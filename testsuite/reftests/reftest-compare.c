@@ -35,12 +35,16 @@ buffer_diff_core (const guchar *buf_a,
         	  const guchar *buf_b,
                   int           stride_b,
         	  int		width,
-        	  int		height)
+		  int		height,
+                  guint        *max_diff_out,
+                  guint        *pixels_changed_out)
 {
   int x, y;
   guchar *buf_diff = NULL;
   int stride_diff = 0;
   GdkTexture *diff = NULL;
+  guint max_diff = 0;
+  guint pixels_changed = 0;
 
   for (y = 0; y < height; y++)
     {
@@ -84,6 +88,10 @@ buffer_diff_core (const guchar *buf_a,
               guint channel_diff;
 
               channel_diff = ABS (value_a - value_b);
+
+              if (channel_diff > max_diff)
+                max_diff = channel_diff;
+
               channel_diff *= 4;  /* emphasize */
               if (channel_diff)
                 channel_diff += 128; /* make sure it's visible */
@@ -91,6 +99,8 @@ buffer_diff_core (const guchar *buf_a,
                 channel_diff = 255;
               diff_pixel |= channel_diff << (channel * 8);
             }
+
+          pixels_changed++;
 
           if ((diff_pixel & 0x00ffffff) == 0)
             {
@@ -105,12 +115,21 @@ buffer_diff_core (const guchar *buf_a,
       }
   }
 
+  if (max_diff_out != NULL)
+    *max_diff_out = max_diff;
+
+  if (pixels_changed_out != NULL)
+    *pixels_changed_out = pixels_changed;
+
   return diff;
 }
 
 GdkTexture *
 reftest_compare_textures (GdkTexture *texture1,
-                          GdkTexture *texture2)
+                          GdkTexture *texture2,
+                          guint      *max_diff_out,
+                          guint      *pixels_changed_out,
+                          guint      *pixels_out)
 {
   int w, h;
   guchar *data1, *data2;
@@ -126,10 +145,13 @@ reftest_compare_textures (GdkTexture *texture1,
 
   diff = buffer_diff_core (data1, w * 4,
                            data2, w * 4,
-                           w, h);
+                           w, h, max_diff_out, pixels_changed_out);
 
   g_free (data1);
   g_free (data2);
+
+  if (pixels_out != NULL)
+    *pixels_out = w * h;
 
   return diff;
 }

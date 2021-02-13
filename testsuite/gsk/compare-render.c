@@ -318,6 +318,9 @@ main (int argc, char **argv)
   GError *error = NULL;
   GOptionContext *context;
   GdkTexture *diff_texture = NULL;
+  guint max_diff = 0;
+  guint pixels_changed = 0;
+  guint pixels = 0;
 
   (g_test_init) (&argc, &argv, NULL);
 
@@ -377,9 +380,12 @@ main (int argc, char **argv)
         }
 
       /* Now compare the two */
-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
+      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
+                                               &max_diff, &pixels_changed, &pixels);
       if (diff_texture)
         {
+          g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
+                   pixels_changed, pixels, max_diff); 
           save_image (diff_texture, node_file, ".diff.png");
           success = FALSE;
         }
@@ -412,10 +418,13 @@ main (int argc, char **argv)
 
       save_image (reference_texture, node_file, "-flipped.ref.png");
 
-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
+      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
+                                               &max_diff, &pixels_changed, &pixels);
 
       if (diff_texture)
         {
+          g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
+                   pixels_changed, pixels, max_diff);
           save_image (diff_texture, node_file, "-flipped.diff.png");
           success = FALSE;
         }
@@ -478,10 +487,13 @@ main (int argc, char **argv)
 
       save_image (reference_texture, node_file, "-repeated.ref.png");
 
-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
+      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
+                                               &max_diff, &pixels_changed, &pixels);
 
       if (diff_texture)
         {
+          g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
+                   pixels_changed, pixels, max_diff);
           save_image (diff_texture, node_file, "-repeated.diff.png");
           success = FALSE;
         }
@@ -515,10 +527,13 @@ main (int argc, char **argv)
 
       save_image (reference_texture, node_file, "-rotated.ref.png");
 
-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
+      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
+                                               &max_diff, &pixels_changed, &pixels);
 
       if (diff_texture)
         {
+          g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
+                   pixels_changed, pixels, max_diff);
           save_image (diff_texture, node_file, "-rotated.diff.png");
           success = FALSE;
         }
@@ -572,10 +587,13 @@ main (int argc, char **argv)
 
       save_image (reference_texture, node_file, "-masked.ref.png");
 
-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
+      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
+                                               &max_diff, &pixels_changed, &pixels);
 
       if (diff_texture)
         {
+          g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
+                   pixels_changed, pixels, max_diff);
           save_image (diff_texture, node_file, "-masked.diff.png");
           success = FALSE;
         }
@@ -613,10 +631,13 @@ main (int argc, char **argv)
       g_assert_nonnull (rendered_texture);
       g_assert_nonnull (rendered_texture2);
 
-      diff_texture = reftest_compare_textures (rendered_texture, rendered_texture2);
+      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
+                                               &max_diff, &pixels_changed, &pixels);
 
       if (diff_texture)
         {
+          g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
+                   pixels_changed, pixels, max_diff);
           save_image (diff_texture, node_file, "-replayed.diff.png");
           success = FALSE;
         }
@@ -668,7 +689,8 @@ main (int argc, char **argv)
 
       save_image (reference_texture, node_file, "-clipped.ref.png");
 
-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
+      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
+                                               &max_diff, &pixels_changed, &pixels);
 
       if (diff_texture)
         {

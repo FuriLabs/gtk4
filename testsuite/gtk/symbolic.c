@@ -190,7 +190,7 @@ test_symbolic (gconstpointer data)
       return;
     }
 
-  diff = reftest_compare_textures (reference, texture);
+  diff = reftest_compare_textures (reference, texture, NULL, NULL, NULL);
   if (diff)
     {
       save_image (texture, filename, NULL, ".out.png");

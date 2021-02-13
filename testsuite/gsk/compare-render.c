@@ -111,6 +111,37 @@ get_output_file (const char *file,
   return result;
 }
 
+void
+load_test_settings (const char *node_file,
+                    guint64 *max_diff,
+                    guint64 *max_pixels)
+{
+  char *keyfile_path = file_replace_extension (node_file, ".node", ".keyfile");
+  GKeyFile *keyfile = g_key_file_new ();
+  guint64 tolerated_diff = 0;
+  guint64 tolerated_pixels = 0;
+
+  if (keyfile_path != NULL && g_file_test (keyfile_path, G_FILE_TEST_EXISTS))
+    {
+      GError *error = NULL;
+      g_key_file_load_from_file (keyfile, keyfile_path, G_KEY_FILE_NONE, &error);
+      g_assert_no_error (error);
+      tolerated_diff = g_key_file_get_uint64 (keyfile, "reftest", "tolerated-diff-level", NULL);
+      g_print ("Maximum difference tolerated: %" G_GUINT64_FORMAT " levels\n", tolerated_diff);
+      tolerated_pixels = g_key_file_get_uint64 (keyfile, "reftest", "tolerated-diff-pixels", NULL);
+      g_print ("Different pixels tolerated: %" G_GUINT64_FORMAT "\n", tolerated_pixels);
+    }
+
+  if (max_diff)
+    *max_diff = tolerated_diff;
+
+  if (max_pixels)
+    *max_pixels = tolerated_pixels;
+
+  g_key_file_unref (keyfile);
+  g_free (keyfile_path);
+}
+
 static void
 save_image (GdkTexture *texture,
             const char *test_name,
@@ -384,10 +415,18 @@ main (int argc, char **argv)
                                                &max_diff, &pixels_changed, &pixels);
       if (diff_texture)
         {
+          guint64 tolerated_diff = 0;
+          guint64 tolerated_pixels = 0;
+
           g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
                    pixels_changed, pixels, max_diff); 
           save_image (diff_texture, node_file, ".diff.png");
-          success = FALSE;
+          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
+
+          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
+            g_print ("not right, but close enough?\n");
+          else
+            success = FALSE;
         }
 
       g_clear_object (&diff_texture);
@@ -423,10 +462,19 @@ main (int argc, char **argv)
 
       if (diff_texture)
         {
+          guint64 tolerated_diff = 0;
+          guint64 tolerated_pixels = 0;
           g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
                    pixels_changed, pixels, max_diff);
           save_image (diff_texture, node_file, "-flipped.diff.png");
-          success = FALSE;
+
+          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
+
+          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
+            g_print ("not right, but close enough?\n");
+          else
+            success = FALSE;
+
         }
 
       g_clear_object (&diff_texture);
@@ -492,10 +540,19 @@ main (int argc, char **argv)
 
       if (diff_texture)
         {
+          guint64 tolerated_diff = 0;
+          guint64 tolerated_pixels = 0;
+
           g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
                    pixels_changed, pixels, max_diff);
           save_image (diff_texture, node_file, "-repeated.diff.png");
-          success = FALSE;
+
+          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
+
+          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
+            g_print ("not right, but close enough?\n");
+          else
+            success = FALSE;
         }
 
       g_clear_object (&diff_texture);
@@ -532,10 +589,19 @@ main (int argc, char **argv)
 
       if (diff_texture)
         {
+          guint64 tolerated_diff = 0;
+          guint64 tolerated_pixels = 0;
+
           g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
                    pixels_changed, pixels, max_diff);
           save_image (diff_texture, node_file, "-rotated.diff.png");
-          success = FALSE;
+
+          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
+
+          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
+            g_print ("not right, but close enough?\n");
+          else
+            success = FALSE;
         }
 
       g_clear_object (&diff_texture);
@@ -592,10 +658,19 @@ main (int argc, char **argv)
 
       if (diff_texture)
         {
+          guint64 tolerated_diff = 0;
+          guint64 tolerated_pixels = 0;
+
           g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
                    pixels_changed, pixels, max_diff);
           save_image (diff_texture, node_file, "-masked.diff.png");
-          success = FALSE;
+
+          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
+
+          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
+            g_print ("not right, but close enough?\n");
+          else
+            success = FALSE;
         }
 
       g_clear_object (&diff_texture);
@@ -636,10 +711,19 @@ main (int argc, char **argv)
 
       if (diff_texture)
         {
+          guint64 tolerated_diff = 0;
+          guint64 tolerated_pixels = 0;
+
           g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
                    pixels_changed, pixels, max_diff);
           save_image (diff_texture, node_file, "-replayed.diff.png");
-          success = FALSE;
+
+          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
+
+          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
+            g_print ("not right, but close enough?\n");
+          else
+            success = FALSE;
         }
 
       g_clear_object (&diff_texture);
@@ -694,8 +778,17 @@ main (int argc, char **argv)
 
       if (diff_texture)
         {
+          guint64 tolerated_diff = 0;
+          guint64 tolerated_pixels = 0;
+
           save_image (diff_texture, node_file, "-clipped.diff.png");
-          success = FALSE;
+
+          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
+
+          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
+            g_print ("not right, but close enough?\n");
+          else
+            success = FALSE;
         }
 
       g_clear_object (&diff_texture);
@@ -733,12 +826,22 @@ skip_clip:
 
       save_image (reference_texture, node_file, "-colorflipped.ref.png");
 
-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
+      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
+                                               &max_diff, &pixels_changed, &pixels);
 
       if (diff_texture)
         {
+          guint64 tolerated_diff = 0;
+          guint64 tolerated_pixels = 0;
+
           save_image (diff_texture, node_file, "-colorflipped.diff.png");
-          success = FALSE;
+
+          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
+
+          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
+            g_print ("not right, but close enough?\n");
+          else
+            success = FALSE;
         }
 
       g_clear_object (&diff_texture);

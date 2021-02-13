@@ -23,6 +23,10 @@ G_BEGIN_DECLS
 
 G_MODULE_EXPORT
 GdkTexture *            reftest_compare_textures        (GdkTexture             *texture1,
-                                                         GdkTexture             *texture2);
+                                                         GdkTexture             *texture2,
+                                                         guint                  *max_diff_out,
+                                                         guint                  *pixels_changed_out,
+                                                         guint                  *pixels_out);
 
 G_END_DECLS
+

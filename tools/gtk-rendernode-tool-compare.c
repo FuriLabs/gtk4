@@ -74,6 +74,9 @@ do_compare (int          *argc,
   GdkTexture *texture[2];
   GdkTexture *diff;
   GError *error = NULL;
+  guint max_diff = 0;
+  guint pixels_changed = 0;
+  guint pixels = 0;
 
   g_set_prgname ("gtk4-rendernode-tool compare");
   context = g_option_context_new (NULL);
@@ -113,8 +116,8 @@ do_compare (int          *argc,
         }
     }
 
-  diff = reftest_compare_textures (texture[0], texture[1]);
-
+  diff = reftest_compare_textures (texture[0], texture[1],
+                                   &max_diff, &pixels_changed, &pixels);
   if (opt_filename && diff)
     {
       if (!gdk_texture_save_to_png (diff, opt_filename))

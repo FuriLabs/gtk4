@@ -151,7 +151,7 @@ compare_nodes (GskRenderNode *node1,
   texture1 = gsk_renderer_render_texture (get_renderer (), node1, &bounds);
   texture2 = gsk_renderer_render_texture (get_renderer (), node2, &bounds);
 
-  diff = reftest_compare_textures (texture1, texture2);
+  diff = reftest_compare_textures (texture1, texture2, NULL, NULL, NULL);
   if (diff)
     {
       g_print ("Test failed for %s (%s)\n", path, variant);

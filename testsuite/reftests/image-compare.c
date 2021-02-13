@@ -51,7 +51,7 @@ main (int argc, char **argv)
       exit (1);
     }
 
-  diff = reftest_compare_textures (image1, image2);
+  diff = reftest_compare_textures (image1, image2, NULL, NULL, NULL);
 
   if (opt_filename && diff)
     {

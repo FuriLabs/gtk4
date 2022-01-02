@@ -60,7 +60,7 @@ Copyright:
  2008 BOSS GNU/Linux
  2006-2009 Baris Cicek
  2009 Bastien Nocera
- 2016-2020 Benjamin Otte
+ 2016-2021 Benjamin Otte
  2006 Benoît Dejean
  2003 Besnik Bleta
  2002 Borislav Aleksandrov
@@ -74,7 +74,7 @@ Copyright:
  2000 Chih-Wei Huang
  2010 Christian Dywan
  2004-2006 Christian Hammond
- 2015 Christian Hergert
+ 2015-2020 Christian Hergert
  (unknown) Christian Kellner
  2009-2010 Christian Kirbach
  2002-2004 Christian Neumair
@@ -296,7 +296,7 @@ Copyright:
  2006 Raphael Higino <In Memoriam>
  2004 Ravishankar Shrivastava
  2003-2004 Raymond Penners
- 1998-2020 Red Hat, Inc.
+ 1998-2021 Red Hat, Inc.
  2009 Reinout van Schouwen
  2009-2010 Reşat SABIQ
  2002 Rhoslyn Prys
@@ -366,7 +366,7 @@ Copyright:
  2005-2010 Theppitak Karoonboonyanan
  2004 Thierry Vignaud
  1998-2006 Tim Janik
- 2018 Timm Bäder
+ 2017-2018 Timm Bäder
  2002-2010 Tino Meinen
  2004 Tomas Kuliavas
  2004 Tomislav Markovski
@@ -510,7 +510,7 @@ Files:
  subprojects/gi-docgen/*
 Copyright:
  2020-2021 GNOME Foundation
-License: CC0-1.0, and CC-BY-SA-3.0, and Apache-2.0 or GPL-3.0+
+License: CC0-1.0, and CC-BY-SA-3.0, and Apache-2.0 or GPL-3.0+, and GPL-2.0+, and LGPL-2+ or MPL-1.1
 
 Files:
  subprojects/gi-docgen/gidocgen/templates/basic/fzy.js
@@ -519,6 +519,20 @@ Copyright:
  2014 John Hawthorn
  2014 John Louis Del Rosario, Hank Gay, John Mastro, Brandon Bennett
 License: Expat
+
+License: GPL-2.0+
+ SPDX license expression "GPL-2.0-or-later":
+ https://spdx.org/licenses/GPL-2.0-or-later.html
+ .
+ This license identifier refers to the choice to use code under
+ GPL-2.0-or-later (i.e., GPL-2.0 or some later version), as distinguished
+ from use of code under GPL-2.0-only. The license notice (as seen in the
+ Standard License Header field below) states which of these applies the
+ code in the file. The example in the exhibit to the license shows the
+ license notice for the "or later" approach.
+ .
+ On Debian systems, the complete text of the GNU General Public License
+ version 2 can be found in "/usr/share/common-licenses/GPL-2.0".
 
 License: GPL-3.0+
  SPDX license expression "GPL-3.0-or-later":
@@ -1024,6 +1038,13 @@ License: CC-BY-SA-3.0
      this trademark restriction does not form part of the License.
  .
      Creative Commons may be contacted at https://creativecommons.org/.
+
+License: MPL-1.1
+ SPDX license expression "MPL-1.1":
+ https://spdx.org/licenses/MPL-1.1.html
+ .
+ On Debian systems, the complete text of the Mozilla Public License
+ version 1.1 can be found in "/usr/share/common-licenses/MPL-1.1".
 
 License: ZPL-2.1
  Redistribution and use in source and binary forms, with or without

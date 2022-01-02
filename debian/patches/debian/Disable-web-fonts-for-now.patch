@@ -197,7 +197,7 @@ index ce790e7..0a01b93 100644
 -  font-display: swap;
 -}
 diff --git a/subprojects/gi-docgen/gidocgen/templates/basic/style.css b/subprojects/gi-docgen/gidocgen/templates/basic/style.css
-index 889bbe8..89f0e4e 100644
+index 4a92097..7fd9a68 100644
 --- a/subprojects/gi-docgen/gidocgen/templates/basic/style.css
 +++ b/subprojects/gi-docgen/gidocgen/templates/basic/style.css
 @@ -7,8 +7,6 @@

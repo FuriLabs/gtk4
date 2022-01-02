@@ -10,44 +10,44 @@ Signed-off-by: Simon McVittie <smcv@debian.org>
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/3195
 Applied-upstream: no, upstream want reftests to be a strict pass/fail with identical results required
 ---
- testsuite/gsk/compare-render.c       | 10 +++++++++-
+ testsuite/gsk/compare-render.c       |  9 ++++++++-
  testsuite/reftests/gtk-reftest.c     |  9 ++++++++-
  testsuite/reftests/reftest-compare.c | 28 +++++++++++++++++++++++++---
  testsuite/reftests/reftest-compare.h |  5 ++++-
- 4 files changed, 46 insertions(+), 6 deletions(-)
+ 4 files changed, 45 insertions(+), 6 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index a62252a..9742358 100644
+index 919957e..7145363 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
-@@ -236,11 +236,19 @@ main (int argc, char **argv)
-     }
+@@ -227,12 +227,19 @@ main (int argc, char **argv)
    else
      {
+       GdkTexture *diff_texture;
 +      guint max_diff = 0;
 +      guint pixels_changed = 0;
 +      guint pixels = 0;
-+
+ 
        /* Now compare the two */
--      diff_surface = reftest_compare_surfaces (rendered_surface, reference_surface);
-+      diff_surface = reftest_compare_surfaces (rendered_surface, reference_surface,
+-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
++      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
 +                                               &max_diff, &pixels_changed, &pixels);
  
-       if (diff_surface)
+       if (diff_texture)
          {
 +          g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
 +                   pixels_changed, pixels, max_diff);
 +
-           save_image (diff_surface, node_file, ".diff.png");
-           cairo_surface_destroy (diff_surface);
+           save_image (diff_texture, node_file, ".diff.png");
+           g_object_unref (diff_texture);
            success = FALSE;
 diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
-index cd15396..3ae5413 100644
+index 3872f55..12d202f 100644
 --- a/testsuite/reftests/gtk-reftest.c
 +++ b/testsuite/reftests/gtk-reftest.c
-@@ -298,6 +298,9 @@ test_ui_file (GFile *file)
+@@ -331,6 +331,9 @@ test_ui_file (GFile *file)
    char *ui_file, *reference_file;
-   cairo_surface_t *ui_image, *reference_image, *diff_image;
+   GdkTexture *ui_image, *reference_image, *diff_image;
    GtkStyleProvider *provider;
 +  guint max_diff = 0;
 +  guint pixels_changed = 0;
@@ -55,12 +55,12 @@ index cd15396..3ae5413 100644
  
    ui_file = g_file_get_path (file);
  
-@@ -317,12 +320,16 @@ test_ui_file (GFile *file)
-     }
-   g_free (reference_file);
+@@ -362,12 +365,16 @@ test_ui_file (GFile *file)
+   if (reference_image == NULL)
+     reference_image = gdk_memory_texture_new (1, 1, GDK_MEMORY_DEFAULT, g_bytes_new ((guchar[4]) {0, 0, 0, 0}, 4), 4);
  
--  diff_image = reftest_compare_surfaces (ui_image, reference_image);
-+  diff_image = reftest_compare_surfaces (ui_image, reference_image,
+-  diff_image = reftest_compare_textures (ui_image, reference_image);
++  diff_image = reftest_compare_textures (ui_image, reference_image,
 +                                         &max_diff, &pixels_changed, &pixels);
  
    save_image (ui_image, ui_file, ".out.png");
@@ -70,14 +70,14 @@ index cd15396..3ae5413 100644
      {
 +      g_test_message ("%u (out of %u) pixels differ from reference by up to %u levels",
 +                      pixels_changed, pixels, max_diff);
+       save_node (g_object_get_data (G_OBJECT (ui_image), "source-render-node"), ui_file, ".out.node");
+       save_node (g_object_get_data (G_OBJECT (reference_image), "source-render-node"), ui_file, ".ref.node");
        save_image (diff_image, ui_file, ".diff.png");
-       cairo_surface_destroy (diff_image);
-       g_test_fail ();
 diff --git a/testsuite/reftests/reftest-compare.c b/testsuite/reftests/reftest-compare.c
-index 5bccb69..ac72c61 100644
+index bb6c6eb..202fcf5 100644
 --- a/testsuite/reftests/reftest-compare.c
 +++ b/testsuite/reftests/reftest-compare.c
-@@ -83,12 +83,16 @@ buffer_diff_core (const guchar *buf_a,
+@@ -35,12 +35,16 @@ buffer_diff_core (const guchar *buf_a,
          	  const guchar *buf_b,
                    int           stride_b,
          	  int		width,
@@ -89,13 +89,13 @@ index 5bccb69..ac72c61 100644
    int x, y;
    guchar *buf_diff = NULL;
    int stride_diff = 0;
-   cairo_surface_t *diff = NULL;
+   GdkTexture *diff = NULL;
 +  guint max_diff = 0;
 +  guint pixels_changed = 0;
  
    for (y = 0; y < height; y++)
      {
-@@ -129,6 +133,10 @@ buffer_diff_core (const guchar *buf_a,
+@@ -84,6 +88,10 @@ buffer_diff_core (const guchar *buf_a,
                guint channel_diff;
  
                channel_diff = ABS (value_a - value_b);
@@ -106,7 +106,7 @@ index 5bccb69..ac72c61 100644
                channel_diff *= 4;  /* emphasize */
                if (channel_diff)
                  channel_diff += 128; /* make sure it's visible */
-@@ -137,6 +145,8 @@ buffer_diff_core (const guchar *buf_a,
+@@ -92,6 +100,8 @@ buffer_diff_core (const guchar *buf_a,
                diff_pixel |= channel_diff << (channel * 8);
              }
  
@@ -115,7 +115,7 @@ index 5bccb69..ac72c61 100644
            if ((diff_pixel & 0x00ffffff) == 0)
              {
                /* alpha only difference, convert to luminance */
-@@ -148,12 +158,21 @@ buffer_diff_core (const guchar *buf_a,
+@@ -105,12 +115,21 @@ buffer_diff_core (const guchar *buf_a,
        }
    }
  
@@ -128,42 +128,41 @@ index 5bccb69..ac72c61 100644
    return diff;
  }
  
- cairo_surface_t *
- reftest_compare_surfaces (cairo_surface_t *surface1,
--                          cairo_surface_t *surface2)
-+                          cairo_surface_t *surface2,
-+                          guint           *max_diff_out,
-+                          guint           *pixels_changed_out,
-+                          guint           *pixels_out)
+ GdkTexture *
+ reftest_compare_textures (GdkTexture *texture1,
+-                          GdkTexture *texture2)
++                          GdkTexture *texture2,
++                          guint      *max_diff_out,
++                          guint      *pixels_changed_out,
++                          guint      *pixels_out)
  {
-   int w1, h1, w2, h2, w, h;
-   cairo_surface_t *coerced1, *coerced2, *diff;
-@@ -169,11 +188,14 @@ reftest_compare_surfaces (cairo_surface_t *surface1,
-                            cairo_image_surface_get_stride (coerced1),
-                            cairo_image_surface_get_data (coerced2),
-                            cairo_image_surface_get_stride (coerced2),
+   int w, h;
+   guchar *data1, *data2;
+@@ -126,10 +145,13 @@ reftest_compare_textures (GdkTexture *texture1,
+ 
+   diff = buffer_diff_core (data1, w * 4,
+                            data2, w * 4,
 -                           w, h);
 +                           w, h, max_diff_out, pixels_changed_out);
  
-   cairo_surface_destroy (coerced1);
-   cairo_surface_destroy (coerced2);
+   g_free (data1);
+   g_free (data2);
  
 +  if (pixels_out != NULL)
 +    *pixels_out = w * h;
 +
    return diff;
  }
- 
 diff --git a/testsuite/reftests/reftest-compare.h b/testsuite/reftests/reftest-compare.h
-index 551b1c5..c6e001c 100644
+index d5e02a1..b71636e 100644
 --- a/testsuite/reftests/reftest-compare.h
 +++ b/testsuite/reftests/reftest-compare.h
 @@ -24,7 +24,10 @@ G_BEGIN_DECLS
  
  G_MODULE_EXPORT
- cairo_surface_t *       reftest_compare_surfaces        (cairo_surface_t        *surface1,
--                                                         cairo_surface_t        *surface2);
-+                                                         cairo_surface_t        *surface2,
+ GdkTexture *            reftest_compare_textures        (GdkTexture             *texture1,
+-                                                         GdkTexture             *texture2);
++                                                         GdkTexture             *texture2,
 +                                                         guint                  *max_diff_out,
 +                                                         guint                  *pixels_changed_out,
 +                                                         guint                  *pixels_out);

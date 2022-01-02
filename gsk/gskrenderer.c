@@ -39,7 +39,6 @@
 #include "gskcairorenderer.h"
 #include "gskdebugprivate.h"
 #include "gl/gskglrenderer.h"
-#include "ngl/gsknglrenderer.h"
 #include "gskprofilerprivate.h"
 #include "gskrendernodeprivate.h"
 
@@ -104,7 +103,7 @@ static GParamSpec *gsk_renderer_properties[N_PROPS];
 
 static gboolean
 gsk_renderer_real_realize (GskRenderer  *self,
-                           GdkSurface    *surface,
+                           GdkSurface   *surface,
                            GError      **error)
 {
   GSK_RENDERER_WARN_NOT_IMPLEMENTED_METHOD (self, realize);
@@ -190,12 +189,12 @@ gsk_renderer_class_init (GskRendererClass *klass)
   /**
    * GskRenderer:realized: (attributes org.gtk.Property.get=gsk_renderer_is_realized)
    *
-   * Whether the renderer has been associated with a surface.
+   * Whether the renderer has been associated with a surface or draw context.
    */
   gsk_renderer_properties[PROP_REALIZED] =
     g_param_spec_boolean ("realized",
                           "Realized",
-                          "The renderer has been associated with a surface",
+                          "The renderer has been associated with a surface or draw context",
                           FALSE,
                           G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
@@ -282,11 +281,14 @@ gsk_renderer_is_realized (GskRenderer *renderer)
 /**
  * gsk_renderer_realize:
  * @renderer: a `GskRenderer`
- * @surface: the `GdkSurface` renderer will be used on
+ * @surface: (nullable): the `GdkSurface` renderer will be used on
  * @error: return location for an error
  *
  * Creates the resources needed by the @renderer to render the scene
  * graph.
+ *
+ * Since GTK 4.6, the surface may be `NULL`, which allows using
+ * renderers without having to create a surface.
  */
 gboolean
 gsk_renderer_realize (GskRenderer  *renderer,
@@ -297,10 +299,11 @@ gsk_renderer_realize (GskRenderer  *renderer,
 
   g_return_val_if_fail (GSK_IS_RENDERER (renderer), FALSE);
   g_return_val_if_fail (!gsk_renderer_is_realized (renderer), FALSE);
-  g_return_val_if_fail (GDK_IS_SURFACE (surface), FALSE);
+  g_return_val_if_fail (surface == NULL || GDK_IS_SURFACE (surface), FALSE);
   g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-  priv->surface = g_object_ref (surface);
+  if (surface)
+    priv->surface = g_object_ref (surface);
 
   if (!GSK_RENDERER_GET_CLASS (renderer)->realize (renderer, surface, error))
     {
@@ -400,13 +403,15 @@ gsk_renderer_render_texture (GskRenderer           *renderer,
 
 /**
  * gsk_renderer_render:
- * @renderer: a `GskRenderer`
+ * @renderer: a realized `GskRenderer`
  * @root: a `GskRenderNode`
  * @region: (nullable): the `cairo_region_t` that must be redrawn or %NULL
  *   for the whole window
  *
- * Renders the scene graph, described by a tree of `GskRenderNode` instances,
- * ensuring that the given @region gets redrawn.
+ * Renders the scene graph, described by a tree of `GskRenderNode` instances
+ * to the renderer's surface,  ensuring that the given @region gets redrawn.
+ *
+ * If the renderer has no associated surface, this function does nothing.
  *
  * Renderers must ensure that changes of the contents given by the @root
  * node as well as the area given by @region are redrawn. They are however
@@ -428,6 +433,9 @@ gsk_renderer_render (GskRenderer          *renderer,
   g_return_if_fail (priv->is_realized);
   g_return_if_fail (GSK_IS_RENDER_NODE (root));
   g_return_if_fail (priv->root_node == NULL);
+
+  if (priv->surface == NULL)
+    return;
 
   if (region == NULL || priv->prev_node == NULL || GSK_RENDERER_DEBUG_CHECK (renderer, FULL_REDRAW))
     {
@@ -506,9 +514,7 @@ get_renderer_for_name (const char *renderer_name)
   else if (g_ascii_strcasecmp (renderer_name, "cairo") == 0)
     return GSK_TYPE_CAIRO_RENDERER;
   else if (g_ascii_strcasecmp (renderer_name, "opengl") == 0 ||
-           g_ascii_strcasecmp (renderer_name, "ngl") == 0)
-    return GSK_TYPE_NGL_RENDERER;
-  else if (g_ascii_strcasecmp (renderer_name, "gl") == 0)
+           g_ascii_strcasecmp (renderer_name, "gl") == 0)
     return GSK_TYPE_GL_RENDERER;
 #ifdef GDK_RENDERING_VULKAN
   else if (g_ascii_strcasecmp (renderer_name, "vulkan") == 0)
@@ -520,12 +526,11 @@ get_renderer_for_name (const char *renderer_name)
 #ifdef GDK_WINDOWING_BROADWAY
       g_print ("broadway - Use the Broadway specific renderer\n");
 #else
-      g_print ("broadway - disabled during GTK build\n");
+      g_print ("broadway - Disabled during GTK build\n");
 #endif
       g_print ("   cairo - Use the Cairo fallback renderer\n");
-      g_print ("  opengl - Use the default OpenGL renderer\n");
-      g_print ("      gl - An OpenGL renderer\n");
-      g_print ("     ngl - Another OpenGL renderer\n");
+      g_print ("  opengl - Use the OpenGL renderer\n");
+      g_print ("      gl - Use the OpenGL renderer\n");
 #ifdef GDK_RENDERING_VULKAN
       g_print ("  vulkan - Use the Vulkan renderer\n");
 #else
@@ -571,11 +576,11 @@ get_renderer_for_backend (GdkSurface *surface)
 {
 #ifdef GDK_WINDOWING_X11
   if (GDK_IS_X11_SURFACE (surface))
-    return GSK_TYPE_NGL_RENDERER;
+    return GSK_TYPE_GL_RENDERER;
 #endif
 #ifdef GDK_WINDOWING_WAYLAND
   if (GDK_IS_WAYLAND_SURFACE (surface))
-    return GSK_TYPE_NGL_RENDERER;
+    return GSK_TYPE_GL_RENDERER;
 #endif
 #ifdef GDK_WINDOWING_BROADWAY
   if (GDK_IS_BROADWAY_SURFACE (surface))
@@ -583,7 +588,7 @@ get_renderer_for_backend (GdkSurface *surface)
 #endif
 #ifdef GDK_WINDOWING_MACOS
   if (GDK_IS_MACOS_SURFACE (surface))
-    return GSK_TYPE_NGL_RENDERER;
+    return GSK_TYPE_GL_RENDERER;
 #endif
 #ifdef GDK_WINDOWING_WIN32
   if (GDK_IS_WIN32_SURFACE (surface))
@@ -593,7 +598,7 @@ get_renderer_for_backend (GdkSurface *surface)
 
       if (!(GDK_DISPLAY_DEBUG_CHECK (display, GL_GLES) ||
             GDK_WIN32_DISPLAY (display)->running_on_arm64))
-        return GSK_TYPE_NGL_RENDERER;
+        return GSK_TYPE_GL_RENDERER;
     }
 #endif
 

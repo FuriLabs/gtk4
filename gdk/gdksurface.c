@@ -30,25 +30,24 @@
 #include "gdksurface.h"
 
 #include "gdk-private.h"
+#include "gdkcontentprovider.h"
 #include "gdkdeviceprivate.h"
 #include "gdkdisplayprivate.h"
 #include "gdkdragsurfaceprivate.h"
 #include "gdkeventsprivate.h"
 #include "gdkframeclockidleprivate.h"
 #include "gdkglcontextprivate.h"
-#include "gdkinternals.h"
 #include "gdkintl.h"
 #include "gdkmarshalers.h"
 #include "gdkpopupprivate.h"
 #include "gdkrectangle.h"
 #include "gdktoplevelprivate.h"
+#include "gdkvulkancontext.h"
 
 #include <math.h>
 
-#include <epoxy/gl.h>
-
-#ifdef GDK_WINDOWING_WAYLAND
-#include "wayland/gdkwayland.h"
+#ifdef HAVE_EGL
+#include <epoxy/egl.h>
 #endif
 
 /**
@@ -59,11 +58,24 @@
  * It’s a low-level object, used to implement high-level objects
  * such as [class@Gtk.Window] or [class@Gtk.Dialog] in GTK.
  *
- * The surfaces you see in practice are either [class@Gdk.Toplevel] or
- * [class@Gdk.Popup], and those interfaces provide much of the required
+ * The surfaces you see in practice are either [iface@Gdk.Toplevel] or
+ * [iface@Gdk.Popup], and those interfaces provide much of the required
  * API to interact with these surfaces. Other, more specialized surface
  * types exist, but you will rarely interact with them directly.
  */
+
+typedef struct _GdkSurfacePrivate GdkSurfacePrivate;
+
+struct _GdkSurfacePrivate
+{
+  gpointer egl_native_window;
+#ifdef HAVE_EGL
+  EGLSurface egl_surface;
+  gboolean egl_surface_high_depth;
+#endif
+
+  gpointer widget;
+};
 
 enum {
   LAYOUT,
@@ -112,7 +124,7 @@ static void gdk_surface_queue_set_is_mapped (GdkSurface *surface,
 static guint signals[LAST_SIGNAL] = { 0 };
 static GParamSpec *properties[LAST_PROP] = { NULL, };
 
-G_DEFINE_ABSTRACT_TYPE (GdkSurface, gdk_surface, G_TYPE_OBJECT)
+G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (GdkSurface, gdk_surface, G_TYPE_OBJECT)
 
 static gboolean
 gdk_surface_real_beep (GdkSurface *surface)
@@ -593,11 +605,14 @@ gdk_surface_class_init (GdkSurfaceClass *klass)
                   0,
                   NULL,
                   NULL,
-                  NULL,
+                  _gdk_marshal_VOID__INT_INT,
                   G_TYPE_NONE,
                   2,
                   G_TYPE_INT,
                   G_TYPE_INT);
+  g_signal_set_va_marshaller (signals[LAYOUT],
+                              G_OBJECT_CLASS_TYPE (object_class),
+                              _gdk_marshal_VOID__INT_INTv);
 
   /**
    * GdkSurface::render:
@@ -713,22 +728,14 @@ gdk_surface_finalize (GObject *object)
       _gdk_surface_destroy (surface, FALSE);
     }
 
-  if (surface->input_region)
-    cairo_region_destroy (surface->input_region);
-
-  if (surface->cursor)
-    g_object_unref (surface->cursor);
-
-  if (surface->device_cursor)
-    g_hash_table_destroy (surface->device_cursor);
-
-  if (surface->devices_inside)
-    g_list_free (surface->devices_inside);
+  g_clear_pointer (&surface->input_region, cairo_region_destroy);
+  g_clear_object (&surface->cursor);
+  g_clear_pointer (&surface->device_cursor, g_hash_table_destroy);
+  g_clear_pointer (&surface->devices_inside, g_list_free);
 
   g_clear_object (&surface->display);
 
-  if (surface->opaque_region)
-    cairo_region_destroy (surface->opaque_region);
+  g_clear_pointer (&surface->opaque_region, cairo_region_destroy);
 
   if (surface->parent)
     surface->parent->children = g_list_remove (surface->parent->children, surface);
@@ -926,14 +933,19 @@ surface_remove_from_pointer_info (GdkSurface  *surface,
  */
 static void
 _gdk_surface_destroy_hierarchy (GdkSurface *surface,
-                                gboolean   foreign_destroy)
+                                gboolean    foreign_destroy)
 {
+  G_GNUC_UNUSED GdkSurfacePrivate *priv = gdk_surface_get_instance_private (surface);
+
   g_return_if_fail (GDK_IS_SURFACE (surface));
 
   if (GDK_SURFACE_DESTROYED (surface))
     return;
 
   GDK_SURFACE_GET_CLASS (surface)->destroy (surface, foreign_destroy);
+
+  /* backend must have unset this */
+  g_assert (priv->egl_native_window == NULL);
 
   if (surface->gl_paint_context)
     {
@@ -1005,16 +1017,20 @@ gdk_surface_destroy (GdkSurface *surface)
 }
 
 void
-gdk_surface_set_widget (GdkSurface *surface,
+gdk_surface_set_widget (GdkSurface *self,
                         gpointer    widget)
 {
-  surface->widget = widget;
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
+
+  priv->widget = widget;
 }
 
 gpointer
-gdk_surface_get_widget (GdkSurface *surface)
+gdk_surface_get_widget (GdkSurface *self)
 {
-  return surface->widget;
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
+
+  return priv->widget;
 }
 
 /**
@@ -1065,6 +1081,66 @@ gdk_surface_get_mapped (GdkSurface *surface)
   return GDK_SURFACE_IS_MAPPED (surface);
 }
 
+void
+gdk_surface_set_egl_native_window (GdkSurface *self,
+                                   gpointer    native_window)
+{
+#ifdef HAVE_EGL
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
+
+  /* This checks that all EGL platforms we support conform to the same struct sizes.
+   * When this ever fails, there will be some fun times happening for whoever tries
+   * this weird EGL backend... */
+  G_STATIC_ASSERT (sizeof (gpointer) == sizeof (EGLNativeWindowType));
+
+  if (priv->egl_surface != NULL)
+    {
+      gdk_gl_context_clear_current_if_surface (self);
+      eglDestroySurface (gdk_surface_get_display (self), priv->egl_surface);
+      priv->egl_surface = NULL;
+    }
+
+  priv->egl_native_window = native_window;
+}
+
+gpointer /* EGLSurface */
+gdk_surface_get_egl_surface (GdkSurface *self)
+{
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
+
+  return priv->egl_surface;
+}
+
+void
+gdk_surface_ensure_egl_surface (GdkSurface *self,
+                                gboolean    high_depth)
+{
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
+  GdkDisplay *display = gdk_surface_get_display (self);
+
+  g_return_if_fail (priv->egl_native_window != NULL);
+
+  if (priv->egl_surface_high_depth != high_depth &&
+      priv->egl_surface != NULL &&
+      gdk_display_get_egl_config_high_depth (display) != gdk_display_get_egl_config (display))
+    {
+      gdk_gl_context_clear_current_if_surface (self);
+      eglDestroySurface (gdk_surface_get_display (self), priv->egl_surface);
+      priv->egl_surface = NULL;
+    }
+
+  if (priv->egl_surface == NULL)
+    {
+      priv->egl_surface = eglCreateWindowSurface (gdk_display_get_egl_display (display),
+                                                  high_depth ? gdk_display_get_egl_config_high_depth (display)
+                                                             : gdk_display_get_egl_config (display),
+                                                  (EGLNativeWindowType) priv->egl_native_window,
+                                                  NULL);
+      priv->egl_surface_high_depth = high_depth;
+    }
+#endif
+}
+
 GdkGLContext *
 gdk_surface_get_paint_gl_context (GdkSurface  *surface,
                                   GError     **error)
@@ -1100,7 +1176,7 @@ gdk_surface_get_paint_gl_context (GdkSurface  *surface,
  * Before using the returned `GdkGLContext`, you will need to
  * call [method@Gdk.GLContext.make_current] or [method@Gdk.GLContext.realize].
  *
- * Returns: (transfer full) (nullable): the newly created `GdkGLContext`
+ * Returns: (transfer full): the newly created `GdkGLContext`
  */
 GdkGLContext *
 gdk_surface_create_gl_context (GdkSurface   *surface,
@@ -1112,7 +1188,7 @@ gdk_surface_create_gl_context (GdkSurface   *surface,
   if (!gdk_display_prepare_gl (surface->display, error))
     return NULL;
 
-  return gdk_gl_context_new_for_surface (surface);
+  return gdk_gl_context_new (surface->display, surface);
 }
 
 /**
@@ -2028,7 +2104,7 @@ gdk_surface_get_root_coords (GdkSurface *surface,
       *root_y = 0;
       return;
     }
-  
+
   GDK_SURFACE_GET_CLASS (surface)->get_root_coords (surface, x, y, root_x, root_y);
 }
 

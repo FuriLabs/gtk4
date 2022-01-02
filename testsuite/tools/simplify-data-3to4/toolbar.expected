@@ -2,14 +2,12 @@
 <interface>
   <requires lib="gtk" version="4.0"/>
   <object class="GtkBox">
-    <style>
-      <class name="toolbar"/>
-    </style>
+    <property name="css-classes">toolbar</property>
     <child>
       <object class="GtkButton">
-        <property name="label" translatable="yes">New</property>
+        <property name="label" translatable="1">New</property>
         <property name="icon-name">document-new</property>
-        <property name="tooltip-text" translatable="yes">Create a new document</property>
+        <property name="tooltip-text" translatable="1">Create a new document</property>
       </object>
     </child>
     <child>

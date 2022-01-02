@@ -94,7 +94,7 @@
  * Note: if a sequence is set early to %GTK_EVENT_SEQUENCE_CLAIMED on
  * %GDK_TOUCH_BEGIN/%GDK_BUTTON_PRESS (so those events are captured before
  * reaching the event widget, this implies %GTK_PHASE_CAPTURE), one similar
- * event will emulated if the sequence changes to %GTK_EVENT_SEQUENCE_DENIED.
+ * event will be emulated if the sequence changes to %GTK_EVENT_SEQUENCE_DENIED.
  * This way event coherence is preserved before event propagation is unstopped
  * again.
  *
@@ -1020,7 +1020,6 @@ gtk_gesture_set_sequence_state (GtkGesture            *gesture,
 {
   GtkGesturePrivate *priv;
   PointData *data;
-  GtkEventSequenceState current_state;
 
   g_return_val_if_fail (GTK_IS_GESTURE (gesture), FALSE);
   g_return_val_if_fail (state >= GTK_EVENT_SEQUENCE_NONE &&
@@ -1044,12 +1043,7 @@ gtk_gesture_set_sequence_state (GtkGesture            *gesture,
       data->state != GTK_EVENT_SEQUENCE_NONE)
     return FALSE;
 
-  current_state = data->state;
   data->state = state;
-
-  if (state == GTK_EVENT_SEQUENCE_DENIED &&
-      current_state == GTK_EVENT_SEQUENCE_CLAIMED)
-    _gtk_gesture_cancel_sequence (gesture, sequence);
 
   gtk_widget_cancel_event_sequence (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (gesture)),
                                     gesture, sequence, state);

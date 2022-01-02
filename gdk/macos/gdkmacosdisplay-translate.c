@@ -30,6 +30,8 @@
 #include "gdkmacossurface-private.h"
 #include "gdkmacosseat-private.h"
 
+#include "gdk/gdkeventsprivate.h"
+
 #define GDK_MOD2_MASK (1 << 4)
 #define GRIP_WIDTH 15
 #define GRIP_HEIGHT 15
@@ -535,6 +537,7 @@ fill_pinch_event (GdkMacosDisplay *display,
   seat = gdk_display_get_default_seat (GDK_DISPLAY (display));
 
   return gdk_touchpad_event_new_pinch (GDK_SURFACE (surface),
+                                       NULL, /* FIXME make up sequences */
                                        gdk_seat_get_pointer (seat),
                                        get_time_from_ns_event (nsevent),
                                        get_keyboard_modifiers_from_ns_event (nsevent),

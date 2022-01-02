@@ -78,6 +78,7 @@ gtk_private_sources = files([
   'gtkcssinheritvalue.c',
   'gtkcssinitialvalue.c',
   'gtkcsskeyframes.c',
+  'gtkcsslineheightvalue.c',
   'gtkcsslookup.c',
   'gtkcssnode.c',
   'gtkcssnodedeclaration.c',
@@ -110,7 +111,6 @@ gtk_private_sources = files([
   'gtkfilechooserutils.c',
   'gtkfilesystemmodel.c',
   'gtkgizmo.c',
-  'gtkhsla.c',
   'gtkiconcache.c',
   'gtkiconcachevalidator.c',
   'gtkiconhelper.c',
@@ -390,6 +390,7 @@ gtk_public_sources = files([
   'gtkstylecontext.c',
   'gtkstyleprovider.c',
   'gtkswitch.c',
+  'gtksymbolicpaintable.c',
   'gtktestatcontext.c',
   'gtktestutils.c',
   'gtktext.c',
@@ -662,6 +663,7 @@ gtk_public_headers = files([
   'gtkstylecontext.h',
   'gtkstyleprovider.h',
   'gtkswitch.h',
+  'gtksymbolicpaintable.h',
   'gtktestatcontext.h',
   'gtktestutils.h',
   'gtktext.h',
@@ -861,17 +863,102 @@ if not fs.exists('theme/Default/Default-light.css')
   endif
 endif
 
-gtkresources = gnome.compile_resources('gtkresources',
-  gtk_gresources_xml,
-  dependencies: theme_deps,
-  source_dir: [
-    # List in order of preference
-    meson.current_build_dir(),
-    meson.current_source_dir(),
-  ],
-  c_name: '_gtk',
-  extra_args: '--manual-register',
-)
+
+objcopy_supports_add_symbol = false
+objcopy = find_program('objcopy', required : false)
+if objcopy.found()
+  objcopy_supports_add_symbol = run_command(objcopy, '--help').stdout().contains('--add-symbol')
+endif
+
+ld = find_program('ld', required : false)
+
+if not meson.is_cross_build() and build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and ld.found()
+  glib_compile_resources = find_program('glib-compile-resources')
+
+  # Create the resource blob
+  gtk_gresource = custom_target('gtk.gresource',
+      input : gtk_gresources_xml,
+      depends : theme_deps,
+      output : 'gtk.gresource',
+      depfile : 'gtk.gresource.d',
+      command : [glib_compile_resources,
+                 '--generate',
+                 '--target=@OUTPUT@',
+                 '--dependency-file=@DEPFILE@',
+                 '--sourcedir=' + meson.current_source_dir(),
+                 '--sourcedir=' + meson.current_build_dir(),
+                 '@INPUT@'])
+
+  # Create resource data file
+  gtk_resources_c = custom_target('gtkresources.c',
+      input : gtk_gresources_xml,
+      depends : theme_deps,
+      output : 'gtkresources.c',
+      depfile : 'gtkresources.c.d',
+      command : [glib_compile_resources,
+                 '--generate-source',
+                 '--target=@OUTPUT@',
+                 '--dependency-file=@DEPFILE@',
+                 '--sourcedir=' + meson.current_source_dir(),
+                 '--sourcedir=' + meson.current_build_dir(),
+                 '--external-data',
+                 '--c-name', '_gtk',
+                 '--manual-register',
+                 '@INPUT@'])
+
+  gtk_resources_h = custom_target('gtkresources.h',
+      input : gtk_gresources_xml,
+      depends : theme_deps,
+      output : 'gtkresources.h',
+      depfile : 'gtkresources.h.d',
+      command : [glib_compile_resources,
+                 '--generate-header',
+                 '--target=@OUTPUT@',
+                 '--dependency-file=@DEPFILE@',
+                 '--sourcedir=' + meson.current_source_dir(),
+                 '--sourcedir=' + meson.current_build_dir(),
+                 '--external-data',
+                 '--c-name', '_gtk',
+                 '--manual-register',
+                 '@INPUT@'])
+
+  # Create object file containing resource data
+  gtk_resources_binary = custom_target('gtkresources_blob.o',
+      input : gtk_gresource,
+      output : 'gtkresources_blob.o',
+      command : [ld,
+                 '-r',
+                 '-b','binary',
+                 '@INPUT@',
+                 '-o','@OUTPUT@'])
+
+  # Rename symbol to match the one in the C file
+  gtk_resources_o = custom_target('gtkresources_blob2.o',
+    input : gtk_resources_binary,
+    output : 'gtkresources_blob2.o',
+    command : [objcopy,
+                 '--add-symbol','_gtk_resource_data=.data:0',
+                 '@INPUT@',
+                 '@OUTPUT@'])
+
+  gtkresources = [
+      gtk_resources_c,
+      gtk_resources_h,
+      gtk_resources_o,
+    ]
+else
+  gtkresources = gnome.compile_resources('gtkresources',
+    gtk_gresources_xml,
+    dependencies: theme_deps,
+    source_dir: [
+      # List in order of preference
+      meson.current_build_dir(),
+      meson.current_source_dir(),
+    ],
+    c_name: '_gtk',
+    extra_args: '--manual-register',
+  )
+endif
 
 foreach lang : [ 'de', 'fr', 'es', 'zh' ]
   conf = configuration_data()
@@ -1014,7 +1101,7 @@ if harfbuzz_dep.found() and pangoft_dep.found()
 endif
 
 if x11_enabled
-  x11_data_prefix = dependency('x11').get_pkgconfig_variable('prefix')
+  x11_data_prefix = dependency('x11').get_variable(pkgconfig: 'prefix')
 
   gtk_cargs += [ '-DX11_DATA_PREFIX="@0@"'.format(x11_data_prefix), ]
   gtk_sources += gtk_x11_sources
@@ -1118,28 +1205,11 @@ libgtk_static = static_library('gtk',
   link_with: [libgtk_css, libgdk, libgsk ],
 )
 
-# `link_whole:` is actually only supported on Visual Studio 2015 Update 2
-# or later via the linker flag `/WHOLEARCHIVE:<static_lib>`, so we need
-# to work around it for Visual Studio 2013.  Note that all needed static
-# libs are required so that we grab the object files from each of them to
-# link the final GTK DLL.
-whole_archives = []
-gtk4_objs = []
-
-if cc.get_id() == 'msvc' and cc.version().split('.').get(0) < '19'
-  foreach target : [ libgtk_static, libgtk_css, libgdk, libgdk_win32, libgsk, libgsk_f16c ]
-    gtk4_objs += target.extract_all_objects(recursive: false)
-  endforeach
-else
-  whole_archives = [libgtk_static, libgtk_css, libgdk, libgsk ]
-endif
-
 libgtk = shared_library('gtk-4',
   c_args: gtk_cargs + common_cflags,
   include_directories: [confinc, gdkinc, gskinc, gtkinc],
   dependencies: gtk_deps + [libgtk_css_dep, libgdk_dep, libgsk_dep],
-  link_whole: whole_archives,
-  objects: gtk4_objs,
+  link_whole: [libgtk_static, libgtk_css, libgdk, libgsk ],
   link_args: common_ldflags,
   soversion: gtk_soversion,
   version: gtk_library_version,

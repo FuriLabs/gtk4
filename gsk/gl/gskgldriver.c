@@ -1,484 +1,1281 @@
+/* gskgldriver.c
+ *
+ * Copyright 2017 Timm Bäder <mail@baedert.org>
+ * Copyright 2018 Matthias Clasen <mclasen@redhat.com>
+ * Copyright 2018 Alexander Larsson <alexl@redhat.com>
+ * Copyright 2020 Christian Hergert <chergert@redhat.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ */
+
 #include "config.h"
 
 #include "gskgldriverprivate.h"
 
-#include "gskdebugprivate.h"
-#include "gskprofilerprivate.h"
-#include "gdk/gdkglcontextprivate.h"
-#include "gdk/gdktextureprivate.h"
-#include "gdk/gdkgltextureprivate.h"
-#include "gdkmemorytextureprivate.h"
+#include <gsk/gskdebugprivate.h>
+#include <gsk/gskglshaderprivate.h>
+#include <gsk/gskrendererprivate.h>
 
-#include <gdk/gdk.h>
-#include <epoxy/gl.h>
+#include "gskglcommandqueueprivate.h"
+#include "gskglcompilerprivate.h"
+#include "gskglglyphlibraryprivate.h"
+#include "gskgliconlibraryprivate.h"
+#include "gskglprogramprivate.h"
+#include "gskglshadowlibraryprivate.h"
+#include "gskgltextureprivate.h"
+#include "fp16private.h"
 
- typedef struct {
-  GLuint fbo_id;
-  GLuint depth_stencil_id;
-} Fbo;
+#include <gdk/gdkglcontextprivate.h>
+#include <gdk/gdkdisplayprivate.h>
+#include <gdk/gdkmemorytextureprivate.h>
+#include <gdk/gdkprofilerprivate.h>
+#include <gdk/gdktextureprivate.h>
 
-typedef struct {
-  GLuint texture_id;
-  int width;
-  int height;
-  GLuint min_filter;
-  GLuint mag_filter;
-  Fbo fbo;
-  GdkTexture *user;
-  guint in_use : 1;
-  guint permanent : 1;
-
-  /* TODO: Make this optional and not for every texture... */
-  TextureSlice *slices;
-  guint n_slices;
-} Texture;
-
-struct _GskGLDriver
-{
-  GObject parent_instance;
-
-  GdkGLContext *gl_context;
-  GskProfiler *profiler;
-  struct {
-    GQuark created_textures;
-    GQuark reused_textures;
-    GQuark surface_uploads;
-  } counters;
-
-  Fbo default_fbo;
-
-  GHashTable *textures;         /* texture_id -> Texture */
-  GHashTable *pointer_textures; /* pointer -> texture_id */
-
-  const Texture *bound_source_texture;
-
-  int max_texture_size;
-
-  gboolean in_frame : 1;
-};
+#define ATLAS_SIZE 512
+#define MAX_OLD_RATIO 0.5
 
 G_DEFINE_TYPE (GskGLDriver, gsk_gl_driver, G_TYPE_OBJECT)
 
-static void
-upload_gdk_texture (GdkTexture      *source_texture,
-                    int              target,
-                    int              x_offset,
-                    int              y_offset,
-                    int              width,
-                    int              height)
+static guint
+texture_key_hash (gconstpointer v)
 {
-  cairo_surface_t *surface = NULL;
-  GdkMemoryFormat data_format;
-  const guchar *data;
-  gsize data_stride;
-  gsize bpp;
+  const GskTextureKey *k = (const GskTextureKey *)v;
 
-  g_return_if_fail (source_texture != NULL);
-  g_return_if_fail (x_offset + width <= gdk_texture_get_width (source_texture));
-  g_return_if_fail (y_offset + height <= gdk_texture_get_height (source_texture));
+  /* Optimize for 0..3 where 0 is the scaled out case. Usually
+   * we'll be squarely on 1 or 2 for standard vs HiDPI. When rendering
+   * to a texture scaled out like in node-editor, we might be < 1.
+   */
+  guint scale_x = floorf (k->scale_x);
+  guint scale_y = floorf (k->scale_y);
 
-  /* Note: GdkGLTextures are already handled before we reach this and reused as-is */
-
-  if (GDK_IS_MEMORY_TEXTURE (source_texture))
-    {
-      GdkMemoryTexture *memory_texture = GDK_MEMORY_TEXTURE (source_texture);
-      data = gdk_memory_texture_get_data (memory_texture);
-      data_format = gdk_memory_texture_get_format (memory_texture);
-      data_stride = gdk_memory_texture_get_stride (memory_texture);
-    }
-  else
-    {
-      /* Fall back to downloading to a surface */
-      surface = gdk_texture_download_surface (source_texture);
-      cairo_surface_flush (surface);
-      data = cairo_image_surface_get_data (surface);
-      data_format = GDK_MEMORY_DEFAULT;
-      data_stride = cairo_image_surface_get_stride (surface);
-    }
-
-  bpp = gdk_memory_format_bytes_per_pixel (data_format);
-
-  gdk_gl_context_upload_texture (gdk_gl_context_get_current (),
-                                 data + x_offset * bpp + y_offset * data_stride,
-                                 width, height, data_stride,
-                                 data_format, target);
-
-  if (surface)
-    cairo_surface_destroy (surface);
+  return GPOINTER_TO_SIZE (k->pointer) ^
+    ((scale_x << 8) |
+     (scale_y << 6) |
+     (k->filter << 1) |
+     k->pointer_is_child);
 }
 
-static Texture *
-texture_new (void)
+static gboolean
+texture_key_equal (gconstpointer v1,
+                   gconstpointer v2)
 {
-  return g_slice_new0 (Texture);
-}
+  const GskTextureKey *k1 = (const GskTextureKey *)v1;
+  const GskTextureKey *k2 = (const GskTextureKey *)v2;
 
-static inline void
-fbo_clear (const Fbo *f)
-{
-  if (f->depth_stencil_id != 0)
-    glDeleteRenderbuffers (1, &f->depth_stencil_id);
-
-  glDeleteFramebuffers (1, &f->fbo_id);
+  return k1->pointer == k2->pointer &&
+         k1->scale_x == k2->scale_x &&
+         k1->scale_y == k2->scale_y &&
+         k1->filter == k2->filter &&
+         k1->pointer_is_child == k2->pointer_is_child &&
+         (!k1->pointer_is_child || memcmp (&k1->parent_rect, &k2->parent_rect, sizeof k1->parent_rect) == 0);
 }
 
 static void
-texture_free (gpointer data)
+remove_texture_key_for_id (GskGLDriver *self,
+                           guint        texture_id)
 {
-  Texture *t = data;
-  guint i;
+  GskTextureKey *key;
 
-  if (t->user)
-    gdk_texture_clear_render_data (t->user);
+  g_assert (GSK_IS_GL_DRIVER (self));
+  g_assert (texture_id > 0);
 
-  if (t->fbo.fbo_id != 0)
-    fbo_clear (&t->fbo);
-
-  if (t->texture_id != 0)
-    {
-      glDeleteTextures (1, &t->texture_id);
-    }
-  else
-    {
-      g_assert_cmpint (t->n_slices, >, 0);
-
-      for (i = 0; i < t->n_slices; i ++)
-        glDeleteTextures (1, &t->slices[i].texture_id);
-    }
-
-  g_slice_free (Texture, t);
+  /* g_hash_table_remove() will cause @key to be freed */
+  if (g_hash_table_steal_extended (self->texture_id_to_key,
+                                   GUINT_TO_POINTER (texture_id),
+                                   NULL,
+                                   (gpointer *)&key))
+    g_hash_table_remove (self->key_to_texture_id, key);
 }
 
 static void
-gsk_gl_driver_set_texture_parameters (GskGLDriver *self,
-                                      int          min_filter,
-                                      int          mag_filter)
+gsk_gl_texture_destroyed (gpointer data)
 {
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter);
-
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  ((GskGLTexture *)data)->user = NULL;
 }
 
 static void
-gsk_gl_driver_finalize (GObject *gobject)
+gsk_gl_driver_autorelease_texture (GskGLDriver *self,
+                                   guint        texture_id)
 {
-  GskGLDriver *self = GSK_GL_DRIVER (gobject);
+  g_assert (GSK_IS_GL_DRIVER (self));
 
-  gdk_gl_context_make_current (self->gl_context);
+  g_array_append_val (self->texture_pool, texture_id);
+}
 
+static guint
+gsk_gl_driver_collect_unused_textures (GskGLDriver *self,
+                                       gint64       watermark)
+{
+  GHashTableIter iter;
+  gpointer k, v;
+  guint old_size;
+  guint collected;
+
+  g_assert (GSK_IS_GL_DRIVER (self));
+
+  old_size = g_hash_table_size (self->textures);
+
+  g_hash_table_iter_init (&iter, self->textures);
+  while (g_hash_table_iter_next (&iter, &k, &v))
+    {
+      GskGLTexture *t = v;
+
+      if (t->user || t->permanent)
+        continue;
+
+      if (t->last_used_in_frame <= watermark)
+        {
+          g_hash_table_iter_steal (&iter);
+
+          g_assert (t->link.prev == NULL);
+          g_assert (t->link.next == NULL);
+          g_assert (t->link.data == t);
+
+          remove_texture_key_for_id (self, t->texture_id);
+          gsk_gl_driver_autorelease_texture (self, t->texture_id);
+          t->texture_id = 0;
+          gsk_gl_texture_free (t);
+        }
+    }
+
+  collected = old_size - g_hash_table_size (self->textures);
+
+  return collected;
+}
+
+static void
+gsk_gl_texture_atlas_free (GskGLTextureAtlas *atlas)
+{
+  if (atlas->texture_id != 0)
+    {
+      glDeleteTextures (1, &atlas->texture_id);
+      atlas->texture_id = 0;
+    }
+
+  g_clear_pointer (&atlas->nodes, g_free);
+  g_slice_free (GskGLTextureAtlas, atlas);
+}
+
+GskGLTextureAtlas *
+gsk_gl_driver_create_atlas (GskGLDriver *self)
+{
+  GskGLTextureAtlas *atlas;
+
+  g_return_val_if_fail (GSK_IS_GL_DRIVER (self), NULL);
+
+  atlas = g_slice_new0 (GskGLTextureAtlas);
+  atlas->width = ATLAS_SIZE;
+  atlas->height = ATLAS_SIZE;
+  /* TODO: We might want to change the strategy about the amount of
+   *       nodes here? stb_rect_pack.h says width is optimal. */
+  atlas->nodes = g_malloc0_n (atlas->width, sizeof (struct stbrp_node));
+  stbrp_init_target (&atlas->context, atlas->width, atlas->height, atlas->nodes, atlas->width);
+  atlas->texture_id = gsk_gl_command_queue_create_texture (self->command_queue,
+                                                           atlas->width,
+                                                           atlas->height,
+                                                           GL_RGBA8,
+                                                           GL_LINEAR,
+                                                           GL_LINEAR);
+
+  gdk_gl_context_label_object_printf (gdk_gl_context_get_current (),
+                                      GL_TEXTURE, atlas->texture_id,
+                                      "Texture atlas %d",
+                                      atlas->texture_id);
+
+  g_ptr_array_add (self->atlases, atlas);
+
+  return atlas;
+}
+
+static void
+remove_program (gpointer data)
+{
+  GskGLProgram *program = data;
+
+  g_assert (!program || GSK_IS_GL_PROGRAM (program));
+
+  if (program != NULL)
+    {
+      gsk_gl_program_delete (program);
+      g_object_unref (program);
+    }
+}
+
+static void
+gsk_gl_driver_shader_weak_cb (gpointer  data,
+                              GObject  *where_object_was)
+{
+  GskGLDriver *self = data;
+
+  g_assert (GSK_IS_GL_DRIVER (self));
+
+  if (self->shader_cache != NULL)
+    g_hash_table_remove (self->shader_cache, where_object_was);
+}
+
+static void
+gsk_gl_driver_dispose (GObject *object)
+{
+  GskGLDriver *self = (GskGLDriver *)object;
+
+  g_assert (GSK_IS_GL_DRIVER (self));
+  g_assert (self->in_frame == FALSE);
+
+#define GSK_GL_NO_UNIFORMS
+#define GSK_GL_ADD_UNIFORM(pos, KEY, name)
+#define GSK_GL_DEFINE_PROGRAM(name, resource, uniforms) \
+  GSK_GL_DELETE_PROGRAM(name);                          \
+  GSK_GL_DELETE_PROGRAM(name ## _no_clip);              \
+  GSK_GL_DELETE_PROGRAM(name ## _rect_clip);
+#define GSK_GL_DELETE_PROGRAM(name)                     \
+  G_STMT_START {                                        \
+    if (self->name)                                     \
+      gsk_gl_program_delete (self->name);               \
+    g_clear_object (&self->name);                       \
+  } G_STMT_END;
+# include "gskglprograms.defs"
+#undef GSK_GL_NO_UNIFORMS
+#undef GSK_GL_ADD_UNIFORM
+#undef GSK_GL_DEFINE_PROGRAM
+
+  if (self->shader_cache != NULL)
+    {
+      GHashTableIter iter;
+      gpointer k, v;
+
+      g_hash_table_iter_init (&iter, self->shader_cache);
+      while (g_hash_table_iter_next (&iter, &k, &v))
+        {
+          GskGLShader *shader = k;
+          g_object_weak_unref (G_OBJECT (shader),
+                               gsk_gl_driver_shader_weak_cb,
+                               self);
+          g_hash_table_iter_remove (&iter);
+        }
+
+      g_clear_pointer (&self->shader_cache, g_hash_table_unref);
+    }
+
+  if (self->command_queue != NULL)
+    {
+      gsk_gl_command_queue_make_current (self->command_queue);
+      gsk_gl_driver_collect_unused_textures (self, 0);
+      g_clear_object (&self->command_queue);
+    }
+
+  if (self->autorelease_framebuffers->len > 0)
+    {
+      glDeleteFramebuffers (self->autorelease_framebuffers->len,
+                            (GLuint *)(gpointer)self->autorelease_framebuffers->data);
+      self->autorelease_framebuffers->len = 0;
+    }
+
+  g_clear_pointer (&self->texture_pool, g_array_unref);
+
+  g_assert (!self->textures || g_hash_table_size (self->textures) == 0);
+  g_assert (!self->texture_id_to_key || g_hash_table_size (self->texture_id_to_key) == 0);
+  g_assert (!self->key_to_texture_id|| g_hash_table_size (self->key_to_texture_id) == 0);
+
+  g_clear_object (&self->glyphs);
+  g_clear_object (&self->icons);
+  g_clear_object (&self->shadows);
+
+  g_clear_pointer (&self->atlases, g_ptr_array_unref);
+  g_clear_pointer (&self->autorelease_framebuffers, g_array_unref);
+  g_clear_pointer (&self->key_to_texture_id, g_hash_table_unref);
   g_clear_pointer (&self->textures, g_hash_table_unref);
-  g_clear_pointer (&self->pointer_textures, g_hash_table_unref);
-  g_clear_object (&self->profiler);
+  g_clear_pointer (&self->key_to_texture_id, g_hash_table_unref);
+  g_clear_pointer (&self->texture_id_to_key, g_hash_table_unref);
+  g_clear_pointer (&self->render_targets, g_ptr_array_unref);
+  g_clear_pointer (&self->shader_cache, g_hash_table_unref);
 
-  if (self->gl_context == gdk_gl_context_get_current ())
-    gdk_gl_context_clear_current ();
+  g_clear_object (&self->command_queue);
+  g_clear_object (&self->shared_command_queue);
 
-  G_OBJECT_CLASS (gsk_gl_driver_parent_class)->finalize (gobject);
+  G_OBJECT_CLASS (gsk_gl_driver_parent_class)->dispose (object);
 }
 
 static void
 gsk_gl_driver_class_init (GskGLDriverClass *klass)
 {
-  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  gobject_class->finalize = gsk_gl_driver_finalize;
+  object_class->dispose = gsk_gl_driver_dispose;
 }
 
 static void
 gsk_gl_driver_init (GskGLDriver *self)
 {
-  self->textures = g_hash_table_new_full (NULL, NULL, NULL, texture_free);
-
-  self->max_texture_size = -1;
-
-#ifdef G_ENABLE_DEBUG
-  self->profiler = gsk_profiler_new ();
-  self->counters.created_textures = gsk_profiler_add_counter (self->profiler,
-                                                              "created_textures",
-                                                              "Textures created this frame",
-                                                              TRUE);
-  self->counters.reused_textures = gsk_profiler_add_counter (self->profiler,
-                                                             "reused_textures",
-                                                             "Textures reused this frame",
-                                                             TRUE);
-  self->counters.surface_uploads = gsk_profiler_add_counter (self->profiler,
-                                                             "surface_uploads",
-                                                             "Texture uploads from surfaces this frame",
-                                                             TRUE);
-#endif
+  self->autorelease_framebuffers = g_array_new (FALSE, FALSE, sizeof (guint));
+  self->textures = g_hash_table_new_full (NULL, NULL, NULL,
+                                          (GDestroyNotify)gsk_gl_texture_free);
+  self->texture_id_to_key = g_hash_table_new (NULL, NULL);
+  self->key_to_texture_id = g_hash_table_new_full (texture_key_hash,
+                                                   texture_key_equal,
+                                                   g_free,
+                                                   NULL);
+  self->shader_cache = g_hash_table_new_full (NULL, NULL, NULL, remove_program);
+  self->texture_pool = g_array_new (FALSE, FALSE, sizeof (guint));
+  self->render_targets = g_ptr_array_new ();
+  self->atlases = g_ptr_array_new_with_free_func ((GDestroyNotify)gsk_gl_texture_atlas_free);
 }
 
-GskGLDriver *
-gsk_gl_driver_new (GdkGLContext *context)
+static gboolean
+gsk_gl_driver_load_programs (GskGLDriver  *self,
+                             GError      **error)
+{
+  GskGLCompiler *compiler;
+  gboolean ret = FALSE;
+  G_GNUC_UNUSED gint64 start_time = GDK_PROFILER_CURRENT_TIME;
+
+  g_assert (GSK_IS_GL_DRIVER (self));
+  g_assert (GSK_IS_GL_COMMAND_QUEUE (self->command_queue));
+
+  compiler = gsk_gl_compiler_new (self, self->debug);
+
+  /* Setup preambles that are shared by all shaders */
+  gsk_gl_compiler_set_preamble_from_resource (compiler,
+                                               GSK_GL_COMPILER_ALL,
+                                               "/org/gtk/libgsk/gl/preamble.glsl");
+  gsk_gl_compiler_set_preamble_from_resource (compiler,
+                                               GSK_GL_COMPILER_VERTEX,
+                                               "/org/gtk/libgsk/gl/preamble.vs.glsl");
+  gsk_gl_compiler_set_preamble_from_resource (compiler,
+                                               GSK_GL_COMPILER_FRAGMENT,
+                                               "/org/gtk/libgsk/gl/preamble.fs.glsl");
+
+  /* Setup attributes that are provided via VBO */
+  gsk_gl_compiler_bind_attribute (compiler, "aPosition", 0);
+  gsk_gl_compiler_bind_attribute (compiler, "aUv", 1);
+  gsk_gl_compiler_bind_attribute (compiler, "aColor", 2);
+  gsk_gl_compiler_bind_attribute (compiler, "aColor2", 3);
+
+  /* Use XMacros to register all of our programs and their uniforms */
+#define GSK_GL_NO_UNIFORMS
+#define GSK_GL_ADD_UNIFORM(pos, KEY, name)                                                      \
+  gsk_gl_program_add_uniform (program, #name, UNIFORM_##KEY);
+#define GSK_GL_DEFINE_PROGRAM(name, resource, uniforms)                                         \
+  gsk_gl_compiler_set_source_from_resource (compiler, GSK_GL_COMPILER_ALL, resource);           \
+  GSK_GL_COMPILE_PROGRAM(name ## _no_clip, uniforms, "#define NO_CLIP 1\n");                    \
+  GSK_GL_COMPILE_PROGRAM(name ## _rect_clip, uniforms, "#define RECT_CLIP 1\n");                \
+  GSK_GL_COMPILE_PROGRAM(name, uniforms, "");
+#define GSK_GL_COMPILE_PROGRAM(name, uniforms, clip)                                            \
+  G_STMT_START {                                                                                \
+    GskGLProgram *program;                                                                      \
+    gboolean have_alpha;                                                                        \
+    gboolean have_source;                                                                       \
+                                                                                                \
+    if (!(program = gsk_gl_compiler_compile (compiler, #name, clip, error)))                    \
+      goto failure;                                                                             \
+                                                                                                \
+    have_alpha = gsk_gl_program_add_uniform (program, "u_alpha", UNIFORM_SHARED_ALPHA);         \
+    have_source = gsk_gl_program_add_uniform (program, "u_source", UNIFORM_SHARED_SOURCE);      \
+    gsk_gl_program_add_uniform (program, "u_clip_rect", UNIFORM_SHARED_CLIP_RECT);              \
+    gsk_gl_program_add_uniform (program, "u_viewport", UNIFORM_SHARED_VIEWPORT);                \
+    gsk_gl_program_add_uniform (program, "u_projection", UNIFORM_SHARED_PROJECTION);            \
+    gsk_gl_program_add_uniform (program, "u_modelview", UNIFORM_SHARED_MODELVIEW);              \
+                                                                                                \
+    uniforms                                                                                    \
+                                                                                                \
+    gsk_gl_program_uniforms_added (program, have_source);                                       \
+    if (have_alpha)                                                                             \
+      gsk_gl_program_set_uniform1f (program, UNIFORM_SHARED_ALPHA, 0, 1.0f);                    \
+                                                                                                \
+    *(GskGLProgram **)(((guint8 *)self) + G_STRUCT_OFFSET (GskGLDriver, name)) =                \
+         g_steal_pointer (&program);                                                            \
+  } G_STMT_END;
+# include "gskglprograms.defs"
+#undef GSK_GL_DEFINE_PROGRAM_CLIP
+#undef GSK_GL_DEFINE_PROGRAM
+#undef GSK_GL_ADD_UNIFORM
+
+  ret = TRUE;
+
+failure:
+  g_clear_object (&compiler);
+
+  gdk_profiler_end_mark (start_time, "load programs", NULL);
+
+  return ret;
+}
+
+/**
+ * gsk_gl_driver_autorelease_framebuffer:
+ * @self: a `GskGLDriver`
+ * @framebuffer_id: the id of the OpenGL framebuffer
+ *
+ * Marks @framebuffer_id to be deleted when the current frame has cmopleted.
+ */
+static void
+gsk_gl_driver_autorelease_framebuffer (GskGLDriver *self,
+                                       guint        framebuffer_id)
+{
+  g_assert (GSK_IS_GL_DRIVER (self));
+
+  g_array_append_val (self->autorelease_framebuffers, framebuffer_id);
+}
+
+static GskGLDriver *
+gsk_gl_driver_new (GskGLCommandQueue  *command_queue,
+                   gboolean            debug_shaders,
+                   GError            **error)
 {
   GskGLDriver *self;
-  g_return_val_if_fail (GDK_IS_GL_CONTEXT (context), NULL);
+  GdkGLContext *context;
+  gint64 before G_GNUC_UNUSED;
 
-  self = (GskGLDriver *) g_object_new (GSK_TYPE_GL_DRIVER, NULL);
-  self->gl_context = context;
+  g_return_val_if_fail (GSK_IS_GL_COMMAND_QUEUE (command_queue), NULL);
 
-  return self;
-}
+  before = GDK_PROFILER_CURRENT_TIME;
 
-void
-gsk_gl_driver_begin_frame (GskGLDriver *self)
-{
-  g_return_if_fail (GSK_IS_GL_DRIVER (self));
-  g_return_if_fail (!self->in_frame);
+  context = gsk_gl_command_queue_get_context (command_queue);
 
-  self->in_frame = TRUE;
+  gdk_gl_context_make_current (context);
 
-  if (self->max_texture_size < 0)
+  self = g_object_new (GSK_TYPE_GL_DRIVER, NULL);
+  self->command_queue = g_object_ref (command_queue);
+  self->shared_command_queue = g_object_ref (command_queue);
+  self->debug = !!debug_shaders;
+
+  if (!gsk_gl_driver_load_programs (self, error))
     {
-      glGetIntegerv (GL_MAX_TEXTURE_SIZE, (GLint *) &self->max_texture_size);
-      GSK_NOTE (OPENGL, g_message ("GL max texture size: %d", self->max_texture_size));
+      g_object_unref (self);
+      return NULL;
     }
 
-  glBindFramebuffer (GL_FRAMEBUFFER, 0);
+  self->glyphs = gsk_gl_glyph_library_new (self);
+  self->icons = gsk_gl_icon_library_new (self);
+  self->shadows = gsk_gl_shadow_library_new (self);
 
-  glActiveTexture (GL_TEXTURE0);
-  glBindTexture (GL_TEXTURE_2D, 0);
+  gdk_profiler_end_mark (before, "create GskGLDriver", NULL);
 
-  glActiveTexture (GL_TEXTURE0 + 1);
-  glBindTexture (GL_TEXTURE_2D, 0);
-
-  glBindVertexArray (0);
-  glUseProgram (0);
-
-  glActiveTexture (GL_TEXTURE0);
-
-#ifdef G_ENABLE_DEBUG
-  gsk_profiler_reset (self->profiler);
-#endif
+  return g_steal_pointer (&self);
 }
 
-gboolean
-gsk_gl_driver_in_frame (GskGLDriver *self)
+/**
+ * gsk_gl_driver_for_display:
+ * @display: A #GdkDisplay that is known to support GL
+ * @debug_shaders: if debug information for shaders should be displayed
+ * @error: location for error information
+ *
+ * Retrieves a driver for a shared display. Generally this is shared across all GL
+ * contexts for a display so that fewer programs are necessary for driving output.
+ *
+ * Returns: (transfer full): a `GskGLDriver` if successful; otherwise %NULL and
+ *   @error is set.
+ */
+GskGLDriver *
+gsk_gl_driver_for_display (GdkDisplay  *display,
+                           gboolean     debug_shaders,
+                           GError     **error)
 {
-  return self->in_frame;
+  GdkGLContext *context;
+  GskGLCommandQueue *command_queue = NULL;
+  GskGLDriver *driver;
+
+  g_return_val_if_fail (GDK_IS_DISPLAY (display), NULL);
+
+  if ((driver = g_object_get_data (G_OBJECT (display), "GSK_GL_DRIVER")))
+    return g_object_ref (driver);
+
+  context = gdk_display_get_gl_context (display);
+  g_assert (context);
+
+  gdk_gl_context_make_current (context);
+
+  /* Initially we create a command queue using the shared context. However,
+   * as frames are processed this will be replaced with the command queue
+   * for a given renderer. But since the programs are compiled into the
+   * shared context, all other contexts sharing with it will have access
+   * to those programs.
+   */
+  command_queue = gsk_gl_command_queue_new (context, NULL);
+
+  if (!(driver = gsk_gl_driver_new (command_queue, debug_shaders, error)))
+    goto failure;
+
+  g_object_set_data_full (G_OBJECT (display),
+                          "GSK_GL_DRIVER",
+                          g_object_ref (driver),
+                          g_object_unref);
+
+failure:
+  g_clear_object (&command_queue);
+
+  return g_steal_pointer (&driver);
 }
 
+static GPtrArray *
+gsk_gl_driver_compact_atlases (GskGLDriver *self)
+{
+  GPtrArray *removed = NULL;
+
+  g_assert (GSK_IS_GL_DRIVER (self));
+
+  for (guint i = self->atlases->len; i > 0; i--)
+    {
+      GskGLTextureAtlas *atlas = g_ptr_array_index (self->atlases, i - 1);
+
+      if (gsk_gl_texture_atlas_get_unused_ratio (atlas) > MAX_OLD_RATIO)
+        {
+          GSK_NOTE (GLYPH_CACHE,
+                    g_message ("Dropping atlas %d (%g.2%% old)", i,
+                               100.0 * gsk_gl_texture_atlas_get_unused_ratio (atlas)));
+          if (removed == NULL)
+            removed = g_ptr_array_new_with_free_func ((GDestroyNotify)gsk_gl_texture_atlas_free);
+          g_ptr_array_add (removed, g_ptr_array_steal_index (self->atlases, i - 1));
+        }
+    }
+
+  GSK_NOTE (GLYPH_CACHE, {
+    static guint timestamp;
+    if (timestamp++ % 60 == 0)
+      g_message ("%d atlases", self->atlases->len);
+  });
+
+  return removed;
+}
+
+/**
+ * gsk_gl_driver_begin_frame:
+ * @self: a `GskGLDriver`
+ * @command_queue: A `GskGLCommandQueue` from the renderer
+ *
+ * Begin a new frame.
+ *
+ * Texture atlases, pools, and other resources will be prepared to draw the
+ * next frame. The command queue should be one that was created for the
+ * target context to be drawn into (the context of the renderer's surface).
+ */
+void
+gsk_gl_driver_begin_frame (GskGLDriver       *self,
+                           GskGLCommandQueue *command_queue)
+{
+  gint64 last_frame_id;
+  GPtrArray *removed;
+
+  g_return_if_fail (GSK_IS_GL_DRIVER (self));
+  g_return_if_fail (GSK_IS_GL_COMMAND_QUEUE (command_queue));
+  g_return_if_fail (self->in_frame == FALSE);
+
+  last_frame_id = self->current_frame_id;
+
+  self->in_frame = TRUE;
+  self->current_frame_id++;
+
+  g_set_object (&self->command_queue, command_queue);
+
+  gsk_gl_command_queue_begin_frame (self->command_queue);
+
+  /* Compact atlases with too many freed pixels */
+  removed = gsk_gl_driver_compact_atlases (self);
+
+  /* Mark unused pixel regions of the atlases */
+  gsk_gl_texture_library_begin_frame (GSK_GL_TEXTURE_LIBRARY (self->icons),
+                                       self->current_frame_id,
+                                       removed);
+  gsk_gl_texture_library_begin_frame (GSK_GL_TEXTURE_LIBRARY (self->glyphs),
+                                       self->current_frame_id,
+                                       removed);
+
+  /* Cleanup old shadows */
+  gsk_gl_shadow_library_begin_frame (self->shadows);
+
+  /* Remove all textures that are from a previous frame or are no
+   * longer used by linked GdkTexture. We do this at the beginning
+   * of the following frame instead of the end so that we reduce chances
+   * we block on any resources while delivering our frames.
+   */
+  gsk_gl_driver_collect_unused_textures (self, last_frame_id - 1);
+
+  /* Now free atlas textures */
+  g_clear_pointer (&removed, g_ptr_array_unref);
+}
+
+/**
+ * gsk_gl_driver_end_frame:
+ * @self: a `GskGLDriver`
+ *
+ * Clean up resources from drawing the current frame.
+ *
+ * Temporary resources used while drawing will be released.
+ */
 void
 gsk_gl_driver_end_frame (GskGLDriver *self)
 {
   g_return_if_fail (GSK_IS_GL_DRIVER (self));
-  g_return_if_fail (self->in_frame);
+  g_return_if_fail (self->in_frame == TRUE);
 
-  self->bound_source_texture = NULL;
-
-  self->default_fbo.fbo_id = 0;
-
-#ifdef G_ENABLE_DEBUG
-  GSK_NOTE (OPENGL,
-            g_message ("Textures created: %" G_GINT64_FORMAT "\n"
-                     " Textures reused: %" G_GINT64_FORMAT "\n"
-                     " Surface uploads: %" G_GINT64_FORMAT,
-                     gsk_profiler_counter_get (self->profiler, self->counters.created_textures),
-                     gsk_profiler_counter_get (self->profiler, self->counters.reused_textures),
-                     gsk_profiler_counter_get (self->profiler, self->counters.surface_uploads)));
-#endif
-
-  GSK_NOTE (OPENGL,
-            g_message ("*** Frame end: textures=%d",
-                     g_hash_table_size (self->textures)));
+  gsk_gl_command_queue_make_current (self->command_queue);
+  gsk_gl_command_queue_end_frame (self->command_queue);
 
   self->in_frame = FALSE;
 }
 
-int
-gsk_gl_driver_collect_textures (GskGLDriver *self)
+/**
+ * gsk_gl_driver_after_frame:
+ * @self: a `GskGLDriver`
+ *
+ * This function does post-frame cleanup operations.
+ *
+ * To reduce the chances of blocking on the driver it is performed
+ * after the frame has swapped buffers.
+ */
+void
+gsk_gl_driver_after_frame (GskGLDriver *self)
 {
-  GHashTableIter iter;
-  gpointer value_p = NULL;
-  int old_size;
+  g_return_if_fail (GSK_IS_GL_DRIVER (self));
+  g_return_if_fail (self->in_frame == FALSE);
+
+  /* Release any render targets (possibly adding them to
+   * self->autorelease_framebuffers) so we can release the FBOs immediately
+   * afterwards.
+   */
+  while (self->render_targets->len > 0)
+    {
+      GskGLRenderTarget *render_target = g_ptr_array_index (self->render_targets, self->render_targets->len - 1);
+
+      gsk_gl_driver_autorelease_framebuffer (self, render_target->framebuffer_id);
+      gsk_gl_driver_autorelease_texture (self, render_target->texture_id);
+      g_slice_free (GskGLRenderTarget, render_target);
+
+      self->render_targets->len--;
+    }
+
+  /* Now that we have collected render targets, release all the FBOs */
+  if (self->autorelease_framebuffers->len > 0)
+    {
+      glDeleteFramebuffers (self->autorelease_framebuffers->len,
+                            (GLuint *)(gpointer)self->autorelease_framebuffers->data);
+      self->autorelease_framebuffers->len = 0;
+    }
+
+  /* Release any cached textures we used during the frame */
+  if (self->texture_pool->len > 0)
+    {
+      glDeleteTextures (self->texture_pool->len,
+                        (GLuint *)(gpointer)self->texture_pool->data);
+      self->texture_pool->len = 0;
+    }
+
+  /* Reset command queue to our shared queue incase we have operations
+   * that need to be processed outside of a frame (such as callbacks
+   * from external systems such as GDK).
+   */
+  g_set_object (&self->command_queue, self->shared_command_queue);
+}
+
+GdkGLContext *
+gsk_gl_driver_get_context (GskGLDriver *self)
+{
+  g_return_val_if_fail (GSK_IS_GL_DRIVER (self), NULL);
+  g_return_val_if_fail (GSK_IS_GL_COMMAND_QUEUE (self->command_queue), NULL);
+
+  return gsk_gl_command_queue_get_context (self->command_queue);
+}
+
+/**
+ * gsk_gl_driver_cache_texture:
+ * @self: a `GskGLDriver`
+ * @key: the key for the texture
+ * @texture_id: the id of the texture to be cached
+ *
+ * Inserts @texture_id into the texture cache using @key.
+ *
+ * Textures can be looked up by @key after calling this function using
+ * gsk_gl_driver_lookup_texture().
+ *
+ * Textures that have not been used within a number of frames will be
+ * purged from the texture cache automatically.
+ */
+void
+gsk_gl_driver_cache_texture (GskGLDriver         *self,
+                             const GskTextureKey *key,
+                             guint                texture_id)
+{
+  GskTextureKey *k;
+
+  g_assert (GSK_IS_GL_DRIVER (self));
+  g_assert (key != NULL);
+  g_assert (texture_id > 0);
+  g_assert (g_hash_table_contains (self->textures, GUINT_TO_POINTER (texture_id)));
+
+  k = g_memdup (key, sizeof *key);
+
+  g_hash_table_insert (self->key_to_texture_id, k, GUINT_TO_POINTER (texture_id));
+  g_hash_table_insert (self->texture_id_to_key, GUINT_TO_POINTER (texture_id), k);
+}
+
+/**
+ * gsk_gl_driver_load_texture:
+ * @self: a `GdkTexture`
+ * @texture: a `GdkTexture`
+ * @min_filter: GL_NEAREST or GL_LINEAR
+ * @mag_filter: GL_NEAREST or GL_LINEAR
+ *
+ * Loads a `GdkTexture` by uploading the contents to the GPU when
+ * necessary. If @texture is a `GdkGLTexture`, it can be used without
+ * uploading contents to the GPU.
+ *
+ * If the texture has already been uploaded and not yet released
+ * from cache, this function returns that texture id without further
+ * work.
+ *
+ * If the texture has not been used for a number of frames, it will
+ * be removed from cache.
+ *
+ * There is no need to release the resulting texture identifier after
+ * using it. It will be released automatically.
+ *
+ * Returns: a texture identifier
+ */
+guint
+gsk_gl_driver_load_texture (GskGLDriver *self,
+                            GdkTexture  *texture,
+                            int          min_filter,
+                            int          mag_filter)
+{
+  GdkGLContext *context;
+  GdkMemoryTexture *downloaded_texture;
+  GskGLTexture *t;
+  guint texture_id;
+  int height;
+  int width;
+  int format;
 
   g_return_val_if_fail (GSK_IS_GL_DRIVER (self), 0);
-  g_return_val_if_fail (!self->in_frame, 0);
+  g_return_val_if_fail (GDK_IS_TEXTURE (texture), 0);
+  g_return_val_if_fail (GSK_IS_GL_COMMAND_QUEUE (self->command_queue), 0);
 
-  old_size = g_hash_table_size (self->textures);
+  context = self->command_queue->context;
 
-  g_hash_table_iter_init (&iter, self->textures);
-  while (g_hash_table_iter_next (&iter, NULL, &value_p))
+  format = GL_RGBA8;
+
+  if (GDK_IS_GL_TEXTURE (texture))
     {
-      Texture *t = value_p;
+      GdkGLTexture *gl_texture = (GdkGLTexture *) texture;
+      GdkGLContext *texture_context = gdk_gl_texture_get_context (gl_texture);
 
-      if (t->user || t->permanent)
-        continue;
-
-      if (t->in_use)
+      if (gdk_gl_context_is_shared (context, texture_context))
         {
-          t->in_use = FALSE;
-
-          if (t->fbo.fbo_id != 0)
-            {
-              fbo_clear (&t->fbo);
-              t->fbo.fbo_id = 0;
-            }
+          /* A GL texture from the same GL context is a simple task... */
+          return gdk_gl_texture_get_id (gl_texture);
         }
       else
         {
-          /* Remove from self->pointer_textures. */
-          /* TODO: Is there a better way for this? */
-          if (self->pointer_textures)
-            {
-              GHashTableIter pointer_iter;
-              gpointer value;
-              gpointer p;
-
-              g_hash_table_iter_init (&pointer_iter, self->pointer_textures);
-              while (g_hash_table_iter_next (&pointer_iter, &p, &value))
-                {
-                  if (GPOINTER_TO_INT (value) == t->texture_id)
-                    {
-                      g_hash_table_iter_remove (&pointer_iter);
-                      break;
-                    }
-                }
-            }
-
-          g_hash_table_iter_remove (&iter);
+          downloaded_texture = gdk_memory_texture_from_texture (texture, gdk_texture_get_format (texture));
         }
     }
-
-  return old_size - g_hash_table_size (self->textures);
-}
-
-
-GdkGLContext *
-gsk_gl_driver_get_gl_context (GskGLDriver *self)
-{
-  return self->gl_context;
-}
-
-int
-gsk_gl_driver_get_max_texture_size (GskGLDriver *self)
-{
-  if (self->max_texture_size < 0)
+  else
     {
-      if (gdk_gl_context_get_use_es (self->gl_context))
-        return 2048;
+      if ((t = gdk_texture_get_render_data (texture, self)))
+        {
+          if (t->min_filter == min_filter && t->mag_filter == mag_filter)
+            return t->texture_id;
+        }
 
-      return 1024;
+      downloaded_texture = gdk_memory_texture_from_texture (texture, gdk_texture_get_format (texture));
     }
 
-  return self->max_texture_size;
+  /* The download_texture() call may have switched the GL context. Make sure
+   * the right context is at work again. */
+  gdk_gl_context_make_current (context);
+
+  width = gdk_texture_get_width (texture);
+  height = gdk_texture_get_height (texture);
+  texture_id = gsk_gl_command_queue_upload_texture (self->command_queue,
+                                                    GDK_TEXTURE (downloaded_texture),
+                                                    min_filter,
+                                                    mag_filter);
+
+  t = gsk_gl_texture_new (texture_id,
+                           width, height, format, min_filter, mag_filter,
+                           self->current_frame_id);
+
+  g_hash_table_insert (self->textures, GUINT_TO_POINTER (texture_id), t);
+
+  if (gdk_texture_set_render_data (texture, self, t, gsk_gl_texture_destroyed))
+    t->user = texture;
+
+  gdk_gl_context_label_object_printf (context, GL_TEXTURE, t->texture_id,
+                                      "GdkTexture<%p> %d", texture, t->texture_id);
+
+  g_clear_object (&downloaded_texture);
+
+  return texture_id;
 }
 
-static Texture *
-gsk_gl_driver_get_texture (GskGLDriver *self,
-                           int          texture_id)
+/**
+ * gsk_gl_driver_create_texture:
+ * @self: a `GskGLDriver`
+ * @width: the width of the texture
+ * @height: the height of the texture
+ * @format: format for the texture
+ * @min_filter: GL_NEAREST or GL_LINEAR
+ * @mag_filter: GL_NEAREST or GL_FILTER
+ *
+ * Creates a new texture immediately that can be used by the caller
+ * to upload data, map to a framebuffer, or other uses which may
+ * modify the texture immediately.
+ *
+ * Typical examples for @format are GK_RGBA8, GL_RGBA16F or GL_RGBA32F.
+ *
+ * Use gsk_gl_driver_release_texture() to release this texture back into
+ * the pool so it may be reused later in the pipeline.
+ *
+ * Returns: a `GskGLTexture` which can be returned to the pool with
+ *   gsk_gl_driver_release_texture().
+ */
+GskGLTexture *
+gsk_gl_driver_create_texture (GskGLDriver *self,
+                              float        width,
+                              float        height,
+                              int          format,
+                              int          min_filter,
+                              int          mag_filter)
 {
-  Texture *t;
+  GskGLTexture *texture;
+  guint texture_id;
 
-  if (g_hash_table_lookup_extended (self->textures, GINT_TO_POINTER (texture_id), NULL, (gpointer *) &t))
-    return t;
+  g_return_val_if_fail (GSK_IS_GL_DRIVER (self), NULL);
 
-  return NULL;
+  texture_id = gsk_gl_command_queue_create_texture (self->command_queue,
+                                                     width, height,
+                                                     format,
+                                                     min_filter, mag_filter);
+  texture = gsk_gl_texture_new (texture_id,
+                                 width, height,
+                                 format,
+                                 min_filter, mag_filter,
+                                 self->current_frame_id);
+  g_hash_table_insert (self->textures,
+                       GUINT_TO_POINTER (texture->texture_id),
+                       texture);
+
+  return texture;
 }
 
-static Texture *
-create_texture (GskGLDriver *self,
-                float        fwidth,
-                float        fheight)
+/**
+ * gsk_gl_driver_release_texture:
+ * @self: a `GskGLDriver`
+ * @texture: a `GskGLTexture`
+ *
+ * Releases @texture back into the pool so that it can be used later
+ * in the command stream by future batches. This helps reduce VRAM
+ * usage on the GPU.
+ *
+ * When the frame has completed, pooled textures will be released
+ * to free additional VRAM back to the system.
+ */
+void
+gsk_gl_driver_release_texture (GskGLDriver  *self,
+                               GskGLTexture *texture)
 {
   guint texture_id;
-  Texture *t;
-  int width = ceilf (fwidth);
-  int height = ceilf (fheight);
 
-  g_assert (width > 0);
-  g_assert (height > 0);
+  g_assert (GSK_IS_GL_DRIVER (self));
+  g_assert (texture != NULL);
 
-  if (width > self->max_texture_size ||
-      height > self->max_texture_size)
-    {
-      g_critical ("Texture %d x %d is bigger than supported texture limit of %d; clipping...",
-                  width, height,
-                  self->max_texture_size);
+  texture_id = texture->texture_id;
+  texture->texture_id = 0;
+  gsk_gl_texture_free (texture);
 
-      width = MIN (width, self->max_texture_size);
-      height = MIN (height, self->max_texture_size);
-    }
+  if (texture_id > 0)
+    remove_texture_key_for_id (self, texture_id);
 
-  glGenTextures (1, &texture_id);
-  t = texture_new ();
-  t->texture_id = texture_id;
-  t->width = width;
-  t->height = height;
-  t->min_filter = GL_NEAREST;
-  t->mag_filter = GL_NEAREST;
-  t->in_use = TRUE;
-  g_hash_table_insert (self->textures, GINT_TO_POINTER (texture_id), t);
-#ifdef G_ENABLE_DEBUG
-  gsk_profiler_counter_inc (self->profiler, self->counters.created_textures);
-#endif
-
-  return t;
+  g_hash_table_steal (self->textures, GUINT_TO_POINTER (texture_id));
+  gsk_gl_driver_autorelease_texture (self, texture_id);
 }
 
-static void
-gsk_gl_driver_release_texture (gpointer data)
+/**
+ * gsk_gl_driver_create_render_target:
+ * @self: a `GskGLDriver`
+ * @width: the width for the render target
+ * @height: the height for the render target
+ * @format: the format to use
+ * @min_filter: the min filter to use for the texture
+ * @mag_filter: the mag filter to use for the texture
+ * @out_render_target: (out): a location for the render target
+ *
+ * Creates a new render target which contains a framebuffer and a texture
+ * bound to that framebuffer of the size @width x @height and using the
+ * appropriate filters.
+ *
+ * Typical examples for @format are GK_RGBA8, GL_RGBA16F or GL_RGBA32F.
+ *
+ * Use gsk_gl_driver_release_render_target() when you are finished with
+ * the render target to release it. You may steal the texture from the
+ * render target when releasing it.
+ *
+ * Returns: %TRUE if successful; otherwise %FALSE and @out_fbo_id and
+ *   @out_texture_id are undefined.
+ */
+gboolean
+gsk_gl_driver_create_render_target (GskGLDriver        *self,
+                                    int                 width,
+                                    int                 height,
+                                    int                 format,
+                                    int                 min_filter,
+                                    int                 mag_filter,
+                                    GskGLRenderTarget **out_render_target)
 {
-  Texture *t = data;
+  guint framebuffer_id;
+  guint texture_id;
 
-  t->user = NULL;
+  g_return_val_if_fail (GSK_IS_GL_DRIVER (self), FALSE);
+  g_return_val_if_fail (GSK_IS_GL_COMMAND_QUEUE (self->command_queue), FALSE);
+  g_return_val_if_fail (out_render_target != NULL, FALSE);
+
+#if 0
+  if (self->render_targets->len > 0)
+    {
+      for (guint i = self->render_targets->len; i > 0; i--)
+        {
+          GskGLRenderTarget *render_target = g_ptr_array_index (self->render_targets, i-1);
+
+          if (render_target->width == width &&
+              render_target->height == height &&
+              render_target->min_filter == min_filter &&
+              render_target->mag_filter == mag_filter)
+            {
+              *out_render_target = g_ptr_array_steal_index_fast (self->render_targets, i-1);
+              return TRUE;
+            }
+        }
+    }
+#endif
+
+  if (gsk_gl_command_queue_create_render_target (self->command_queue,
+                                                  width, height,
+                                                  format,
+                                                  min_filter, mag_filter,
+                                                  &framebuffer_id, &texture_id))
+    {
+      GskGLRenderTarget *render_target;
+
+      render_target = g_slice_new0 (GskGLRenderTarget);
+      render_target->min_filter = min_filter;
+      render_target->mag_filter = mag_filter;
+      render_target->format = format;
+      render_target->width = width;
+      render_target->height = height;
+      render_target->framebuffer_id = framebuffer_id;
+      render_target->texture_id = texture_id;
+
+      *out_render_target = render_target;
+
+      return TRUE;
+    }
+
+  *out_render_target = NULL;
+
+  return FALSE;
+}
+
+/**
+ * gsk_gl_driver_release_render_target:
+ * @self: a `GskGLDriver`
+ * @render_target: a `GskGLRenderTarget` created with
+ *   gsk_gl_driver_create_render_target().
+ * @release_texture: if the texture should also be released
+ *
+ * Releases a render target that was previously created. An attempt may
+ * be made to cache the render target so that future creations of render
+ * targets are performed faster.
+ *
+ * If @release_texture is %FALSE, the backing texture id is returned and
+ * the framebuffer is released. Otherwise, both the texture and framebuffer
+ * are released or cached until the end of the frame.
+ *
+ * This may be called when building the render job as the texture or
+ * framebuffer will not be removed immediately.
+ *
+ * Returns: a texture id if @release_texture is %FALSE, otherwise zero.
+ */
+guint
+gsk_gl_driver_release_render_target (GskGLDriver       *self,
+                                     GskGLRenderTarget *render_target,
+                                     gboolean           release_texture)
+{
+  guint texture_id;
+
+  g_return_val_if_fail (GSK_IS_GL_DRIVER (self), 0);
+  g_return_val_if_fail (render_target != NULL, 0);
+
+  if (release_texture)
+    {
+      texture_id = 0;
+      g_ptr_array_add (self->render_targets, render_target);
+    }
+  else
+    {
+      GskGLTexture *texture;
+
+      texture_id = render_target->texture_id;
+
+      texture = gsk_gl_texture_new (render_target->texture_id,
+                                     render_target->width,
+                                     render_target->height,
+                                     render_target->format,
+                                     render_target->min_filter,
+                                     render_target->mag_filter,
+                                     self->current_frame_id);
+      g_hash_table_insert (self->textures,
+                           GUINT_TO_POINTER (texture_id),
+                           g_steal_pointer (&texture));
+
+      gsk_gl_driver_autorelease_framebuffer (self, render_target->framebuffer_id);
+      g_slice_free (GskGLRenderTarget, render_target);
+
+    }
+
+  return texture_id;
+}
+
+/**
+ * gsk_gl_driver_lookup_shader:
+ * @self: a `GskGLDriver`
+ * @shader: the shader to lookup or load
+ * @error: a location for a `GError`
+ *
+ * Attepts to load @shader from the shader cache.
+ *
+ * If it has not been loaded, then it will compile the shader on demand.
+ *
+ * Returns: (nullable) (transfer none): a `GskGLShader`
+ */
+GskGLProgram *
+gsk_gl_driver_lookup_shader (GskGLDriver  *self,
+                             GskGLShader  *shader,
+                             GError      **error)
+{
+  GskGLProgram *program;
+
+  g_return_val_if_fail (self != NULL, NULL);
+  g_return_val_if_fail (shader != NULL, NULL);
+
+  program = g_hash_table_lookup (self->shader_cache, shader);
+
+  if (program == NULL)
+    {
+      const GskGLUniform *uniforms;
+      GskGLCompiler *compiler;
+      GBytes *suffix;
+      int n_required_textures;
+      int n_uniforms;
+
+      uniforms = gsk_gl_shader_get_uniforms (shader, &n_uniforms);
+      if (n_uniforms > GSK_GL_PROGRAM_MAX_CUSTOM_ARGS)
+        {
+          g_set_error (error,
+                       GDK_GL_ERROR,
+                       GDK_GL_ERROR_UNSUPPORTED_FORMAT,
+                       "Tried to use %d uniforms, while only %d is supported",
+                       n_uniforms,
+                       GSK_GL_PROGRAM_MAX_CUSTOM_ARGS);
+          return NULL;
+        }
+
+      n_required_textures = gsk_gl_shader_get_n_textures (shader);
+      if (n_required_textures > GSK_GL_PROGRAM_MAX_CUSTOM_TEXTURES)
+        {
+          g_set_error (error,
+                       GDK_GL_ERROR,
+                       GDK_GL_ERROR_UNSUPPORTED_FORMAT,
+                       "Tried to use %d textures, while only %d is supported",
+                       n_required_textures,
+                       GSK_GL_PROGRAM_MAX_CUSTOM_TEXTURES);
+          return NULL;
+        }
+
+      compiler = gsk_gl_compiler_new (self, FALSE);
+      suffix = gsk_gl_shader_get_source (shader);
+
+      gsk_gl_compiler_set_preamble_from_resource (compiler,
+                                                  GSK_GL_COMPILER_ALL,
+                                                  "/org/gtk/libgsk/gl/preamble.glsl");
+      gsk_gl_compiler_set_preamble_from_resource (compiler,
+                                                  GSK_GL_COMPILER_VERTEX,
+                                                  "/org/gtk/libgsk/gl/preamble.vs.glsl");
+      gsk_gl_compiler_set_preamble_from_resource (compiler,
+                                                  GSK_GL_COMPILER_FRAGMENT,
+                                                  "/org/gtk/libgsk/gl/preamble.fs.glsl");
+      gsk_gl_compiler_set_source_from_resource (compiler,
+                                                GSK_GL_COMPILER_ALL,
+                                                "/org/gtk/libgsk/gl/custom.glsl");
+      gsk_gl_compiler_set_suffix (compiler, GSK_GL_COMPILER_FRAGMENT, suffix);
+
+      /* Setup attributes that are provided via VBO */
+      gsk_gl_compiler_bind_attribute (compiler, "aPosition", 0);
+      gsk_gl_compiler_bind_attribute (compiler, "aUv", 1);
+      gsk_gl_compiler_bind_attribute (compiler, "aColor", 2);
+      gsk_gl_compiler_bind_attribute (compiler, "aColor2", 3);
+
+      if ((program = gsk_gl_compiler_compile (compiler, NULL, "", error)))
+        {
+          gboolean have_alpha;
+
+          gsk_gl_program_add_uniform (program, "u_source", UNIFORM_SHARED_SOURCE);
+          gsk_gl_program_add_uniform (program, "u_clip_rect", UNIFORM_SHARED_CLIP_RECT);
+          gsk_gl_program_add_uniform (program, "u_viewport", UNIFORM_SHARED_VIEWPORT);
+          gsk_gl_program_add_uniform (program, "u_projection", UNIFORM_SHARED_PROJECTION);
+          gsk_gl_program_add_uniform (program, "u_modelview", UNIFORM_SHARED_MODELVIEW);
+          have_alpha = gsk_gl_program_add_uniform (program, "u_alpha", UNIFORM_SHARED_ALPHA);
+
+          gsk_gl_program_add_uniform (program, "u_size", UNIFORM_CUSTOM_SIZE);
+          gsk_gl_program_add_uniform (program, "u_texture1", UNIFORM_CUSTOM_TEXTURE1);
+          gsk_gl_program_add_uniform (program, "u_texture2", UNIFORM_CUSTOM_TEXTURE2);
+          gsk_gl_program_add_uniform (program, "u_texture3", UNIFORM_CUSTOM_TEXTURE3);
+          gsk_gl_program_add_uniform (program, "u_texture4", UNIFORM_CUSTOM_TEXTURE4);
+
+          /* Custom arguments (max is 8) */
+          for (guint i = 0; i < n_uniforms; i++)
+            gsk_gl_program_add_uniform (program, uniforms[i].name, UNIFORM_CUSTOM_ARG0+i);
+
+          gsk_gl_program_uniforms_added (program, TRUE);
+
+          if (have_alpha)
+            gsk_gl_program_set_uniform1f (program, UNIFORM_SHARED_ALPHA, 0, 1.0f);
+
+          g_hash_table_insert (self->shader_cache, shader, program);
+          g_object_weak_ref (G_OBJECT (shader),
+                             gsk_gl_driver_shader_weak_cb,
+                             self);
+        }
+
+      g_object_unref (compiler);
+    }
+
+  return program;
+}
+
+#ifdef G_ENABLE_DEBUG
+static void
+write_atlas_to_png (GskGLDriver       *driver,
+                    GskGLTextureAtlas *atlas,
+                    const char        *filename)
+{
+  GdkTexture *texture;
+
+  texture = gdk_gl_texture_new (gsk_gl_driver_get_context (driver),
+                                atlas->texture_id,
+                                atlas->width, atlas->height,
+                                NULL, NULL);
+  gdk_texture_save_to_png (texture, filename);
+  g_object_unref (texture);
 }
 
 void
-gsk_gl_driver_slice_texture (GskGLDriver   *self,
-                             GdkTexture    *texture,
-                             TextureSlice **out_slices,
-                             guint         *out_n_slices)
+gsk_gl_driver_save_atlases_to_png (GskGLDriver *self,
+                                   const char  *directory)
 {
-  const int max_texture_size = gsk_gl_driver_get_max_texture_size (self) / 4; // XXX Too much?
-  const int cols = (texture->width / max_texture_size) + 1;
-  const int rows = (texture->height / max_texture_size) + 1;
-  int col, row;
-  int x = 0, y = 0; /* Position in the texture */
-  TextureSlice *slices;
-  Texture *tex;
+  g_return_if_fail (GSK_IS_GL_DRIVER (self));
 
-  g_assert (texture->width > max_texture_size || texture->height > max_texture_size);
+  if (directory == NULL)
+    directory = ".";
 
-
-  tex = gdk_texture_get_render_data (texture, self);
-
-  if (tex != NULL)
+  for (guint i = 0; i < self->atlases->len; i++)
     {
-      g_assert (tex->n_slices > 0);
-      *out_slices = tex->slices;
-      *out_n_slices = tex->n_slices;
+      GskGLTextureAtlas *atlas = g_ptr_array_index (self->atlases, i);
+      char *filename = g_strdup_printf ("%s%sframe-%d-atlas-%d.png",
+                                        directory,
+                                        G_DIR_SEPARATOR_S,
+                                        (int)self->current_frame_id,
+                                        atlas->texture_id);
+      write_atlas_to_png (self, atlas, filename);
+      g_free (filename);
+    }
+}
+#endif
+
+GskGLCommandQueue *
+gsk_gl_driver_create_command_queue (GskGLDriver *self,
+                                     GdkGLContext *context)
+{
+  g_return_val_if_fail (GSK_IS_GL_DRIVER (self), NULL);
+  g_return_val_if_fail (GDK_IS_GL_CONTEXT (context), NULL);
+
+  return gsk_gl_command_queue_new (context, self->shared_command_queue->uniforms);
+}
+
+void
+gsk_gl_driver_add_texture_slices (GskGLDriver        *self,
+                                  GdkTexture         *texture,
+                                  GskGLTextureSlice **out_slices,
+                                  guint              *out_n_slices)
+{
+  int max_texture_size;
+  GskGLTextureSlice *slices;
+  GskGLTexture *t;
+  guint n_slices;
+  guint cols;
+  guint rows;
+  int tex_width;
+  int tex_height;
+  int x = 0, y = 0;
+  GdkMemoryTexture *memtex;
+
+  g_assert (GSK_IS_GL_DRIVER (self));
+  g_assert (GDK_IS_TEXTURE (texture));
+  g_assert (out_slices != NULL);
+  g_assert (out_n_slices != NULL);
+
+  /* XXX: Too much? */
+  max_texture_size = self->command_queue->max_texture_size / 4;
+
+  tex_width = texture->width;
+  tex_height = texture->height;
+  cols = (texture->width / max_texture_size) + 1;
+  rows = (texture->height / max_texture_size) + 1;
+
+  if ((t = gdk_texture_get_render_data (texture, self)))
+    {
+      *out_slices = t->slices;
+      *out_n_slices = t->n_slices;
       return;
     }
 
-  slices = g_new0 (TextureSlice, cols * rows);
+  n_slices = cols * rows;
+  slices = g_new0 (GskGLTextureSlice, n_slices);
+  memtex = gdk_memory_texture_from_texture (texture,
+                                            gdk_texture_get_format (texture));
 
-  for (col = 0; col < cols; col ++)
+  for (guint col = 0; col < cols; col ++)
     {
-      const int slice_width = MIN (max_texture_size, texture->width - x);
+      int slice_width = MIN (max_texture_size, texture->width - x);
 
-      for (row = 0; row < rows; row ++)
+      for (guint row = 0; row < rows; row ++)
         {
-          const int slice_height = MIN (max_texture_size, texture->height - y);
-          const int slice_index = (col * rows) + row;
+          int slice_height = MIN (max_texture_size, texture->height - y);
+          int slice_index = (col * rows) + row;
+          GdkTexture *subtex;
           guint texture_id;
 
-          glGenTextures (1, &texture_id);
+          subtex = gdk_memory_texture_new_subtexture (memtex,
+                                                      x, y,
+                                                      slice_width, slice_height);
+          texture_id = gsk_gl_command_queue_upload_texture (self->command_queue,
+                                                            subtex,
+                                                            GL_NEAREST, GL_NEAREST);
+          g_object_unref (subtex);
 
-#ifdef G_ENABLE_DEBUG
-          gsk_profiler_counter_inc (self->profiler, self->counters.created_textures);
-#endif
-          glBindTexture (GL_TEXTURE_2D, texture_id);
-          gsk_gl_driver_set_texture_parameters (self, GL_NEAREST, GL_NEAREST);
-          upload_gdk_texture (texture, GL_TEXTURE_2D, x, y, slice_width, slice_height);
-
-#ifdef G_ENABLE_DEBUG
-          gsk_profiler_counter_inc (self->profiler, self->counters.surface_uploads);
-#endif
-
-          slices[slice_index].rect = (GdkRectangle){x, y, slice_width, slice_height};
+          slices[slice_index].rect.x = x;
+          slices[slice_index].rect.y = y;
+          slices[slice_index].rect.width = slice_width;
+          slices[slice_index].rect.height = slice_height;
           slices[slice_index].texture_id = texture_id;
 
           y += slice_height;
@@ -488,362 +1285,109 @@ gsk_gl_driver_slice_texture (GskGLDriver   *self,
       x += slice_width;
     }
 
+  g_object_unref (memtex);
+
   /* Allocate one Texture for the entire thing. */
-  tex = texture_new ();
-  tex->width = texture->width;
-  tex->height = texture->height;
-  tex->min_filter = GL_NEAREST;
-  tex->mag_filter = GL_NEAREST;
-  tex->in_use = TRUE;
-  tex->slices = slices;
-  tex->n_slices = cols * rows;
+  t = gsk_gl_texture_new (0,
+                          tex_width, tex_height,
+                          GL_RGBA8,
+                          GL_NEAREST, GL_NEAREST,
+                          self->current_frame_id);
 
-  /* Use texture_free as destroy notify here since we are not inserting this Texture
-   * into self->textures! */
-  gdk_texture_set_render_data (texture, self, tex, texture_free);
+  /* Use gsk_gl_texture_free() as destroy notify here since we are
+   * not inserting this GskGLTexture into self->textures!
+   */
+  gdk_texture_set_render_data (texture, self, t,
+                               (GDestroyNotify)gsk_gl_texture_free);
 
-  *out_slices = slices;
-  *out_n_slices = cols * rows;
+  t->slices = *out_slices = slices;
+  t->n_slices = *out_n_slices = n_slices;
 }
 
-int
-gsk_gl_driver_get_texture_for_texture (GskGLDriver *self,
-                                       GdkTexture  *texture,
-                                       int          min_filter,
-                                       int          mag_filter)
-{
-  Texture *t;
-  GdkTexture *downloaded_texture = NULL;
-  GdkTexture *source_texture;
-
-  if (GDK_IS_GL_TEXTURE (texture))
-    {
-      GdkGLTexture *gl_texture = (GdkGLTexture *) texture;
-      GdkGLContext *texture_context = gdk_gl_texture_get_context (gl_texture);
-
-      if (gdk_gl_context_is_shared (self->gl_context, texture_context))
-        {
-          /* A GL texture from the same GL context is a simple task... */
-          return gdk_gl_texture_get_id (gl_texture);
-        }
-      else
-        {
-          cairo_surface_t *surface;
-
-          /* In this case, we have to temporarily make the texture's context the current one,
-           * download its data into our context and then create a texture from it. */
-          if (texture_context)
-            gdk_gl_context_make_current (texture_context);
-
-          surface = gdk_texture_download_surface (texture);
-          downloaded_texture = gdk_texture_new_for_surface (surface);
-          cairo_surface_destroy (surface);
-
-          gdk_gl_context_make_current (self->gl_context);
-
-          source_texture = downloaded_texture;
-        }
-    }
-  else
-    {
-      t = gdk_texture_get_render_data (texture, self);
-
-      if (t)
-        {
-          if (t->min_filter == min_filter && t->mag_filter == mag_filter)
-            return t->texture_id;
-        }
-
-      source_texture = texture;
-    }
-
-  t = create_texture (self, gdk_texture_get_width (texture), gdk_texture_get_height (texture));
-
-  if (gdk_texture_set_render_data (texture, self, t, gsk_gl_driver_release_texture))
-    t->user = texture;
-
-  gsk_gl_driver_bind_source_texture (self, t->texture_id);
-  gsk_gl_driver_init_texture (self,
-                              t->texture_id,
-                              source_texture,
-                              min_filter,
-                              mag_filter);
-  gdk_gl_context_label_object_printf (self->gl_context, GL_TEXTURE, t->texture_id,
-                                      "GdkTexture<%p> %d", texture, t->texture_id);
-
-  if (downloaded_texture)
-    g_object_unref (downloaded_texture);
-
-  return t->texture_id;
-}
-
-static guint
-texture_key_hash (gconstpointer v)
-{
-  const GskTextureKey *k = (GskTextureKey *)v;
-
-  return GPOINTER_TO_UINT (k->pointer)
-         + (guint)(k->scale_x * 100)
-         + (guint)(k->scale_y * 100)
-         + (guint)k->filter * 2 +
-         + (guint)k->pointer_is_child;
-}
-
-static gboolean
-texture_key_equal (gconstpointer v1, gconstpointer v2)
-{
-  const GskTextureKey *k1 = (GskTextureKey *)v1;
-  const GskTextureKey *k2 = (GskTextureKey *)v2;
-
-  return k1->pointer == k2->pointer &&
-         k1->scale_x == k2->scale_x &&
-         k1->scale_y == k2->scale_y &&
-         k1->filter == k2->filter &&
-         k1->pointer_is_child == k2->pointer_is_child &&
-         (!k1->pointer_is_child || graphene_rect_equal (&k1->parent_rect, &k2->parent_rect));
-}
-
-int
-gsk_gl_driver_get_texture_for_key (GskGLDriver   *self,
-                                   GskTextureKey *key)
-{
-  int id = 0;
-
-  if (G_UNLIKELY (self->pointer_textures == NULL))
-    self->pointer_textures = g_hash_table_new_full (texture_key_hash, texture_key_equal, g_free, NULL);
-
-  id = GPOINTER_TO_INT (g_hash_table_lookup (self->pointer_textures, key));
-
-  if (id != 0)
-    {
-      Texture *t;
-
-      t = g_hash_table_lookup (self->textures, GINT_TO_POINTER (id));
-
-      if (t != NULL)
-        t->in_use = TRUE;
-    }
-
-  return id;
-}
-
-void
-gsk_gl_driver_set_texture_for_key (GskGLDriver   *self,
-                                   GskTextureKey *key,
-                                   int            texture_id)
-{
-  GskTextureKey *k;
-
-  if (G_UNLIKELY (self->pointer_textures == NULL))
-    self->pointer_textures = g_hash_table_new_full (texture_key_hash, texture_key_equal, g_free, NULL);
-
-  k = g_new (GskTextureKey, 1);
-  *k = *key;
-
-  g_hash_table_insert (self->pointer_textures, k, GINT_TO_POINTER (texture_id));
-}
-
-int
-gsk_gl_driver_create_texture (GskGLDriver *self,
-                              float        width,
-                              float        height)
-{
-  Texture *t;
-
-  g_return_val_if_fail (GSK_IS_GL_DRIVER (self), -1);
-
-  t = create_texture (self, width, height);
-
-  return t->texture_id;
-}
-
-void
-gsk_gl_driver_create_render_target (GskGLDriver *self,
-                                    int          width,
-                                    int          height,
-                                    int          min_filter,
-                                    int          mag_filter,
-                                    int         *out_texture_id,
-                                    int         *out_render_target_id)
-{
-  GLuint fbo_id;
-  Texture *texture;
-
-  g_return_if_fail (self->in_frame);
-
-  texture = create_texture (self, width, height);
-  gsk_gl_driver_bind_source_texture (self, texture->texture_id);
-  gsk_gl_driver_init_texture_empty (self, texture->texture_id, min_filter, mag_filter);
-
-  glGenFramebuffers (1, &fbo_id);
-  glBindFramebuffer (GL_FRAMEBUFFER, fbo_id);
-  glFramebufferTexture2D (GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture->texture_id, 0);
-
-#if 0
-  if (add_depth_buffer || add_stencil_buffer)
-    {
-      glGenRenderbuffersEXT (1, &depth_stencil_buffer_id);
-      gdk_gl_context_label_object_printf (self->gl_context, GL_RENDERBUFFER, depth_stencil_buffer_id,
-                                          "%s buffer for %d", add_depth_buffer ? "Depth" : "Stencil", texture_id);
-    }
-  else
-    depth_stencil_buffer_id = 0;
-
-  glBindRenderbuffer (GL_RENDERBUFFER, depth_stencil_buffer_id);
-
-  if (add_depth_buffer || add_stencil_buffer)
-    {
-      if (add_stencil_buffer)
-        glRenderbufferStorage (GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, t->width, t->height);
-      else
-        glRenderbufferStorage (GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, t->width, t->height);
-
-      if (add_depth_buffer)
-        glFramebufferRenderbuffer (GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                                   GL_RENDERBUFFER, depth_stencil_buffer_id);
-
-      if (add_stencil_buffer)
-        glFramebufferRenderbufferEXT (GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
-                                      GL_RENDERBUFFER, depth_stencil_buffer_id);
-  texture->fbo.depth_stencil_id = depth_stencil_buffer_id;
-    }
-#endif
-
-  texture->fbo.fbo_id = fbo_id;
-
-  g_assert_cmphex (glCheckFramebufferStatus (GL_FRAMEBUFFER), ==, GL_FRAMEBUFFER_COMPLETE);
-
-  glBindFramebuffer (GL_FRAMEBUFFER, self->default_fbo.fbo_id);
-
-  *out_texture_id = texture->texture_id;
-  *out_render_target_id = fbo_id;
-}
-
-/* Mark the texture permanent, meaning it won'e be reused by the GLDriver.
- * E.g. to store it in some other cache. */
-void
+GskGLTexture *
 gsk_gl_driver_mark_texture_permanent (GskGLDriver *self,
-                                      int          texture_id)
+                                      guint        texture_id)
 {
-  Texture *t = gsk_gl_driver_get_texture (self, texture_id);
+  GskGLTexture *t;
 
-  g_assert (t != NULL);
+  g_return_val_if_fail (GSK_IS_GL_DRIVER (self), NULL);
+  g_return_val_if_fail (texture_id > 0, NULL);
 
-  t->permanent = TRUE;
+  if ((t = g_hash_table_lookup (self->textures, GUINT_TO_POINTER (texture_id))))
+    t->permanent = TRUE;
+
+  return t;
 }
 
 void
-gsk_gl_driver_bind_source_texture (GskGLDriver *self,
-                                   int          texture_id)
+gsk_gl_driver_release_texture_by_id (GskGLDriver *self,
+                                     guint        texture_id)
 {
-  Texture *t;
+  GskGLTexture *texture;
 
   g_return_if_fail (GSK_IS_GL_DRIVER (self));
-  g_return_if_fail (self->in_frame);
+  g_return_if_fail (texture_id > 0);
 
-  t = gsk_gl_driver_get_texture (self, texture_id);
-  if (t == NULL)
-    {
-      g_critical ("No texture %d found.", texture_id);
-      return;
-    }
+  remove_texture_key_for_id (self, texture_id);
 
-  if (self->bound_source_texture != t)
-    {
-      glActiveTexture (GL_TEXTURE0);
-      glBindTexture (GL_TEXTURE_2D, t->texture_id);
-
-      self->bound_source_texture = t;
-    }
+  if ((texture = g_hash_table_lookup (self->textures, GUINT_TO_POINTER (texture_id))))
+    gsk_gl_driver_release_texture (self, texture);
 }
 
-void
-gsk_gl_driver_destroy_texture (GskGLDriver *self,
-                               int          texture_id)
+typedef struct _GskGLTextureState
 {
-  g_return_if_fail (GSK_IS_GL_DRIVER (self));
+  GdkGLContext *context;
+  GLuint        texture_id;
+} GskGLTextureState;
 
-  g_hash_table_remove (self->textures, GINT_TO_POINTER (texture_id));
+static void
+create_texture_from_texture_destroy (gpointer data)
+{
+  GskGLTextureState *state = data;
+
+  g_assert (state != NULL);
+  g_assert (GDK_IS_GL_CONTEXT (state->context));
+
+  gdk_gl_context_make_current (state->context);
+  glDeleteTextures (1, &state->texture_id);
+  g_clear_object (&state->context);
+  g_slice_free (GskGLTextureState, state);
 }
 
-
-void
-gsk_gl_driver_init_texture_empty (GskGLDriver *self,
-                                  int          texture_id,
-                                  int          min_filter,
-                                  int          mag_filter)
+GdkTexture *
+gsk_gl_driver_create_gdk_texture (GskGLDriver *self,
+                                  guint        texture_id)
 {
-  Texture *t;
+  GskGLTextureState *state;
+  GskGLTexture *texture;
+  int width, height;
 
-  g_return_if_fail (GSK_IS_GL_DRIVER (self));
+  g_return_val_if_fail (GSK_IS_GL_DRIVER (self), NULL);
+  g_return_val_if_fail (self->command_queue != NULL, NULL);
+  g_return_val_if_fail (GDK_IS_GL_CONTEXT (self->command_queue->context), NULL);
+  g_return_val_if_fail (texture_id > 0, NULL);
+  g_return_val_if_fail (!g_hash_table_contains (self->texture_id_to_key, GUINT_TO_POINTER (texture_id)), NULL);
 
-  t = gsk_gl_driver_get_texture (self, texture_id);
-  if (t == NULL)
-    {
-      g_critical ("No texture %d found.", texture_id);
-      return;
-    }
+  /* We must be tracking this texture_id already to use it */
+  if (!(texture = g_hash_table_lookup (self->textures, GUINT_TO_POINTER (texture_id))))
+    g_return_val_if_reached (NULL);
 
-  if (self->bound_source_texture != t)
-    {
-      g_critical ("You must bind the texture before initializing it.");
-      return;
-    }
+  state = g_slice_new0 (GskGLTextureState);
+  state->texture_id = texture_id;
+  state->context = g_object_ref (self->command_queue->context);
 
-  t->min_filter = min_filter;
-  t->mag_filter = mag_filter;
+  g_hash_table_steal (self->textures, GUINT_TO_POINTER (texture_id));
 
-  gsk_gl_driver_set_texture_parameters (self, t->min_filter, t->mag_filter);
+  width = texture->width;
+  height = texture->height;
 
-  if (gdk_gl_context_get_use_es (self->gl_context))
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA8, t->width, t->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  else
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA8, t->width, t->height, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+  texture->texture_id = 0;
+  gsk_gl_texture_free (texture);
 
-  glBindTexture (GL_TEXTURE_2D, 0);
-}
-
-static gboolean
-filter_uses_mipmaps (int filter)
-{
-  return filter != GL_NEAREST && filter != GL_LINEAR;
-}
-
-void
-gsk_gl_driver_init_texture (GskGLDriver     *self,
-                            int              texture_id,
-                            GdkTexture      *texture,
-                            int              min_filter,
-                            int              mag_filter)
-{
-  Texture *t;
-
-  g_return_if_fail (GSK_IS_GL_DRIVER (self));
-
-  t = gsk_gl_driver_get_texture (self, texture_id);
-  if (t == NULL)
-    {
-      g_critical ("No texture %d found.", texture_id);
-      return;
-    }
-
-  if (self->bound_source_texture != t)
-    {
-      g_critical ("You must bind the texture before initializing it.");
-      return;
-    }
-
-  gsk_gl_driver_set_texture_parameters (self, min_filter, mag_filter);
-
-  upload_gdk_texture (texture, GL_TEXTURE_2D, 0, 0, t->width, t->height);
-
-#ifdef G_ENABLE_DEBUG
-  gsk_profiler_counter_inc (self->profiler, self->counters.surface_uploads);
-#endif
-
-  t->min_filter = min_filter;
-  t->mag_filter = mag_filter;
-
-  if (filter_uses_mipmaps (t->min_filter))
-    glGenerateMipmap (GL_TEXTURE_2D);
+  return gdk_gl_texture_new (self->command_queue->context,
+                             texture_id,
+                             width,
+                             height,
+                             create_texture_from_texture_destroy,
+                             state);
 }

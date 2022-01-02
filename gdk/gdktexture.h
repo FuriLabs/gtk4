@@ -38,6 +38,30 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkTexture, g_object_unref)
 
 typedef struct _GdkTextureClass        GdkTextureClass;
 
+#define GDK_TEXTURE_ERROR       (gdk_texture_error_quark ())
+
+GDK_AVAILABLE_IN_4_6
+GQuark gdk_texture_error_quark (void);
+
+/**
+ * GdkTextureError:
+ * @GDK_TEXTURE_ERROR_TOO_LARGE: Not enough memory to handle this image
+ * @GDK_TEXTURE_ERROR_CORRUPT_IMAGE: The image data appears corrupted
+ * @GDK_TEXTURE_ERROR_UNSUPPORTED_CONTENT: The image contains features
+ *   that cannot be loaded
+ * @GDK_TEXTURE_ERROR_UNSUPPORTED_FORMAT: The image format is not supported
+ *
+ * Possible errors that can be returned by `GdkTexture` constructors.
+ *
+ * Since: 4.6
+ */
+typedef enum
+{
+  GDK_TEXTURE_ERROR_TOO_LARGE,
+  GDK_TEXTURE_ERROR_CORRUPT_IMAGE,
+  GDK_TEXTURE_ERROR_UNSUPPORTED_CONTENT,
+  GDK_TEXTURE_ERROR_UNSUPPORTED_FORMAT,
+} GdkTextureError;
 
 GDK_AVAILABLE_IN_ALL
 GType                   gdk_texture_get_type                   (void) G_GNUC_CONST;
@@ -48,6 +72,12 @@ GDK_AVAILABLE_IN_ALL
 GdkTexture *            gdk_texture_new_from_resource          (const char      *resource_path);
 GDK_AVAILABLE_IN_ALL
 GdkTexture *            gdk_texture_new_from_file              (GFile           *file,
+                                                                GError         **error);
+GDK_AVAILABLE_IN_4_6
+GdkTexture *            gdk_texture_new_from_filename          (const char      *path,
+                                                                GError         **error);
+GDK_AVAILABLE_IN_4_6
+GdkTexture *            gdk_texture_new_from_bytes             (GBytes          *bytes,
                                                                 GError         **error);
 
 GDK_AVAILABLE_IN_ALL
@@ -62,6 +92,13 @@ void                    gdk_texture_download                   (GdkTexture      
 GDK_AVAILABLE_IN_ALL
 gboolean                gdk_texture_save_to_png                (GdkTexture      *texture,
                                                                 const char      *filename);
+GDK_AVAILABLE_IN_4_6
+GBytes *                gdk_texture_save_to_png_bytes          (GdkTexture      *texture);
+GDK_AVAILABLE_IN_4_6
+gboolean                gdk_texture_save_to_tiff               (GdkTexture      *texture,
+                                                                const char      *filename);
+GDK_AVAILABLE_IN_4_6
+GBytes *                gdk_texture_save_to_tiff_bytes         (GdkTexture      *texture);
 
 G_END_DECLS
 

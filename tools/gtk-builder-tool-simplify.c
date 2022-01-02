@@ -255,6 +255,7 @@ is_pcdata_element (Element *element)
     "col",
     "item",
     "mark",
+    "lookup",
     NULL,
   };
 
@@ -431,6 +432,9 @@ value_is_default (Element      *element,
   if (g_type_is_a (G_PARAM_SPEC_VALUE_TYPE (pspec), G_TYPE_BOXED))
     return FALSE;
 
+  if (!value_string)
+    return FALSE;
+
   if (!gtk_builder_value_from_string (data->builder, pspec, value_string, &value, &error))
     {
       g_printerr (_("%s:%d: Couldn’t parse value for property '%s': %s\n"), data->input_filename, element->line_number, pspec->name, error->message);
@@ -485,7 +489,7 @@ get_attribute_value (Element *element,
         return element->attribute_values[i];
     }
 
-  return NULL;
+  return "";
 }
 
 static void
@@ -548,7 +552,7 @@ get_class_name (Element *element)
         return get_attribute_value (parent, "class");
     }
 
-  return NULL;
+  return "";
 }
 
 static gboolean
@@ -577,6 +581,60 @@ property_is_boolean (Element      *element,
     return G_PARAM_SPEC_VALUE_TYPE (pspec) == G_TYPE_BOOLEAN;
 
   return FALSE;
+}
+
+static gboolean
+property_is_enum (Element      *element,
+                  MyParserData *data,
+                  GType        *type)
+{
+  GParamSpec *pspec = NULL;
+  const char *class_name;
+  const char *property_name;
+  int i;
+  PropKind kind;
+
+  kind = get_prop_kind (element);
+  class_name = get_class_name (element);
+  property_name = "";
+
+  for (i = 0; element->attribute_names[i]; i++)
+    {
+      if (strcmp (element->attribute_names[i], "name") == 0)
+        property_name = (const char *)element->attribute_values[i];
+    }
+
+  if (class_name && property_name)
+    pspec = get_property_pspec (data, class_name, property_name, kind);
+  if (pspec && G_TYPE_IS_ENUM (G_PARAM_SPEC_VALUE_TYPE (pspec)))
+    {
+      *type = G_PARAM_SPEC_VALUE_TYPE (pspec);
+      return TRUE;
+    }
+
+  *type = G_TYPE_NONE;
+  return FALSE;
+}
+
+static char *
+canonical_enum_value (MyParserData *data,
+                      GType         type,
+                      const char   *string)
+{
+  GValue value = G_VALUE_INIT;
+
+  if (gtk_builder_value_from_string_type (data->builder, type, string, &value, NULL))
+    {
+      GEnumClass *eclass = g_type_class_ref (type);
+      GEnumValue *evalue = g_enum_get_value (eclass, g_value_get_enum (&value));
+
+      if (evalue)
+        return g_strdup (evalue->value_nick);
+      else
+        return g_strdup_printf ("%d", g_value_get_enum (&value));
+    }
+
+  return NULL;
 }
 
 static void
@@ -1723,7 +1781,6 @@ rewrite_toolbar (Element      *element,
                  MyParserData *data)
 {
   GList *l, *ll;
-  Element *style = NULL;
 
   set_attribute_value (element, "class", "GtkBox");
 
@@ -1746,9 +1803,6 @@ rewrite_toolbar (Element      *element,
       Element *child = l->data;
       Element *object = NULL;
       Element *packing = NULL;
-
-      if (g_str_equal (child->element_name, "style"))
-        style = child;
 
       if (!g_str_equal (child->element_name, "child"))
         continue;
@@ -1794,10 +1848,13 @@ rewrite_toolbar (Element      *element,
         child->children = g_list_remove (child->children, packing);
     }
 
-  if (!style)
-    style = add_element (element, "style");
+  {
+    Element *child;
 
-  set_attribute_value (add_element (style, "class"), "name", "toolbar");
+    child = add_element (element, "property");
+    set_attribute_value (child, "name", "css-classes");
+    child->data = g_strdup ("toolbar");
+  }
 }
 
 static void
@@ -1872,16 +1929,38 @@ simplify_element (Element      *element,
                   MyParserData *data)
 {
   GList *l;
+  GType type;
 
   if (!is_pcdata_element (element))
-    g_clear_pointer (&element->data, g_free);
-  else if (g_str_equal (element->element_name, "property") &&
-           property_is_boolean (element, data))
     {
-      const char *b = canonical_boolean_value (data, element->data);
-      g_free (element->data);
-      element->data = g_strdup (b);
+      g_clear_pointer (&element->data, g_free);
     }
+  else if (g_str_equal (element->element_name, "property"))
+    {
+      if (property_is_boolean (element, data))
+        {
+          const char *b = canonical_boolean_value (data, element->data);
+          g_free (element->data);
+          element->data = g_strdup (b);
+        }
+      else if (property_is_enum (element, data, &type))
+        {
+          char *e = canonical_enum_value (data, type, element->data);
+          g_free (element->data);
+          element->data = e;
+        }
+
+      for (int i = 0; element->attribute_names[i]; i++)
+        {
+          if (g_str_equal (element->attribute_names[i], "translatable"))
+            {
+              const char *b = canonical_boolean_value (data, element->attribute_values[i]);
+              g_free (element->attribute_values[i]);
+              element->attribute_values[i] = g_strdup (b);
+              break;
+            }
+        }
+     }
 
   l = element->children;
   while (l)
@@ -2216,6 +2295,18 @@ simplify_file (const char *filename,
   if (!g_markup_parse_context_parse (context, buffer, -1, &error))
     {
       g_printerr (_("Can’t parse “%s”: %s\n"), filename, error->message);
+      return FALSE;
+    }
+
+  if (!g_markup_parse_context_end_parse (context, &error))
+    {
+      g_printerr (_("Can't parse “%s”: %s\n"), filename, error->message);
+      return FALSE;
+    }
+
+  if (data.root == NULL)
+    {
+      g_printerr (_("Can't parse “%s”\n"), filename);
       return FALSE;
     }
 

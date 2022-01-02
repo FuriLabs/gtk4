@@ -33,6 +33,7 @@
 #include "gtkcssstringvalueprivate.h"
 #include "gtkcssfontvariationsvalueprivate.h"
 #include "gtkcssfontfeaturesvalueprivate.h"
+#include "gtkcsslineheightvalueprivate.h"
 #include "gtkcssstylepropertyprivate.h"
 #include "gtkcsstransitionprivate.h"
 #include "gtkstyleanimationprivate.h"
@@ -117,12 +118,16 @@ gtk_css_style_get_value (GtkCssStyle *style,
       return style->font->font_stretch;
     case GTK_CSS_PROPERTY_LETTER_SPACING:
       return style->font->letter_spacing;
+    case GTK_CSS_PROPERTY_LINE_HEIGHT:
+      return style->font->line_height;
     case GTK_CSS_PROPERTY_TEXT_DECORATION_LINE:
       return style->font_variant->text_decoration_line;
     case GTK_CSS_PROPERTY_TEXT_DECORATION_COLOR:
       return style->font_variant->text_decoration_color ? style->font_variant->text_decoration_color : style->core->color;
     case GTK_CSS_PROPERTY_TEXT_DECORATION_STYLE:
       return style->font_variant->text_decoration_style;
+    case GTK_CSS_PROPERTY_TEXT_TRANSFORM:
+      return style->font_variant->text_transform;
     case GTK_CSS_PROPERTY_FONT_KERNING:
       return style->font_variant->font_kerning;
     case GTK_CSS_PROPERTY_FONT_VARIANT_LIGATURES:
@@ -397,6 +402,24 @@ get_pango_underline_from_style (GtkTextDecorationStyle style)
   g_return_val_if_reached (PANGO_UNDERLINE_SINGLE);
 }
 
+PangoTextTransform
+gtk_css_style_get_pango_text_transform (GtkCssStyle *style)
+{
+  switch (_gtk_css_text_transform_value_get (style->font_variant->text_transform))
+    {
+    case GTK_CSS_TEXT_TRANSFORM_NONE:
+      return PANGO_TEXT_TRANSFORM_NONE;
+    case GTK_CSS_TEXT_TRANSFORM_LOWERCASE:
+      return PANGO_TEXT_TRANSFORM_LOWERCASE;
+    case GTK_CSS_TEXT_TRANSFORM_UPPERCASE:
+      return PANGO_TEXT_TRANSFORM_UPPERCASE;
+    case GTK_CSS_TEXT_TRANSFORM_CAPITALIZE:
+      return PANGO_TEXT_TRANSFORM_CAPITALIZE;
+    default:
+      return PANGO_TEXT_TRANSFORM_NONE;
+    }
+}
+
 static PangoOverline
 get_pango_overline_from_style (GtkTextDecorationStyle style)
 {
@@ -486,31 +509,6 @@ gtk_css_style_compute_font_features (GtkCssStyle *style)
       append_separated (&s, "sups 1");
       break;
     case GTK_CSS_FONT_VARIANT_POSITION_NORMAL:
-    default:
-      break;
-    }
-
-  switch (_gtk_css_font_variant_caps_value_get (style->font_variant->font_variant_caps))
-    {
-    case GTK_CSS_FONT_VARIANT_CAPS_SMALL_CAPS:
-      append_separated (&s, "smcp 1");
-      break;
-    case GTK_CSS_FONT_VARIANT_CAPS_ALL_SMALL_CAPS:
-      append_separated (&s, "c2sc 1, smcp 1");
-      break;
-    case GTK_CSS_FONT_VARIANT_CAPS_PETITE_CAPS:
-      append_separated (&s, "pcap 1");
-      break;
-    case GTK_CSS_FONT_VARIANT_CAPS_ALL_PETITE_CAPS:
-      append_separated (&s, "c2pc 1, pcap 1");
-      break;
-    case GTK_CSS_FONT_VARIANT_CAPS_UNICASE:
-      append_separated (&s, "unic 1");
-      break;
-    case GTK_CSS_FONT_VARIANT_CAPS_TITLING_CAPS:
-      append_separated (&s, "titl 1");
-      break;
-    case GTK_CSS_FONT_VARIANT_CAPS_NORMAL:
     default:
       break;
     }
@@ -640,6 +638,44 @@ gtk_css_style_get_pango_attributes (GtkCssStyle *style)
       attrs = add_pango_attr (attrs, pango_attr_letter_spacing_new (letter_spacing * PANGO_SCALE));
     }
 
+  /* line-height */
+  {
+    double height = gtk_css_line_height_value_get (style->font->line_height);
+    if (height != 0.0)
+      {
+        if (gtk_css_number_value_get_dimension (style->font->line_height) == GTK_CSS_DIMENSION_LENGTH)
+          attrs = add_pango_attr (attrs, pango_attr_line_height_new_absolute (height * PANGO_SCALE));
+        else
+          attrs = add_pango_attr (attrs, pango_attr_line_height_new (height));
+      }
+   }
+
+  /* casing variants */
+  switch (_gtk_css_font_variant_caps_value_get (style->font_variant->font_variant_caps))
+    {
+    case GTK_CSS_FONT_VARIANT_CAPS_SMALL_CAPS:
+      attrs = add_pango_attr (attrs, pango_attr_variant_new (PANGO_VARIANT_SMALL_CAPS));
+      break;
+    case GTK_CSS_FONT_VARIANT_CAPS_ALL_SMALL_CAPS:
+      attrs = add_pango_attr (attrs, pango_attr_variant_new (PANGO_VARIANT_ALL_SMALL_CAPS));
+      break;
+    case GTK_CSS_FONT_VARIANT_CAPS_PETITE_CAPS:
+      attrs = add_pango_attr (attrs, pango_attr_variant_new (PANGO_VARIANT_PETITE_CAPS));
+      break;
+    case GTK_CSS_FONT_VARIANT_CAPS_ALL_PETITE_CAPS:
+      attrs = add_pango_attr (attrs, pango_attr_variant_new (PANGO_VARIANT_ALL_PETITE_CAPS));
+      break;
+    case GTK_CSS_FONT_VARIANT_CAPS_UNICASE:
+      attrs = add_pango_attr (attrs, pango_attr_variant_new (PANGO_VARIANT_UNICASE));
+      break;
+    case GTK_CSS_FONT_VARIANT_CAPS_TITLING_CAPS:
+      attrs = add_pango_attr (attrs, pango_attr_variant_new (PANGO_VARIANT_TITLE_CAPS));
+      break;
+    case GTK_CSS_FONT_VARIANT_CAPS_NORMAL:
+    default:
+      break;
+    }
+
   /* OpenType features */
   {
     char *font_features = gtk_css_style_compute_font_features (style);
@@ -649,6 +685,14 @@ gtk_css_style_get_pango_attributes (GtkCssStyle *style)
         attrs = add_pango_attr (attrs, pango_attr_font_features_new (font_features));
         g_free (font_features);
       }
+  }
+
+  /* text-transform */
+  {
+    PangoTextTransform transform = gtk_css_style_get_pango_text_transform (style);
+
+    if (transform != PANGO_TEXT_TRANSFORM_NONE)
+      attrs = add_pango_attr (attrs, pango_attr_text_transform_new (transform));
   }
 
   return attrs;

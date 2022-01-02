@@ -178,7 +178,8 @@ gtk_picture_measure (GtkWidget      *widget,
   double min_width, min_height, nat_width, nat_height;
   double default_size;
 
-  if (self->paintable == NULL)
+  /* for_size = 0 below is treated as -1, but we want to return zeros. */
+  if (self->paintable == NULL || for_size == 0)
     {
       *minimum = 0;
       *natural = 0;
@@ -839,6 +840,9 @@ gtk_picture_set_keep_aspect_ratio (GtkPicture *self,
     return;
 
   self->keep_aspect_ratio = keep_aspect_ratio;
+
+  gtk_widget_queue_draw (GTK_WIDGET (self));
+
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_KEEP_ASPECT_RATIO]);
 }
 
@@ -884,6 +888,9 @@ gtk_picture_set_can_shrink (GtkPicture *self,
     return;
 
   self->can_shrink = can_shrink;
+
+  gtk_widget_queue_resize (GTK_WIDGET (self));
+
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_SHRINK]);
 }
 

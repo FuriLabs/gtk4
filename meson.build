@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.4.1',
+        version: '4.6.0',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -7,11 +7,11 @@ project('gtk', 'c',
           # https://github.com/mesonbuild/meson/issues/2289
           'c_std=gnu99',
         ],
-        meson_version : '>= 0.55',
+        meson_version : '>= 0.59',
         license: 'LGPL-2.1-or-later')
 
 glib_req           = '>= 2.66.0'
-pango_req          = '>= 1.47.0' # keep this in sync with .gitlab-ci/test-msys.sh
+pango_req          = '>= 1.50.0' # keep this in sync with .gitlab-ci/test-msys.sh
 fribidi_req        = '>= 0.19.7'
 cairo_req          = '>= 1.14.0'
 gdk_pixbuf_req     = '>= 2.30.0'
@@ -150,11 +150,6 @@ cdata.set_quoted('GTK_DATADIR', gtk_datadir)
 cdata.set_quoted('GTK_LIBDIR', gtk_libdir)
 cdata.set_quoted('GTK_SYSCONFDIR', gtk_sysconfdir)
 cdata.set_quoted('GETTEXT_PACKAGE', 'gtk40')
-cdata.set('GTK_MAJOR_VERSION', gtk_major_version)
-cdata.set('GTK_MINOR_VERSION', gtk_minor_version)
-cdata.set('GTK_MICRO_VERSION', gtk_micro_version)
-cdata.set('GTK_BINARY_AGE', gtk_binary_age)
-cdata.set('GTK_INTERFACE_AGE', gtk_interface_age)
 
 check_headers = [
   'crt/externs.h',
@@ -211,6 +206,17 @@ foreach func : check_functions
     cdata.set('HAVE_' + func.underscorify().to_upper(), 1)
   endif
 endforeach
+
+# We use links() because sigsetjmp() is often a macro hidden behind other macros
+cdata.set('HAVE_SIGSETJMP',
+  cc.links('''#define _POSIX_SOURCE
+              #include <setjmp.h>
+              int main (void) {
+                sigjmp_buf env;
+                sigsetjmp (env, 0);
+                return 0;
+              }''', name: 'sigsetjmp'),
+)
 
 # Check for __uint128_t (gcc) by checking for 128-bit division
 uint128_t_src = '''int main() {
@@ -285,26 +291,39 @@ elif cc.get_id() == 'gcc' or cc.get_id() == 'clang'
     '-Wundef',
     '-Wuninitialized',
     '-Wunused',
-    '-Werror=address',
-    '-Werror=array-bounds',
-    '-Werror=empty-body',
-    '-Werror=implicit',
-    '-Werror=implicit-fallthrough',
-    '-Werror=init-self',
-    '-Werror=int-to-pointer-cast',
-    '-Werror=main',
-    '-Werror=missing-braces',
-    '-Werror=missing-declarations',
-    '-Werror=missing-prototypes',
-    '-Werror=nonnull',
-    '-Werror=pointer-to-int-cast',
-    '-Werror=redundant-decls',
-    '-Werror=return-type',
-    '-Werror=sequence-point',
-    '-Werror=trigraphs',
-    '-Werror=vla',
-    '-Werror=write-strings',
   ]
+
+  extra_warnings = [
+    'address',
+    'array-bounds',
+    'empty-body',
+    'implicit',
+    'implicit-fallthrough',
+    'init-self',
+    'int-to-pointer-cast',
+    'main',
+    'missing-braces',
+    'missing-declarations',
+    'missing-prototypes',
+    'nonnull',
+    'pointer-to-int-cast',
+    'redundant-decls',
+    'return-type',
+    'sequence-point',
+    'trigraphs',
+    'vla',
+    'write-strings',
+  ]
+
+  if get_option('buildtype').startswith('debug')
+    foreach warning: extra_warnings
+      test_cflags += '-Werror=@0@'.format(warning)
+    endforeach
+  else
+    foreach warning: extra_warnings
+      test_cflags += '-W@0@'.format(warning)
+    endforeach
+  endif
 
   if cc.get_id() == 'gcc'
     test_cflags += ['-Wcast-align'] # This warns too much on clang
@@ -394,6 +413,16 @@ pangocairo_dep = dependency('pangocairo', version: pango_req,
 pixbuf_dep     = dependency('gdk-pixbuf-2.0', version: gdk_pixbuf_req,
                             fallback : ['gdk-pixbuf', 'gdkpixbuf_dep'],
                             default_options: ['png=enabled', 'jpeg=enabled', 'builtin_loaders=png,jpeg', 'man=false'])
+png_dep        = dependency(cc.get_argument_syntax() == 'msvc' ? 'png' : 'libpng',
+                            fallback: ['libpng', 'libpng_dep'],
+                            required: true)
+tiff_dep       = dependency('libtiff-4',
+                            fallback: ['libtiff', 'libtiff4_dep'],
+                            required: true)
+jpeg_dep       = dependency('libjpeg',
+                            fallback: ['libjpeg-turbo', 'jpeg_dep'],
+                            required: true)
+
 epoxy_dep      = dependency('epoxy', version: epoxy_req,
                             fallback: ['libepoxy', 'libepoxy_dep'])
 harfbuzz_dep   = dependency('harfbuzz', version: '>= 2.1.0', required: false,
@@ -427,7 +456,7 @@ colord_dep = dependency('colord', version: '>= 0.1.9', required: get_option('col
 cdata.set('HAVE_COLORD', colord_dep.found())
 
 if iso_codes_dep.found()
-  cdata.set_quoted('ISO_CODES_PREFIX', iso_codes_dep.get_pkgconfig_variable('prefix'))
+  cdata.set_quoted('ISO_CODES_PREFIX', iso_codes_dep.get_variable(pkgconfig: 'prefix'))
 else
   cdata.set_quoted('ISO_CODES_PREFIX', '/usr')
 endif
@@ -465,7 +494,15 @@ if not cairo_csi_dep.found()
   cairo_csi_dep = cc.find_library('cairo-script-interpreter', required: get_option('build-tests'))
 endif
 
+have_egl = epoxy_dep.get_variable(
+  pkgconfig: 'epoxy_has_egl',
+  internal: 'epoxy_has_egl',
+  default_value: '0') == '1'
+
 cdata.set('HAVE_CAIRO_SCRIPT_INTERPRETER', cairo_csi_dep.found())
+if have_egl
+  cdata.set('HAVE_EGL', 1)
+endif
 cdata.set('HAVE_HARFBUZZ', harfbuzz_dep.found())
 cdata.set('HAVE_PANGOFT', pangoft_dep.found())
 
@@ -478,7 +515,7 @@ if wayland_enabled
   if not wlprotocolsdep.found()
     wlproto_dir = subproject('wayland-protocols').get_variable('wayland_protocols_srcdir')
   else
-    wlproto_dir = wlprotocolsdep.get_pkgconfig_variable('pkgdatadir')
+    wlproto_dir = wlprotocolsdep.get_variable(pkgconfig: 'pkgdatadir')
   endif
 
   wayland_pkgs = [
@@ -541,6 +578,13 @@ if x11_enabled
   endif
   cdata.set('XINPUT_2_2', 1)
 
+  has_gesture_pinch_event = cc.has_member('XIGesturePinchEvent', 'type', dependencies: xi_dep,
+                                          prefix: '''#include <X11/Xlib.h>
+                                                     #include <X11/extensions/XInput2.h>''')
+  if has_gesture_pinch_event
+    cdata.set('XINPUT_2_4', 1)
+  endif
+
   xinerama_dep = dependency('xinerama')
   if not cc.has_header_symbol('X11/extensions/Xinerama.h', 'XineramaQueryExtension', dependencies: xinerama_dep)
     error('X11 backend enabled, but Xinerama extension does not work.')
@@ -573,10 +617,6 @@ if win32_enabled
   pc_gdk_extra_libs += ['-lwinmm', '-ldwmapi', '-lsetupapi', '-lcfgmgr32']
 
   # Check whether libepoxy is built with EGL support on Windows
-  win32_has_egl = epoxy_dep.get_variable(
-    pkgconfig: 'epoxy_has_egl',
-    internal: 'epoxy_has_egl',
-    default_value: '0') == '1'
 endif
 
 # Check for bind_textdomain_codeset, including -lintl if GLib brings it in by
@@ -669,8 +709,8 @@ endif
 
 graphene_dep_type = graphene_dep.type_name()
 if graphene_dep_type == 'pkgconfig'
-  graphene_has_sse2 = graphene_dep.get_pkgconfig_variable('graphene_has_sse2') == '1'
-  graphene_has_gcc = graphene_dep.get_pkgconfig_variable('graphene_has_gcc') == '1'
+  graphene_has_sse2 = graphene_dep.get_variable(pkgconfig: 'graphene_has_sse2') == '1'
+  graphene_has_gcc = graphene_dep.get_variable(pkgconfig: 'graphene_has_gcc') == '1'
 else
   graphene_simd = subproject('graphene').get_variable('graphene_simd')
   graphene_has_sse2 = graphene_simd.contains('sse2')
@@ -758,8 +798,7 @@ if get_option('build-examples')
 endif
 
 # config.h
-configure_file(input: 'config.h.meson',
-               output: 'config.h',
+configure_file(output: 'config.h',
                configuration: cdata)
 
 # Requires
@@ -822,7 +861,7 @@ common_pc_variables = [
 foreach pkg: pkgs
   pkg_config.generate(
     filebase: pkg,
-    variables: common_pc_variables,
+    unescaped_variables: common_pc_variables,
     name: 'GTK',
     description: 'GTK Graphical UI Library',
     requires: gdk_packages + gsk_packages + gtk_packages,
@@ -838,7 +877,7 @@ endforeach
 if os_unix
   pkg_config.generate(
     filebase: 'gtk4-unix-print',
-    variables: common_pc_variables,
+    unescaped_variables: common_pc_variables,
     name: 'GTK',
     description: 'GTK Unix print support',
     requires: ['gtk4'] + gtk_packages,
@@ -895,6 +934,9 @@ summary('Cloud support', cloudproviders_dep.found(), section: 'Features')
 summary('Sysprof support', libsysprof_capture_dep.found(), section: 'Features')
 summary('Colord support', colord_dep.found(), section: 'Features')
 summary('Tracker support', tracker3_dep.found(), section: 'Features')
+
+summary('Compiler', cc.get_id(), section: 'Toolchain')
+summary('Linker', cc.get_linker_id(), section: 'Toolchain')
 
 # Build
 summary('Debugging', get_option('debug'), section: 'Build')

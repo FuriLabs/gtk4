@@ -85,24 +85,17 @@ parse_texture (GtkCssParser *parser,
   scheme = g_uri_parse_scheme (url);
   if (scheme && g_ascii_strcasecmp (scheme, "data") == 0)
     {
-      GInputStream *stream;
-      GdkPixbuf *pixbuf;
       GBytes *bytes;
-
-      texture = NULL;
 
       bytes = gtk_css_data_url_parse (url, NULL, &error);
       if (bytes)
         {
-          stream = g_memory_input_stream_new_from_bytes (bytes);
+          texture = gdk_texture_new_from_bytes (bytes, &error);
           g_bytes_unref (bytes);
-          pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, &error);
-          g_object_unref (stream);
-          if (pixbuf != NULL)
-            {
-              texture = gdk_texture_new_for_pixbuf (pixbuf);
-              g_object_unref (pixbuf);
-            }
+        }
+      else
+        {
+          texture = NULL;
         }
     }
   else
@@ -802,6 +795,11 @@ parse_glyphs (GtkCssParser *parser,
                 gi.attr.is_cluster_start = 0;
               else
                 gi.attr.is_cluster_start = 1;
+
+              if (gtk_css_parser_try_ident (parser, "color"))
+                gi.attr.is_color = 1;
+              else
+                gi.attr.is_color = 0;
             }
 
           pango_glyph_string_set_size (glyph_string, glyph_string->num_glyphs + 1);
@@ -1920,7 +1918,7 @@ gsk_render_node_deserialize_from_bytes (GBytes            *bytes,
     gpointer user_data;
   } error_func_pair = { error_func, user_data };
 
-  parser = gtk_css_parser_new_for_bytes (bytes, NULL, NULL, gsk_render_node_parser_error,
+  parser = gtk_css_parser_new_for_bytes (bytes, NULL, gsk_render_node_parser_error,
                                          &error_func_pair, NULL);
   root = parse_container_node (parser);
 
@@ -2336,7 +2334,8 @@ gsk_text_node_serialize_glyphs (GskRenderNode *node,
                   glyphs[i].geometry.width == ascii->glyphs[j].geometry.width &&
                   glyphs[i].geometry.x_offset == 0 &&
                   glyphs[i].geometry.y_offset == 0 &&
-                  glyphs[i].attr.is_cluster_start)
+                  glyphs[i].attr.is_cluster_start &&
+                  !glyphs[i].attr.is_color)
                 {
                   switch (j + MIN_ASCII_GLYPH)
                     {
@@ -2366,6 +2365,7 @@ gsk_text_node_serialize_glyphs (GskRenderNode *node,
       g_string_append_printf (p, "%u ", glyphs[i].glyph);
       string_append_double (p, (double) glyphs[i].geometry.width / PANGO_SCALE);
       if (!glyphs[i].attr.is_cluster_start ||
+          glyphs[i].attr.is_color ||
           glyphs[i].geometry.x_offset != 0 ||
           glyphs[i].geometry.y_offset != 0)
         {
@@ -2375,6 +2375,8 @@ gsk_text_node_serialize_glyphs (GskRenderNode *node,
           string_append_double (p, (double) glyphs[i].geometry.y_offset / PANGO_SCALE);
           if (!glyphs[i].attr.is_cluster_start)
             g_string_append (p, " same-cluster");
+          if (!glyphs[i].attr.is_color)
+            g_string_append (p, " color");
         }
 
       if (i + 1 < n_glyphs)
@@ -2690,26 +2692,23 @@ render_node_print (Printer       *p,
     case GSK_TEXTURE_NODE:
       {
         GdkTexture *texture = gsk_texture_node_get_texture (node);
-        cairo_surface_t *surface;
-        GByteArray *array;
+        GBytes *bytes;
 
         start_node (p, "texture");
         append_rect_param (p, "bounds", &node->bounds);
 
-        surface = gdk_texture_download_surface (texture);
-        array = g_byte_array_new ();
-        cairo_surface_write_to_png_stream (surface, cairo_write_array, array);
+        bytes = gdk_texture_save_to_png_bytes (texture);
 
         _indent (p);
         g_string_append (p->str, "texture: url(\"data:image/png;base64,");
-        b64 = base64_encode_with_linebreaks (array->data, array->len);
+        b64 = base64_encode_with_linebreaks (g_bytes_get_data (bytes, NULL),
+                                             g_bytes_get_size (bytes));
         append_escaping_newlines (p->str, b64);
         g_free (b64);
         g_string_append (p->str, "\");\n");
         end_node (p);
 
-        g_byte_array_free (array, TRUE);
-        cairo_surface_destroy (surface);
+        g_bytes_unref (bytes);
       }
       break;
 

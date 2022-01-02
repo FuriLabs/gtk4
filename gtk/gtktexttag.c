@@ -107,6 +107,7 @@ enum {
   PROP_PIXELS_ABOVE_LINES,
   PROP_PIXELS_BELOW_LINES,
   PROP_PIXELS_INSIDE_WRAP,
+  PROP_LINE_HEIGHT,
   PROP_EDITABLE,
   PROP_WRAP_MODE,
   PROP_JUSTIFICATION,
@@ -133,6 +134,9 @@ enum {
   PROP_ALLOW_BREAKS,
   PROP_SHOW_SPACES,
   PROP_INSERT_HYPHENS,
+  PROP_TEXT_TRANSFORM,
+  PROP_WORD,
+  PROP_SENTENCE,
 
   /* Behavior args */
   PROP_ACCUMULATIVE_MARGIN,
@@ -150,6 +154,7 @@ enum {
   PROP_PIXELS_ABOVE_LINES_SET,
   PROP_PIXELS_BELOW_LINES_SET,
   PROP_PIXELS_INSIDE_WRAP_SET,
+  PROP_LINE_HEIGHT_SET,
   PROP_EDITABLE_SET,
   PROP_WRAP_MODE_SET,
   PROP_JUSTIFICATION_SET,
@@ -174,6 +179,9 @@ enum {
   PROP_ALLOW_BREAKS_SET,
   PROP_SHOW_SPACES_SET,
   PROP_INSERT_HYPHENS_SET,
+  PROP_TEXT_TRANSFORM_SET,
+  PROP_WORD_SET,
+  PROP_SENTENCE_SET,
 
   LAST_ARG
 };
@@ -597,6 +605,21 @@ gtk_text_tag_class_init (GtkTextTagClass *klass)
                                                      GTK_PARAM_READWRITE));
 
   /**
+   * GtkTexTag:line-height:
+   *
+   * Factor to scale line height by.
+   *
+   * Since: 4.6
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_LINE_HEIGHT,
+                                   g_param_spec_float ("line-height",
+                                                       P_("Line height factor"),
+                                                       P_("The factor to apply to line height"),
+                                                       0.0, 10.0, 0.0,
+                                                       GTK_PARAM_READWRITE));
+
+  /**
    * GtkTextTag:strikethrough:
    *
    * Whether to strike through the text.
@@ -840,6 +863,56 @@ gtk_text_tag_class_init (GtkTextTagClass *klass)
                                                          GTK_PARAM_READWRITE));
 
   /**
+   * GtkTextTag:text-transform:
+   *
+   * How to transform the text for display.
+   *
+   * Since: 4.6
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_TEXT_TRANSFORM,
+                                   g_param_spec_enum ("text-transform",
+                                                         P_("Text Transform"),
+                                                         P_("Whether to transform text for display."),
+                                                         PANGO_TYPE_TEXT_TRANSFORM,
+                                                         PANGO_TEXT_TRANSFORM_NONE,
+                                                         GTK_PARAM_READWRITE));
+
+  /**
+   * GtkTextTag:word:
+   *
+   * Whether this tag represents a single word.
+   *
+   * This affects line breaks and cursor movement.
+   *
+   * Since: 4.6
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_WORD,
+                                   g_param_spec_boolean ("word",
+                                                         P_("Word"),
+                                                         P_("Whether this is a word."),
+                                                         FALSE,
+                                                         GTK_PARAM_READWRITE));
+
+  /**
+   * GtkTextTag:sentence:
+   *
+   * Whether this tag represents a single sentence.
+   *
+   * This affects cursor movement.
+   *
+   * Since: 4.6
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_SENTENCE,
+                                   g_param_spec_boolean ("sentence",
+                                                         P_("Sentence"),
+                                                         P_("Whether this is a sentence."),
+                                                         FALSE,
+                                                         GTK_PARAM_READWRITE));
+
+  /**
    * GtkTextTag:accumulative-margin:
    *
    * Whether the margins accumulate or override each other.
@@ -936,6 +1009,10 @@ gtk_text_tag_class_init (GtkTextTagClass *klass)
                 P_("Pixels inside wrap set"),
                 P_("Whether this tag affects the number of pixels between wrapped lines"));
 
+  ADD_SET_PROP ("line-height-set", PROP_LINE_HEIGHT_SET,
+                P_("Line height set"),
+                P_("Whether this tag affects the height of lines"));
+
   ADD_SET_PROP ("strikethrough-set", PROP_STRIKETHROUGH_SET,
                 P_("Strikethrough set"),
                 P_("Whether this tag affects strikethrough"));
@@ -1013,6 +1090,18 @@ gtk_text_tag_class_init (GtkTextTagClass *klass)
   ADD_SET_PROP ("insert-hyphens-set", PROP_INSERT_HYPHENS_SET,
                 P_("Insert hyphens set"),
                 P_("Whether this tag affects insertion of hyphens"));
+
+  ADD_SET_PROP ("text-transform-set", PROP_TEXT_TRANSFORM_SET,
+                P_("Text transform set"),
+                P_("Whether this tag affects text transformation"));
+
+  ADD_SET_PROP ("word-set", PROP_WORD_SET,
+                P_("Word set"),
+                P_("Whether this tag represents a single word"));
+
+  ADD_SET_PROP ("sentence-set", PROP_WORD_SET,
+                P_("Sentence set"),
+                P_("Whether this tag represents a single sentence"));
 }
 
 static void
@@ -1573,6 +1662,13 @@ gtk_text_tag_set_property (GObject      *object,
       size_changed = TRUE;
       break;
 
+    case PROP_LINE_HEIGHT:
+      priv->line_height_set = TRUE;
+      priv->values->line_height = g_value_get_float (value);
+      g_object_notify (object, "line-height-set");
+      size_changed = TRUE;
+      break;
+
     case PROP_EDITABLE:
       priv->editable_set = TRUE;
       priv->values->editable = g_value_get_boolean (value);
@@ -1755,6 +1851,24 @@ gtk_text_tag_set_property (GObject      *object,
       g_object_notify (object, "insert-hyphens-set");
       break;
 
+    case PROP_TEXT_TRANSFORM:
+      priv->text_transform_set = TRUE;
+      priv->values->text_transform = g_value_get_enum (value);
+      g_object_notify (object, "text-transform-set");
+      break;
+
+    case PROP_WORD:
+      priv->word_set = TRUE;
+      priv->values->word = g_value_get_boolean (value);
+      g_object_notify (object, "word-set");
+      break;
+
+    case PROP_SENTENCE:
+      priv->sentence_set = TRUE;
+      priv->values->sentence = g_value_get_boolean (value);
+      g_object_notify (object, "sentence-set");
+      break;
+
     case PROP_ACCUMULATIVE_MARGIN:
       priv->accumulative_margin = g_value_get_boolean (value);
       g_object_notify (object, "accumulative-margin");
@@ -1919,6 +2033,18 @@ gtk_text_tag_set_property (GObject      *object,
       priv->insert_hyphens_set = g_value_get_boolean (value);
       break;
 
+    case PROP_TEXT_TRANSFORM_SET:
+      priv->text_transform_set = g_value_get_boolean (value);
+      break;
+
+    case PROP_WORD_SET:
+      priv->word_set = g_value_get_boolean (value);
+      break;
+
+    case PROP_SENTENCE_SET:
+      priv->sentence_set = g_value_get_boolean (value);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -2020,6 +2146,10 @@ gtk_text_tag_get_property (GObject      *object,
 
     case PROP_PIXELS_INSIDE_WRAP:
       g_value_set_int (value,  priv->values->pixels_inside_wrap);
+      break;
+
+    case PROP_LINE_HEIGHT:
+      g_value_set_float (value, priv->values->line_height);
       break;
 
     case PROP_EDITABLE:
@@ -2127,6 +2257,18 @@ gtk_text_tag_get_property (GObject      *object,
       g_value_set_boolean (value, !priv->values->no_hyphens);
       break;
 
+    case PROP_TEXT_TRANSFORM:
+      g_value_set_enum (value, priv->values->text_transform);
+      break;
+
+    case PROP_WORD:
+      g_value_set_boolean (value, priv->values->word);
+      break;
+
+    case PROP_SENTENCE:
+      g_value_set_boolean (value, priv->values->sentence);
+      break;
+
     case PROP_ACCUMULATIVE_MARGIN:
       g_value_set_boolean (value, priv->accumulative_margin);
       break;
@@ -2167,6 +2309,10 @@ gtk_text_tag_get_property (GObject      *object,
 
     case PROP_PIXELS_INSIDE_WRAP_SET:
       g_value_set_boolean (value, priv->pixels_inside_wrap_set);
+      break;
+
+    case PROP_LINE_HEIGHT_SET:
+      g_value_set_boolean (value, priv->line_height_set);
       break;
 
     case PROP_EDITABLE_SET:
@@ -2263,6 +2409,18 @@ gtk_text_tag_get_property (GObject      *object,
 
     case PROP_INSERT_HYPHENS_SET:
       g_value_set_boolean (value, priv->insert_hyphens_set);
+      break;
+
+    case PROP_TEXT_TRANSFORM_SET:
+      g_value_set_boolean (value, priv->text_transform_set);
+      break;
+
+    case PROP_WORD_SET:
+      g_value_set_boolean (value, priv->word_set);
+      break;
+
+    case PROP_SENTENCE_SET:
+      g_value_set_boolean (value, priv->sentence_set);
       break;
 
     case PROP_BACKGROUND:

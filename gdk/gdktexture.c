@@ -28,8 +28,7 @@
  * `GdkPixbuf`, or a Cairo surface, or other pixel data.
  *
  * The ownership of the pixel data is transferred to the `GdkTexture`
- * instance; you can only make a copy of it, via
- * [method@Gdk.Texture.download].
+ * instance; you can only make a copy of it, via [method@Gdk.Texture.download].
  *
  * `GdkTexture` is an immutable object: That means you cannot change
  * anything about it other than increasing the reference count via
@@ -40,12 +39,17 @@
 
 #include "gdktextureprivate.h"
 
-#include "gdkinternals.h"
+#include "gdkintl.h"
 #include "gdkmemorytextureprivate.h"
 #include "gdkpaintable.h"
 #include "gdksnapshot.h"
 
 #include <graphene.h>
+#include "loaders/gdkpngprivate.h"
+#include "loaders/gdktiffprivate.h"
+#include "loaders/gdkjpegprivate.h"
+
+G_DEFINE_QUARK (gdk-texture-error-quark, gdk_texture_error)
 
 /* HACK: So we don't need to include any (not-yet-created) GSK or GTK headers */
 void
@@ -108,20 +112,121 @@ gdk_texture_paintable_init (GdkPaintableInterface *iface)
   iface->get_intrinsic_height = gdk_texture_paintable_get_intrinsic_height;
 }
 
+static GVariant *
+gdk_texture_icon_serialize (GIcon *icon)
+{
+  GVariant *result;
+  GBytes *bytes;
+
+  bytes = gdk_texture_save_to_png_bytes (GDK_TEXTURE (icon));
+  result = g_variant_new_from_bytes (G_VARIANT_TYPE_BYTESTRING, bytes, TRUE);
+  g_bytes_unref (bytes);
+
+  return g_variant_new ("(sv)", "bytes", result);
+}
+
+static void
+gdk_texture_icon_init (GIconIface *iface)
+{
+  iface->hash = (guint (*) (GIcon *)) g_direct_hash;
+  iface->equal = (gboolean (*) (GIcon *, GIcon *)) g_direct_equal;
+  iface->serialize = gdk_texture_icon_serialize;
+}
+
+static GInputStream *
+gdk_texture_loadable_icon_load (GLoadableIcon  *icon,
+                                int             size,
+                                char          **type,
+                                GCancellable   *cancellable,
+                                GError        **error)
+{
+  GInputStream *stream;
+  GBytes *bytes;
+
+  bytes = gdk_texture_save_to_png_bytes (GDK_TEXTURE (icon));
+  stream = g_memory_input_stream_new_from_bytes (bytes);
+  g_bytes_unref (bytes);
+
+  if (type)
+    *type = NULL;
+
+  return stream;
+}
+
+static void
+gdk_texture_loadable_icon_load_in_thread (GTask        *task,
+                                          gpointer      source_object,
+                                          gpointer      task_data,
+                                          GCancellable *cancellable)
+{
+  GInputStream *stream;
+  GBytes *bytes;
+
+  bytes = gdk_texture_save_to_png_bytes (source_object);
+  stream = g_memory_input_stream_new_from_bytes (bytes);
+  g_bytes_unref (bytes);
+  g_task_return_pointer (task, stream, g_object_unref);
+}
+
+static void
+gdk_texture_loadable_icon_load_async (GLoadableIcon       *icon,
+                                      int                  size,
+                                      GCancellable        *cancellable,
+                                      GAsyncReadyCallback  callback,
+                                      gpointer             user_data)
+{
+  GTask *task;
+
+  task = g_task_new (icon, cancellable, callback, user_data);
+  g_task_run_in_thread (task, gdk_texture_loadable_icon_load_in_thread);
+  g_object_unref (task);
+}
+
+static GInputStream *
+gdk_texture_loadable_icon_load_finish (GLoadableIcon  *icon,
+                                       GAsyncResult   *res,
+                                       char          **type,
+                                       GError        **error)
+{
+  GInputStream *result;
+
+  g_return_val_if_fail (g_task_is_valid (res, icon), NULL);
+
+  result = g_task_propagate_pointer (G_TASK (res), error);
+  if (result == NULL)
+    return NULL;
+
+  if (type)
+    *type = NULL;
+
+  return result;
+}
+
+static void
+gdk_texture_loadable_icon_init (GLoadableIconIface *iface)
+{
+  iface->load = gdk_texture_loadable_icon_load;
+  iface->load_async = gdk_texture_loadable_icon_load_async;
+  iface->load_finish = gdk_texture_loadable_icon_load_finish;
+}
+
 G_DEFINE_ABSTRACT_TYPE_WITH_CODE (GdkTexture, gdk_texture, G_TYPE_OBJECT,
                                   G_IMPLEMENT_INTERFACE (GDK_TYPE_PAINTABLE,
-                                                         gdk_texture_paintable_init))
+                                                         gdk_texture_paintable_init)
+                                  G_IMPLEMENT_INTERFACE (G_TYPE_ICON,
+                                                         gdk_texture_icon_init)
+                                  G_IMPLEMENT_INTERFACE (G_TYPE_LOADABLE_ICON, gdk_texture_loadable_icon_init))
 
 #define GDK_TEXTURE_WARN_NOT_IMPLEMENTED_METHOD(obj,method) \
   g_critical ("Texture of type '%s' does not implement GdkTexture::" # method, G_OBJECT_TYPE_NAME (obj))
 
 static void
-gdk_texture_real_download (GdkTexture         *self,
-                           const GdkRectangle *area,
-                           guchar             *data,
-                           gsize               stride)
+gdk_texture_default_download (GdkTexture      *texture,
+                              GdkMemoryFormat  format,
+                              guchar          *data,
+                              gsize            stride)
 {
-  GDK_TEXTURE_WARN_NOT_IMPLEMENTED_METHOD (self, download);
+  GDK_TEXTURE_WARN_NOT_IMPLEMENTED_METHOD (texture, download);
 }
 
 static void
@@ -187,7 +292,7 @@ gdk_texture_class_init (GdkTextureClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
-  klass->download = gdk_texture_real_download;
+  klass->download = gdk_texture_default_download;
 
   gobject_class->set_property = gdk_texture_set_property;
   gobject_class->get_property = gdk_texture_get_property;
@@ -263,7 +368,7 @@ gdk_texture_new_for_surface (cairo_surface_t *surface)
   
   texture = gdk_memory_texture_new (cairo_image_surface_get_width (surface),
                                     cairo_image_surface_get_height (surface),
-                                    GDK_MEMORY_CAIRO_FORMAT_ARGB32,
+                                    GDK_MEMORY_DEFAULT,
                                     bytes,
                                     cairo_image_surface_get_stride (surface));
 
@@ -277,6 +382,10 @@ gdk_texture_new_for_surface (cairo_surface_t *surface)
  * @pixbuf: a `GdkPixbuf`
  *
  * Creates a new texture object representing the `GdkPixbuf`.
+ *
+ * This function is threadsafe, so that you can e.g. use GTask
+ * and g_task_run_in_thread() to avoid blocking the main thread
+ * while loading a big image.
  *
  * Returns: a new `GdkTexture`
  */
@@ -320,23 +429,32 @@ gdk_texture_new_for_pixbuf (GdkPixbuf *pixbuf)
  * If you are unsure about the validity of a resource, use
  * [ctor@Gdk.Texture.new_from_file] to load it.
  *
+ * This function is threadsafe, so that you can e.g. use GTask
+ * and g_task_run_in_thread() to avoid blocking the main thread
+ * while loading a big image.
+ *
  * Return value: A newly-created `GdkTexture`
  */
 GdkTexture *
 gdk_texture_new_from_resource (const char *resource_path)
 {
-  GError *error = NULL;
+  GBytes *bytes;
   GdkTexture *texture;
-  GdkPixbuf *pixbuf;
+  GError *error = NULL;
 
   g_return_val_if_fail (resource_path != NULL, NULL);
 
-  pixbuf = gdk_pixbuf_new_from_resource (resource_path, &error);
-  if (pixbuf == NULL)
-    g_error ("Resource path %s is not a valid image: %s", resource_path, error->message);
+  bytes = g_resources_lookup_data (resource_path, 0, &error);
+  if (bytes != NULL)
+    {
+      texture = gdk_texture_new_from_bytes (bytes, &error);
+      g_bytes_unref (bytes);
+    }
+  else
+    texture = NULL;
 
-  texture = gdk_texture_new_for_pixbuf (pixbuf);
-  g_object_unref (pixbuf);
+  if (texture == NULL)
+    g_error ("Resource path %s s not a valid image: %s", resource_path, error->message);
 
   return texture;
 }
@@ -353,23 +471,75 @@ gdk_texture_new_from_resource (const char *resource_path)
  *
  * If %NULL is returned, then @error will be set.
  *
+ * This function is threadsafe, so that you can e.g. use GTask
+ * and g_task_run_in_thread() to avoid blocking the main thread
+ * while loading a big image.
+ *
  * Return value: A newly-created `GdkTexture`
  */
 GdkTexture *
 gdk_texture_new_from_file (GFile   *file,
                            GError **error)
 {
+  GBytes *bytes;
   GdkTexture *texture;
-  GdkPixbuf *pixbuf;
-  GInputStream *stream;
 
   g_return_val_if_fail (G_IS_FILE (file), NULL);
   g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-  stream = G_INPUT_STREAM (g_file_read (file, NULL, error));
-  if (stream == NULL)
+  bytes = g_file_load_bytes (file, NULL, NULL, error);
+  if (bytes == NULL)
     return NULL;
 
+  texture = gdk_texture_new_from_bytes (bytes, error);
+
+  g_bytes_unref (bytes);
+
+  return texture;
+}
+
+gboolean
+gdk_texture_can_load (GBytes *bytes)
+{
+  return gdk_is_png (bytes) ||
+         gdk_is_jpeg (bytes) ||
+         gdk_is_tiff (bytes);
+}
+
+static GdkTexture *
+gdk_texture_new_from_bytes_internal (GBytes  *bytes,
+                                     GError **error)
+{
+  if (gdk_is_png (bytes))
+    {
+      return gdk_load_png (bytes, error);
+    }
+  else if (gdk_is_jpeg (bytes))
+    {
+      return gdk_load_jpeg (bytes, error);
+    }
+  else if (gdk_is_tiff (bytes))
+    {
+      return gdk_load_tiff (bytes, error);
+    }
+  else
+    {
+      g_set_error_literal (error,
+                           GDK_TEXTURE_ERROR, GDK_TEXTURE_ERROR_UNSUPPORTED_FORMAT,
+                           _("Unknown image format."));
+      return NULL;
+    }
+}
+
+static GdkTexture *
+gdk_texture_new_from_bytes_pixbuf (GBytes  *bytes,
+                                   GError **error)
+{
+  GInputStream *stream;
+  GdkPixbuf *pixbuf;
+  GdkTexture *texture;
+
+  stream = g_memory_input_stream_new_from_bytes (bytes);
   pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, error);
   g_object_unref (stream);
   if (pixbuf == NULL)
@@ -377,6 +547,92 @@ gdk_texture_new_from_file (GFile   *file,
 
   texture = gdk_texture_new_for_pixbuf (pixbuf);
   g_object_unref (pixbuf);
+
+  return texture;
+}
+
+
+/**
+ * gdk_texture_new_from_bytes:
+ * @bytes: a `GBytes` containing the data to load
+ * @error: Return location for an error
+ *
+ * Creates a new texture by loading an image from memory,
+ *
+ * The file format is detected automatically. The supported formats
+ * are PNG and JPEG, though more formats might be available.
+ *
+ * If %NULL is returned, then @error will be set.
+ *
+ * This function is threadsafe, so that you can e.g. use GTask
+ * and g_task_run_in_thread() to avoid blocking the main thread
+ * while loading a big image.
+ *
+ * Return value: A newly-created `GdkTexture`
+ *
+ * Since: 4.6
+ */
+GdkTexture *
+gdk_texture_new_from_bytes (GBytes  *bytes,
+                            GError **error)
+{
+  GdkTexture *texture;
+  GError *internal_error = NULL;
+
+  g_return_val_if_fail (bytes != NULL, NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+  texture = gdk_texture_new_from_bytes_internal (bytes, &internal_error);
+  if (texture)
+    return texture;
+
+  if (!g_error_matches (internal_error, GDK_TEXTURE_ERROR, GDK_TEXTURE_ERROR_UNSUPPORTED_CONTENT) &&
+      !g_error_matches (internal_error, GDK_TEXTURE_ERROR, GDK_TEXTURE_ERROR_UNSUPPORTED_FORMAT))
+    {
+      g_propagate_error (error, internal_error);
+      return NULL;
+    }
+
+  g_clear_error (&internal_error);
+
+  return gdk_texture_new_from_bytes_pixbuf (bytes, error);
+}
+
+/**
+ * gdk_texture_new_from_filename:
+ * @path: (type filename): the filename to load
+ * @error: Return location for an error
+ *
+ * Creates a new texture by loading an image from a file.
+ *
+ * The file format is detected automatically. The supported formats
+ * are PNG and JPEG, though more formats might be available.
+ *
+ * If %NULL is returned, then @error will be set.
+ *
+ * This function is threadsafe, so that you can e.g. use GTask
+ * and g_task_run_in_thread() to avoid blocking the main thread
+ * while loading a big image.
+ *
+ * Return value: A newly-created `GdkTexture`
+ *
+ * Since: 4.6
+ */
+GdkTexture *
+gdk_texture_new_from_filename (const char  *path,
+                               GError     **error)
+{
+  GdkTexture *texture;
+  GFile *file;
+
+  g_return_val_if_fail (path, NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+  file = g_file_new_for_path (path);
+
+  texture = gdk_texture_new_from_file (file, error);
+
+  g_object_unref (file);
 
   return texture;
 }
@@ -413,6 +669,15 @@ gdk_texture_get_height (GdkTexture *texture)
   return texture->height;
 }
 
+void
+gdk_texture_do_download (GdkTexture      *texture,
+                         GdkMemoryFormat  format,
+                         guchar          *data,
+                         gsize            stride)
+{
+  GDK_TEXTURE_GET_CLASS (texture)->download (texture, format, data,stride);
+}
+
 cairo_surface_t *
 gdk_texture_download_surface (GdkTexture *texture)
 {
@@ -433,20 +698,6 @@ gdk_texture_download_surface (GdkTexture *texture)
   cairo_surface_mark_dirty (surface);
 
   return surface;
-}
-
-void
-gdk_texture_download_area (GdkTexture         *texture,
-                           const GdkRectangle *area,
-                           guchar             *data,
-                           gsize               stride)
-{
-  g_assert (area->x >= 0);
-  g_assert (area->y >= 0);
-  g_assert (area->x + area->width <= texture->width);
-  g_assert (area->y + area->height <= texture->height);
-
-  GDK_TEXTURE_GET_CLASS (texture)->download (texture, area, data, stride);
 }
 
 /**
@@ -485,10 +736,16 @@ gdk_texture_download (GdkTexture *texture,
   g_return_if_fail (data != NULL);
   g_return_if_fail (stride >= gdk_texture_get_width (texture) * 4);
 
-  gdk_texture_download_area (texture,
-                             &(GdkRectangle) { 0, 0, texture->width, texture->height },
-                             data,
-                             stride);
+  gdk_texture_do_download (texture,
+                           GDK_MEMORY_DEFAULT,
+                           data,
+                           stride);
+}
+
+GdkMemoryFormat
+gdk_texture_get_format (GdkTexture *self)
+{
+  return self->format;
 }
 
 gboolean
@@ -540,7 +797,8 @@ gdk_texture_get_render_data (GdkTexture  *self,
  * This is a utility function intended for debugging and testing.
  * If you want more control over formats, proper error handling or
  * want to store to a `GFile` or other location, you might want to
- * look into using the gdk-pixbuf library.
+ * use [method@Gdk.Texture.save_to_png_bytes] or look into the
+ * gdk-pixbuf library.
  *
  * Returns: %TRUE if saving succeeded, %FALSE on failure.
  */
@@ -548,30 +806,110 @@ gboolean
 gdk_texture_save_to_png (GdkTexture *texture,
                          const char *filename)
 {
-  cairo_surface_t *surface;
-  cairo_status_t status;
+  GBytes *bytes;
   gboolean result;
 
   g_return_val_if_fail (GDK_IS_TEXTURE (texture), FALSE);
   g_return_val_if_fail (filename != NULL, FALSE);
 
-  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-                                        gdk_texture_get_width (texture),
-                                        gdk_texture_get_height (texture));
-  gdk_texture_download (texture,
-                        cairo_image_surface_get_data (surface),
-                        cairo_image_surface_get_stride (surface));
-  cairo_surface_mark_dirty (surface);
-
-  status = cairo_surface_write_to_png (surface, filename);
-
-  if (status != CAIRO_STATUS_SUCCESS ||
-      cairo_surface_status (surface) != CAIRO_STATUS_SUCCESS)
-    result = FALSE;
-  else
-    result = TRUE;
-
-  cairo_surface_destroy (surface);
+  bytes = gdk_save_png (texture);
+  result = g_file_set_contents (filename,
+                                g_bytes_get_data (bytes, NULL),
+                                g_bytes_get_size (bytes),
+                                NULL);
+  g_bytes_unref (bytes);
 
   return result;
+}
+
+/**
+ * gdk_texture_save_to_png_bytes:
+ * @texture: a `GdkTexture`
+ *
+ * Store the given @texture in memory as a PNG file.
+ *
+ * Use [ctor@Gdk.Texture.new_from_bytes] to read it back.
+ *
+ * If you want to serialize a texture, this is a convenient and
+ * portable way to do that.
+ *
+ * If you need more control over the generated image, such as
+ * attaching metadata, you should look into an image handling
+ * library such as the gdk-pixbuf library.
+ *
+ * If you are dealing with high dynamic range float data, you
+ * might also want to consider [method@Gdk.Texture.save_to_tiff_bytes]
+ * instead.
+ *
+ * Returns: a newly allocated `GBytes` containing PNG data
+ *
+ * Since: 4.6
+ */
+GBytes *
+gdk_texture_save_to_png_bytes (GdkTexture *texture)
+{
+  g_return_val_if_fail (GDK_IS_TEXTURE (texture), NULL);
+
+  return gdk_save_png (texture);
+}
+
+/**
+ * gdk_texture_save_to_tiff:
+ * @texture: a `GdkTexture`
+ * @filename: (type filename): the filename to store to
+ *
+ * Store the given @texture to the @filename as a TIFF file.
+ *
+ * GTK will attempt to store data without loss.
+ * Returns: %TRUE if saving succeeded, %FALSE on failure.
+ *
+ * Since: 4.6
+ */
+gboolean
+gdk_texture_save_to_tiff (GdkTexture  *texture,
+                          const char  *filename)
+{
+  GBytes *bytes;
+  gboolean result;
+
+  g_return_val_if_fail (GDK_IS_TEXTURE (texture), FALSE);
+  g_return_val_if_fail (filename != NULL, FALSE);
+
+  bytes = gdk_save_tiff (texture);
+  result = g_file_set_contents (filename,
+                                g_bytes_get_data (bytes, NULL),
+                                g_bytes_get_size (bytes),
+                                NULL);
+  g_bytes_unref (bytes);
+
+  return result;
+}
+
+/**
+ * gdk_texture_save_to_tiff_bytes:
+ * @texture: a `GdkTexture`
+ *
+ * Store the given @texture in memory as a TIFF file.
+ *
+ * Use [ctor@Gdk.Texture.new_from_bytes] to read it back.
+ *
+ * This function is intended to store a representation of the
+ * texture's data that is as accurate as possible. This is
+ * particularly relevant when working with high dynamic range
+ * images and floating-point texture data.
+ *
+ * If that is not your concern and you are interested in a
+ * smaller size and a more portable format, you might want to
+ * use [method@Gdk.Texture.save_to_png_bytes].
+ *
+ * Returns: a newly allocated `GBytes` containing TIFF data
+ *
+ * Since: 4.6
+ */
+GBytes *
+gdk_texture_save_to_tiff_bytes (GdkTexture *texture)
+{
+  g_return_val_if_fail (GDK_IS_TEXTURE (texture), NULL);
+
+  return gdk_save_tiff (texture);
 }

@@ -67,6 +67,7 @@ demos = files([
   'paintable_animated.c',
   'paintable_emblem.c',
   'paintable_mediastream.c',
+  'paintable_symbolic.c',
   'panes.c',
   'password_entry.c',
   'peg_solitaire.c',
@@ -139,7 +140,7 @@ if os_unix
   demos += files('pagesetup.c')
 endif
 
-librsvg_dep = dependency('librsvg-2.0', version: '>= 2.46.0', required: false)
+librsvg_dep = dependency('librsvg-2.0', version: '>= 2.52.0', required: false)
 
 if librsvg_dep.found()
   demos += files('paintable_svg.c')
@@ -155,15 +156,81 @@ demos_h = custom_target('gtk4 demo header',
   command: [ find_program('geninclude.py'), '@OUTPUT@', '@INPUT@' ],
 )
 
-gtkdemo_resources = gnome.compile_resources('gtkdemo_resources',
-  'demo.gresource.xml',
-  source_dir: '.',
-)
+objcopy_supports_add_symbol = false
+objcopy = find_program('objcopy', required : false)
+if objcopy.found()
+  objcopy_supports_add_symbol = run_command(objcopy, '--help').stdout().contains('--add-symbol')
+endif
+
+ld = find_program('ld', required : false)
+
+if build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and ld.found()
+  glib_compile_resources = find_program('glib-compile-resources')
+
+  # Create the resource blob
+  gtkdemo_gresource = custom_target('gtkdemo.gresource',
+      input : 'demo.gresource.xml',
+      output : 'gtkdemo.gresource',
+      depfile : 'gtkdemo.gresource.d',
+      command : [glib_compile_resources,
+                 '--generate',
+                 '--target=@OUTPUT@',
+                 '--dependency-file=@DEPFILE@',
+                 '--sourcedir=' + meson.current_source_dir(),
+                 '--sourcedir=' + meson.current_build_dir(),
+                 '@INPUT@'])
+
+  # Create resource data file
+  gtkdemo_resources_c = custom_target('gtkdemo_resources.c',
+      input : 'demo.gresource.xml',
+      output : 'gtkdemo_resources.c',
+      depfile : 'gtkdemo_resources.c.d',
+      command : [glib_compile_resources,
+                 '--generate-source',
+                 '--target=@OUTPUT@',
+                 '--dependency-file=@DEPFILE@',
+                 '--sourcedir=' + meson.current_source_dir(),
+                 '--sourcedir=' + meson.current_build_dir(),
+                 '--external-data',
+                 '--c-name', '_g_binary_gtkdemo',
+                 '@INPUT@'])
+
+  # Create object file containing resource data
+  gtkdemo_resources_binary = custom_target('gtkdemo_resources.o',
+      input : gtkdemo_gresource,
+      output : 'gtkdemo_resources.o',
+      command : [ld,
+                 '-r',
+                 '-b','binary',
+                 '@INPUT@',
+                 '-o','@OUTPUT@'])
+
+  # Rename symbol to match the one in the C file
+  gtkdemo_resources_o = custom_target('gtkdemo_resources2.o',
+    input : gtkdemo_resources_binary,
+    output : 'gtkdemo_resources2.o',
+    command : [objcopy,
+                 '--add-symbol','_g_binary_gtkdemo_resource_data=.data:0',
+                 '@INPUT@',
+                 '@OUTPUT@'])
+
+  gtkdemo_resources = [
+      gtkdemo_resources_c,
+      gtkdemo_resources_o,
+    ]
+else
+  gtkdemo_resources = gnome.compile_resources('gtkdemo_resources',
+    'demo.gresource.xml',
+    source_dir: '.',
+  )
+endif
 
 # Use a subset of compiler flags
 demo_cflags = []
 foreach flag: common_cflags
-  if flag not in ['-Werror=missing-prototypes', '-Werror=missing-declarations', '-fvisibility=hidden']
+  if flag not in ['-Werror=missing-prototypes', '-Wmissing-prototypes',
+                  '-Werror=missing-declarations', '-Wmissing-declarations',
+                  '-fvisibility=hidden']
     demo_cflags += flag
   endif
 endforeach
@@ -175,7 +242,7 @@ executable('gtk4-demo',
   c_args: gtkdemo_args + demo_cflags,
   dependencies: gtkdemo_deps,
   include_directories: confinc,
-  gui_app: true,
+  win_subsystem: 'windows',
   link_args: extra_demo_ldflags,
   install: true,
 )
@@ -185,7 +252,7 @@ executable('gtk4-demo-application',
   c_args: gtkdemo_args + common_cflags,
   dependencies: gtkdemo_deps,
   include_directories: confinc,
-  gui_app: true,
+  win_subsystem: 'windows',
   link_args: extra_demo_ldflags,
   install: true,
 )

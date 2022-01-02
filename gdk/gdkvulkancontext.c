@@ -25,7 +25,6 @@
 #include "gdkvulkancontextprivate.h"
 
 #include "gdkdisplayprivate.h"
-#include "gdkinternals.h"
 #include "gdkintl.h"
 
 /**
@@ -36,7 +35,7 @@
  *
  * `GdkVulkanContext`s are created for a surface using
  * [method@Gdk.Surface.create_vulkan_context], and the context will match
- * the the characteristics of the surface.
+ * the characteristics of the surface.
  *
  * Support for `GdkVulkanContext` is platform-specific and context creation
  * can fail, returning %NULL context.
@@ -426,6 +425,7 @@ device_supports_incremental_present (VkPhysicalDevice device)
 
 static void
 gdk_vulkan_context_begin_frame (GdkDrawContext *draw_context,
+                                gboolean        prefers_high_depth,
                                 cairo_region_t *region)
 {
   GdkVulkanContext *context = GDK_VULKAN_CONTEXT (draw_context);

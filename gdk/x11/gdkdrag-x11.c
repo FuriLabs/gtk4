@@ -34,11 +34,12 @@
 #include "gdkdevice-xi2-private.h"
 #include "gdkdisplay-x11.h"
 #include "gdkdragprivate.h"
+#include "gdkeventsprivate.h"
 #include "gdksurfaceprivate.h"
-#include "gdkinternals.h"
 #include "gdkintl.h"
 #include "gdkprivate-x11.h"
 #include "gdkscreen-x11.h"
+#include "gdkseatprivate.h"
 #include "gdkselectioninputstream-x11.h"
 #include "gdkselectionoutputstream-x11.h"
 
@@ -1612,10 +1613,29 @@ gdk_x11_drag_set_hotspot (GdkDrag *drag,
 }
 
 static void
+gdk_x11_drag_default_output_closed (GObject      *stream,
+                                    GAsyncResult *result,
+                                    gpointer      user_data)
+{
+  GError *error = NULL;
+
+  if (!g_output_stream_close_finish (G_OUTPUT_STREAM (stream), result, &error))
+    {
+      GDK_NOTE (DND,
+                g_printerr ("failed to close stream: %s\n",
+                            error->message));
+      g_error_free (error);
+    }
+
+  g_object_unref (stream);
+}
+
+static void
 gdk_x11_drag_default_output_done (GObject      *drag,
                                   GAsyncResult *result,
                                   gpointer      user_data)
 {
+  GOutputStream *stream = user_data;
   GError *error = NULL;
 
   if (!gdk_drag_write_finish (GDK_DRAG (drag), result, &error))
@@ -1623,6 +1643,12 @@ gdk_x11_drag_default_output_done (GObject      *drag,
       GDK_DISPLAY_NOTE (gdk_drag_get_display (GDK_DRAG (drag)), DND, g_printerr ("failed to write stream: %s\n", error->message));
       g_error_free (error);
     }
+
+  g_output_stream_close_async (stream,
+                               G_PRIORITY_DEFAULT,
+                               NULL, 
+                               gdk_x11_drag_default_output_closed,
+                               NULL);
 }
 
 static void
@@ -1636,8 +1662,7 @@ gdk_x11_drag_default_output_handler (GOutputStream *stream,
                         G_PRIORITY_DEFAULT,
                         NULL,
                         gdk_x11_drag_default_output_done,
-                        NULL);
-  g_object_unref (stream);
+                        stream);
 }
 
 static gboolean

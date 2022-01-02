@@ -53,7 +53,6 @@ typedef struct {
 
   GObject *object;
   CommonInfo *parent;
-  gboolean applied_properties;
 } ObjectInfo;
 
 typedef struct {
@@ -71,8 +70,9 @@ typedef struct {
   GParamSpec *pspec;
   gpointer value;
   GString *text;
-  gboolean translatable:1;
-  gboolean bound:1;
+  gboolean translatable : 1;
+  gboolean bound        : 1;
+  gboolean applied      : 1;
   char *context;
   int line;
   int col;
@@ -221,6 +221,10 @@ void      _gtk_builder_add (GtkBuilder *builder,
                             ChildInfo *child_info);
 void      _gtk_builder_add_signals (GtkBuilder *builder,
                                     GPtrArray  *signals);
+void       gtk_builder_take_bindings (GtkBuilder *builder,
+                                      GObject    *target,
+                                      GSList     *bindings);
+
 gboolean  _gtk_builder_finish (GtkBuilder  *builder,
                                GError     **error);
 void _free_signal_info (SignalInfo *info,
@@ -238,10 +242,9 @@ gboolean _gtk_builder_enum_from_string (GType         type,
                                         int          *enum_value,
                                         GError      **error);
 gboolean  _gtk_builder_flags_from_string (GType         type,
-                                          GFlagsValue  *aliases,
-					  const char   *string,
-					  guint        *value,
-					  GError      **error);
+                                          const char   *string,
+                                          guint        *value,
+                                          GError      **error);
 gboolean _gtk_builder_boolean_from_string (const char   *string,
                                            gboolean     *value,
                                            GError      **error);
@@ -250,9 +253,9 @@ const char * _gtk_builder_parser_translate (const char *domain,
                                              const char *context,
                                              const char *text);
 char *   _gtk_builder_get_resource_path (GtkBuilder *builder,
-					  const char *string);
+					  const char *string) G_GNUC_MALLOC;
 char *   _gtk_builder_get_absolute_filename (GtkBuilder *builder,
-					      const char *string);
+					      const char *string) G_GNUC_MALLOC;
 
 void      _gtk_builder_menu_start (ParserData   *parser_data,
                                    const char   *element_name,

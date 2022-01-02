@@ -30,10 +30,12 @@
 #define __GDK_PRIVATE_X11_H__
 
 #include "gdkcursor.h"
-#include "gdkinternals.h"
 #include "gdkx.h"
 #include "gdksurface-x11.h"
 #include "gdkscreen-x11.h"
+
+#include "gdk/gdkdeviceprivate.h"
+#include "gdk/gdkkeysprivate.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -138,6 +140,7 @@ guchar * _gdk_x11_device_xi2_translate_event_mask (GdkX11DeviceManagerXI2 *devic
 guint    _gdk_x11_device_xi2_translate_state      (XIModifierState *mods_state,
                                                    XIButtonState   *buttons_state,
                                                    XIGroupState    *group_state);
+guint _gdk_x11_device_xi2_gesture_type_to_phase (int evtype, int flags);
 int      _gdk_x11_device_xi2_get_id               (GdkX11DeviceXI2 *device);
 void     _gdk_device_xi2_unset_scroll_valuators   (GdkX11DeviceXI2 *device);
 
@@ -238,8 +241,6 @@ void gdk_x11_surface_raise (GdkSurface *surface);
 void gdk_x11_surface_set_opacity (GdkSurface *surface,
                                   double      opacity);
 gboolean gdk_x11_surface_supports_edge_constraints (GdkSurface *surface);
-
-GdkGrabStatus _gdk_x11_convert_grab_status (int status);
 
 cairo_surface_t * _gdk_x11_display_create_bitmap_surface (GdkDisplay *display,
                                                           int         width,

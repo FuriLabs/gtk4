@@ -1,4 +1,6 @@
 // VERTEX_SHADER:
+// cross_fade.glsl
+
 void main() {
   gl_Position = u_projection * u_modelview * vec4(aPosition, 0.0, 1.0);
 
@@ -6,6 +8,8 @@ void main() {
 }
 
 // FRAGMENT_SHADER:
+// cross_fade.glsl
+
 uniform float u_progress;
 uniform sampler2D u_source2;
 

@@ -52,6 +52,7 @@
 #include "gtkcssstringvalueprivate.h"
 #include "gtkcsstransformvalueprivate.h"
 #include "gtkcssfontvariationsvalueprivate.h"
+#include "gtkcsslineheightvalueprivate.h"
 #include "gtktypebuiltins.h"
 
 /*** REGISTRATION ***/
@@ -361,6 +362,18 @@ parse_text_decoration_style (GtkCssStyleProperty *property,
 
   if (value == NULL)
     gtk_css_parser_error_syntax (parser, "unknown text decoration style value");
+
+  return value;
+}
+
+static GtkCssValue *
+parse_text_transform (GtkCssStyleProperty *property,
+                      GtkCssParser        *parser)
+{
+  GtkCssValue *value = _gtk_css_text_transform_value_try_parse (parser);
+
+  if (value == NULL)
+    gtk_css_parser_error_syntax (parser, "unknown text transform value");
 
   return value;
 }
@@ -812,6 +825,13 @@ transform_origin_parse (GtkCssStyleProperty *property,
   return _gtk_css_position_value_parse (parser);
 }
 
+static GtkCssValue *
+parse_line_height (GtkCssStyleProperty *property,
+                   GtkCssParser        *parser)
+{
+  return gtk_css_line_height_value_parse (parser);
+}
+
 /*** REGISTRATION ***/
 
 G_STATIC_ASSERT (GTK_CSS_PROPERTY_COLOR == 0);
@@ -909,6 +929,12 @@ _gtk_css_style_property_init_properties (void)
                                           GTK_CSS_AFFECTS_TEXT_ATTRS,
                                           parse_text_decoration_style,
                                           _gtk_css_text_decoration_style_value_new (GTK_CSS_TEXT_DECORATION_STYLE_SOLID));
+  gtk_css_style_property_register        ("text-transform",
+                                          GTK_CSS_PROPERTY_TEXT_TRANSFORM,
+                                          0,
+                                          GTK_CSS_AFFECTS_TEXT_ATTRS | GTK_CSS_AFFECTS_TEXT_SIZE,
+                                          parse_text_transform,
+                                          _gtk_css_text_transform_value_new (GTK_CSS_TEXT_TRANSFORM_NONE));
   gtk_css_style_property_register        ("font-kerning",
                                           GTK_CSS_PROPERTY_FONT_KERNING,
                                           0,
@@ -1401,4 +1427,10 @@ _gtk_css_style_property_init_properties (void)
                                           GTK_CSS_AFFECTS_TEXT_ATTRS | GTK_CSS_AFFECTS_TEXT_SIZE,
                                           parse_font_variation_settings,
                                           gtk_css_font_variations_value_new_default ());
+  gtk_css_style_property_register        ("line-height",
+                                          GTK_CSS_PROPERTY_LINE_HEIGHT,
+                                          GTK_STYLE_PROPERTY_INHERIT | GTK_STYLE_PROPERTY_ANIMATED,
+                                          GTK_CSS_AFFECTS_TEXT_ATTRS | GTK_CSS_AFFECTS_TEXT_SIZE,
+                                          parse_line_height,
+                                          _gtk_css_value_ref (gtk_css_line_height_value_get_default ()));
 }

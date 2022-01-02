@@ -25,7 +25,6 @@
 #include "gdkglcontextprivate.h"
 #include "gdkdisplayprivate.h"
 #include "gdksurface.h"
-#include "gdkinternals.h"
 
 #include <epoxy/egl.h>
 
@@ -34,8 +33,6 @@ G_BEGIN_DECLS
 struct _GdkWaylandGLContext
 {
   GdkGLContext parent_instance;
-
-  EGLContext egl_context;
 };
 
 struct _GdkWaylandGLContextClass

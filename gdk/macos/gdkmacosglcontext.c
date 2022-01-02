@@ -23,7 +23,6 @@
 #include "gdkmacossurface-private.h"
 #include "gdkmacostoplevelsurface-private.h"
 
-#include "gdkinternals.h"
 #include "gdkintl.h"
 
 #include <OpenGL/gl.h>
@@ -164,7 +163,7 @@ ensure_gl_view (GdkMacosGLContext *self)
   return [nswindow contentView];
 }
 
-static gboolean
+static GdkGLAPI
 gdk_macos_gl_context_real_realize (GdkGLContext  *context,
                                    GError       **error)
 {
@@ -185,7 +184,10 @@ gdk_macos_gl_context_real_realize (GdkGLContext  *context,
   g_assert (GDK_IS_MACOS_GL_CONTEXT (self));
 
   if (self->gl_context != nil)
-    return TRUE;
+    return GDK_GL_API_GL;
+
+  if (!gdk_gl_context_is_api_allowed (context, GDK_GL_API_GL, error))
+    return 0;
 
   existing = [NSOpenGLContext currentContext];
 
@@ -198,7 +200,7 @@ gdk_macos_gl_context_real_realize (GdkGLContext  *context,
   if (shared != NULL)
     {
       if (!(shared_gl_context = get_ns_open_gl_context (GDK_MACOS_GL_CONTEXT (shared), error)))
-        return FALSE;
+        return 0;
     }
 
   GDK_DISPLAY_NOTE (display,
@@ -207,7 +209,7 @@ gdk_macos_gl_context_real_realize (GdkGLContext  *context,
                                major, minor));
 
   if (!(pixelFormat = create_pixel_format (major, minor, error)))
-    return FALSE;
+    return 0;
 
   gl_context = [[NSOpenGLContext alloc] initWithFormat:pixelFormat
                                           shareContext:shared_gl_context];
@@ -220,15 +222,15 @@ gdk_macos_gl_context_real_realize (GdkGLContext  *context,
                            GDK_GL_ERROR,
                            GDK_GL_ERROR_NOT_AVAILABLE,
                            "Failed to create NSOpenGLContext");
-      return FALSE;
+      return 0;
     }
 
   cgl_context = [gl_context CGLContextObj];
 
   swapRect[0] = 0;
   swapRect[1] = 0;
-  swapRect[2] = surface->width;
-  swapRect[3] = surface->height;
+  swapRect[2] = surface ? surface->width : 0;
+  swapRect[3] = surface ? surface->height : 0;
 
   CGLSetParameter (cgl_context, kCGLCPSwapRectangle, swapRect);
   CGLSetParameter (cgl_context, kCGLCPSwapInterval, &sync_to_framerate);
@@ -259,7 +261,7 @@ gdk_macos_gl_context_real_realize (GdkGLContext  *context,
   if (existing != NULL)
     [existing makeCurrentContext];
 
-  return TRUE;
+  return GDK_GL_API_GL;
 }
 
 static gboolean
@@ -292,6 +294,7 @@ opaque_region_covers_surface (GdkMacosGLContext *self)
 
 static void
 gdk_macos_gl_context_begin_frame (GdkDrawContext *context,
+                                  gboolean        prefers_high_depth,
                                   cairo_region_t *painted)
 {
   GdkMacosGLContext *self = (GdkMacosGLContext *)context;
@@ -345,7 +348,7 @@ gdk_macos_gl_context_begin_frame (GdkDrawContext *context,
       [self->gl_context update];
     }
 
-  GDK_DRAW_CONTEXT_CLASS (gdk_macos_gl_context_parent_class)->begin_frame (context, painted);
+  GDK_DRAW_CONTEXT_CLASS (gdk_macos_gl_context_parent_class)->begin_frame (context, prefers_high_depth, painted);
 
   if (!self->is_attached)
     {

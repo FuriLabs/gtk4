@@ -151,6 +151,7 @@ struct _GtkCssFontValues {
   GtkCssValue *secondary_caret_color; // NULL if currentColor
   GtkCssValue *font_feature_settings;
   GtkCssValue *font_variation_settings;
+  GtkCssValue *line_height;
 };
 
 struct _GtkCssFontVariantValues {
@@ -158,6 +159,7 @@ struct _GtkCssFontVariantValues {
   GtkCssValue *text_decoration_line;
   GtkCssValue *text_decoration_color; // NULL if currentColor
   GtkCssValue *text_decoration_style;
+  GtkCssValue *text_transform;
   GtkCssValue *font_kerning;
   GtkCssValue *font_variant_ligatures;
   GtkCssValue *font_variant_position;
@@ -262,6 +264,7 @@ gboolean                gtk_css_style_print                     (GtkCssStyle    
                                                                  guint                   indent,
                                                                  gboolean                skip_initial);
 
+PangoTextTransform      gtk_css_style_get_pango_text_transform  (GtkCssStyle            *style);
 char *                  gtk_css_style_compute_font_features     (GtkCssStyle            *style);
 PangoAttrList *         gtk_css_style_get_pango_attributes      (GtkCssStyle            *style);
 PangoFontDescription *  gtk_css_style_get_pango_font            (GtkCssStyle            *style);

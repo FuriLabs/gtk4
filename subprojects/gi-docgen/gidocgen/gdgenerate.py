@@ -383,8 +383,6 @@ class TemplateConstant:
 class TemplateProperty:
     def __init__(self, namespace, type_, prop):
         self.name = prop.name
-        self.type_name = prop.target.name
-        self.type_cname = prop.target.ctype
         self.is_fundamental = prop.target.is_fundamental
         self.is_array = isinstance(prop.target, gir.ArrayType)
         self.is_list = isinstance(prop.target, gir.ListType)
@@ -393,19 +391,23 @@ class TemplateProperty:
         self.writable = prop.writable
         self.construct = prop.construct
         self.construct_only = prop.construct_only
-        if self.type_cname is None:
-            if prop.target.is_fundamental:
-                self.type_cname = prop.target.name
-            elif self.is_array or self.is_list:
-                value_type = prop.target.value_type
-                if value_type.name in ['utf8', 'filename']:
-                    self.type_cname = 'gchar*'
-                elif value_type.ctype is None:
-                    self.type_cname = type_name_to_cname(value_type.name, True)
-                else:
-                    self.type_cname = value_type.ctype
+        if self.is_fundamental:
+            self.type_name = prop.target.name
+            self.type_cname = prop.target.ctype
+        elif self.is_array or self.is_list:
+            value_type = prop.target.value_type
+            if value_type.name in ['utf8', 'filename']:
+                self.type_name = "string[]"
+                self.type_cname = "char*"
+            elif value_type.ctype is not None:
+                self.type_name = value_type.name
+                self.type_cname = value_type.ctype
             else:
-                self.type_cname = type_name_to_cname(prop.target.name, True)
+                self.type_name = value_type.name
+                self.type_cname = type_name_to_cname(value_type.name, True)
+        else:
+            self.type_name = prop.target.name
+            self.type_cname = prop.target.ctype
         if prop.doc is not None:
             self.summary = utils.preprocess_docs(prop.doc.content, namespace, summary=True)
             self.description = utils.preprocess_docs(prop.doc.content, namespace)
@@ -510,25 +512,17 @@ class TemplateProperty:
             if link is not None:
                 self.attributes["Getter method"] = link
 
-        if self.is_array:
-            name = prop.target.value_type.name
-        elif self.is_list:
-            name = prop.target.value_type.name
-        elif self.type_name is not None:
-            name = self.type_name
-        else:
-            name = None
-        if name is not None:
-            if self.is_fundamental:
-                self.link = f"<code>{self.type_cname}</code>"
-            elif self.is_array or self.is_list:
-                self.link = f"<code>{self.type_cname}</code>"
+        if self.is_fundamental:
+            self.link = f"<code>{self.type_cname}</code>"
+        elif self.is_array or self.is_list:
+            self.link = f"<code>{self.type_cname}</code>"
+        elif prop.target.name is not None:
+            name = prop.target.name
+            if '.' in name:
+                ns, name = name.split('.')
             else:
-                if '.' in name:
-                    ns, name = name.split('.')
-                else:
-                    ns = namespace.name
-                self.link = gen_type_link(namespace.repository, ns, name, self.type_cname)
+                ns = namespace.name
+            self.link = gen_type_link(namespace.repository, ns, name, self.type_cname)
 
     @property
     def c_decl(self):
@@ -549,12 +543,6 @@ class TemplateArgument:
     def __init__(self, namespace, call, argument):
         self.name = argument.name
         self.type_name = argument.target.name
-        if isinstance(call, gir.FunctionMacro):
-            self.type_cname = '-'
-        else:
-            self.type_cname = argument.target.ctype
-            if self.type_cname is None:
-                self.type_cname = type_name_to_cname(argument.target.name, True)
         self.is_array = isinstance(argument.target, gir.ArrayType)
         self.is_list = isinstance(argument.target, gir.ListType)
         self.is_map = isinstance(argument.target, gir.MapType)
@@ -562,6 +550,32 @@ class TemplateArgument:
         self.is_macro = isinstance(call, gir.FunctionMacro)
         self.is_list_model = self.type_name in ['Gio.ListModel', 'GListModel']
         self.is_fundamental = argument.target.is_fundamental
+        if isinstance(call, gir.FunctionMacro):
+            self.type_cname = '-'
+        elif self.is_array or self.is_list:
+            if argument.target.ctype is None:
+                if argument.target.value_type.name in ['utf8', 'filename']:
+                    self.type_cname = 'char**'
+                elif argument.target.value_type.ctype is not None:
+                    self.type_cname = argument.target.value_type.ctype + '*'
+                else:
+                    self.type_cname = 'gpointer'
+            else:
+                self.type_cname = argument.target.ctype
+        elif self.type_name in ['utf8', 'filename']:
+            if argument.target.ctype is None:
+                self.type_cname = 'char*'
+            else:
+                self.type_cname = argument.target.ctype
+        elif self.is_fundamental:
+            if argument.target.ctype is None:
+                self.type_cname = type_name_to_cname(argument.target.name, False)
+            else:
+                self.type_cname = argument.target.ctype
+        else:
+            self.type_cname = argument.target.ctype
+            if self.type_cname is None:
+                self.type_cname = type_name_to_cname(argument.target.name, True)
         self.transfer = argument.transfer or 'none'
         if isinstance(call, gir.Method):
             self.transfer_note = METHOD_ARG_TRANSFER_MODES[argument.transfer or 'none']
@@ -624,6 +638,10 @@ class TemplateArgument:
 
     @property
     def is_pointer(self):
+        if self.type_cname is None:
+            return False
+        if self.direction in ['out', 'inout'] and self.is_fundamental and self.type_cname.count('*') == 1:
+            return False
         return '*' in self.type_cname
 
     @property
@@ -703,6 +721,8 @@ class TemplateReturnValue:
 
     @property
     def is_pointer(self):
+        if self.type_cname is None:
+            return False
         return '*' in self.type_cname
 
 
@@ -1146,6 +1166,7 @@ class TemplateField:
             self.type_name = 'none'
             self.type_cname = 'gpointer'
         self.private = field.private
+        self.bits = field.bits
         if field.doc is not None:
             self.description = utils.preprocess_docs(field.doc.content, namespace)
         else:
@@ -1612,6 +1633,8 @@ class TemplateRecord:
             for field in self.fields:
                 if field.is_callback:
                     res += [f"  {field.type_cname};"]
+                elif field.bits > 0:
+                    res += [f"  {field.type_cname} {field.name} : {field.bits};"]
                 else:
                     res += [f"  {field.type_cname} {field.name};"]
         else:
@@ -2661,6 +2684,28 @@ def gen_types_hierarchy(config, theme_config, output_dir, jinja_env, repository)
     }
 
 
+def gen_opensearch(config, repository, namespace, symbols, content_files):
+    desc = etree.Element('OpenSearchDescription')
+    desc.set("xmlns", "http://a9.com/-/spec/opensearch/1.1/")
+    desc.set("xmlns:moz", "http://www.mozilla.org/2006/browser/search/")
+    sub = etree.SubElement(desc, 'ShortName')
+    sub.text = f"{namespace.name}"
+    sub = etree.SubElement(desc, 'Description')
+    sub.text = f"{namespace.name}-{namespace.version} Reference Manual"
+    sub = etree.SubElement(desc, 'InputEncoding')
+    sub.text = "UTF-8"
+    if config.logo_url:
+        sub = etree.SubElement(desc, 'Image')
+        sub.text = config.logo_url
+    sub = etree.SubElement(desc, 'Url', type="text/html")
+    sub.set("type", "text/html")
+    sub.set("template", f"{config.docs_url}/?q={{searchTerms}}")
+    sub = etree.SubElement(desc, 'moz:SearchForm')
+    sub.text = f"{config.docs_url}"
+
+    return etree.ElementTree(desc)
+
+
 def gen_devhelp(config, repository, namespace, symbols, content_files):
     book = etree.Element('book')
     book.set("xmlns", "http://www.devhelp.net/book")
@@ -2945,6 +2990,11 @@ def gen_reference(config, options, repository, templates_dir, theme_config, cont
         res.write(devhelp_file, encoding="UTF-8")
 
     if config.search_index:
+        if config.docs_url:
+            opensearch_file = os.path.join(ns_dir, "opensearch.xml")
+            log.info(f"Creating OpenSearch file for {namespace.name}-{namespace.version}: {opensearch_file}")
+            res = gen_opensearch(config, repository, namespace, template_symbols, content_files)
+            res.write(opensearch_file, encoding="UTF-8")
         gdgenindices.gen_indices(config, repository, content_dirs, ns_dir)
 
     copy_files = []

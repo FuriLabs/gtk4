@@ -29,22 +29,16 @@ G_BEGIN_DECLS
 #define GDK_MEMORY_GDK_PIXBUF_OPAQUE GDK_MEMORY_R8G8B8
 #define GDK_MEMORY_GDK_PIXBUF_ALPHA GDK_MEMORY_R8G8B8A8
 
-#define GDK_MEMORY_CAIRO_FORMAT_ARGB32 GDK_MEMORY_DEFAULT
+GdkMemoryTexture *      gdk_memory_texture_from_texture     (GdkTexture        *texture,
+                                                             GdkMemoryFormat    format);
+GdkTexture *            gdk_memory_texture_new_subtexture   (GdkMemoryTexture  *texture,
+                                                             int                x,
+                                                             int                y,
+                                                             int                width,
+                                                             int                height);
 
-gsize                   gdk_memory_format_bytes_per_pixel   (GdkMemoryFormat    format);
-
-GdkMemoryFormat         gdk_memory_texture_get_format       (GdkMemoryTexture  *self);
 const guchar *          gdk_memory_texture_get_data         (GdkMemoryTexture  *self);
 gsize                   gdk_memory_texture_get_stride       (GdkMemoryTexture  *self);
-
-void                    gdk_memory_convert                  (guchar            *dest_data,
-                                                             gsize              dest_stride,
-                                                             GdkMemoryFormat    dest_format,
-                                                             const guchar      *src_data,
-                                                             gsize              src_stride,
-                                                             GdkMemoryFormat    src_format,
-                                                             gsize              width,
-                                                             gsize              height);
 
 
 G_END_DECLS

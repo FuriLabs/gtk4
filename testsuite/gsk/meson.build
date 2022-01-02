@@ -23,6 +23,7 @@ compare_render_tests = [
   'blend-difference',
   'blend-invisible-child',
   'blend-normal',
+  'border-bottom-right',
   'borders-rotated',
   'borders-scaled',
   'clip-coordinates-2d',
@@ -62,6 +63,7 @@ compare_render_tests = [
   'issue-3615',
   'nested-rounded-clips',
   'opacity_clip',
+  'opacity-overdraw',
   'opacity-overlapping-children',
   'outset_shadow_offset_both',
   'outset_shadow_offset_x',
@@ -91,11 +93,10 @@ informative_render_tests = [
 ]
 
 renderers = [
-  # name      exclude term
-  [ 'gl', '-ngl'    ],
-  [ 'ngl', ''    ],
-  [ 'broadway',  '-3d' ],
-  [ 'cairo',  '-3d' ],
+  # name          exclude term
+  [ 'gl', ''           ],
+  [ 'broadway',   '-3d' ],
+  [ 'cairo',      '-3d' ],
 ]
 
 foreach renderer : renderers

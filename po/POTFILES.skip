@@ -7,6 +7,7 @@ demos/gtk-demo/appwindow.c
 demos/gtk-demo/blendmodes.ui
 demos/gtk-demo/changedisplay.c
 demos/gtk-demo/clipboard.c
+demos/gtk-demo/clipboard.ui
 demos/gtk-demo/combobox.c
 demos/gtk-demo/constraints_builder.ui
 demos/gtk-demo/constraints.ui
@@ -238,6 +239,8 @@ testsuite/reftests/label-ellipsize-with-big.ref.ui
 testsuite/reftests/label-ellipsize-with-big.ui
 testsuite/reftests/label-fonts.ref.ui
 testsuite/reftests/label-fonts.ui
+testsuite/reftests/label-max-width-chars-and-halign-and-infinite-width.ref.ui
+testsuite/reftests/label-max-width-chars-and-halign-and-infinite-width.ui
 testsuite/reftests/label-shadows.ref.ui
 testsuite/reftests/label-shadows.ui
 testsuite/reftests/label-sizing.ref.ui
@@ -252,6 +255,8 @@ testsuite/reftests/label-width-chars-dont-shrink.ref.ui
 testsuite/reftests/label-width-chars-dont-shrink.ui
 testsuite/reftests/label-wrap-justify.ref.ui
 testsuite/reftests/label-wrap-justify.ui
+testsuite/reftests/label-wrap-width-chars.ref.ui
+testsuite/reftests/label-wrap-width-chars.ui
 testsuite/reftests/link-coloring.ref.ui
 testsuite/reftests/link-coloring.ui
 testsuite/reftests/messagedialog-secondarytext.ref.ui
@@ -315,6 +320,8 @@ testsuite/reftests/window-height-for-width.ref.ui
 testsuite/reftests/window-height-for-width.ui
 testsuite/reftests/window-show-contents-on-map.ref.ui
 testsuite/reftests/window-show-contents-on-map.ui
+testsuite/reftests/wrapping-in-boxes-in-boxes.ref.ui
+testsuite/reftests/wrapping-in-boxes-in-boxes.ui
 testsuite/tools/simplify-data-3to4/assistant.ui
 testsuite/tools/simplify-data-3to4/box.ui
 testsuite/tools/simplify-data-3to4/grid.ui

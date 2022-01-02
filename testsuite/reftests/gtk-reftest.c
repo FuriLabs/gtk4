@@ -157,7 +157,7 @@ get_components_of_test_file (const char  *test_file,
   if (basename)
     {
       char *base = g_path_get_basename (test_file);
-      
+
       if (g_str_has_suffix (base, ".ui"))
         base[strlen (base) - strlen (".ui")] = '\0';
 
@@ -241,7 +241,7 @@ add_extra_css (const char *testname,
 {
   GtkStyleProvider *provider = NULL;
   char *css_file;
-  
+
   css_file = get_test_file (testname, extension, TRUE);
   if (css_file == NULL)
     return NULL;
@@ -254,7 +254,7 @@ add_extra_css (const char *testname,
                                               GTK_STYLE_PROVIDER_PRIORITY_FORCE);
 
   g_free (css_file);
-  
+
   return provider;
 }
 
@@ -269,14 +269,14 @@ remove_extra_css (GtkStyleProvider *provider)
 }
 
 static void
-save_image (cairo_surface_t *surface,
-            const char      *test_name,
-            const char      *extension)
+save_image (GdkTexture *texture,
+            const char *test_name,
+            const char *extension)
 {
   GError *error = NULL;
   char *filename;
-  int ret;
-  
+  gboolean ret;
+
   filename = get_output_file (test_name, extension, &error);
   if (filename == NULL)
     {
@@ -286,9 +286,42 @@ save_image (cairo_surface_t *surface,
     }
 
   g_test_message ("Storing test result image at %s", filename);
-  ret = cairo_surface_write_to_png (surface, filename);
-  g_assert_true (ret == CAIRO_STATUS_SUCCESS);
+  ret = gdk_texture_save_to_png (texture, filename);
+  g_assert_true (ret);
 
+  g_free (filename);
+}
+
+static void
+save_node (GskRenderNode *node,
+           const char    *test_name,
+           const char    *extension)
+{
+  GError *error = NULL;
+  char *filename;
+  gboolean ret;
+  GBytes *bytes;
+
+  filename = get_output_file (test_name, extension, &error);
+  if (filename == NULL)
+    {
+      g_test_message ("Not storing test result node: %s", error->message);
+      g_error_free (error);
+      return;
+    }
+
+  g_test_message ("Storing test result node at %s", filename);
+  if (node)
+    bytes = gsk_render_node_serialize (node);
+  else
+    bytes = g_bytes_new ("", 0);
+  ret = g_file_set_contents (filename,
+                             g_bytes_get_data (bytes, NULL),
+                             g_bytes_get_size (bytes),
+                             NULL);
+  g_assert_true (ret);
+
+  g_bytes_unref (bytes);
   g_free (filename);
 }
 
@@ -296,7 +329,7 @@ static void
 test_ui_file (GFile *file)
 {
   char *ui_file, *reference_file;
-  cairo_surface_t *ui_image, *reference_image, *diff_image;
+  GdkTexture *ui_image, *reference_image, *diff_image;
   GtkStyleProvider *provider;
 
   ui_file = g_file_get_path (file);
@@ -306,25 +339,39 @@ test_ui_file (GFile *file)
   ui_image = reftest_snapshot_ui_file (ui_file);
 
   if ((reference_file = get_reference_image (ui_file)) != NULL)
-    reference_image = cairo_image_surface_create_from_png (reference_file);
+    {
+      GError *error = NULL;
+
+      reference_image = gdk_texture_new_from_filename (reference_file, &error);
+      if (reference_image == NULL)
+        {
+          g_test_message ("Failed to load reference image: %s", error->message);
+          g_clear_error (&error);
+          g_test_fail ();
+        }
+    }
   else if ((reference_file = get_test_file (ui_file, ".ref.ui", TRUE)) != NULL)
     reference_image = reftest_snapshot_ui_file (reference_file);
   else
     {
-      reference_image = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 1, 1);
+      reference_image = NULL;
       g_test_message ("No reference image.");
       g_test_fail ();
     }
   g_free (reference_file);
+  if (reference_image == NULL)
+    reference_image = gdk_memory_texture_new (1, 1, GDK_MEMORY_DEFAULT, g_bytes_new ((guchar[4]) {0, 0, 0, 0}, 4), 4);
 
-  diff_image = reftest_compare_surfaces (ui_image, reference_image);
+  diff_image = reftest_compare_textures (ui_image, reference_image);
 
   save_image (ui_image, ui_file, ".out.png");
   save_image (reference_image, ui_file, ".ref.png");
   if (diff_image)
     {
+      save_node (g_object_get_data (G_OBJECT (ui_image), "source-render-node"), ui_file, ".out.node");
+      save_node (g_object_get_data (G_OBJECT (reference_image), "source-render-node"), ui_file, ".ref.node");
       save_image (diff_image, ui_file, ".diff.png");
-      cairo_surface_destroy (diff_image);
+      g_object_unref (diff_image);
       g_test_fail ();
     }
 
@@ -332,8 +379,8 @@ test_ui_file (GFile *file)
 
   g_free (ui_file);
 
-  cairo_surface_destroy (ui_image);
-  cairo_surface_destroy (reference_image);
+  g_clear_object (&ui_image);
+  g_clear_object (&reference_image);
 }
 
 static int
@@ -397,7 +444,7 @@ add_test_for_file (GFile *file)
 
       g_object_unref (info);
     }
-  
+
   g_assert_no_error (error);
   g_object_unref (enumerator);
 
@@ -450,38 +497,10 @@ log_writer (GLogLevelFlags   log_level,
     }
 #endif
 
-  return g_log_writer_standard_streams (log_level, fields, n_fields, user_data);
-}
+ if (!g_log_writer_default_would_drop (log_level, NULL))
+    return g_log_writer_standard_streams (log_level, fields, n_fields, user_data);
 
-static void
-enforce_default_settings (void)
-{
-  GtkSettings *settings;
-  GObjectClass *klass;
-  GParamSpec **pspecs;
-  guint n_pspecs;
-  int i;
-
-  settings = gtk_settings_get_default ();
-
-  klass = g_type_class_ref (G_OBJECT_TYPE (settings));
-
-  pspecs = g_object_class_list_properties (klass, &n_pspecs);
-  for (i = 0; i < n_pspecs; i++)
-    {
-      GParamSpec *pspec = pspecs[i];
-      const GValue *value;
-
-      if ((pspec->flags & G_PARAM_WRITABLE) == 0)
-        continue;
-
-      value = g_param_spec_get_default_value (pspec);
-      g_object_set_property (G_OBJECT (settings), pspec->name, value);
-    }
-
-  g_free (pspecs);
-
-  g_type_class_unref (klass);
+  return G_LOG_WRITER_HANDLED;
 }
 
 int
@@ -489,15 +508,16 @@ main (int argc, char **argv)
 {
   const char *basedir;
   int result;
-  
-  /* I don't want to fight fuzzy scaling algorithms in GPUs,
-   * so unless you explicitly set it to something else, we
-   * will use Cairo's image surface.
-   */
-  g_setenv ("GDK_RENDERING", "image", FALSE);
 
   if (!parse_command_line (&argc, &argv))
     return 1;
+
+  /* Override some settings that otherwise might affect
+   * the reliability of our output.
+   */
+  g_object_set (gtk_settings_get_default (),
+                "gtk-cursor-blink", FALSE,
+                NULL);
 
   if (arg_base_dir)
     basedir = arg_base_dir;
@@ -509,7 +529,7 @@ main (int argc, char **argv)
       GFile *dir;
 
       dir = g_file_new_for_path (basedir);
-      
+
       add_test_for_file (dir);
 
       g_object_unref (dir);
@@ -533,8 +553,6 @@ main (int argc, char **argv)
    * "file" property of GtkImage as a relative path in builder files.
    */
   chdir (basedir);
-
-  enforce_default_settings ();
 
   g_log_set_writer_func (log_writer, NULL, NULL);
 

@@ -22,7 +22,6 @@
 
 #include "gdkprivate-wayland.h"
 
-#include "gdkinternals.h"
 #include "gdkprofilerprivate.h"
 
 static const cairo_user_data_key_t gdk_wayland_cairo_context_key;
@@ -145,6 +144,7 @@ gdk_wayland_cairo_context_create_surface (GdkWaylandCairoContext *self)
 
 static void
 gdk_wayland_cairo_context_begin_frame (GdkDrawContext *draw_context,
+                                       gboolean        prefers_high_depth,
                                        cairo_region_t *region)
 {
   GdkWaylandCairoContext *self = GDK_WAYLAND_CAIRO_CONTEXT (draw_context);

@@ -286,6 +286,31 @@ typedef enum
 } GtkMovementStep;
 
 /**
+ * GtkNaturalWrapMode:
+ * @GTK_NATURAL_WRAP_INHERIT: Inherit the minimum size request.
+ *   In particular, this should be used with %PANGO_WRAP_CHAR.
+ * @GTK_NATURAL_WRAP_NONE: Try not to wrap the text. This mode is the
+ *   closest to GTK3's behavior but can lead to a wide label leaving
+ *   lots of empty space below the text.
+ * @GTK_NATURAL_WRAP_WORD: Attempt to wrap at word boundaries. This
+ *   is useful in particular when using %PANGO_WRAP_WORD_CHAR as the
+ *   wrap mode.
+ *
+ * Options for selecting a different wrap mode for natural size
+ * requests.
+ *
+ * See for example the [property@Gtk.Label:natural-wrap-mode] property.
+ *
+ * Since: 4.6
+ */
+typedef enum
+{
+  GTK_NATURAL_WRAP_INHERIT,
+  GTK_NATURAL_WRAP_NONE,
+  GTK_NATURAL_WRAP_WORD
+} GtkNaturalWrapMode;
+
+/**
  * GtkScrollStep:
  * @GTK_SCROLL_STEPS: Scroll in steps.
  * @GTK_SCROLL_PAGES: Scroll by pages.
@@ -685,7 +710,7 @@ typedef enum {
  * @GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH: Prefer height-for-width geometry management
  * @GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT: Prefer width-for-height geometry management
  * @GTK_SIZE_REQUEST_CONSTANT_SIZE: Don’t trade height-for-width or width-for-height
- * 
+ *
  * Specifies a preference for height-for-width or
  * width-for-height geometry management.
  */
@@ -1130,6 +1155,27 @@ typedef enum {
   GTK_SYSTEM_SETTING_DISPLAY,
   GTK_SYSTEM_SETTING_ICON_THEME
 } GtkSystemSetting;
+
+/**
+ * GtkSymbolicColor:
+ * @GTK_SYMBOLIC_COLOR_FOREGROUND: The default foreground color
+ * @GTK_SYMBOLIC_COLOR_ERROR: Indication color for errors
+ * @GTK_SYMBOLIC_COLOR_WARNING: Indication color for warnings
+ * @GTK_SYMBOLIC_COLOR_SUCCESS: Indication color for success
+ *
+ * The indexes of colors passed to symbolic color rendering, such as
+ * [vfunc@Gtk.SymbolicPaintable.snapshot_symbolic].
+ *
+ * More values may be added over time.
+ *
+ * Since: 4.6
+ */
+typedef enum {
+  GTK_SYMBOLIC_COLOR_FOREGROUND = 0,
+  GTK_SYMBOLIC_COLOR_ERROR = 1,
+  GTK_SYMBOLIC_COLOR_WARNING = 2,
+  GTK_SYMBOLIC_COLOR_SUCCESS = 3
+} GtkSymbolicColor;
 
 /**
  * GtkAccessibleRole:

@@ -1,3 +1,9 @@
+gtk4 (4.6.0+ds1-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 02 Jan 2022 12:50:50 +0000
+
 gtk4 (4.4.1+ds1-3) unstable; urgency=medium
 
   * debian/control.in: Don't build ffmpeg backend on architectures where

@@ -1,8 +1,19 @@
 gtk4 (4.6.0+ds1-1) UNRELEASED; urgency=medium
 
   * New upstream release
+  * Rebase patch series
+    - d/p/debian/testsuite-Don-t-test-the-old-gl-renderer.patch:
+      Drop, no longer needed
+    - d/p/debian/Disable-clipboard-test.patch:
+      Try re-enabling this test now that upstream avoid it being run in
+      parallel
+  * d/control.in: Update build-dependencies
+  * d/copyright: Update
+  * d/rules: Don't build man pages under nodoc build-profile
+  * d/source/include-binaries, d/rules:
+    Remove workaround for Compose endianness handling, no longer necessary
 
- -- Simon McVittie <smcv@debian.org>  Sun, 02 Jan 2022 12:50:50 +0000
+ -- Simon McVittie <smcv@debian.org>  Sun, 02 Jan 2022 15:22:52 +0000
 
 gtk4 (4.4.1+ds1-3) unstable; urgency=medium
 

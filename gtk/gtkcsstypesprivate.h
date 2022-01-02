@@ -198,6 +198,7 @@ enum { /*< skip >*/
   GTK_CSS_PROPERTY_TEXT_DECORATION_LINE,
   GTK_CSS_PROPERTY_TEXT_DECORATION_COLOR,
   GTK_CSS_PROPERTY_TEXT_DECORATION_STYLE,
+  GTK_CSS_PROPERTY_TEXT_TRANSFORM,
   GTK_CSS_PROPERTY_FONT_KERNING,
   GTK_CSS_PROPERTY_FONT_VARIANT_LIGATURES,
   GTK_CSS_PROPERTY_FONT_VARIANT_POSITION,
@@ -275,6 +276,7 @@ enum { /*< skip >*/
   GTK_CSS_PROPERTY_SECONDARY_CARET_COLOR,
   GTK_CSS_PROPERTY_FONT_FEATURE_SETTINGS,
   GTK_CSS_PROPERTY_FONT_VARIATION_SETTINGS,
+  GTK_CSS_PROPERTY_LINE_HEIGHT,
   /* add more */
   GTK_CSS_PROPERTY_N_PROPERTIES
 };
@@ -336,6 +338,13 @@ typedef enum /*< skip >*/ {
   GTK_CSS_TEXT_DECORATION_STYLE_DOUBLE,
   GTK_CSS_TEXT_DECORATION_STYLE_WAVY
 } GtkTextDecorationStyle;
+
+typedef enum /*< skip >*/ {
+  GTK_CSS_TEXT_TRANSFORM_NONE,
+  GTK_CSS_TEXT_TRANSFORM_LOWERCASE,
+  GTK_CSS_TEXT_TRANSFORM_UPPERCASE,
+  GTK_CSS_TEXT_TRANSFORM_CAPITALIZE,
+} GtkTextTransform;
 
 /* for the order in arrays */
 typedef enum /*< skip >*/ {
@@ -443,16 +452,75 @@ typedef enum /*< skip >*/ {
   GTK_CSS_FONT_VARIANT_EAST_ASIAN_RUBY         = 1 << 9
 } GtkCssFontVariantEastAsian;
 
-GtkCssChange            _gtk_css_change_for_sibling              (GtkCssChange       match);
-GtkCssChange            _gtk_css_change_for_child                (GtkCssChange       match);
+static inline GtkCssChange
+_gtk_css_change_for_sibling (GtkCssChange match)
+{
+#define BASE_STATES ( GTK_CSS_CHANGE_CLASS \
+                    | GTK_CSS_CHANGE_NAME \
+                    | GTK_CSS_CHANGE_ID \
+                    | GTK_CSS_CHANGE_FIRST_CHILD \
+                    | GTK_CSS_CHANGE_LAST_CHILD \
+                    | GTK_CSS_CHANGE_NTH_CHILD \
+                    | GTK_CSS_CHANGE_NTH_LAST_CHILD \
+                    | GTK_CSS_CHANGE_STATE \
+                    | GTK_CSS_CHANGE_HOVER \
+                    | GTK_CSS_CHANGE_DISABLED \
+                    | GTK_CSS_CHANGE_SELECTED \
+                    | GTK_CSS_CHANGE_BACKDROP)
 
-GtkCssDimension         gtk_css_unit_get_dimension               (GtkCssUnit         unit);
+#define KEEP_STATES ( ~(BASE_STATES|GTK_CSS_CHANGE_SOURCE|GTK_CSS_CHANGE_PARENT_STYLE) \
+                    | GTK_CSS_CHANGE_NTH_CHILD \
+                    | GTK_CSS_CHANGE_NTH_LAST_CHILD)
 
-char *                  gtk_css_change_to_string                 (GtkCssChange       change);
+  return (match & KEEP_STATES) | ((match & BASE_STATES) << GTK_CSS_CHANGE_SIBLING_SHIFT);
+
+#undef BASE_STATES
+#undef KEEP_STATES
+}
+
+static inline GtkCssChange
+_gtk_css_change_for_child (GtkCssChange match)
+{
+#define BASE_STATES ( GTK_CSS_CHANGE_CLASS \
+                    | GTK_CSS_CHANGE_NAME \
+                    | GTK_CSS_CHANGE_ID \
+                    | GTK_CSS_CHANGE_FIRST_CHILD \
+                    | GTK_CSS_CHANGE_LAST_CHILD \
+                    | GTK_CSS_CHANGE_NTH_CHILD \
+                    | GTK_CSS_CHANGE_NTH_LAST_CHILD \
+                    | GTK_CSS_CHANGE_STATE \
+                    | GTK_CSS_CHANGE_HOVER \
+                    | GTK_CSS_CHANGE_DISABLED \
+                    | GTK_CSS_CHANGE_BACKDROP \
+                    | GTK_CSS_CHANGE_SELECTED \
+                    | GTK_CSS_CHANGE_SIBLING_CLASS \
+                    | GTK_CSS_CHANGE_SIBLING_NAME \
+                    | GTK_CSS_CHANGE_SIBLING_ID \
+                    | GTK_CSS_CHANGE_SIBLING_FIRST_CHILD \
+                    | GTK_CSS_CHANGE_SIBLING_LAST_CHILD \
+                    | GTK_CSS_CHANGE_SIBLING_NTH_CHILD \
+                    | GTK_CSS_CHANGE_SIBLING_NTH_LAST_CHILD \
+                    | GTK_CSS_CHANGE_SIBLING_STATE \
+                    | GTK_CSS_CHANGE_SIBLING_HOVER \
+                    | GTK_CSS_CHANGE_SIBLING_DISABLED \
+                    | GTK_CSS_CHANGE_SIBLING_BACKDROP \
+                    | GTK_CSS_CHANGE_SIBLING_SELECTED)
+
+#define KEEP_STATES (~(BASE_STATES|GTK_CSS_CHANGE_SOURCE|GTK_CSS_CHANGE_PARENT_STYLE))
+
+  return (match & KEEP_STATES) | ((match & BASE_STATES) << GTK_CSS_CHANGE_PARENT_SHIFT);
+
+#undef BASE_STATES
+#undef KEEP_STATES
+}
+
+GtkCssDimension         gtk_css_unit_get_dimension               (GtkCssUnit         unit) G_GNUC_CONST;
+
+char *                  gtk_css_change_to_string                 (GtkCssChange       change) G_GNUC_MALLOC;
 void                    gtk_css_change_print                     (GtkCssChange       change,
                                                                   GString           *string);
 
-const char *            gtk_css_pseudoclass_name                 (GtkStateFlags      flags);
+const char *            gtk_css_pseudoclass_name                 (GtkStateFlags      flags) G_GNUC_CONST;
 
 /* These hash functions are selected so they achieve 2 things:
  * 1. collision free among each other

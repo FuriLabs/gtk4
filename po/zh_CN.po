@@ -1,6 +1,6 @@
 # Chinese (China) translation of GTK.
 # converted from tranditional Chinese translation and modified (2003).
-# Copyright (C) 2000-2020 GTK's COPYRIGHT HOLDER
+# Copyright (C) 2000-2021 GTK's COPYRIGHT HOLDER
 # This file is distributed under the same license as the GTK package.
 # 辛立仁 <hsin@med.cgu.edu.tw>, 2000.
 # Chih-Wei Huang <cwhuang@linux.org.tw>, 2000.
@@ -23,16 +23,16 @@
 # Boyuan Yang <073plan@gmail.com>, 2016.
 # Zamir SUN <sztsian@gmail.com>, 2016.
 # Mingcong Bai <jeffbai@aosc.xyz>, 2015, 2016, 2017, 2018.
-# Dingzhong Chen <wsxy162@gmail.com>, 2018, 2019.
+# Dingzhong Chen <wsxy162@gmail.com>, 2018-2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gtk master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2021-09-15 15:38+0000\n"
-"PO-Revision-Date: 2021-09-15 14:55-0400\n"
+"POT-Creation-Date: 2021-09-05 17:26+0000\n"
+"PO-Revision-Date: 2021-09-05 16:30-0400\n"
 "Last-Translator: Boyuan Yang <073plan@gmail.com>\n"
-"Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
+"Language-Team: Chinese - China <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -102,7 +102,7 @@ msgstr "已通过 GDK_DEBUG 停用 Vulkan 支持"
 #: gdk/keyname-table.h:6843
 msgctxt "keyboard label"
 msgid "BackSpace"
-msgstr "退格"
+msgstr "Backspace"
 
 #: gdk/keyname-table.h:6844
 msgctxt "keyboard label"
@@ -112,7 +112,7 @@ msgstr "Tab"
 #: gdk/keyname-table.h:6845
 msgctxt "keyboard label"
 msgid "Return"
-msgstr "回车"
+msgstr "Enter"
 
 #: gdk/keyname-table.h:6846
 msgctxt "keyboard label"
@@ -137,7 +137,7 @@ msgstr "Esc"
 #: gdk/keyname-table.h:6850
 msgctxt "keyboard label"
 msgid "Multi_key"
-msgstr "多键"
+msgstr "撰写键"
 
 #: gdk/keyname-table.h:6851
 msgctxt "keyboard label"
@@ -167,12 +167,12 @@ msgstr "下"
 #: gdk/keyname-table.h:6856 gtk/gtkshortcutlabel.c:212
 msgctxt "keyboard label"
 msgid "Page_Up"
-msgstr "向上翻页"
+msgstr "Page Up"
 
 #: gdk/keyname-table.h:6857 gtk/gtkshortcutlabel.c:215
 msgctxt "keyboard label"
 msgid "Page_Down"
-msgstr "向下翻页"
+msgstr "Page Down"
 
 #: gdk/keyname-table.h:6858
 msgctxt "keyboard label"
@@ -187,12 +187,12 @@ msgstr "Begin"
 #: gdk/keyname-table.h:6860
 msgctxt "keyboard label"
 msgid "Print"
-msgstr "Print"
+msgstr "PrtSc"
 
 #: gdk/keyname-table.h:6861
 msgctxt "keyboard label"
 msgid "Insert"
-msgstr "插入"
+msgstr "Insert"
 
 #: gdk/keyname-table.h:6862
 msgctxt "keyboard label"
@@ -213,7 +213,7 @@ msgstr "Tab（小键盘）"
 #: gdk/keyname-table.h:6866
 msgctxt "keyboard label"
 msgid "KP_Enter"
-msgstr "回车（小键盘）"
+msgstr "Enter（小键盘）"
 
 #: gdk/keyname-table.h:6867
 msgctxt "keyboard label"
@@ -243,7 +243,7 @@ msgstr "下（小键盘）"
 #: gdk/keyname-table.h:6872
 msgctxt "keyboard label"
 msgid "KP_Page_Up"
-msgstr "向上翻页（小键盘）"
+msgstr "PgUp（小键盘）"
 
 #: gdk/keyname-table.h:6873
 msgctxt "keyboard label"
@@ -253,7 +253,7 @@ msgstr "Prior（小键盘）"
 #: gdk/keyname-table.h:6874
 msgctxt "keyboard label"
 msgid "KP_Page_Down"
-msgstr "向下翻页（小键盘）"
+msgstr "PgDn（小键盘）"
 
 #: gdk/keyname-table.h:6875
 msgctxt "keyboard label"
@@ -273,17 +273,17 @@ msgstr "Begin（小键盘）"
 #: gdk/keyname-table.h:6878
 msgctxt "keyboard label"
 msgid "KP_Insert"
-msgstr "插入（小键盘）"
+msgstr "Ins（小键盘）"
 
 #: gdk/keyname-table.h:6879
 msgctxt "keyboard label"
 msgid "KP_Delete"
-msgstr "删除（小键盘）"
+msgstr "Del（小键盘）"
 
 #: gdk/keyname-table.h:6880
 msgctxt "keyboard label"
 msgid "Delete"
-msgstr "删除"
+msgstr "Delete"
 
 #: gdk/keyname-table.h:6881
 msgctxt "keyboard label"
@@ -358,7 +358,7 @@ msgstr "音频暂停"
 #: gdk/keyname-table.h:6895
 msgctxt "keyboard label"
 msgid "AudioRewind"
-msgstr "音频重定位"
+msgstr "音频快退"
 
 #: gdk/keyname-table.h:6896
 msgctxt "keyboard label"
@@ -477,42 +477,54 @@ msgstr "未找到兼容传输格式"
 msgid "Failed to decode contents with mime-type of '%s'"
 msgstr "无法解码 mime 类型为“%s”的内容"
 
-#: gdk/wayland/gdkglcontext-wayland.c:190
+#: gdk/wayland/gdkglcontext-wayland.c:191
 #: gdk/win32/gdkglcontext-win32-egl.c:399
 #: gdk/win32/gdkglcontext-win32-wgl.c:628 gdk/x11/gdkglcontext-egl.c:600
 #: gdk/x11/gdkglcontext-glx.c:613
 msgid "Unable to create a GL context"
 msgstr "无法创建 GL 上下文"
 
-#: gdk/wayland/gdkglcontext-wayland.c:484 gdk/x11/gdkglcontext-egl.c:688
-msgid "Failed to create EGL display"
-msgstr "创建 EGL 显示失败"
+#: gdk/wayland/gdkglcontext-wayland.c:484
+msgid "libEGL not available in this sandbox"
+msgstr "libEGL 在此沙盒内不可用"
 
-#: gdk/wayland/gdkglcontext-wayland.c:493 gdk/x11/gdkglcontext-egl.c:697
+#: gdk/wayland/gdkglcontext-wayland.c:485
+msgid "libEGL not available"
+msgstr "libEGL 不可用"
+
+#: gdk/wayland/gdkglcontext-wayland.c:498
+msgid "Sandbox does not provide an OpenGL implementation"
+msgstr "沙盒未提供 OpenGL 实现"
+
+#: gdk/wayland/gdkglcontext-wayland.c:499
+msgid "No OpenGL implementation available"
+msgstr "没有可用的 OpenGL 实现"
+
+#: gdk/wayland/gdkglcontext-wayland.c:508 gdk/x11/gdkglcontext-egl.c:697
 msgid "Could not initialize EGL display"
 msgstr "无法初始化 EGL 显示"
 
-#: gdk/wayland/gdkglcontext-wayland.c:504 gdk/x11/gdkglcontext-egl.c:707
+#: gdk/wayland/gdkglcontext-wayland.c:519 gdk/x11/gdkglcontext-egl.c:707
 #, c-format
 msgid "EGL version %d.%d is too old. GTK requires %d.%d"
 msgstr "EGL %d.%d 版太旧。GTK 需要 %d.%d"
 
-#: gdk/wayland/gdkglcontext-wayland.c:515
+#: gdk/wayland/gdkglcontext-wayland.c:530
 #: gdk/win32/gdkglcontext-win32-egl.c:273
 #: gdk/win32/gdkglcontext-win32-wgl.c:286
 #: gdk/win32/gdkglcontext-win32-wgl.c:304
 msgid "No GL implementation is available"
 msgstr "没有可用的 GL 实现"
 
-#: gdk/wayland/gdkglcontext-wayland.c:525
+#: gdk/wayland/gdkglcontext-wayland.c:540
 msgid "Core GL is not available on EGL implementation"
 msgstr "核心 GL 在 EGL 实现中无法使用"
 
-#: gdk/wayland/gdkglcontext-wayland.c:534 gdk/x11/gdkglcontext-egl.c:718
+#: gdk/wayland/gdkglcontext-wayland.c:549 gdk/x11/gdkglcontext-egl.c:718
 msgid "Surfaceless contexts are not supported on this EGL implementation"
 msgstr "此 EGL 实现不支持无界面上下文"
 
-#: gdk/wayland/gdkglcontext-wayland.c:546
+#: gdk/wayland/gdkglcontext-wayland.c:561
 #: gdk/win32/gdkglcontext-win32-egl.c:216
 #: gdk/win32/gdkglcontext-win32-egl.c:226
 #: gdk/win32/gdkglcontext-win32-wgl.c:594
@@ -714,6 +726,10 @@ msgstr "未找到完美的 EGL 配置"
 msgid "EGL is not supported"
 msgstr "不支持 EGL"
 
+#: gdk/x11/gdkglcontext-egl.c:688
+msgid "Failed to create EGL display"
+msgstr "创建 EGL 显示失败"
+
 #: gdk/x11/gdkglcontext-glx.c:770
 msgid "No GLX configurations available"
 msgstr "没有可用的 GLX 配置"
@@ -886,19 +902,19 @@ msgstr "自定义许可证"
 
 #: gtk/gtkaboutdialog.c:126
 msgid "GNU General Public License, version 2 or later"
-msgstr "GNU 通用公共许可证，第 2 版以上"
+msgstr "GNU 通用公共许可证，第 2 版及以上"
 
 #: gtk/gtkaboutdialog.c:127
 msgid "GNU General Public License, version 3 or later"
-msgstr "GNU 通用公共许可证，第 3 版以上"
+msgstr "GNU 通用公共许可证，第 3 版及以上"
 
 #: gtk/gtkaboutdialog.c:128
 msgid "GNU Lesser General Public License, version 2.1 or later"
-msgstr "GNU 宽松通用公共许可证，2.1 版以上"
+msgstr "GNU 宽松通用公共许可证，第 2.1 版及以上"
 
 #: gtk/gtkaboutdialog.c:129
 msgid "GNU Lesser General Public License, version 3 or later"
-msgstr "GNU 宽松通用公共许可证，第 3 版以上"
+msgstr "GNU 宽松通用公共许可证，第 3 版及以上"
 
 #: gtk/gtkaboutdialog.c:130
 msgid "BSD 2-Clause License"
@@ -910,7 +926,7 @@ msgstr "MIT 许可证"
 
 #: gtk/gtkaboutdialog.c:132
 msgid "Artistic License 2.0"
-msgstr "艺术许可证 2.0"
+msgstr "艺术许可证第 2.0 版"
 
 #: gtk/gtkaboutdialog.c:133
 msgid "GNU General Public License, version 2 only"
@@ -922,7 +938,7 @@ msgstr "GNU 通用公共许可证，仅限第 3 版"
 
 #: gtk/gtkaboutdialog.c:135
 msgid "GNU Lesser General Public License, version 2.1 only"
-msgstr "GNU 宽松通用公共许可证，仅限 2.1 版"
+msgstr "GNU 宽松通用公共许可证，仅限第 2.1 版"
 
 #: gtk/gtkaboutdialog.c:136
 msgid "GNU Lesser General Public License, version 3 only"
@@ -930,7 +946,7 @@ msgstr "GNU 宽松通用公共许可证，仅限第 3 版"
 
 #: gtk/gtkaboutdialog.c:137
 msgid "GNU Affero General Public License, version 3 or later"
-msgstr "GNU Affero 通用公共许可证，第 3 版以上"
+msgstr "GNU Affero 通用公共许可证，第 3 版及以上"
 
 #: gtk/gtkaboutdialog.c:138
 msgid "GNU Affero General Public License, version 3 only"
@@ -942,11 +958,11 @@ msgstr "BSD 3-Clause 许可证"
 
 #: gtk/gtkaboutdialog.c:140
 msgid "Apache License, Version 2.0"
-msgstr "Apache 许可证，2.0 版"
+msgstr "Apache 许可证第 2.0 版"
 
 #: gtk/gtkaboutdialog.c:141
 msgid "Mozilla Public License 2.0"
-msgstr "Mozilla 公用许可证 2.0"
+msgstr "Mozilla 公用许可证第 2.0 版"
 
 #: gtk/gtkaboutdialog.c:969
 msgid "Website"
@@ -971,7 +987,7 @@ msgstr "翻译："
 
 #: gtk/gtkaboutdialog.c:2124
 msgid "Design by"
-msgstr "设计者"
+msgstr "设计："
 
 #. Translators: this is the license preamble; the string at the end
 #. * contains the name of the license as link text.
@@ -982,7 +998,7 @@ msgid ""
 "This program comes with absolutely no warranty.\n"
 "See the <a href=\"%s\">%s</a> for details."
 msgstr ""
-"本程序不含任何担保。\n"
+"本程序不作任何担保。\n"
 "详情见 <a href=\"%s\">%s</a>。"
 
 #. This is the text that should appear next to menu accelerators
@@ -990,7 +1006,7 @@ msgstr ""
 #. * translated on keyboards used for your language, don't translate
 #. * this.
 #.
-#: gtk/gtkaccelgroup.c:826 gtk/gtkshortcutlabel.c:100
+#: gtk/gtkaccelgroup.c:837 gtk/gtkshortcutlabel.c:100
 #: gtk/gtkshortcutlabel.c:136
 msgctxt "keyboard label"
 msgid "Shift"
@@ -1001,7 +1017,7 @@ msgstr "Shift"
 #. * translated on keyboards used for your language, don't translate
 #. * this.
 #.
-#: gtk/gtkaccelgroup.c:845 gtk/gtkshortcutlabel.c:103
+#: gtk/gtkaccelgroup.c:856 gtk/gtkshortcutlabel.c:103
 #: gtk/gtkshortcutlabel.c:138
 msgctxt "keyboard label"
 msgid "Ctrl"
@@ -1012,7 +1028,7 @@ msgstr "Ctrl"
 #. * translated on keyboards used for your language, don't translate
 #. * this.
 #.
-#: gtk/gtkaccelgroup.c:864 gtk/gtkshortcutlabel.c:106
+#: gtk/gtkaccelgroup.c:875 gtk/gtkshortcutlabel.c:106
 #: gtk/gtkshortcutlabel.c:140
 msgctxt "keyboard label"
 msgid "Alt"
@@ -1023,7 +1039,7 @@ msgstr "Alt"
 #. * translated on keyboards used for your language, don't translate
 #. * this.
 #.
-#: gtk/gtkaccelgroup.c:882 gtk/gtkshortcutlabel.c:112
+#: gtk/gtkaccelgroup.c:893 gtk/gtkshortcutlabel.c:112
 #: gtk/gtkshortcutlabel.c:142
 msgctxt "keyboard label"
 msgid "Super"
@@ -1034,7 +1050,7 @@ msgstr "Super"
 #. * translated on keyboards used for your language, don't translate
 #. * this.
 #.
-#: gtk/gtkaccelgroup.c:896 gtk/gtkshortcutlabel.c:115
+#: gtk/gtkaccelgroup.c:907 gtk/gtkshortcutlabel.c:115
 #: gtk/gtkshortcutlabel.c:144
 msgctxt "keyboard label"
 msgid "Hyper"
@@ -1045,7 +1061,7 @@ msgstr "Hyper"
 #. * translated on keyboards used for your language, don't translate
 #. * this.
 #.
-#: gtk/gtkaccelgroup.c:911 gtk/gtkshortcutlabel.c:109
+#: gtk/gtkaccelgroup.c:922 gtk/gtkshortcutlabel.c:109
 #: gtk/gtkshortcutlabel.c:146
 msgctxt "keyboard label"
 msgid "Meta"
@@ -1055,17 +1071,17 @@ msgstr "Meta"
 #. * be used in accelerators such as "Ctrl+Shift+KP 1" in menus,
 #. * and therefore the translation needs to be very short.
 #.
-#: gtk/gtkaccelgroup.c:931
+#: gtk/gtkaccelgroup.c:942
 msgctxt "keyboard label"
 msgid "KP"
 msgstr "小键盘"
 
-#: gtk/gtkaccelgroup.c:938
+#: gtk/gtkaccelgroup.c:949
 msgctxt "keyboard label"
 msgid "Space"
 msgstr "空格"
 
-#: gtk/gtkaccelgroup.c:941 gtk/gtkshortcutlabel.c:171
+#: gtk/gtkaccelgroup.c:952 gtk/gtkshortcutlabel.c:171
 msgctxt "keyboard label"
 msgid "Backslash"
 msgstr "反斜杠 (\\)"
@@ -1634,7 +1650,7 @@ msgstr "无效的"
 #.
 #: gtk/gtkcellrendereraccel.c:437 gtk/gtkcellrendereraccel.c:730
 msgid "New accelerator…"
-msgstr "新建加速键…"
+msgstr "新建快捷键…"
 
 #: gtk/gtkcellrendererprogress.c:128 gtk/gtkcellrendererprogress.c:318
 #: gtk/gtkcellrendererprogress.c:348
@@ -1970,9 +1986,9 @@ msgstr "右(_R)："
 msgid "Paper Margins"
 msgstr "纸张边距"
 
-#: gtk/gtkentry.c:3726
+#: gtk/gtkentry.c:3743
 msgid "Insert Emoji"
-msgstr "插入绘文字"
+msgstr "插入表情符号"
 
 #: gtk/gtkfilechooserdialog.c:551
 msgid "_Name"
@@ -2041,7 +2057,7 @@ msgstr "同名文件已存在"
 #: gtk/gtkprintbackend.c:642 gtk/gtkprinteroptionwidget.c:713
 #: gtk/gtkprintunixdialog.c:667 gtk/gtkprintunixdialog.c:823
 #: gtk/gtkwindow.c:6140 gtk/inspector/css-editor.c:248
-#: gtk/inspector/recorder.c:1245 gtk/ui/gtkappchooserdialog.ui:45
+#: gtk/inspector/recorder.c:1271 gtk/ui/gtkappchooserdialog.ui:45
 #: gtk/ui/gtkassistant.ui:52 gtk/ui/gtkcolorchooserdialog.ui:33
 #: gtk/ui/gtkfontchooserdialog.ui:24
 msgid "_Cancel"
@@ -2054,7 +2070,7 @@ msgid "_Open"
 msgstr "打开(_O)"
 
 #: gtk/gtkfilechoosernative.c:574 gtk/inspector/css-editor.c:249
-#: gtk/inspector/recorder.c:1246
+#: gtk/inspector/recorder.c:1272
 msgid "_Save"
 msgstr "保存(_S)"
 
@@ -2131,7 +2147,7 @@ msgid "If you delete an item, it will be permanently lost."
 msgstr "如果您删除一个项目，它将永久丢失。"
 
 #: gtk/gtkfilechooserwidget.c:1210 gtk/gtkfilechooserwidget.c:1826
-#: gtk/gtklabel.c:5483 gtk/gtktext.c:6060 gtk/gtktextview.c:8847
+#: gtk/gtklabel.c:5483 gtk/gtktext.c:6062 gtk/gtktextview.c:8886
 msgid "_Delete"
 msgstr "删除(_D)"
 
@@ -2256,7 +2272,7 @@ msgid "Audio"
 msgstr "音频"
 
 #: gtk/gtkfilechooserwidget.c:4303 gtk/gtkfontbutton.c:602
-#: gtk/inspector/visual.ui:187
+#: gtk/inspector/visual.ui:170
 msgid "Font"
 msgstr "字体"
 
@@ -2298,7 +2314,7 @@ msgstr "演示文稿"
 
 #: gtk/gtkfilechooserwidget.c:4315
 msgid "Spreadsheet"
-msgstr "工作表"
+msgstr "电子表格"
 
 #: gtk/gtkfilechooserwidget.c:4346 gtk/gtkfilechooserwidget.c:4539
 msgid "Unknown"
@@ -2362,7 +2378,7 @@ msgstr "斜体（Italic）"
 
 #: gtk/gtkfontchooserwidget.c:1571
 msgid "Slant"
-msgstr "倾斜（Slant）"
+msgstr "斜体（Slant）"
 
 #: gtk/gtkfontchooserwidget.c:1572
 msgid "Optical Size"
@@ -2400,19 +2416,19 @@ msgstr "字符变体"
 msgid "OpenGL context creation failed"
 msgstr "OpenGL 上下文创建失败"
 
-#: gtk/gtklabel.c:5480 gtk/gtktext.c:6048 gtk/gtktextview.c:8835
+#: gtk/gtklabel.c:5480 gtk/gtktext.c:6050 gtk/gtktextview.c:8874
 msgid "Cu_t"
 msgstr "剪切(_T)"
 
-#: gtk/gtklabel.c:5481 gtk/gtktext.c:6052 gtk/gtktextview.c:8839
+#: gtk/gtklabel.c:5481 gtk/gtktext.c:6054 gtk/gtktextview.c:8878
 msgid "_Copy"
 msgstr "复制(_C)"
 
-#: gtk/gtklabel.c:5482 gtk/gtktext.c:6056 gtk/gtktextview.c:8843
+#: gtk/gtklabel.c:5482 gtk/gtktext.c:6058 gtk/gtktextview.c:8882
 msgid "_Paste"
 msgstr "粘贴(_P)"
 
-#: gtk/gtklabel.c:5488 gtk/gtktext.c:6069 gtk/gtktextview.c:8868
+#: gtk/gtklabel.c:5488 gtk/gtktext.c:6071 gtk/gtktextview.c:8907
 msgid "Select _All"
 msgstr "全选(_A)"
 
@@ -2584,7 +2600,7 @@ msgstr "立即忘记密码(_I)"
 
 #: gtk/gtkmountoperation.c:770
 msgid "Remember password until you _logout"
-msgstr "记到注销之前(_L)"
+msgstr "注销前记住密码(_L)"
 
 #: gtk/gtkmountoperation.c:781
 msgid "Remember _forever"
@@ -2649,11 +2665,11 @@ msgstr "上一个标签页"
 
 #: gtk/gtknotebook.c:3253
 msgid "Next tab"
-msgstr "上一个标签页"
+msgstr "下一个标签页"
 
 #: gtk/gtknotebook.c:4073
 msgid "Tab"
-msgstr "Tab"
+msgstr "标签页"
 
 #: gtk/gtknotebook.c:4371 gtk/gtknotebook.c:6579
 #, c-format
@@ -2700,19 +2716,19 @@ msgstr ""
 msgid "Page Setup"
 msgstr "页面设置"
 
-#: gtk/gtkpasswordentry.c:167
+#: gtk/gtkpasswordentry.c:173
 msgid "Hide Text"
 msgstr "隐藏文本"
 
-#: gtk/gtkpasswordentry.c:172 gtk/gtkpasswordentry.c:606
+#: gtk/gtkpasswordentry.c:178 gtk/gtkpasswordentry.c:629
 msgid "Show Text"
 msgstr "显示文本"
 
-#: gtk/gtkpasswordentry.c:199
+#: gtk/gtkpasswordentry.c:216
 msgid "Caps Lock is on"
 msgstr "大写锁定已打开"
 
-#: gtk/gtkpasswordentry.c:680
+#: gtk/gtkpasswordentry.c:705
 msgid "_Show Text"
 msgstr "显示文本(_S)"
 
@@ -2886,7 +2902,7 @@ msgstr "开始(_S)"
 
 #: gtk/gtkplacessidebar.c:3297
 msgid "_Power On"
-msgstr "电源开(_P)"
+msgstr "开启电源(_P)"
 
 #: gtk/gtkplacessidebar.c:3298
 msgid "_Connect Drive"
@@ -3300,7 +3316,7 @@ msgstr "无法将 URI 为“%s”的项目移动至“%s”"
 msgid "No registered application with name “%s” for item with URI “%s” found"
 msgstr "未找到注册名称为“%s”且 URI 为“%s”的应用程序"
 
-#: gtk/gtksearchentry.c:599
+#: gtk/gtksearchentry.c:619
 msgid "Clear entry"
 msgstr "清除条目"
 
@@ -3363,7 +3379,7 @@ msgstr "右划"
 #. Translators: This is the window title for the shortcuts window in normal mode
 #: gtk/gtkshortcutswindow.c:874 gtk/inspector/window.ui:517
 msgid "Shortcuts"
-msgstr "快捷键"
+msgstr "快捷操作"
 
 #. Translators: This is the window title for the shortcuts window in search mode
 #: gtk/gtkshortcutswindow.c:879
@@ -3373,7 +3389,7 @@ msgstr "搜索结果"
 #. Translators: This is placeholder text for the search entry in the shortcuts window
 #: gtk/gtkshortcutswindow.c:909
 msgid "Search Shortcuts"
-msgstr "搜索快捷键"
+msgstr "搜索快捷操作"
 
 #: gtk/gtkshortcutswindow.c:968 gtk/ui/gtkemojichooser.ui:349
 #: gtk/ui/gtkfilechooserwidget.ui:297
@@ -3389,19 +3405,19 @@ msgstr "尝试不同的搜索"
 msgid "Could not show link"
 msgstr "无法显示链接"
 
-#: gtk/gtktext.c:6074 gtk/gtktextview.c:8873
+#: gtk/gtktext.c:6076 gtk/gtktextview.c:8912
 msgid "Insert _Emoji"
-msgstr "插入绘文字(_E)"
+msgstr "插入表情符号(_E)"
 
-#: gtk/gtktextview.c:8855
+#: gtk/gtktextview.c:8894
 msgid "_Undo"
 msgstr "撤消(_U)"
 
-#: gtk/gtktextview.c:8859
+#: gtk/gtktextview.c:8898
 msgid "_Redo"
 msgstr "重做(_R)"
 
-#: gtk/gtktreeexpander.c:196
+#: gtk/gtktreeexpander.c:205
 msgid "Expand"
 msgstr "展开"
 
@@ -3437,7 +3453,7 @@ msgid ""
 "the internals of any GTK application. Using it may cause the application to "
 "break or crash."
 msgstr ""
-"GTK 检查器是一个交互式的调试器，让您可以探索并修改任何 GTK+ 应用程序的内部构"
+"GTK 检查器是一个交互式的调试器，让您可以探索并修改任何 GTK 应用程序的内部构"
 "造。使用它可能造成应用程序损坏或崩溃。"
 
 #: gtk/gtkwindow.c:6135
@@ -3530,6 +3546,7 @@ msgctxt "event phase"
 msgid "Target"
 msgstr "目标"
 
+# If the limit is set to GTK_LIMIT_SAME_NATIVE, the controller won't handle events that are targeted at widgets on a different surface, such as popovers.
 #: gtk/inspector/controllers.c:156
 msgctxt "propagation limit"
 msgid "Native"
@@ -3582,12 +3599,12 @@ msgstr "无"
 #: gtk/inspector/general.c:317
 msgctxt "GL version"
 msgid "Disabled"
-msgstr "禁用"
+msgstr "已禁用"
 
 #: gtk/inspector/general.c:318
 msgctxt "GL vendor"
 msgid "Disabled"
-msgstr "禁用"
+msgstr "已禁用"
 
 #: gtk/inspector/general.c:389
 msgctxt "GL vendor"
@@ -3597,12 +3614,12 @@ msgstr "无"
 #: gtk/inspector/general.c:440
 msgctxt "Vulkan device"
 msgid "Disabled"
-msgstr "禁用"
+msgstr "已禁用"
 
 #: gtk/inspector/general.c:441 gtk/inspector/general.c:442
 msgctxt "Vulkan version"
 msgid "Disabled"
-msgstr "禁用"
+msgstr "已禁用"
 
 #: gtk/inspector/general.c:498
 msgctxt "Vulkan device"
@@ -3628,7 +3645,7 @@ msgstr "GSK 渲染器"
 
 #: gtk/inspector/general.ui:110
 msgid "Pango Fontmap"
-msgstr "Pango 字体图（fontmap）"
+msgstr "Pango 字体映射"
 
 #: gtk/inspector/general.ui:136
 msgid "Media Backend"
@@ -3877,7 +3894,7 @@ msgstr "来源："
 msgid "Defined At"
 msgstr "定义于"
 
-#: gtk/inspector/recorder.c:1216
+#: gtk/inspector/recorder.c:1242
 #, c-format
 msgid "Saving RenderNode failed"
 msgstr "无法保存 RenderNode"
@@ -4019,99 +4036,99 @@ msgstr "后端不支持窗口缩放"
 msgid "GL rendering is disabled"
 msgstr "GL 渲染已停用"
 
-#: gtk/inspector/visual.ui:59
+#: gtk/inspector/visual.ui:35
 msgid "GTK Theme"
 msgstr "GTK 主题"
 
-#: gtk/inspector/visual.ui:83
+#: gtk/inspector/visual.ui:59
 msgid "Dark Variant"
 msgstr "深色变种"
 
-#: gtk/inspector/visual.ui:108
+#: gtk/inspector/visual.ui:84
 msgid "Cursor Theme"
 msgstr "光标主题"
 
-#: gtk/inspector/visual.ui:133
+#: gtk/inspector/visual.ui:109
 msgid "Cursor Size"
 msgstr "光标大小"
 
-#: gtk/inspector/visual.ui:162
+#: gtk/inspector/visual.ui:145
 msgid "Icon Theme"
 msgstr "图标主题"
 
-#: gtk/inspector/visual.ui:212
+#: gtk/inspector/visual.ui:195
 msgid "Font Scale"
 msgstr "字体缩放"
 
-#: gtk/inspector/visual.ui:249
+#: gtk/inspector/visual.ui:240
 msgid "Text Direction"
 msgstr "文本方向"
 
-#: gtk/inspector/visual.ui:264
+#: gtk/inspector/visual.ui:255
 msgid "Left-to-Right"
 msgstr "从左至右"
 
-#: gtk/inspector/visual.ui:265
+#: gtk/inspector/visual.ui:256
 msgid "Right-to-Left"
 msgstr "从右至左"
 
-#: gtk/inspector/visual.ui:283
+#: gtk/inspector/visual.ui:274
 msgid "Window Scaling"
 msgstr "窗口缩放"
 
-#: gtk/inspector/visual.ui:309
+#: gtk/inspector/visual.ui:307
 msgid "Animations"
 msgstr "动画"
 
-#: gtk/inspector/visual.ui:334
+#: gtk/inspector/visual.ui:332
 msgid "Slowdown"
 msgstr "减速"
 
-#: gtk/inspector/visual.ui:384
+#: gtk/inspector/visual.ui:390
 msgid "Show fps overlay"
 msgstr "显示帧率浮窗"
 
-#: gtk/inspector/visual.ui:409
+#: gtk/inspector/visual.ui:415
 msgid "Show Graphic Updates"
 msgstr "显示图形更新"
 
-#: gtk/inspector/visual.ui:434
+#: gtk/inspector/visual.ui:440
 msgid "Show Fallback Rendering"
 msgstr "显示后备（fallback）渲染"
 
-#: gtk/inspector/visual.ui:459
+#: gtk/inspector/visual.ui:465
 msgid "Show Baselines"
 msgstr "显示基线"
 
-#: gtk/inspector/visual.ui:487
+#: gtk/inspector/visual.ui:493
 msgid "Show Layout Borders"
 msgstr "显示布局边框"
 
-#: gtk/inspector/visual.ui:544
+#: gtk/inspector/visual.ui:550
 msgid "CSS Padding"
 msgstr "CSS 填充"
 
-#: gtk/inspector/visual.ui:554
+#: gtk/inspector/visual.ui:560
 msgid "CSS Border"
 msgstr "CSS 边框"
 
-#: gtk/inspector/visual.ui:564
+#: gtk/inspector/visual.ui:570
 msgid "CSS Margin"
 msgstr "CSS 边距"
 
-#: gtk/inspector/visual.ui:574
+#: gtk/inspector/visual.ui:580
 msgid "Widget Margin"
 msgstr "部件边距"
 
-#: gtk/inspector/visual.ui:609
+#: gtk/inspector/visual.ui:615
 msgid "Show Focus"
 msgstr "显示焦点"
 
-#: gtk/inspector/visual.ui:648
+#: gtk/inspector/visual.ui:654
 msgid "Simulate Touchscreen"
 msgstr "模拟触摸屏"
 
-#: gtk/inspector/visual.ui:672
+#: gtk/inspector/visual.ui:678
 msgid "Software GL"
 msgstr "软件 GL"
 
@@ -4252,7 +4269,7 @@ msgstr "上标形式"
 #: gtk/open-type-layout.h:15
 msgctxt "OpenType layout"
 msgid "Above-base Mark Positioning"
-msgstr "上标标记位置"
+msgstr "上标标记定位"
 
 #: gtk/open-type-layout.h:16
 msgctxt "OpenType layout"
@@ -4267,7 +4284,7 @@ msgstr "替代分数"
 #: gtk/open-type-layout.h:18
 msgctxt "OpenType layout"
 msgid "Akhands"
-msgstr "Akhands"
+msgstr "不可分"
 
 #: gtk/open-type-layout.h:19
 msgctxt "OpenType layout"
@@ -4277,7 +4294,7 @@ msgstr "下标形式"
 #: gtk/open-type-layout.h:20
 msgctxt "OpenType layout"
 msgid "Below-base Mark Positioning"
-msgstr "下标标记位置"
+msgstr "下标标记定位"
 
 #: gtk/open-type-layout.h:21
 msgctxt "OpenType layout"
@@ -4287,7 +4304,7 @@ msgstr "下标替换"
 #: gtk/open-type-layout.h:22
 msgctxt "OpenType layout"
 msgid "Contextual Alternates"
-msgstr "上下文变换"
+msgstr "依语境替代"
 
 #: gtk/open-type-layout.h:23
 msgctxt "OpenType layout"
@@ -4302,22 +4319,22 @@ msgstr "字形合成/分解"
 #: gtk/open-type-layout.h:25
 msgctxt "OpenType layout"
 msgid "Conjunct Form After Ro"
-msgstr "Ro 后的联合形式"
+msgstr "Ro 后的合字字形"
 
 #: gtk/open-type-layout.h:26
 msgctxt "OpenType layout"
 msgid "Conjunct Forms"
-msgstr "联合形式"
+msgstr "合字字形"
 
 #: gtk/open-type-layout.h:27
 msgctxt "OpenType layout"
 msgid "Contextual Ligatures"
-msgstr "上下文连字"
+msgstr "依语境连字"
 
 #: gtk/open-type-layout.h:28
 msgctxt "OpenType layout"
 msgid "Centered CJK Punctuation"
-msgstr "居中的 CJK 标点"
+msgstr "中日韩居中标点"
 
 #: gtk/open-type-layout.h:29
 msgctxt "OpenType layout"
@@ -4327,22 +4344,22 @@ msgstr "大写留空"
 #: gtk/open-type-layout.h:30
 msgctxt "OpenType layout"
 msgid "Contextual Swash"
-msgstr "上下文沿伸"
+msgstr "依语境花体"
 
 #: gtk/open-type-layout.h:31
 msgctxt "OpenType layout"
 msgid "Cursive Positioning"
-msgstr "行草放置"
+msgstr "连写字定位"
 
 #: gtk/open-type-layout.h:32
 msgctxt "OpenType layout"
 msgid "Petite Capitals From Capitals"
-msgstr "根据大写字母生成的超小型大写字母"
+msgstr "根据大写字母生成其特小型"
 
 #: gtk/open-type-layout.h:33
 msgctxt "OpenType layout"
 msgid "Small Capitals From Capitals"
-msgstr "根据大写字母生成的小型大写字母"
+msgstr "根据大写字母生成其小型"
 
 #: gtk/open-type-layout.h:34
 msgctxt "OpenType layout"
@@ -4372,7 +4389,7 @@ msgstr "专家形式"
 #: gtk/open-type-layout.h:39
 msgctxt "OpenType layout"
 msgid "Final Glyph on Line Alternates"
-msgstr "最终行中字形变换"
+msgstr "行末字形替代"
 
 #: gtk/open-type-layout.h:40
 msgctxt "OpenType layout"
@@ -4392,7 +4409,7 @@ msgstr "末端形式"
 #: gtk/open-type-layout.h:43
 msgctxt "OpenType layout"
 msgid "Flattened accent forms"
-msgstr "扁平化的重音形式"
+msgstr "变音符扁平形式"
 
 #: gtk/open-type-layout.h:44
 msgctxt "OpenType layout"
@@ -4407,12 +4424,12 @@ msgstr "全宽"
 #: gtk/open-type-layout.h:46
 msgctxt "OpenType layout"
 msgid "Half Forms"
-msgstr "半宽形式"
+msgstr "半形"
 
 #: gtk/open-type-layout.h:47
 msgctxt "OpenType layout"
 msgid "Halant Forms"
-msgstr "Halant 形式"
+msgstr "Halant 字形"
 
 #: gtk/open-type-layout.h:48
 msgctxt "OpenType layout"
@@ -4422,12 +4439,12 @@ msgstr "替代半宽"
 #: gtk/open-type-layout.h:49
 msgctxt "OpenType layout"
 msgid "Historical Forms"
-msgstr "古文形式"
+msgstr "古文字形"
 
 #: gtk/open-type-layout.h:50
 msgctxt "OpenType layout"
 msgid "Horizontal Kana Alternates"
-msgstr "水平假名替代"
+msgstr "横书假名替代"
 
 #: gtk/open-type-layout.h:51
 msgctxt "OpenType layout"
@@ -4442,7 +4459,7 @@ msgstr "谚文"
 #: gtk/open-type-layout.h:53
 msgctxt "OpenType layout"
 msgid "Hojo Kanji Forms"
-msgstr "北条汉字"
+msgstr "北条汉字形式"
 
 #: gtk/open-type-layout.h:54
 msgctxt "OpenType layout"
@@ -4452,52 +4469,52 @@ msgstr "半宽"
 #: gtk/open-type-layout.h:55
 msgctxt "OpenType layout"
 msgid "Initial Forms"
-msgstr "初始形式"
+msgstr "首端形式"
 
 #: gtk/open-type-layout.h:56
 msgctxt "OpenType layout"
 msgid "Isolated Forms"
-msgstr "独立形式"
+msgstr "孤立形式"
 
 #: gtk/open-type-layout.h:57
 msgctxt "OpenType layout"
 msgid "Italics"
-msgstr "斜体"
+msgstr "意大利体"
 
 #: gtk/open-type-layout.h:58
 msgctxt "OpenType layout"
 msgid "Justification Alternates"
-msgstr "对齐形式"
+msgstr "对齐替代"
 
 #: gtk/open-type-layout.h:59
 msgctxt "OpenType layout"
 msgid "JIS78 Forms"
-msgstr "JIS78 形式"
+msgstr "JIS78 字形"
 
 #: gtk/open-type-layout.h:60
 msgctxt "OpenType layout"
 msgid "JIS83 Forms"
-msgstr "JIS83 形式"
+msgstr "JIS83 字形"
 
 #: gtk/open-type-layout.h:61
 msgctxt "OpenType layout"
 msgid "JIS90 Forms"
-msgstr "JIS90 形式"
+msgstr "JIS90 字形"
 
 #: gtk/open-type-layout.h:62
 msgctxt "OpenType layout"
 msgid "JIS2004 Forms"
-msgstr "JIS2004 形式"
+msgstr "JIS2004 字形"
 
 #: gtk/open-type-layout.h:63
 msgctxt "OpenType layout"
 msgid "Kerning"
-msgstr "字距"
+msgstr "字偶距"
 
 #: gtk/open-type-layout.h:64
 msgctxt "OpenType layout"
 msgid "Left Bounds"
-msgstr "左边距"
+msgstr "左边界"
 
 #: gtk/open-type-layout.h:65
 msgctxt "OpenType layout"
@@ -4507,7 +4524,7 @@ msgstr "标准连字"
 #: gtk/open-type-layout.h:66
 msgctxt "OpenType layout"
 msgid "Leading Jamo Forms"
-msgstr "字母领头形式"
+msgstr "字母初声形式"
 
 #: gtk/open-type-layout.h:67
 msgctxt "OpenType layout"
@@ -4517,32 +4534,32 @@ msgstr "等高数字"
 #: gtk/open-type-layout.h:68
 msgctxt "OpenType layout"
 msgid "Localized Forms"
-msgstr "本地化形式"
+msgstr "本地化字形"
 
 #: gtk/open-type-layout.h:69
 msgctxt "OpenType layout"
 msgid "Left-to-right alternates"
-msgstr "从左至右变换"
+msgstr "左到右替代字形"
 
 #: gtk/open-type-layout.h:70
 msgctxt "OpenType layout"
 msgid "Left-to-right mirrored forms"
-msgstr "从左至右镜像形式"
+msgstr "左到右镜像字形"
 
 #: gtk/open-type-layout.h:71
 msgctxt "OpenType layout"
 msgid "Mark Positioning"
-msgstr "标记位置"
+msgstr "标记定位"
 
 #: gtk/open-type-layout.h:72
 msgctxt "OpenType layout"
 msgid "Medial Forms #2"
-msgstr "内侧形式 #2"
+msgstr "中间形式 #2"
 
 #: gtk/open-type-layout.h:73
 msgctxt "OpenType layout"
 msgid "Medial Forms"
-msgstr "内侧形式"
+msgstr "中间形式"
 
 #: gtk/open-type-layout.h:74
 msgctxt "OpenType layout"
@@ -4552,27 +4569,27 @@ msgstr "数学用希腊字母"
 #: gtk/open-type-layout.h:75
 msgctxt "OpenType layout"
 msgid "Mark to Mark Positioning"
-msgstr "标记间位置"
+msgstr "标记间定位"
 
 #: gtk/open-type-layout.h:76
 msgctxt "OpenType layout"
 msgid "Mark Positioning via Substitution"
-msgstr "通过代换确定标记位置"
+msgstr "通过替换放置标记"
 
 #: gtk/open-type-layout.h:77
 msgctxt "OpenType layout"
 msgid "Alternate Annotation Forms"
-msgstr "替代标注形式"
+msgstr "替代标注字形"
 
 #: gtk/open-type-layout.h:78
 msgctxt "OpenType layout"
 msgid "NLC Kanji Forms"
-msgstr "NLC 汉字形式"
+msgstr "NLC 汉字字形"
 
 #: gtk/open-type-layout.h:79
 msgctxt "OpenType layout"
 msgid "Nukta Forms"
-msgstr "Nukta 形式"
+msgstr "Nukta 字形"
 
 #: gtk/open-type-layout.h:80
 msgctxt "OpenType layout"
@@ -4582,17 +4599,17 @@ msgstr "分子"
 #: gtk/open-type-layout.h:81
 msgctxt "OpenType layout"
 msgid "Oldstyle Figures"
-msgstr "老式数字"
+msgstr "旧式数字"
 
 #: gtk/open-type-layout.h:82
 msgctxt "OpenType layout"
 msgid "Optical Bounds"
-msgstr "视觉边距"
+msgstr "视觉边界"
 
 #: gtk/open-type-layout.h:83
 msgctxt "OpenType layout"
 msgid "Ordinals"
-msgstr "序数"
+msgstr "序号"
 
 #: gtk/open-type-layout.h:84
 msgctxt "OpenType layout"
@@ -4602,22 +4619,22 @@ msgstr "装饰字符"
 #: gtk/open-type-layout.h:85
 msgctxt "OpenType layout"
 msgid "Proportional Alternate Widths"
-msgstr "等比例宽度替代"
+msgstr "比例宽度替代"
 
 #: gtk/open-type-layout.h:86
 msgctxt "OpenType layout"
 msgid "Petite Capitals"
-msgstr "超小型大写字母"
+msgstr "特小型大写字母"
 
 #: gtk/open-type-layout.h:87
 msgctxt "OpenType layout"
 msgid "Proportional Kana"
-msgstr "等比例假名"
+msgstr "比例假名"
 
 #: gtk/open-type-layout.h:88
 msgctxt "OpenType layout"
 msgid "Proportional Figures"
-msgstr "等比例数字"
+msgstr "比例数字"
 
 #: gtk/open-type-layout.h:89
 msgctxt "OpenType layout"
@@ -4627,7 +4644,7 @@ msgstr "标前形式"
 #: gtk/open-type-layout.h:90
 msgctxt "OpenType layout"
 msgid "Pre-base Substitutions"
-msgstr "标前代换"
+msgstr "标前替换"
 
 #: gtk/open-type-layout.h:91
 msgctxt "OpenType layout"
@@ -4637,17 +4654,17 @@ msgstr "标后形式"
 #: gtk/open-type-layout.h:92
 msgctxt "OpenType layout"
 msgid "Post-base Substitutions"
-msgstr "标后代换"
+msgstr "标后替换"
 
 #: gtk/open-type-layout.h:93
 msgctxt "OpenType layout"
 msgid "Proportional Widths"
-msgstr "等比例宽度"
+msgstr "比例宽度"
 
 #: gtk/open-type-layout.h:94
 msgctxt "OpenType layout"
 msgid "Quarter Widths"
-msgstr "四分之一宽"
+msgstr "四分之一宽度"
 
 #: gtk/open-type-layout.h:95
 msgctxt "OpenType layout"
@@ -4657,52 +4674,52 @@ msgstr "随机化"
 #: gtk/open-type-layout.h:96
 msgctxt "OpenType layout"
 msgid "Required Contextual Alternates"
-msgstr "必要的上下文变换"
+msgstr "强制依语境替代"
 
 #: gtk/open-type-layout.h:97
 msgctxt "OpenType layout"
 msgid "Rakar Forms"
-msgstr "Rakar 形式"
+msgstr "Rakar 字形"
 
 #: gtk/open-type-layout.h:98
 msgctxt "OpenType layout"
 msgid "Required Ligatures"
-msgstr "必要的连字"
+msgstr "强制连字"
 
 #: gtk/open-type-layout.h:99
 msgctxt "OpenType layout"
 msgid "Reph Forms"
-msgstr "Reph 形式"
+msgstr "Reph 字形"
 
 #: gtk/open-type-layout.h:100
 msgctxt "OpenType layout"
 msgid "Right Bounds"
-msgstr "右边距"
+msgstr "右边界"
 
 #: gtk/open-type-layout.h:101
 msgctxt "OpenType layout"
 msgid "Right-to-left alternates"
-msgstr "从右至左变换"
+msgstr "右到左替代字形"
 
 #: gtk/open-type-layout.h:102
 msgctxt "OpenType layout"
 msgid "Right-to-left mirrored forms"
-msgstr "从右至左镜像形式"
+msgstr "右到左镜像字形"
 
 #: gtk/open-type-layout.h:103
 msgctxt "OpenType layout"
 msgid "Ruby Notation Forms"
-msgstr "Ruby 标记形式"
+msgstr "旁注标记形式"
 
 #: gtk/open-type-layout.h:104
 msgctxt "OpenType layout"
 msgid "Required Variation Alternates"
-msgstr "必要的变种变换"
+msgstr "强制变体替代"
 
 #: gtk/open-type-layout.h:105
 msgctxt "OpenType layout"
 msgid "Stylistic Alternates"
-msgstr "风格化变换"
+msgstr "替代样式"
 
 #: gtk/open-type-layout.h:106
 msgctxt "OpenType layout"
@@ -4722,112 +4739,112 @@ msgstr "小型大写字母"
 #: gtk/open-type-layout.h:109
 msgctxt "OpenType layout"
 msgid "Simplified Forms"
-msgstr "简化形式"
+msgstr "简体字"
 
 #: gtk/open-type-layout.h:110
 msgctxt "OpenType layout"
 msgid "Stylistic Set 1"
-msgstr "风格化组 1"
+msgstr "样式集 1"
 
 #: gtk/open-type-layout.h:111
 msgctxt "OpenType layout"
 msgid "Stylistic Set 2"
-msgstr "风格化组 2"
+msgstr "样式集 2"
 
 #: gtk/open-type-layout.h:112
 msgctxt "OpenType layout"
 msgid "Stylistic Set 3"
-msgstr "风格化组 3"
+msgstr "样式集 3"
 
 #: gtk/open-type-layout.h:113
 msgctxt "OpenType layout"
 msgid "Stylistic Set 4"
-msgstr "风格化组 4"
+msgstr "样式集 4"
 
 #: gtk/open-type-layout.h:114
 msgctxt "OpenType layout"
 msgid "Stylistic Set 5"
-msgstr "风格化组 5"
+msgstr "样式集 5"
 
 #: gtk/open-type-layout.h:115
 msgctxt "OpenType layout"
 msgid "Stylistic Set 6"
-msgstr "风格化组 6"
+msgstr "样式集 6"
 
 #: gtk/open-type-layout.h:116
 msgctxt "OpenType layout"
 msgid "Stylistic Set 7"
-msgstr "风格化组 7"
+msgstr "样式集 7"
 
 #: gtk/open-type-layout.h:117
 msgctxt "OpenType layout"
 msgid "Stylistic Set 8"
-msgstr "风格化组 8"
+msgstr "样式集 8"
 
 #: gtk/open-type-layout.h:118
 msgctxt "OpenType layout"
 msgid "Stylistic Set 9"
-msgstr "风格化组 9"
+msgstr "样式集 9"
 
 #: gtk/open-type-layout.h:119
 msgctxt "OpenType layout"
 msgid "Stylistic Set 10"
-msgstr "风格化组 10"
+msgstr "样式集 10"
 
 #: gtk/open-type-layout.h:120
 msgctxt "OpenType layout"
 msgid "Stylistic Set 11"
-msgstr "风格化组 11"
+msgstr "样式集 11"
 
 #: gtk/open-type-layout.h:121
 msgctxt "OpenType layout"
 msgid "Stylistic Set 12"
-msgstr "风格化组 12"
+msgstr "样式集 12"
 
 #: gtk/open-type-layout.h:122
 msgctxt "OpenType layout"
 msgid "Stylistic Set 13"
-msgstr "风格化组 13"
+msgstr "样式集 13"
 
 #: gtk/open-type-layout.h:123
 msgctxt "OpenType layout"
 msgid "Stylistic Set 14"
-msgstr "风格化组 14"
+msgstr "样式集 14"
 
 #: gtk/open-type-layout.h:124
 msgctxt "OpenType layout"
 msgid "Stylistic Set 15"
-msgstr "风格化组 15"
+msgstr "样式集 15"
 
 #: gtk/open-type-layout.h:125
 msgctxt "OpenType layout"
 msgid "Stylistic Set 16"
-msgstr "风格化组 16"
+msgstr "样式集 16"
 
 #: gtk/open-type-layout.h:126
 msgctxt "OpenType layout"
 msgid "Stylistic Set 17"
-msgstr "风格化组 17"
+msgstr "样式集 17"
 
 #: gtk/open-type-layout.h:127
 msgctxt "OpenType layout"
 msgid "Stylistic Set 18"
-msgstr "风格化组 18"
+msgstr "样式集 18"
 
 #: gtk/open-type-layout.h:128
 msgctxt "OpenType layout"
 msgid "Stylistic Set 19"
-msgstr "风格化组 19"
+msgstr "样式集 19"
 
 #: gtk/open-type-layout.h:129
 msgctxt "OpenType layout"
 msgid "Stylistic Set 20"
-msgstr "风格化组 20"
+msgstr "样式集 20"
 
 #: gtk/open-type-layout.h:130
 msgctxt "OpenType layout"
 msgid "Math script style alternates"
-msgstr "数学书写风格变换"
+msgstr "数学书写风格替代"
 
 #: gtk/open-type-layout.h:131
 msgctxt "OpenType layout"
@@ -4847,37 +4864,37 @@ msgstr "上标"
 #: gtk/open-type-layout.h:134
 msgctxt "OpenType layout"
 msgid "Swash"
-msgstr "笔画沿伸"
+msgstr "花体"
 
 #: gtk/open-type-layout.h:135
 msgctxt "OpenType layout"
 msgid "Titling"
-msgstr "标题化"
+msgstr "标题"
 
 #: gtk/open-type-layout.h:136
 msgctxt "OpenType layout"
 msgid "Trailing Jamo Forms"
-msgstr "字母跟随形式"
+msgstr "字母终声形式"
 
 #: gtk/open-type-layout.h:137
 msgctxt "OpenType layout"
 msgid "Traditional Name Forms"
-msgstr "传统名称形式"
+msgstr "传统姓名字形"
 
 #: gtk/open-type-layout.h:138
 msgctxt "OpenType layout"
 msgid "Tabular Figures"
-msgstr "制表数字"
+msgstr "等宽数字"
 
 #: gtk/open-type-layout.h:139
 msgctxt "OpenType layout"
 msgid "Traditional Forms"
-msgstr "传统形式"
+msgstr "繁体字"
 
 #: gtk/open-type-layout.h:140
 msgctxt "OpenType layout"
 msgid "Third Widths"
-msgstr "三分之一宽"
+msgstr "三分之一宽度"
 
 #: gtk/open-type-layout.h:141
 msgctxt "OpenType layout"
@@ -4887,57 +4904,57 @@ msgstr "大小写单一化"
 #: gtk/open-type-layout.h:142
 msgctxt "OpenType layout"
 msgid "Alternate Vertical Metrics"
-msgstr "替代垂直尺寸"
+msgstr "替代垂直规格"
 
 #: gtk/open-type-layout.h:143
 msgctxt "OpenType layout"
 msgid "Vattu Variants"
-msgstr "Vattu 变种"
+msgstr "Vattu 变体"
 
 #: gtk/open-type-layout.h:144
 msgctxt "OpenType layout"
 msgid "Vertical Writing"
-msgstr "垂直书写"
+msgstr "纵向书写"
 
 #: gtk/open-type-layout.h:145
 msgctxt "OpenType layout"
 msgid "Alternate Vertical Half Metrics"
-msgstr "替代垂直半高尺寸"
+msgstr "替代垂直半高规格"
 
 #: gtk/open-type-layout.h:146
 msgctxt "OpenType layout"
 msgid "Vowel Jamo Forms"
-msgstr "字母韵母形式"
+msgstr "字母中声形式"
 
 #: gtk/open-type-layout.h:147
 msgctxt "OpenType layout"
 msgid "Vertical Kana Alternates"
-msgstr "垂直假名替代"
+msgstr "纵书假名替代"
 
 #: gtk/open-type-layout.h:148
 msgctxt "OpenType layout"
 msgid "Vertical Kerning"
-msgstr "垂直字距"
+msgstr "纵向字偶距"
 
 #: gtk/open-type-layout.h:149
 msgctxt "OpenType layout"
 msgid "Proportional Alternate Vertical Metrics"
-msgstr "等比例变换垂直尺寸"
+msgstr "比例替代垂直规格"
 
 #: gtk/open-type-layout.h:150
 msgctxt "OpenType layout"
 msgid "Vertical Alternates and Rotation"
-msgstr "垂直变换和旋转"
+msgstr "纵书替代和旋转"
 
 #: gtk/open-type-layout.h:151
 msgctxt "OpenType layout"
 msgid "Vertical Alternates for Rotation"
-msgstr "垂直旋转变换"
+msgstr "旋转用纵书替代"
 
 #: gtk/open-type-layout.h:152
 msgctxt "OpenType layout"
 msgid "Slashed Zero"
-msgstr "带斜划的 0"
+msgstr "斜杆零"
 
 #: gtk/paper_names_offsets.c:4
 msgctxt "paper size"
@@ -6417,7 +6434,7 @@ msgstr "莫迪文"
 #: gtk/script-names.c:129
 msgctxt "Script"
 msgid "Mro"
-msgstr "默文"
+msgstr "默禄文"
 
 #: gtk/script-names.c:130
 msgctxt "Script"
@@ -6756,7 +6773,7 @@ msgstr "动物和自然"
 #: gtk/ui/gtkemojichooser.ui:133 gtk/ui/gtkemojichooser.ui:266
 msgctxt "emoji category"
 msgid "Food & Drink"
-msgstr "餐饮"
+msgstr "食物和饮料"
 
 #: gtk/ui/gtkemojichooser.ui:147 gtk/ui/gtkemojichooser.ui:275
 msgctxt "emoji category"
@@ -7048,7 +7065,7 @@ msgstr "等待(_H)"
 
 #: gtk/ui/gtkprintunixdialog.ui:866 gtk/ui/gtkprintunixdialog.ui:867
 msgid "Hold the job until it is explicitly released"
-msgstr "保持任务直到其被显式释放"
+msgstr "保持任务直到其被明确释放"
 
 #: gtk/ui/gtkprintunixdialog.ui:894
 msgid "Add Cover Page"
@@ -7953,6 +7970,18 @@ msgstr ""
 #~ msgid "No available configurations for the given RGBA pixel format"
 #~ msgstr "指定的 RGBA 像素格式没有可用的设置"
 
+#~ msgid "Show text"
+#~ msgstr "显示文本"
+
+#~ msgid "Online"
+#~ msgstr "在线"
+
+#~ msgid "Offline"
+#~ msgstr "离线"
+
+#~ msgid "Dormant"
+#~ msgstr "断网"
+
 #~ msgid "C_redits"
 #~ msgstr "鸣谢(_R)"
 
@@ -8037,20 +8066,8 @@ msgstr ""
 #~ msgid "Other…"
 #~ msgstr "其它…"
 
-#~ msgid "Show text"
-#~ msgstr "显示文本"
-
 #~ msgid "Setting is hardcoded by GTK_TEST_TOUCHSCREEN"
 #~ msgstr "设置值由 GTK_TEST_TOUCHSCREEN 所设置"
-
-#~ msgid "Online"
-#~ msgstr "在线"
-
-#~ msgid "Offline"
-#~ msgstr "离线"
-
-#~ msgid "Dormant"
-#~ msgstr "断网"
 
 #~ msgid "%s"
 #~ msgstr "%s"

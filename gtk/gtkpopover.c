@@ -132,6 +132,8 @@
 #include "gsk/gskroundedrectprivate.h"
 #include "gtkcssshadowvalueprivate.h"
 
+#include "gdk/gdksurfaceprivate.h"
+
 #define MNEMONICS_DELAY 300 /* ms */
 
 #define TAIL_GAP_WIDTH  24
@@ -774,6 +776,7 @@ gtk_popover_key_pressed (GtkWidget       *widget,
                          GdkModifierType  state)
 {
   GtkPopover *popover = GTK_POPOVER (widget);
+  GtkWindow *root;
 
   if (keyval == GDK_KEY_Escape)
     {
@@ -781,6 +784,8 @@ gtk_popover_key_pressed (GtkWidget       *widget,
       return TRUE;
     }
 
+  root = GTK_WINDOW (gtk_widget_get_root (GTK_WIDGET (popover)));
+  _gtk_window_update_focus_visible (root, keyval, state, TRUE);
   update_mnemonics_visible (popover, keyval, state, TRUE);
 
   return FALSE;
@@ -793,7 +798,10 @@ gtk_popover_key_released (GtkWidget       *widget,
                           GdkModifierType  state)
 {
   GtkPopover *popover = GTK_POPOVER (widget);
+  GtkWindow *root;
 
+  root = GTK_WINDOW (gtk_widget_get_root (GTK_WIDGET (popover)));
+  _gtk_window_update_focus_visible (root, keyval, state, FALSE);
   update_mnemonics_visible (popover, keyval, state, FALSE);
 
   return FALSE;
@@ -2095,7 +2103,7 @@ gtk_popover_buildable_init (GtkBuildableIface *iface)
 /**
  * gtk_popover_set_pointing_to: (attributes org.gtk.Method.set_property=pointing-to)
  * @popover: a `GtkPopover`
- * @rect: rectangle to point to
+ * @rect: (nullable): rectangle to point to
  *
  * Sets the rectangle that @popover points to.
  *

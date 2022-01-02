@@ -93,6 +93,7 @@ gtk_tests = [
   ['testswitch'],
   ['testtreepos'],
   ['testsensitive'],
+  ['testtextscroll'],
   ['testtextview'],
   ['testtextview2'],
   ['testgmenu'],
@@ -141,7 +142,7 @@ foreach t: gtk_tests
   )
 endforeach
 
-if profiler_enabled
+if libsysprof_dep.found()
   executable('testperf',
     sources: 'testperf.c',
     dependencies: [libsysprof_dep, platform_gio_dep, libm],

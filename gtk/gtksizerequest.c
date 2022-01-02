@@ -139,7 +139,6 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
                                        int              *minimum_baseline,
                                        int              *natural_baseline)
 {
-  const gboolean baselines_requested = (minimum_baseline != NULL || natural_baseline != NULL);
   SizeRequestCache *cache;
   int min_size = 0;
   int nat_size = 0;
@@ -361,7 +360,7 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
           nat_size = adjusted_natural;
         }
 
-      if (baselines_requested && (min_baseline != -1 || nat_baseline != -1))
+      if (min_baseline != -1 || nat_baseline != -1)
 	{
 	  if (orientation == GTK_ORIENTATION_HORIZONTAL)
 	    {
@@ -445,7 +444,7 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
               }
 	    g_string_append_printf (s, " (hit cache: %s)\n",
 		                    found_in_cache ? "yes" : "no");
-            g_message ("%s", s->str);
+            g_printerr ("%s", s->str);
             g_string_free (s, TRUE);
 	    });
 }
@@ -488,6 +487,14 @@ gtk_widget_measure (GtkWidget        *widget,
   g_return_if_fail (for_size >= -1);
   g_return_if_fail (orientation == GTK_ORIENTATION_HORIZONTAL ||
                     orientation == GTK_ORIENTATION_VERTICAL);
+
+  if (for_size >= 0)
+    {
+      int min_opposite_size;
+      gtk_widget_measure (widget, OPPOSITE_ORIENTATION (orientation), -1, &min_opposite_size, NULL, NULL, NULL);
+      if (for_size < min_opposite_size)
+        for_size = min_opposite_size;
+    }
 
   /* This is the main function that checks for a cached size and
    * possibly queries the widget class to compute the size if it's

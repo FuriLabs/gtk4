@@ -42,7 +42,6 @@
 #include "gdkdropprivate.h"
 
 #include "gdkdrag.h"
-#include "gdkinternals.h"
 #include "gdkprivate-win32.h"
 #include "gdkwin32.h"
 #include "gdkwin32dnd.h"
@@ -426,14 +425,9 @@ set_source_actions_helper (GdkDrop       *drop,
   return actions;
 }
 
-/* Utility function to translate win32 screen coordinates to
- * client coordinates (i.e. relative to the surface origin)
- *
- * Note that input is expected to be:
- * a) NOT scaled by dpi_scale
- * b) NOT translated by the GDK screen offset (gdk_offset_x / y)
- *
- * This utility function preserves subpixel precision
+/* Utility function to translate screen coordinates to surface-relative
+ * coordinates. This routine only works with pixel values that aren't
+ * scaled by any GDK DPI scale factor.
  */
 static void
 unscaled_screen_to_client (GdkSurface* surface,
@@ -515,8 +509,8 @@ idroptarget_dragenter (LPDROPTARGET This,
                                               grfKeyState);
 
   set_data_object (&ctx->data_object, pDataObj);
-  pt_x = pt.x / drop_win32->scale + _gdk_offset_x;
-  pt_y = pt.y / drop_win32->scale + _gdk_offset_y;
+  pt_x = pt.x / drop_win32->scale;
+  pt_y = pt.y / drop_win32->scale;
 
   unscaled_screen_to_client (ctx->surface, pt.x, pt.y, &x, &y);
   x /= drop_win32->scale;
@@ -555,8 +549,8 @@ idroptarget_dragover (LPDROPTARGET This,
 {
   drop_target_context *ctx = (drop_target_context *) This;
   GdkWin32Drop *drop_win32 = GDK_WIN32_DROP (ctx->drop);
-  int pt_x = pt.x / drop_win32->scale + _gdk_offset_x;
-  int pt_y = pt.y / drop_win32->scale + _gdk_offset_y;
+  int pt_x = pt.x / drop_win32->scale;
+  int pt_y = pt.y / drop_win32->scale;
   GdkDragAction source_actions;
   GdkDragAction dest_actions;
 
@@ -625,8 +619,6 @@ idroptarget_drop (LPDROPTARGET This,
 {
   drop_target_context *ctx = (drop_target_context *) This;
   GdkWin32Drop *drop_win32 = GDK_WIN32_DROP (ctx->drop);
-  int pt_x = pt.x / drop_win32->scale + _gdk_offset_x;
-  int pt_y = pt.y / drop_win32->scale + _gdk_offset_y;
   double x = 0.0;
   double y = 0.0;
   GdkDragAction dest_action;
@@ -700,6 +692,8 @@ target_context_new (GdkSurface *window)
 
   return result;
 }
+
+#if 0
 
 /* From MS Knowledge Base article Q130698 */
 
@@ -777,8 +771,6 @@ resolve_link (HWND     hWnd,
   return SUCCEEDED (hr);
 }
 
-#if 0
-
 /* Check for filenames like C:\Users\tml\AppData\Local\Temp\d5qtkvvs.bmp */
 static gboolean
 filename_looks_tempish (const char *filename)
@@ -816,143 +808,12 @@ close_it (gpointer data)
 
 #endif
 
-static GdkWin32MessageFilterReturn
-gdk_dropfiles_filter (GdkWin32Display *display,
-                      MSG             *msg,
-                      int             *ret_valp,
-                      gpointer         data)
-{
-  GdkSurface *window;
-  GdkDrop *drop;
-  GdkWin32Drop *drop_win32;
-  GString *result;
-  HANDLE hdrop;
-  POINT pt;
-  int nfiles, i;
-  char *fileName, *linkedFile;
-
-  if (msg->message != WM_DROPFILES)
-    return GDK_WIN32_MESSAGE_FILTER_CONTINUE;
-
-  GDK_NOTE (DND, g_print ("WM_DROPFILES: %p\n", msg->hwnd));
-
-  window = gdk_win32_handle_table_lookup (msg->hwnd);
-
-  drop = gdk_drop_new (GDK_DISPLAY (display),
-                       gdk_seat_get_pointer (gdk_display_get_default_seat (GDK_DISPLAY (display))),
-                       NULL,
-                       /* WM_DROPFILES drops are always file names */
-                       gdk_content_formats_new ((const char *[2]) {
-                                                  "text/uri-list",
-                                                  NULL
-                                                }, 1),
-                       window,
-                       GDK_DRAG_PROTO_WIN32_DROPFILES);
-  drop_win32 = GDK_WIN32_DROP (drop);
-
-  gdk_drop_set_actions (drop, GDK_ACTION_COPY);
-
-  hdrop = (HANDLE) msg->wParam;
-  DragQueryPoint (hdrop, &pt);
-  ClientToScreen (msg->hwnd, &pt);
-
-  nfiles = DragQueryFile (hdrop, 0xFFFFFFFF, NULL, 0);
-
-  result = g_string_new (NULL);
-  for (i = 0; i < nfiles; i++)
-    {
-      char *uri;
-      wchar_t wfn[MAX_PATH];
-
-      DragQueryFileW (hdrop, i, wfn, MAX_PATH);
-      fileName = g_utf16_to_utf8 (wfn, -1, NULL, NULL, NULL);
-
-      /* Resolve shortcuts */
-      if (resolve_link (msg->hwnd, wfn, &linkedFile))
-        {
-          uri = g_filename_to_uri (linkedFile, NULL, NULL);
-          if (uri != NULL)
-            {
-              g_string_append (result, uri);
-              GDK_NOTE (DND, g_print ("... %s link to %s: %s\n",
-                                      fileName, linkedFile, uri));
-              g_free (uri);
-            }
-          g_free (fileName);
-          fileName = linkedFile;
-        }
-      else
-        {
-          uri = g_filename_to_uri (fileName, NULL, NULL);
-          if (uri != NULL)
-            {
-              g_string_append (result, uri);
-              GDK_NOTE (DND, g_print ("... %s: %s\n", fileName, uri));
-              g_free (uri);
-            }
-        }
-
-#if 0
-      /* Awful hack to recognize temp files corresponding to
-       * images dragged from Firefox... Open the file right here
-       * so that it is less likely that Firefox manages to delete
-       * it before the GTK-using app (typically GIMP) has opened
-       * it.
-       *
-       * Not compiled in for now, because it means images dragged
-       * from Firefox would stay around in the temp folder which
-       * is not what Firefox intended. I don't feel comfortable
-       * with that, both from a geenral sanity point of view, and
-       * from a privacy point of view. It's better to wait for
-       * Firefox to fix the problem, for instance by deleting the
-       * temp file after a longer delay, or to wait until we
-       * implement the OLE2_DND...
-       */
-      if (filename_looks_tempish (fileName))
-        {
-          int fd = g_open (fileName, _O_RDONLY|_O_BINARY, 0);
-          if (fd == -1)
-            {
-              GDK_NOTE (DND, g_print ("Could not open %s, maybe an image dragged from Firefox that it already deleted\n", fileName));
-            }
-          else
-            {
-              GDK_NOTE (DND, g_print ("Opened %s as %d so that Firefox won't delete it\n", fileName, fd));
-              g_timeout_add_seconds (1, close_it, GINT_TO_POINTER (fd));
-            }
-        }
-#endif
-
-      g_free (fileName);
-      g_string_append (result, "\015\012");
-    }
-
-  g_clear_pointer (&drop_win32->dropfiles_list, g_free);
-  drop_win32->dropfiles_list = result->str;
-  g_string_free (result, FALSE);
-  if (drop_win32->dropfiles_list == NULL)
-    drop_win32->dropfiles_list = g_strdup ("");
-
-  gdk_drop_emit_drop_event (drop,
-                            FALSE, 
-                            pt.x / drop_win32->scale + _gdk_offset_x,
-                            pt.y / drop_win32->scale + _gdk_offset_y,
-                            _gdk_win32_get_next_tick (msg->time));
-
-  DragFinish (hdrop);
-
-  *ret_valp = 0;
-
-  return GDK_WIN32_MESSAGE_FILTER_REMOVE;
-}
-
 static void
 gdk_win32_drop_status (GdkDrop       *drop,
                        GdkDragAction  actions,
                        GdkDragAction  preferred)
 {
   GdkWin32Drop *drop_win32 = GDK_WIN32_DROP (drop);
-  GdkDrag *drag;
 
   g_return_if_fail (drop != NULL);
 

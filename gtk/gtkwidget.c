@@ -2289,19 +2289,14 @@ _gtk_widget_cancel_sequence (GtkWidget        *widget,
                              GdkEventSequence *sequence)
 {
   GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
-  gboolean emulates_pointer;
   gboolean handled = FALSE;
-  GdkEventSequence *seq;
   GList *l;
-
-  emulates_pointer = _gtk_widget_get_emulating_sequence (widget, sequence, &seq);
 
   for (l = priv->event_controllers; l; l = l->next)
     {
       GtkEventController *controller;
       GtkGesture *gesture;
 
-      seq = sequence;
       controller = l->data;
 
       if (!GTK_IS_GESTURE (controller))
@@ -2309,14 +2304,7 @@ _gtk_widget_cancel_sequence (GtkWidget        *widget,
 
       gesture = GTK_GESTURE (controller);
 
-      if (seq && emulates_pointer &&
-          !gtk_gesture_handles_sequence (gesture, seq))
-        seq = NULL;
-
-      if (!gtk_gesture_handles_sequence (gesture, seq))
-        continue;
-
-      handled |= _gtk_gesture_cancel_sequence (gesture, seq);
+      handled |= _gtk_gesture_cancel_sequence (gesture, sequence);
     }
 
   return handled;
@@ -2441,6 +2429,18 @@ gtk_widget_root_at_context (GtkWidget *self)
   gtk_at_context_set_display (priv->at_context, gtk_root_get_display (priv->root));
 }
 
+static void
+gtk_widget_unroot_at_context (GtkWidget *self)
+{
+  GtkWidgetPrivate *priv = gtk_widget_get_instance_private (self);
+
+  if (priv->at_context != NULL)
+    {
+      gtk_at_context_set_display (priv->at_context, gdk_display_get_default ());
+      gtk_at_context_unrealize (priv->at_context);
+    }
+}
+
 void
 gtk_widget_realize_at_context (GtkWidget *self)
 {
@@ -2532,6 +2532,9 @@ gtk_widget_unroot (GtkWidget *widget)
 
   if (!GTK_IS_ROOT (widget))
     {
+      /* Roots unrealize the ATContext on unmap */
+      gtk_widget_unroot_at_context (widget);
+
       priv->root = NULL;
       g_object_notify_by_pspec (G_OBJECT (widget), widget_props[PROP_ROOT]);
     }
@@ -3603,6 +3606,7 @@ gtk_widget_queue_resize_internal (GtkWidget *widget)
     return;
 
   priv->resize_needed = TRUE;
+  _gtk_size_request_cache_clear (&priv->requests);
   gtk_widget_set_alloc_needed (widget);
 
   if (priv->resize_func)
@@ -3841,52 +3845,53 @@ gtk_widget_adjust_size_allocation (GtkWidget     *widget,
   if (priv->halign == GTK_ALIGN_FILL && priv->valign == GTK_ALIGN_FILL)
     return;
 
-  if (gtk_widget_get_request_mode (widget) == GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH)
+  /* Note that adjust_for_align removes any margins from the
+   * allocated sizes and possibly limits them to the natural sizes */
+
+  if (priv->halign == GTK_ALIGN_FILL ||
+      (priv->valign != GTK_ALIGN_FILL &&
+       gtk_widget_get_request_mode (widget) == GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH))
     {
-      /* Go ahead and request the height for allocated width, note that the internals
-       * of get_height_for_width will internally limit the for_size to natural size
-       * when aligning implicitly.
-       */
-      gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL, -1,
-                          &min_width, &natural_width, NULL, NULL);
+      gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
+                          allocation->height + priv->margin.top + priv->margin.bottom,
+                          &min_width, NULL, NULL, NULL);
+      gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
+                          -1,
+                          NULL, &natural_width, NULL, NULL);
+      natural_width = MAX (min_width, natural_width);
+      adjust_for_align (effective_align (priv->halign, _gtk_widget_get_direction (widget)),
+                        natural_width - priv->margin.left - priv->margin.right,
+                        &allocation->x,
+                        &allocation->width);
       gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL,
                           allocation->width + priv->margin.left + priv->margin.right,
                           &min_height, &natural_height, NULL, NULL);
+      adjust_for_align (priv->valign,
+                        natural_height - priv->margin.top - priv->margin.bottom,
+                        &allocation->y,
+                        &allocation->height);
     }
   else
     {
-      /* Go ahead and request the width for allocated height, note that the internals
-       * of get_width_for_height will internally limit the for_size to natural size
-       * when aligning implicitly.
-       */
-      gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL, -1,
-                          &min_height, &natural_height, NULL, NULL);
+      gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL,
+                          allocation->width + priv->margin.left + priv->margin.right,
+                          &min_height, NULL, NULL, NULL);
+      gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL,
+                          -1,
+                          NULL, &natural_height, NULL, NULL);
+      natural_height = MAX (min_height, natural_height);
+      adjust_for_align (priv->valign,
+                        natural_height - priv->margin.top - priv->margin.bottom,
+                        &allocation->y,
+                        &allocation->height);
       gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
                           allocation->height + priv->margin.top + priv->margin.bottom,
                           &min_width, &natural_width, NULL, NULL);
+      adjust_for_align (effective_align (priv->halign, _gtk_widget_get_direction (widget)),
+                        natural_width - priv->margin.left - priv->margin.right,
+                        &allocation->x,
+                        &allocation->width);
     }
-
-#ifdef G_ENABLE_CONSISTENCY_CHECKS
-  if ((min_width > allocation->width + priv->margin.left + priv->margin.right ||
-       min_height > allocation->height + priv->margin.top + priv->margin.bottom) &&
-      !GTK_IS_SCROLLABLE (widget))
-    g_warning ("gtk_widget_size_allocate(): attempt to underallocate %s%s %s %p. "
-               "Allocation is %dx%d, but minimum required size is %dx%d.",
-               priv->parent ? G_OBJECT_TYPE_NAME (priv->parent) : "", priv->parent ? "'s child" : "toplevel",
-               G_OBJECT_TYPE_NAME (widget), widget,
-               allocation->width, allocation->height,
-               min_width, min_height);
-#endif
-  /* Now that we have the right natural height and width, go ahead and remove any margins from the
-   * allocated sizes and possibly limit them to the natural sizes */
-  adjust_for_align (effective_align (priv->halign, _gtk_widget_get_direction (widget)),
-                    natural_width - priv->margin.left - priv->margin.right,
-                    &allocation->x,
-                    &allocation->width);
-  adjust_for_align (priv->valign,
-                    natural_height - priv->margin.top - priv->margin.bottom,
-                    &allocation->y,
-                    &allocation->height);
 }
 
 /**
@@ -4966,7 +4971,8 @@ gtk_widget_real_css_changed (GtkWidget         *widget,
             {
               gtk_widget_queue_resize (widget);
             }
-          else if (gtk_css_style_change_affects (change, GTK_CSS_AFFECTS_TRANSFORM))
+          else if (gtk_css_style_change_affects (change, GTK_CSS_AFFECTS_TRANSFORM) &&
+                   priv->parent)
             {
               gtk_widget_queue_allocate (priv->parent);
             }
@@ -6445,8 +6451,16 @@ gtk_widget_update_pango_context (GtkWidget        *widget,
   pango_context_set_font_description (context, font_desc);
   pango_font_description_free (font_desc);
 
-  if (cairo_version () >= CAIRO_VERSION_ENCODE (1, 17, 4))
-    pango_context_set_round_glyph_positions (context, FALSE);
+  settings = gtk_widget_get_settings (widget);
+
+  if (settings &&
+      cairo_version () >= CAIRO_VERSION_ENCODE (1, 17, 4))
+    {
+      gboolean hint_font_metrics;
+
+      g_object_get (settings, "gtk-hint-font-metrics", &hint_font_metrics, NULL);
+      pango_context_set_round_glyph_positions (context, hint_font_metrics);
+    }
 
   if (direction != GTK_TEXT_DIR_NONE)
     pango_context_set_base_dir (context, direction == GTK_TEXT_DIR_LTR
@@ -6455,7 +6469,6 @@ gtk_widget_update_pango_context (GtkWidget        *widget,
 
   pango_cairo_context_set_resolution (context, _gtk_css_number_value_get (style->core->dpi, 100));
 
-  settings = gtk_widget_get_settings (widget);
   font_options = (cairo_font_options_t*)g_object_get_qdata (G_OBJECT (widget), quark_font_options);
   if (settings && font_options)
     {
@@ -10375,7 +10388,7 @@ gtk_widget_get_allocated_baseline (GtkWidget *widget)
  * toplevel. The opacity value itself is not inherited by child
  * widgets (since that would make widgets deeper in the hierarchy
  * progressively more translucent). As a consequence, [class@Gtk.Popover]s
- * and other [class@Gtk.Native] widgets with their own surface will use their
+ * and other [iface@Gtk.Native] widgets with their own surface will use their
  * own opacity value, and thus by default appear non-translucent,
  * even if they are attached to a toplevel that is translucent.
  */
@@ -10606,7 +10619,6 @@ gtk_widget_ensure_resize (GtkWidget *widget)
     return;
 
   priv->resize_needed = FALSE;
-  _gtk_size_request_cache_clear (&priv->requests);
 }
 
 void

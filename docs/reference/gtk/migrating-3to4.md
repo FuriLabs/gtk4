@@ -315,7 +315,7 @@ have been added to `GdkDisplay`.
 
 The root window is an X11-centric concept that is no longer exposed in the
 backend-neutral GDK API. If you need to interact with the X11 root window,
-you can use [method@GdkX11.Display.get_xrootwindow] to get its XID.
+you can use [`method@GdkX11.Display.get_xrootwindow`] to get its XID.
 
 ### Stop using `GdkVisual`
 
@@ -333,9 +333,9 @@ had replacements in GTK 3 and were deprecated in favor of `GdkSeat`.
 
 In GTK 4, the two roles of a standalone toplevel window and of a popup that
 is placed relative to a parent window have been separated out into two
-interfaces, [class@Gdk.Toplevel] and [class@Gdk.Popup]. Surfaces
-implementing these interfaces are created with [ctor@Gdk.Surface.new_toplevel]
-and [ctor@Gdk.Surface.new_popup], respectively, and they are presented on
+interfaces, [iface@Gdk.Toplevel] and [iface@Gdk.Popup]. Surfaces
+implementing these interfaces are created with [`ctor@Gdk.Surface.new_toplevel`]
+and [`ctor@Gdk.Surface.new_popup`], respectively, and they are presented on
 screen using [method@Gdk.Toplevel.present] and [method@Gdk.Popup.present].
 The `present()` functions take parameters in the form of an auxiliary layout
 struct, [struct@Gdk.PopupLayout] or [struct@Gdk.ToplevelLayout].
@@ -362,9 +362,9 @@ windows, you you will have to use Xlib apis.
 
 A number of minor API cleanups have happened in `GdkSurface`
 as well. For example, `gdk_surface_input_shape_combine_region()`
-has been renamed to [method@Gdk.Surface.set_input_region], and
+has been renamed to [`method@Gdk.Surface.set_input_region`], and
 `gdk_surface_begin_resize_drag()` has been renamed to
-[method@Gdk.Toplevel.begin_resize].
+[`method@Gdk.Toplevel.begin_resize`].
 
 ### The "iconified" window state has been renamed to "minimized"
 
@@ -388,7 +388,7 @@ have accessors that you will have to use.
 
 Event compression is always enabled in GTK 4, for both motion and
 scroll events. If you need to see the uncoalesced motion or scroll
-history, use [method@Gdk.Event.get_history] on the latest event.
+history, use [`method@Gdk.Event.get_history`] on the latest event.
 
 ### Stop using grabs
 
@@ -410,8 +410,8 @@ have been removed. Update your code accordingly.
 Any APIs that deal with global (or root) coordinates have been
 removed in GTK 4, since not all backends support them. You should
 replace your use of such APIs with surface-relative equivalents.
-Examples of this are `gdk_surface_get_origin()`, `gdk_surface_move()`
-or `gdk_event_get_root_coords()`.
+Examples of such removed APIs are `gdk_window_get_origin()`,
+`gdk_window_move()` or `gdk_event_get_root_coords()`.
 
 ### Adapt to `GdkKeymap` API changes
 
@@ -668,18 +668,21 @@ box children as necessary.
 ### Adapt to `GtkWindow` API changes
 
 Following the `GdkSurface` changes, a number of `GtkWindow` APIs that were
-X11-specific have been removed. This includes `gtk_window_set_geometry_hints()`,
-`gtk_window_set_gravity()`, `gtk_window_move()`, `gtk_window_parse_geometry()`,
+X11-specific have been removed. This includes `gtk_window_set_position()`,
+`gtk_window_set_geometry_hints()`, `gtk_window_set_gravity()`,
+`gtk_window_move()`, `gtk_window_parse_geometry()`,
 `gtk_window_set_keep_above()`, `gtk_window_set_keep_below()`,
 `gtk_window_begin_resize_drag()`, `gtk_window_begin_move_drag()`.
 Most likely, you should just stop using them. In some cases, you can
 fall back to using the underlying `GdkToplevel` APIs (for example,
-[method@Gdk.Toplevel.begin_resize]).
+[`method@Gdk.Toplevel.begin_resize`]); alternatively, you will need to get
+the native windowing system surface from the `GtkWindow` and call platform
+specific API.
 
 The APIs for controlling `GtkWindow` size have changed to be better aligned
 with the way size changes are integrated in the frame cycle. `gtk_window_resize()`
 and `gtk_window_get_size()` have been removed. Instead, use
-[method@Gtk.Window.set_default_size] and [method@Gtk.Window.get_default_size].
+[`method@Gtk.Window.set_default_size`] and [`method@Gtk.Window.get_default_size`].
 
 ### Adapt to `GtkHeaderBar` and `GtkActionBar` API changes
 
@@ -1051,7 +1054,7 @@ Observing widget contents and widget size is now done by using the
 
 ### Monitor handling has changed
 
-Instead of a monitor number, [class@Gdk.Monitor] is now used throughout. 
+Instead of a monitor number, [class@Gdk.Monitor] is now used throughout.
 [method@Gdk.Display.get_monitors] returns the list of monitors that can be queried
 or observed for monitors to pass to APIs like [method@Gtk.Window.fullscreen_on_monitor].
 
@@ -1272,6 +1275,15 @@ on the context it is rendered it. To properly render a symbolic icon that
 is provided in the form of a `GtkIconPaintable` (this can be checked with
 [method@Gtk.IconPaintable.is_symbolic]), you have to call
 [method@Gtk.IconPaintable.get_icon_name] and set the icon name on a `GtkImage`.
+
+### Adapt to GtkImage changes
+`GtkPicture`'s behaviour was "split out" of `GtkImage` as the latter was covering
+too many use cases; if you're loading an icon, [class@Gtk.Image] in GTK3 and GTK4 are
+perfectly equivalent. If you are loading a more complex image asset, like a picture
+or a thumbnail, then [class@Gtk.Picture] is the appropriate widget.
+
+One noteworthy distinction is that while `GtkImage` has its size computed by
+GTK, `GtkPicture` lets you decide about the size.
 
 ### Update to GtkFileChooser API changes
 

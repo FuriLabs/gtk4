@@ -19,7 +19,7 @@
  * Modified by the GTK+ Team and others 1997-2000.  See the AUTHORS
  * file for a list of people on the GTK+ Team.  See the ChangeLog
  * files for a list of changes.  These files are distributed with
- * GTK+ at ftp://ftp.gtk.org/pub/gtk/. 
+ * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
 #include "config.h"
@@ -68,7 +68,11 @@
 #include "gtknative.h"
 #include "gtkpopcountprivate.h"
 
+#include "inspector/init.h"
 #include "inspector/window.h"
+
+#include "gdk/gdkeventsprivate.h"
+#include "gdk/gdksurfaceprivate.h"
 
 #define GDK_ARRAY_ELEMENT_TYPE GtkWidget *
 #define GDK_ARRAY_TYPE_NAME GtkWidgetStack
@@ -359,7 +363,7 @@ enum_locale_proc (LPTSTR locale)
 
   return TRUE;
 }
-  
+
 #endif
 
 void
@@ -376,7 +380,7 @@ setlocale_initialization (void)
 #ifdef G_OS_WIN32
       /* If some of the POSIXish environment variables are set, set
        * the Win32 thread locale correspondingly.
-       */ 
+       */
       char *p = getenv ("LC_ALL");
       if (p == NULL)
         p = getenv ("LANG");
@@ -563,6 +567,8 @@ do_post_parse_initialization (void)
   g_signal_connect (display_manager, "notify::default-display",
                     G_CALLBACK (default_display_notify_cb),
                     NULL);
+
+  gtk_inspector_register_extension ();
 }
 
 #ifdef G_PLATFORM_WIN32
@@ -619,7 +625,7 @@ gtk_init_check (void)
  *
  * Call this function before using any other GTK functions in your GUI
  * applications.  It will initialize everything needed to operate the
- * toolkit and parses some standard command line options.
+ * toolkit.
  *
  * If you are using `GtkApplication`, you don't have to call gtk_init()
  * or gtk_init_check(); the `GApplication::startup` handler
@@ -844,7 +850,7 @@ gtk_main_sync (void)
   ClipboardStore store = { NULL, };
   GSList *displays, *l;
   GCancellable *cancel;
-  
+
   /* Try storing all clipboard data we have */
   displays = gdk_display_manager_list_displays (gdk_display_manager_get ());
   if (displays == NULL)
@@ -872,12 +878,12 @@ gtk_main_sync (void)
 
   if (g_main_loop_is_running (store.store_loop))
     g_main_loop_run (store.store_loop);
-  
+
   g_cancellable_cancel (cancel);
   g_object_unref (cancel);
   g_clear_handle_id (&store.timeout_id, g_source_remove);
   g_clear_pointer (&store.store_loop, g_main_loop_unref);
-  
+
   /* Synchronize the recent manager singleton */
   _gtk_recent_manager_sync ();
 }
@@ -948,6 +954,7 @@ rewrite_event_for_surface (GdkEvent  *event,
     case GDK_TOUCHPAD_SWIPE:
       gdk_touchpad_event_get_deltas (event, &dx, &dy);
       return gdk_touchpad_event_new_swipe (new_surface,
+                                           gdk_event_get_event_sequence (event),
                                            gdk_event_get_device (event),
                                            gdk_event_get_time (event),
                                            gdk_event_get_modifier_state (event),
@@ -958,6 +965,7 @@ rewrite_event_for_surface (GdkEvent  *event,
     case GDK_TOUCHPAD_PINCH:
       gdk_touchpad_event_get_deltas (event, &dx, &dy);
       return gdk_touchpad_event_new_pinch (new_surface,
+                                           gdk_event_get_event_sequence (event),
                                            gdk_event_get_device (event),
                                            gdk_event_get_time (event),
                                            gdk_event_get_modifier_state (event),
@@ -1287,19 +1295,15 @@ is_key_event (GdkEvent *event)
 }
 
 static inline void
-set_widget_active_state (GtkWidget       *target,
-                         const gboolean   release)
+set_widget_active_state (GtkWidget      *target,
+                         const gboolean  is_active)
 {
   GtkWidget *w;
 
   w = target;
   while (w)
     {
-      if (release)
-        gtk_widget_set_active_state (w, FALSE);
-      else
-        gtk_widget_set_active_state (w, TRUE);
-
+      gtk_widget_set_active_state (w, is_active);
       w = _gtk_widget_get_parent (w);
     }
 }
@@ -1346,14 +1350,26 @@ handle_pointing_event (GdkEvent *event)
   switch ((guint) type)
     {
     case GDK_LEAVE_NOTIFY:
+      if (gdk_crossing_event_get_mode (event) == GDK_CROSSING_GRAB)
+        {
+          GtkWidget *grab_widget;
+
+          grab_widget =
+            gtk_window_lookup_pointer_focus_implicit_grab (toplevel,
+                                                           device,
+                                                           sequence);
+          if (grab_widget)
+            set_widget_active_state (grab_widget, FALSE);
+        }
+
+      old_target = update_pointer_focus_state (toplevel, event, NULL);
+      gtk_synthesize_crossing_events (GTK_ROOT (toplevel), GTK_CROSSING_POINTER, old_target, NULL,
+                                      event, gdk_crossing_event_get_mode (event), NULL);
+      break;
     case GDK_TOUCH_END:
     case GDK_TOUCH_CANCEL:
       old_target = update_pointer_focus_state (toplevel, event, NULL);
-      if (type == GDK_TOUCH_END || type == GDK_TOUCH_CANCEL)
-        set_widget_active_state (old_target, TRUE);
-      else if (type == GDK_LEAVE_NOTIFY)
-        gtk_synthesize_crossing_events (GTK_ROOT (toplevel), GTK_CROSSING_POINTER, old_target, NULL,
-                                        event, gdk_crossing_event_get_mode (event), NULL);
+      set_widget_active_state (old_target, FALSE);
       break;
     case GDK_DRAG_LEAVE:
       {
@@ -1405,7 +1421,7 @@ handle_pointing_event (GdkEvent *event)
       else if (type == GDK_TOUCH_BEGIN)
         {
           gtk_window_set_pointer_focus_grab (toplevel, device, sequence, target);
-          set_widget_active_state (target, FALSE);
+          set_widget_active_state (target, TRUE);
         }
 
       /* Let it take the effective pointer focus anyway, as it may change due
@@ -1450,9 +1466,9 @@ handle_pointing_event (GdkEvent *event)
         }
 
       if (type == GDK_BUTTON_PRESS)
-        set_widget_active_state (target, FALSE);
-      else if (has_implicit)
         set_widget_active_state (target, TRUE);
+      else if (has_implicit)
+        set_widget_active_state (target, FALSE);
 
       break;
     case GDK_SCROLL:
@@ -1465,7 +1481,7 @@ handle_pointing_event (GdkEvent *event)
           target = gtk_window_lookup_effective_pointer_focus_widget (toplevel,
                                                                      device,
                                                                      sequence);
-          set_widget_active_state (target, TRUE);
+          set_widget_active_state (target, FALSE);
         }
       break;
     default:

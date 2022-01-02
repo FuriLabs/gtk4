@@ -26,18 +26,14 @@
 
 #include "gdkversionmacros.h"
 
-#include "gdkinternals.h"
-#include "gdkintl.h"
-
 #include "gdkresources.h"
 
-#include "gdk-private.h"
-
 #include "gdkconstructor.h"
-
-#ifndef HAVE_XCONVERTCASE
-#include "gdkkeysyms.h"
-#endif
+#include "gdkdebug.h"
+#include "gdkdisplay.h"
+#include "gdkglcontextprivate.h"
+#include "gdkintl.h"
+#include "gdk-private.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -125,7 +121,7 @@ static const GdkDebugKey gdk_debug_keys[] = {
   { "gl-software",     GDK_DEBUG_GL_SOFTWARE, "Force OpenGL software rendering" },
   { "gl-texture-rect", GDK_DEBUG_GL_TEXTURE_RECT, "Use OpenGL texture rectangle extension" },
   { "gl-legacy",       GDK_DEBUG_GL_LEGACY, "Use a legacy OpenGL context" },
-  { "gl-gles",         GDK_DEBUG_GL_GLES, "Use a GLES OpenGL context" },
+  { "gl-gles",         GDK_DEBUG_GL_GLES, "Only allow OpenGL GLES API" },
   { "gl-debug",        GDK_DEBUG_GL_DEBUG, "Insert debugging information in OpenGL" },
   { "gl-egl",          GDK_DEBUG_GL_EGL, "Use EGL on X11 or Windows" },
   { "gl-glx",          GDK_DEBUG_GL_GLX, "Use GLX on X11" },
@@ -133,6 +129,7 @@ static const GdkDebugKey gdk_debug_keys[] = {
   { "vulkan-disable",  GDK_DEBUG_VULKAN_DISABLE, "Disable Vulkan support" },
   { "vulkan-validate", GDK_DEBUG_VULKAN_VALIDATE, "Load the Vulkan validation layer" },
   { "default-settings",GDK_DEBUG_DEFAULT_SETTINGS, "Force default values for xsettings", TRUE },
+  { "high-depth",      GDK_DEBUG_HIGH_DEPTH, "Use high bit depth rendering if possible", TRUE },
 };
 
 
@@ -298,6 +295,14 @@ gdk_pre_parse (void)
   _gdk_debug_flags = gdk_parse_debug_var ("GDK_DEBUG",
                                           gdk_debug_keys,
                                           G_N_ELEMENTS (gdk_debug_keys));
+
+  /* These are global */
+  if (GDK_DEBUG_CHECK (GL_EGL))
+    gdk_gl_backend_use (GDK_GL_EGL);
+  else if (GDK_DEBUG_CHECK (GL_GLX))
+    gdk_gl_backend_use (GDK_GL_GLX);
+  else if (GDK_DEBUG_CHECK (GL_WGL))
+    gdk_gl_backend_use (GDK_GL_WGL);
 
 #ifndef G_HAS_CONSTRUCTORS
   stash_desktop_startup_notification_id ();

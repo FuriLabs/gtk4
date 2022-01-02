@@ -33,7 +33,9 @@
 #include "gtkbox.h"
 #include "gtkbinlayout.h"
 #include "gtkmediafileprivate.h"
+#include "gtkimmoduleprivate.h"
 
+#include "gdk/gdkdebug.h"
 
 #ifdef GDK_WINDOWING_X11
 #include "x11/gdkx.h"
@@ -86,6 +88,7 @@ struct _GtkInspectorGeneral
   GtkWidget *gsk_renderer;
   GtkWidget *pango_fontmap;
   GtkWidget *media_backend;
+  GtkWidget *im_module;
   GtkWidget *gl_version;
   GtkWidget *gl_error;
   GtkWidget *gl_error_row;
@@ -157,8 +160,6 @@ init_version (GtkInspectorGeneral *gen)
     renderer = "Vulkan";
   else if (strcmp (G_OBJECT_TYPE_NAME (gsk_renderer), "GskGLRenderer") == 0)
     renderer = "GL";
-  else if (strcmp (G_OBJECT_TYPE_NAME (gsk_renderer), "GskNglRenderer") == 0)
-    renderer = "NGL";
   else if (strcmp (G_OBJECT_TYPE_NAME (gsk_renderer), "GskCairoRenderer") == 0)
     renderer = "Cairo";
   else
@@ -371,10 +372,10 @@ init_gl (GtkInspectorGeneral *gen)
       char *version;
 
       gl_version = epoxy_gl_version ();
-      version = g_strdup_printf ("WGL %d.%d", gl_version / 10, gl_version % 10, NULL);
+      version = g_strdup_printf ("WGL %d.%d", gl_version / 10, gl_version % 10);
       gtk_label_set_text (GTK_LABEL (gen->gl_version), version);
       g_free (version);
-      gtk_label_set_text (GTK_LABEL (gen->gl_vendor), glGetString (GL_VENDOR));
+      gtk_label_set_text (GTK_LABEL (gen->gl_vendor), (const char *) glGetString (GL_VENDOR));
 
       append_wgl_extension_row (gen, "WGL_EXT_create_context");
       append_wgl_extension_row (gen, "WGL_EXT_swap_control");
@@ -743,6 +744,42 @@ init_media (GtkInspectorGeneral *gen)
   gtk_label_set_label (GTK_LABEL (gen->media_backend), name);
 }
 
+static void
+im_module_changed (GtkSettings         *settings,
+                   GParamSpec          *pspec,
+                   GtkInspectorGeneral *gen)
+{
+  if (!gen->display)
+    return;
+
+  gtk_label_set_label (GTK_LABEL (gen->im_module),
+                       _gtk_im_module_get_default_context_id (gen->display));
+}
+
+static void
+init_im_module (GtkInspectorGeneral *gen)
+{
+  GtkSettings *settings = gtk_settings_get_for_display (gen->display);
+  const char *default_context_id = _gtk_im_module_get_default_context_id (gen->display);
+
+  gtk_label_set_label (GTK_LABEL (gen->im_module), default_context_id);
+
+  if (g_getenv ("GTK_IM_MODULE") != NULL)
+    {
+      /* This can't update if GTK_IM_MODULE envvar is set */
+      gtk_widget_set_tooltip_text (gen->im_module,
+                                   _("IM Context is hardcoded by GTK_IM_MODULE"));
+      gtk_widget_set_sensitive (gen->im_module, FALSE);
+      return;
+    }
+
+  g_signal_connect_object (settings,
+                           "notify::gtk-im-module",
+                           G_CALLBACK (im_module_changed),
+                           gen, 0);
+}
+
+
 static void populate_seats (GtkInspectorGeneral *gen);
 
 static void
@@ -1066,6 +1103,7 @@ gtk_inspector_general_class_init (GtkInspectorGeneralClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorGeneral, gsk_renderer);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorGeneral, pango_fontmap);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorGeneral, media_backend);
+  gtk_widget_class_bind_template_child (widget_class, GtkInspectorGeneral, im_module);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorGeneral, gl_version);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorGeneral, gl_error);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorGeneral, gl_error_row);
@@ -1104,6 +1142,7 @@ gtk_inspector_general_set_display (GtkInspectorGeneral *gen,
   init_gl (gen);
   init_vulkan (gen);
   init_device (gen);
+  init_im_module (gen);
 }
 
 // vim: set et sw=2 ts=2:

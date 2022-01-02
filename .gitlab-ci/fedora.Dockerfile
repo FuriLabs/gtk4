@@ -53,6 +53,7 @@ RUN dnf -y install \
     libpng-devel \
     librsvg2 \
     libselinux-devel \
+    libtiff-devel \
     libubsan \
     libXcomposite-devel \
     libXcursor-devel \
@@ -75,6 +76,7 @@ RUN dnf -y install \
     pcre-devel \
     pcre-static \
     python3 \
+    python3-docutils \
     python3-gobject \
     python3-jinja2 \
     python3-markdown \

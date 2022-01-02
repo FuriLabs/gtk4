@@ -7,7 +7,8 @@
  * shows.
  *
  * We also demonstrate adding other things to a text view, such as
- * clickable icons.
+ * clickable icons and widgets which can also replace a character
+ * (try copying the ghost text).
  */
 
 #include <gtk/gtk.h>
@@ -94,13 +95,12 @@ show_page (GtkTextView *text_view,
       gtk_text_buffer_insert (buffer, &iter, " can easily be realized with ", -1);
       insert_link (buffer, &iter, "tags", 2);
       gtk_text_buffer_insert (buffer, &iter, ".\n", -1);
-      gtk_text_buffer_insert (buffer, &iter,
-          "Of course you can also embed Emoji 😋, "
-          "icons ", -1);
+      gtk_text_buffer_insert (buffer, &iter, "Of course you can also embed Emoji 😋, ", -1);
+      gtk_text_buffer_insert (buffer, &iter, "icons ", -1);
 
       theme = gtk_icon_theme_get_for_display (gtk_widget_get_display (GTK_WIDGET (text_view)));
       icon = gtk_icon_theme_lookup_icon (theme,
-                                         "microphone-sensitivity-high-symbolic",
+                                         "eye-not-looking-symbolic",
                                          NULL,
                                          16,
                                          1,
@@ -114,7 +114,12 @@ show_page (GtkTextView *text_view,
       gtk_level_bar_set_value (GTK_LEVEL_BAR (child), 50);
       gtk_widget_set_size_request (child, 100, -1);
       gtk_text_view_add_child_at_anchor (text_view, child, anchor);
-      gtk_text_buffer_insert (buffer, &iter, ".", -1);
+      gtk_text_buffer_insert (buffer, &iter, " and labels with ", -1);
+      anchor = gtk_text_child_anchor_new_with_replacement ("👻");
+      gtk_text_buffer_insert_child_anchor (buffer, &iter, anchor);
+      child = gtk_label_new ("ghost");
+      gtk_text_view_add_child_at_anchor (text_view, child, anchor);
+      gtk_text_buffer_insert (buffer, &iter, " text.", -1);
     }
   else if (page == 2)
     {

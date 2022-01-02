@@ -2,7 +2,6 @@
 <interface>
   <object class="GtkWindow" id="window1">
     <property name="decorated">0</property>
-    <signal name="realize" handler="reftest:set_default_direction_ltr"/>
     <child>
       <object class="GtkGrid" id="grid1">
         <property name="row_spacing">1</property>
@@ -212,8 +211,7 @@
                     <property name="halign">end</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
                     </attributes>
@@ -224,8 +222,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
                     </attributes>
@@ -646,8 +643,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">4</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -659,8 +655,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">4</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -1092,8 +1087,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE   
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">8</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -1105,8 +1099,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE   
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">8</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -1982,8 +1975,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="max_width_chars">4</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -1995,8 +1987,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="max_width_chars">4</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -2016,8 +2007,7 @@ ABCD</property>
                     <property name="halign">start</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="max_width_chars">4</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -2029,8 +2019,7 @@ ABCD</property>
                     <property name="halign">start</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="max_width_chars">4</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -2434,8 +2423,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">4</property>
                     <property name="max_width_chars">4</property>
                     <attributes>
@@ -2448,8 +2436,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">4</property>
                     <property name="max_width_chars">4</property>
                     <attributes>
@@ -2470,8 +2457,7 @@ ABCD</property>
                     <property name="halign">start</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">4</property>
                     <property name="max_width_chars">4</property>
                     <attributes>
@@ -2484,8 +2470,7 @@ ABCD</property>
                     <property name="halign">start</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">4</property>
                     <property name="max_width_chars">4</property>
                     <attributes>
@@ -2898,8 +2883,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE   
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">8</property>
                     <property name="max_width_chars">4</property>
                     <attributes>
@@ -2912,8 +2896,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE   
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">8</property>
                     <property name="max_width_chars">4</property>
                     <attributes>
@@ -2934,8 +2917,7 @@ ABCD</property>
                     <property name="halign">start</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE   
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">8</property>
                     <property name="max_width_chars">4</property>
                     <attributes>
@@ -2948,8 +2930,7 @@ ABCD</property>
                     <property name="halign">start</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE   
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">8</property>
                     <property name="max_width_chars">4</property>
                     <attributes>
@@ -3818,8 +3799,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="max_width_chars">8</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -3831,8 +3811,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="max_width_chars">8</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -3852,8 +3831,7 @@ ABCD</property>
                     <property name="halign">start</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="max_width_chars">8</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -3865,8 +3843,7 @@ ABCD</property>
                     <property name="halign">start</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="max_width_chars">8</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -4270,8 +4247,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">4</property>
                     <property name="max_width_chars">8</property>
                     <attributes>
@@ -4284,8 +4260,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">4</property>
                     <property name="max_width_chars">8</property>
                     <attributes>
@@ -4306,8 +4281,7 @@ ABCD</property>
                     <property name="halign">start</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">4</property>
                     <property name="max_width_chars">8</property>
                     <attributes>
@@ -4320,8 +4294,7 @@ ABCD</property>
                     <property name="halign">start</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">4</property>
                     <property name="max_width_chars">8</property>
                     <attributes>
@@ -4734,8 +4707,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE   
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">8</property>
                     <property name="max_width_chars">8</property>
                     <attributes>
@@ -4748,8 +4720,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE   
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">8</property>
                     <property name="max_width_chars">8</property>
                     <attributes>
@@ -4770,8 +4741,7 @@ ABCD</property>
                     <property name="halign">start</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE   
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">8</property>
                     <property name="max_width_chars">8</property>
                     <attributes>
@@ -4784,8 +4754,7 @@ ABCD</property>
                     <property name="halign">start</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE   
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">8</property>
                     <property name="max_width_chars">8</property>
                     <attributes>
@@ -5654,8 +5623,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="max_width_chars">12</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -5667,8 +5635,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="max_width_chars">12</property>
                     <attributes>
                       <attribute name="font-desc" value="Monospace"></attribute>
@@ -6104,8 +6071,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">4</property>
                     <property name="max_width_chars">12</property>
                     <attributes>
@@ -6118,8 +6084,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">4</property>
                     <property name="max_width_chars">12</property>
                     <attributes>
@@ -6566,8 +6531,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">end</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE   
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">8</property>
                     <property name="max_width_chars">12</property>
                     <attributes>
@@ -6580,8 +6544,7 @@ ABCD</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">ABCDE   
-ABCD</property>
+                    <property name="label" translatable="yes">ABCDE ABCD</property>
                     <property name="width_chars">8</property>
                     <property name="max_width_chars">12</property>
                     <attributes>

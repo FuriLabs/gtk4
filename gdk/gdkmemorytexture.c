@@ -21,6 +21,9 @@
 
 #include "gdkmemorytextureprivate.h"
 
+#include "gdkmemoryformatprivate.h"
+#include "gsk/gl/fp16private.h"
+
 /**
  * GdkMemoryTexture:
  *
@@ -30,8 +33,6 @@
 struct _GdkMemoryTexture
 {
   GdkTexture parent_instance;
-
-  GdkMemoryFormat format;
 
   GBytes *bytes;
   gsize stride;
@@ -44,31 +45,6 @@ struct _GdkMemoryTextureClass
 
 G_DEFINE_TYPE (GdkMemoryTexture, gdk_memory_texture, GDK_TYPE_TEXTURE)
 
-gsize
-gdk_memory_format_bytes_per_pixel (GdkMemoryFormat format)
-{
-  switch (format)
-    {
-    case GDK_MEMORY_B8G8R8A8_PREMULTIPLIED:
-    case GDK_MEMORY_A8R8G8B8_PREMULTIPLIED:
-    case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
-    case GDK_MEMORY_B8G8R8A8:
-    case GDK_MEMORY_A8R8G8B8:
-    case GDK_MEMORY_R8G8B8A8:
-    case GDK_MEMORY_A8B8G8R8:
-      return 4;
-
-    case GDK_MEMORY_R8G8B8:
-    case GDK_MEMORY_B8G8R8:
-      return 3;
-
-    case GDK_MEMORY_N_FORMATS:
-    default:
-      g_assert_not_reached ();
-      return 4;
-    }
-}
-
 static void
 gdk_memory_texture_dispose (GObject *object)
 {
@@ -80,21 +56,20 @@ gdk_memory_texture_dispose (GObject *object)
 }
 
 static void
-gdk_memory_texture_download (GdkTexture         *texture,
-                             const GdkRectangle *area,
-                             guchar             *data,
-                             gsize               stride)
+gdk_memory_texture_download (GdkTexture      *texture,
+                             GdkMemoryFormat  format,
+                             guchar          *data,
+                             gsize            stride)
 {
   GdkMemoryTexture *self = GDK_MEMORY_TEXTURE (texture);
 
   gdk_memory_convert (data, stride,
-                      GDK_MEMORY_CAIRO_FORMAT_ARGB32,
-                      (guchar *) g_bytes_get_data (self->bytes, NULL)
-                        + area->x * gdk_memory_format_bytes_per_pixel (self->format)
-                        + area->y * self->stride,
+                      format,
+                      (guchar *) g_bytes_get_data (self->bytes, NULL),
                       self->stride,
-                      self->format,
-                      area->width, area->height);
+                      texture->format,
+                      gdk_texture_get_width (texture),
+                      gdk_texture_get_height (texture));
 }
 
 static void
@@ -104,12 +79,48 @@ gdk_memory_texture_class_init (GdkMemoryTextureClass *klass)
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
   texture_class->download = gdk_memory_texture_download;
+
   gobject_class->dispose = gdk_memory_texture_dispose;
 }
 
 static void
 gdk_memory_texture_init (GdkMemoryTexture *self)
 {
+}
+
+static GBytes *
+gdk_memory_sanitize (GBytes          *bytes,
+                     int              width,
+                     int              height,
+                     GdkMemoryFormat  format,
+                     gsize            stride,
+                     gsize           *out_stride)
+{
+  gsize align, size, copy_stride, bpp;
+  const guchar *data;
+  guchar *copy;
+  int y;
+
+  data = g_bytes_get_data (bytes, &size);
+  align = gdk_memory_format_alignment (format);
+
+  if (GPOINTER_TO_SIZE (data) % align == 0 &&
+      stride % align == 0)
+    {
+      *out_stride = stride;
+      return g_bytes_ref (bytes);
+    }
+
+  bpp = gdk_memory_format_bytes_per_pixel (format);
+  copy_stride = bpp * width;
+  /* align to multiples of 4, just to be sure */
+  copy_stride = (copy_stride + 3) & ~3;
+  copy = g_malloc (copy_stride * height);
+  for (y = 0; y < height; y++)
+    memcpy (copy + y * copy_stride, data + y * stride, bpp * width);
+
+  *out_stride = copy_stride;
+  return g_bytes_new_take (copy, copy_stride * height);
 }
 
 /**
@@ -136,22 +147,90 @@ gdk_memory_texture_new (int              width,
 {
   GdkMemoryTexture *self;
 
+  g_return_val_if_fail (width > 0, NULL);
+  g_return_val_if_fail (height > 0, NULL);
+  g_return_val_if_fail (bytes != NULL, NULL);
+  g_return_val_if_fail (stride >= width * gdk_memory_format_bytes_per_pixel (format), NULL);
+
+  bytes = gdk_memory_sanitize (bytes, width, height, format, stride, &stride);
+
   self = g_object_new (GDK_TYPE_MEMORY_TEXTURE,
                        "width", width,
                        "height", height,
                        NULL);
 
-  self->format = format;
-  self->bytes = g_bytes_ref (bytes);
+  GDK_TEXTURE (self)->format = format;
+  self->bytes = bytes;
   self->stride = stride;
 
   return GDK_TEXTURE (self);
 }
 
-GdkMemoryFormat 
-gdk_memory_texture_get_format (GdkMemoryTexture *self)
+GdkTexture *
+gdk_memory_texture_new_subtexture (GdkMemoryTexture  *source,
+                                   int                x,
+                                   int                y,
+                                   int                width,
+                                   int                height)
 {
-  return self->format;
+  GdkTexture *texture, *result;
+  gsize bpp, offset, size;
+  GBytes *bytes;
+
+  g_return_val_if_fail (GDK_IS_MEMORY_TEXTURE (source), NULL);
+  g_return_val_if_fail (x < 0 || x >= GDK_TEXTURE (source)->width, NULL);
+  g_return_val_if_fail (y < 0 || y >= GDK_TEXTURE (source)->height, NULL);
+  g_return_val_if_fail (width <= 0 || x + width > GDK_TEXTURE (source)->width, NULL);
+  g_return_val_if_fail (height <= 0 || y + height > GDK_TEXTURE (source)->height, NULL);
+
+  texture = GDK_TEXTURE (source);
+  bpp = gdk_memory_format_bytes_per_pixel (texture->format);
+  offset = y * source->stride + x * bpp;
+  size = source->stride * (height - 1) + x * bpp;
+  bytes = g_bytes_new_from_bytes (source->bytes, offset, size);
+
+  result = gdk_memory_texture_new (texture->width,
+                                   texture->height,
+                                   texture->format,
+                                   bytes,
+                                   source->stride);
+  g_bytes_unref (bytes);
+
+  return result;
+}
+
+GdkMemoryTexture *
+gdk_memory_texture_from_texture (GdkTexture      *texture,
+                                 GdkMemoryFormat  format)
+{
+  GdkTexture *result;
+  GBytes *bytes;
+  guchar *data;
+  gsize stride;
+
+  g_return_val_if_fail (GDK_IS_TEXTURE (texture), NULL);
+
+  if (GDK_IS_MEMORY_TEXTURE (texture))
+    {
+      GdkMemoryTexture *memtex = GDK_MEMORY_TEXTURE (texture);
+
+      if (gdk_texture_get_format (texture) == format)
+        return g_object_ref (memtex);
+    }
+
+  stride = texture->width * gdk_memory_format_bytes_per_pixel (format);
+  data = g_malloc_n (stride, texture->height);
+
+  gdk_texture_do_download (texture, format, data, stride);
+  bytes = g_bytes_new_take (data, stride);
+  result = gdk_memory_texture_new (texture->width,
+                                   texture->height,
+                                   format,
+                                   bytes,
+                                   stride);
+  g_bytes_unref (bytes);
+
+  return GDK_MEMORY_TEXTURE (result);
 }
 
 const guchar *
@@ -166,155 +245,3 @@ gdk_memory_texture_get_stride (GdkMemoryTexture *self)
   return self->stride;
 }
 
-static void
-convert_memcpy (guchar       *dest_data,
-                gsize         dest_stride,
-                const guchar *src_data,
-                gsize         src_stride,
-                gsize         width,
-                gsize         height)
-{
-  gsize y;
-
-  for (y = 0; y < height; y++)
-    memcpy (dest_data + y * dest_stride, src_data + y * src_stride, 4 * width);
-}
-
-#define SWIZZLE(A,R,G,B) \
-static void \
-convert_swizzle ## A ## R ## G ## B (guchar       *dest_data, \
-                                     gsize         dest_stride, \
-                                     const guchar *src_data, \
-                                     gsize         src_stride, \
-                                     gsize         width, \
-                                     gsize         height) \
-{ \
-  gsize x, y; \
-\
-  for (y = 0; y < height; y++) \
-    { \
-      for (x = 0; x < width; x++) \
-        { \
-          dest_data[4 * x + A] = src_data[4 * x + 0]; \
-          dest_data[4 * x + R] = src_data[4 * x + 1]; \
-          dest_data[4 * x + G] = src_data[4 * x + 2]; \
-          dest_data[4 * x + B] = src_data[4 * x + 3]; \
-        } \
-\
-      dest_data += dest_stride; \
-      src_data += src_stride; \
-    } \
-}
-
-SWIZZLE(3,2,1,0)
-SWIZZLE(2,1,0,3)
-SWIZZLE(3,0,1,2)
-SWIZZLE(1,2,3,0)
-
-#define SWIZZLE_OPAQUE(A,R,G,B) \
-static void \
-convert_swizzle_opaque_## A ## R ## G ## B (guchar       *dest_data, \
-                                            gsize         dest_stride, \
-                                            const guchar *src_data, \
-                                            gsize         src_stride, \
-                                            gsize         width, \
-                                            gsize         height) \
-{ \
-  gsize x, y; \
-\
-  for (y = 0; y < height; y++) \
-    { \
-      for (x = 0; x < width; x++) \
-        { \
-          dest_data[4 * x + A] = 0xFF; \
-          dest_data[4 * x + R] = src_data[3 * x + 0]; \
-          dest_data[4 * x + G] = src_data[3 * x + 1]; \
-          dest_data[4 * x + B] = src_data[3 * x + 2]; \
-        } \
-\
-      dest_data += dest_stride; \
-      src_data += src_stride; \
-    } \
-}
-
-SWIZZLE_OPAQUE(3,2,1,0)
-SWIZZLE_OPAQUE(3,0,1,2)
-SWIZZLE_OPAQUE(0,1,2,3)
-SWIZZLE_OPAQUE(0,3,2,1)
-
-#define PREMULTIPLY(d,c,a) G_STMT_START { guint t = c * a + 0x80; d = ((t >> 8) + t) >> 8; } G_STMT_END
-#define SWIZZLE_PREMULTIPLY(A,R,G,B, A2,R2,G2,B2) \
-static void \
-convert_swizzle_premultiply_ ## A ## R ## G ## B ## _ ## A2 ## R2 ## G2 ## B2 \
-                                    (guchar       *dest_data, \
-                                     gsize         dest_stride, \
-                                     const guchar *src_data, \
-                                     gsize         src_stride, \
-                                     gsize         width, \
-                                     gsize         height) \
-{ \
-  gsize x, y; \
-\
-  for (y = 0; y < height; y++) \
-    { \
-      for (x = 0; x < width; x++) \
-        { \
-          dest_data[4 * x + A] = src_data[4 * x + A2]; \
-          PREMULTIPLY(dest_data[4 * x + R], src_data[4 * x + R2], src_data[4 * x + A2]); \
-          PREMULTIPLY(dest_data[4 * x + G], src_data[4 * x + G2], src_data[4 * x + A2]); \
-          PREMULTIPLY(dest_data[4 * x + B], src_data[4 * x + B2], src_data[4 * x + A2]); \
-        } \
-\
-      dest_data += dest_stride; \
-      src_data += src_stride; \
-    } \
-}
-
-SWIZZLE_PREMULTIPLY (3,2,1,0, 3,2,1,0)
-SWIZZLE_PREMULTIPLY (0,1,2,3, 3,2,1,0)
-SWIZZLE_PREMULTIPLY (3,2,1,0, 0,1,2,3)
-SWIZZLE_PREMULTIPLY (0,1,2,3, 0,1,2,3)
-SWIZZLE_PREMULTIPLY (3,2,1,0, 3,0,1,2)
-SWIZZLE_PREMULTIPLY (0,1,2,3, 3,0,1,2)
-SWIZZLE_PREMULTIPLY (3,2,1,0, 0,3,2,1)
-SWIZZLE_PREMULTIPLY (0,1,2,3, 0,3,2,1)
-SWIZZLE_PREMULTIPLY (3,0,1,2, 3,2,1,0)
-SWIZZLE_PREMULTIPLY (3,0,1,2, 0,1,2,3)
-SWIZZLE_PREMULTIPLY (3,0,1,2, 3,0,1,2)
-SWIZZLE_PREMULTIPLY (3,0,1,2, 0,3,2,1)
-
-typedef void (* ConversionFunc) (guchar       *dest_data,
-                                 gsize         dest_stride,
-                                 const guchar *src_data,
-                                 gsize         src_stride,
-                                 gsize         width,
-                                 gsize         height);
-
-static ConversionFunc converters[GDK_MEMORY_N_FORMATS][3] =
-{
-  { convert_memcpy, convert_swizzle3210, convert_swizzle2103 },
-  { convert_swizzle3210, convert_memcpy, convert_swizzle3012 },
-  { convert_swizzle2103, convert_swizzle1230, convert_memcpy },
-  { convert_swizzle_premultiply_3210_3210, convert_swizzle_premultiply_0123_3210, convert_swizzle_premultiply_3012_3210,  },
-  { convert_swizzle_premultiply_3210_0123, convert_swizzle_premultiply_0123_0123, convert_swizzle_premultiply_3012_0123 },
-  { convert_swizzle_premultiply_3210_3012, convert_swizzle_premultiply_0123_3012, convert_swizzle_premultiply_3012_3012 },
-  { convert_swizzle_premultiply_3210_0321, convert_swizzle_premultiply_0123_0321, convert_swizzle_premultiply_3012_0321 },
-  { convert_swizzle_opaque_3210, convert_swizzle_opaque_0123, convert_swizzle_opaque_3012 },
-  { convert_swizzle_opaque_3012, convert_swizzle_opaque_0321, convert_swizzle_opaque_3210 }
-};
-
-void
-gdk_memory_convert (guchar          *dest_data,
-                    gsize            dest_stride,
-                    GdkMemoryFormat  dest_format,
-                    const guchar    *src_data,
-                    gsize            src_stride,
-                    GdkMemoryFormat  src_format,
-                    gsize            width,
-                    gsize            height)
-{
-  g_assert (dest_format < 3);
-  g_assert (src_format < GDK_MEMORY_N_FORMATS);
-
-  converters[src_format][dest_format] (dest_data, dest_stride, src_data, src_stride, width, height);
-}

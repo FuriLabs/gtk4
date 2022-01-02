@@ -35,13 +35,12 @@
 
 #include "gdkglcontext.h"
 #include "gdksurface.h"
-#include "gdkinternals.h"
 #include "gdkintl.h"
 
 #include <cairo.h>
 #include <epoxy/wgl.h>
 
-#ifdef GDK_WIN32_ENABLE_EGL
+#ifdef HAVE_EGL
 # include <epoxy/egl.h>
 #endif
 

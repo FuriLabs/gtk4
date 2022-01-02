@@ -57,7 +57,9 @@
 #include "gtknative.h"
 #include "gtkwidgetprivate.h"
 #include "gtkjoinedmenuprivate.h"
+#include "gtkcsslineheightvalueprivate.h"
 #include "gtkcssenumvalueprivate.h"
+
 
 /**
  * GtkTextView:
@@ -305,7 +307,7 @@ struct _GtkTextPendingScroll
   double         yalign;
 };
 
-typedef enum 
+typedef enum
 {
   SELECT_CHARACTERS,
   SELECT_WORDS,
@@ -747,7 +749,7 @@ gtk_text_view_drop_scroll_motion (GtkDropControllerMotion *motion,
   GdkRectangle target_rect;
 
   target_rect = priv->text_window->allocation;
-  
+
   if (x < target_rect.x ||
       y < target_rect.y ||
       x > (target_rect.x + target_rect.width) ||
@@ -1076,7 +1078,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                                          P_("Whether Tab will result in a tab character being entered"),
                                                          TRUE,
                                                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
-        
+
    /**
     * GtkTextView:im-module:
     *
@@ -1199,16 +1201,16 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    * - <kbd>Ctrl</kbd>-<kbd>PgUp</kbd>, <kbd>Ctrl</kbd>-<kbd>PgDn</kbd>
    *   move horizontally by pages
    */
-  signals[MOVE_CURSOR] = 
+  signals[MOVE_CURSOR] =
     g_signal_new (I_("move-cursor"),
-		  G_OBJECT_CLASS_TYPE (gobject_class), 
-		  G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION, 
+		  G_OBJECT_CLASS_TYPE (gobject_class),
+		  G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
 		  G_STRUCT_OFFSET (GtkTextViewClass, move_cursor),
-		  NULL, NULL, 
-		  _gtk_marshal_VOID__ENUM_INT_BOOLEAN, 
+		  NULL, NULL,
+		  _gtk_marshal_VOID__ENUM_INT_BOOLEAN,
 		  G_TYPE_NONE, 3,
-		  GTK_TYPE_MOVEMENT_STEP, 
-		  G_TYPE_INT, 
+		  GTK_TYPE_MOVEMENT_STEP,
+		  G_TYPE_INT,
 		  G_TYPE_BOOLEAN);
   g_signal_set_va_marshaller (signals[MOVE_CURSOR],
                               G_OBJECT_CLASS_TYPE (gobject_class),
@@ -1572,7 +1574,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
   /**
    * GtkTextView|selection.delete:
    *
-   * Deletes the current selection. 
+   * Deletes the current selection.
    */
   gtk_widget_class_install_action (widget_class, "selection.delete", NULL,
                                    gtk_text_view_activate_selection_delete);
@@ -1610,7 +1612,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
   /**
    * GtkTextView|menu.popup:
    *
-   * Opens the context menu. 
+   * Opens the context menu.
    */
   gtk_widget_class_install_action (widget_class, "menu.popup", NULL, gtk_text_view_popup_menu);
 
@@ -1633,79 +1635,79 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
 
   add_move_binding (widget_class, GDK_KEY_KP_Right, 0,
                     GTK_MOVEMENT_VISUAL_POSITIONS, 1);
-  
+
   add_move_binding (widget_class, GDK_KEY_Left, 0,
                     GTK_MOVEMENT_VISUAL_POSITIONS, -1);
 
   add_move_binding (widget_class, GDK_KEY_KP_Left, 0,
                     GTK_MOVEMENT_VISUAL_POSITIONS, -1);
-  
+
   add_move_binding (widget_class, GDK_KEY_Right, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_WORDS, 1);
 
   add_move_binding (widget_class, GDK_KEY_KP_Right, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_WORDS, 1);
-  
+
   add_move_binding (widget_class, GDK_KEY_Left, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_WORDS, -1);
 
   add_move_binding (widget_class, GDK_KEY_KP_Left, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_WORDS, -1);
-  
+
   add_move_binding (widget_class, GDK_KEY_Up, 0,
                     GTK_MOVEMENT_DISPLAY_LINES, -1);
 
   add_move_binding (widget_class, GDK_KEY_KP_Up, 0,
                     GTK_MOVEMENT_DISPLAY_LINES, -1);
-  
+
   add_move_binding (widget_class, GDK_KEY_Down, 0,
                     GTK_MOVEMENT_DISPLAY_LINES, 1);
 
   add_move_binding (widget_class, GDK_KEY_KP_Down, 0,
                     GTK_MOVEMENT_DISPLAY_LINES, 1);
-  
+
   add_move_binding (widget_class, GDK_KEY_Up, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_PARAGRAPHS, -1);
 
   add_move_binding (widget_class, GDK_KEY_KP_Up, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_PARAGRAPHS, -1);
-  
+
   add_move_binding (widget_class, GDK_KEY_Down, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_PARAGRAPHS, 1);
 
   add_move_binding (widget_class, GDK_KEY_KP_Down, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_PARAGRAPHS, 1);
-  
+
   add_move_binding (widget_class, GDK_KEY_Home, 0,
                     GTK_MOVEMENT_DISPLAY_LINE_ENDS, -1);
 
   add_move_binding (widget_class, GDK_KEY_KP_Home, 0,
                     GTK_MOVEMENT_DISPLAY_LINE_ENDS, -1);
-  
+
   add_move_binding (widget_class, GDK_KEY_End, 0,
                     GTK_MOVEMENT_DISPLAY_LINE_ENDS, 1);
 
   add_move_binding (widget_class, GDK_KEY_KP_End, 0,
                     GTK_MOVEMENT_DISPLAY_LINE_ENDS, 1);
-  
+
   add_move_binding (widget_class, GDK_KEY_Home, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_BUFFER_ENDS, -1);
 
   add_move_binding (widget_class, GDK_KEY_KP_Home, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_BUFFER_ENDS, -1);
-  
+
   add_move_binding (widget_class, GDK_KEY_End, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_BUFFER_ENDS, 1);
 
   add_move_binding (widget_class, GDK_KEY_KP_End, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_BUFFER_ENDS, 1);
-  
+
   add_move_binding (widget_class, GDK_KEY_Page_Up, 0,
                     GTK_MOVEMENT_PAGES, -1);
 
   add_move_binding (widget_class, GDK_KEY_KP_Page_Up, 0,
                     GTK_MOVEMENT_PAGES, -1);
-  
+
   add_move_binding (widget_class, GDK_KEY_Page_Down, 0,
                     GTK_MOVEMENT_PAGES, 1);
 
@@ -1717,7 +1719,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
 
   add_move_binding (widget_class, GDK_KEY_KP_Page_Up, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_HORIZONTAL_PAGES, -1);
-  
+
   add_move_binding (widget_class, GDK_KEY_Page_Down, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_HORIZONTAL_PAGES, 1);
 
@@ -1734,7 +1736,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                        GDK_KEY_slash, GDK_CONTROL_MASK,
                                        "select-all",
                                        "(b)", TRUE);
-  
+
   /* Unselect all */
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_backslash, GDK_CONTROL_MASK,
@@ -1756,7 +1758,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                        GDK_KEY_KP_Delete, 0,
                                        "delete-from-cursor",
                                        "(ii)", GTK_DELETE_CHARS, 1);
-  
+
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_BackSpace, 0,
                                        "backspace",
@@ -1777,7 +1779,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                        GDK_KEY_KP_Delete, GDK_CONTROL_MASK,
                                        "delete-from-cursor",
                                        "(ii)", GTK_DELETE_WORD_ENDS, 1);
-  
+
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_BackSpace, GDK_CONTROL_MASK,
                                        "delete-from-cursor",
@@ -1861,13 +1863,13 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                        NULL);
 
   /* Emoji */
-  gtk_widget_class_add_binding_signal (widget_class,
+  gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_period, GDK_CONTROL_MASK,
-                                       "insert-emoji",
+                                       "misc.insert-emoji",
                                        NULL);
-  gtk_widget_class_add_binding_signal (widget_class,
+  gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_semicolon, GDK_CONTROL_MASK,
-                                       "insert-emoji",
+                                       "misc.insert-emoji",
                                        NULL);
 
   /* Caret mode */
@@ -1885,7 +1887,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                        GDK_KEY_KP_Tab, GDK_CONTROL_MASK,
                                        "move-focus",
                                        "(i)", GTK_DIR_TAB_FORWARD);
-  
+
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_Tab, GDK_SHIFT_MASK | GDK_CONTROL_MASK,
                                        "move-focus",
@@ -2249,7 +2251,7 @@ gtk_text_view_set_buffer (GtkTextView   *text_view,
     g_object_unref (old_buffer);
 
   g_object_notify (G_OBJECT (text_view), "buffer");
-  
+
   if (gtk_widget_get_visible (GTK_WIDGET (text_view)))
     gtk_widget_queue_draw (GTK_WIDGET (text_view));
 
@@ -2424,7 +2426,7 @@ gtk_text_view_get_iter_location (GtkTextView       *text_view,
   g_return_if_fail (gtk_text_iter_get_buffer (iter) == get_buffer (text_view));
 
   gtk_text_view_ensure_layout (text_view);
-  
+
   gtk_text_layout_get_iter_location (text_view->priv->layout, iter, location);
 }
 
@@ -2451,7 +2453,7 @@ gtk_text_view_get_line_yrange (GtkTextView       *text_view,
   g_return_if_fail (gtk_text_iter_get_buffer (iter) == get_buffer (text_view));
 
   gtk_text_view_ensure_layout (text_view);
-  
+
   gtk_text_layout_get_line_yrange (text_view->priv->layout,
                                    iter,
                                    y,
@@ -2482,7 +2484,7 @@ gtk_text_view_get_line_at_y (GtkTextView *text_view,
   g_return_if_fail (GTK_IS_TEXT_VIEW (text_view));
 
   gtk_text_view_ensure_layout (text_view);
-  
+
   gtk_text_layout_get_line_at_y (text_view->priv->layout,
                                  target_iter,
                                  y,
@@ -2534,17 +2536,17 @@ _gtk_text_view_scroll_to_iter (GtkTextView   *text_view,
    * from flush_scroll in this function? I think it wasn't done before
    * because changed_handler was screwed up, but I could be wrong.
    */
-  
+
   g_return_val_if_fail (GTK_IS_TEXT_VIEW (text_view), FALSE);
   g_return_val_if_fail (iter != NULL, FALSE);
   g_return_val_if_fail (within_margin >= 0.0 && within_margin < 0.5, FALSE);
   g_return_val_if_fail (xalign >= 0.0 && xalign <= 1.0, FALSE);
   g_return_val_if_fail (yalign >= 0.0 && yalign <= 1.0, FALSE);
-  
+
   widget = GTK_WIDGET (text_view);
 
   DV(g_print(G_STRLOC"\n"));
-  
+
   gtk_text_layout_get_iter_location (priv->layout,
                                      iter,
                                      &cursor);
@@ -2639,16 +2641,16 @@ _gtk_text_view_scroll_to_iter (GtkTextView   *text_view,
       if (cursor.y < screen_inner_top)
         {
           if (cursor.y == 0)
-            border_yoffset = (with_border) ? priv->top_padding : 0;
+            border_yoffset = with_border ? priv->top_padding : 0;
 
           screen_dest.y = cursor.y - MAX (within_margin_yoffset, border_yoffset);
         }
       else if (cursor_bottom > screen_inner_bottom)
         {
           if (cursor_bottom == buffer_bottom - priv->top_margin)
-            border_yoffset = (with_border) ? priv->bottom_padding : 0;
+            border_yoffset = with_border ? priv->bottom_padding : 0;
 
-          screen_dest.y = cursor_bottom - screen_dest.height +
+          screen_dest.y = cursor_bottom - screen_dest.height -
                           MAX (within_margin_yoffset, border_yoffset);
         }
     }
@@ -2677,16 +2679,16 @@ _gtk_text_view_scroll_to_iter (GtkTextView   *text_view,
       if (cursor.x < screen_inner_left)
         {
           if (cursor.x == priv->left_margin)
-            border_xoffset = (with_border) ? priv->left_padding : 0;
+            border_xoffset = with_border ? priv->left_padding : 0;
 
           screen_dest.x = cursor.x - MAX (within_margin_xoffset, border_xoffset);
         }
       else if (cursor_right >= screen_inner_right - 1)
         {
           if (cursor.x >= buffer_right - priv->right_padding)
-            border_xoffset = (with_border) ? priv->right_padding : 0;
+            border_xoffset = with_border ? priv->right_padding : 0;
 
-          screen_dest.x = cursor_right - screen_dest.width +
+          screen_dest.x = cursor_right - screen_dest.width -
                           MAX (within_margin_xoffset, border_xoffset) + 1;
         }
     }
@@ -2701,7 +2703,7 @@ _gtk_text_view_scroll_to_iter (GtkTextView   *text_view,
   retval = (screen.y != screen_dest.y) || (screen.x != screen_dest.x);
 
   DV(g_print (">%s ("G_STRLOC")\n", retval ? "Actually scrolled" : "Didn't end up scrolling"));
-  
+
   return retval;
 }
 
@@ -2782,14 +2784,14 @@ gtk_text_view_queue_scroll (GtkTextView   *text_view,
   GtkTextPendingScroll *scroll;
 
   DV(g_print(G_STRLOC"\n"));
-  
+
   scroll = g_slice_new (GtkTextPendingScroll);
 
   scroll->within_margin = within_margin;
   scroll->use_align = use_align;
   scroll->xalign = xalign;
   scroll->yalign = yalign;
-  
+
   gtk_text_buffer_get_iter_at_mark (get_buffer (text_view), &iter, mark);
 
   scroll->mark = gtk_text_buffer_create_mark (get_buffer (text_view),
@@ -2798,7 +2800,7 @@ gtk_text_view_queue_scroll (GtkTextView   *text_view,
                                               gtk_text_mark_get_left_gravity (mark));
 
   g_object_ref (scroll->mark);
-  
+
   cancel_pending_scroll (text_view);
 
   text_view->priv->pending_scroll = scroll;
@@ -2814,9 +2816,9 @@ gtk_text_view_flush_scroll (GtkTextView *text_view)
   GtkWidget *widget;
 
   widget = GTK_WIDGET (text_view);
-  
+
   DV(g_print(G_STRLOC"\n"));
-  
+
   if (text_view->priv->pending_scroll == NULL)
     {
       DV (g_print ("in flush scroll, no pending scroll\n"));
@@ -2827,7 +2829,7 @@ gtk_text_view_flush_scroll (GtkTextView *text_view)
 
   /* avoid recursion */
   text_view->priv->pending_scroll = NULL;
-  
+
   gtk_text_buffer_get_iter_at_mark (get_buffer (text_view), &iter, scroll->mark);
 
   /* Validate area around the scroll destination, so the adjustment
@@ -2847,7 +2849,7 @@ gtk_text_view_flush_scroll (GtkTextView *text_view)
 
   /* Ensure we have updated width/height */
   gtk_text_view_update_adjustments (text_view);
-  
+
   retval = _gtk_text_view_scroll_to_iter (text_view,
                                           &iter,
                                           scroll->within_margin,
@@ -2894,7 +2896,7 @@ static void
 gtk_text_view_update_layout_width (GtkTextView *text_view)
 {
   DV(g_print(">Updating layout width ("G_STRLOC")\n"));
-  
+
   gtk_text_view_ensure_layout (text_view);
 
   gtk_text_layout_set_screen_width (text_view->priv->layout,
@@ -2908,12 +2910,12 @@ gtk_text_view_update_im_spot_location (GtkTextView *text_view)
 
   if (text_view->priv->layout == NULL)
     return;
-  
+
   gtk_text_view_get_cursor_locations (text_view, NULL, &area, NULL);
 
   area.x -= text_view->priv->xoffset;
   area.y -= text_view->priv->yoffset;
-    
+
   /* Width returned by Pango indicates direction of cursor,
    * by its sign more than the size of cursor.
    */
@@ -2994,7 +2996,7 @@ gtk_text_view_scroll_to_mark (GtkTextView *text_view,
                               gboolean     use_align,
                               double       xalign,
                               double       yalign)
-{  
+{
   g_return_if_fail (GTK_IS_TEXT_VIEW (text_view));
   g_return_if_fail (GTK_IS_TEXT_MARK (mark));
   g_return_if_fail (within_margin >= 0.0 && within_margin < 0.5);
@@ -3960,12 +3962,12 @@ gtk_text_view_finalize (GObject *object)
   g_assert (priv->top_child == NULL);
   g_assert (priv->bottom_child == NULL);
   g_assert (priv->center_child == NULL);
-  
+
   cancel_pending_scroll (text_view);
 
   if (priv->tabs)
     pango_tab_array_free (priv->tabs);
-  
+
   if (priv->hadjustment)
     g_object_unref (priv->hadjustment);
   if (priv->vadjustment)
@@ -4016,7 +4018,7 @@ gtk_text_view_set_property (GObject         *object,
     case PROP_WRAP_MODE:
       gtk_text_view_set_wrap_mode (text_view, g_value_get_enum (value));
       break;
-      
+
     case PROP_JUSTIFICATION:
       gtk_text_view_set_justification (text_view, g_value_get_enum (value));
       break;
@@ -4060,7 +4062,7 @@ gtk_text_view_set_property (GObject         *object,
     case PROP_ACCEPTS_TAB:
       gtk_text_view_set_accepts_tab (text_view, g_value_get_boolean (value));
       break;
-      
+
     case PROP_IM_MODULE:
       g_free (priv->im_module);
       priv->im_module = g_value_dup_string (value);
@@ -4145,7 +4147,7 @@ gtk_text_view_get_property (GObject         *object,
     case PROP_EDITABLE:
       g_value_set_boolean (value, priv->editable);
       break;
-      
+
     case PROP_WRAP_MODE:
       g_value_set_enum (value, priv->wrap_mode);
       break;
@@ -4193,7 +4195,7 @@ gtk_text_view_get_property (GObject         *object,
     case PROP_ACCEPTS_TAB:
       g_value_set_boolean (value, priv->accepts_tab);
       break;
-      
+
     case PROP_IM_MODULE:
       g_value_set_string (value, priv->im_module);
       break;
@@ -4331,7 +4333,7 @@ gtk_text_view_compute_child_allocation (GtkTextView         *text_view,
   int buffer_y;
   GtkTextIter iter;
   GtkRequisition req;
-  
+
   gtk_text_buffer_get_iter_at_child_anchor (get_buffer (text_view),
                                             &iter,
                                             vc->anchor);
@@ -4356,7 +4358,7 @@ gtk_text_view_update_child_allocation (GtkTextView         *text_view,
   GtkAllocation allocation;
 
   gtk_text_view_compute_child_allocation (text_view, vc, &allocation);
-  
+
   gtk_widget_size_allocate (vc->widget, &allocation, -1);
 
 #if 0
@@ -4377,7 +4379,7 @@ gtk_anchored_child_allocated (GtkTextLayout *layout,
 {
   AnchoredChild *vc = NULL;
   GtkTextView *text_view = data;
-  
+
   /* x,y is the position of the child from the top of the line, and
    * from the left of the buffer. We have to translate that into text
    * window coordinates, then size_allocate the child.
@@ -4388,7 +4390,7 @@ gtk_anchored_child_allocated (GtkTextLayout *layout,
   g_assert (vc != NULL);
 
   DV (g_print ("child allocated at %d,%d\n", x, y));
-  
+
   vc->from_left_of_buffer = x;
   vc->from_top_of_line = y;
 
@@ -4407,6 +4409,8 @@ gtk_text_view_allocate_children (GtkTextView *text_view)
     {
       const AnchoredChild *child = iter->data;
       GtkTextIter child_loc;
+      GtkRequisition child_req;
+      GtkAllocation allocation;
 
       /* We need to force-validate the regions containing children. */
       gtk_text_buffer_get_iter_at_child_anchor (get_buffer (text_view),
@@ -4415,10 +4419,10 @@ gtk_text_view_allocate_children (GtkTextView *text_view)
 
       /* Since anchored children are only ever allocated from
        * gtk_text_layout_get_line_display() we have to make sure
-       * that the display line caching in the layout doesn't 
+       * that the display line caching in the layout doesn't
        * get in the way. Invalidating the layout around the anchor
        * achieves this.
-       */ 
+       */
       if (_gtk_widget_get_alloc_needed (child->widget))
         {
           GtkTextIter end = child_loc;
@@ -4427,6 +4431,15 @@ gtk_text_view_allocate_children (GtkTextView *text_view)
         }
 
       gtk_text_layout_validate_yrange (priv->layout, &child_loc, 0, 1);
+
+      gtk_widget_get_preferred_size (child->widget, &child_req, NULL);
+
+      allocation.x = - child_req.width;
+      allocation.y = - child_req.height;
+      allocation.width = child_req.width;
+      allocation.height = child_req.height;
+
+      gtk_widget_size_allocate (child->widget, &allocation, -1);
     }
 }
 
@@ -4557,7 +4570,7 @@ gtk_text_view_size_allocate (GtkWidget *widget,
   GtkWidget *chooser;
   PangoLayout *layout;
   guint mru_size;
-  
+
   text_view = GTK_TEXT_VIEW (widget);
   priv = text_view->priv;
 
@@ -4631,7 +4644,7 @@ gtk_text_view_size_allocate (GtkWidget *widget,
     }
 
   gtk_text_view_update_layout_width (text_view);
-  
+
   /* Note that this will do some layout validation */
   gtk_text_view_allocate_children (text_view);
 
@@ -4653,7 +4666,7 @@ gtk_text_view_size_allocate (GtkWidget *widget,
 
   /* The GTK resize loop processes all the pending exposes right
    * after doing the resize stuff, so the idle sizer won't have a
-   * chance to run. So we do the work here. 
+   * chance to run. So we do the work here.
    */
   gtk_text_view_flush_first_validate (text_view);
 
@@ -4693,9 +4706,9 @@ gtk_text_view_validate_onscreen (GtkTextView *text_view)
 
   widget = GTK_WIDGET (text_view);
   priv = text_view->priv;
-  
+
   DV(g_print(">Validating onscreen ("G_STRLOC")\n"));
-  
+
   if (SCREEN_HEIGHT (widget) > 0)
     {
       GtkTextIter first_para;
@@ -4716,7 +4729,7 @@ gtk_text_view_validate_onscreen (GtkTextView *text_view)
   priv->onscreen_validated = TRUE;
 
   DV(g_print(">Done validating onscreen, onscreen_validated = TRUE ("G_STRLOC")\n"));
-  
+
   /* This can have the odd side effect of triggering a scroll, which should
    * flip "onscreen_validated" back to FALSE, but should also get us
    * back into this function to turn it on again.
@@ -4741,7 +4754,7 @@ gtk_text_view_flush_first_validate (GtkTextView *text_view)
   DV (g_print ("removing first validate in %s\n", G_STRLOC));
   g_source_remove (priv->first_validate_idle);
   priv->first_validate_idle = 0;
-  
+
   /* be sure we have up-to-date screen size set on the
    * layout.
    */
@@ -4765,9 +4778,9 @@ gtk_text_view_flush_first_validate (GtkTextView *text_view)
       if (!gtk_text_view_flush_scroll (text_view) ||
           !priv->onscreen_validated)
 	gtk_text_view_validate_onscreen (text_view);
-      
+
       DV(g_print(">Leaving first validate idle ("G_STRLOC")\n"));
-      
+
       g_assert (priv->onscreen_validated);
     }
 }
@@ -4780,11 +4793,11 @@ first_validate_callback (gpointer data)
   /* Note that some of this code is duplicated at the end of size_allocate,
    * keep in sync with that.
    */
-  
+
   DV(g_print(G_STRLOC"\n"));
 
   gtk_text_view_flush_first_validate (text_view);
-  
+
   return FALSE;
 }
 
@@ -4795,11 +4808,11 @@ incremental_validate_callback (gpointer data)
   gboolean result = TRUE;
 
   DV(g_print(G_STRLOC"\n"));
-  
+
   gtk_text_layout_validate (text_view->priv->layout, 2000);
 
   gtk_text_view_update_adjustments (text_view);
-  
+
   if (gtk_text_layout_is_valid (text_view->priv->layout))
     {
       text_view->priv->incremental_validate_idle = 0;
@@ -4822,7 +4835,7 @@ gtk_text_view_invalidate (GtkTextView *text_view)
   /* We'll invalidate when the layout is created */
   if (priv->layout == NULL)
     return;
-  
+
   if (!priv->first_validate_idle)
     {
       priv->first_validate_idle = g_idle_add_full (GTK_PRIORITY_RESIZE - 2, first_validate_callback, text_view, NULL);
@@ -4830,7 +4843,7 @@ gtk_text_view_invalidate (GtkTextView *text_view)
       DV (g_print (G_STRLOC": adding first validate idle %d\n",
                    priv->first_validate_idle));
     }
-      
+
   if (!priv->incremental_validate_idle)
     {
       priv->incremental_validate_idle = g_idle_add_full (GTK_TEXT_VIEW_PRIORITY_VALIDATE, incremental_validate_callback, text_view, NULL);
@@ -4862,11 +4875,11 @@ changed_handler (GtkTextLayout     *layout,
   GtkTextView *text_view;
   GtkTextViewPrivate *priv;
   GtkWidget *widget;
-  
+
   text_view = GTK_TEXT_VIEW (data);
   priv = text_view->priv;
   widget = GTK_WIDGET (data);
-  
+
   DV(g_print(">Lines Validated ("G_STRLOC")\n"));
 
   if (gtk_widget_get_realized (widget))
@@ -4882,7 +4895,7 @@ changed_handler (GtkTextLayout     *layout,
       GtkTextIter first;
       int new_first_para_top;
       int old_first_para_top;
-      
+
       /* If the bottom of the old area was above the top of the
        * screen, we need to scroll to keep the current top of the
        * screen in place.  Remember that first_para_pixels is the
@@ -4902,7 +4915,7 @@ changed_handler (GtkTextLayout     *layout,
       if (new_first_para_top != old_first_para_top)
         {
           priv->yoffset += new_first_para_top - old_first_para_top;
-          
+
           gtk_adjustment_set_value (text_view->priv->vadjustment, priv->yoffset);
         }
 
@@ -5783,7 +5796,7 @@ gtk_text_view_paint (GtkWidget   *widget,
 {
   GtkTextView *text_view;
   GtkTextViewPrivate *priv;
-  
+
   text_view = GTK_TEXT_VIEW (widget);
   priv = text_view->priv;
 
@@ -5900,7 +5913,7 @@ gtk_text_view_snapshot (GtkWidget   *widget,
 
   DV(g_print (">Exposed ("G_STRLOC")\n"));
 
-  draw_text (widget, snapshot); 
+  draw_text (widget, snapshot);
 
   snapshot_text_view_child (widget, priv->left_child, snapshot);
   snapshot_text_view_child (widget, priv->right_child, snapshot);
@@ -5908,9 +5921,6 @@ gtk_text_view_snapshot (GtkWidget   *widget,
   snapshot_text_view_child (widget, priv->bottom_child, snapshot);
   snapshot_text_view_child (widget, priv->center_child, snapshot);
 
-  /* Propagate exposes to all unanchored children. 
-   * Anchored children are handled in gtk_text_view_paint(). 
-   */
   for (iter = priv->anchored_children.head; iter; iter = iter->next)
     {
       const AnchoredChild *vc = iter->data;
@@ -5998,10 +6008,10 @@ cursor_blinks (GtkTextView *text_view)
     {
       GtkTextMark *insert;
       GtkTextIter iter;
-      
+
       insert = gtk_text_buffer_get_insert (get_buffer (text_view));
       gtk_text_buffer_get_iter_at_mark (get_buffer (text_view), &iter, insert);
-      
+
       if (gtk_text_iter_editable (&iter, text_view->priv->editable))
 	return blink;
     }
@@ -6295,7 +6305,7 @@ gtk_text_view_move_cursor (GtkTextView     *text_view,
       GtkScrollStep scroll_step;
       double old_xpos, old_ypos;
 
-      switch (step) 
+      switch (step)
 	{
         case GTK_MOVEMENT_VISUAL_POSITIONS:
           leave_direction = count > 0 ? GTK_DIR_RIGHT : GTK_DIR_LEFT;
@@ -6306,7 +6316,7 @@ gtk_text_view_move_cursor (GtkTextView     *text_view,
 	  break;
         case GTK_MOVEMENT_DISPLAY_LINE_ENDS:
 	  scroll_step = GTK_SCROLL_HORIZONTAL_ENDS;
-	  break;	  
+	  break;
         case GTK_MOVEMENT_DISPLAY_LINES:
           leave_direction = count > 0 ? GTK_DIR_DOWN : GTK_DIR_UP;
           G_GNUC_FALLTHROUGH;
@@ -6418,7 +6428,7 @@ gtk_text_view_move_cursor (GtkTextView     *text_view,
 
       if (count < 0)
         gtk_text_iter_backward_visible_word_starts (&newplace, -count);
-      else if (count > 0) 
+      else if (count > 0)
 	{
 	  if (!gtk_text_iter_forward_visible_word_ends (&newplace, count))
 	    gtk_text_iter_forward_to_line_end (&newplace);
@@ -6494,7 +6504,7 @@ gtk_text_view_move_cursor (GtkTextView     *text_view,
       else if (count < 0)
         gtk_text_buffer_get_iter_at_offset (get_buffer (text_view), &newplace, 0);
      break;
-      
+
     case GTK_MOVEMENT_PAGES:
     case GTK_MOVEMENT_HORIZONTAL_PAGES:
       /* We handle these cases above and return early from them. */
@@ -6503,7 +6513,7 @@ gtk_text_view_move_cursor (GtkTextView     *text_view,
       break;
     }
 
-  /* call move_cursor() even if the cursor hasn't moved, since it 
+  /* call move_cursor() even if the cursor hasn't moved, since it
      cancels the selection
   */
   move_cursor (text_view, &newplace, extend_selection);
@@ -6537,8 +6547,8 @@ gtk_text_view_move_viewport (GtkTextView     *text_view,
 {
   GtkAdjustment *adjustment;
   double increment;
-  
-  switch (step) 
+
+  switch (step)
     {
     case GTK_SCROLL_STEPS:
     case GTK_SCROLL_PAGES:
@@ -6555,7 +6565,7 @@ gtk_text_view_move_viewport (GtkTextView     *text_view,
       break;
     }
 
-  switch (step) 
+  switch (step)
     {
     case GTK_SCROLL_STEPS:
     case GTK_SCROLL_HORIZONTAL_STEPS:
@@ -6607,7 +6617,7 @@ gtk_text_view_scroll_pages (GtkTextView *text_view,
   priv = text_view->priv;
 
   g_return_val_if_fail (priv->vadjustment != NULL, FALSE);
-  
+
   adjustment = priv->vadjustment;
 
   insert_mark = gtk_text_buffer_get_insert (get_buffer (text_view));
@@ -6672,7 +6682,7 @@ gtk_text_view_scroll_pages (GtkTextView *text_view,
 
       gtk_text_view_set_virtual_cursor_pos (text_view, cursor_x_pos, cursor_y_pos);
     }
-  
+
   /* Adjust to have the cursor _entirely_ onscreen, move_mark_onscreen
    * only guarantees 1 pixel onscreen.
    */
@@ -6758,7 +6768,7 @@ gtk_text_view_scroll_hpages (GtkTextView *text_view,
    *  back to get the end of the line onscreen.
    *      http://bugzilla.gnome.org/show_bug.cgi?id=68963
    */
-  
+
   /* Adjust to have the cursor _entirely_ onscreen, move_mark_onscreen
    * only guarantees 1 pixel onscreen.
    */
@@ -6991,7 +7001,7 @@ static void
 gtk_text_view_cut_clipboard (GtkTextView *text_view)
 {
   GdkClipboard *clipboard = gtk_widget_get_clipboard (GTK_WIDGET (text_view));
-  
+
   gtk_text_buffer_cut_clipboard (get_buffer (text_view),
 				 clipboard,
 				 text_view->priv->editable);
@@ -7005,7 +7015,7 @@ static void
 gtk_text_view_copy_clipboard (GtkTextView *text_view)
 {
   GdkClipboard *clipboard = gtk_widget_get_clipboard (GTK_WIDGET (text_view));
-  
+
   gtk_text_buffer_copy_clipboard (get_buffer (text_view), clipboard);
 
   /* on copy do not scroll, we are already onscreen */
@@ -7015,7 +7025,7 @@ static void
 gtk_text_view_paste_clipboard (GtkTextView *text_view)
 {
   GdkClipboard *clipboard = gtk_widget_get_clipboard (GTK_WIDGET (text_view));
-  
+
   text_view->priv->scroll_after_paste = TRUE;
 
   gtk_text_buffer_paste_clipboard (get_buffer (text_view),
@@ -7202,7 +7212,7 @@ selection_scan_timeout (gpointer data)
 
   text_view = GTK_TEXT_VIEW (data);
 
-  gtk_text_view_scroll_mark_onscreen (text_view, 
+  gtk_text_view_scroll_mark_onscreen (text_view,
 				      gtk_text_buffer_get_insert (get_buffer (text_view)));
 
   return TRUE; /* remain installed. */
@@ -7608,7 +7618,7 @@ gtk_text_view_start_selection_drag (GtkTextView          *text_view,
        * cursor however be inside the selection (this happens on triple click) then we
        * move the side which was last moved (current insert mark) */
       if (gtk_text_iter_compare (&cursor, &old_start) <= 0 ||
-          (gtk_text_iter_compare (&cursor, &old_end) < 0 && 
+          (gtk_text_iter_compare (&cursor, &old_end) < 0 &&
            gtk_text_iter_compare (&old_ins, &old_bound) <= 0))
         {
           bound = old_end;
@@ -7671,29 +7681,6 @@ gtk_text_view_end_selection_drag (GtkTextView *text_view)
  * Layout utils
  */
 
-static PangoUnderline
-get_pango_underline_from_style (GtkTextDecorationStyle style)
-{
-  switch (style)
-    {
-    case GTK_CSS_TEXT_DECORATION_STYLE_DOUBLE:
-      return PANGO_UNDERLINE_DOUBLE;
-    case GTK_CSS_TEXT_DECORATION_STYLE_WAVY:
-      return PANGO_UNDERLINE_ERROR;
-    case GTK_CSS_TEXT_DECORATION_STYLE_SOLID:
-    default:
-      return PANGO_UNDERLINE_SINGLE;
-    }
-
-  g_return_val_if_reached (PANGO_UNDERLINE_SINGLE);
-}
-
-static PangoOverline
-get_pango_overline_from_style (GtkTextDecorationStyle style)
-{
-  return PANGO_OVERLINE_SINGLE;
-}
-
 static void
 gtk_text_view_set_attributes_from_style (GtkTextView        *text_view,
                                          GtkTextAttributes  *values)
@@ -7722,20 +7709,30 @@ gtk_text_view_set_attributes_from_style (GtkTextView        *text_view,
 
   values->font = gtk_css_style_get_pango_font (style);
 
-  values->letter_spacing = _gtk_css_number_value_get (style->font->letter_spacing, 100) * PANGO_SCALE;
-
   /* text-decoration */
 
   decoration_line = _gtk_css_text_decoration_line_value_get (style->font_variant->text_decoration_line);
   decoration_style = _gtk_css_text_decoration_style_value_get (style->font_variant->text_decoration_style);
-  color = gtk_css_color_value_get_rgba (style->core->color);
   decoration_color = gtk_css_color_value_get_rgba (style->font_variant->text_decoration_color
                                                    ? style->font_variant->text_decoration_color
                                                    : style->core->color);
 
   if (decoration_line & GTK_CSS_TEXT_DECORATION_LINE_UNDERLINE)
     {
-      values->appearance.underline = get_pango_underline_from_style (decoration_style);
+      switch (decoration_style)
+        {
+        case GTK_CSS_TEXT_DECORATION_STYLE_DOUBLE:
+          values->appearance.underline = PANGO_UNDERLINE_DOUBLE;
+          break;
+        case GTK_CSS_TEXT_DECORATION_STYLE_WAVY:
+          values->appearance.underline = PANGO_UNDERLINE_ERROR;
+          break;
+        case GTK_CSS_TEXT_DECORATION_STYLE_SOLID:
+        default:
+          values->appearance.underline = PANGO_UNDERLINE_SINGLE;
+          break;
+        }
+
       if (values->appearance.underline_rgba)
         *values->appearance.underline_rgba = *decoration_color;
       else
@@ -7750,7 +7747,7 @@ gtk_text_view_set_attributes_from_style (GtkTextView        *text_view,
 
   if (decoration_line & GTK_CSS_TEXT_DECORATION_LINE_OVERLINE)
     {
-      values->appearance.overline = get_pango_overline_from_style (decoration_style);
+      values->appearance.overline = PANGO_OVERLINE_SINGLE;
       if (values->appearance.overline_rgba)
         *values->appearance.overline_rgba = *decoration_color;
       else
@@ -7781,9 +7778,22 @@ gtk_text_view_set_attributes_from_style (GtkTextView        *text_view,
   /* letter-spacing */
   values->letter_spacing = _gtk_css_number_value_get (style->font->letter_spacing, 100) * PANGO_SCALE;
 
+  /* line-height */
+
+  values->line_height = gtk_css_line_height_value_get (style->font->line_height);
+  values->line_height_is_absolute = FALSE;
+  if (values->line_height != 0.0)
+    {
+      if (gtk_css_number_value_get_dimension (style->font->line_height) == GTK_CSS_DIMENSION_LENGTH)
+        values->line_height_is_absolute = TRUE;
+    }
+
   /* OpenType features */
   g_free (values->font_features);
   values->font_features = gtk_css_style_compute_font_features (style);
+
+  /* text-transform */
+  values->text_transform = gtk_css_style_get_pango_text_transform (style);
 }
 
 static void
@@ -7846,7 +7856,7 @@ gtk_text_view_ensure_layout (GtkTextView *text_view)
       PangoContext *ltr_context, *rtl_context;
 
       DV(g_print(G_STRLOC"\n"));
-      
+
       priv->layout = gtk_text_layout_new ();
 
       g_signal_connect (priv->layout,
@@ -7863,7 +7873,7 @@ gtk_text_view_ensure_layout (GtkTextView *text_view)
 			"allocate-child",
 			G_CALLBACK (gtk_anchored_child_allocated),
 			text_view);
-      
+
       if (get_buffer (text_view))
         gtk_text_layout_set_buffer (priv->layout, get_buffer (text_view));
 
@@ -7928,7 +7938,7 @@ GtkTextAttributes*
 gtk_text_view_get_default_attributes (GtkTextView *text_view)
 {
   g_return_val_if_fail (GTK_IS_TEXT_VIEW (text_view), NULL);
-  
+
   gtk_text_view_ensure_layout (text_view);
 
   return gtk_text_attributes_copy (text_view->priv->layout->default_style);
@@ -8134,7 +8144,7 @@ gtk_text_view_drag_motion (GtkDropTarget *dest,
 
   gtk_text_layout_get_iter_at_pixel (priv->layout,
                                      &newplace,
-                                     bx, by);  
+                                     bx, by);
 
   if (gtk_text_buffer_get_selection_bounds (get_buffer (text_view),
                                             &start, &end) &&
@@ -8144,7 +8154,7 @@ gtk_text_view_drag_motion (GtkDropTarget *dest,
       /* We're inside the selection. */
     }
   else
-    {      
+    {
       can_accept = gtk_text_iter_can_insert (&newplace, priv->editable);
     }
 
@@ -8332,13 +8342,13 @@ gtk_text_view_value_changed (GtkAdjustment *adjustment,
   /* Note that we oddly call this function with adjustment == NULL
    * sometimes
    */
-  
+
   priv->onscreen_validated = FALSE;
 
   DV(g_print(">Scroll offset changed %s/%g, onscreen_validated = FALSE ("G_STRLOC")\n",
              adjustment == priv->hadjustment ? "hadjustment" : adjustment == priv->vadjustment ? "vadjustment" : "none",
              adjustment ? gtk_adjustment_get_value (adjustment) : 0.0));
-  
+
   if (adjustment == priv->hadjustment)
     {
       dx = priv->xoffset - (int)gtk_adjustment_get_value (adjustment);
@@ -8358,7 +8368,7 @@ gtk_text_view_value_changed (GtkAdjustment *adjustment,
           priv->first_para_pixels = gtk_adjustment_get_value (adjustment) - line_top;
         }
     }
-  
+
   if (dx != 0 || dy != 0)
     {
       if (gtk_widget_get_realized (GTK_WIDGET (text_view)))
@@ -8374,7 +8384,7 @@ gtk_text_view_value_changed (GtkAdjustment *adjustment,
    * first_validate_idle shouldn't have anything to do.
    */
   gtk_text_view_update_layout_width (text_view);
-  
+
   /* We also update the IM spot location here, since the IM context
    * might do something that leads to validation.
    */
@@ -8386,7 +8396,7 @@ gtk_text_view_value_changed (GtkAdjustment *adjustment,
    * that, or shouldn't be.
    */
   gtk_text_view_validate_onscreen (text_view);
-  
+
   /* If this got installed, get rid of it, it's just a waste of time. */
   if (priv->first_validate_idle != 0)
     {
@@ -8556,6 +8566,8 @@ gtk_text_view_retrieve_surrounding_handler (GtkIMContext  *context,
   GtkTextIter end;
   GtkTextIter start1;
   GtkTextIter end1;
+  GtkTextIter start2;
+  GtkTextIter end2;
   int cursor_pos;
   int anchor_pos;
   char *text;
@@ -8578,6 +8590,16 @@ gtk_text_view_retrieve_surrounding_handler (GtkIMContext  *context,
 
   gtk_text_iter_set_line_offset (&start1, 0);
   gtk_text_iter_forward_to_line_end (&end1);
+
+  start2 = start;
+  gtk_text_iter_backward_word_starts (&start2, 3);
+  if (gtk_text_iter_compare (&start2, &start1) < 0)
+    start1 = start2;
+
+  end2 = end;
+  gtk_text_iter_forward_word_ends (&end2, 3);
+  if (gtk_text_iter_compare (&end2, &end1) > 0)
+    end1 = end2;
 
   pre = gtk_text_iter_get_slice (&start1, &start);
   sel = gtk_text_iter_get_slice (&start, &end);
@@ -8738,12 +8760,12 @@ gtk_text_view_select_all (GtkWidget *widget,
   GtkTextIter start_iter, end_iter, insert;
 
   buffer = text_view->priv->buffer;
-  if (select) 
+  if (select)
     {
       gtk_text_buffer_get_bounds (buffer, &start_iter, &end_iter);
       gtk_text_buffer_select_range (buffer, &start_iter, &end_iter);
     }
-  else 
+  else
     {
       gtk_text_buffer_get_iter_at_mark (buffer, &insert,
 					gtk_text_buffer_get_insert (buffer));
@@ -9497,7 +9519,7 @@ anchored_child_new (GtkWidget          *child,
   g_object_set_qdata (G_OBJECT (child), quark_text_view_child, vc);
 
   gtk_text_child_anchor_register_child (anchor, child, layout);
-  
+
   return vc;
 }
 
@@ -10002,6 +10024,10 @@ gtk_text_view_insert_emoji (GtkTextView *text_view)
                                     gtk_text_buffer_get_insert (buffer));
 
   gtk_text_view_get_iter_location (text_view, &iter, (GdkRectangle *) &rect);
+
+  rect.width = MAX (rect.width, 1);
+  rect.height = MAX (rect.height, 1);
+
   gtk_text_view_buffer_to_window_coords (text_view, GTK_TEXT_WINDOW_TEXT,
                                          rect.x, rect.y, &rect.x, &rect.y);
   _text_window_to_widget_coords (text_view, &rect.x, &rect.y);
@@ -10075,7 +10101,11 @@ gtk_text_view_real_undo (GtkWidget   *widget,
   GtkTextView *text_view = GTK_TEXT_VIEW (widget);
 
   if (gtk_text_view_get_editable (text_view))
-    gtk_text_buffer_undo (text_view->priv->buffer);
+    {
+      gtk_text_buffer_undo (text_view->priv->buffer);
+      gtk_text_view_scroll_mark_onscreen (text_view,
+                                          gtk_text_buffer_get_insert (text_view->priv->buffer));
+    }
 }
 
 static void
@@ -10086,7 +10116,11 @@ gtk_text_view_real_redo (GtkWidget   *widget,
   GtkTextView *text_view = GTK_TEXT_VIEW (widget);
 
   if (gtk_text_view_get_editable (text_view))
-    gtk_text_buffer_redo (text_view->priv->buffer);
+    {
+      gtk_text_buffer_redo (text_view->priv->buffer);
+      gtk_text_view_scroll_mark_onscreen (text_view,
+                                          gtk_text_buffer_get_insert (text_view->priv->buffer));
+    }
 }
 
 static void

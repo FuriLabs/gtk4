@@ -1,5 +1,6 @@
 // VERTEX_SHADER:
-uniform vec4 u_color;
+// border.glsl
+
 uniform vec4 u_widths;
 uniform vec4[3] u_outline_rect;
 
@@ -10,7 +11,7 @@ _OUT_ _GSK_ROUNDED_RECT_UNIFORM_ transformed_inside_outline;
 void main() {
   gl_Position = u_projection * u_modelview * vec4(aPosition, 0.0, 1.0);
 
-  final_color = gsk_premultiply(u_color) * u_alpha;
+  final_color = gsk_scaled_premultiply(aColor, u_alpha);
 
   GskRoundedRect outside = gsk_create_rect(u_outline_rect);
   GskRoundedRect inside = gsk_rounded_rect_shrink (outside, u_widths);
@@ -23,6 +24,8 @@ void main() {
 }
 
 // FRAGMENT_SHADER:
+// border.glsl
+
 uniform vec4[3] u_outline_rect;
 
 _IN_ vec4 final_color;
@@ -36,5 +39,5 @@ void main() {
                       gsk_rounded_rect_coverage(gsk_decode_rect(transformed_inside_outline), frag),
                       0.0, 1.0);
 
-  gskSetOutputColor(final_color * alpha);
+  gskSetScaledOutputColor(final_color, alpha);
 }

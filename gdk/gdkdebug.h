@@ -18,8 +18,11 @@
 #ifndef __GDK_DEBUG_H__
 #define __GDK_DEBUG_H__
 
-G_BEGIN_DECLS
+#include <glib.h>
 
+#include "gdktypes.h"
+
+G_BEGIN_DECLS
 
 typedef enum {
   GDK_DEBUG_MISC            = 1 <<  0,
@@ -47,6 +50,7 @@ typedef enum {
   GDK_DEBUG_VULKAN_DISABLE  = 1 << 21,
   GDK_DEBUG_VULKAN_VALIDATE = 1 << 22,
   GDK_DEBUG_DEFAULT_SETTINGS= 1 << 23,
+  GDK_DEBUG_HIGH_DEPTH      = 1 << 24,
 } GdkDebugFlags;
 
 extern guint _gdk_debug_flags;

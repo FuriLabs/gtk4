@@ -18,7 +18,6 @@
 #include "config.h"
 
 #include "gdkx11devicemanager-xi2.h"
-#include "gdkinternals.h"
 #include "gdkprivate-x11.h"
 #include "gdkdisplay-x11.h"
 
@@ -42,13 +41,15 @@ _gdk_x11_device_manager_new (GdkDisplay *display)
       int major, minor;
 
       major = 2;
-      minor = 3;
+      minor = 4;
 
       if (XIQueryVersion (xdisplay, &major, &minor) != BadRequest)
         {
           GdkX11DeviceManagerXI2 *device_manager_xi2;
 
-          GDK_DISPLAY_NOTE (display, INPUT, g_message ("Creating XI2 device manager"));
+          GDK_DISPLAY_NOTE (display, INPUT,
+                            g_message ("Creating XI2 (version %d.%d) device manager",
+                                       major, minor));
 
           device_manager_xi2 = g_object_new (GDK_TYPE_X11_DEVICE_MANAGER_XI2,
                                              "display", display,

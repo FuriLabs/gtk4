@@ -28,11 +28,8 @@
 #include "gdkx11display.h"
 #include "gdkx11glcontext.h"
 #include "gdkx11screen.h"
-#include "gdkx11surface.h"
 #include "gdkx11property.h"
 #include <X11/Xatom.h>
-
-#include "gdkinternals.h"
 
 #include "gdkintl.h"
 

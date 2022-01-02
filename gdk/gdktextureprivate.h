@@ -3,6 +3,8 @@
 
 #include "gdktexture.h"
 
+#include "gdkenums.h"
+
 G_BEGIN_DECLS
 
 #define GDK_TEXTURE_CLASS(klass)            (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_TEXTURE, GdkTextureClass))
@@ -13,6 +15,7 @@ struct _GdkTexture
 {
   GObject parent_instance;
 
+  GdkMemoryFormat format;
   int width;
   int height;
 
@@ -24,22 +27,23 @@ struct _GdkTexture
 struct _GdkTextureClass {
   GObjectClass parent_class;
 
+  /* mandatory: Download in the given format into data */
   void                  (* download)                    (GdkTexture             *texture,
-                                                         const GdkRectangle     *area,
+                                                         GdkMemoryFormat         format,
                                                          guchar                 *data,
                                                          gsize                   stride);
 };
 
-gpointer                gdk_texture_new                 (const GdkTextureClass  *klass,
-                                                         int                     width,
-                                                         int                     height);
+gboolean                gdk_texture_can_load            (GBytes                 *bytes);
+
 GdkTexture *            gdk_texture_new_for_surface     (cairo_surface_t        *surface);
 cairo_surface_t *       gdk_texture_download_surface    (GdkTexture             *texture);
-void                    gdk_texture_download_area       (GdkTexture             *texture,
-                                                         const GdkRectangle     *area,
+
+void                    gdk_texture_do_download         (GdkTexture             *texture,
+                                                         GdkMemoryFormat         format,
                                                          guchar                 *data,
                                                          gsize                   stride);
-
+GdkMemoryFormat         gdk_texture_get_format          (GdkTexture             *self);
 gboolean                gdk_texture_set_render_data     (GdkTexture             *self,
                                                          gpointer                key,
                                                          gpointer                data,

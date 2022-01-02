@@ -957,6 +957,7 @@ draw_insertion_cursor (GtkStyleContext *context,
                        cairo_t         *cr,
                        double           x,
                        double           y,
+                       double           width,
                        double           height,
                        double           aspect_ratio,
                        gboolean         is_primary,
@@ -966,7 +967,9 @@ draw_insertion_cursor (GtkStyleContext *context,
   GdkRGBA primary_color;
   GdkRGBA secondary_color;
   int stem_width;
-  int offset;
+  double angle;
+  double dx, dy;
+  double xx1, yy1, xx2, yy2;
 
   cairo_save (cr);
   cairo_new_path (cr);
@@ -976,106 +979,118 @@ draw_insertion_cursor (GtkStyleContext *context,
 
   stem_width = height * aspect_ratio + 1;
 
-  /* put (stem_width % 2) on the proper side of the cursor */
-  if (direction == PANGO_DIRECTION_LTR)
-    offset = stem_width / 2;
-  else
-    offset = stem_width - stem_width / 2;
+  yy1 = y;
+  yy2 = y + height;
 
-  cairo_rectangle (cr, x - offset, y, stem_width, height);
-  cairo_fill (cr);
+  if (width < 0)
+    {
+      xx1 = x;
+      xx2 = x - width;
+    }
+  else
+    {
+      xx1 = x + width;
+      xx2 = x;
+    }
+
+  angle = atan2 (height, width);
+
+  dx = (stem_width/2.0) * cos (M_PI/2 - angle);
+  dy = (stem_width/2.0) * sin (M_PI/2 - angle);
 
   if (draw_arrow)
     {
-      int arrow_width;
-      int ax, ay;
-
-      arrow_width = stem_width + 1;
-
       if (direction == PANGO_DIRECTION_RTL)
         {
-          ax = x - offset - 1;
-          ay = y + height - arrow_width * 2 - arrow_width + 1;
+          double x0, y0, x1, y1, x2, y2;
 
-          cairo_move_to (cr, ax, ay + 1);
-          cairo_line_to (cr, ax - arrow_width, ay + arrow_width);
-          cairo_line_to (cr, ax, ay + 2 * arrow_width);
-          cairo_fill (cr);
+          x0 = xx2 - dx + 2 * dy;
+          y0 = yy2 - dy - 2 * dx;
+
+          x1 = x0 + 4 * dy;
+          y1 = y0 - 4 * dx;
+          x2 = x0 + 2 * dy - 3 * dx;
+          y2 = y0 - 2 * dx - 3 * dy;
+
+          cairo_move_to (cr, xx1 + dx, yy1 + dy);
+          cairo_line_to (cr, xx2 + dx, yy2 + dy);
+          cairo_line_to (cr, x2, y2);
+          cairo_line_to (cr, x1, y1);
+          cairo_line_to (cr, xx1 - dx, yy1 - dy);
         }
       else if (direction == PANGO_DIRECTION_LTR)
         {
-          ax = x + stem_width - offset;
-          ay = y + height - arrow_width * 2 - arrow_width + 1;
+          double x0, y0, x1, y1, x2, y2;
 
-          cairo_move_to (cr, ax, ay + 1);
-          cairo_line_to (cr, ax + arrow_width, ay + arrow_width);
-          cairo_line_to (cr, ax, ay + 2 * arrow_width);
-          cairo_fill (cr);
+          x0 = xx2 + dx + 2 * dy;
+          y0 = yy2 + dy - 2 * dx;
+
+          x1 = x0 + 4 * dy;
+          y1 = y0 - 4 * dx;
+          x2 = x0 + 2 * dy + 3 * dx;
+          y2 = y0 - 2 * dx + 3 * dy;
+
+          cairo_move_to (cr, xx1 - dx, yy1 - dy);
+          cairo_line_to (cr, xx2 - dx, yy2 - dy);
+          cairo_line_to (cr, x2, y2);
+          cairo_line_to (cr, x1, y1);
+          cairo_line_to (cr, xx1 + dx, yy1 + dy);
         }
       else
         g_assert_not_reached();
     }
+  else
+    {
+      cairo_move_to (cr, xx1 + dx, yy1 + dy);
+      cairo_line_to (cr, xx2 + dx, yy2 + dy);
+      cairo_line_to (cr, xx2 - dx, yy2 - dy);
+      cairo_line_to (cr, xx1 - dx, yy1 - dy);
+    }
+
+  cairo_fill (cr);
 
   cairo_restore (cr);
 }
 
 static void
-get_insertion_cursor_bounds (double           height,
+get_insertion_cursor_bounds (double           width,
+                             double           height,
                              double           aspect_ratio,
                              PangoDirection   direction,
                              gboolean         draw_arrow,
                              graphene_rect_t *bounds)
 {
   int stem_width;
-  int offset;
+
+  if (width < 0)
+    width = - width;
 
   stem_width = height * aspect_ratio + 1;
-  if (direction == PANGO_DIRECTION_LTR)
-    offset = stem_width / 2;
-  else
-    offset = stem_width - stem_width / 2;
 
-  if (draw_arrow)
-    {
-      if (direction == PANGO_DIRECTION_LTR)
-        {
-          graphene_rect_init (bounds,
-                              - offset, 0,
-                              2 * stem_width + 1, height);
-        }
-      else
-        {
-          graphene_rect_init (bounds,
-                              - offset - stem_width - 2, 0,
-                              2 * stem_width + 2, height);
-        }
-    }
-  else
-    {
-      graphene_rect_init (bounds,
-                          - offset, 0,
-                          stem_width, height);
-    }
+  graphene_rect_init (bounds,
+                      - 2 * stem_width, - stem_width,
+                      width + 4 * stem_width, height + 2 * stem_width);
 }
 
 static void
 snapshot_insertion_cursor (GtkSnapshot     *snapshot,
                            GtkStyleContext *context,
+                           double           width,
                            double           height,
                            double           aspect_ratio,
                            gboolean         is_primary,
                            PangoDirection   direction,
                            gboolean         draw_arrow)
 {
-  if (draw_arrow)
+  if (width != 0 || draw_arrow)
     {
       cairo_t *cr;
       graphene_rect_t bounds;
 
-      get_insertion_cursor_bounds (height, aspect_ratio, direction, draw_arrow, &bounds);
+      get_insertion_cursor_bounds (width, height, aspect_ratio, direction, draw_arrow, &bounds);
       cr = gtk_snapshot_append_cairo (snapshot, &bounds);
 
-      draw_insertion_cursor (context, cr, 0, 0, height, aspect_ratio, is_primary, direction, draw_arrow);
+      draw_insertion_cursor (context, cr, 0, 0, width, height, aspect_ratio, is_primary, direction, draw_arrow);
 
       cairo_destroy (cr);
     }
@@ -1152,7 +1167,7 @@ gtk_snapshot_render_insertion_cursor (GtkSnapshot     *snapshot,
         keyboard_direction = gdk_device_get_direction (keyboard);
     }
 
-  pango_layout_get_cursor_pos (layout, index, &strong_pos, &weak_pos);
+  pango_layout_get_caret_pos (layout, index, &strong_pos, &weak_pos);
 
   direction2 = PANGO_DIRECTION_NEUTRAL;
 
@@ -1175,9 +1190,10 @@ gtk_snapshot_render_insertion_cursor (GtkSnapshot     *snapshot,
     }
 
   gtk_snapshot_save (snapshot);
-  gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (x + PANGO_PIXELS (cursor1->x), y + PANGO_PIXELS (cursor1->y)));
+  gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (x + PANGO_PIXELS (MIN (cursor1->x, cursor1->x + cursor1->width)), y + PANGO_PIXELS (cursor1->y)));
   snapshot_insertion_cursor (snapshot,
                              context,
+                             PANGO_PIXELS (cursor1->width),
                              PANGO_PIXELS (cursor1->height),
                              aspect_ratio,
                              TRUE,
@@ -1188,9 +1204,10 @@ gtk_snapshot_render_insertion_cursor (GtkSnapshot     *snapshot,
   if (direction2 != PANGO_DIRECTION_NEUTRAL)
     {
       gtk_snapshot_save (snapshot);
-      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (x + PANGO_PIXELS (cursor2->x), y + PANGO_PIXELS (cursor2->y)));
+      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (x + PANGO_PIXELS (MIN (cursor2->x, cursor2->x + cursor2->width)), y + PANGO_PIXELS (cursor2->y)));
       snapshot_insertion_cursor (snapshot,
                                  context,
+                                 PANGO_PIXELS (cursor2->width),
                                  PANGO_PIXELS (cursor2->height),
                                  aspect_ratio,
                                  FALSE,

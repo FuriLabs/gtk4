@@ -1,8 +1,7 @@
 #ifndef __GDK__PRIVATE_H__
 #define __GDK__PRIVATE_H__
 
-#include <gdk/gdk.h>
-#include "gdk/gdkinternals.h"
+#include "gdk/gdktypes.h"
 
 /* Private API for use in GTK+ */
 
@@ -29,13 +28,9 @@ gboolean gdk_should_use_portal (void);
 
 const char *   gdk_get_startup_notification_id (void);
 
-PangoDirection gdk_unichar_direction (gunichar    ch);
+PangoDirection gdk_unichar_direction (gunichar    ch) G_GNUC_CONST;
 PangoDirection gdk_find_base_dir     (const char *text,
                                       int         len);
-
-void           gdk_surface_set_widget (GdkSurface *surface,
-                                       gpointer    widget);
-gpointer       gdk_surface_get_widget (GdkSurface *surface);
 
 typedef struct
 {

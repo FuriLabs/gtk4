@@ -470,9 +470,6 @@ builder_construct (ParserData  *data,
 
   g_assert (object_info != NULL);
 
-  if (object_info->object && object_info->applied_properties)
-    return object_info->object;
-
   if (object_info->object == NULL)
     {
       object = _gtk_builder_construct (data->builder, object_info, error);
@@ -487,8 +484,6 @@ builder_construct (ParserData  *data,
       object = object_info->object;
       _gtk_builder_apply_properties (data->builder, object_info, error);
     }
-
-  object_info->applied_properties = TRUE;
 
   g_assert (G_IS_OBJECT (object));
 
@@ -918,7 +913,7 @@ parse_property (ParserData   *data,
 
   if (bind_flags_str)
     {
-      if (!_gtk_builder_flags_from_string (G_TYPE_BINDING_FLAGS, NULL, bind_flags_str, &bind_flags, error))
+      if (!_gtk_builder_flags_from_string (G_TYPE_BINDING_FLAGS, bind_flags_str, &bind_flags, error))
         {
           _gtk_builder_prefix_error (data->builder, &data->ctx, error);
           return;
@@ -1713,9 +1708,7 @@ parse_custom (GtkBuildableParseContext  *context,
       ObjectInfo* object_info = (ObjectInfo*)parent_info;
       if (!object_info->object)
         {
-          object_info->object = _gtk_builder_construct (data->builder,
-                                                        object_info,
-                                                        error);
+          object_info->object = builder_construct (data, object_info, error);
           if (!object_info->object)
             return TRUE; /* A GError is already set */
         }
@@ -1967,6 +1960,12 @@ end_element (GtkBuildableParseContext  *context,
         {
           _gtk_builder_add_signals (data->builder, object_info->signals);
           object_info->signals = NULL;
+        }
+
+      if (object_info->bindings)
+        {
+          gtk_builder_take_bindings (data->builder, object_info->object, object_info->bindings);
+          object_info->bindings = NULL;
         }
 
       free_object_info (object_info);

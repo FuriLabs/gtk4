@@ -28,9 +28,16 @@
 #include "gsktransformprivate.h"
 
 #include "gdk/gdktextureprivate.h"
+#include "gdk/gdkmemoryformatprivate.h"
 #include "gdk/gdk-private.h"
 
 #include <hb-ot.h>
+
+/* maximal number of rectangles we keep in a diff region before we throw
+ * the towel and just use the bounding box of the parent node.
+ * Meant to avoid performance corner cases.
+ */
+#define MAX_RECTS_IN_DIFF 30
 
 static inline void
 gsk_cairo_rectangle (cairo_t               *cr,
@@ -827,18 +834,14 @@ project (double  angle,
 {
   double x, y;
 
-  x = radius * cos (angle);
-  y = radius * sin (angle);
-  if (copysign (x, 1.0) > copysign (y, 1.0))
-    {
-      *x_out = copysign (radius, x);
-      *y_out = y * radius / copysign (x, 1.0);
-    }
-  else
-    {
-      *x_out = x * radius / copysign (y, 1.0);
-      *y_out = copysign (radius, y);
-    }
+#ifdef HAVE_SINCOS
+  sincos (angle, &y, &x);
+#else
+  x = cos (angle);
+  y = sin (angle);
+#endif
+  *x_out = radius * x;
+  *y_out = radius * y;
 }
 
 static void
@@ -1559,6 +1562,8 @@ gsk_texture_node_new (GdkTexture            *texture,
 
   self->texture = g_object_ref (texture);
   graphene_rect_init_from_rect (&node->bounds, bounds);
+
+  node->prefers_high_depth = gdk_memory_format_prefers_high_depth (gdk_texture_get_format (texture));
 
   return node;
 }
@@ -2602,32 +2607,35 @@ gsk_container_node_draw (GskRenderNode *node,
     }
 }
 
-static void
-gsk_render_node_add_to_region (GskRenderNode  *node,
-                               cairo_region_t *region)
-{
-  cairo_rectangle_int_t rect;
-
-  rectangle_init_from_graphene (&rect, &node->bounds);
-  cairo_region_union_rectangle (region, &rect);
-}
-
 static int
 gsk_container_node_compare_func (gconstpointer elem1, gconstpointer elem2, gpointer data)
 {
   return gsk_render_node_can_diff ((const GskRenderNode *) elem1, (const GskRenderNode *) elem2) ? 0 : 1;
 }
 
-static void
+static GskDiffResult
 gsk_container_node_keep_func (gconstpointer elem1, gconstpointer elem2, gpointer data)
 {
   gsk_render_node_diff ((GskRenderNode *) elem1, (GskRenderNode *) elem2, data);
+  if (cairo_region_num_rectangles (data) > MAX_RECTS_IN_DIFF)
+    return GSK_DIFF_ABORTED;
+
+  return GSK_DIFF_OK;
 }
 
-static void
+static GskDiffResult
 gsk_container_node_change_func (gconstpointer elem, gsize idx, gpointer data)
 {
-  gsk_render_node_add_to_region ((GskRenderNode *) elem, data);
+  const GskRenderNode *node = elem;
+  cairo_region_t *region = data;
+  cairo_rectangle_int_t rect;
+
+  rectangle_init_from_graphene (&rect, &node->bounds);
+  cairo_region_union_rectangle (region, &rect);
+  if (cairo_region_num_rectangles (region) > MAX_RECTS_IN_DIFF)
+    return GSK_DIFF_ABORTED;
+
+  return GSK_DIFF_OK;
 }
 
 static GskDiffSettings *
@@ -2730,11 +2738,13 @@ gsk_container_node_new (GskRenderNode **children,
 
       self->children[0] = gsk_render_node_ref (children[0]);
       graphene_rect_init_from_rect (&bounds, &(children[0]->bounds));
+      node->prefers_high_depth = gsk_render_node_prefers_high_depth (children[0]);
 
       for (guint i = 1; i < n_children; i++)
         {
           self->children[i] = gsk_render_node_ref (children[i]);
           graphene_rect_union (&bounds, &(children[i]->bounds), &bounds);
+          node->prefers_high_depth |= gsk_render_node_prefers_high_depth (children[i]);
         }
 
       graphene_rect_init_from_rect (&node->bounds, &bounds);
@@ -2965,6 +2975,8 @@ gsk_transform_node_new (GskRenderNode *child,
                                   &child->bounds,
                                   &node->bounds);
 
+  node->prefers_high_depth = gsk_render_node_prefers_high_depth (child);
+
   return node;
 }
 
@@ -3099,6 +3111,8 @@ gsk_opacity_node_new (GskRenderNode *child,
   self->opacity = CLAMP (opacity, 0.0, 1.0);
 
   graphene_rect_init_from_rect (&node->bounds, &child->bounds);
+
+  node->prefers_high_depth = gsk_render_node_prefers_high_depth (child);
 
   return node;
 }
@@ -3302,6 +3316,8 @@ gsk_color_matrix_node_new (GskRenderNode           *child,
 
   graphene_rect_init_from_rect (&node->bounds, &child->bounds);
 
+  node->prefers_high_depth = gsk_render_node_prefers_high_depth (child);
+
   return node;
 }
 
@@ -3451,6 +3467,8 @@ gsk_repeat_node_new (const graphene_rect_t *bounds,
   else
     graphene_rect_init_from_rect (&self->child_bounds, &child->bounds);
 
+  node->prefers_high_depth = gsk_render_node_prefers_high_depth (child);
+
   return node;
 }
 
@@ -3582,6 +3600,8 @@ gsk_clip_node_new (GskRenderNode         *child,
 
   graphene_rect_intersection (&self->clip, &child->bounds, &node->bounds);
 
+  node->prefers_high_depth = gsk_render_node_prefers_high_depth (child);
+
   return node;
 }
 
@@ -3712,6 +3732,8 @@ gsk_rounded_clip_node_new (GskRenderNode         *child,
   gsk_rounded_rect_init_copy (&self->clip, clip);
 
   graphene_rect_intersection (&self->clip.bounds, &child->bounds, &node->bounds);
+
+  node->prefers_high_depth = gsk_render_node_prefers_high_depth (child);
 
   return node;
 }
@@ -3932,6 +3954,8 @@ gsk_shadow_node_new (GskRenderNode   *child,
 
   gsk_shadow_node_get_bounds (self, &node->bounds);
 
+  node->prefers_high_depth = gsk_render_node_prefers_high_depth (child);
+
   return node;
 }
 
@@ -4125,6 +4149,8 @@ gsk_blend_node_new (GskRenderNode *bottom,
 
   graphene_rect_union (&bottom->bounds, &top->bounds, &node->bounds);
 
+  node->prefers_high_depth = gsk_render_node_prefers_high_depth (bottom) || gsk_render_node_prefers_high_depth (top);
+
   return node;
 }
 
@@ -4273,6 +4299,8 @@ gsk_cross_fade_node_new (GskRenderNode *start,
 
   graphene_rect_union (&start->bounds, &end->bounds, &node->bounds);
 
+  node->prefers_high_depth = gsk_render_node_prefers_high_depth (start) || gsk_render_node_prefers_high_depth (end);
+
   return node;
 }
 
@@ -4377,15 +4405,6 @@ gsk_text_node_draw (GskRenderNode *node,
   cairo_restore (cr);
 }
 
-/* We steal one of the bits in PangoGlyphVisAttr */
-
-G_STATIC_ASSERT (sizeof (PangoGlyphVisAttr) == 4);
-
-#define COLOR_GLYPH_BIT 2
-#define GLYPH_IS_COLOR(g)  (((*(guint32*)&(g)->attr) & COLOR_GLYPH_BIT) != 0)
-#define GLYPH_SET_COLOR(g)  (*(guint32*)(&(g)->attr) |= COLOR_GLYPH_BIT)
-#define GLYPH_CLEAR_COLOR(g)  (*(guint32*)(&(g)->attr) &= ~COLOR_GLYPH_BIT)
-
 static void
 gsk_text_node_diff (GskRenderNode  *node1,
                     GskRenderNode  *node2,
@@ -4411,7 +4430,7 @@ gsk_text_node_diff (GskRenderNode  *node1,
               info1->geometry.x_offset == info2->geometry.x_offset &&
               info1->geometry.y_offset == info2->geometry.y_offset &&
               info1->attr.is_cluster_start == info2->attr.is_cluster_start &&
-              GLYPH_IS_COLOR (info1) == GLYPH_IS_COLOR (info2))
+              info1->attr.is_color == info2->attr.is_color)
             continue;
 
           gsk_render_node_diff_impossible (node1, node2, region);
@@ -4422,46 +4441,6 @@ gsk_text_node_diff (GskRenderNode  *node1,
     }
 
   gsk_render_node_diff_impossible (node1, node2, region);
-}
-
-static gboolean
-font_has_color_glyphs (PangoFont *font)
-{
-  hb_face_t *face = hb_font_get_face (pango_font_get_hb_font (font));
-
-  return hb_ot_color_has_layers (face) ||
-         hb_ot_color_has_png (face) ||
-         hb_ot_color_has_svg (face);
-}
-
-static gboolean
-glyph_has_color (PangoFont *font,
-                 guint      glyph)
-{
-  hb_font_t *hb_font = pango_font_get_hb_font (font);
-  hb_face_t *face = hb_font_get_face (hb_font);
-  hb_blob_t *blob;
-
-  if (hb_ot_color_glyph_get_layers (face, glyph, 0, NULL, NULL) > 0)
-    return TRUE;
-
-  blob = hb_ot_color_glyph_reference_png (hb_font, glyph);
-  if (blob)
-    {
-      guint length = hb_blob_get_length (blob);
-      hb_blob_destroy (blob);
-      return length > 0;
-    }
-
-  blob = hb_ot_color_glyph_reference_svg (face, glyph);
-  if (blob)
-    {
-      guint length = hb_blob_get_length (blob);
-      hb_blob_destroy (blob);
-      return length > 0;
-    }
-
-  return FALSE;
 }
 
 /**
@@ -4488,7 +4467,6 @@ gsk_text_node_new (PangoFont              *font,
   GskRenderNode *node;
   PangoRectangle ink_rect;
   PangoGlyphInfo *glyph_infos;
-  gboolean has_color_glyphs;
   int n;
 
   pango_glyph_string_extents (glyphs, font, &ink_rect, NULL);
@@ -4507,7 +4485,6 @@ gsk_text_node_new (PangoFont              *font,
   self->has_color_glyphs = FALSE;
 
   glyph_infos = g_malloc_n (glyphs->num_glyphs, sizeof (PangoGlyphInfo));
-  has_color_glyphs = font_has_color_glyphs (font);
 
   n = 0;
   for (int i = 0; i < glyphs->num_glyphs; i++)
@@ -4517,14 +4494,9 @@ gsk_text_node_new (PangoFont              *font,
         continue;
 
       glyph_infos[n] = glyphs->glyphs[i];
-      GLYPH_CLEAR_COLOR (&glyph_infos[n]);
 
-      if (has_color_glyphs &&
-          glyph_has_color (font, glyph_infos[n].glyph))
-        {
-          self->has_color_glyphs = TRUE;
-          GLYPH_SET_COLOR (&glyph_infos[n]);
-        }
+      if (glyphs->glyphs[i].attr.is_color)
+        self->has_color_glyphs = TRUE;
 
       n++;
     }
@@ -4580,6 +4552,8 @@ gsk_text_node_get_font (const GskRenderNode *node)
  * Checks whether the text @node has color glyphs.
  *
  * Returns: %TRUE if the text node has color glyphs
+ *
+ * Since: 4.2
  */
 gboolean
 gsk_text_node_has_color_glyphs (const GskRenderNode *node)
@@ -4891,7 +4865,7 @@ gsk_blur_node_diff (GskRenderNode  *node1,
 /**
  * gsk_blur_node_new:
  * @child: the child node to blur
- * @radius: the blur radius
+ * @radius: the blur radius. Must be positive
  *
  * Creates a render node that blurs the child.
  *
@@ -4906,6 +4880,7 @@ gsk_blur_node_new (GskRenderNode *child,
   float clip_radius;
 
   g_return_val_if_fail (GSK_IS_RENDER_NODE (child), NULL);
+  g_return_val_if_fail (radius >= 0, NULL);
 
   self = gsk_render_node_alloc (GSK_BLUR_NODE);
   node = (GskRenderNode *) self;
@@ -4919,6 +4894,8 @@ gsk_blur_node_new (GskRenderNode *child,
   graphene_rect_inset (&self->render_node.bounds,
                        - clip_radius,
                        - clip_radius);
+
+  node->prefers_high_depth = gsk_render_node_prefers_high_depth (child);
 
   return node;
 }
@@ -5041,6 +5018,8 @@ gsk_debug_node_new (GskRenderNode *child,
   self->message = message;
 
   graphene_rect_init_from_rect (&node->bounds, &child->bounds);
+
+  node->prefers_high_depth = gsk_render_node_prefers_high_depth (child);
 
   return node;
 }
@@ -5206,7 +5185,10 @@ gsk_gl_shader_node_new (GskGLShader           *shader,
     {
       self->children = g_malloc_n (n_children, sizeof (GskRenderNode *));
       for (guint i = 0; i < n_children; i++)
-        self->children[i] = gsk_render_node_ref (children[i]);
+        {
+          self->children[i] = gsk_render_node_ref (children[i]);
+          node->prefers_high_depth |= gsk_render_node_prefers_high_depth (children[i]);
+        }
     }
 
   return node;
@@ -5721,6 +5703,120 @@ gsk_render_node_init_types_once (void)
     gsk_render_node_types[GSK_DEBUG_NODE] = node_type;
   }
 }
+
+static void
+gsk_render_node_content_serializer_finish (GObject      *source,
+                                           GAsyncResult *result,
+                                           gpointer      serializer)
+{
+  GOutputStream *stream = G_OUTPUT_STREAM (source);
+  GError *error = NULL;
+
+  if (g_output_stream_splice_finish (stream, result, &error) < 0)
+    gdk_content_serializer_return_error (serializer, error);
+  else
+    gdk_content_serializer_return_success (serializer);
+}
+
+static void
+gsk_render_node_content_serializer (GdkContentSerializer *serializer)
+{
+  GInputStream *input;
+  const GValue *value;
+  GskRenderNode *node;
+  GBytes *bytes;
+
+  value = gdk_content_serializer_get_value (serializer);
+  node = gsk_value_get_render_node (value);
+  bytes = gsk_render_node_serialize (node);
+  input = g_memory_input_stream_new_from_bytes (bytes);
+
+  g_output_stream_splice_async (gdk_content_serializer_get_output_stream (serializer),
+                                input,
+                                G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+                                gdk_content_serializer_get_priority (serializer),
+                                gdk_content_serializer_get_cancellable (serializer),
+                                gsk_render_node_content_serializer_finish,
+                                serializer);
+  g_object_unref (input);
+  g_bytes_unref (bytes);
+}
+
+static void
+gsk_render_node_content_deserializer_finish (GObject      *source,
+                              GAsyncResult *result,
+                              gpointer      deserializer)
+{
+  GOutputStream *stream = G_OUTPUT_STREAM (source);
+  GError *error = NULL;
+  gssize written;
+  GValue *value;
+  GskRenderNode *node;
+  GBytes *bytes;
+
+  written = g_output_stream_splice_finish (stream, result, &error);
+  if (written < 0)
+    {
+      gdk_content_deserializer_return_error (deserializer, error);
+      return;
+    }
+
+  bytes = g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (stream));
+
+  /* For now, we ignore any parsing errors. We might want to revisit that if it turns
+   * out copy/paste leads to too many errors */
+  node = gsk_render_node_deserialize (bytes, NULL, NULL);
+
+  value = gdk_content_deserializer_get_value (deserializer);
+  gsk_value_take_render_node (value, node);
+
+  gdk_content_deserializer_return_success (deserializer);
+}
+
+static void
+gsk_render_node_content_deserializer (GdkContentDeserializer *deserializer)
+{
+  GOutputStream *output;
+
+  output = g_memory_output_stream_new_resizable ();
+
+  g_output_stream_splice_async (output,
+                                gdk_content_deserializer_get_input_stream (deserializer),
+                                G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE | G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
+                                gdk_content_deserializer_get_priority (deserializer),
+                                gdk_content_deserializer_get_cancellable (deserializer),
+                                gsk_render_node_content_deserializer_finish,
+                                deserializer);
+  g_object_unref (output);
+}
+
+static void
+gsk_render_node_init_content_serializers (void)
+{
+  gdk_content_register_serializer (GSK_TYPE_RENDER_NODE,
+                                   "application/x-gtk-render-node",
+                                   gsk_render_node_content_serializer,
+                                   NULL,
+                                   NULL);
+  gdk_content_register_serializer (GSK_TYPE_RENDER_NODE,
+                                   "text/plain;charset=utf-8",
+                                   gsk_render_node_content_serializer,
+                                   NULL,
+                                   NULL);
+  /* The serialization format only outputs ASCII, so we can do this */
+  gdk_content_register_serializer (GSK_TYPE_RENDER_NODE,
+                                   "text/plain",
+                                   gsk_render_node_content_serializer,
+                                   NULL,
+                                   NULL);
+
+  gdk_content_register_deserializer ("application/x-gtk-render-node",
+                                     GSK_TYPE_RENDER_NODE,
+                                     gsk_render_node_content_deserializer,
+                                     NULL,
+                                     NULL);
+}
+
 /*< private >
  * gsk_render_node_init_types:
  *
@@ -5735,6 +5831,7 @@ gsk_render_node_init_types (void)
     {
       gboolean initialized = TRUE;
       gsk_render_node_init_types_once ();
+      gsk_render_node_init_content_serializers ();
       g_once_init_leave (&register_types__volatile, initialized);
     }
 }

@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include <Windows.h>
+#include <windows.h>
 
 #include "gdkprivate-win32.h"
 #include "gdkhdataoutputstream-win32.h"
@@ -31,7 +31,6 @@
 #include "gdkwin32display.h"
 #include "gdkwin32surface.h"
 
-#include "gdkinternals.h"
 
 typedef struct _GdkWin32HDataOutputStreamPrivate  GdkWin32HDataOutputStreamPrivate;
 

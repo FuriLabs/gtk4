@@ -96,7 +96,7 @@
  * uniform sampler2D u_texture2;
  * ```
  *
- * GTK uses the the "gsk" namespace in the symbols it uses in the
+ * GTK uses the "gsk" namespace in the symbols it uses in the
  * shader, so your code should not use any symbols with the prefix gsk
  * or GSK. There are some helper functions declared that you can use:
  *
@@ -140,7 +140,6 @@
 #include "gskdebugprivate.h"
 
 #include "gl/gskglrendererprivate.h"
-#include "ngl/gsknglrendererprivate.h"
 
 static GskGLUniformType
 uniform_type_from_glsl (const char *str)
@@ -546,8 +545,6 @@ gsk_gl_shader_compile (GskGLShader  *shader,
 
   if (GSK_IS_GL_RENDERER (renderer))
     return gsk_gl_renderer_try_compile_gl_shader (GSK_GL_RENDERER (renderer), shader, error);
-  else if (GSK_IS_NGL_RENDERER (renderer))
-    return gsk_ngl_renderer_try_compile_gl_shader (GSK_NGL_RENDERER (renderer), shader, error);
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
                "The renderer does not support gl shaders");

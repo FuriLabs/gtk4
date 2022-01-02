@@ -57,6 +57,7 @@
 #include "gtkshortcutcontrollerprivate.h"
 #include "gtkshortcutmanager.h"
 #include "gtkshortcuttrigger.h"
+#include "gtksizerequest.h"
 #include "gtksnapshot.h"
 #include "gtktypebuiltins.h"
 #include "gtkwidgetprivate.h"
@@ -68,9 +69,9 @@
 
 #include "inspector/window.h"
 
-#include "gdk/gdktextureprivate.h"
-#include "gdk/gdk-private.h"
 #include "gdk/gdkprofilerprivate.h"
+#include "gdk/gdksurfaceprivate.h"
+#include "gdk/gdktextureprivate.h"
 
 #include <cairo-gobject.h>
 #include <errno.h>
@@ -147,6 +148,14 @@
  * # Accessibility
  *
  * `GtkWindow` uses the %GTK_ACCESSIBLE_ROLE_WINDOW role.
+ * 
+ * # Actions
+ * 
+ * `GtkWindow` defines a set of built-in actions:
+ * - `default.activate`: Activate the default widget.
+ * - `window.minimize`: Minimize the window.
+ * - `window.toggle-maximized`: Maximize or restore the window.
+ * - `window.close`: Close the window.
  */
 
 #define MENU_BAR_ACCEL GDK_KEY_F10
@@ -211,7 +220,6 @@ typedef struct
    */
   guint    need_default_size         : 1;
 
-  guint    builder_visible           : 1;
   guint    decorated                 : 1;
   guint    deletable                 : 1;
   guint    destroy_with_parent       : 1;
@@ -283,6 +291,7 @@ enum {
   PROP_DEFAULT_WIDGET,
   PROP_FOCUS_WIDGET,
   PROP_CHILD,
+  PROP_TITLEBAR,
   PROP_HANDLE_MENUBAR_ACCEL,
 
   /* Readonly properties */
@@ -472,10 +481,6 @@ static void     gtk_window_buildable_add_child              (GtkBuildable       
                                                              GtkBuilder         *builder,
                                                              GObject            *child,
                                                              const char         *type);
-static void     gtk_window_buildable_set_buildable_property (GtkBuildable       *buildable,
-                                                             GtkBuilder         *builder,
-                                                             const char         *name,
-                                                             const GValue       *value);
 
 static void             gtk_window_shortcut_manager_interface_init      (GtkShortcutManagerInterface *iface);
 /* GtkRoot */
@@ -622,8 +627,10 @@ gtk_window_measure (GtkWidget      *widget,
   GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
   GtkWidget *child = priv->child;
   gboolean has_size_request = gtk_widget_has_size_request (widget);
+  int title_for_size = for_size;
   int title_min_size = 0;
   int title_nat_size = 0;
+  int child_for_size = for_size;
   int child_min_size = 0;
   int child_nat_size = 0;
 
@@ -633,17 +640,30 @@ gtk_window_measure (GtkWidget      *widget,
           gtk_widget_get_visible (priv->title_box) &&
           gtk_widget_get_child_visible (priv->title_box))
         {
-          int size = for_size;
-          if (orientation == GTK_ORIENTATION_HORIZONTAL && for_size >= 0)
-            gtk_widget_measure (priv->title_box,
-                                GTK_ORIENTATION_VERTICAL,
-                                -1,
-                                NULL, &size,
-                                NULL, NULL);
+          if (orientation == GTK_ORIENTATION_HORIZONTAL && for_size >= 0 &&
+              child != NULL && gtk_widget_get_visible (child))
+            {
+              GtkRequestedSize sizes[2];
+
+              gtk_widget_measure (priv->title_box,
+                                  GTK_ORIENTATION_VERTICAL,
+                                  -1,
+                                  &sizes[0].minimum_size, &sizes[0].natural_size,
+                                  NULL, NULL);
+              gtk_widget_measure (child,
+                                  GTK_ORIENTATION_VERTICAL,
+                                  -1,
+                                  &sizes[1].minimum_size, &sizes[1].natural_size,
+                                  NULL, NULL);
+              for_size -= sizes[0].minimum_size + sizes[1].minimum_size;
+              for_size = gtk_distribute_natural_allocation (for_size, 2, sizes);
+              title_for_size = sizes[0].minimum_size;
+              child_for_size = sizes[1].minimum_size + for_size;
+            }
 
           gtk_widget_measure (priv->title_box,
                               orientation,
-                              MAX (size, -1),
+                              title_for_size,
                               &title_min_size, &title_nat_size,
                               NULL, NULL);
         }
@@ -653,7 +673,7 @@ gtk_window_measure (GtkWidget      *widget,
     {
       gtk_widget_measure (child,
                           orientation,
-                          MAX (for_size, -1),
+                          child_for_size,
                           &child_min_size, &child_nat_size,
                           NULL, NULL);
 
@@ -1042,6 +1062,20 @@ gtk_window_class_init (GtkWindowClass *klass)
                            GTK_PARAM_READWRITE|G_PARAM_STATIC_STRINGS|G_PARAM_EXPLICIT_NOTIFY);
 
   /**
+   * GtkWindow:titlebar: (attributes org.gtk.Property.get=gtk_window_get_titlebar org.gtk.Property.set=gtk_window_set_titlebar)
+   *
+   * The titlebar widget.
+   *
+   * Since: 4.6
+   */
+  window_props[PROP_TITLEBAR] =
+      g_param_spec_object ("titlebar",
+                           P_("Titlebar"),
+                           P_("The titlebar widget"),
+                           GTK_TYPE_WIDGET,
+                           GTK_PARAM_READWRITE|G_PARAM_STATIC_STRINGS|G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
    * GtkWindow:handle-menubar-accel: (attributes org.gtk.Property.get=gtk_window_get_handle_menubar_accel org.gtk.Property.set=gtk_window_set_handle_menubar_accel)
    *
    * Whether the window frame should handle F10 for activating
@@ -1174,7 +1208,7 @@ gtk_window_class_init (GtkWindowClass *klass)
   /**
    * GtkWindow|window.minimize:
    *
-   * Close the window.
+   * Minimize the window.
    */
   gtk_widget_class_install_action (widget_class, "window.minimize", NULL,
                                    gtk_window_activate_minimize);
@@ -1820,6 +1854,9 @@ gtk_window_set_property (GObject      *object,
     case PROP_CHILD:
       gtk_window_set_child (window, g_value_get_object (value));
       break;
+    case PROP_TITLEBAR:
+      gtk_window_set_titlebar (window, g_value_get_object (value));
+      break;
     case PROP_HANDLE_MENUBAR_ACCEL:
       gtk_window_set_handle_menubar_accel (window, g_value_get_boolean (value));
       break;
@@ -1903,6 +1940,9 @@ gtk_window_get_property (GObject      *object,
     case PROP_CHILD:
       g_value_set_object (value, gtk_window_get_child (window));
       break;
+    case PROP_TITLEBAR:
+      g_value_set_object (value, gtk_window_get_titlebar (window));
+      break;
     case PROP_HANDLE_MENUBAR_ACCEL:
       g_value_set_boolean (value, gtk_window_get_handle_menubar_accel (window));
       break;
@@ -1916,7 +1956,6 @@ static void
 gtk_window_buildable_interface_init (GtkBuildableIface *iface)
 {
   parent_buildable_iface = g_type_interface_peek_parent (iface);
-  iface->set_buildable_property = gtk_window_buildable_set_buildable_property;
   iface->add_child = gtk_window_buildable_add_child;
 }
 
@@ -1932,23 +1971,6 @@ gtk_window_buildable_add_child (GtkBuildable *buildable,
     gtk_window_set_child (GTK_WINDOW (buildable), GTK_WIDGET (child));
   else
     parent_buildable_iface->add_child (buildable, builder, child, type);
-}
-
-static void
-gtk_window_buildable_set_buildable_property (GtkBuildable *buildable,
-                                             GtkBuilder   *builder,
-                                             const char   *name,
-                                             const GValue *value)
-{
-  GtkWindow *window = GTK_WINDOW (buildable);
-  GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
-
-  if (strcmp (name, "visible") == 0 && g_value_get_boolean (value))
-    priv->builder_visible = TRUE;
-  else if (parent_buildable_iface->set_buildable_property)
-    parent_buildable_iface->set_buildable_property (buildable, builder, name, value);
-  else
-    g_object_set_property (G_OBJECT (buildable), name, value);
 }
 
 static void
@@ -2997,7 +3019,7 @@ gtk_window_enable_csd (GtkWindow *window)
 }
 
 /**
- * gtk_window_set_titlebar:
+ * gtk_window_set_titlebar: (attributes org.gtk.Method.set_property=titlebar)
  * @window: a `GtkWindow`
  * @titlebar: (nullable): the widget to use as titlebar
  *
@@ -3023,6 +3045,9 @@ gtk_window_set_titlebar (GtkWindow *window,
 
   g_return_if_fail (GTK_IS_WINDOW (window));
 
+  if (priv->titlebar == titlebar)
+    return;
+
   if ((!priv->title_box && titlebar) || (priv->title_box && !titlebar))
     {
       was_mapped = _gtk_widget_get_mapped (widget);
@@ -3043,25 +3068,27 @@ gtk_window_set_titlebar (GtkWindow *window,
       priv->client_decorated = FALSE;
       gtk_widget_remove_css_class (widget, "csd");
       gtk_widget_remove_css_class (widget, "solid-csd");
+    }
+  else
+    {
+      priv->use_client_shadow = gtk_window_supports_client_shadow (window);
 
-      goto out;
+      gtk_window_enable_csd (window);
+      priv->titlebar = titlebar;
+      priv->title_box = titlebar;
+      gtk_widget_insert_before (priv->title_box, widget, NULL);
+
+      gtk_widget_add_css_class (titlebar, "titlebar");
     }
 
-  priv->use_client_shadow = gtk_window_supports_client_shadow (window);
-
-  gtk_window_enable_csd (window);
-  priv->title_box = titlebar;
-  gtk_widget_insert_before (priv->title_box, widget, NULL);
-
-  gtk_widget_add_css_class (titlebar, "titlebar");
-
-out:
   if (was_mapped)
     gtk_widget_map (widget);
+
+  g_object_notify_by_pspec (G_OBJECT (window), window_props[PROP_TITLEBAR]);
 }
 
 /**
- * gtk_window_get_titlebar:
+ * gtk_window_get_titlebar: (attributes org.gtk.Method.get_property=titlebar)
  * @window: a `GtkWindow`
  *
  * Returns the custom titlebar that has been set with
@@ -3076,11 +3103,7 @@ gtk_window_get_titlebar (GtkWindow *window)
 
   g_return_val_if_fail (GTK_IS_WINDOW (window), NULL);
 
-  /* Don't return the internal titlebar */
-  if (priv->title_box == priv->titlebar)
-    return NULL;
-
-  return priv->title_box;
+  return priv->titlebar;
 }
 
 /**
@@ -4164,18 +4187,76 @@ update_realized_window_properties (GtkWindow *window)
     }
 }
 
+/* NB: When orientation is VERTICAL, width/height are flipped.
+ * The code uses the terms nonetheless to make it more intuitive
+ * to understand.
+ */
+static void
+gtk_window_compute_min_size (GtkWidget      *window,
+                             GtkOrientation  orientation,
+                             double          ideal_ratio,
+                             int            *min_width,
+                             int            *min_height)
+{
+  int start, end, mid, other;
+  double ratio;
+
+  /* start = min width, end = min width for min height (ie max width) */
+  gtk_widget_measure (window, orientation, -1, &start, NULL, NULL, NULL);
+  gtk_widget_measure (window, OPPOSITE_ORIENTATION (orientation), start, &other, NULL, NULL, NULL);
+  if ((double) start / other >= ideal_ratio)
+    {
+      *min_width = start;
+      *min_height = other;
+      return;
+    }
+  gtk_widget_measure (window, OPPOSITE_ORIENTATION (orientation), -1, &other, NULL, NULL, NULL);
+  gtk_widget_measure (window, orientation, other, &end, NULL, NULL, NULL);
+  if ((double) end / other <= ideal_ratio)
+    {
+      *min_width = end;
+      *min_height = other;
+      return;
+    }
+
+  while (start < end)
+    {
+      mid = (start + end) / 2;
+      
+      gtk_widget_measure (window, OPPOSITE_ORIENTATION (orientation), mid, &other, NULL, NULL, NULL);
+      ratio = (double) mid / other;
+      if(ratio == ideal_ratio)
+        {
+          *min_width = mid;
+          *min_height = other;
+          return;
+        }
+      else if (ratio < ideal_ratio)
+        start = mid + 1;
+      else
+        end = mid - 1;
+    }
+
+  gtk_widget_measure (window, orientation, other, &start, NULL, NULL, NULL);
+  *min_width = start;
+  *min_height = other;
+}
+
 static void
 gtk_window_compute_default_size (GtkWindow *window,
+                                 int        cur_width,
+                                 int        cur_height,
                                  int        max_width,
                                  int        max_height,
                                  int       *min_width,
                                  int       *min_height,
-                                 int       *nat_width,
-                                 int       *nat_height)
+                                 int       *width,
+                                 int       *height)
 {
   GtkWidget *widget = GTK_WIDGET (window);
+  GtkSizeRequestMode request_mode = gtk_widget_get_request_mode (widget);
 
-  if (gtk_widget_get_request_mode (widget) == GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT)
+  if (request_mode == GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT)
     {
       int minimum, natural;
 
@@ -4183,14 +4264,20 @@ gtk_window_compute_default_size (GtkWindow *window,
                           &minimum, &natural,
                           NULL, NULL);
       *min_height = minimum;
-      *nat_height = MAX (minimum, MIN (max_height, natural));
+      if (cur_height <= 0)
+        cur_height = natural;
+      *height = MAX (minimum, MIN (max_height, cur_height));
 
       gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
-                          *nat_height,
+                          *height,
                           &minimum, &natural,
                           NULL, NULL);
       *min_width = minimum;
-      *nat_width = MAX (minimum, MIN (max_width, natural));
+      if (cur_width <= 0)
+        cur_width = natural;
+      *width = MAX (minimum, MIN (max_width, cur_width));
+
+      gtk_window_compute_min_size (widget, GTK_ORIENTATION_VERTICAL, (double) *height / *width, min_height, min_width);
     }
   else /* GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH or CONSTANT_SIZE */
     {
@@ -4200,14 +4287,22 @@ gtk_window_compute_default_size (GtkWindow *window,
                           &minimum, &natural,
                           NULL, NULL);
       *min_width = minimum;
-      *nat_width = MAX (minimum, MIN (max_width, natural));
+      if (cur_width <= 0)
+        cur_width = natural;
+      *width = MAX (minimum, MIN (max_width, cur_width));
 
       gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL,
-                          *nat_width,
+                          *width,
                           &minimum, &natural,
                           NULL, NULL);
       *min_height = minimum;
-      *nat_height = MAX (minimum, MIN (max_height, natural));
+      if (cur_height <= 0)
+        cur_height = natural;
+
+      *height = MAX (minimum, MIN (max_height, cur_height));
+
+      if (request_mode != GTK_SIZE_REQUEST_CONSTANT_SIZE)
+        gtk_window_compute_min_size (widget, GTK_ORIENTATION_HORIZONTAL, (double) *width / *height, min_width, min_height);
     }
 }
 
@@ -4240,22 +4335,14 @@ toplevel_compute_size (GdkToplevel     *toplevel,
   GtkBorder shadow;
   int bounds_width, bounds_height;
   int min_width, min_height;
-  int nat_width, nat_height;
 
   gdk_toplevel_size_get_bounds (size, &bounds_width, &bounds_height);
 
   gtk_window_compute_default_size (window,
+                                   priv->default_width, priv->default_height,
                                    bounds_width, bounds_height,
                                    &min_width, &min_height,
-                                   &nat_width, &nat_height);
-
-  width = priv->default_width;
-  height = priv->default_height;
-
-  if (width <= 0)
-    width = nat_width;
-  if (height <= 0)
-    height = nat_height;
+                                   &width, &height);
 
   if (width < min_width)
     width = min_width;
@@ -4305,12 +4392,11 @@ gtk_window_realize (GtkWidget *widget)
 
             if (priv->title_box == NULL)
               {
-                priv->titlebar = gtk_header_bar_new ();
-                gtk_widget_add_css_class (priv->titlebar, "titlebar");
-                gtk_widget_add_css_class (priv->titlebar, "default-decoration");
+                priv->title_box = gtk_header_bar_new ();
+                gtk_widget_add_css_class (priv->title_box, "titlebar");
+                gtk_widget_add_css_class (priv->title_box, "default-decoration");
 
-                gtk_widget_insert_before (priv->titlebar, widget, NULL);
-                priv->title_box = priv->titlebar;
+                gtk_widget_insert_before (priv->title_box, widget, NULL);
               }
 
             update_window_actions (window);
@@ -4817,11 +4903,11 @@ update_mnemonics_visible (GtkWindow       *window,
     }
 }
 
-static void
-update_focus_visible (GtkWindow       *window,
-                      guint            keyval,
-                      GdkModifierType  state,
-                      gboolean         visible)
+void
+_gtk_window_update_focus_visible (GtkWindow       *window,
+                                  guint            keyval,
+                                  GdkModifierType  state,
+                                  gboolean         visible)
 {
   GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
 
@@ -4856,7 +4942,7 @@ gtk_window_key_pressed (GtkWidget       *widget,
 {
   GtkWindow *window = GTK_WINDOW (widget);
 
-  update_focus_visible (window, keyval, state, TRUE);
+  _gtk_window_update_focus_visible (window, keyval, state, TRUE);
   update_mnemonics_visible (window, keyval, state, TRUE);
 
   return FALSE;
@@ -4871,7 +4957,7 @@ gtk_window_key_released (GtkWidget       *widget,
 {
   GtkWindow *window = GTK_WINDOW (widget);
 
-  update_focus_visible (window, keyval, state, FALSE);
+  _gtk_window_update_focus_visible (window, keyval, state, FALSE);
   update_mnemonics_visible (window, keyval, state, FALSE);
 
   return FALSE;
@@ -5892,7 +5978,7 @@ gtk_window_set_auto_startup_notification (gboolean setting)
 }
 
 /**
- * gtk_window_get_mnemonics_visible: (attributes org.gtk.MEthod.get_property=mnemonics-visible)
+ * gtk_window_get_mnemonics_visible: (attributes org.gtk.Method.get_property=mnemonics-visible)
  * @window: a `GtkWindow`
  *
  * Gets whether mnemonics are supposed to be visible.
@@ -5911,7 +5997,7 @@ gtk_window_get_mnemonics_visible (GtkWindow *window)
 }
 
 /**
- * gtk_window_set_mnemonics_visible:
+ * gtk_window_set_mnemonics_visible: (attributes org.gtk.Method.set_property=mnemonics-visible)
  * @window: a `GtkWindow`
  * @setting: the new value
  *

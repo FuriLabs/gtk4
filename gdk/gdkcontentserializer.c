@@ -26,6 +26,10 @@
 #include "filetransferportalprivate.h"
 #include "gdktextureprivate.h"
 #include "gdkrgba.h"
+#include "loaders/gdkpngprivate.h"
+#include "loaders/gdktiffprivate.h"
+#include "loaders/gdkjpegprivate.h"
+#include "gdkmemorytextureprivate.h"
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <string.h>
@@ -50,7 +54,7 @@
 
 typedef struct _Serializer Serializer;
 
-struct _Serializer 
+struct _Serializer
 {
   const char *                    mime_type; /* interned */
   GType                           type;
@@ -442,7 +446,7 @@ lookup_serializer (const char *mime_type,
           serializer->type == type)
         return serializer;
     }
-  
+
   return NULL;
 }
 
@@ -606,6 +610,7 @@ gdk_content_serialize_finish (GAsyncResult  *result,
 
 /*** SERIALIZERS ***/
 
+
 static void
 pixbuf_serializer_finish (GObject      *source,
                           GAsyncResult *res,
@@ -625,7 +630,7 @@ pixbuf_serializer (GdkContentSerializer *serializer)
   const GValue *value;
   GdkPixbuf *pixbuf;
   const char *name;
-  
+
   name = gdk_content_serializer_get_user_data (serializer);
   value = gdk_content_serializer_get_value (serializer);
 
@@ -636,11 +641,7 @@ pixbuf_serializer (GdkContentSerializer *serializer)
   else if (G_VALUE_HOLDS (value, GDK_TYPE_TEXTURE))
     {
       GdkTexture *texture = g_value_get_object (value);
-      cairo_surface_t *surface = gdk_texture_download_surface (texture);
-      pixbuf = gdk_pixbuf_get_from_surface (surface,
-                                            0, 0,
-                                            gdk_texture_get_width (texture), gdk_texture_get_height (texture));
-      cairo_surface_destroy (surface);
+      pixbuf = gdk_pixbuf_get_from_texture (texture);
     }
   else
     {
@@ -650,12 +651,83 @@ pixbuf_serializer (GdkContentSerializer *serializer)
   gdk_pixbuf_save_to_stream_async (pixbuf,
                                    gdk_content_serializer_get_output_stream (serializer),
                                    name,
-				   gdk_content_serializer_get_cancellable (serializer),
+                                   gdk_content_serializer_get_cancellable (serializer),
                                    pixbuf_serializer_finish,
                                    serializer,
                                    g_str_equal (name, "png") ? "compression" : NULL, "2",
                                    NULL);
   g_object_unref (pixbuf);
+}
+
+static void
+texture_serializer_finish (GObject      *source,
+                           GAsyncResult *res,
+                           gpointer      user_data)
+{
+  GdkContentSerializer *serializer = GDK_CONTENT_SERIALIZER (source);
+  GError *error = NULL;
+
+  if (!g_task_propagate_boolean (G_TASK (res), &error))
+    gdk_content_serializer_return_error (serializer, error);
+  else
+    gdk_content_serializer_return_success (serializer);
+}
+
+static void
+serialize_texture_in_thread (GTask        *task,
+                             gpointer      source_object,
+                             gpointer      task_data,
+                             GCancellable *cancellable)
+{
+  GdkContentSerializer *serializer = source_object;
+  const GValue *value;
+  GdkTexture *texture;
+  GBytes *bytes = NULL;
+  GError *error = NULL;
+  gboolean result = FALSE;
+  GInputStream *input;
+  gssize spliced;
+
+  value = gdk_content_serializer_get_value (serializer);
+  texture = g_value_get_object (value);
+
+  if (strcmp (gdk_content_serializer_get_mime_type (serializer), "image/png") == 0)
+    bytes = gdk_save_png (texture);
+  else if (strcmp (gdk_content_serializer_get_mime_type (serializer), "image/tiff") == 0)
+    bytes = gdk_save_tiff (texture);
+  else if (strcmp (gdk_content_serializer_get_mime_type (serializer), "image/jpeg") == 0)
+    bytes = gdk_save_jpeg (texture);
+  else
+    g_assert_not_reached ();
+
+  input = g_memory_input_stream_new_from_bytes (bytes);
+  spliced = g_output_stream_splice (gdk_content_serializer_get_output_stream (serializer),
+                                    input,
+                                    G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+                                    gdk_content_serializer_get_cancellable (serializer),
+                                    &error);
+  g_object_unref (input);
+  g_bytes_unref (bytes);
+
+  result = spliced != -1;
+
+  if (result)
+    g_task_return_boolean (task, result);
+  else
+    g_task_return_error (task, error);
+}
+
+static void
+texture_serializer (GdkContentSerializer *serializer)
+{
+  GTask *task;
+
+  task = g_task_new (serializer,
+                     gdk_content_serializer_get_cancellable (serializer),
+                     texture_serializer_finish,
+                     NULL);
+  g_task_run_in_thread (task, serialize_texture_in_thread);
+  g_object_unref (task);
 }
 
 static void
@@ -751,7 +823,7 @@ file_uri_serializer (GdkContentSerializer *serializer)
   else if (G_VALUE_HOLDS (value, GDK_TYPE_FILE_LIST))
     {
       GSList *l;
-      
+
       for (l = g_value_get_boxed (value); l; l = l->next)
         {
           uri = g_file_get_uri (l->data);
@@ -795,7 +867,7 @@ file_text_serializer (GdkContentSerializer *serializer)
     {
       GString *str;
       GSList *l;
-      
+
       str = g_string_new (NULL);
 
       for (l = g_value_get_boxed (value); l; l = l->next)
@@ -877,51 +949,53 @@ init (void)
 
   initialized = TRUE;
 
+  gdk_content_register_serializer (GDK_TYPE_TEXTURE,
+                                   "image/png",
+                                   texture_serializer,
+                                   NULL, NULL);
+
+  gdk_content_register_serializer (GDK_TYPE_TEXTURE,
+                                   "image/tiff",
+                                   texture_serializer,
+                                   NULL, NULL);
+
+  gdk_content_register_serializer (GDK_TYPE_TEXTURE,
+                                   "image/jpeg",
+                                   texture_serializer,
+                                   NULL, NULL);
+
   formats = gdk_pixbuf_get_formats ();
-
-  /* Make sure png comes first */
-  for (f = formats; f; f = f->next)
-    {
-      GdkPixbufFormat *fmt = f->data;
-      char *name; 
- 
-      name = gdk_pixbuf_format_get_name (fmt);
-      if (g_str_equal (name, "png"))
-	{
-	  formats = g_slist_delete_link (formats, f);
-	  formats = g_slist_prepend (formats, fmt);
-
-	  g_free (name);
-
-	  break;
-	}
-
-      g_free (name);
-    }  
 
   for (f = formats; f; f = f->next)
     {
       GdkPixbufFormat *fmt = f->data;
       char **mimes, **m;
+      char *name;
 
       if (!gdk_pixbuf_format_is_writable (fmt))
-	continue;
+        continue;
 
+      name = gdk_pixbuf_format_get_name (fmt);
       mimes = gdk_pixbuf_format_get_mime_types (fmt);
       for (m = mimes; *m; m++)
-	{
-          gdk_content_register_serializer (GDK_TYPE_TEXTURE,
-                                           *m,
-                                           pixbuf_serializer,
-                                           gdk_pixbuf_format_get_name (fmt),
-                                           g_free);
+        {
+          /* Turning textures into pngs, tiffs or jpegs is handled above */
+          if (!g_str_equal (name, "png") &&
+              !g_str_equal (name, "tiff") &&
+              !g_str_equal (name, "jpeg"))
+            gdk_content_register_serializer (GDK_TYPE_TEXTURE,
+                                             *m,
+                                             pixbuf_serializer,
+                                             gdk_pixbuf_format_get_name (fmt),
+                                             g_free);
           gdk_content_register_serializer (GDK_TYPE_PIXBUF,
                                            *m,
                                            pixbuf_serializer,
                                            gdk_pixbuf_format_get_name (fmt),
                                            g_free);
-	}
+        }
       g_strfreev (mimes);
+      g_free (name);
     }
 
   g_slist_free (formats);

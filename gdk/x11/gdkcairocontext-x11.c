@@ -26,7 +26,6 @@
 
 #include "gdkcairo.h"
 #include "gdksurfaceprivate.h"
-#include "gdkinternals.h"
 
 #include <X11/Xlib.h>
 
@@ -56,6 +55,7 @@ create_cairo_surface_for_surface (GdkSurface *surface)
 
 static void
 gdk_x11_cairo_context_begin_frame (GdkDrawContext *draw_context,
+                                   gboolean        prefers_high_depth,
                                    cairo_region_t *region)
 {
   GdkX11CairoContext *self = GDK_X11_CAIRO_CONTEXT (draw_context);

@@ -5,10 +5,14 @@ uniform float u_alpha;
 #if defined(GSK_GLES) || defined(GSK_LEGACY)
 attribute vec2 aPosition;
 attribute vec2 aUv;
+attribute vec4 aColor;
+attribute vec4 aColor2;
 _OUT_ vec2 vUv;
 #else
 _IN_ vec2 aPosition;
 _IN_ vec2 aUv;
+_IN_ vec4 aColor;
+_IN_ vec4 aColor2;
 _OUT_ vec2 vUv;
 #endif
 

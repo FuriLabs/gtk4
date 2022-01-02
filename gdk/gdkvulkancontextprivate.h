@@ -23,8 +23,9 @@
 
 #include "gdkvulkancontext.h"
 
+#include "gdkdebug.h"
 #include "gdkdrawcontextprivate.h"
-#include "gdkinternals.h"
+#include "gdkenums.h"
 
 #ifdef GDK_RENDERING_VULKAN
 #include <vulkan/vulkan.h>

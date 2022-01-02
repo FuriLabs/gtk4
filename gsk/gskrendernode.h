@@ -494,7 +494,7 @@ GskRenderNode *         gsk_text_node_new                       (PangoFont      
                                                                  const graphene_point_t   *offset);
 GDK_AVAILABLE_IN_ALL
 PangoFont *             gsk_text_node_get_font                  (const GskRenderNode      *node) G_GNUC_PURE;
-GDK_AVAILABLE_IN_ALL
+GDK_AVAILABLE_IN_4_2
 gboolean                gsk_text_node_has_color_glyphs          (const GskRenderNode      *node) G_GNUC_PURE;
 GDK_AVAILABLE_IN_ALL
 guint                   gsk_text_node_get_num_glyphs            (const GskRenderNode      *node) G_GNUC_PURE;
@@ -533,6 +533,26 @@ GDK_AVAILABLE_IN_ALL
 GBytes *                gsk_gl_shader_node_get_args             (const GskRenderNode      *node) G_GNUC_PURE;
 GDK_AVAILABLE_IN_ALL
 GskGLShader *           gsk_gl_shader_node_get_shader           (const GskRenderNode      *node) G_GNUC_PURE;
+
+/**
+ * GSK_VALUE_HOLDS_RENDER_NODE:
+ * @value: a `GValue`
+ *
+ * Evaluates to %TRUE if @value was initialized with %GSK_TYPE_RENDER_NODE.
+ */
+#define GSK_VALUE_HOLDS_RENDER_NODE(value)       (G_VALUE_HOLDS ((value), GSK_TYPE_RENDER_NODE))
+
+GDK_AVAILABLE_IN_4_4
+void                    gsk_value_set_render_node               (GValue                   *value,
+                                                                 GskRenderNode            *node);
+GDK_AVAILABLE_IN_4_4
+void                    gsk_value_take_render_node              (GValue                   *value,
+                                                                 GskRenderNode            *node);
+GDK_AVAILABLE_IN_4_4
+GskRenderNode *         gsk_value_get_render_node               (const GValue             *value);
+GDK_AVAILABLE_IN_4_4
+GskRenderNode *         gsk_value_dup_render_node               (const GValue             *value);
+
 
 G_END_DECLS
 

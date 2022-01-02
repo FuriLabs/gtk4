@@ -67,7 +67,8 @@ typedef enum {
   /* dimension */
   GTK_CSS_TOKEN_SIGNED_INTEGER_DIMENSION,
   GTK_CSS_TOKEN_SIGNLESS_INTEGER_DIMENSION,
-  GTK_CSS_TOKEN_DIMENSION
+  GTK_CSS_TOKEN_SIGNED_DIMENSION,
+  GTK_CSS_TOKEN_SIGNLESS_DIMENSION
 } GtkCssTokenType;
 
 typedef union _GtkCssToken GtkCssToken;
@@ -129,7 +130,7 @@ GtkCssTokenizer *       gtk_css_tokenizer_new                   (GBytes         
 GtkCssTokenizer *       gtk_css_tokenizer_ref                   (GtkCssTokenizer        *tokenizer);
 void                    gtk_css_tokenizer_unref                 (GtkCssTokenizer        *tokenizer);
 
-const GtkCssLocation *  gtk_css_tokenizer_get_location          (GtkCssTokenizer        *tokenizer);
+const GtkCssLocation *  gtk_css_tokenizer_get_location          (GtkCssTokenizer        *tokenizer) G_GNUC_CONST;
 
 gboolean                gtk_css_tokenizer_read_token            (GtkCssTokenizer        *tokenizer,
                                                                  GtkCssToken            *token,

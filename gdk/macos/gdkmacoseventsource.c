@@ -27,12 +27,12 @@
 #include <unistd.h>
 
 #include "gdkdisplayprivate.h"
-#include "gdkinternals.h"
 
 #include "gdkmacoseventsource-private.h"
 #include "gdkmacosdisplay-private.h"
 
-#include "gdk-private.h"
+#include "gdk/gdkeventsprivate.h"
+#include "gdk/gdk-private.h"
 
 /*
  * This file implementations integration between the GLib main loop and
@@ -1076,7 +1076,7 @@ _gdk_macos_event_source_new (GdkMacosDisplay *display)
   event_source = (GdkMacosEventSource *)source;
   event_source->display = g_object_ref (GDK_DISPLAY (display));
 
-  /* Hook into the the CFRunLoop for the main thread */
+  /* Hook into the CFRunLoop for the main thread */
 
   main_thread_run_loop = CFRunLoopGetCurrent ();
 

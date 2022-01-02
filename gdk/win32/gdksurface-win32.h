@@ -30,11 +30,10 @@
 #include "gdk/win32/gdkwin32surface.h"
 #include "gdk/gdksurfaceprivate.h"
 #include "gdk/gdkcursor.h"
-#include "gdk/gdkinternals.h"
 
 #include <windows.h>
 
-#ifdef GDK_WIN32_ENABLE_EGL
+#ifdef HAVE_EGL
 # include <epoxy/egl.h>
 #endif
 
@@ -150,7 +149,7 @@ struct _GdkW32DragMoveResizeContext
    * that is being dragged. It indicates the shape the dragged window
    * will take if released at a particular point.
    * Indicator window size always matches the target indicator shape,
-   * the the actual indicator drawn on it might not, depending on
+   * the actual indicator drawn on it might not, depending on
    * how much time elapsed since the animation started.
    */
   HWND               shape_indicator;
@@ -338,10 +337,9 @@ struct _GdkWin32Surface
     int configured_height;
     RECT configured_rect;
   } next_layout;
+  gboolean force_recompute_size;
 
-#ifdef GDK_WIN32_ENABLE_EGL
-  EGLSurface egl_surface;
-  EGLSurface egl_dummy_surface;
+#ifdef HAVE_EGL
   guint egl_force_redraw_all : 1;
 #endif
 };
@@ -374,7 +372,7 @@ void gdk_win32_surface_move_resize (GdkSurface *window,
 RECT
 gdk_win32_surface_handle_queued_move_resize (GdkDrawContext *draw_context);
 
-#ifdef GDK_WIN32_ENABLE_EGL
+#ifdef HAVE_EGL
 EGLSurface gdk_win32_surface_get_egl_surface (GdkSurface *surface,
                                               EGLConfig   config,
                                               gboolean    is_dummy);

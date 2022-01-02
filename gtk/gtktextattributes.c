@@ -387,6 +387,9 @@ _gtk_text_attributes_fill_from_tags (GtkTextAttributes *dest,
       if (tag->priv->pixels_inside_wrap_set)
         dest->pixels_inside_wrap = vals->pixels_inside_wrap;
 
+      if (tag->priv->line_height_set)
+        dest->line_height = vals->line_height;
+
       if (tag->priv->tabs_set)
         {
           if (dest->tabs)
@@ -435,6 +438,15 @@ _gtk_text_attributes_fill_from_tags (GtkTextAttributes *dest,
 
       if (tag->priv->insert_hyphens_set)
         dest->no_hyphens = vals->no_hyphens;
+
+      if (tag->priv->text_transform_set)
+        dest->text_transform = vals->text_transform;
+
+      if (tag->priv->word_set)
+        dest->word = vals->word;
+
+      if (tag->priv->sentence_set)
+        dest->sentence = vals->sentence;
     }
 
   dest->left_margin += left_margin_accumulative;
@@ -457,13 +469,15 @@ _gtk_text_tag_affects_size (GtkTextTag *tag)
     priv->pixels_above_lines_set ||
     priv->pixels_below_lines_set ||
     priv->pixels_inside_wrap_set ||
+    priv->line_height_set ||
     priv->tabs_set ||
     priv->underline_set ||
     priv->overline_set ||
     priv->wrap_mode_set ||
     priv->invisible_set ||
     priv->font_features_set ||
-    priv->letter_spacing_set;
+    priv->letter_spacing_set ||
+    priv->text_transform_set;
 }
 
 gboolean

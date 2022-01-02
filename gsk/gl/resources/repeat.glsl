@@ -1,4 +1,6 @@
 // VERTEX_SHADER:
+// repeat.glsl
+
 void main() {
   gl_Position = u_projection * u_modelview * vec4(aPosition, 0.0, 1.0);
 
@@ -6,9 +8,10 @@ void main() {
 }
 
 // FRAGMENT_SHADER:
+// repeat.glsl
+
 uniform vec4 u_child_bounds;
 uniform vec4 u_texture_rect;
-
 
 float wrap(float f, float wrap_for) {
   return mod(f, wrap_for);
@@ -37,5 +40,5 @@ void main() {
 
   vec4 diffuse = GskTexture(u_source, tp);
 
-  gskSetOutputColor(diffuse * u_alpha);
+  gskSetScaledOutputColor(diffuse, u_alpha);
 }

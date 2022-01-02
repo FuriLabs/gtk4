@@ -272,6 +272,7 @@ struct _GtkLabel
   guint    ellipsize          : 3;
   guint    use_markup         : 1;
   guint    wrap_mode          : 3;
+  guint    natural_wrap_mode  : 3;
   guint    single_line_mode   : 1;
   guint    in_click           : 1;
   guint    track_links        : 1;
@@ -380,6 +381,7 @@ enum {
   PROP_JUSTIFY,
   PROP_WRAP,
   PROP_WRAP_MODE,
+  PROP_NATURAL_WRAP_MODE,
   PROP_SELECTABLE,
   PROP_MNEMONIC_KEYVAL,
   PROP_MNEMONIC_WIDGET,
@@ -484,6 +486,9 @@ gtk_label_set_property (GObject      *object,
     case PROP_WRAP_MODE:
       gtk_label_set_wrap_mode (self, g_value_get_enum (value));
       break;
+    case PROP_NATURAL_WRAP_MODE:
+      gtk_label_set_natural_wrap_mode (self, g_value_get_enum (value));
+      break;
     case PROP_SELECTABLE:
       gtk_label_set_selectable (self, g_value_get_boolean (value));
       break;
@@ -551,6 +556,9 @@ gtk_label_get_property (GObject     *object,
     case PROP_WRAP_MODE:
       g_value_set_enum (value, self->wrap_mode);
       break;
+    case PROP_NATURAL_WRAP_MODE:
+      g_value_set_enum (value, self->natural_wrap_mode);
+      break;
     case PROP_SELECTABLE:
       g_value_set_boolean (value, gtk_label_get_selectable (self));
       break;
@@ -604,6 +612,7 @@ gtk_label_init (GtkLabel *self)
   self->jtype = GTK_JUSTIFY_LEFT;
   self->wrap = FALSE;
   self->wrap_mode = PANGO_WRAP_WORD;
+  self->natural_wrap_mode = GTK_NATURAL_WRAP_INHERIT;
   self->ellipsize = PANGO_ELLIPSIZE_NONE;
 
   self->use_underline = FALSE;
@@ -1017,34 +1026,8 @@ gtk_label_get_measuring_layout (GtkLabel    *self,
   return copy;
 }
 
-static void
-get_height_for_width (GtkLabel *self,
-                      int       width,
-                      int      *minimum_height,
-                      int      *natural_height,
-                      int      *minimum_baseline,
-                      int      *natural_baseline)
-{
-  PangoLayout *layout;
-  int text_height, baseline;
-
-  layout = gtk_label_get_measuring_layout (self, NULL, width * PANGO_SCALE);
-
-  pango_layout_get_pixel_size (layout, NULL, &text_height);
-
-  *minimum_height = text_height;
-  *natural_height = text_height;
-
-  baseline = pango_layout_get_baseline (layout) / PANGO_SCALE;
-  *minimum_baseline = baseline;
-  *natural_baseline = baseline;
-
-  g_object_unref (layout);
-}
-
 static int
-get_char_pixels (GtkWidget   *self,
-                 PangoLayout *layout)
+get_char_pixels (PangoLayout *layout)
 {
   PangoContext *context;
   PangoFontMetrics *metrics;
@@ -1060,134 +1043,231 @@ get_char_pixels (GtkWidget   *self,
 }
 
 static void
-gtk_label_get_preferred_layout_size (GtkLabel *self,
-                                     PangoRectangle *smallest,
-                                     PangoRectangle *widest,
-                                     int *smallest_baseline,
-                                     int *widest_baseline)
+get_default_widths (GtkLabel    *self,
+                    int         *minimum,
+                    int         *natural)
 {
-  PangoLayout *layout;
   int char_pixels;
 
-  /* "width-chars" Hard-coded minimum width:
-   *    - minimum size should be MAX (width-chars, strlen ("..."));
-   *    - natural size should be MAX (width-chars, strlen (self->text));
-   *
-   * "max-width-chars" User specified maximum size requisition
-   *    - minimum size should be MAX (width-chars, 0)
-   *    - natural size should be MIN (max-width-chars, strlen (self->text))
-   *
-   *    For ellipsizing labels; if max-width-chars is specified: either it is used as
-   *    a minimum size or the label text as a minimum size (natural size still overflows).
-   *
-   *    For wrapping labels; A reasonable minimum size is useful to naturally layout
-   *    interfaces automatically. In this case if no "width-chars" is specified, the minimum
-   *    width will default to the wrap guess that gtk_label_ensure_layout() does.
-   */
-
-  /* Start off with the pixel extents of an as-wide-as-possible layout */
-  layout = gtk_label_get_measuring_layout (self, NULL, -1);
-
-  if (self->width_chars > -1 || self->max_width_chars > -1)
-    char_pixels = get_char_pixels (GTK_WIDGET (self), layout);
-  else
-    char_pixels = 0;
-
-  pango_layout_get_extents (layout, NULL, widest);
-  widest->width = MAX (widest->width, char_pixels * self->width_chars);
-  widest->x = widest->y = 0;
-  *widest_baseline = pango_layout_get_baseline (layout) / PANGO_SCALE;
-
-  if (self->ellipsize || self->wrap)
+  if (self->width_chars < 0 && self->max_width_chars < 0)
     {
-      /* a layout with width 0 will be as small as humanly possible */
-      layout = gtk_label_get_measuring_layout (self,
-                                               layout,
-                                               self->width_chars > -1 ? char_pixels * self->width_chars
-                                                                      : 0);
+      if (minimum)
+        *minimum = -1;
+      if (natural)
+        *natural = -1;
+      return;
+    }
 
-      pango_layout_get_extents (layout, NULL, smallest);
-      smallest->width = MAX (smallest->width, char_pixels * self->width_chars);
-      smallest->x = smallest->y = 0;
+  gtk_label_ensure_layout (self);
+  char_pixels = get_char_pixels (self->layout);
 
-      *smallest_baseline = pango_layout_get_baseline (layout) / PANGO_SCALE;
+  if (minimum)
+    {
+      if (self->width_chars < 0)
+        *minimum = -1;
+      else
+        *minimum = char_pixels * self->width_chars;
+    }
 
-      if (self->max_width_chars > -1 && widest->width > char_pixels * self->max_width_chars)
+  if (natural)
+    {
+      if (self->max_width_chars < 0)
+        *natural = -1;
+      else
+        *natural = char_pixels * MAX (self->width_chars, self->max_width_chars);
+    }
+}
+
+static void
+get_static_size (GtkLabel       *self,
+                 GtkOrientation  orientation,
+                 int            *minimum,
+                 int            *natural,
+                 int            *minimum_baseline,
+                 int            *natural_baseline)
+{
+  int minimum_default, natural_default;
+  PangoLayout *layout;
+
+  get_default_widths (self, &minimum_default, &natural_default);
+
+  layout = gtk_label_get_measuring_layout (self, NULL, self->ellipsize ? natural_default : -1);
+
+  if (orientation == GTK_ORIENTATION_HORIZONTAL)
+    {
+      pango_layout_get_size (layout, natural, NULL);
+      if (self->ellipsize)
         {
-          layout = gtk_label_get_measuring_layout (self,
-                                                   layout,
-                                                   MAX (smallest->width, char_pixels * self->max_width_chars));
-          pango_layout_get_extents (layout, NULL, widest);
-          widest->width = MAX (widest->width, char_pixels * self->width_chars);
-          widest->x = widest->y = 0;
-
-          *widest_baseline = pango_layout_get_baseline (layout) / PANGO_SCALE;
+          layout = gtk_label_get_measuring_layout (self, layout, 0);
+          pango_layout_get_size (layout, minimum, NULL);
+          /* yes, Pango ellipsizes even when that needs more space */
+          *minimum = MIN (*minimum, *natural);
         }
+      else
+        *minimum = *natural;
 
-      if (widest->width < smallest->width)
-        {
-          *smallest = *widest;
-          *smallest_baseline = *widest_baseline;
-        }
+      if (minimum_default > *minimum)
+        *minimum = minimum_default;
+      *natural = MAX (*minimum, *natural);
     }
   else
     {
-      *smallest = *widest;
-      *smallest_baseline = *widest_baseline;
+      pango_layout_get_size (layout, NULL, minimum);
+      *minimum_baseline = pango_layout_get_baseline (layout);
+
+      *natural = *minimum;
+      *natural_baseline = *minimum_baseline;
     }
 
   g_object_unref (layout);
 }
 
 static void
-gtk_label_get_preferred_size (GtkWidget      *widget,
-                              GtkOrientation  orientation,
-                              int            *minimum_size,
-                              int            *natural_size,
-                              int            *minimum_baseline,
-                              int            *natural_baseline)
+get_height_for_width (GtkLabel *self,
+                      int       width,
+                      int      *minimum_height,
+                      int      *natural_height,
+                      int      *minimum_baseline,
+                      int      *natural_baseline)
 {
-  GtkLabel      *self = GTK_LABEL (widget);
-  PangoRectangle widest_rect;
-  PangoRectangle smallest_rect;
-  int smallest_baseline;
-  int widest_baseline;
+  PangoLayout *layout;
+  int natural_width, text_height, baseline;
 
-  gtk_label_get_preferred_layout_size (self,
-                                       &smallest_rect, &widest_rect,
-                                       &smallest_baseline, &widest_baseline);
-
-  widest_rect.width  = PANGO_PIXELS_CEIL (widest_rect.width);
-  widest_rect.height = PANGO_PIXELS_CEIL (widest_rect.height);
-
-  smallest_rect.width  = PANGO_PIXELS_CEIL (smallest_rect.width);
-  smallest_rect.height = PANGO_PIXELS_CEIL (smallest_rect.height);
-
-  if (orientation == GTK_ORIENTATION_HORIZONTAL)
+  if (width < 0)
     {
-      /* Normal desired width */
-      *minimum_size = smallest_rect.width;
-      *natural_size = widest_rect.width;
+      /* Minimum height is assuming infinite width */
+      layout = gtk_label_get_measuring_layout (self, NULL, -1);
+      pango_layout_get_size (layout, NULL, minimum_height);
+      baseline = pango_layout_get_baseline (layout);
+      *minimum_baseline = baseline;
+
+      /* Natural height is assuming natural width */
+      get_default_widths (self, NULL, &natural_width);
+
+      layout = gtk_label_get_measuring_layout (self, layout, natural_width);
+      pango_layout_get_size (layout, NULL, natural_height);
+      baseline = pango_layout_get_baseline (layout);
+      *natural_baseline = baseline;
     }
-  else /* GTK_ORIENTATION_VERTICAL */
+  else
     {
-      if (smallest_rect.height < widest_rect.height)
+      /* minimum = natural for any given width */
+      layout = gtk_label_get_measuring_layout (self, NULL, width);
+
+      pango_layout_get_size (layout, NULL, &text_height);
+
+      *minimum_height = text_height;
+      *natural_height = text_height;
+
+      baseline = pango_layout_get_baseline (layout);
+      *minimum_baseline = baseline;
+      *natural_baseline = baseline;
+    }
+
+  g_object_unref (layout);
+}
+
+static int
+my_pango_layout_get_width_for_height (PangoLayout *layout,
+                                      int          for_height,
+                                      int          min,
+                                      int          max)
+{
+  int mid, text_width, text_height;
+
+  min = PANGO_PIXELS_CEIL (min);
+  max = PANGO_PIXELS_CEIL (max);
+
+  while (min < max)
+    {
+      mid = (min + max) / 2;
+      pango_layout_set_width (layout, mid * PANGO_SCALE);
+      pango_layout_get_size (layout, &text_width, &text_height);
+      text_width = PANGO_PIXELS_CEIL (text_width);
+      if (text_width > mid)
+        min = mid = text_width;
+      else if (text_height > for_height)
+        min = mid + 1;
+      else
+        max = mid;
+    }
+
+  return min * PANGO_SCALE;
+}
+
+static void
+get_width_for_height (GtkLabel *self,
+                      int       height,
+                      int      *minimum_width,
+                      int      *natural_width)
+{
+  PangoLayout *layout;
+  int minimum_default, natural_default;
+
+  get_default_widths (self, &minimum_default, &natural_default);
+
+  if (height < 0)
+    {
+      /* Minimum width is as many line breaks as possible */
+      layout = gtk_label_get_measuring_layout (self, NULL, MAX (minimum_default, 0));
+      pango_layout_get_size (layout, minimum_width, NULL);
+      *minimum_width = MAX (*minimum_width, minimum_default);
+
+      /* Natural width is natural width - or as wide as possible */
+      layout = gtk_label_get_measuring_layout (self, layout, natural_default);
+      pango_layout_get_size (layout, natural_width, NULL);
+      *natural_width = MAX (*natural_width, *minimum_width);
+    }
+  else
+    {
+      int min, max;
+
+      /* Can't use a measuring layout here, because we need to force
+       * ellipsizing mode */
+      gtk_label_ensure_layout (self);
+      layout = pango_layout_copy (self->layout);
+      pango_layout_set_ellipsize (layout, PANGO_ELLIPSIZE_NONE);
+
+      /* binary search for the smallest width where the height doesn't
+       * eclipse the given height */
+      min = MAX (minimum_default, 0);
+
+      pango_layout_set_width (layout, -1);
+      pango_layout_get_size (layout, &max, NULL);
+
+      /* first, do natural width */
+      if (self->natural_wrap_mode == GTK_NATURAL_WRAP_NONE)
         {
-          *minimum_size = smallest_rect.height;
-          *natural_size = widest_rect.height;
-          *minimum_baseline = smallest_baseline;
-          *natural_baseline = widest_baseline;
+          *natural_width = max;
         }
       else
         {
-          *minimum_size = widest_rect.height;
-          *natural_size = smallest_rect.height;
-          *minimum_baseline = widest_baseline;
-          *natural_baseline = smallest_baseline;
+          if (self->natural_wrap_mode == GTK_NATURAL_WRAP_WORD)
+            pango_layout_set_wrap (layout, PANGO_WRAP_WORD);
+          *natural_width = my_pango_layout_get_width_for_height (layout, height, min, max);
+        }
+
+      /* then, do minimum width */
+      if (self->ellipsize != PANGO_ELLIPSIZE_NONE)
+        {
+          g_object_unref (layout);
+          layout = gtk_label_get_measuring_layout (self, NULL, MAX (minimum_default, 0));
+          pango_layout_get_size (layout, minimum_width, NULL);
+          *minimum_width = MAX (*minimum_width, minimum_default);
+        }
+      else if (self->natural_wrap_mode == GTK_NATURAL_WRAP_INHERIT)
+        {
+          *minimum_width = *natural_width;
+        }
+      else
+        {
+          pango_layout_set_wrap (layout, self->wrap_mode);
+          *minimum_width = my_pango_layout_get_width_for_height (layout, height, min, *natural_width);
         }
     }
-}
 
+  g_object_unref (layout);
+}
 
 static void
 gtk_label_measure (GtkWidget      *widget,
@@ -1200,14 +1280,22 @@ gtk_label_measure (GtkWidget      *widget,
 {
   GtkLabel *self = GTK_LABEL (widget);
 
-  if (orientation == GTK_ORIENTATION_VERTICAL && for_size != -1 && self->wrap)
-    {
-      gtk_label_clear_layout (self);
+  if (for_size > 0)
+    for_size *= PANGO_SCALE;
 
-      get_height_for_width (self, for_size, minimum, natural, minimum_baseline, natural_baseline);
-    }
+  if (!self->wrap)
+    get_static_size (self, orientation, minimum, natural, minimum_baseline, natural_baseline);
+  else if (orientation == GTK_ORIENTATION_VERTICAL)
+    get_height_for_width (self, for_size, minimum, natural, minimum_baseline, natural_baseline);
   else
-    gtk_label_get_preferred_size (widget, orientation, minimum, natural, minimum_baseline, natural_baseline);
+    get_width_for_height (self, for_size, minimum, natural);
+
+  *minimum = PANGO_PIXELS_CEIL (*minimum);
+  *natural = PANGO_PIXELS_CEIL (*natural);
+  if (*minimum_baseline > 0)
+    *minimum_baseline = PANGO_PIXELS_CEIL (*minimum_baseline);
+  if (*natural_baseline > 0)
+    *natural_baseline = PANGO_PIXELS_CEIL (*natural_baseline);
 }
 
 static void
@@ -2305,6 +2393,9 @@ gtk_label_class_init (GtkLabelClass *class)
    * This only affects the formatting if line wrapping is on (see the
    * [property@Gtk.Label:wrap] property). The default is %PANGO_WRAP_WORD,
    * which means wrap on word boundaries.
+   *
+   * For sizing behavior, also consider the [property@Gtk.Label:natural-wrap-mode]
+   * property.
    */
   label_props[PROP_WRAP_MODE] =
       g_param_spec_enum ("wrap-mode",
@@ -2312,6 +2403,27 @@ gtk_label_class_init (GtkLabelClass *class)
                          P_("If wrap is set, controls how linewrapping is done"),
                          PANGO_TYPE_WRAP_MODE,
                          PANGO_WRAP_WORD,
+                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * GtkLabel:natural-wrap-mode: (attributes org.gtk.Property.get=gtk_label_get_natural_wrap_mode org.gtk.Property.set=gtk_label_set_natural_wrap_mode)
+   *
+   * Select the line wrapping for the natural size request.
+   *
+   * This only affects the natural size requested. For the actual wrapping used,
+   * see the [property@Gtk.Label:wrap-mode] property.
+   *
+   * The default is %GTK_NATURAL_WRAP_INHERIT, which inherits the behavior of the
+   * [property@Gtk.Label:wrap-mode] property.
+   *
+   * Since: 4.6
+   */
+  label_props[PROP_NATURAL_WRAP_MODE] =
+      g_param_spec_enum ("natural-wrap-mode",
+                         P_("Natural wrap mode"),
+                         P_("If wrap is set, controls linewrapping for natural size requests"),
+                         GTK_TYPE_NATURAL_WRAP_MODE,
+                         GTK_NATURAL_WRAP_INHERIT,
                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
   /**
@@ -2380,7 +2492,7 @@ gtk_label_class_init (GtkLabelClass *class)
    *
    * If this property is set to -1, the width will be calculated automatically.
    *
-   * See the section on [text layout][label-text-layout] for details of how
+   * See the section on [text layout](#text-layout) for details of how
    * [property@Gtk.Label:width-chars] and [property@Gtk.Label:max-width-chars]
    * determine the width of ellipsized and wrapped labels.
    */
@@ -2416,7 +2528,7 @@ gtk_label_class_init (GtkLabelClass *class)
    *
    * If this property is set to -1, the width will be calculated automatically.
    *
-   * See the section on [text layout][label-text-layout] for details of how
+   * See the section on [text layout](#text-layout) for details of how
    * [property@Gtk.Label:width-chars] and [property@Gtk.Label:max-width-chars]
    * determine the width of ellipsized and wrapped labels.
    */
@@ -3777,7 +3889,7 @@ gtk_label_set_ellipsize (GtkLabel          *self,
  * See [method@Gtk.Label.set_ellipsize].
  *
  * Returns: `PangoEllipsizeMode`
- **/     
+ **/
 PangoEllipsizeMode
 gtk_label_get_ellipsize (GtkLabel *self)
 {
@@ -3928,6 +4040,9 @@ gtk_label_get_wrap (GtkLabel *self)
  * This only affects the label if line wrapping is on. (See
  * [method@Gtk.Label.set_wrap]) The default is %PANGO_WRAP_WORD
  * which means wrap on word boundaries.
+ *
+ * For sizing behavior, also consider the [property@Gtk.Label:natural-wrap-mode]
+ * property.
  */
 void
 gtk_label_set_wrap_mode (GtkLabel *self,
@@ -3952,14 +4067,61 @@ gtk_label_set_wrap_mode (GtkLabel *self,
  *
  * See [method@Gtk.Label.set_wrap_mode].
  *
- * Returns: %TRUE if the lines of the label are automatically wrapped.
+ * Returns: the line wrap mode
  */
 PangoWrapMode
 gtk_label_get_wrap_mode (GtkLabel *self)
 {
-  g_return_val_if_fail (GTK_IS_LABEL (self), FALSE);
+  g_return_val_if_fail (GTK_IS_LABEL (self), PANGO_WRAP_WORD);
 
   return self->wrap_mode;
+}
+
+/**
+ * gtk_label_set_natural_wrap_mode: (attributes org.gtk.Method.set_property=natural-wrap-mode)
+ * @self: a `GtkLabel`
+ * @wrap_mode: the line wrapping mode
+ *
+ * Select the line wrapping for the natural size request.
+ *
+ * This only affects the natural size requested, for the actual wrapping used,
+ * see the [property@Gtk.Label:wrap-mode] property.
+ *
+ * Since: 4.6
+ */
+void
+gtk_label_set_natural_wrap_mode (GtkLabel           *self,
+                                 GtkNaturalWrapMode  wrap_mode)
+{
+  g_return_if_fail (GTK_IS_LABEL (self));
+
+  if (self->natural_wrap_mode != wrap_mode)
+    {
+      self->natural_wrap_mode = wrap_mode;
+      g_object_notify_by_pspec (G_OBJECT (self), label_props[PROP_NATURAL_WRAP_MODE]);
+
+      gtk_widget_queue_resize (GTK_WIDGET (self));
+    }
+}
+
+/**
+ * gtk_label_get_natural_wrap_mode: (attributes org.gtk.Method.get_property=natural-wrap-mode)
+ * @self: a `GtkLabel`
+ *
+ * Returns line wrap mode used by the label.
+ *
+ * See [method@Gtk.Label.set_natural_wrap_mode].
+ *
+ * Returns: the natural line wrap mode
+ *
+ * Since: 4.6
+ */
+GtkNaturalWrapMode
+gtk_label_get_natural_wrap_mode (GtkLabel *self)
+{
+  g_return_val_if_fail (GTK_IS_LABEL (self), GTK_NATURAL_WRAP_INHERIT);
+
+  return self->natural_wrap_mode;
 }
 
 static void
@@ -3977,7 +4139,6 @@ gtk_label_ensure_layout (GtkLabel *self)
   if (self->layout)
     return;
 
-  align = PANGO_ALIGN_LEFT; /* Quiet gcc */
   rtl = _gtk_widget_get_direction (GTK_WIDGET (self)) == GTK_TEXT_DIR_RTL;
   self->layout = gtk_widget_create_pango_layout (GTK_WIDGET (self), self->text);
 
@@ -4930,8 +5091,8 @@ gtk_label_select_region  (GtkLabel *self,
 /**
  * gtk_label_get_selection_bounds:
  * @self: a `GtkLabel`
- * @start: (out): return location for start of selection, as a character offset
- * @end: (out): return location for end of selection, as a character offset
+ * @start: (out) (optional): return location for start of selection, as a character offset
+ * @end: (out) (optional): return location for end of selection, as a character offset
  *
  * Gets the selected range of characters in the label.
  *

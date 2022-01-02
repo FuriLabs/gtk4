@@ -31,7 +31,6 @@
 #include "gdkpopupprivate.h"
 #include "gdktoplevelprivate.h"
 #include "gdkdragsurfaceprivate.h"
-#include "gdkinternals.h"
 #include "gdkdeviceprivate.h"
 #include "gdkdevice-xi2-private.h"
 #include "gdkframeclockidleprivate.h"
@@ -41,6 +40,8 @@
 #include "gdkglcontext-x11.h"
 #include "gdkprivate-x11.h"
 #include "gdktextureprivate.h"
+
+#include "gdkseatprivate.h"
 #include "gdk-private.h"
 
 #include <graphene.h>
@@ -1274,6 +1275,8 @@ _gdk_x11_display_create_surface (GdkDisplay     *display,
   g_object_ref (surface);
   _gdk_x11_display_add_window (x11_screen->display, &impl->xid, surface);
 
+  gdk_surface_set_egl_native_window (surface, (void *) impl->xid);
+
   gdk_x11_surface_set_title (surface, get_default_title ());
   if (surface_type == GDK_SURFACE_TOPLEVEL)
     gdk_x11_surface_set_type_hint (surface, GDK_SURFACE_TYPE_HINT_NORMAL);
@@ -1363,7 +1366,7 @@ gdk_x11_surface_destroy (GdkSurface *surface,
 
   if (!foreign_destroy)
     {
-      gdk_x11_surface_destroy_egl_surface (impl);
+      gdk_surface_set_egl_native_window (surface, NULL);
       gdk_x11_surface_destroy_glx_drawable (impl);
 
       XDestroyWindow (GDK_SURFACE_XDISPLAY (surface), GDK_SURFACE_XID (surface));

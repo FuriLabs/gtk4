@@ -27,6 +27,7 @@
 #include "a11y.h"
 #include "actions.h"
 #include "cellrenderergraph.h"
+#include "clipboard.h"
 #include "controllers.h"
 #include "css-editor.h"
 #include "css-node-tree.h"
@@ -35,6 +36,7 @@
 #include "list-data.h"
 #include "logs.h"
 #include "magnifier.h"
+#include "measuregraph.h"
 #include "menu.h"
 #include "misc-info.h"
 #include "object-tree.h"
@@ -53,10 +55,14 @@
 
 #include "gtkmodulesprivate.h"
 
+static GIOExtensionPoint *extension_point = NULL;
+
 void
 gtk_inspector_init (void)
 {
-  static GIOExtensionPoint *extension_point = NULL;
+  GIOModuleScope *scope;
+  char **paths;
+  int i;
 
   g_type_ensure (G_TYPE_LIST_STORE);
 
@@ -64,6 +70,7 @@ gtk_inspector_init (void)
   g_type_ensure (GTK_TYPE_GRAPH_DATA);
   g_type_ensure (GTK_TYPE_INSPECTOR_A11Y);
   g_type_ensure (GTK_TYPE_INSPECTOR_ACTIONS);
+  g_type_ensure (GTK_TYPE_INSPECTOR_CLIPBOARD);
   g_type_ensure (GTK_TYPE_INSPECTOR_CONTROLLERS);
   g_type_ensure (GTK_TYPE_INSPECTOR_CSS_EDITOR);
   g_type_ensure (GTK_TYPE_INSPECTOR_CSS_NODE_TREE);
@@ -72,6 +79,7 @@ gtk_inspector_init (void)
   g_type_ensure (GTK_TYPE_INSPECTOR_LOGS);
   g_type_ensure (GTK_TYPE_MAGNIFIER);
   g_type_ensure (GTK_TYPE_INSPECTOR_MAGNIFIER);
+  g_type_ensure (GTK_TYPE_INSPECTOR_MEASURE_GRAPH);
   g_type_ensure (GTK_TYPE_INSPECTOR_MENU);
   g_type_ensure (GTK_TYPE_INSPECTOR_MISC_INFO);
   g_type_ensure (GTK_TYPE_INSPECTOR_OBJECT_TREE);
@@ -85,26 +93,25 @@ gtk_inspector_init (void)
   g_type_ensure (GTK_TYPE_INSPECTOR_VISUAL);
   g_type_ensure (GTK_TYPE_INSPECTOR_WINDOW);
 
-  if (extension_point == NULL)
-    {
-      GIOModuleScope *scope;
-      char **paths;
-      int i;
+  paths = _gtk_get_module_path ("inspector");
+  scope = g_io_module_scope_new (G_IO_MODULE_SCOPE_BLOCK_DUPLICATES);
 
-      extension_point = g_io_extension_point_register ("gtk-inspector-page");
-      g_io_extension_point_set_required_type (extension_point, GTK_TYPE_WIDGET);
+  for (i = 0; paths[i] != NULL; i++)
+    g_io_modules_load_all_in_directory_with_scope (paths[i], scope);
 
-      paths = _gtk_get_module_path ("inspector");
-      scope = g_io_module_scope_new (G_IO_MODULE_SCOPE_BLOCK_DUPLICATES);
-
-      for (i = 0; paths[i] != NULL; i++)
-        g_io_modules_load_all_in_directory_with_scope (paths[i], scope);
-
-      g_strfreev (paths);
-      g_io_module_scope_free (scope);
-    }
+  g_strfreev (paths);
+  g_io_module_scope_free (scope);
 
   gtk_css_provider_set_keep_css_sections ();
+}
+
+void
+gtk_inspector_register_extension (void)
+{
+  if (extension_point == NULL) {
+    extension_point = g_io_extension_point_register ("gtk-inspector-page");
+    g_io_extension_point_set_required_type (extension_point, GTK_TYPE_WIDGET);
+  }
 }
 
 // vim: set et sw=2 ts=2:

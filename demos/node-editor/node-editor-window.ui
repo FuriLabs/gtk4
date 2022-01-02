@@ -161,9 +161,10 @@
     </child>
     <child>
       <object class="GtkPaned">
+        <property name="shrink-start-child">false</property>
         <property name="shrink-end-child">false</property>
         <property name="position">400</property>
-        <child>
+        <property name="start-child">
           <object class="GtkScrolledWindow">
             <property name="hscrollbar-policy">never</property>
             <property name="hexpand">1</property>
@@ -184,8 +185,8 @@
               </object>
             </child>
           </object>
-        </child>
-        <child>
+        </property>
+        <property name="end-child">
           <object class="GtkBox">
             <child>
               <object class="GtkScrolledWindow">
@@ -198,8 +199,22 @@
                     <child>
                       <object class="GtkPicture" id="picture">
                         <property name="can-shrink">0</property>
+                        <property name="keep-aspect-ratio">1</property>
                         <property name="halign">center</property>
                         <property name="valign">center</property>
+                        <child>
+                          <object class="GtkDragSource">
+                            <property name="actions">copy</property>
+                            <signal name="prepare" handler="on_picture_drag_prepare_cb" swapped="no"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkDropTargetAsync">
+                        <property name="actions">copy</property>
+                        <property name="formats">application/x-gtk-render-node</property>
+                        <signal name="drop" handler="on_picture_drop_cb" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -217,7 +232,7 @@
               </object>
             </child>
           </object>
-        </child>
+        </property>
       </object>
     </child>
   </template>

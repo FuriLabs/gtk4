@@ -27,7 +27,7 @@
 
 #include <cairo-win32.h>
 
-#include <Windows.h>
+#include <windows.h>
 
 G_DEFINE_TYPE (GdkWin32CairoContext, gdk_win32_cairo_context, GDK_TYPE_CAIRO_CONTEXT)
 
@@ -53,18 +53,17 @@ create_cairo_surface_for_surface (GdkSurface *surface,
 
 static void
 gdk_win32_cairo_context_begin_frame (GdkDrawContext *draw_context,
+                                     gboolean        prefers_high_depth,
                                      cairo_region_t *region)
 {
   GdkWin32CairoContext *self = GDK_WIN32_CAIRO_CONTEXT (draw_context);
   GdkSurface *surface;
-  GdkWin32Surface *impl;
   int scale;
   cairo_t *cr;
   int width, height;
   RECT queued_window_rect;
 
   surface = gdk_draw_context_get_surface (draw_context);
-  impl = GDK_WIN32_SURFACE (surface);
   scale = gdk_surface_get_scale_factor (surface);
 
   queued_window_rect = gdk_win32_surface_handle_queued_move_resize (draw_context);
@@ -121,11 +120,6 @@ gdk_win32_cairo_context_end_frame (GdkDrawContext *draw_context,
                                    cairo_region_t *painted)
 {
   GdkWin32CairoContext *self = GDK_WIN32_CAIRO_CONTEXT (draw_context);
-  GdkSurface *surface;
-  int scale;
-
-  surface = gdk_draw_context_get_surface (draw_context);
-  scale = gdk_surface_get_scale_factor (surface);
 
   /* The code to resize double-buffered windows immediately
    * before blitting the buffer contents onto them used

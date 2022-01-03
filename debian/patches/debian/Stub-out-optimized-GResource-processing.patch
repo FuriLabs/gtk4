@@ -1,0 +1,57 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Mon, 3 Jan 2022 21:45:09 +0000
+Subject: Stub out optimized GResource processing
+
+This results in use of an executable stack and some unwanted symbol
+exports, which we can otherwise avoid.
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/4598
+Forwarded: no, a better solution will need discussion with upstream
+---
+ demos/gtk-demo/meson.build       | 3 ---
+ demos/widget-factory/meson.build | 3 ---
+ gtk/meson.build                  | 3 ---
+ 3 files changed, 9 deletions(-)
+
+diff --git a/demos/gtk-demo/meson.build b/demos/gtk-demo/meson.build
+index 5b79dfa..d8ef4bd 100644
+--- a/demos/gtk-demo/meson.build
++++ b/demos/gtk-demo/meson.build
+@@ -158,9 +158,6 @@ demos_h = custom_target('gtk4 demo header',
+ 
+ objcopy_supports_add_symbol = false
+ objcopy = find_program('objcopy', required : false)
+-if objcopy.found()
+-  objcopy_supports_add_symbol = run_command(objcopy, '--help').stdout().contains('--add-symbol')
+-endif
+ 
+ ld = find_program('ld', required : false)
+ 
+diff --git a/demos/widget-factory/meson.build b/demos/widget-factory/meson.build
+index 800230b..14bdf15 100644
+--- a/demos/widget-factory/meson.build
++++ b/demos/widget-factory/meson.build
+@@ -2,9 +2,6 @@
+ 
+ objcopy_supports_add_symbol = false
+ objcopy = find_program('objcopy', required : false)
+-if objcopy.found()
+-  objcopy_supports_add_symbol = run_command(objcopy, '--help').stdout().contains('--add-symbol')
+-endif
+ 
+ ld = find_program('ld', required : false)
+ 
+diff --git a/gtk/meson.build b/gtk/meson.build
+index 91aefe1..1897862 100644
+--- a/gtk/meson.build
++++ b/gtk/meson.build
+@@ -866,9 +866,6 @@ endif
+ 
+ objcopy_supports_add_symbol = false
+ objcopy = find_program('objcopy', required : false)
+-if objcopy.found()
+-  objcopy_supports_add_symbol = run_command(objcopy, '--help').stdout().contains('--add-symbol')
+-endif
+ 
+ ld = find_program('ld', required : false)
+ 

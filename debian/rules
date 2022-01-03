@@ -71,6 +71,7 @@ debian/%: debian/%.in
 		-e "s#@GNOME_TEAM@#$(UPLOADERS)#g" \
 		-e "s#@LIBDIR@#$(LIBDIR)#g" \
 		-e "s#@MODULES_BASE_PATH@#$(MODULES_BASE_PATH)#g" \
+		-e "s#@DEB_VERSION_UPSTREAM@#$(DEB_VERSION_UPSTREAM)#g" \
 		$@.in > $@
 
 configure_flags_common = \

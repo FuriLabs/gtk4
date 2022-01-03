@@ -1,5 +1,8 @@
 libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
 * Build-Depends-Package: libgtk-4-dev
+ (regex|optional)"^_binary_gtk_gtk_gresource_.*@Base$" @DEB_VERSION_UPSTREAM@
+ (regex|optional)"^_gtk_.*_resource@Base$" @DEB_VERSION_UPSTREAM@
+ (regex|optional)"^_gtk_resource_.*@Base$" @DEB_VERSION_UPSTREAM@
  gdk_anchor_hints_get_type@Base 4.0.0
  gdk_app_launch_context_get_display@Base 4.0.0
  gdk_app_launch_context_get_type@Base 4.0.0
@@ -156,6 +159,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_device_tool_type_get_type@Base 4.0.0
  gdk_display_beep@Base 4.0.0
  gdk_display_close@Base 4.0.0
+ gdk_display_create_gl_context@Base 4.6.0
  gdk_display_device_is_grabbed@Base 4.0.0
  gdk_display_flush@Base 4.0.0
  gdk_display_get_app_launch_context@Base 4.0.0
@@ -250,6 +254,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_events_get_angle@Base 4.0.0
  gdk_events_get_center@Base 4.0.0
  gdk_events_get_distance@Base 4.0.0
+ gdk_file_list_get_files@Base 4.6.0
  gdk_file_list_get_type@Base 4.0.0
  gdk_focus_event_get_in@Base 4.0.0
  gdk_focus_event_get_type@Base 4.0.0
@@ -275,7 +280,10 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_frame_timings_ref@Base 4.0.0
  gdk_frame_timings_unref@Base 4.0.0
  gdk_fullscreen_mode_get_type@Base 4.0.0
+ gdk_gl_api_get_type@Base 4.6.0
  gdk_gl_context_clear_current@Base 4.0.0
+ gdk_gl_context_get_allowed_apis@Base 4.6.0
+ gdk_gl_context_get_api@Base 4.6.0
  gdk_gl_context_get_current@Base 4.0.0
  gdk_gl_context_get_debug_enabled@Base 4.0.0
  gdk_gl_context_get_display@Base 4.0.0
@@ -290,6 +298,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_gl_context_is_shared@Base 4.3.2
  gdk_gl_context_make_current@Base 4.0.0
  gdk_gl_context_realize@Base 4.0.0
+ gdk_gl_context_set_allowed_apis@Base 4.6.0
  gdk_gl_context_set_debug_enabled@Base 4.0.0
  gdk_gl_context_set_forward_compatible@Base 4.0.0
  gdk_gl_context_set_required_version@Base 4.0.0
@@ -448,13 +457,20 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_surface_set_opaque_region@Base 4.0.0
  gdk_surface_translate_coordinates@Base 4.0.0
  gdk_texture_download@Base 4.0.0
+ gdk_texture_error_get_type@Base 4.6.0
+ gdk_texture_error_quark@Base 4.6.0
  gdk_texture_get_height@Base 4.0.0
  gdk_texture_get_type@Base 4.0.0
  gdk_texture_get_width@Base 4.0.0
  gdk_texture_new_for_pixbuf@Base 4.0.0
+ gdk_texture_new_from_bytes@Base 4.6.0
  gdk_texture_new_from_file@Base 4.0.0
+ gdk_texture_new_from_filename@Base 4.6.0
  gdk_texture_new_from_resource@Base 4.0.0
  gdk_texture_save_to_png@Base 4.0.0
+ gdk_texture_save_to_png_bytes@Base 4.6.0
+ gdk_texture_save_to_tiff@Base 4.6.0
+ gdk_texture_save_to_tiff_bytes@Base 4.6.0
  gdk_titlebar_gesture_get_type@Base 4.4.0
  gdk_toplevel_begin_move@Base 4.0.0
  gdk_toplevel_begin_resize@Base 4.0.0
@@ -817,7 +833,9 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_transform_rotate_3d@Base 4.0.0
  gsk_transform_scale@Base 4.0.0
  gsk_transform_scale_3d@Base 4.0.0
+ gsk_transform_skew@Base 4.6.0
  gsk_transform_to_2d@Base 4.0.0
+ gsk_transform_to_2d_components@Base 4.6.0
  gsk_transform_to_affine@Base 4.0.0
  gsk_transform_to_matrix@Base 4.0.0
  gsk_transform_to_string@Base 4.0.0
@@ -828,6 +846,10 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_transform_translate@Base 4.0.0
  gsk_transform_translate_3d@Base 4.0.0
  gsk_transform_unref@Base 4.0.0
+ gsk_value_dup_render_node@Base 4.6.0
+ gsk_value_get_render_node@Base 4.6.0
+ gsk_value_set_render_node@Base 4.6.0
+ gsk_value_take_render_node@Base 4.6.0
  gtk_about_dialog_add_credit_section@Base 4.0.0
  gtk_about_dialog_get_artists@Base 4.0.0
  gtk_about_dialog_get_authors@Base 4.0.0
@@ -1060,6 +1082,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_bitset_get_type@Base 4.0.0
  gtk_bitset_intersect@Base 4.0.0
  gtk_bitset_is_empty@Base 4.0.0
+ gtk_bitset_iter_get_type@Base 4.6.0
  gtk_bitset_iter_get_value@Base 4.0.0
  gtk_bitset_iter_init_at@Base 4.0.0
  gtk_bitset_iter_init_first@Base 4.0.0
@@ -1636,6 +1659,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_drop_down_get_model@Base 4.0.0
  gtk_drop_down_get_selected@Base 4.0.0
  gtk_drop_down_get_selected_item@Base 4.0.0
+ gtk_drop_down_get_show_arrow@Base 4.6.0
  gtk_drop_down_get_type@Base 4.0.0
  gtk_drop_down_new@Base 4.0.0
  gtk_drop_down_new_from_strings@Base 4.0.0
@@ -1645,6 +1669,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_drop_down_set_list_factory@Base 4.0.0
  gtk_drop_down_set_model@Base 4.0.0
  gtk_drop_down_set_selected@Base 4.0.0
+ gtk_drop_down_set_show_arrow@Base 4.6.0
  gtk_drop_target_async_get_actions@Base 4.0.0
  gtk_drop_target_async_get_formats@Base 4.0.0
  gtk_drop_target_async_get_type@Base 4.0.0
@@ -1950,6 +1975,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_flatten_list_model_get_type@Base 4.0.0
  gtk_flatten_list_model_new@Base 4.0.0
  gtk_flatten_list_model_set_model@Base 4.0.0
+ gtk_flow_box_append@Base 4.6.0
  gtk_flow_box_bind_model@Base 4.0.0
  gtk_flow_box_child_changed@Base 4.0.0
  gtk_flow_box_child_get_child@Base 4.0.0
@@ -1973,6 +1999,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_flow_box_invalidate_filter@Base 4.0.0
  gtk_flow_box_invalidate_sort@Base 4.0.0
  gtk_flow_box_new@Base 4.0.0
+ gtk_flow_box_prepend@Base 4.6.0
  gtk_flow_box_remove@Base 4.0.0
  gtk_flow_box_select_all@Base 4.0.0
  gtk_flow_box_select_child@Base 4.0.0
@@ -2370,6 +2397,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_label_get_max_width_chars@Base 4.0.0
  gtk_label_get_mnemonic_keyval@Base 4.0.0
  gtk_label_get_mnemonic_widget@Base 4.0.0
+ gtk_label_get_natural_wrap_mode@Base 4.6.0
  gtk_label_get_selectable@Base 4.0.0
  gtk_label_get_selection_bounds@Base 4.0.0
  gtk_label_get_single_line_mode@Base 4.0.0
@@ -2395,6 +2423,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_label_set_markup_with_mnemonic@Base 4.0.0
  gtk_label_set_max_width_chars@Base 4.0.0
  gtk_label_set_mnemonic_widget@Base 4.0.0
+ gtk_label_set_natural_wrap_mode@Base 4.6.0
  gtk_label_set_selectable@Base 4.0.0
  gtk_label_set_single_line_mode@Base 4.0.0
  gtk_label_set_text@Base 4.0.0
@@ -2596,6 +2625,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_media_stream_unrealize@Base 4.0.0
  gtk_media_stream_update@Base 4.0.0
  gtk_menu_button_get_always_show_arrow@Base 4.3.2
+ gtk_menu_button_get_child@Base 4.6.0
  gtk_menu_button_get_direction@Base 4.0.0
  gtk_menu_button_get_has_frame@Base 4.0.0
  gtk_menu_button_get_icon_name@Base 4.0.0
@@ -2609,6 +2639,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_menu_button_popdown@Base 4.0.0
  gtk_menu_button_popup@Base 4.0.0
  gtk_menu_button_set_always_show_arrow@Base 4.3.2
+ gtk_menu_button_set_child@Base 4.6.0
  gtk_menu_button_set_create_popup_func@Base 4.0.0
  gtk_menu_button_set_direction@Base 4.0.0
  gtk_menu_button_set_has_frame@Base 4.0.0
@@ -2671,6 +2702,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_native_get_type@Base 4.0.0
  gtk_native_realize@Base 4.0.0
  gtk_native_unrealize@Base 4.0.0
+ gtk_natural_wrap_mode_get_type@Base 4.6.0
  gtk_never_trigger_get@Base 4.0.0
  gtk_never_trigger_get_type@Base 4.0.0
  gtk_no_selection_get_model@Base 4.0.0
@@ -3711,6 +3743,9 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_switch_new@Base 4.0.0
  gtk_switch_set_active@Base 4.0.0
  gtk_switch_set_state@Base 4.0.0
+ gtk_symbolic_color_get_type@Base 4.6.0
+ gtk_symbolic_paintable_get_type@Base 4.6.0
+ gtk_symbolic_paintable_snapshot_symbolic@Base 4.6.0
  gtk_system_setting_get_type@Base 4.0.0
  gtk_test_accessible_assertion_message_role@Base 4.0.0
  gtk_test_accessible_check_property@Base 4.0.0
@@ -3801,6 +3836,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_text_child_anchor_get_type@Base 4.0.0
  gtk_text_child_anchor_get_widgets@Base 4.0.0
  gtk_text_child_anchor_new@Base 4.0.0
+ gtk_text_child_anchor_new_with_replacement@Base 4.6.0
  gtk_text_compute_cursor_extents@Base 4.3.2
  gtk_text_direction_get_type@Base 4.0.0
  gtk_text_extend_selection_get_type@Base 4.0.0
@@ -4054,11 +4090,13 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_tree_drag_source_get_type@Base 4.0.0
  gtk_tree_drag_source_row_draggable@Base 4.0.0
  gtk_tree_expander_get_child@Base 4.0.0
+ gtk_tree_expander_get_indent_for_icon@Base 4.6.0
  gtk_tree_expander_get_item@Base 4.0.0
  gtk_tree_expander_get_list_row@Base 4.0.0
  gtk_tree_expander_get_type@Base 4.0.0
  gtk_tree_expander_new@Base 4.0.0
  gtk_tree_expander_set_child@Base 4.0.0
+ gtk_tree_expander_set_indent_for_icon@Base 4.6.0
  gtk_tree_expander_set_list_row@Base 4.0.0
  gtk_tree_get_row_drag_data@Base 4.0.0
  gtk_tree_iter_copy@Base 4.0.0

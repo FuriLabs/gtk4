@@ -1,4 +1,4 @@
-gtk4 (4.6.0+ds1-1) UNRELEASED; urgency=medium
+gtk4 (4.6.0+ds1-1) experimental; urgency=medium
 
   * New upstream release
   * Rebase patch series
@@ -13,9 +13,11 @@ gtk4 (4.6.0+ds1-1) UNRELEASED; urgency=medium
   * d/p/Make-our-stack-noexec.patch:
     Add patch from upstream fixing regressions from optimized GResource
     processing
+  * d/p/build-Tell-glib-compile-resources-to-make-symbols-interna.patch:
+    Add proposed patch to reduce unwanted symbol exports
   * Upload to experimental for initial testing
 
- -- Simon McVittie <smcv@debian.org>  Tue, 04 Jan 2022 15:53:47 +0000
+ -- Simon McVittie <smcv@debian.org>  Tue, 04 Jan 2022 18:14:08 +0000
 
 gtk4 (4.4.1+ds1-3) unstable; urgency=medium
 

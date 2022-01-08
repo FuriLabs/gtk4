@@ -1,5 +1,6 @@
 Make-our-stack-noexec.patch
 build-Tell-glib-compile-resources-to-make-symbols-interna.patch
+png-Correct-endianness-for-big-endian-machines.patch
 reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
 reftests-Allow-minor-differences-to-be-tolerated.patch
 debian/Disable-web-fonts-for-now.patch

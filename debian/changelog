@@ -1,9 +1,16 @@
+gtk4 (4.6.0+ds1-3) experimental; urgency=medium
+
+  * Skip another known-failing test on mips*el (see #993550)
+  * Add mips*el bug reference to previous changelog entry
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 08 Jan 2022 22:47:19 +0000
+
 gtk4 (4.6.0+ds1-2) experimental; urgency=medium
 
   * d/p/png-Correct-endianness-for-big-endian-machines.patch:
     Add proposed patch to fix FTBFS on s390x
   * d/p/debian/Skip-some-known-failing-tests-on-mips-family-architecture.patch:
-    Skip more known-failing tests on mips family
+    Skip another known-failing test on mips family (see #1003348)
   * d/p/debian/Disable-optimized-GResource-embedding.patch:
     Disable optimized GResource embedding.
     This seems to be triggering failures on armel and armhf. Second-guessing

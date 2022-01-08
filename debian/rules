@@ -160,6 +160,9 @@ override_dh_clean: debian/control
 	touch debian/control.in
 	rm -f $(call dh_subst_files,$(all_binaries))
 	rm -rf debian/build debian/install
+	# Rebuild the CSS from source. Note that gtk.css is hand-written,
+	# not generated, so don't delete that one.
+	rm -f gtk/theme/Default/Default-*.css
 	dh_clean
 
 # Add dependencies to generate files from the debian/*.in ones

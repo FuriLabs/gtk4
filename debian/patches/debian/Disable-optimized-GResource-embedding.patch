@@ -1,0 +1,55 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Sat, 8 Jan 2022 18:26:52 +0000
+Subject: Disable optimized GResource embedding
+
+This seems to be triggering failures on armel and armhf. Second-guessing
+GResource seems to be more trouble than it's worth.
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/4617
+Signed-off-by: Simon McVittie <smcv@debian.org>
+Forwarded: no
+---
+ demos/gtk-demo/meson.build       | 2 +-
+ demos/widget-factory/meson.build | 2 +-
+ gtk/meson.build                  | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/demos/gtk-demo/meson.build b/demos/gtk-demo/meson.build
+index 5b79dfa..294d66f 100644
+--- a/demos/gtk-demo/meson.build
++++ b/demos/gtk-demo/meson.build
+@@ -164,7 +164,7 @@ endif
+ 
+ ld = find_program('ld', required : false)
+ 
+-if build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and ld.found()
++if false
+   glib_compile_resources = find_program('glib-compile-resources')
+ 
+   # Create the resource blob
+diff --git a/demos/widget-factory/meson.build b/demos/widget-factory/meson.build
+index 800230b..d78f9f6 100644
+--- a/demos/widget-factory/meson.build
++++ b/demos/widget-factory/meson.build
+@@ -8,7 +8,7 @@ endif
+ 
+ ld = find_program('ld', required : false)
+ 
+-if build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and ld.found()
++if false
+   glib_compile_resources = find_program('glib-compile-resources')
+ 
+   # Create the resource blob
+diff --git a/gtk/meson.build b/gtk/meson.build
+index 201af63..8c7c56e 100644
+--- a/gtk/meson.build
++++ b/gtk/meson.build
+@@ -872,7 +872,7 @@ endif
+ 
+ ld = find_program('ld', required : false)
+ 
+-if not meson.is_cross_build() and build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and ld.found()
++if false
+   glib_compile_resources = find_program('glib-compile-resources')
+ 
+   # Create the resource blob

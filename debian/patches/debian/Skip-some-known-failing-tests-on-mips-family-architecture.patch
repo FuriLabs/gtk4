@@ -5,8 +5,8 @@ Subject: Skip some known-failing tests on mips-family architectures
 Forwarded: no
 ---
  testsuite/gsk/meson.build      | 10 ++++++++--
- testsuite/reftests/meson.build | 12 +++++++++---
- 2 files changed, 17 insertions(+), 5 deletions(-)
+ testsuite/reftests/meson.build | 19 +++++++++++++------
+ 2 files changed, 21 insertions(+), 8 deletions(-)
 
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
 index 71e18f8..fb42e30 100644
@@ -37,7 +37,7 @@ index 71e18f8..fb42e30 100644
  # to run in ci, but still useful to keep around
  informative_render_tests = [
 diff --git a/testsuite/reftests/meson.build b/testsuite/reftests/meson.build
-index 0b6d0fa..4be052f 100644
+index 0b6d0fa..b7d2fcf 100644
 --- a/testsuite/reftests/meson.build
 +++ b/testsuite/reftests/meson.build
 @@ -71,9 +71,6 @@ testdata = [
@@ -50,16 +50,30 @@ index 0b6d0fa..4be052f 100644
    'background-color-transparent.css',
    'background-color-transparent.ref.ui',
    'background-color-transparent.ui',
-@@ -581,6 +578,15 @@ xfails = [
+@@ -92,9 +89,6 @@ testdata = [
+   'background-position-repeat.ref.ui',
+   'background-position-repeat.ui',
+   'background-position-repeat-bg.png',
+-  'background-position-simple.css',
+-  'background-position-simple.ref.ui',
+-  'background-position-simple.ui',
+   'background-repeat-clip.css',
+   'background-repeat-clip.ref.ui',
+   'background-repeat-clip.ui',
+@@ -581,6 +575,19 @@ xfails = [
    'border-half-pixel.ui'
  ]
  
 +if not host_machine.cpu_family().contains('mips')
-+  # https://gitlab.gnome.org/GNOME/gtk/-/issues/4618
 +  testdata += [
++    # https://gitlab.gnome.org/GNOME/gtk/-/issues/4618
 +    'background-blend-mode-clip-interaction.css',
 +    'background-blend-mode-clip-interaction.ref.ui',
 +    'background-blend-mode-clip-interaction.ui',
++    # https://gitlab.gnome.org/GNOME/gtk/-/issues/4228
++    'background-position-simple.css',
++    'background-position-simple.ref.ui',
++    'background-position-simple.ui',
 +  ]
 +endif
 +

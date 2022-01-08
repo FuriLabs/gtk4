@@ -4,8 +4,9 @@ Subject: Skip some known-failing tests on mips-family architectures
 
 Forwarded: no
 ---
- testsuite/gsk/meson.build | 10 ++++++++--
- 1 file changed, 8 insertions(+), 2 deletions(-)
+ testsuite/gsk/meson.build      | 10 ++++++++--
+ testsuite/reftests/meson.build | 12 +++++++++---
+ 2 files changed, 17 insertions(+), 5 deletions(-)
 
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
 index 71e18f8..fb42e30 100644
@@ -35,3 +36,33 @@ index 71e18f8..fb42e30 100644
  # these are too sensitive to differences in the renderers
  # to run in ci, but still useful to keep around
  informative_render_tests = [
+diff --git a/testsuite/reftests/meson.build b/testsuite/reftests/meson.build
+index 0b6d0fa..4be052f 100644
+--- a/testsuite/reftests/meson.build
++++ b/testsuite/reftests/meson.build
+@@ -71,9 +71,6 @@ testdata = [
+   'background-area.css',
+   'background-area.ref.ui',
+   'background-area.ui',
+-  'background-blend-mode-clip-interaction.css',
+-  'background-blend-mode-clip-interaction.ref.ui',
+-  'background-blend-mode-clip-interaction.ui',
+   'background-color-transparent.css',
+   'background-color-transparent.ref.ui',
+   'background-color-transparent.ui',
+@@ -581,6 +578,15 @@ xfails = [
+   'border-half-pixel.ui'
+ ]
+ 
++if not host_machine.cpu_family().contains('mips')
++  # https://gitlab.gnome.org/GNOME/gtk/-/issues/4618
++  testdata += [
++    'background-blend-mode-clip-interaction.css',
++    'background-blend-mode-clip-interaction.ref.ui',
++    'background-blend-mode-clip-interaction.ui',
++  ]
++endif
++
+ reftest_env = environment()
+ reftest_env.set('GTK_A11Y', 'test')
+ reftest_env.set('G_TEST_SRCDIR', meson.current_source_dir())

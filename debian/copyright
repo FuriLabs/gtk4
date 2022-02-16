@@ -10,6 +10,7 @@ Files-Excluded:
  docs/reference/gtk/gtk4
  subprojects/gi-docgen/gidocgen/templates/basic/*.woff
  subprojects/gi-docgen/gidocgen/templates/basic/*.woff2
+ subprojects/wayland
 
 Files: *
 Copyright:

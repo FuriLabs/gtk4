@@ -42,7 +42,7 @@ index 919957e..7145363 100644
            g_object_unref (diff_texture);
            success = FALSE;
 diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
-index 3872f55..12d202f 100644
+index 4d3d57d..5136efa 100644
 --- a/testsuite/reftests/gtk-reftest.c
 +++ b/testsuite/reftests/gtk-reftest.c
 @@ -331,6 +331,9 @@ test_ui_file (GFile *file)

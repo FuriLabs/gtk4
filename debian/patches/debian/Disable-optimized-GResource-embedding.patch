@@ -15,10 +15,10 @@ Forwarded: no
  3 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/demos/gtk-demo/meson.build b/demos/gtk-demo/meson.build
-index 5b79dfa..294d66f 100644
+index f594cd5..0200246 100644
 --- a/demos/gtk-demo/meson.build
 +++ b/demos/gtk-demo/meson.build
-@@ -164,7 +164,7 @@ endif
+@@ -160,7 +160,7 @@ endif
  
  ld = find_program('ld', required : false)
  
@@ -28,7 +28,7 @@ index 5b79dfa..294d66f 100644
  
    # Create the resource blob
 diff --git a/demos/widget-factory/meson.build b/demos/widget-factory/meson.build
-index 800230b..d78f9f6 100644
+index 9a083eb..162a66a 100644
 --- a/demos/widget-factory/meson.build
 +++ b/demos/widget-factory/meson.build
 @@ -8,7 +8,7 @@ endif
@@ -41,7 +41,7 @@ index 800230b..d78f9f6 100644
  
    # Create the resource blob
 diff --git a/gtk/meson.build b/gtk/meson.build
-index 201af63..8c7c56e 100644
+index 9e01201..9b20626 100644
 --- a/gtk/meson.build
 +++ b/gtk/meson.build
 @@ -872,7 +872,7 @@ endif

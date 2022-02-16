@@ -82,7 +82,7 @@ index 7145363..2d5fdf9 100644
      }
  
 diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
-index 12d202f..5970b1d 100644
+index 5136efa..aa4d3c7 100644
 --- a/testsuite/reftests/gtk-reftest.c
 +++ b/testsuite/reftests/gtk-reftest.c
 @@ -292,6 +292,12 @@ save_image (GdkTexture *texture,

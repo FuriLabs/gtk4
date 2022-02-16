@@ -118,7 +118,6 @@ struct _GdkWaylandSurface
   unsigned int mapped : 1;
   unsigned int awaiting_frame : 1;
   unsigned int awaiting_frame_frozen : 1;
-  unsigned int is_drag_surface : 1;
 
   int pending_buffer_offset_x;
   int pending_buffer_offset_y;
@@ -780,11 +779,22 @@ gdk_wayland_surface_update_scale (GdkSurface *surface)
       return;
     }
 
-  scale = 1;
-  for (l = impl->display_server.outputs; l != NULL; l = l->next)
+  if (!impl->display_server.outputs)
     {
-      guint32 output_scale = gdk_wayland_display_get_output_scale (display_wayland, l->data);
-      scale = MAX (scale, output_scale);
+      scale = impl->scale;
+    }
+  else
+    {
+      scale = 1;
+      for (l = impl->display_server.outputs; l != NULL; l = l->next)
+        {
+          struct wl_output *output = l->data;
+          uint32_t output_scale;
+
+          output_scale = gdk_wayland_display_get_output_scale (display_wayland,
+                                                               output);
+          scale = MAX (scale, output_scale);
+        }
     }
 
   /* Notify app that scale changed */
@@ -925,12 +935,33 @@ gdk_wayland_surface_attach_image (GdkSurface           *surface,
     }
 }
 
+static void
+gdk_wayland_surface_sync_offset (GdkSurface *surface)
+{
+  GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (surface);
+
+  if (wl_surface_get_version (impl->display_server.wl_surface) <
+      WL_SURFACE_OFFSET_SINCE_VERSION)
+    return;
+
+  if (impl->pending_buffer_offset_x == 0 &&
+      impl->pending_buffer_offset_y == 0)
+    return;
+
+  wl_surface_offset (impl->display_server.wl_surface,
+                     impl->pending_buffer_offset_x,
+                     impl->pending_buffer_offset_y);
+  impl->pending_buffer_offset_x = 0;
+  impl->pending_buffer_offset_y = 0;
+}
+
 void
 gdk_wayland_surface_sync (GdkSurface *surface)
 {
   gdk_wayland_surface_sync_shadow (surface);
   gdk_wayland_surface_sync_opaque_region (surface);
   gdk_wayland_surface_sync_input_region (surface);
+  gdk_wayland_surface_sync_offset (surface);
 }
 
 static gboolean
@@ -1467,6 +1498,7 @@ gdk_wayland_surface_configure_toplevel (GdkSurface *surface)
   int width, height;
   gboolean is_resizing;
   gboolean fixed_size;
+  gboolean was_fixed_size;
   gboolean saved_size;
 
   new_state = impl->pending.toplevel.state;
@@ -1481,6 +1513,11 @@ gdk_wayland_surface_configure_toplevel (GdkSurface *surface)
                  GDK_TOPLEVEL_STATE_TILED) ||
     is_resizing;
 
+  was_fixed_size =
+    surface->state & (GDK_TOPLEVEL_STATE_MAXIMIZED |
+                      GDK_TOPLEVEL_STATE_FULLSCREEN |
+                      GDK_TOPLEVEL_STATE_TILED);
+
   width = impl->pending.toplevel.width;
   height = impl->pending.toplevel.height;
 
@@ -1493,7 +1530,7 @@ gdk_wayland_surface_configure_toplevel (GdkSurface *surface)
    * the client should configure its size back to what it was before
    * being maximize or fullscreen.
    */
-  if (saved_size && !fixed_size)
+  if (saved_size && !fixed_size && was_fixed_size)
     {
       width = impl->saved_width;
       height = impl->saved_height;
@@ -2283,8 +2320,7 @@ gdk_wayland_toplevel_inhibit_idle (GdkToplevel *toplevel)
 
   if (!wayland_toplevel->idle_inhibitor)
     {
-      g_assert (wayland_toplevel->idle_inhibitor &&
-                wayland_toplevel->idle_inhibitor_refcount > 0);
+      g_assert (wayland_toplevel->idle_inhibitor_refcount == 0);
 
       wayland_toplevel->idle_inhibitor =
           zwp_idle_inhibit_manager_v1_create_inhibitor (display_wayland->idle_inhibit_manager,
@@ -2825,27 +2861,12 @@ find_grab_input_seat (GdkSurface *surface,
   return NULL;
 }
 
-static gboolean
-should_be_mapped (GdkSurface *surface)
-{
-  GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (surface);
-
-  /* Don't map crazy temp that GTK uses for internal X11 shenanigans. */
-  if (GDK_IS_DRAG_SURFACE (surface) && surface->x < 0 && surface->y < 0)
-    return FALSE;
-
-  if (impl->is_drag_surface)
-    return FALSE;
-
-  return TRUE;
-}
-
 static void
 gdk_wayland_surface_map_toplevel (GdkSurface *surface)
 {
   GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (surface);
 
-  if (!should_be_mapped (surface))
+  if (!GDK_IS_WAYLAND_TOPLEVEL (surface))
     return;
 
   if (impl->mapped)
@@ -4703,7 +4724,6 @@ create_dnd_surface (GdkDisplay *display)
                                                  GDK_SURFACE_TEMP,
                                                  NULL,
                                                  0, 0, 100, 100);
-  GDK_WAYLAND_SURFACE (surface)->is_drag_surface = TRUE;
 
   return surface;
 }

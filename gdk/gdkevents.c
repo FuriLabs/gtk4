@@ -719,14 +719,6 @@ gdk_event_queue_handle_scroll_compression (GdkDisplay *display)
 
       gdk_event_unref (old_event);
     }
-
-  if (g_queue_get_length (&display->queued_events) == 1 &&
-      g_queue_peek_head_link (&display->queued_events) == scrolls)
-    {
-      GdkFrameClock *clock = gdk_surface_get_frame_clock (surface);
-      if (clock) /* might be NULL if surface was destroyed */
-        gdk_frame_clock_request_phase (clock, GDK_FRAME_CLOCK_PHASE_FLUSH_EVENTS);
-    }
 }
 
 static void
@@ -831,14 +823,6 @@ _gdk_event_queue_handle_motion_compression (GdkDisplay *display)
       gdk_event_unref (pending_motions->data);
       g_queue_delete_link (&display->queued_events, pending_motions);
       pending_motions = next;
-    }
-
-  if (g_queue_get_length (&display->queued_events) == 1 &&
-      g_queue_peek_head_link (&display->queued_events) == pending_motions)
-    {
-      GdkFrameClock *clock = gdk_surface_get_frame_clock (pending_motion_surface);
-      if (clock) /* might be NULL if surface was destroyed */
-        gdk_frame_clock_request_phase (clock, GDK_FRAME_CLOCK_PHASE_FLUSH_EVENTS);
     }
 }
 
@@ -1225,7 +1209,7 @@ gdk_event_get_event_type (GdkEvent *event)
  *
  * Extracts the surface associated with an event.
  *
- * Returns: (transfer none): The `GdkSurface` associated with the event
+ * Returns: (transfer none) (nullable): The `GdkSurface` associated with the event
  */
 GdkSurface *
 gdk_event_get_surface (GdkEvent *event)
@@ -2512,7 +2496,8 @@ static const GdkEventTypeInfo gdk_touchpad_event_info = {
 GDK_DEFINE_EVENT_TYPE (GdkTouchpadEvent, gdk_touchpad_event,
                        &gdk_touchpad_event_info,
                        GDK_EVENT_TYPE_SLOT (GDK_TOUCHPAD_SWIPE)
-                       GDK_EVENT_TYPE_SLOT (GDK_TOUCHPAD_PINCH))
+                       GDK_EVENT_TYPE_SLOT (GDK_TOUCHPAD_PINCH)
+                       GDK_EVENT_TYPE_SLOT (GDK_TOUCHPAD_HOLD))
 
 GdkEvent *
 gdk_touchpad_event_new_swipe (GdkSurface              *surface,
@@ -2586,6 +2571,27 @@ gdk_touchpad_event_new_pinch (GdkSurface              *surface,
   return (GdkEvent *) self;
 }
 
+GdkEvent *
+gdk_touchpad_event_new_hold (GdkSurface              *surface,
+                             GdkDevice               *device,
+                             guint32                  time,
+                             GdkModifierType          state,
+                             GdkTouchpadGesturePhase  phase,
+                             double                   x,
+                             double                   y,
+                             int                      n_fingers)
+{
+  GdkTouchpadEvent *self = gdk_event_alloc (GDK_TOUCHPAD_HOLD, surface, device, time);
+
+  self->state = state;
+  self->phase = phase;
+  self->x = x;
+  self->y = y;
+  self->n_fingers = n_fingers;
+
+  return (GdkEvent *) self;
+}
+
 /**
  * gdk_touchpad_event_get_gesture_phase:
  * @event: (type GdkTouchpadEvent): a touchpad event
@@ -2601,7 +2607,8 @@ gdk_touchpad_event_get_gesture_phase (GdkEvent *event)
 
   g_return_val_if_fail (GDK_IS_EVENT (event), 0);
   g_return_val_if_fail (GDK_IS_EVENT_TYPE (event, GDK_TOUCHPAD_PINCH) ||
-                        GDK_IS_EVENT_TYPE (event, GDK_TOUCHPAD_SWIPE), 0);
+                        GDK_IS_EVENT_TYPE (event, GDK_TOUCHPAD_SWIPE) ||
+                        GDK_IS_EVENT_TYPE (event, GDK_TOUCHPAD_HOLD), 0);
 
   return self->phase;
 }
@@ -2621,7 +2628,8 @@ gdk_touchpad_event_get_n_fingers (GdkEvent *event)
 
   g_return_val_if_fail (GDK_IS_EVENT (event), 0);
   g_return_val_if_fail (GDK_IS_EVENT_TYPE (event, GDK_TOUCHPAD_PINCH) ||
-                        GDK_IS_EVENT_TYPE (event, GDK_TOUCHPAD_SWIPE), 0);
+                        GDK_IS_EVENT_TYPE (event, GDK_TOUCHPAD_SWIPE) ||
+                        GDK_IS_EVENT_TYPE (event, GDK_TOUCHPAD_HOLD), 0);
 
   return self->n_fingers;
 }

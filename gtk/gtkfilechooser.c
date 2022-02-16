@@ -335,7 +335,7 @@ gtk_file_chooser_set_current_name  (GtkFileChooser *chooser,
  * This is meant to be used in save dialogs, to get the currently typed
  * filename when the file itself does not exist yet.
  *
- * Returns: The raw text from the file chooser’s “Name” entry. Free with
+ * Returns: (nullable): The raw text from the file chooser’s “Name” entry. Free with
  *   g_free(). Note that this string is not a full pathname or URI; it is
  *   whatever the contents of the entry are. Note also that this string is
  *   in UTF-8 encoding, which is not necessarily the system’s encoding for
@@ -369,7 +369,7 @@ gtk_file_chooser_unselect_all (GtkFileChooser *chooser)
 /**
  * gtk_file_chooser_set_current_folder:
  * @chooser: a `GtkFileChooser`
- * @file: the `GFile` for the new folder
+ * @file: (nullable): the `GFile` for the new folder
  * @error: location to store error
  *
  * Sets the current folder for @chooser from a `GFile`.
@@ -395,7 +395,7 @@ gtk_file_chooser_set_current_folder (GtkFileChooser  *chooser,
  *
  * Gets the current folder of @chooser as `GFile`.
  *
- * Returns: (transfer full): the `GFile` for the current folder.
+ * Returns: (transfer full) (nullable): the `GFile` for the current folder.
  */
 GFile *
 gtk_file_chooser_get_current_folder (GtkFileChooser *chooser)
@@ -523,7 +523,7 @@ gtk_file_chooser_set_file (GtkFileChooser  *chooser,
  * If the file chooser is in folder mode, this function returns
  * the selected folder.
  *
- * Returns: (transfer full): a selected `GFile`. You own the
+ * Returns: (transfer full) (nullable): a selected `GFile`. You own the
  *   returned file; use g_object_unref() to release it.
  */
 GFile *
@@ -794,7 +794,7 @@ gtk_file_chooser_set_choice (GtkFileChooser  *chooser,
  *
  * Gets the currently selected option in the 'choice' with the given ID.
  *
- * Returns: the ID of the currently selected option
+ * Returns: (nullable): the ID of the currently selected option
  */
 const char *
 gtk_file_chooser_get_choice (GtkFileChooser  *chooser,

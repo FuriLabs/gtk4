@@ -4993,8 +4993,15 @@ gtk_icon_view_unselect_path (GtkIconView *icon_view,
  * want to convert the returned list into a list of `GtkTreeRowReferences`.
  * To do this, you can use gtk_tree_row_reference_new().
  *
- * To free the return value, use:
+ * To free the return value, use `g_list_free_full`:
  * |[<!-- language="C" -->
+ * GtkWidget *icon_view = gtk_icon_view_new ();
+ * // Use icon_view
+ *
+ * GList *list = gtk_icon_view_get_selected_items (GTK_ICON_VIEW (icon_view));
+ *
+ * // use list
+ *
  * g_list_free_full (list, (GDestroyNotify) gtk_tree_path_free);
  * ]|
  *
@@ -6425,7 +6432,7 @@ gtk_icon_view_set_drag_dest_item (GtkIconView              *icon_view,
 /**
  * gtk_icon_view_get_drag_dest_item:
  * @icon_view: a `GtkIconView`
- * @path: (out) (optional): Return location for the path of
+ * @path: (out) (nullable) (optional): Return location for the path of
  *   the highlighted item
  * @pos: (out) (optional): Return location for the drop position
  *
@@ -6519,7 +6526,7 @@ gtk_icon_view_get_dest_item_at_pos (GtkIconView              *icon_view,
  * Creates a `GdkPaintable` representation of the item at @path.
  * This image is used for a drag icon.
  *
- * Returns: (transfer full): a newly-allocated `GdkPaintable` of the drag icon.
+ * Returns: (transfer full) (nullable): a newly-allocated `GdkPaintable` of the drag icon.
  **/
 GdkPaintable *
 gtk_icon_view_create_drag_icon (GtkIconView *icon_view,

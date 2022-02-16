@@ -105,13 +105,6 @@ typedef enum {
   GDK_WIN32_TABLET_INPUT_API_WINPOINTER
 } GdkWin32TabletInputAPI;
 
-/* Detect running architecture */
-typedef BOOL (WINAPI *funcIsWow64Process2) (HANDLE, USHORT *, USHORT *);
-typedef struct _GdkWin32KernelCPUFuncs
-{
-  funcIsWow64Process2 isWow64Process2;
-} GdkWin32KernelCPUFuncs;
-
 typedef struct
 {
   HDC hdc;
@@ -132,7 +125,6 @@ struct _GdkWin32Display
 
   /* WGL/OpenGL Items */
   GdkWin32GLDummyContextWGL dummy_context_wgl;
-  int wgl_pixel_format;
   guint gl_version;
 
   GListModel *monitors;
@@ -177,7 +169,6 @@ struct _GdkWin32Display
 
   /* Running CPU items */
   guint running_on_arm64 : 1;
-  GdkWin32KernelCPUFuncs cpu_funcs;
 };
 
 struct _GdkWin32DisplayClass

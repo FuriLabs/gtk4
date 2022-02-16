@@ -55,6 +55,7 @@
 #include "gtkjoinedmenuprivate.h"
 
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 
 /**
@@ -898,8 +899,8 @@ get_cursor_direction (GtkLabel *self)
        * definitely in this paragraph, which is good enough
        * to figure out the resolved direction.
        */
-       if (line->start_index + line->length >= self->select_info->selection_end)
-        return line->resolved_dir;
+       if (pango_layout_line_get_start_index (line) + pango_layout_line_get_length (line) >= self->select_info->selection_end)
+        return pango_layout_line_get_resolved_direction (line);
     }
 
   return PANGO_DIRECTION_LTR;
@@ -1185,7 +1186,7 @@ my_pango_layout_get_width_for_height (PangoLayout *layout,
       pango_layout_get_size (layout, &text_width, &text_height);
       text_width = PANGO_PIXELS_CEIL (text_width);
       if (text_width > mid)
-        min = mid = text_width;
+        min = text_width;
       else if (text_height > for_height)
         min = mid + 1;
       else
@@ -2492,7 +2493,7 @@ gtk_label_class_init (GtkLabelClass *class)
    *
    * If this property is set to -1, the width will be calculated automatically.
    *
-   * See the section on [text layout](#text-layout) for details of how
+   * See the section on [text layout](class.Label.html#text-layout) for details of how
    * [property@Gtk.Label:width-chars] and [property@Gtk.Label:max-width-chars]
    * determine the width of ellipsized and wrapped labels.
    */
@@ -2528,7 +2529,7 @@ gtk_label_class_init (GtkLabelClass *class)
    *
    * If this property is set to -1, the width will be calculated automatically.
    *
-   * See the section on [text layout](#text-layout) for details of how
+   * See the section on [text layout](class.Label.html#text-layout) for details of how
    * [property@Gtk.Label:width-chars] and [property@Gtk.Label:max-width-chars]
    * determine the width of ellipsized and wrapped labels.
    */

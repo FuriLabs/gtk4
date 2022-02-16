@@ -289,10 +289,15 @@ gsk_renderer_is_realized (GskRenderer *renderer)
  *
  * Since GTK 4.6, the surface may be `NULL`, which allows using
  * renderers without having to create a surface.
+ *
+ * Note that it is mandatory to call [method@Gsk.Renderer.unrealize] before
+ * destroying the renderer.
+ *
+ * Returns: Whether the renderer was successfully realized
  */
 gboolean
 gsk_renderer_realize (GskRenderer  *renderer,
-                      GdkSurface    *surface,
+                      GdkSurface   *surface,
                       GError      **error)
 {
   GskRendererPrivate *priv = gsk_renderer_get_instance_private (renderer);
@@ -592,14 +597,7 @@ get_renderer_for_backend (GdkSurface *surface)
 #endif
 #ifdef GDK_WINDOWING_WIN32
   if (GDK_IS_WIN32_SURFACE (surface))
-    /* remove check for OpenGL/ES when OpenGL/ES 2.0 shader is ready */
-    {
-      GdkDisplay *display = gdk_surface_get_display (surface);
-
-      if (!(GDK_DISPLAY_DEBUG_CHECK (display, GL_GLES) ||
-            GDK_WIN32_DISPLAY (display)->running_on_arm64))
-        return GSK_TYPE_GL_RENDERER;
-    }
+    return GSK_TYPE_GL_RENDERER;
 #endif
 
   return G_TYPE_INVALID;

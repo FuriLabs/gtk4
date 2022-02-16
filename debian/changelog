@@ -1,12 +1,13 @@
-gtk4 (4.6.1+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.6.1+ds-1) unstable; urgency=medium
 
   * New upstream release
   * Drop patches that were applied upstream
   * d/control.in: Update build-dependency versions
   * d/copyright: Update
   * d/watch: Repack with wayland subproject excluded, we use the system copy
+  * d/run-tests.sh: Show full test log after testing
 
- -- Simon McVittie <smcv@debian.org>  Wed, 16 Feb 2022 11:12:23 +0000
+ -- Simon McVittie <smcv@debian.org>  Wed, 16 Feb 2022 16:55:50 +0000
 
 gtk4 (4.6.0+ds1-4) unstable; urgency=medium
 

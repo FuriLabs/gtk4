@@ -67,8 +67,14 @@ for reftest in $XFAIL_REFTESTS; do
     rm -f "$BUILDDIR/testsuite/reftests/output/$BACKEND/$reftest.diff.png"
 done
 
+if [ -e "$test_data/tests-failed" ]; then
+    head -v -n-0 "$BUILDDIR/meson-logs/testlog-$BACKEND.txt"
+fi
+
 # Put the rest in the log as base64 since we don't have an
 # equivalent of AUTOPKGTEST_ARTIFACTS for buildds
 debian/log-reftests.py
 
-[ -e "$test_data/tests-failed" ] && exit 1 || exit 0
+if [ -e "$test_data/tests-failed" ]; then
+    exit 1
+fi

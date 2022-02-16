@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.6.0',
+        version: '4.6.1',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -16,8 +16,8 @@ fribidi_req        = '>= 0.19.7'
 cairo_req          = '>= 1.14.0'
 gdk_pixbuf_req     = '>= 2.30.0'
 introspection_req  = '>= 1.39.0'
-wayland_proto_req  = '>= 1.21'
-wayland_req        = '>= 1.16.91'
+wayland_proto_req  = '>= 1.23'
+wayland_req        = '>= 1.20.0'
 graphene_req       = '>= 1.9.1'
 epoxy_req          = '>= 1.4'
 cloudproviders_req = '>= 0.3.1'
@@ -298,7 +298,8 @@ elif cc.get_id() == 'gcc' or cc.get_id() == 'clang'
     'array-bounds',
     'empty-body',
     'implicit',
-    'implicit-fallthrough',
+    'implicit-fallthrough',   # For non-gcc
+    'implicit-fallthrough=5', # For GCC, only recognize the attribute and no comments
     'init-self',
     'int-to-pointer-cast',
     'main',
@@ -455,10 +456,12 @@ cdata.set('HAVE_TRACKER3', tracker3_dep.found())
 colord_dep = dependency('colord', version: '>= 0.1.9', required: get_option('colord'))
 cdata.set('HAVE_COLORD', colord_dep.found())
 
-if iso_codes_dep.found()
-  cdata.set_quoted('ISO_CODES_PREFIX', iso_codes_dep.get_variable(pkgconfig: 'prefix'))
-else
-  cdata.set_quoted('ISO_CODES_PREFIX', '/usr')
+if not os_win32
+  if iso_codes_dep.found()
+    cdata.set_quoted('ISO_CODES_PREFIX', iso_codes_dep.get_variable(pkgconfig: 'prefix'))
+  else
+    cdata.set_quoted('ISO_CODES_PREFIX', '/usr')
+  endif
 endif
 
 
@@ -508,9 +511,12 @@ cdata.set('HAVE_PANGOFT', pangoft_dep.found())
 
 wayland_pkgs = []
 if wayland_enabled
-  wlclientdep    = dependency('wayland-client', version:  wayland_req)
+  wlclientdep    = dependency('wayland-client', version:  wayland_req,
+                              fallback: 'wayland',
+                              default_options: ['documentation=false'])
   wlprotocolsdep = dependency('wayland-protocols', version: wayland_proto_req, required: false)
-  wlegldep       = dependency('wayland-egl')
+  wlegldep       = dependency('wayland-egl',
+                              fallback: 'wayland')
 
   if not wlprotocolsdep.found()
     wlproto_dir = subproject('wayland-protocols').get_variable('wayland_protocols_srcdir')
@@ -614,7 +620,7 @@ if win32_enabled
   else
     pc_gdk_extra_libs += ['-Wl,-luuid']
   endif
-  pc_gdk_extra_libs += ['-lwinmm', '-ldwmapi', '-lsetupapi', '-lcfgmgr32']
+  pc_gdk_extra_libs += ['-lwinmm', '-ldwmapi', '-lsetupapi', '-lcfgmgr32', '-lhid']
 
   # Check whether libepoxy is built with EGL support on Windows
 endif
@@ -897,7 +903,7 @@ if not meson.is_cross_build()
     gnome.post_install(
       glib_compile_schemas: true,
       gio_querymodules: gio_module_dirs,
-      gtk_update_icon_cache: true,
+      gtk_update_icon_cache: get_option('demos'),
     )
   else
     meson.add_install_script('build-aux/meson/post-install.py',

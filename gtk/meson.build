@@ -883,6 +883,7 @@ if not meson.is_cross_build() and build_machine.system() == 'linux' and objcopy.
       depfile : 'gtk.gresource.d',
       command : [glib_compile_resources,
                  '--generate',
+                 '--internal',
                  '--target=@OUTPUT@',
                  '--dependency-file=@DEPFILE@',
                  '--sourcedir=' + meson.current_source_dir(),
@@ -897,6 +898,7 @@ if not meson.is_cross_build() and build_machine.system() == 'linux' and objcopy.
       depfile : 'gtkresources.c.d',
       command : [glib_compile_resources,
                  '--generate-source',
+                 '--internal',
                  '--target=@OUTPUT@',
                  '--dependency-file=@DEPFILE@',
                  '--sourcedir=' + meson.current_source_dir(),
@@ -913,6 +915,7 @@ if not meson.is_cross_build() and build_machine.system() == 'linux' and objcopy.
       depfile : 'gtkresources.h.d',
       command : [glib_compile_resources,
                  '--generate-header',
+                 '--internal',
                  '--target=@OUTPUT@',
                  '--dependency-file=@DEPFILE@',
                  '--sourcedir=' + meson.current_source_dir(),
@@ -927,6 +930,7 @@ if not meson.is_cross_build() and build_machine.system() == 'linux' and objcopy.
       input : gtk_gresource,
       output : 'gtkresources_blob.o',
       command : [ld,
+                 '-z', 'noexecstack',
                  '-r',
                  '-b','binary',
                  '@INPUT@',
@@ -937,6 +941,7 @@ if not meson.is_cross_build() and build_machine.system() == 'linux' and objcopy.
     input : gtk_resources_binary,
     output : 'gtkresources_blob2.o',
     command : [objcopy,
+                 '--strip-all',
                  '--add-symbol','_gtk_resource_data=.data:0',
                  '@INPUT@',
                  '@OUTPUT@'])
@@ -1067,6 +1072,10 @@ gtk_gen_headers = [
   gtkversion,
 ]
 
+font_script_language_sources = files([
+  'language-names.c',
+])
+
 gtk_sources += [
   gtk_a11y_src,
   gtk_dbus_src,
@@ -1076,6 +1085,7 @@ gtk_sources += [
   gtkmarshalers,
   gtkprivatetypebuiltins,
   gtktypebuiltins,
+  font_script_language_sources,
 ]
 
 gtk_deps = [
@@ -1091,14 +1101,6 @@ gtk_deps = [
   libm,
   graphene_dep,
 ]
-
-if harfbuzz_dep.found() and pangoft_dep.found()
-  gtk_deps += [ harfbuzz_dep, pangoft_dep ]
-  gtk_sources += files([
-  'language-names.c',
-  'script-names.c',
-  ])
-endif
 
 if x11_enabled
   x11_data_prefix = dependency('x11').get_variable(pkgconfig: 'prefix')
@@ -1147,6 +1149,9 @@ endif
 # So we don't add these twice
 if x11_enabled or wayland_enabled
   gtk_sources += gtk_use_wayland_or_x11_c_sources
+endif
+
+if pangoft_dep.found()
   gtk_deps += pangoft_dep
 endif
 

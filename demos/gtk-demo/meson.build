@@ -98,6 +98,7 @@ demos = files([
   'transparent.c',
   'tree_store.c',
   'video_player.c',
+  'font_features.c',
 ])
 
 gtkdemo_deps = [ libgtk_dep, ]
@@ -128,13 +129,8 @@ extra_demo_sources = files([
   'script-names.c',
   'unicode-names.c',
   'suggestionentry.c',
+  'language-names.c',
 ])
-
-if harfbuzz_dep.found() and pangoft_dep.found()
-  demos += files(['font_features.c'])
-  extra_demo_sources += files(['language-names.c'])
-  gtkdemo_deps += [ harfbuzz_dep, epoxy_dep ]
-endif
 
 if os_unix
   demos += files('pagesetup.c')
@@ -174,6 +170,7 @@ if build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_ad
       depfile : 'gtkdemo.gresource.d',
       command : [glib_compile_resources,
                  '--generate',
+                 '--internal',
                  '--target=@OUTPUT@',
                  '--dependency-file=@DEPFILE@',
                  '--sourcedir=' + meson.current_source_dir(),
@@ -187,6 +184,7 @@ if build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_ad
       depfile : 'gtkdemo_resources.c.d',
       command : [glib_compile_resources,
                  '--generate-source',
+                 '--internal',
                  '--target=@OUTPUT@',
                  '--dependency-file=@DEPFILE@',
                  '--sourcedir=' + meson.current_source_dir(),
@@ -200,6 +198,7 @@ if build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_ad
       input : gtkdemo_gresource,
       output : 'gtkdemo_resources.o',
       command : [ld,
+                 '-z', 'noexecstack',
                  '-r',
                  '-b','binary',
                  '@INPUT@',
@@ -210,6 +209,7 @@ if build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_ad
     input : gtkdemo_resources_binary,
     output : 'gtkdemo_resources2.o',
     command : [objcopy,
+                 '--strip-all',
                  '--add-symbol','_g_binary_gtkdemo_resource_data=.data:0',
                  '@INPUT@',
                  '@OUTPUT@'])

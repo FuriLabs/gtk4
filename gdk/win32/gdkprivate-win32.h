@@ -269,7 +269,6 @@ extern int               _gdk_input_ignore_core;
  */
 extern HKL               _gdk_input_locale;
 extern gboolean          _gdk_input_locale_is_ime;
-extern UINT              _gdk_input_codepage;
 
 extern guint             _gdk_keymap_serial;
 
@@ -351,12 +350,11 @@ GList *_gdk_win32_display_list_devices (GdkDisplay *dpy);
 gboolean _gdk_win32_display_has_pending (GdkDisplay *display);
 void _gdk_win32_display_queue_events (GdkDisplay *display);
 
-gboolean   _gdk_win32_keymap_has_altgr           (GdkWin32Keymap *keymap);
 guint8     _gdk_win32_keymap_get_active_group    (GdkWin32Keymap *keymap);
 guint8     _gdk_win32_keymap_get_rshift_scancode (GdkWin32Keymap *keymap);
 void       _gdk_win32_keymap_set_active_layout   (GdkWin32Keymap *keymap,
                                                   HKL             hkl);
-
+GdkModifierType _gdk_win32_keymap_get_mod_mask   (GdkWin32Keymap *keymap);
 
 GdkKeymap *_gdk_win32_display_get_keymap (GdkDisplay *display);
 
@@ -424,5 +422,13 @@ BOOL WINAPI GtkShowWindow (GdkSurface *window,
 void _gdk_win32_surfaceing_init (void);
 void _gdk_drag_init    (void);
 void _gdk_events_init (GdkDisplay *display);
+
+typedef enum _GdkWin32ProcessorCheckType
+{
+  GDK_WIN32_ARM64,
+  GDK_WIN32_WOW64,
+} GdkWin32ProcessorCheckType;
+
+gboolean _gdk_win32_check_processor (GdkWin32ProcessorCheckType check_type);
 
 #endif /* __GDK_PRIVATE_WIN32_H__ */

@@ -100,7 +100,7 @@ image:disabled { -gtk-icon-filter: opacity(0.5); }
 
 textview > text > selection { background-color: rgba(90, 90, 90, 0.5); }
 
-textview > text > selection:focus-within { background-color: #0f3b71; }
+textview > text > selection:focus-within { background-color: rgba(21, 83, 158, 0.3); }
 
 textview:drop(active) { caret-color: #26a269; }
 
@@ -146,7 +146,7 @@ label:focus:focus-visible { outline-color: rgba(255, 255, 255, 0.6); outline-wid
 
 label > selection { background-color: rgba(90, 90, 90, 0.5); color: #ffffff; }
 
-label > selection:focus-within { background-color: #0f3b71; }
+label > selection:focus-within { background-color: rgba(21, 83, 158, 0.3); }
 
 label:disabled { color: #919191; }
 
@@ -219,7 +219,7 @@ spinbutton.vertical > text:disabled, spinbutton:disabled:not(.vertical), entry:d
 
 spinbutton.vertical > text > text > selection, spinbutton:not(.vertical) > text > selection, entry > text > selection { background-color: rgba(90, 90, 90, 0.5); color: transparent; }
 
-spinbutton.vertical > text > text > selection:focus-within, spinbutton:not(.vertical) > text > selection:focus-within, entry > text > selection:focus-within { background-color: #0f3b71; color: #ffffff; }
+spinbutton.vertical > text > text > selection:focus-within, spinbutton:not(.vertical) > text > selection:focus-within, entry > text > selection:focus-within { background-color: rgba(21, 83, 158, 0.3); color: #f3f3f1; }
 
 spinbutton.vertical > text.error, spinbutton.error:not(.vertical), entry.error { color: #cc0000; transition-property: outline, outline-width, outline-offset, outline-color; transition-duration: 300ms; animation-timing-function: ease-in-out; }
 
@@ -558,7 +558,7 @@ spinbutton.vertical > text { min-height: 32px; min-width: 32px; padding: 0; bord
 
 spinbutton.vertical > text > selection { background-color: rgba(90, 90, 90, 0.5); color: transparent; }
 
-spinbutton.vertical > text > selection:focus-within { background-color: #0f3b71; color: #ffffff; }
+spinbutton.vertical > text > selection:focus-within { background-color: rgba(21, 83, 158, 0.3); color: #ffffff; }
 
 spinbutton.vertical > text > block-cursor { color: #2d2d2d; background-color: white; }
 
@@ -1468,7 +1468,7 @@ columnview row:not(:selected) cell editablelabel.editing:focus-within { outline:
 
 columnview row:not(:selected) cell editablelabel.editing text selection { background-color: rgba(90, 90, 90, 0.5); color: transparent; }
 
-columnview row:not(:selected) cell editablelabel.editing text selection:focus-within { background-color: #0f3b71; color: #ffffff; }
+columnview row:not(:selected) cell editablelabel.editing text selection:focus-within { background-color: rgba(21, 83, 158, 0.3); color: #f3f3f1; }
 
 /******************************************************* Rich Lists                                          * Large list usually containing lots of widgets       * https://gitlab.gnome.org/GNOME/gtk/-/issues/3073    * */
 .rich-list { /* rich lists usually containing other widgets than just labels/text */ }
@@ -1765,7 +1765,7 @@ window.maximized, window.fullscreen { border-radius: 0; box-shadow: none; }
 
 window.tiled, window.tiled-top, window.tiled-left, window.tiled-right, window.tiled-bottom { border-radius: 0; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.75), 0 0 0 20px transparent; }
 
-window:backdrop { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.75), 0 0 0 20px transparent; }
+window.tiled:backdrop, window.tiled-top:backdrop, window.tiled-left:backdrop, window.tiled-right:backdrop, window.tiled-bottom:backdrop { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.75), 0 0 0 20px transparent; }
 
 window.popup { box-shadow: none; }
 

@@ -1,3 +1,10 @@
+gtk4 (4.6.1+ds-1ubuntu2) jammy; urgency=medium
+
+  * debian/patches/git_gdk_testnames.patch:
+    - use the correct names for the installed gdk tests
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Mon, 07 Mar 2022 21:39:58 +0100
+
 gtk4 (4.6.1+ds-1ubuntu1) jammy; urgency=medium
 
   * debian/tests:

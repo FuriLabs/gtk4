@@ -22,4 +22,4 @@ debian/tests/run-with-display $GDK_BACKEND \
 gnome-desktop-testing-runner \
 --report-directory="$AUTOPKGTEST_ARTIFACTS" \
 --tap \
-gtk-4.0/gtk/templates.test
+gtk-4.0/gtk/templates.test "gtk-4.0/gdk/{'name': 'memorytexture'}.test"

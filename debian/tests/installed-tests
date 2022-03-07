@@ -14,7 +14,8 @@ export HOME="$AUTOPKGTEST_TMP"
 
 tests=$(gnome-desktop-testing-runner -l gtk-4.0 |
     cut -f1 -d' ' |
-    grep -v '^gtk-4.0/gtk/templates.test$')
+    grep -v '^gtk-4.0/gtk/templates.test$' |
+    grep -v 'memorytexture')
 
 exec dbus-run-session -- \
 debian/tests/run-with-display $GDK_BACKEND \

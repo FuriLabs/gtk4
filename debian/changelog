@@ -1,8 +1,18 @@
-gtk4 (4.6.2+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.6.2+ds-1) unstable; urgency=medium
 
   * New upstream release
+  * d/missing-sources/emojibase: Update to emojibase-data 7.0.1, matching
+    the data files in gtk/emoji
+  * d/rules: Improve regeneration of emoji data
+  * d/missing-sources: Add Unicode emoji data.
+    The JSON data files in d/missing-sources/emojibase are indirectly
+    derived from this.
+  * d/copyright: Update
+  * d/p/debian/Disable-optimized-GResource-embedding.patch: Remove.
+    The upstream code now disables this on the architectures where it is
+    known to be problematic, namely 32-bit ARM.
 
- -- Simon McVittie <smcv@debian.org>  Sun, 20 Mar 2022 17:19:38 +0000
+ -- Simon McVittie <smcv@debian.org>  Sun, 20 Mar 2022 17:51:43 +0000
 
 gtk4 (4.6.1+ds-1) unstable; urgency=medium
 

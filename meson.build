@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.6.1',
+        version: '4.6.2',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -409,18 +409,20 @@ if win32_enabled
   pangowin32_dep = dependency('pangowin32')
 endif
 
+is_msvc_like = cc.get_argument_syntax() == 'msvc'
+
 pangocairo_dep = dependency('pangocairo', version: pango_req,
                             fallback : ['pango', 'libpangocairo_dep'])
 pixbuf_dep     = dependency('gdk-pixbuf-2.0', version: gdk_pixbuf_req,
                             fallback : ['gdk-pixbuf', 'gdkpixbuf_dep'],
                             default_options: ['png=enabled', 'jpeg=enabled', 'builtin_loaders=png,jpeg', 'man=false'])
-png_dep        = dependency(cc.get_argument_syntax() == 'msvc' ? 'png' : 'libpng',
+png_dep        = dependency(is_msvc_like ? 'png' : 'libpng',
                             fallback: ['libpng', 'libpng_dep'],
                             required: true)
-tiff_dep       = dependency('libtiff-4',
+tiff_dep       = dependency(is_msvc_like ? 'tiff' : 'libtiff-4',
                             fallback: ['libtiff', 'libtiff4_dep'],
                             required: true)
-jpeg_dep       = dependency('libjpeg',
+jpeg_dep       = dependency(is_msvc_like ? 'jpeg' : 'libjpeg',
                             fallback: ['libjpeg-turbo', 'jpeg_dep'],
                             required: true)
 
@@ -431,7 +433,8 @@ harfbuzz_dep   = dependency('harfbuzz', version: '>= 2.1.0', required: false,
                             default_options: ['coretext=enabled'])
 xkbdep         = dependency('xkbcommon', version: xkbcommon_req, required: wayland_enabled)
 graphene_dep   = dependency('graphene-gobject-1.0', version: graphene_req,
-                            fallback: ['graphene', 'graphene_dep'])
+                            fallback: ['graphene', 'graphene_dep'],
+                            default_options: ['tests=false'])
 iso_codes_dep  = dependency('iso-codes', required: false)
 
 gidocgen_dep    = dependency('gi-docgen', version: '>= 2021.1',
@@ -514,15 +517,11 @@ if wayland_enabled
   wlclientdep    = dependency('wayland-client', version:  wayland_req,
                               fallback: 'wayland',
                               default_options: ['documentation=false'])
-  wlprotocolsdep = dependency('wayland-protocols', version: wayland_proto_req, required: false)
+  wlprotocolsdep = dependency('wayland-protocols', version: wayland_proto_req)
   wlegldep       = dependency('wayland-egl',
                               fallback: 'wayland')
 
-  if not wlprotocolsdep.found()
-    wlproto_dir = subproject('wayland-protocols').get_variable('wayland_protocols_srcdir')
-  else
-    wlproto_dir = wlprotocolsdep.get_variable(pkgconfig: 'pkgdatadir')
-  endif
+  wlproto_dir = wlprotocolsdep.get_variable('pkgdatadir')
 
   wayland_pkgs = [
     'wayland-client @0@'.format(wayland_req),

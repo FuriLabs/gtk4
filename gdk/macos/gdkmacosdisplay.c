@@ -156,51 +156,11 @@ gdk_macos_display_update_bounds (GdkMacosDisplay *self)
   self->width = self->max_x - self->min_x;
   self->height = self->max_y - self->min_y;
 
+  GDK_NOTE (MISC,
+            g_message ("Displays reconfigured to bounds %d,%d %dx%d",
+                       self->min_x, self->min_y, self->width, self->height));
+
   GDK_END_MACOS_ALLOC_POOL;
-}
-
-static void
-gdk_macos_display_monitors_changed_cb (CFNotificationCenterRef  center,
-                                       void                    *observer,
-                                       CFStringRef              name,
-                                       const void              *object,
-                                       CFDictionaryRef          userInfo)
-{
-  GdkMacosDisplay *self = observer;
-
-  g_assert (GDK_IS_MACOS_DISPLAY (self));
-
-  _gdk_macos_display_reload_monitors (self);
-
-  /* Now we need to update all our surface positions since they
-   * probably just changed origins. We ignore the popup surfaces
-   * since we can rely on the toplevel surfaces to handle that.
-   */
-  for (const GList *iter = _gdk_macos_display_get_surfaces (self);
-       iter != NULL;
-       iter = iter->next)
-    {
-      GdkMacosSurface *surface = iter->data;
-
-      g_assert (GDK_IS_MACOS_SURFACE (surface));
-
-      if (GDK_IS_TOPLEVEL (surface))
-        _gdk_macos_surface_update_position (surface);
-    }
-}
-
-static void
-gdk_macos_display_user_defaults_changed_cb (CFNotificationCenterRef  center,
-                                            void                    *observer,
-                                            CFStringRef              name,
-                                            const void              *object,
-                                            CFDictionaryRef          userInfo)
-{
-  GdkMacosDisplay *self = observer;
-
-  g_assert (GDK_IS_MACOS_DISPLAY (self));
-
-  _gdk_macos_display_reload_settings (self);
 }
 
 void
@@ -273,56 +233,6 @@ gdk_macos_display_load_seat (GdkMacosDisplay *self)
   seat = _gdk_macos_seat_new (self);
   gdk_display_add_seat (GDK_DISPLAY (self), seat);
   g_object_unref (seat);
-}
-
-static gboolean
-gdk_macos_display_frame_cb (gpointer data)
-{
-  GdkMacosDisplay *self = data;
-  GdkDisplayLinkSource *source;
-  gint64 presentation_time;
-  gint64 now;
-  GList *iter;
-
-  g_assert (GDK_IS_MACOS_DISPLAY (self));
-
-  source = (GdkDisplayLinkSource *)self->frame_source;
-
-  presentation_time = source->presentation_time;
-  now = g_source_get_time ((GSource *)source);
-
-  iter = self->awaiting_frames.head;
-
-  while (iter != NULL)
-    {
-      GdkMacosSurface *surface = iter->data;
-
-      g_assert (GDK_IS_MACOS_SURFACE (surface));
-
-      iter = iter->next;
-
-      _gdk_macos_surface_publish_timings (surface,
-                                          source->presentation_time,
-                                          source->refresh_interval);
-
-      _gdk_macos_display_remove_frame_callback (self, surface);
-
-      if (GDK_SURFACE_IS_MAPPED (GDK_SURFACE (surface)))
-        gdk_surface_thaw_updates (GDK_SURFACE (surface));
-    }
-
-  return G_SOURCE_CONTINUE;
-}
-
-static void
-gdk_macos_display_load_display_link (GdkMacosDisplay *self)
-{
-  self->frame_source = gdk_display_link_source_new ();
-  g_source_set_callback (self->frame_source,
-                         gdk_macos_display_frame_cb,
-                         self,
-                         NULL);
-  g_source_attach (self->frame_source, NULL);
 }
 
 static const char *
@@ -400,11 +310,15 @@ gdk_macos_display_queue_events (GdkDisplay *display)
 
   g_return_if_fail (GDK_IS_MACOS_DISPLAY (self));
 
-  if ((nsevent = _gdk_macos_event_source_get_pending ()))
+  while ((nsevent = _gdk_macos_event_source_get_pending ()))
     {
       GdkEvent *event = _gdk_macos_display_translate (self, nsevent);
 
-      if (event != NULL)
+      if (event == GDK_MACOS_EVENT_DROP)
+        {
+          [nsevent release];
+        }
+      else if (event != NULL)
         {
           push_nsevent (event, nsevent);
           _gdk_windowing_got_event (GDK_DISPLAY (self),
@@ -428,7 +342,6 @@ _gdk_macos_display_surface_added (GdkMacosDisplay *self,
   g_assert (GDK_IS_MACOS_SURFACE (surface));
   g_assert (!queue_contains (&self->sorted_surfaces, &surface->sorted));
   g_assert (!queue_contains (&self->main_surfaces, &surface->main));
-  g_assert (!queue_contains (&self->awaiting_frames, &surface->frame));
   g_assert (surface->sorted.data == surface);
   g_assert (surface->main.data == surface);
   g_assert (surface->frame.data == surface);
@@ -455,9 +368,6 @@ _gdk_macos_display_surface_removed (GdkMacosDisplay *self,
   if (queue_contains (&self->main_surfaces, &surface->main))
     _gdk_macos_display_surface_resigned_main (self, surface);
 
-  if (queue_contains (&self->awaiting_frames, &surface->frame))
-    g_queue_unlink (&self->awaiting_frames, &surface->frame);
-
   g_return_if_fail (self->keyboard_surface != surface);
 }
 
@@ -480,12 +390,59 @@ _gdk_macos_display_surface_became_key (GdkMacosDisplay *self,
   event = gdk_focus_event_new (GDK_SURFACE (surface), keyboard, TRUE);
   _gdk_event_queue_append (GDK_DISPLAY (self), event);
 
+  /* For each parent surface, we want them to look like they
+   * are also still focused, so ensure they have that same
+   * state associated with them.
+   */
+  if (GDK_IS_POPUP (surface))
+    {
+      for (GdkSurface *parent = GDK_SURFACE (surface)->parent;
+           parent != NULL;
+           parent = parent->parent)
+        {
+          if (GDK_IS_TOPLEVEL (parent))
+            gdk_synthesize_surface_state (parent, 0, GDK_TOPLEVEL_STATE_FOCUSED);
+        }
+    }
+
   /* We just became the active window.  Unlike X11, Mac OS X does
    * not send us motion events while the window does not have focus
    * ("is not key").  We send a dummy motion notify event now, so that
    * everything in the window is set to correct state.
    */
   gdk_surface_request_motion (GDK_SURFACE (surface));
+}
+
+static gboolean
+select_key_in_idle_cb (gpointer data)
+{
+  GdkMacosDisplay *self = data;
+
+  g_assert (GDK_IS_MACOS_DISPLAY (self));
+
+  self->select_key_in_idle = 0;
+
+  /* Don't steal focus from NSPanel, etc */
+  if (self->key_window_is_foregin)
+    return G_SOURCE_REMOVE;
+
+  if (self->keyboard_surface == NULL)
+    {
+      const GList *surfaces = _gdk_macos_display_get_surfaces (self);
+
+      for (const GList *iter = surfaces; iter; iter = iter->next)
+        {
+          GdkMacosSurface *surface = iter->data;
+
+          if (GDK_SURFACE_IS_MAPPED (GDK_SURFACE (surface)))
+            {
+              [surface->window showAndMakeKey:YES];
+              break;
+            }
+        }
+    }
+
+  return G_SOURCE_REMOVE;
 }
 
 void
@@ -516,7 +473,25 @@ _gdk_macos_display_surface_resigned_key (GdkMacosDisplay *self,
                                 _gdk_display_get_next_serial (GDK_DISPLAY (self)));
     }
 
+  /* For each parent surface, we want them to look like they
+   * are also still focused, so ensure they have that same
+   * state associated with them.
+   */
+  if (GDK_IS_POPUP (surface))
+    {
+      for (GdkSurface *parent = GDK_SURFACE (surface)->parent;
+           parent != NULL;
+           parent = parent->parent)
+        {
+          if (GDK_IS_TOPLEVEL (parent))
+            gdk_synthesize_surface_state (parent, GDK_TOPLEVEL_STATE_FOCUSED, 0);
+        }
+    }
+
   _gdk_macos_display_clear_sorting (self);
+
+  if (self->select_key_in_idle == 0)
+    self->select_key_in_idle = g_idle_add (select_key_in_idle_cb, self);
 }
 
 /* Raises a transient window.
@@ -555,47 +530,11 @@ void
 _gdk_macos_display_surface_resigned_main (GdkMacosDisplay *self,
                                           GdkMacosSurface *surface)
 {
-  GdkMacosSurface *new_surface = NULL;
-
   g_return_if_fail (GDK_IS_MACOS_DISPLAY (self));
   g_return_if_fail (GDK_IS_MACOS_SURFACE (surface));
 
   if (queue_contains (&self->main_surfaces, &surface->main))
     g_queue_unlink (&self->main_surfaces, &surface->main);
-
-  _gdk_macos_display_clear_sorting (self);
-
-  if (GDK_SURFACE (surface)->transient_for &&
-      gdk_surface_get_mapped (GDK_SURFACE (surface)->transient_for))
-    {
-      new_surface = GDK_MACOS_SURFACE (GDK_SURFACE (surface)->transient_for);
-    }
-  else
-    {
-      const GList *surfaces = _gdk_macos_display_get_surfaces (self);
-
-      for (const GList *iter = surfaces; iter; iter = iter->next)
-        {
-          GdkMacosSurface *item = iter->data;
-
-          g_assert (GDK_IS_MACOS_SURFACE (item));
-
-          if (item == surface)
-            continue;
-
-          if (GDK_SURFACE_IS_MAPPED (GDK_SURFACE (item)))
-            {
-              new_surface = item;
-              break;
-            }
-        }
-    }
-
-  if (new_surface != NULL)
-    {
-      NSWindow *nswindow = _gdk_macos_surface_get_native (new_surface);
-      [nswindow makeKeyAndOrderFront:nswindow];
-    }
 
   _gdk_macos_display_clear_sorting (self);
 }
@@ -658,20 +597,12 @@ gdk_macos_display_finalize (GObject *object)
 {
   GdkMacosDisplay *self = (GdkMacosDisplay *)object;
 
-  CFNotificationCenterRemoveObserver (CFNotificationCenterGetDistributedCenter (),
-                                      self,
-                                      CFSTR ("NSApplicationDidChangeScreenParametersNotification"),
-                                      NULL);
+  _gdk_macos_display_feedback_destroy (self);
 
-  CFNotificationCenterRemoveObserver (CFNotificationCenterGetDistributedCenter (),
-                                      self,
-                                      CFSTR ("NSUserDefaultsDidChangeNotification"),
-                                      NULL);
-
+  g_clear_handle_id (&self->select_key_in_idle, g_source_remove);
   g_clear_pointer (&self->active_drags, g_hash_table_unref);
   g_clear_pointer (&self->active_drops, g_hash_table_unref);
   g_clear_object (&GDK_DISPLAY (self)->clipboard);
-  g_clear_pointer (&self->frame_source, g_source_unref);
   g_clear_object (&self->monitors);
   g_clear_pointer (&self->name, g_free);
 
@@ -746,24 +677,10 @@ _gdk_macos_display_open (const char *display_name)
 
   gdk_macos_display_load_seat (self);
   gdk_macos_display_load_clipboard (self);
-
-  /* Load CVDisplayLink before monitors to access refresh rates */
-  gdk_macos_display_load_display_link (self);
   _gdk_macos_display_reload_monitors (self);
 
-  CFNotificationCenterAddObserver (CFNotificationCenterGetLocalCenter (),
-                                   self,
-                                   gdk_macos_display_monitors_changed_cb,
-                                   CFSTR ("NSApplicationDidChangeScreenParametersNotification"),
-                                   NULL,
-                                   CFNotificationSuspensionBehaviorDeliverImmediately);
-
-  CFNotificationCenterAddObserver (CFNotificationCenterGetDistributedCenter (),
-                                   self,
-                                   gdk_macos_display_user_defaults_changed_cb,
-                                   CFSTR ("NSUserDefaultsDidChangeNotification"),
-                                   NULL,
-                                   CFNotificationSuspensionBehaviorDeliverImmediately);
+  /* Initialize feedback from display server */
+  _gdk_macos_display_feedback_init (self);
 
   if (event_source == NULL)
     {
@@ -774,6 +691,8 @@ _gdk_macos_display_open (const char *display_name)
   g_object_add_weak_pointer (G_OBJECT (self), (gpointer *)&self);
 
   gdk_display_emit_opened (GDK_DISPLAY (self));
+
+  [NSApp activateIgnoringOtherApps:YES];
 
   return GDK_DISPLAY (self);
 }
@@ -815,6 +734,7 @@ _gdk_macos_display_get_monitor_at_coords (GdkMacosDisplay *self,
                                           int              x,
                                           int              y)
 {
+  GdkMacosMonitor *best_match = NULL;
   guint n_monitors;
 
   g_return_val_if_fail (GDK_IS_MACOS_DISPLAY (self), NULL);
@@ -824,12 +744,25 @@ _gdk_macos_display_get_monitor_at_coords (GdkMacosDisplay *self,
   for (guint i = 0; i < n_monitors; i++)
     {
       GdkMacosMonitor *monitor = get_monitor (self, i);
+      const GdkRectangle *geom = &GDK_MONITOR (monitor)->geometry;
 
-      if (gdk_rectangle_contains_point (&GDK_MONITOR (monitor)->geometry, x, y))
-        return GDK_MONITOR (monitor);
+      if (x >= geom->x &&
+          y >= geom->y &&
+          x <= (geom->x + geom->width) &&
+          y <= (geom->y + geom->height))
+        {
+          if (x <= geom->x + geom->width && y < geom->y + geom->height)
+            return GDK_MONITOR (monitor);
+
+          /* Not an exact match as we're on a boundary, but there is
+           * a good chance another monitor doesn't exist there so we
+           * would want to still treat this as the best monitor.
+           */
+          best_match = monitor;
+        }
     }
 
-  return NULL;
+  return GDK_MONITOR (best_match);
 }
 
 GdkMonitor *
@@ -954,6 +887,14 @@ _gdk_macos_display_get_surface_at_coords (GdkMacosDisplay *self,
           *surface_x = x - GDK_MACOS_SURFACE (surface)->root_x;
           *surface_y = y - GDK_MACOS_SURFACE (surface)->root_y;
 
+          /* One last check to make sure that the x,y is within the input
+           * region of the window. Otherwise we might send the event to the
+           * wrong window because of window shadow.
+           */
+          if (surface->input_region != NULL &&
+              !cairo_region_contains_point (surface->input_region, *surface_x, *surface_y))
+            continue;
+
           return GDK_MACOS_SURFACE (surface);
         }
     }
@@ -983,42 +924,6 @@ _gdk_macos_display_get_surface_at_display_coords (GdkMacosDisplay *self,
   return _gdk_macos_display_get_surface_at_coords (self, x_gdk, y_gdk, surface_x, surface_y);
 }
 
-void
-_gdk_macos_display_add_frame_callback (GdkMacosDisplay *self,
-                                       GdkMacosSurface *surface)
-{
-  g_return_if_fail (GDK_IS_MACOS_DISPLAY (self));
-  g_return_if_fail (GDK_IS_MACOS_SURFACE (surface));
-
-  if (!queue_contains (&self->awaiting_frames, &surface->frame))
-    {
-      /* Processing frames is always head to tail, so push to the
-       * head so that we don't possibly re-enter this right after
-       * adding to the queue.
-       */
-      g_queue_push_head_link (&self->awaiting_frames, &surface->frame);
-
-      if (self->awaiting_frames.length == 1)
-        gdk_display_link_source_unpause ((GdkDisplayLinkSource *)self->frame_source);
-    }
-}
-
-void
-_gdk_macos_display_remove_frame_callback (GdkMacosDisplay *self,
-                                          GdkMacosSurface *surface)
-{
-  g_return_if_fail (GDK_IS_MACOS_DISPLAY (self));
-  g_return_if_fail (GDK_IS_MACOS_SURFACE (surface));
-
-  if (queue_contains (&self->awaiting_frames, &surface->frame))
-    {
-      g_queue_unlink (&self->awaiting_frames, &surface->frame);
-
-      if (self->awaiting_frames.length == 0)
-        gdk_display_link_source_pause ((GdkDisplayLinkSource *)self->frame_source);
-    }
-}
-
 NSWindow *
 _gdk_macos_display_find_native_under_pointer (GdkMacosDisplay *self,
                                               int             *x,
@@ -1036,17 +941,6 @@ _gdk_macos_display_find_native_under_pointer (GdkMacosDisplay *self,
     return _gdk_macos_surface_get_native (surface);
 
   return NULL;
-}
-
-int
-_gdk_macos_display_get_nominal_refresh_rate (GdkMacosDisplay *self)
-{
-  g_return_val_if_fail (GDK_IS_MACOS_DISPLAY (self), 60 * 1000);
-
-  if (self->frame_source == NULL)
-    return 60 * 1000;
-
-  return ((GdkDisplayLinkSource *)self->frame_source)->refresh_rate;
 }
 
 void
@@ -1070,10 +964,15 @@ _gdk_macos_display_get_surfaces (GdkMacosDisplay *self)
       NSArray *array = [NSApp orderedWindows];
       GQueue sorted = G_QUEUE_INIT;
 
+      self->key_window_is_foregin = FALSE;
+
       for (id obj in array)
         {
           NSWindow *nswindow = (NSWindow *)obj;
           GdkMacosSurface *surface;
+
+          if ([nswindow isKeyWindow])
+            self->key_window_is_foregin = !GDK_IS_MACOS_WINDOW (nswindow);
 
           if (!GDK_IS_MACOS_WINDOW (nswindow))
             continue;

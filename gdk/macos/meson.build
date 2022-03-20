@@ -2,13 +2,16 @@ gdk_macos_sources = files([
   'edgesnapping.c',
 
   'gdkdisplaylinksource.c',
+  'gdkmacosbuffer.c',
   'gdkmacoscairocontext.c',
   'gdkmacosclipboard.c',
   'gdkmacoscursor.c',
   'gdkmacosdevice.c',
   'gdkmacosdisplay.c',
+  'gdkmacosdisplay-feedback.c',
   'gdkmacosdisplay-settings.c',
   'gdkmacosdisplay-translate.c',
+  'gdkmacosdisplay-wm.c',
   'gdkmacosdrag.c',
   'gdkmacosdrop.c',
   'gdkmacosdragsurface.c',
@@ -20,11 +23,10 @@ gdk_macos_sources = files([
   'gdkmacosseat.c',
   'gdkmacossurface.c',
   'gdkmacostoplevelsurface.c',
-
   'GdkMacosBaseView.c',
-  'GdkMacosCairoView.c',
-  'GdkMacosCairoSubview.c',
-  'GdkMacosGLView.c',
+  'GdkMacosLayer.c',
+  'GdkMacosTile.c',
+  'GdkMacosView.c',
   'GdkMacosWindow.c',
 ])
 
@@ -46,6 +48,7 @@ gdk_macos_frameworks = [
   'CoreVideo',
   'CoreServices',
   'Foundation',
+  'IOSurface',
   'OpenGL',
   'QuartzCore',
 ]

@@ -98,6 +98,8 @@ image:disabled { -gtk-icon-filter: opacity(0.5); }
 
 .view:selected:focus, iconview:selected:focus, .view:selected, iconview:selected, textview > text:selected:focus, textview > text:selected { border-radius: 3px; }
 
+textview > text { background-color: transparent; }
+
 textview > text > selection { background-color: rgba(90, 90, 90, 0.5); }
 
 textview > text > selection:focus-within { background-color: rgba(21, 83, 158, 0.3); }

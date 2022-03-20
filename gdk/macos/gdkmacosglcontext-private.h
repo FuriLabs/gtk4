@@ -29,7 +29,7 @@
 #include "gdkmacossurface.h"
 
 #import <OpenGL/OpenGL.h>
-#import <OpenGL/gl.h>
+#import <OpenGL/gl3.h>
 #import <AppKit/AppKit.h>
 
 G_BEGIN_DECLS
@@ -39,23 +39,20 @@ struct _GdkMacosGLContext
   GdkGLContext parent_instance;
 
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-  NSOpenGLContext *gl_context;
+  CGLContextObj cgl_context;
   G_GNUC_END_IGNORE_DEPRECATIONS
 
-  NSWindow *dummy_window;
-  NSView *dummy_view;
+  GLuint texture;
+  GLuint target;
+  GLuint fbo;
 
-  cairo_region_t *damage;
-
-  guint is_attached : 1;
-  guint needs_resize : 1;
+  guint last_opaque : 1;
 };
 
 struct _GdkMacosGLContextClass
 {
   GdkGLContextClass parent_class;
 };
-
 
 G_END_DECLS
 

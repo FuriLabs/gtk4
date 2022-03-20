@@ -117,6 +117,7 @@ typedef struct {
 
 #ifdef HAVE_EGL
   EGLContext egl_context;
+  EGLBoolean (*eglSwapBuffersWithDamage) (EGLDisplay, EGLSurface, const EGLint *, EGLint);
 #endif
 } GdkGLContextPrivate;
 
@@ -279,11 +280,7 @@ gdk_gl_context_real_realize (GdkGLContext  *context,
       G_GNUC_UNUSED gint64 start_time = GDK_PROFILER_CURRENT_TIME;
 
       if (share != NULL)
-        {
-          gdk_gl_context_get_required_version (share, &major, &minor);
-          gdk_gl_context_set_allowed_apis (context,
-                                           gdk_gl_context_get_allowed_apis (share));
-        }
+        gdk_gl_context_get_required_version (share, &major, &minor);
       else
         gdk_gl_context_get_required_version (context, &major, &minor);
 
@@ -423,6 +420,11 @@ gdk_gl_context_real_realize (GdkGLContext  *context,
       priv->egl_context = ctx;
 
       gdk_gl_context_set_is_legacy (context, legacy_bit);
+
+      if (epoxy_has_egl_extension (egl_display, "EGL_KHR_swap_buffers_with_damage"))
+        priv->eglSwapBuffersWithDamage = (gpointer)epoxy_eglGetProcAddress ("eglSwapBuffersWithDamageKHR");
+      else if (epoxy_has_egl_extension (egl_display, "EGL_EXT_swap_buffers_with_damage"))
+        priv->eglSwapBuffersWithDamage = (gpointer)epoxy_eglGetProcAddress ("eglSwapBuffersWithDamageEXT");
 
       gdk_profiler_end_mark (start_time, "realize GdkWaylandGLContext", NULL);
 
@@ -612,7 +614,7 @@ gdk_gl_context_real_end_frame (GdkDrawContext *draw_context,
 
   gdk_profiler_add_mark (GDK_PROFILER_CURRENT_TIME, 0, "EGL", "swap buffers");
 
-  if (display->have_egl_swap_buffers_with_damage)
+  if (priv->eglSwapBuffersWithDamage)
     {
       EGLint stack_rects[4 * 4]; /* 4 rects */
       EGLint *heap_rects = NULL;
@@ -636,7 +638,7 @@ gdk_gl_context_real_end_frame (GdkDrawContext *draw_context,
           rects[j++] = rect.width * scale;
           rects[j++] = rect.height * scale;
         }
-      eglSwapBuffersWithDamageEXT (gdk_display_get_egl_display (display), egl_surface, rects, n_rects);
+      priv->eglSwapBuffersWithDamage (gdk_display_get_egl_display (display), egl_surface, rects, n_rects);
       g_free (heap_rects);
     }
   else
@@ -652,6 +654,12 @@ gdk_gl_context_surface_resized (GdkDrawContext *draw_context)
   gdk_gl_context_clear_old_updated_area (context);
 }
 
+static guint
+gdk_gl_context_real_get_default_framebuffer (GdkGLContext *self)
+{
+  return 0;
+}
+
 static void
 gdk_gl_context_class_init (GdkGLContextClass *klass)
 {
@@ -663,6 +671,7 @@ gdk_gl_context_class_init (GdkGLContextClass *klass)
   klass->is_shared = gdk_gl_context_real_is_shared;
   klass->make_current = gdk_gl_context_real_make_current;
   klass->clear_current = gdk_gl_context_real_clear_current;
+  klass->get_default_framebuffer = gdk_gl_context_real_get_default_framebuffer;
 
   draw_context_class->begin_frame = gdk_gl_context_real_begin_frame;
   draw_context_class->end_frame = gdk_gl_context_real_end_frame;

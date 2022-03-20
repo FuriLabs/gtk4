@@ -166,6 +166,54 @@ r32g32b32a32_float_from_float (guchar      *dest,
   memcpy (dest, src, sizeof (float) * n * 4);
 }
 
+#define PREMULTIPLY_FUNC(name, R1, G1, B1, A1, R2, G2, B2, A2) \
+static void \
+name (guchar *dest, \
+      const guchar *src, \
+      gsize n) \
+{ \
+  for (; n > 0; n--) \
+    { \
+      guchar a = src[A1]; \
+      guint16 r = (guint16)src[R1] * a + 127; \
+      guint16 g = (guint16)src[G1] * a + 127; \
+      guint16 b = (guint16)src[B1] * a + 127; \
+      dest[R2] = (r + (r >> 8) + 1) >> 8; \
+      dest[G2] = (g + (g >> 8) + 1) >> 8; \
+      dest[B2] = (b + (b >> 8) + 1) >> 8; \
+      dest[A2] = a; \
+      dest += 4; \
+      src += 4; \
+    } \
+}
+
+PREMULTIPLY_FUNC(r8g8b8a8_to_r8g8b8a8_premultiplied, 0, 1, 2, 3, 0, 1, 2, 3)
+PREMULTIPLY_FUNC(r8g8b8a8_to_b8g8r8a8_premultiplied, 0, 1, 2, 3, 2, 1, 0, 3)
+PREMULTIPLY_FUNC(r8g8b8a8_to_a8r8g8b8_premultiplied, 0, 1, 2, 3, 1, 2, 3, 0)
+PREMULTIPLY_FUNC(r8g8b8a8_to_a8b8g8r8_premultiplied, 0, 1, 2, 3, 3, 2, 1, 0)
+
+#define ADD_ALPHA_FUNC(name, R1, G1, B1, R2, G2, B2, A2) \
+static void \
+name (guchar *dest, \
+      const guchar *src, \
+      gsize n) \
+{ \
+  for (; n > 0; n--) \
+    { \
+      dest[R2] = src[R1]; \
+      dest[G2] = src[G1]; \
+      dest[B2] = src[B1]; \
+      dest[A2] = 255; \
+      dest += 4; \
+      src += 3; \
+    } \
+}
+
+ADD_ALPHA_FUNC(r8g8b8_to_r8g8b8a8, 0, 1, 2, 0, 1, 2, 3)
+ADD_ALPHA_FUNC(r8g8b8_to_b8g8r8a8, 0, 1, 2, 2, 1, 0, 3)
+ADD_ALPHA_FUNC(r8g8b8_to_a8r8g8b8, 0, 1, 2, 1, 2, 3, 0)
+ADD_ALPHA_FUNC(r8g8b8_to_a8b8g8r8, 0, 1, 2, 3, 2, 1, 0)
+
 struct _GdkMemoryFormatDescription
 {
   GdkMemoryAlpha alpha;
@@ -475,9 +523,58 @@ gdk_memory_convert (guchar              *dest_data,
   const GdkMemoryFormatDescription *src_desc = &memory_formats[src_format];
   float *tmp;
   gsize y;
+  void (*func) (guchar *, const guchar *, gsize) = NULL;
 
   g_assert (dest_format < GDK_MEMORY_N_FORMATS);
   g_assert (src_format < GDK_MEMORY_N_FORMATS);
+
+  if (src_format == GDK_MEMORY_R8G8B8A8 && dest_format == GDK_MEMORY_R8G8B8A8_PREMULTIPLIED)
+    func = r8g8b8a8_to_r8g8b8a8_premultiplied;
+  else if (src_format == GDK_MEMORY_B8G8R8A8 && dest_format == GDK_MEMORY_R8G8B8A8_PREMULTIPLIED)
+    func = r8g8b8a8_to_b8g8r8a8_premultiplied;
+  else if (src_format == GDK_MEMORY_R8G8B8A8 && dest_format == GDK_MEMORY_B8G8R8A8_PREMULTIPLIED)
+    func = r8g8b8a8_to_b8g8r8a8_premultiplied;
+  else if (src_format == GDK_MEMORY_B8G8R8A8 && dest_format == GDK_MEMORY_B8G8R8A8_PREMULTIPLIED)
+    func = r8g8b8a8_to_r8g8b8a8_premultiplied;
+  else if (src_format == GDK_MEMORY_R8G8B8A8 && dest_format == GDK_MEMORY_A8R8G8B8_PREMULTIPLIED)
+    func = r8g8b8a8_to_a8r8g8b8_premultiplied;
+  else if (src_format == GDK_MEMORY_B8G8R8A8 && dest_format == GDK_MEMORY_A8R8G8B8_PREMULTIPLIED)
+    func = r8g8b8a8_to_a8b8g8r8_premultiplied;
+  else if (src_format == GDK_MEMORY_R8G8B8 && dest_format == GDK_MEMORY_R8G8B8A8_PREMULTIPLIED)
+    func = r8g8b8_to_r8g8b8a8;
+  else if (src_format == GDK_MEMORY_B8G8R8 && dest_format == GDK_MEMORY_R8G8B8A8_PREMULTIPLIED)
+    func = r8g8b8_to_b8g8r8a8;
+  else if (src_format == GDK_MEMORY_R8G8B8 && dest_format == GDK_MEMORY_B8G8R8A8_PREMULTIPLIED)
+    func = r8g8b8_to_b8g8r8a8;
+  else if (src_format == GDK_MEMORY_B8G8R8 && dest_format == GDK_MEMORY_B8G8R8A8_PREMULTIPLIED)
+    func = r8g8b8_to_r8g8b8a8;
+  else if (src_format == GDK_MEMORY_R8G8B8 && dest_format == GDK_MEMORY_A8R8G8B8_PREMULTIPLIED)
+    func = r8g8b8_to_a8r8g8b8;
+  else if (src_format == GDK_MEMORY_B8G8R8 && dest_format == GDK_MEMORY_A8R8G8B8_PREMULTIPLIED)
+    func = r8g8b8_to_a8b8g8r8;
+  else if (src_format == GDK_MEMORY_R8G8B8 && dest_format == GDK_MEMORY_R8G8B8A8)
+    func = r8g8b8_to_r8g8b8a8;
+  else if (src_format == GDK_MEMORY_B8G8R8 && dest_format == GDK_MEMORY_R8G8B8A8)
+    func = r8g8b8_to_b8g8r8a8;
+  else if (src_format == GDK_MEMORY_R8G8B8 && dest_format == GDK_MEMORY_B8G8R8A8)
+    func = r8g8b8_to_b8g8r8a8;
+  else if (src_format == GDK_MEMORY_B8G8R8 && dest_format == GDK_MEMORY_B8G8R8A8)
+    func = r8g8b8_to_r8g8b8a8;
+  else if (src_format == GDK_MEMORY_R8G8B8 && dest_format == GDK_MEMORY_A8R8G8B8)
+    func = r8g8b8_to_a8r8g8b8;
+  else if (src_format == GDK_MEMORY_B8G8R8 && dest_format == GDK_MEMORY_A8R8G8B8)
+    func = r8g8b8_to_a8b8g8r8;
+
+  if (func != NULL)
+    {
+      for (y = 0; y < height; y++)
+        {
+          func (dest_data, src_data, width);
+          src_data += src_stride;
+          dest_data += dest_stride;
+        }
+      return;
+    }
 
   tmp = g_new (float, width * 4);
 

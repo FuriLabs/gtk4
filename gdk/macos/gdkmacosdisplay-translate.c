@@ -211,6 +211,7 @@ fill_button_event (GdkMacosDisplay *display,
   GdkDevice *pointer = NULL;
   GdkDeviceTool *tool = NULL;
   double *axes = NULL;
+  cairo_region_t *input_region;
 
   g_assert (GDK_IS_MACOS_DISPLAY (display));
   g_assert (GDK_IS_MACOS_SURFACE (surface));
@@ -218,6 +219,7 @@ fill_button_event (GdkMacosDisplay *display,
   seat = gdk_display_get_default_seat (GDK_DISPLAY (display));
   state = get_keyboard_modifiers_from_ns_event (nsevent) |
          _gdk_macos_display_get_current_mouse_modifiers (display);
+  input_region = GDK_SURFACE (surface)->input_region;
 
   switch ((int)[nsevent type])
     {
@@ -244,7 +246,8 @@ fill_button_event (GdkMacosDisplay *display,
    */
   if (type == GDK_BUTTON_PRESS &&
       (x < 0 || x > GDK_SURFACE (surface)->width ||
-       y < 0 || y > GDK_SURFACE (surface)->height))
+       y < 0 || y > GDK_SURFACE (surface)->height ||
+       (input_region && !cairo_region_contains_point (input_region, x, y))))
     return NULL;
 
   if (([nsevent subtype] == NSEventSubtypeTabletPoint) &&
@@ -609,6 +612,8 @@ fill_scroll_event (GdkMacosDisplay *self,
   GdkModifierType state;
   GdkDevice *pointer;
   GdkEvent *ret = NULL;
+  NSEventPhase phase;
+  NSEventPhase momentumPhase;
   GdkSeat *seat;
   double dx;
   double dy;
@@ -616,10 +621,30 @@ fill_scroll_event (GdkMacosDisplay *self,
   g_assert (GDK_IS_MACOS_SURFACE (surface));
   g_assert (nsevent != NULL);
 
+  phase = [nsevent phase];
+  momentumPhase = [nsevent momentumPhase];
+
+  /* Ignore kinetic scroll events from the display server as we already
+   * handle those internally.
+   */
+  if (phase == 0 && momentumPhase != 0)
+    return GDK_MACOS_EVENT_DROP;
+
   seat = gdk_display_get_default_seat (GDK_DISPLAY (self));
   pointer = gdk_seat_get_pointer (seat);
   state = _gdk_macos_display_get_current_mouse_modifiers (self) |
           _gdk_macos_display_get_current_keyboard_modifiers (self);
+
+  /* If we are starting a new phase, send a stop so any previous
+   * scrolling immediately stops.
+   */
+  if (phase == NSEventPhaseMayBegin)
+    return gdk_scroll_event_new (GDK_SURFACE (surface),
+                                 pointer,
+                                 NULL,
+                                 get_time_from_ns_event (nsevent),
+                                 state,
+                                 0.0, 0.0, TRUE);
 
   dx = [nsevent deltaX];
   dy = [nsevent deltaY];
@@ -664,34 +689,32 @@ fill_scroll_event (GdkMacosDisplay *self,
       dy = 0.0;
     }
 
-  if (dx != 0.0 || dy != 0.0)
+  if ((dx != 0.0 || dy != 0.0) && ![nsevent hasPreciseScrollingDeltas])
     {
-      if ([nsevent hasPreciseScrollingDeltas])
-        {
-          GdkEvent *emulated;
+      g_assert (ret == NULL);
 
-          emulated = gdk_scroll_event_new_discrete (GDK_SURFACE (surface),
-                                                    pointer,
-                                                    NULL,
-                                                    get_time_from_ns_event (nsevent),
-                                                    state,
-                                                    direction,
-                                                    TRUE);
-          _gdk_event_queue_append (GDK_DISPLAY (self), emulated);
-        }
-      else
-        {
-          g_assert (ret == NULL);
+      ret = gdk_scroll_event_new_discrete (GDK_SURFACE (surface),
+                                           pointer,
+                                           NULL,
+                                           get_time_from_ns_event (nsevent),
+                                           state,
+                                           direction,
+                                           FALSE);
+    }
 
-          ret = gdk_scroll_event_new (GDK_SURFACE (surface),
-                                      pointer,
-                                      NULL,
-                                      get_time_from_ns_event (nsevent),
-                                      state,
-                                      dx,
-                                      dy,
-                                      FALSE);
-        }
+  if (phase == NSEventPhaseEnded || phase == NSEventPhaseCancelled)
+    {
+      /* The user must have released their fingers in a touchpad
+       * scroll, so try to send a scroll is_stop event.
+       */
+      if (ret != NULL)
+        _gdk_event_queue_append (GDK_DISPLAY (self), g_steal_pointer (&ret));
+      ret = gdk_scroll_event_new (GDK_SURFACE (surface),
+                                  pointer,
+                                  NULL,
+                                  get_time_from_ns_event (nsevent),
+                                  state,
+                                  0.0, 0.0, TRUE);
     }
 
   return g_steal_pointer (&ret);
@@ -854,9 +877,9 @@ get_surface_from_ns_event (GdkMacosDisplay *self,
 
 find_under_pointer:
 
-  if (!surface)
+  if (surface == NULL && nswindow == NULL)
     {
-      /* Fallback used when no NSSurface set.  This happens e.g. when
+      /* Fallback used when no NSWindow set. This happens e.g. when
        * we allow motion events without a window set in gdk_event_translate()
        * that occur immediately after the main menu bar was clicked/used.
        * This fallback will not return coordinates contained in a window's
@@ -906,7 +929,13 @@ find_surface_for_mouse_event (GdkMacosDisplay *self,
   GdkDeviceGrabInfo *grab;
   GdkSeat *seat;
 
-  surface = get_surface_from_ns_event (self, nsevent, &point, x, y);
+  /* Even if we had a surface window, it might be for something outside
+   * the input region (shadow) which we might want to ignore. This is
+   * handled for us deeper in the event unwrapping.
+   */
+  if (!(surface = get_surface_from_ns_event (self, nsevent, &point, x, y)))
+    return NULL;
+
   display = gdk_surface_get_display (surface);
   seat = gdk_display_get_default_seat (GDK_DISPLAY (self));
   pointer = gdk_seat_get_pointer (seat);
@@ -1008,11 +1037,6 @@ find_surface_for_ns_event (GdkMacosDisplay *self,
   g_assert (x != NULL);
   g_assert (y != NULL);
 
-  if (!(surface = get_surface_from_ns_event (self, nsevent, &point, x, y)))
-    return NULL;
-
-  view = (GdkMacosBaseView *)[GDK_MACOS_SURFACE (surface)->window contentView];
-
   _gdk_macos_display_from_display_coords (self, point.x, point.y, &x_tmp, &y_tmp);
 
   switch ((int)[nsevent type])
@@ -1037,7 +1061,9 @@ find_surface_for_ns_event (GdkMacosDisplay *self,
       /* Only handle our own entered/exited events, not the ones for the
        * titlebar buttons.
        */
-      if ([nsevent trackingArea] == [view trackingArea])
+      if ((surface = get_surface_from_ns_event (self, nsevent, &point, x, y)) &&
+          (view = (GdkMacosBaseView *)[GDK_MACOS_SURFACE (surface)->window contentView]) &&
+          ([nsevent trackingArea] == [view trackingArea]))
         return GDK_MACOS_SURFACE (surface);
       else
         return NULL;
@@ -1060,6 +1086,7 @@ _gdk_macos_display_translate (GdkMacosDisplay *self,
   GdkMacosSurface *surface;
   GdkMacosWindow *window;
   NSEventType event_type;
+  NSWindow *event_window;
   GdkEvent *ret = NULL;
   int x;
   int y;
@@ -1102,6 +1129,15 @@ _gdk_macos_display_translate (GdkMacosDisplay *self,
       return NULL;
     }
 
+  /* If the event was delivered to NSWindow that is foreign (or rather,
+   * Cocoa native), then we should pass the event along to that window.
+   */
+  if ((event_window = [nsevent window]) && !GDK_IS_MACOS_WINDOW (event_window))
+    return NULL;
+
+  /* If we can't find a GdkSurface to deliver the event to, then we
+   * should pass it along to the NSApp.
+   */
   if (!(surface = find_surface_for_ns_event (self, nsevent, &x, &y)))
     return NULL;
 
@@ -1133,15 +1169,31 @@ _gdk_macos_display_translate (GdkMacosDisplay *self,
   if (test_resize (nsevent, surface, x, y))
     return NULL;
 
-  if ((event_type == NSEventTypeRightMouseDown ||
-       event_type == NSEventTypeOtherMouseDown ||
-       event_type == NSEventTypeLeftMouseDown))
+  if (event_type == NSEventTypeRightMouseDown ||
+      event_type == NSEventTypeOtherMouseDown ||
+      event_type == NSEventTypeLeftMouseDown)
     {
       if (![NSApp isActive])
         [NSApp activateIgnoringOtherApps:YES];
 
       if (![window isKeyWindow])
-        [window makeKeyWindow];
+        {
+          NSWindow *orig_window = [nsevent window];
+
+          /* To get NSApp to supress activating the window we might
+           * have clicked through the shadow of, we need to dispatch
+           * the event and handle it in GdkMacosView:mouseDown to call
+           * [NSApp preventWindowOrdering]. Calling it here will not
+           * do anything as the event is not registered.
+           */
+          if (orig_window &&
+              GDK_IS_MACOS_WINDOW (orig_window) &&
+              [(GdkMacosWindow *)orig_window needsMouseDownQuirk])
+            [NSApp sendEvent:nsevent];
+
+          [window showAndMakeKey:YES];
+          _gdk_macos_display_clear_sorting (self);
+        }
     }
 
   switch ((int)event_type)
@@ -1174,7 +1226,11 @@ _gdk_macos_display_translate (GdkMacosDisplay *self,
         GdkDevice *pointer = gdk_seat_get_pointer (seat);
         GdkDeviceGrabInfo *grab = _gdk_display_get_last_device_grab (GDK_DISPLAY (self), pointer);
 
-        if (grab == NULL)
+        if ([(GdkMacosWindow *)window isInManualResizeOrMove])
+          {
+            ret = GDK_MACOS_EVENT_DROP;
+          }
+        else if (grab == NULL)
           {
             if (event_type == NSEventTypeMouseExited)
               [[NSCursor arrowCursor] set];

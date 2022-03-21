@@ -1,3 +1,29 @@
+gtk4 (4.6.2+ds-1ubuntu1) UNRELEASED; urgency=medium
+
+  * Sync with Debian. Remaining change:
+    - debian/tests:
+      + include the memorytexture test in the flaky set, it has been
+        unreliable. Ideally that would need debugging but the porting
+        infra is down atm
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 21 Mar 2022 12:30:25 -0400
+
+gtk4 (4.6.2+ds-1) unstable; urgency=medium
+
+  * New upstream release
+  * d/missing-sources/emojibase: Update to emojibase-data 7.0.1, matching
+    the data files in gtk/emoji
+  * d/rules: Improve regeneration of emoji data
+  * d/missing-sources: Add Unicode emoji data.
+    The JSON data files in d/missing-sources/emojibase are indirectly
+    derived from this.
+  * d/copyright: Update
+  * d/p/debian/Disable-optimized-GResource-embedding.patch: Remove.
+    The upstream code now disables this on the architectures where it is
+    known to be problematic, namely 32-bit ARM.
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 20 Mar 2022 17:51:43 +0000
+
 gtk4 (4.6.1+ds-1ubuntu2) jammy; urgency=medium
 
   * debian/patches/git_gdk_testnames.patch:

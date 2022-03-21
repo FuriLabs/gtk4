@@ -4,5 +4,3 @@ debian/Disable-web-fonts-for-now.patch
 debian/templates-Remove-html5shiv.patch
 debian/Skip-some-known-failing-tests-on-mips-family-architecture.patch
 debian/Disable-clipboard-test.patch
-debian/Disable-optimized-GResource-embedding.patch
-git_gdk_testnames.patch

@@ -1,4 +1,4 @@
-gtk4 (4.6.2+ds-1ubuntu1) UNRELEASED; urgency=medium
+gtk4 (4.6.2+ds-1ubuntu1) jammy; urgency=medium
 
   * Sync with Debian. Remaining change:
     - debian/tests:
@@ -6,7 +6,7 @@ gtk4 (4.6.2+ds-1ubuntu1) UNRELEASED; urgency=medium
         unreliable. Ideally that would need debugging but the porting
         infra is down atm
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 21 Mar 2022 12:30:25 -0400
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 21 Mar 2022 12:35:57 -0400
 
 gtk4 (4.6.2+ds-1) unstable; urgency=medium
 

@@ -1,3 +1,11 @@
+gtk4 (4.6.2+ds-1ubuntu2) jammy; urgency=medium
+
+  * debian/patches/git_portal_segfault.patch:
+    - cherry pick a fix for a segfault in the xdg gnome portal
+      (lp: #1967519)
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Mon, 04 Apr 2022 10:45:10 +0200
+
 gtk4 (4.6.2+ds-1ubuntu1) jammy; urgency=medium
 
   * Sync with Debian. Remaining change:

@@ -1,3 +1,11 @@
+gtk4 (4.6.2+ds-1ubuntu3) jammy; urgency=medium
+
+  * Cherry-pick filechooser-Small-fix-for-save-mode.patch:
+    Fix saving files to a folder that doesn't have any files in it
+    (LP: #1969622)
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 20 Apr 2022 09:37:57 -0400
+
 gtk4 (4.6.2+ds-1ubuntu2) jammy; urgency=medium
 
   * debian/patches/git_portal_segfault.patch:

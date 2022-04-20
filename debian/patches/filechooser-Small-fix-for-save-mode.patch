@@ -1,0 +1,30 @@
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Sat, 16 Apr 2022 22:00:22 -0400
+Subject: filechooser: Small fix for save mode
+
+When changing folders, we were making the select
+button insensitive when there's no files around.
+That doesn't make sense in save mode when we don't
+want to select a file but create one.
+
+Fixes: #4851
+(cherry picked from commit eb2699aa9f177cea67bb22bcebd6bb170853b571)
+
+https://launchpad.net/bugs/1969622
+---
+ gtk/gtkfilechooserwidget.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gtk/gtkfilechooserwidget.c b/gtk/gtkfilechooserwidget.c
+index a2310f3..e6184f8 100644
+--- a/gtk/gtkfilechooserwidget.c
++++ b/gtk/gtkfilechooserwidget.c
+@@ -2193,7 +2193,7 @@ update_default (GtkFileChooserWidget *impl)
+     return;
+ 
+   files = gtk_file_chooser_get_files (GTK_FILE_CHOOSER (impl));
+-  sensitive = (g_list_model_get_n_items (files) > 0);
++  sensitive = (g_list_model_get_n_items (files) > 0 || impl->action == GTK_FILE_CHOOSER_ACTION_SAVE);
+   gtk_widget_set_sensitive (button, sensitive);
+ 
+   g_object_unref (files);

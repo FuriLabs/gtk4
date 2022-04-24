@@ -9,10 +9,10 @@ Forwarded: no
  2 files changed, 21 insertions(+), 8 deletions(-)
 
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
-index 71e18f8..fb42e30 100644
+index 106661a..06e1d18 100644
 --- a/testsuite/gsk/meson.build
 +++ b/testsuite/gsk/meson.build
-@@ -75,15 +75,21 @@ compare_render_tests = [
+@@ -77,15 +77,21 @@ compare_render_tests = [
    'scale-up-down',
    'shadow-in-opacity',
    'texture-url',

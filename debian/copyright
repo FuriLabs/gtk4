@@ -8,8 +8,6 @@ Files-Excluded:
  docs/reference/gdk/gdk4-x11
  docs/reference/gsk/gsk4
  docs/reference/gtk/gtk4
- subprojects/gi-docgen/gidocgen/templates/basic/*.woff
- subprojects/gi-docgen/gidocgen/templates/basic/*.woff2
  subprojects/wayland
 
 Files: *
@@ -513,20 +511,6 @@ Files:
  demos/widget-factory/org.gtk.WidgetFactory4.appdata.xml.in
 Copyright: unspecified
 License: CC0-1.0
-
-Files:
- subprojects/gi-docgen/*
-Copyright:
- 2020-2021 GNOME Foundation
-License: CC0-1.0, and CC-BY-SA-3.0, and Apache-2.0 or GPL-3.0+, and GPL-2.0+, and LGPL-2+ or MPL-1.1
-
-Files:
- subprojects/gi-docgen/gidocgen/templates/basic/fzy.js
- subprojects/gi-docgen/gidocgen/templates/basic/solarized-*.css
-Copyright:
- 2014 John Hawthorn
- 2014 John Louis Del Rosario, Hank Gay, John Mastro, Brandon Bennett
-License: Expat
 
 License: GPL-2.0+
  SPDX license expression "GPL-2.0-or-later":

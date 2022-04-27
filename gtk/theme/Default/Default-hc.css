@@ -298,15 +298,15 @@ notebook > header > tabs > arrow:checked:hover, button:checked:hover { color: #2
 
 notebook > header > tabs > arrow:checked:active, button:checked:active { color: #272c2e; border-color: #877b6e; background-image: image(#cdc7c1); box-shadow: none; }
 
-notebook > header > tabs > arrow:backdrop, button.flat:backdrop, button:backdrop { color: #929595; border-color: #d5d0cc; background-image: image(#f6f5f4); box-shadow: none; transition: 200ms ease-out; }
+notebook > header > tabs > arrow:backdrop, button:backdrop.flat, button:backdrop { color: #929595; border-color: #d5d0cc; background-image: image(#f6f5f4); box-shadow: none; transition: 200ms ease-out; }
 
-notebook > header > tabs > arrow:backdrop:not(:disabled), button.flat:backdrop:not(:disabled), button:backdrop:not(:disabled) { -gtk-icon-filter: none; }
+notebook > header > tabs > arrow:backdrop:not(:disabled), button:backdrop.flat:not(:disabled), button:backdrop:not(:disabled) { -gtk-icon-filter: none; }
 
-notebook > header > tabs > arrow:backdrop:active, notebook > header > tabs > arrow:backdrop:checked, button.flat:backdrop:active, button.flat:backdrop:checked, button:backdrop:active, button:backdrop:checked { color: #929595; border-color: #d5d0cc; background-image: image(#ebebeb); box-shadow: none; }
+notebook > header > tabs > arrow:backdrop:active, notebook > header > tabs > arrow:backdrop:checked, button:backdrop.flat:active, button:backdrop.flat:checked, button:backdrop:active, button:backdrop:checked { color: #929595; border-color: #d5d0cc; background-image: image(#ebebeb); box-shadow: none; }
 
-notebook > header > tabs > arrow:backdrop:disabled, button.flat:backdrop:disabled, button:backdrop:disabled { color: #d4cfca; border-color: #d5d0cc; background-image: image(#fefefd); box-shadow: none; }
+notebook > header > tabs > arrow:backdrop:disabled, button:backdrop.flat:disabled, button:backdrop:disabled { color: #d4cfca; border-color: #d5d0cc; background-image: image(#fefefd); box-shadow: none; }
 
-notebook > header > tabs > arrow:backdrop:disabled:active, notebook > header > tabs > arrow:backdrop:disabled:checked, button.flat:backdrop:disabled:active, button.flat:backdrop:disabled:checked, button:backdrop:disabled:active, button:backdrop:disabled:checked { color: #d4cfca; border-color: #d5d0cc; background-image: image(#ebebeb); box-shadow: none; }
+notebook > header > tabs > arrow:backdrop:disabled:active, notebook > header > tabs > arrow:backdrop:disabled:checked, button:backdrop.flat:disabled:active, button:backdrop.flat:disabled:checked, button:backdrop:disabled:active, button:backdrop:disabled:checked { color: #d4cfca; border-color: #d5d0cc; background-image: image(#ebebeb); box-shadow: none; }
 
 notebook > header > tabs > arrow:disabled, button:disabled { color: #929495; border-color: #9e958b; background-image: image(#fefefd); -gtk-icon-filter: opacity(0.5); }
 
@@ -484,17 +484,17 @@ popover.menu box.circular-buttons button.circular.image-button.model:hover, list
 
 popover.menu box.circular-buttons button.circular.image-button.model:active, popover.menu box.circular-buttons button.circular.image-button.model:checked, list > row button.image-button:not(.flat):active, list > row button.image-button:not(.flat):checked { color: #272c2e; border-color: #877b6e; background-image: image(#dfdbd8); box-shadow: none; }
 
-popover.menu box.circular-buttons button.suggested-action.circular.image-button.model, list > row button.image-button.suggested-action:not(.flat) { color: white; outline-color: white; border-color: #0f3b71; background-image: linear-gradient(to top, #1a66c2 2px, #1b6acb); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07); transition-property: outline, outline-width, outline-offset, outline-color; transition-duration: 300ms; animation-timing-function: ease-in-out; }
+popover.menu box.circular-buttons button.suggested-action.circular.image-button.model, list > row button.image-button:not(.flat).suggested-action { color: white; outline-color: white; border-color: #0f3b71; background-image: linear-gradient(to top, #1a66c2 2px, #1b6acb); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07); transition-property: outline, outline-width, outline-offset, outline-color; transition-duration: 300ms; animation-timing-function: ease-in-out; }
 
-popover.menu box.circular-buttons button.suggested-action.circular.image-button.model, list > row button.image-button.suggested-action:not(.flat) { outline: 0 solid transparent; outline-offset: 4px; }
+popover.menu box.circular-buttons button.suggested-action.circular.image-button.model, list > row button.image-button:not(.flat).suggested-action { outline: 0 solid transparent; outline-offset: 4px; }
 
-popover.menu box.circular-buttons button.suggested-action.circular.image-button.model:focus:focus-visible, list > row button.image-button.suggested-action:not(.flat):focus:focus-visible { outline-color: white; outline-width: 2px; outline-offset: -2px; }
+popover.menu box.circular-buttons button.suggested-action.circular.image-button.model:focus:focus-visible, list > row button.image-button:not(.flat).suggested-action:focus:focus-visible { outline-color: white; outline-width: 2px; outline-offset: -2px; }
 
-popover.menu box.circular-buttons button.destructive-action.circular.image-button.model, list > row button.image-button.destructive-action:not(.flat) { color: white; outline-color: white; border-color: #851015; background-image: linear-gradient(to top, #d71a23 2px, #e01b24); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07); transition-property: outline, outline-width, outline-offset, outline-color; transition-duration: 300ms; animation-timing-function: ease-in-out; }
+popover.menu box.circular-buttons button.destructive-action.circular.image-button.model, list > row button.image-button:not(.flat).destructive-action { color: white; outline-color: white; border-color: #851015; background-image: linear-gradient(to top, #d71a23 2px, #e01b24); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07); transition-property: outline, outline-width, outline-offset, outline-color; transition-duration: 300ms; animation-timing-function: ease-in-out; }
 
-popover.menu box.circular-buttons button.destructive-action.circular.image-button.model, list > row button.image-button.destructive-action:not(.flat) { outline: 0 solid transparent; outline-offset: 4px; }
+popover.menu box.circular-buttons button.destructive-action.circular.image-button.model, list > row button.image-button:not(.flat).destructive-action { outline: 0 solid transparent; outline-offset: 4px; }
 
-popover.menu box.circular-buttons button.destructive-action.circular.image-button.model:focus:focus-visible, list > row button.image-button.destructive-action:not(.flat):focus:focus-visible { outline-color: white; outline-width: 2px; outline-offset: -2px; }
+popover.menu box.circular-buttons button.destructive-action.circular.image-button.model:focus:focus-visible, list > row button.image-button:not(.flat).destructive-action:focus:focus-visible { outline-color: white; outline-width: 2px; outline-offset: -2px; }
 
 /********* Links * */
 button.link, link { color: #1b6acb; text-decoration: underline; }
@@ -568,7 +568,7 @@ spinbutton.vertical > text { min-height: 32px; min-width: 32px; padding: 0; bord
 
 spinbutton.vertical > text > selection { background-color: rgba(141, 141, 141, 0.5); color: transparent; }
 
-spinbutton.vertical > text > selection:focus-within { background-color: rgba(53, 132, 228, 0.3); color: #ffffff; }
+spinbutton.vertical > text > selection:focus-within { background-color: rgba(53, 132, 228, 0.3); color: #272c2e; }
 
 spinbutton.vertical > text > block-cursor { color: #ffffff; background-color: black; }
 
@@ -646,9 +646,9 @@ infobar .close:hover, searchbar .close:hover { color: #272c2e; border-color: #87
 /***************** Title buttons * */
 windowcontrols { border-spacing: 6px; }
 
-windowcontrols.start:not(.empty):dir(ltr), windowcontrols.end:not(.empty):dir(rtl) { margin-right: 7px; }
+windowcontrols:not(.empty).start:dir(ltr), windowcontrols:not(.empty).end:dir(rtl) { margin-right: 7px; }
 
-windowcontrols.start:not(.empty):dir(rtl), windowcontrols.end:not(.empty):dir(ltr) { margin-left: 7px; }
+windowcontrols:not(.empty).start:dir(rtl), windowcontrols:not(.empty).end:dir(ltr) { margin-left: 7px; }
 
 windowcontrols button { border-radius: 9999px; padding: 6px; margin: 0 2px; min-width: 0; min-height: 0; }
 
@@ -731,9 +731,9 @@ columnview.view:drop(active), treeview.view:drop(active) { box-shadow: none; }
 
 columnview.view > dndtarget:drop(active), treeview.view > dndtarget:drop(active) { border-style: solid none; border-width: 1px; border-color: #124787; }
 
-columnview.view > dndtarget.after:drop(active), treeview.view > dndtarget.after:drop(active) { border-top-style: none; }
+columnview.view > dndtarget:drop(active).after, treeview.view > dndtarget:drop(active).after { border-top-style: none; }
 
-columnview.view > dndtarget.before:drop(active), treeview.view > dndtarget.before:drop(active) { border-bottom-style: none; }
+columnview.view > dndtarget:drop(active).before, treeview.view > dndtarget:drop(active).before { border-bottom-style: none; }
 
 columnview.view.expander, treeview.view.expander { min-width: 16px; min-height: 16px; -gtk-icon-source: -gtk-icontheme("pan-end-symbolic"); color: #4d4d4d; }
 
@@ -934,15 +934,15 @@ notebook > header > tabs > tab { transition: outline-width 200ms cubic-bezier(0.
 
 notebook > header > tabs > tab:hover { color: #272c2e; background-color: #d8d4d0; }
 
-notebook > header > tabs > tab.reorderable-page:hover { border-color: rgba(135, 123, 110, 0.3); background-color: rgba(253, 253, 252, 0.2); }
+notebook > header > tabs > tab:hover.reorderable-page { border-color: rgba(135, 123, 110, 0.3); background-color: rgba(253, 253, 252, 0.2); }
 
 notebook > header > tabs > tab:not(:checked) { outline-color: transparent; }
 
 notebook > header > tabs > tab:checked { color: #272c2e; }
 
-notebook > header > tabs > tab.reorderable-page:checked { border-color: rgba(135, 123, 110, 0.5); background-color: rgba(253, 253, 252, 0.5); }
+notebook > header > tabs > tab:checked.reorderable-page { border-color: rgba(135, 123, 110, 0.5); background-color: rgba(253, 253, 252, 0.5); }
 
-notebook > header > tabs > tab.reorderable-page:checked:hover { background-color: rgba(253, 253, 252, 0.7); }
+notebook > header > tabs > tab:checked.reorderable-page:hover { background-color: rgba(253, 253, 252, 0.7); }
 
 notebook > header > tabs > tab button.flat { color: alpha(currentColor,0.3); padding: 0; margin-top: 4px; margin-bottom: 4px; min-width: 20px; min-height: 20px; }
 
@@ -1007,15 +1007,15 @@ scrollbar > range.fine-tune.horizontal > trough > slider { border-width: 5px 4px
 
 scrollbar > range.fine-tune.vertical > trough > slider { border-width: 4px 5px; }
 
-scrollbar.overlay-indicator:not(.dragging):not(.hovering) { border-color: transparent; opacity: 0.4; background-color: transparent; }
+scrollbar.overlay-indicator:not(.dragging):not(.hovering) { border-color: transparent; background-color: transparent; }
 
-scrollbar.overlay-indicator:not(.dragging):not(.hovering) > range > trough > slider { margin: 0; min-width: 3px; min-height: 3px; background-color: #272c2e; border: 1px solid white; }
+scrollbar.overlay-indicator:not(.dragging):not(.hovering) > range > trough > slider { margin: 0; min-width: 3px; min-height: 3px; background-color: alpha(#272c2e,0.4); border: 1px solid alpha(white,0.4); }
 
-scrollbar.overlay-indicator.horizontal:not(.dragging):not(.hovering) > range > trough > slider { margin: 0 2px; min-width: 40px; }
+scrollbar.overlay-indicator:not(.dragging):not(.hovering).horizontal > range > trough > slider { margin: 0 2px; min-width: 40px; }
 
-scrollbar.overlay-indicator.vertical:not(.dragging):not(.hovering) > range > trough > slider { margin: 2px 0; min-height: 40px; }
+scrollbar.overlay-indicator:not(.dragging):not(.hovering).vertical > range > trough > slider { margin: 2px 0; min-height: 40px; }
 
-scrollbar.overlay-indicator.dragging, scrollbar.overlay-indicator.hovering { opacity: 0.8; }
+scrollbar.overlay-indicator.dragging, scrollbar.overlay-indicator.hovering { background-color: alpha(#cecece,0.8); border: 1px solid alpha(white,0.8); }
 
 scrollbar.horizontal > range > trough > slider { min-width: 40px; }
 
@@ -1232,67 +1232,67 @@ scale.vertical.fine-tune > marks indicator { min-height: 3px; }
 
 scale.horizontal.marks-before:not(.marks-after) > trough > slider { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-horz-scale-has-marks-above.png"), url("assets-hc/slider-horz-scale-has-marks-above@2.png")); min-height: 26px; min-width: 22px; margin-top: -14px; background-position: top; background-repeat: no-repeat; box-shadow: none; }
 
-scale.horizontal.marks-before.fine-tune:not(.marks-after) > trough > slider { margin: -7px -10px; margin-top: -11px; }
+scale.horizontal.marks-before:not(.marks-after).fine-tune > trough > slider { margin: -7px -10px; margin-top: -11px; }
 
 scale.horizontal.marks-before:not(.marks-after) > trough > slider:hover { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-horz-scale-has-marks-above-hover.png"), url("assets-hc/slider-horz-scale-has-marks-above-hover@2.png")); min-height: 26px; min-width: 22px; margin-top: -14px; background-position: top; background-repeat: no-repeat; box-shadow: none; }
 
-scale.horizontal.marks-before.fine-tune:not(.marks-after) > trough > slider { margin: -7px -10px; margin-top: -11px; }
+scale.horizontal.marks-before:not(.marks-after).fine-tune > trough > slider { margin: -7px -10px; margin-top: -11px; }
 
 scale.horizontal.marks-before:not(.marks-after) > trough > slider:active { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-horz-scale-has-marks-above-active.png"), url("assets-hc/slider-horz-scale-has-marks-above-active@2.png")); min-height: 26px; min-width: 22px; margin-top: -14px; background-position: top; background-repeat: no-repeat; box-shadow: none; }
 
-scale.horizontal.marks-before.fine-tune:not(.marks-after) > trough > slider { margin: -7px -10px; margin-top: -11px; }
+scale.horizontal.marks-before:not(.marks-after).fine-tune > trough > slider { margin: -7px -10px; margin-top: -11px; }
 
 scale.horizontal.marks-before:not(.marks-after) > trough > slider:disabled { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-horz-scale-has-marks-above-insensitive.png"), url("assets-hc/slider-horz-scale-has-marks-above-insensitive@2.png")); min-height: 26px; min-width: 22px; margin-top: -14px; background-position: top; background-repeat: no-repeat; box-shadow: none; }
 
-scale.horizontal.marks-before.fine-tune:not(.marks-after) > trough > slider { margin: -7px -10px; margin-top: -11px; }
+scale.horizontal.marks-before:not(.marks-after).fine-tune > trough > slider { margin: -7px -10px; margin-top: -11px; }
 
 scale.horizontal.marks-after:not(.marks-before) > trough > slider { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-horz-scale-has-marks-below.png"), url("assets-hc/slider-horz-scale-has-marks-below@2.png")); min-height: 26px; min-width: 22px; margin-bottom: -14px; background-position: bottom; background-repeat: no-repeat; box-shadow: none; }
 
-scale.horizontal.marks-after.fine-tune:not(.marks-before) > trough > slider { margin: -7px -10px; margin-bottom: -11px; }
+scale.horizontal.marks-after:not(.marks-before).fine-tune > trough > slider { margin: -7px -10px; margin-bottom: -11px; }
 
 scale.horizontal.marks-after:not(.marks-before) > trough > slider:hover { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-horz-scale-has-marks-below-hover.png"), url("assets-hc/slider-horz-scale-has-marks-below-hover@2.png")); min-height: 26px; min-width: 22px; margin-bottom: -14px; background-position: bottom; background-repeat: no-repeat; box-shadow: none; }
 
-scale.horizontal.marks-after.fine-tune:not(.marks-before) > trough > slider { margin: -7px -10px; margin-bottom: -11px; }
+scale.horizontal.marks-after:not(.marks-before).fine-tune > trough > slider { margin: -7px -10px; margin-bottom: -11px; }
 
 scale.horizontal.marks-after:not(.marks-before) > trough > slider:active { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-horz-scale-has-marks-below-active.png"), url("assets-hc/slider-horz-scale-has-marks-below-active@2.png")); min-height: 26px; min-width: 22px; margin-bottom: -14px; background-position: bottom; background-repeat: no-repeat; box-shadow: none; }
 
-scale.horizontal.marks-after.fine-tune:not(.marks-before) > trough > slider { margin: -7px -10px; margin-bottom: -11px; }
+scale.horizontal.marks-after:not(.marks-before).fine-tune > trough > slider { margin: -7px -10px; margin-bottom: -11px; }
 
 scale.horizontal.marks-after:not(.marks-before) > trough > slider:disabled { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-horz-scale-has-marks-below-insensitive.png"), url("assets-hc/slider-horz-scale-has-marks-below-insensitive@2.png")); min-height: 26px; min-width: 22px; margin-bottom: -14px; background-position: bottom; background-repeat: no-repeat; box-shadow: none; }
 
-scale.horizontal.marks-after.fine-tune:not(.marks-before) > trough > slider { margin: -7px -10px; margin-bottom: -11px; }
+scale.horizontal.marks-after:not(.marks-before).fine-tune > trough > slider { margin: -7px -10px; margin-bottom: -11px; }
 
 scale.vertical.marks-before:not(.marks-after) > trough > slider { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-vert-scale-has-marks-above.png"), url("assets-hc/slider-vert-scale-has-marks-above@2.png")); min-height: 22px; min-width: 26px; margin-left: -14px; background-position: left bottom; background-repeat: no-repeat; box-shadow: none; }
 
-scale.vertical.marks-before.fine-tune:not(.marks-after) > trough > slider { margin: -10px -7px; margin-left: -11px; }
+scale.vertical.marks-before:not(.marks-after).fine-tune > trough > slider { margin: -10px -7px; margin-left: -11px; }
 
 scale.vertical.marks-before:not(.marks-after) > trough > slider:hover { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-vert-scale-has-marks-above-hover.png"), url("assets-hc/slider-vert-scale-has-marks-above-hover@2.png")); min-height: 22px; min-width: 26px; margin-left: -14px; background-position: left bottom; background-repeat: no-repeat; box-shadow: none; }
 
-scale.vertical.marks-before.fine-tune:not(.marks-after) > trough > slider { margin: -10px -7px; margin-left: -11px; }
+scale.vertical.marks-before:not(.marks-after).fine-tune > trough > slider { margin: -10px -7px; margin-left: -11px; }
 
 scale.vertical.marks-before:not(.marks-after) > trough > slider:active { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-vert-scale-has-marks-above-active.png"), url("assets-hc/slider-vert-scale-has-marks-above-active@2.png")); min-height: 22px; min-width: 26px; margin-left: -14px; background-position: left bottom; background-repeat: no-repeat; box-shadow: none; }
 
-scale.vertical.marks-before.fine-tune:not(.marks-after) > trough > slider { margin: -10px -7px; margin-left: -11px; }
+scale.vertical.marks-before:not(.marks-after).fine-tune > trough > slider { margin: -10px -7px; margin-left: -11px; }
 
 scale.vertical.marks-before:not(.marks-after) > trough > slider:disabled { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-vert-scale-has-marks-above-insensitive.png"), url("assets-hc/slider-vert-scale-has-marks-above-insensitive@2.png")); min-height: 22px; min-width: 26px; margin-left: -14px; background-position: left bottom; background-repeat: no-repeat; box-shadow: none; }
 
-scale.vertical.marks-before.fine-tune:not(.marks-after) > trough > slider { margin: -10px -7px; margin-left: -11px; }
+scale.vertical.marks-before:not(.marks-after).fine-tune > trough > slider { margin: -10px -7px; margin-left: -11px; }
 
 scale.vertical.marks-after:not(.marks-before) > trough > slider { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-vert-scale-has-marks-below.png"), url("assets-hc/slider-vert-scale-has-marks-below@2.png")); min-height: 22px; min-width: 26px; margin-right: -14px; background-position: right bottom; background-repeat: no-repeat; box-shadow: none; }
 
-scale.vertical.marks-after.fine-tune:not(.marks-before) > trough > slider { margin: -10px -7px; margin-right: -11px; }
+scale.vertical.marks-after:not(.marks-before).fine-tune > trough > slider { margin: -10px -7px; margin-right: -11px; }
 
 scale.vertical.marks-after:not(.marks-before) > trough > slider:hover { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-vert-scale-has-marks-below-hover.png"), url("assets-hc/slider-vert-scale-has-marks-below-hover@2.png")); min-height: 22px; min-width: 26px; margin-right: -14px; background-position: right bottom; background-repeat: no-repeat; box-shadow: none; }
 
-scale.vertical.marks-after.fine-tune:not(.marks-before) > trough > slider { margin: -10px -7px; margin-right: -11px; }
+scale.vertical.marks-after:not(.marks-before).fine-tune > trough > slider { margin: -10px -7px; margin-right: -11px; }
 
 scale.vertical.marks-after:not(.marks-before) > trough > slider:active { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-vert-scale-has-marks-below-active.png"), url("assets-hc/slider-vert-scale-has-marks-below-active@2.png")); min-height: 22px; min-width: 26px; margin-right: -14px; background-position: right bottom; background-repeat: no-repeat; box-shadow: none; }
 
-scale.vertical.marks-after.fine-tune:not(.marks-before) > trough > slider { margin: -10px -7px; margin-right: -11px; }
+scale.vertical.marks-after:not(.marks-before).fine-tune > trough > slider { margin: -10px -7px; margin-right: -11px; }
 
 scale.vertical.marks-after:not(.marks-before) > trough > slider:disabled { margin: -10px; border-style: none; border-radius: 0; background-color: transparent; background-image: -gtk-scaled(url("assets-hc/slider-vert-scale-has-marks-below-insensitive.png"), url("assets-hc/slider-vert-scale-has-marks-below-insensitive@2.png")); min-height: 22px; min-width: 26px; margin-right: -14px; background-position: right bottom; background-repeat: no-repeat; box-shadow: none; }
 
-scale.vertical.marks-after.fine-tune:not(.marks-before) > trough > slider { margin: -10px -7px; margin-right: -11px; }
+scale.vertical.marks-after:not(.marks-before).fine-tune > trough > slider { margin: -10px -7px; margin-right: -11px; }
 
 scale.color { min-height: 0; min-width: 0; }
 
@@ -1459,7 +1459,7 @@ row.activatable:active { box-shadow: inset 0 2px 2px -2px rgba(0, 0, 0, 0.2); }
 
 row.activatable:selected:active { box-shadow: inset 0 2px 3px -1px rgba(0, 0, 0, 0.5); }
 
-row.activatable.has-open-popup:selected, row.activatable:selected:hover { background-color: #1c64bb; }
+row.activatable:selected.has-open-popup, row.activatable:selected:hover { background-color: #1c64bb; }
 
 row:selected { outline-color: white; }
 
@@ -1564,9 +1564,9 @@ filechooserbutton:drop(active) { box-shadow: none; border-color: transparent; }
 /*********** Sidebar * */
 .sidebar { background-color: #fefefe; }
 
-.sidebar:not(separator):dir(ltr), .sidebar.left:not(separator), .sidebar.left:not(separator):dir(rtl) { border-right: 1px solid #877b6e; border-left-style: none; }
+.sidebar:not(separator):dir(ltr), .sidebar:not(separator).left, .sidebar:not(separator).left:dir(rtl) { border-right: 1px solid #877b6e; border-left-style: none; }
 
-.sidebar:not(separator):dir(rtl), .sidebar.right:not(separator) { border-left: 1px solid #877b6e; border-right-style: none; }
+.sidebar:not(separator):dir(rtl), .sidebar:not(separator).right { border-left: 1px solid #877b6e; border-right-style: none; }
 
 .sidebar listview.view, .sidebar list { background-color: transparent; }
 
@@ -1711,9 +1711,9 @@ colorswatch.light.activatable:hover > overlay { border-color: rgba(0, 0, 0, 0.5)
 
 colorswatch:drop(active) { box-shadow: none; }
 
-colorswatch.light:drop(active) > overlay { border-color: #2ec27e; box-shadow: inset 0 0 0 2px #27a56b, inset 0 0 0 1px #2ec27e; }
+colorswatch:drop(active).light > overlay { border-color: #2ec27e; box-shadow: inset 0 0 0 2px #27a56b, inset 0 0 0 1px #2ec27e; }
 
-colorswatch.dark:drop(active) > overlay { border-color: #2ec27e; box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.3), inset 0 0 0 1px #2ec27e; }
+colorswatch:drop(active).dark > overlay { border-color: #2ec27e; box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.3), inset 0 0 0 1px #2ec27e; }
 
 colorswatch > overlay { border: 1px solid rgba(0, 0, 0, 0.3); }
 

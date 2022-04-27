@@ -1,3 +1,9 @@
+gtk4 (4.6.3+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 27 Apr 2022 15:14:50 +0100
+
 gtk4 (4.6.2+ds-1) unstable; urgency=medium
 
   * New upstream release

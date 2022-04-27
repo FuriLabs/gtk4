@@ -2,7 +2,7 @@ Source: gtk4
 Section: libs
 Priority: optional
 Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Simon McVittie <smcv@debian.org>, Jeremy Bicha <jbicha@debian.org>
+Uploaders: Simon McVittie <smcv@debian.org>, 
 Build-Depends: adwaita-icon-theme <!nocheck>,
                at-spi2-core <!nocheck>,
                dbus <!nocheck>,
@@ -71,7 +71,8 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                xauth <!nocheck>,
                xsltproc,
                xvfb <!nocheck>,
-Build-Depends-Indep: libcairo2-doc,
+Build-Depends-Indep: gi-docgen,
+                     libcairo2-doc,
                      libglib2.0-doc,
                      libpango1.0-doc,
                      pandoc,

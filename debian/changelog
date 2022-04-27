@@ -1,8 +1,16 @@
 gtk4 (4.6.3+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release
+  * Use system copy of gi-docgen.
+    Normally we'd use the bundled copy as per upstream's recommendation,
+    but this orig tarball was built with `meson dist` since upstream has
+    not published an official tarball (GNOME/gtk#4867), and that results
+    in it not having the bundled gi-docgen that is normally present.
+    - d/patches: Drop gi-docgen patches
+    - d/copyright: Drop gi-docgen stanzas
+    - d/control.in: Use system copy of gi-docgen
 
- -- Simon McVittie <smcv@debian.org>  Wed, 27 Apr 2022 15:14:50 +0100
+ -- Simon McVittie <smcv@debian.org>  Wed, 27 Apr 2022 15:22:02 +0100
 
 gtk4 (4.6.2+ds-1) unstable; urgency=medium
 

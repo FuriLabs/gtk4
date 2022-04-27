@@ -9,10 +9,10 @@ Forwarded: no
  2 files changed, 21 insertions(+), 8 deletions(-)
 
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
-index 106661a..06e1d18 100644
+index 2fb0208..8c3ff1f 100644
 --- a/testsuite/gsk/meson.build
 +++ b/testsuite/gsk/meson.build
-@@ -77,15 +77,21 @@ compare_render_tests = [
+@@ -77,9 +77,7 @@ compare_render_tests = [
    'scale-up-down',
    'shadow-in-opacity',
    'texture-url',
@@ -22,6 +22,7 @@ index 106661a..06e1d18 100644
    'repeat-texture',
    'transform-in-transform',
    'transform-in-transform-in-transform',
+@@ -87,6 +85,14 @@ compare_render_tests = [
    'rounded-clip-in-clip-3d', # not really 3d, but cairo fails it
  ]
  

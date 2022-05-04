@@ -1,14 +1,10 @@
 gtk4 (4.6.3+ds1-1) UNRELEASED; urgency=medium
 
   * New upstream release
-  * Use system copy of gi-docgen.
-    Normally we'd use the bundled copy as per upstream's recommendation,
-    but this orig tarball was built with `meson dist` since upstream has
-    not published an official tarball (GNOME/gtk#4867), and that results
-    in it not having the bundled gi-docgen that is normally present.
-    - d/patches: Drop gi-docgen patches
-    - d/copyright: Drop gi-docgen stanzas
-    - d/control.in: Use system copy of gi-docgen
+  * d/copyright: Exclude gtk/theme/Default/Default-*.css.
+    We already deleted them during clean.
+  * d/copyright: Stop excluding subprojects/wayland.
+    It's no longer included in tarballs.
   * d/patches: Update to upstream gtk-4-6 branch commit 4.6.3-9-g045446c3da
     - Work around infinite loop in box allocation (Closes: #1010547)
     - Make it easier to select the current folder with a file chooser
@@ -20,7 +16,6 @@ gtk4 (4.6.3+ds1-1) UNRELEASED; urgency=medium
     dependencies.
   * d/rules: Ignore unaligned-offscreen GSK comparison test.
     Workaround for GNOME/gtk#4889.
-  * New upstream release
 
  -- Simon McVittie <smcv@debian.org>  Wed, 04 May 2022 11:00:20 +0100
 

@@ -1,4 +1,4 @@
-gtk4 (4.6.3+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.6.3+ds1-1) UNRELEASED; urgency=medium
 
   * New upstream release
   * Use system copy of gi-docgen.
@@ -20,8 +20,9 @@ gtk4 (4.6.3+ds-1) UNRELEASED; urgency=medium
     dependencies.
   * d/rules: Ignore unaligned-offscreen GSK comparison test.
     Workaround for GNOME/gtk#4889.
+  * New upstream release
 
- -- Simon McVittie <smcv@debian.org>  Wed, 04 May 2022 10:54:57 +0100
+ -- Simon McVittie <smcv@debian.org>  Wed, 04 May 2022 11:00:20 +0100
 
 gtk4 (4.6.2+ds-1) unstable; urgency=medium
 

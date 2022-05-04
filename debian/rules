@@ -217,12 +217,24 @@ $(info Architecture with qemu buildds detected, increasing test timeout a lot)
 test_timeout_multiplier = 20
 endif
 
+fuzzy_gsk_compare = \
+	$(NULL)
+
+ignore_gsk_compare = \
+	$(NULL)
+
+xfail_gsk_compare = \
+	$(NULL)
+
 fuzzy_reftests = \
 	border-image-url \
 	label-attribute-preference \
 	label-wrap-justify \
 	pseudoclass-on-box \
 	quit-mnemonic \
+	$(NULL)
+
+ignore_reftests = \
 	$(NULL)
 
 xfail_reftests = \
@@ -246,7 +258,11 @@ endif
 override_dh_auto_test:
 	set -e; for backend in $(test_backends); do \
 		env BUILDDIR=debian/build/deb \
+			FUZZY_GSK_COMPARE="$(fuzzy_gsk_compare)" \
 			FUZZY_REFTESTS="$(fuzzy_reftests)" \
+			IGNORE_GSK_COMPARE="$(ignore_gsk_compare)" \
+			IGNORE_REFTESTS="$(ignore_reftests)" \
+			XFAIL_GSK_COMPARE="$(xfail_gsk_compare)" \
 			XFAIL_REFTESTS="$(xfail_reftests)" \
 			BACKEND=$$backend \
 				debian/run-tests.sh -t $(test_timeout_multiplier) \

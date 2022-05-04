@@ -1,3 +1,9 @@
+boxlayout-Do-not-infloop.patch
+Update-Hebrew-translation.patch
+Update-Hebrew-translation-1.patch
+filechooser-Small-fix-for-select-folder-mode.patch
+GtkFileChooserWidget-check-for-empty-instead-of-NULL-GLis.patch
+GtkFileChooserWidget-return-empty-GListModel-in-get_files.patch
 reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
 reftests-Allow-minor-differences-to-be-tolerated.patch
 debian/Skip-some-known-failing-tests-on-mips-family-architecture.patch

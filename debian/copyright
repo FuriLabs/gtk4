@@ -11,7 +11,6 @@ Files-Excluded:
  gtk/theme/Default/Default-*.css
  subprojects/gi-docgen/gidocgen/templates/basic/*.woff
  subprojects/gi-docgen/gidocgen/templates/basic/*.woff2
- subprojects/wayland
 
 Files: *
 Copyright:

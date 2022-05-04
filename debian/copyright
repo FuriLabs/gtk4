@@ -8,6 +8,7 @@ Files-Excluded:
  docs/reference/gdk/gdk4-x11
  docs/reference/gsk/gsk4
  docs/reference/gtk/gtk4
+ gtk/theme/Default/Default-*.css
  subprojects/gi-docgen/gidocgen/templates/basic/*.woff
  subprojects/gi-docgen/gidocgen/templates/basic/*.woff2
  subprojects/wayland

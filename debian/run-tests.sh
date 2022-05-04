@@ -5,7 +5,12 @@ set -ex
 BUILDDIR=${BUILDDIR:-debian/build/deb}
 BACKEND=${BACKEND:-x11}
 
+FUZZY_GSK_COMPARE=${FUZZY_GSK_COMPARE:-}
+IGNORE_GSK_COMPARE=${IGNORE_GSK_COMPARE:-}
+XFAIL_GSK_COMPARE=${XFAIL_GSK_COMPARE:-}
+
 FUZZY_REFTESTS=${FUZZY_REFTESTS:-}
+IGNORE_REFTESTS=${IGNORE_REFTESTS:-}
 XFAIL_REFTESTS=${XFAIL_REFTESTS:-}
 
 test_data="$(mktemp -d -t debian-test-data-XXXXXXXX)"
@@ -15,8 +20,12 @@ cleanup() {
     rm -rf "$test_data"
 
     # Avoid incremental builds with -nc leaking settings into the next build
-    for reftest in $FUZZY_REFTESTS; do
+    for reftest in $FUZZY_REFTESTS $IGNORE_REFTESTS; do
         rm -f "testsuite/reftests/$reftest.keyfile"
+    done
+
+    for reftest in $FUZZY_GSK_COMPARE $IGNORE_GSK_COMPARE; do
+        rm -f "testsuite/gsk/compare/$reftest.keyfile"
     done
 }
 
@@ -34,6 +43,18 @@ fi
 
 for reftest in $FUZZY_REFTESTS; do
     cp debian/close-enough.keyfile "testsuite/reftests/$reftest.keyfile"
+done
+
+for reftest in $FUZZY_GSK_COMPARE; do
+    cp debian/close-enough.keyfile "testsuite/gsk/compare/$reftest.keyfile"
+done
+
+for reftest in $IGNORE_REFTESTS; do
+    cp debian/ignore.keyfile "testsuite/reftests/$reftest.keyfile"
+done
+
+for reftest in $IGNORE_GSK_COMPARE; do
+    cp debian/ignore.keyfile "testsuite/gsk/compare/$reftest.keyfile"
 done
 
 # So that gsettings can find the (uninstalled) gtk schemas
@@ -65,6 +86,12 @@ env \
 # expect to fail
 for reftest in $XFAIL_REFTESTS; do
     rm -f "$BUILDDIR/testsuite/reftests/output/$BACKEND/$reftest.diff.png"
+done
+
+for renderer in cairo gl; do
+    for reftest in $XFAIL_GSK_COMPARE; do
+        rm -f "$BUILDDIR/testsuite/gsk/compare/$renderer/$BACKEND/$reftest.diff.png"
+    done
 done
 
 if [ -e "$test_data/tests-failed" ]; then

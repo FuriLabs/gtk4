@@ -9,8 +9,19 @@ gtk4 (4.6.3+ds-1) UNRELEASED; urgency=medium
     - d/patches: Drop gi-docgen patches
     - d/copyright: Drop gi-docgen stanzas
     - d/control.in: Use system copy of gi-docgen
+  * d/patches: Update to upstream gtk-4-6 branch commit 4.6.3-9-g045446c3da
+    - Work around infinite loop in box allocation (Closes: #1010547)
+    - Make it easier to select the current folder with a file chooser
+    - Fix saving into a subdirectory with a file chooser
+    - Translation updates
+  * d/log-reftests.py: Update names of GSK renderers
+  * d/rules, d/run-tests.sh: Add infrastructure to ignore failing GSK tests.
+    Similar to reftests, these can be fragile against varying versions of
+    dependencies.
+  * d/rules: Ignore unaligned-offscreen GSK comparison test.
+    Workaround for GNOME/gtk#4889.
 
- -- Simon McVittie <smcv@debian.org>  Wed, 27 Apr 2022 15:22:02 +0100
+ -- Simon McVittie <smcv@debian.org>  Wed, 04 May 2022 10:54:57 +0100
 
 gtk4 (4.6.2+ds-1) unstable; urgency=medium
 

@@ -221,6 +221,7 @@ fuzzy_gsk_compare = \
 	$(NULL)
 
 ignore_gsk_compare = \
+	unaligned-offscreen \
 	$(NULL)
 
 xfail_gsk_compare = \

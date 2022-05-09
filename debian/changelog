@@ -1,3 +1,9 @@
+gtk4 (4.6.3+ds1-2) unstable; urgency=medium
+
+  * Cherry-pick gtk-4-6 patch needed for mutter 42.1 (LP: #1972722)
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 09 May 2022 16:48:11 -0400
+
 gtk4 (4.6.3+ds1-1) unstable; urgency=medium
 
   * New upstream release

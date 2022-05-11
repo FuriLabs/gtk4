@@ -120,7 +120,7 @@ def gen_index_func(func, namespace, md=None):
         available_since = func.available_since
     else:
         available_since = None
-    if func.deprecated:
+    if func.deprecated_since is not None:
         (version, msg) = func.deprecated_since
         deprecated_since = version
     else:
@@ -144,7 +144,7 @@ def gen_index_property(prop, namespace, md=None):
         available_since = prop.available_since
     else:
         available_since = None
-    if prop.deprecated:
+    if prop.deprecated_since is not None:
         (version, msg) = prop.deprecated_since
         deprecated_since = version
     else:
@@ -167,7 +167,7 @@ def gen_index_signal(signal, namespace, md=None):
         available_since = signal.available_since
     else:
         available_since = None
-    if signal.deprecated:
+    if signal.deprecated_since is not None:
         (version, msg) = signal.deprecated_since
         deprecated_since = version
     else:
@@ -363,7 +363,7 @@ class TemplateConstant:
         self.stability = const.stability
         self.attributes = const.attributes
         self.available_since = const.available_since
-        if const.deprecated:
+        if const.deprecated_since is not None:
             (version, msg) = const.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -421,7 +421,7 @@ class TemplateProperty:
 
         self.stability = prop.stability
         self.available_since = prop.available_since
-        if prop.deprecated:
+        if prop.deprecated_since is not None:
             (version, msg) = prop.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -642,8 +642,6 @@ class TemplateArgument:
             return False
         if self.direction in ['out', 'inout'] and self.is_fundamental and self.type_cname.count('*') == 1:
             return False
-        if self.is_fundamental and self.type_cname in ['gpointer', 'gconstpointer']:
-            return True
         return '*' in self.type_cname
 
     @property
@@ -725,10 +723,7 @@ class TemplateReturnValue:
     def is_pointer(self):
         if self.type_cname is None:
             return False
-        elif self.is_fundamental and self.type_cname in ['gpointer', 'gconstpointer']:
-            return True
-        else:
-            return '*' in self.type_cname
+        return '*' in self.type_cname
 
 
 class TemplateSignal:
@@ -766,7 +761,7 @@ class TemplateSignal:
         self.stability = signal.stability
         self.attributes = signal.attributes
         self.available_since = signal.available_since
-        if signal.deprecated:
+        if signal.deprecated_since is not None:
             (version, msg) = signal.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -823,7 +818,7 @@ class TemplateMethod:
 
         self.stability = method.stability
         self.available_since = method.available_since
-        if method.deprecated:
+        if method.deprecated_since is not None:
             (version, msg) = method.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -839,19 +834,6 @@ class TemplateMethod:
             self.source_location = (filename, line)
 
         self.introspectable = method.introspectable
-
-        self.shadows = method.shadows
-        if method.shadows:
-            for m in type_.methods:
-                if m.name == method.shadows:
-                    self.shadows_symbol = m.identifier
-                    break
-        self.shadowed_by = method.shadowed_by
-        if method.shadowed_by:
-            for m in type_.methods:
-                if m.name == method.shadowed_by:
-                    self.shadowed_by_symbol = m.identifier
-                    break
 
         def transform_property_attribute(namespace, type_, method, value):
             if value in type_.properties:
@@ -972,7 +954,7 @@ class TemplateClassMethod:
         self.stability = method.stability
         self.attributes = method.attributes
         self.available_since = method.available_since
-        if method.deprecated:
+        if method.deprecated_since is not None:
             (version, msg) = method.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -1045,7 +1027,7 @@ class TemplateFunction:
         self.stability = func.stability
         self.attributes = func.attributes
         self.available_since = func.available_since
-        if func.deprecated:
+        if func.deprecated_since is not None:
             (version, msg) = func.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -1061,17 +1043,6 @@ class TemplateFunction:
             self.source_location = (filename, line)
 
         self.introspectable = func.introspectable
-
-        self.shadows = func.shadows
-        if func.shadows:
-            f = namespace.find_function(func.shadows)
-            if f is not None:
-                self.shadows_symbol = f.identifier
-        self.shadowed_by = func.shadowed_by
-        if func.shadowed_by:
-            f = namespace.find_function(func.shadowed_by)
-            if f is not None:
-                self.shadowed_by_symbol = f.identifier
 
     @property
     def c_decl(self):
@@ -1130,7 +1101,7 @@ class TemplateCallback:
         self.stability = cb.stability
         self.attributes = cb.attributes
         self.available_since = cb.available_since
-        if cb.deprecated:
+        if cb.deprecated_since is not None:
             (version, msg) = cb.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -1252,7 +1223,6 @@ class TemplateInterface:
         if interface.doc is not None:
             self.summary = utils.preprocess_docs(interface.doc.content, namespace, summary=True, md=md)
             self.description = utils.preprocess_docs(interface.doc.content, namespace, md=md)
-            self.description_toc = md.toc_tokens is not None and md.toc_tokens.copy() or None
             filename = interface.doc.filename
             line = interface.doc.line
             if filename.startswith('../'):
@@ -1264,7 +1234,7 @@ class TemplateInterface:
         self.stability = interface.stability
         self.attributes = interface.attributes
         self.available_since = interface.available_since
-        if interface.deprecated:
+        if interface.deprecated_since is not None:
             (version, msg) = interface.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -1403,7 +1373,6 @@ class TemplateClass:
         if cls.doc is not None:
             self.summary = utils.preprocess_docs(cls.doc.content, namespace, summary=True, md=md)
             self.description = utils.preprocess_docs(cls.doc.content, namespace, md=md)
-            self.description_toc = md.toc_tokens is not None and md.toc_tokens.copy() or None
             filename = cls.doc.filename
             line = cls.doc.line
             if filename.startswith('../'):
@@ -1415,7 +1384,7 @@ class TemplateClass:
         self.stability = cls.stability
         self.attributes = cls.attributes
         self.available_since = cls.available_since
-        if cls.deprecated:
+        if cls.deprecated_since is not None:
             (version, msg) = cls.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -1611,7 +1580,6 @@ class TemplateRecord:
         if record.doc is not None:
             self.summary = utils.preprocess_docs(record.doc.content, namespace, summary=True, md=md)
             self.description = utils.preprocess_docs(record.doc.content, namespace, md=md)
-            self.description_toc = md.toc_tokens is not None and md.toc_tokens.copy() or None
             filename = record.doc.filename
             line = record.doc.line
             if filename.startswith('../'):
@@ -1623,7 +1591,7 @@ class TemplateRecord:
         self.stability = record.stability
         self.attributes = record.attributes
         self.available_since = record.available_since
-        if record.deprecated:
+        if record.deprecated_since is not None:
             (version, msg) = record.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -1690,7 +1658,6 @@ class TemplateUnion:
         if union.doc is not None:
             self.summary = utils.preprocess_docs(union.doc.content, namespace, summary=True, md=md)
             self.description = utils.preprocess_docs(union.doc.content, namespace, md=md)
-            self.description_toc = md.toc_tokens is not None and md.toc_tokens.copy() or None
             filename = union.doc.filename
             line = union.doc.line
             if filename.startswith('../'):
@@ -1702,7 +1669,7 @@ class TemplateUnion:
         self.stability = union.stability
         self.attributes = union.attributes
         self.available_since = union.available_since
-        if union.deprecated:
+        if union.deprecated_since is not None:
             (version, msg) = union.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -1779,7 +1746,8 @@ class TemplateAlias:
         self.stability = alias.stability
         self.attributes = alias.attributes
         self.available_since = alias.available_since
-        if alias.deprecated:
+        self.deprecated_since = alias.deprecated_since
+        if alias.deprecated_since is not None:
             (version, msg) = alias.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -1798,7 +1766,6 @@ class TemplateAlias:
 class TemplateMember:
     def __init__(self, namespace, enum, member):
         self.name = member.identifier
-        self.girname = member.name
         self.nick = member.nick
         self.value = member.value
         if member.doc is not None:
@@ -1841,7 +1808,8 @@ class TemplateEnum:
         self.stability = enum.stability
         self.attributes = enum.attributes
         self.available_since = enum.available_since
-        if enum.deprecated:
+        self.deprecated_since = enum.deprecated_since
+        if enum.deprecated_since is not None:
             (version, msg) = enum.deprecated_since
             self.deprecated_since = {
                 "version": version,
@@ -2793,7 +2761,7 @@ def gen_devhelp(config, repository, namespace, symbols, content_files):
                 keyword = etree.SubElement(functions, "keyword")
                 keyword.set("type", "constant")
                 keyword.set("name", t.identifier)
-                keyword.set("link", f"const.{t.name}.html")
+                keyword.set("link", f"constant.{t.name}.html")
                 if t.available_since is not None:
                     keyword.set("since", t.available_since)
                 if t.deprecated_since is not None and t.deprecated_since["version"] is not None:

@@ -1,8 +1,20 @@
-gtk4 (4.6.3+ds-0ubuntu1) UNRELEASED; urgency=medium
+gtk4 (4.6.3+ds1-0ubuntu1) jammy; urgency=medium
 
-  * New upstream release
+  [ Jeremy Bicha ]
+  * New upstream bugfix release (LP: #1973219)
+  * Cherry-pick additional bug fixes:
+    - Fix text view scrolling with mutter 42.1 (LP: #1972722)
+    - Work around infinite loop in box allocation (Closes: #1010547)
+    - Make it easier to select the current folder with a file chooser
+    - Fix saving into a subdirectory with a file chooser
+    - Fix an invalid format string with EGL support
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 11 May 2022 16:56:49 -0400
+  [ Simon McVittie ]
+  * d/log-reftests.py: Update names of GSK renderers
+  * d/rules, d/run-tests.sh: Add infrastructure to ignore failing GSK tests
+  * Ignore unaligned-offscreen GSK comparison test
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 12 May 2022 11:41:48 -0400
 
 gtk4 (4.6.2+ds-1ubuntu3) jammy; urgency=medium
 

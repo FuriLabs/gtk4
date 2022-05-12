@@ -1,0 +1,27 @@
+From: =?utf-8?q?Lo=C3=AFc_Minier?= <loic.minier@ubuntu.com>
+Date: Wed, 11 May 2022 19:43:04 +0000
+Subject: egl: Fix invalid format string
+
+(cherry picked from commit 4f2b1b3cfcf1f11f14993656c21105bbbb9432d7)
+---
+ gdk/gdkdisplay.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/gdk/gdkdisplay.c b/gdk/gdkdisplay.c
+index 31f039d..07487e8 100644
+--- a/gdk/gdkdisplay.c
++++ b/gdk/gdkdisplay.c
+@@ -1628,10 +1628,10 @@ gdk_display_check_egl_extensions (EGLDisplay   egl_display,
+                    /* translators: Arguments are the number of missing extensions
+                     * followed by a comma-separated list of their names */
+                    g_dngettext (GETTEXT_PACKAGE,
+-                                "EGL implementation is missing extension %2$s",
+-                                "EGL implementation is missing %d extensions: %s",
++                                "EGL implementation is missing extension %s",
++                                "EGL implementation is missing %2$d extensions: %1$s",
+                                 n_missing),
+-                   (int) n_missing, missing->str);
++                   missing->str, (int) n_missing);
+ 
+       g_string_free (missing, TRUE);
+       return FALSE;

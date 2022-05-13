@@ -1,8 +1,11 @@
-gtk4 (4.6.4+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.6.4+ds-1) unstable; urgency=medium
 
   * New upstream release
+  * Drop patches applied in new release
+  * Cherry-pick patch to fix an invalid format string
+  * Use gi-docgen to build docs
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Fri, 13 May 2022 16:02:01 -0400
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Fri, 13 May 2022 16:26:26 -0400
 
 gtk4 (4.6.3+ds1-2) unstable; urgency=medium
 

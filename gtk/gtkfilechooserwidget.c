@@ -2193,7 +2193,9 @@ update_default (GtkFileChooserWidget *impl)
     return;
 
   files = gtk_file_chooser_get_files (GTK_FILE_CHOOSER (impl));
-  sensitive = (g_list_model_get_n_items (files) > 0 || impl->action == GTK_FILE_CHOOSER_ACTION_SAVE);
+  sensitive = (g_list_model_get_n_items (files) > 0 ||
+               impl->action == GTK_FILE_CHOOSER_ACTION_SAVE ||
+               impl->action == GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
   gtk_widget_set_sensitive (button, sensitive);
 
   g_object_unref (files);
@@ -5446,7 +5448,7 @@ gtk_file_chooser_widget_get_files (GtkFileChooser *chooser)
        * So we want the selection to be "bar/foo.txt".  Jump to the case for the
        * filename entry to see if that is the case.
        */
-      if (info.result == NULL && impl->location_entry)
+      if (g_list_model_get_n_items (G_LIST_MODEL (info.result)) == 0 && impl->location_entry)
         goto file_entry;
     }
   else if (impl->location_entry &&
@@ -5464,7 +5466,7 @@ gtk_file_chooser_widget_get_files (GtkFileChooser *chooser)
         goto out;
 
       if (!is_well_formed)
-        return NULL;
+        goto empty;
 
       if (info.file_from_entry)
         {
@@ -5474,7 +5476,7 @@ gtk_file_chooser_widget_get_files (GtkFileChooser *chooser)
       else if (!file_list_seen)
         goto file_list;
       else
-        return NULL;
+        goto empty;
     }
   else if (impl->toplevel_last_focus_widget == impl->browse_files_tree_view)
     goto file_list;
@@ -5495,7 +5497,7 @@ gtk_file_chooser_widget_get_files (GtkFileChooser *chooser)
    * then we fall back to the current directory
    */
   if (impl->action == GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER &&
-      info.result == NULL)
+      g_list_model_get_n_items (G_LIST_MODEL (info.result)) == 0)
     {
       GFile *current_folder;
 
@@ -5505,6 +5507,11 @@ gtk_file_chooser_widget_get_files (GtkFileChooser *chooser)
         g_list_store_append (info.result, current_folder);
     }
 
+  return G_LIST_MODEL (info.result);
+
+empty:
+
+  g_list_store_remove_all (info.result);
   return G_LIST_MODEL (info.result);
 }
 

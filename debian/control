@@ -76,12 +76,6 @@ Build-Depends-Indep: gi-docgen <!nodoc>,
                      libglib2.0-doc <!nodoc>,
                      libpango1.0-doc <!nodoc>,
                      pandoc,
-                     python3 (>= 3.6) <!nodoc>,
-                     python3-jinja2 <!nodoc>,
-                     python3-markdown <!nodoc>,
-                     python3-pygments <!nodoc>,
-                     python3-toml <!nodoc>,
-                     python3-typogrify <!nodoc>,
 Rules-Requires-Root: no
 Standards-Version: 4.6.0
 Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4

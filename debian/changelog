@@ -1,3 +1,21 @@
+gtk4 (4.6.4+ds-3) UNRELEASED; urgency=medium
+
+  * d/rules: Stop skipping ngl tests on big-endian machines.
+    The ngl renderer no longer exists: it was renamed to gl.
+  * d/rules, d/run-tests.sh: Move loop through backends into run-tests.sh.
+    This means that if an X11 test fails, we try the Wayland tests (if we
+    are running them at all) before failing the build.
+  * d/rules: Work around llvmpipe segfault by forcing softpipe on mipsel
+    for build-time tests. (Mitigates: #1010838)
+  * Move gi-docgen to Build-Depends-Indep.
+    We correctly disable the gi-docgen-generated documentation when only
+    building architecture-dependent packages.
+  * d/control.in: Drop build-dependencies that were only there for gi-docgen.
+    Now that we're using the packaged gi-docgen instead of the bundled copy,
+    there's no need to depend on its dependencies explicitly.
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 15 May 2022 00:19:50 +0100
+
 gtk4 (4.6.4+ds-2) unstable; urgency=medium
 
   * Cherry-pick patch to fix pasting into the filechooser name field

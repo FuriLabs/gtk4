@@ -1,3 +1,10 @@
+gtk4 (4.6.4+ds-2) unstable; urgency=medium
+
+  * Cherry-pick patch to fix pasting into the filechooser name field
+    (LP: #1971532)
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Sat, 14 May 2022 10:05:42 -0400
+
 gtk4 (4.6.4+ds-1) unstable; urgency=medium
 
   * New upstream release

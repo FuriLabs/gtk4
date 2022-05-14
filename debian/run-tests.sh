@@ -3,7 +3,7 @@
 set -ex
 
 BUILDDIR=${BUILDDIR:-debian/build/deb}
-BACKEND=${BACKEND:-x11}
+BACKENDS=${BACKENDS:-x11}
 
 FUZZY_GSK_COMPARE=${FUZZY_GSK_COMPARE:-}
 IGNORE_GSK_COMPARE=${IGNORE_GSK_COMPARE:-}
@@ -62,41 +62,43 @@ mkdir -p "$test_data/glib-2.0/schemas/"
 cp gtk/org.gtk.* "$test_data/glib-2.0/schemas/"
 glib-compile-schemas "$test_data/glib-2.0/schemas/"
 
-# Remove LD_PRELOAD so we don't run with fakeroot, which makes dbus-related tests fail
-env \
-    -u LD_PRELOAD \
-    GIO_MODULE_DIR=/nonexistent \
-    GIO_USE_VFS=local \
-    GIO_USE_VOLUME_MONITOR=unix \
-    dbus-run-session -- \
-        debian/tests/run-with-display "$BACKEND" \
-            debian/tests/run-with-locales \
-                --generate de_DE.UTF-8 \
-                --generate en_GB.UTF-8 \
-                --generate en_US.UTF-8 \
-                --generate sv_SE=ISO-8859-1 \
-                -- \
-                    meson test -C "$BUILDDIR" \
-                    --print-errorlogs \
-                    --setup="$BACKEND" \
-                    "$@" \
-        || touch "$test_data/tests-failed"
+for BACKEND in $BACKENDS; do
+    # Remove LD_PRELOAD so we don't run with fakeroot, which makes dbus-related tests fail
+    env \
+        -u LD_PRELOAD \
+        GIO_MODULE_DIR=/nonexistent \
+        GIO_USE_VFS=local \
+        GIO_USE_VOLUME_MONITOR=unix \
+        dbus-run-session -- \
+            debian/tests/run-with-display "$BACKEND" \
+                debian/tests/run-with-locales \
+                    --generate de_DE.UTF-8 \
+                    --generate en_GB.UTF-8 \
+                    --generate en_US.UTF-8 \
+                    --generate sv_SE=ISO-8859-1 \
+                    -- \
+                        meson test -C "$BUILDDIR" \
+                        --print-errorlogs \
+                        --setup="$BACKEND" \
+                        "$@" \
+            || touch "$test_data/tests-failed"
 
-# Don't base64-encode the image results for tests that upstream
-# expect to fail
-for reftest in $XFAIL_REFTESTS; do
-    rm -f "$BUILDDIR/testsuite/reftests/output/$BACKEND/$reftest.diff.png"
-done
-
-for renderer in cairo gl; do
-    for reftest in $XFAIL_GSK_COMPARE; do
-        rm -f "$BUILDDIR/testsuite/gsk/compare/$renderer/$BACKEND/$reftest.diff.png"
+    # Don't base64-encode the image results for tests that upstream
+    # expect to fail
+    for reftest in $XFAIL_REFTESTS; do
+        rm -f "$BUILDDIR/testsuite/reftests/output/$BACKEND/$reftest.diff.png"
     done
-done
 
-if [ -e "$test_data/tests-failed" ]; then
-    head -v -n-0 "$BUILDDIR/meson-logs/testlog-$BACKEND.txt"
-fi
+    for renderer in cairo gl; do
+        for reftest in $XFAIL_GSK_COMPARE; do
+            rm -f "$BUILDDIR/testsuite/gsk/compare/$renderer/$BACKEND/$reftest.diff.png"
+        done
+    done
+
+    if [ -e "$test_data/tests-failed" ]; then
+        head -v -n-0 "$BUILDDIR/meson-logs/testlog-$BACKEND.txt"
+    fi
+done
 
 # Put the rest in the log as base64 since we don't have an
 # equivalent of AUTOPKGTEST_ARTIFACTS for buildds

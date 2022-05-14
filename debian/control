@@ -2,7 +2,7 @@ Source: gtk4
 Section: libs
 Priority: optional
 Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Simon McVittie <smcv@debian.org>, Jeremy Bicha <jbicha@debian.org>
+Uploaders: Simon McVittie <smcv@debian.org>, Jeremy Bicha <jbicha@ubuntu.com>
 Build-Depends: adwaita-icon-theme <!nocheck>,
                at-spi2-core <!nocheck>,
                dbus <!nocheck>,
@@ -12,7 +12,6 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                dpkg-dev (>= 1.17.14),
                fonts-cantarell <!nocheck>,
                fonts-dejavu-core <!nocheck>,
-               gi-docgen <!nodoc>,
                gnome-pkg-tools (>= 0.11),
                gobject-introspection (>= 1.41.3),
                gsettings-desktop-schemas <!nocheck>,
@@ -72,9 +71,10 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                xauth <!nocheck>,
                xsltproc,
                xvfb <!nocheck>,
-Build-Depends-Indep: libcairo2-doc,
-                     libglib2.0-doc,
-                     libpango1.0-doc,
+Build-Depends-Indep: gi-docgen <!nodoc>,
+                     libcairo2-doc <!nodoc>,
+                     libglib2.0-doc <!nodoc>,
+                     libpango1.0-doc <!nodoc>,
                      pandoc,
                      python3 (>= 3.6) <!nodoc>,
                      python3-jinja2 <!nodoc>,

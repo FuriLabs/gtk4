@@ -252,7 +252,6 @@ ifeq (big,$(DEB_HOST_ARCH_ENDIAN))
 	skipped_suites += \
 		gsk-compare-broadway \
 		gsk-compare-gl \
-		gsk-compare-ngl \
 		$(NULL)
 endif
 

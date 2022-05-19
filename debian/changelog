@@ -1,3 +1,11 @@
+gtk4 (4.6.4+ds-3ubuntu1) kinetic; urgency=medium
+
+  [ Sebastien Bacher ]
+  * debian/tests:
+    - include the memorytexture test in the flaky set, it has been unreliable
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 19 May 2022 10:16:34 -0400
+
 gtk4 (4.6.4+ds-3) unstable; urgency=medium
 
   * d/rules: Stop skipping ngl tests on big-endian machines.

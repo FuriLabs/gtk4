@@ -2,7 +2,7 @@
 # autopkgtest check: Run the installed-tests to verify GTK works correctly
 # Based on glib2.0's d/tests/installed-tests, (C) 2013 Canonical Ltd.
 
-set -e
+set -eu
 
 # Disable gvfs if it happens to be installed. We want to test the built-in
 # stuff

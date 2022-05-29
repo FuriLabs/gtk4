@@ -4,6 +4,8 @@
 
 set -eu
 
+namespace=gtk-4.0/
+
 # Disable gvfs if it happens to be installed. We want to test the built-in
 # stuff
 export GIO_USE_VFS=local
@@ -12,9 +14,14 @@ export GIO_USE_VOLUME_MONITOR=unix
 export XDG_RUNTIME_DIR="$AUTOPKGTEST_TMP"
 export HOME="$AUTOPKGTEST_TMP"
 
-tests=$(gnome-desktop-testing-runner -l gtk-4.0 |
+tests=$(gnome-desktop-testing-runner -l "$namespace" |
     cut -f1 -d' ' |
     grep -v '^gtk-4.0/gtk/templates.test$')
+
+if [ -z "$tests" ]; then
+    echo "Error: no installed-tests found matching $namespace" >&2
+    exit 1
+fi
 
 exec dbus-run-session -- \
 debian/tests/run-with-display $GDK_BACKEND \

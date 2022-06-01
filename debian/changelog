@@ -1,14 +1,15 @@
-gtk4 (4.6.5+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.6.5+ds-1) unstable; urgency=medium
 
   [ Jeremy Bicha ]
   * New upstream release (LP: #1976500)
     - Fixes file chooser getting bigger each time it opens (LP: #1971112)
+  * Drop 2 patches applied in new release
 
   [ Laurent Bigonville ]
   * debian/control.in: Disable librsvg BD on architectures where it's not
     building
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 01 Jun 2022 08:32:00 -0400
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 01 Jun 2022 09:05:45 -0400
 
 gtk4 (4.6.4+ds-3) unstable; urgency=medium
 

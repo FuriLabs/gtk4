@@ -1,3 +1,10 @@
+gtk4 (4.6.5+ds-0ubuntu1) UNRELEASED; urgency=medium
+
+  * New upstream release (LP: #1976500)
+     - Fixes file chooser getting bigger each time it opens (LP: #1971112)
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 01 Jun 2022 11:10:26 -0400
+
 gtk4 (4.6.3+ds1-0ubuntu1) jammy; urgency=medium
 
   [ Jeremy Bicha ]

@@ -1,3 +1,24 @@
+gtk4 (4.6.5+ds-1ubuntu1) kinetic; urgency=medium
+
+  * Sync with Debian. Remaining change:
+    - debian/tests:
+      + include the memorytexture test in the flaky set, it has been unreliable
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 19 May 2022 10:16:34 -0400
+
+gtk4 (4.6.5+ds-1) unstable; urgency=medium
+
+  [ Jeremy Bicha ]
+  * New upstream release (LP: #1976500)
+    - Fixes file chooser getting bigger each time it opens (LP: #1971112)
+  * Drop 2 patches applied in new release
+
+  [ Laurent Bigonville ]
+  * debian/control.in: Disable librsvg BD on architectures where it's not
+    building
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 01 Jun 2022 09:05:45 -0400
+
 gtk4 (4.6.4+ds-3ubuntu1) kinetic; urgency=medium
 
   [ Sebastien Bacher ]
@@ -5,7 +26,6 @@ gtk4 (4.6.4+ds-3ubuntu1) kinetic; urgency=medium
     - include the memorytexture test in the flaky set, it has been unreliable
 
  -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 19 May 2022 10:16:34 -0400
-
 gtk4 (4.6.4+ds-3) unstable; urgency=medium
 
   * d/rules: Stop skipping ngl tests on big-endian machines.

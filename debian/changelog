@@ -1,3 +1,10 @@
+gtk4 (4.6.5+ds-1ubuntu2) kinetic; urgency=medium
+
+  * Build-Depend on dh-sequence-translations
+    - Fixes missing translations and RTL support (LP: #1947698)
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 30 Jun 2022 09:56:48 -0400
+
 gtk4 (4.6.5+ds-1ubuntu1) kinetic; urgency=medium
 
   * Sync with Debian. Remaining change:

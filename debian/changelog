@@ -1,3 +1,9 @@
+gtk4 (4.6.5+ds-1ubuntu3) kinetic; urgency=medium
+
+  * debian/rules: gtk4 builds 2 translation templates so handle them both
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 30 Jun 2022 10:27:29 -0400
+
 gtk4 (4.6.5+ds-1ubuntu2) kinetic; urgency=medium
 
   * Build-Depend on dh-sequence-translations

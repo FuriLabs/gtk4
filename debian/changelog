@@ -1,3 +1,11 @@
+gtk4 (4.6.5+ds-1ubuntu5) kinetic; urgency=medium
+
+  * Rebuild to get the translations import on launchpad, the template
+    sharing option was enabled on the server which makes the (outdated)
+    project vcs loaded instead of the package files
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Fri, 01 Jul 2022 11:39:09 +0200
+
 gtk4 (4.6.5+ds-1ubuntu4) kinetic; urgency=medium
 
   * Fix the build directory for the previous upload

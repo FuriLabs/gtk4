@@ -316,7 +316,7 @@ override_dh_makeshlibs:
 # https://launchpad.net/bugs/1751820
 override_dh_translations:
 	dh_translations --domain=gtk40
-	ninja -C debian/build/deb gtk40-properties-pot
+	./make-pot properties
 
 override_dh_auto_clean:
 	dh_auto_clean

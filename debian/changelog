@@ -1,3 +1,11 @@
+gtk4 (4.6.5+ds-1ubuntu6) UNRELEASED; urgency=medium
+
+  * debian/rules:
+    - use the make-pot script instead of the  --enable-features=Vulkan
+      rule which seems to not work as intended
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Mon, 04 Jul 2022 13:45:59 +0200
+
 gtk4 (4.6.5+ds-1ubuntu5) kinetic; urgency=medium
 
   * Rebuild to get the translations import on launchpad, the template

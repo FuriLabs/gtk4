@@ -314,6 +314,7 @@ override_dh_makeshlibs:
 
 # Ubuntu's dh_translations can't handle two .pot files yet
 # https://launchpad.net/bugs/1751820
+# This and the dh_auto_clean override should be dropped for 4.7.1
 override_dh_translations:
 	dh_translations --domain=gtk40
 	./make-pot properties

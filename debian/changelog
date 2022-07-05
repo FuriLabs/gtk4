@@ -1,3 +1,29 @@
+gtk4 (4.6.6+ds-1ubuntu1) UNRELEASED; urgency=medium
+
+  * Sync with Debian. Remaining changes:
+    - debian/tests:
+      + include the memorytexture test in the flaky set, it has been unreliable
+    - debian/control:
+      + Build-Depend on dh-sequence-translations
+    - debian/rules: Handle the 2nd translation template file.
+      This override can be dropped with 4.7.1
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 19 May 2022 10:16:34 -0400
+
+gtk4 (4.6.6+ds-1) unstable; urgency=medium
+
+  [ Jeremy Bicha ]
+  * New upstream release (LP: #1980742)
+
+  [ Simon McVittie ]
+  * d/tests/installed-tests: Fail on unset variable references
+  * d/tests/installed-tests: Fail if no tests are found
+
+  [ Evangelos Ribeiro Tzaras ]
+  * Bump required glib build dependency
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 05 Jul 2022 11:24:34 -0400
+
 gtk4 (4.6.5+ds-1ubuntu6) kinetic; urgency=medium
 
   * debian/rules:
@@ -32,14 +58,6 @@ gtk4 (4.6.5+ds-1ubuntu2) kinetic; urgency=medium
     - Fixes missing translations and RTL support (LP: #1947698)
 
  -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 30 Jun 2022 09:56:48 -0400
-
-gtk4 (4.6.5+ds-1ubuntu1) kinetic; urgency=medium
-
-  * Sync with Debian. Remaining change:
-    - debian/tests:
-      + include the memorytexture test in the flaky set, it has been unreliable
-
- -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 19 May 2022 10:16:34 -0400
 
 gtk4 (4.6.5+ds-1) unstable; urgency=medium
 

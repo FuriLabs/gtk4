@@ -1,4 +1,4 @@
-gtk4 (4.6.6+ds-1ubuntu1) UNRELEASED; urgency=medium
+gtk4 (4.6.6+ds-1ubuntu1) kinetic; urgency=medium
 
   * Sync with Debian. Remaining changes:
     - debian/tests:
@@ -8,7 +8,7 @@ gtk4 (4.6.6+ds-1ubuntu1) UNRELEASED; urgency=medium
     - debian/rules: Handle the 2nd translation template file.
       This override can be dropped with 4.7.1
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 19 May 2022 10:16:34 -0400
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 05 Jul 2022 14:09:40 -0400
 
 gtk4 (4.6.6+ds-1) unstable; urgency=medium
 

@@ -1,4 +1,4 @@
-gtk4 (4.6.6+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.6.6+ds-1) unstable; urgency=medium
 
   [ Jeremy Bicha ]
   * New upstream release (LP: #1980742)
@@ -10,7 +10,7 @@ gtk4 (4.6.6+ds-1) UNRELEASED; urgency=medium
   [ Evangelos Ribeiro Tzaras ]
   * Bump required glib build dependency
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 05 Jul 2022 09:59:44 -0400
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 05 Jul 2022 11:24:34 -0400
 
 gtk4 (4.6.5+ds-1) unstable; urgency=medium
 

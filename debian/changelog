@@ -1,8 +1,11 @@
-gtk4 (4.6.6+ds-0ubuntu1) UNRELEASED; urgency=medium
+gtk4 (4.6.6+ds-0ubuntu1) jammy; urgency=medium
 
   * New upstream release (LP: #1980742)
+  * Build-Depend on dh-sequence-translations
+    - Needed to fix missing translations and RTL support (LP: #1947698)
+  * debian/rules: Handle the second translation template for dh-translations
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 05 Jul 2022 14:17:01 -0400
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 05 Jul 2022 14:21:19 -0400
 
 gtk4 (4.6.5+ds-0ubuntu1) jammy; urgency=medium
 

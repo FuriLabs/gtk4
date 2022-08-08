@@ -1,3 +1,18 @@
+gtk4 (4.6.6+ds-2) unstable; urgency=medium
+
+  [ Evangelos Ribeiro Tzaras ]
+  * Drop erroneous !nocheck annotation from python3-gi Build-Depends
+    (Closes: #1014878)
+
+  [ Simon McVittie ]
+  * Add temporary patch to work around #1014417 in Meson
+  * Standards-Version: 4.6.1 (no changes required)
+  * Migrate GLib 2.68.0 build-dependency from d/control to d/control.in
+  * d/copyright: Drop unused GPL license stanzas
+  * d/gtk-4-tests.lintian-overrides: Update syntax for current Lintian
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 08 Aug 2022 19:22:54 +0100
+
 gtk4 (4.6.6+ds-1) unstable; urgency=medium
 
   [ Jeremy Bicha ]

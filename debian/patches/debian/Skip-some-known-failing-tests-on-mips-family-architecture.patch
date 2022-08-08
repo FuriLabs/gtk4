@@ -38,7 +38,7 @@ index 2fb0208..8c3ff1f 100644
  # to run in ci, but still useful to keep around
  informative_render_tests = [
 diff --git a/testsuite/reftests/meson.build b/testsuite/reftests/meson.build
-index 0b6d0fa..b7d2fcf 100644
+index 301f8bd..2c6e104 100644
 --- a/testsuite/reftests/meson.build
 +++ b/testsuite/reftests/meson.build
 @@ -71,9 +71,6 @@ testdata = [
@@ -61,7 +61,7 @@ index 0b6d0fa..b7d2fcf 100644
    'background-repeat-clip.css',
    'background-repeat-clip.ref.ui',
    'background-repeat-clip.ui',
-@@ -581,6 +575,19 @@ xfails = [
+@@ -582,6 +576,19 @@ xfails = [
    'border-half-pixel.ui'
  ]
  

@@ -1,213 +1,305 @@
-Overview of Changes in 4.6.6, 02-07-2022
+Overview of Changes in 4.7.2, 10-08-2022
 ========================================
 
-* Fix translations in GTKs own ui files
-
-* Wayland:
- - Fix a problem with the activation protocol
- - Don't force the HighContrast icontheme
-
-* Windows:
- - Fix a problem with builtin icons if the
-   hicolor icontheme is not installed
-
-* Translation updates:
- Brazilian Portuguese
- Russian
- Turkish
-
-
-Overview of Changes in 4.6.5, 27-05-2022
-========================================
-
-* GtkFileChooser:
- - Fix pasting text into the name field
+* GtkTextView:
+ - Fix child positioning with gutters
 
 * GtkText:
- - Remove an assertion that is sometimes hit
+ - Update placeholder visibility when necessary
 
-* Wayland:
- - Ensure that our cursor surfaces don't violate
-   protocol constraints
+* GtkPicture:
+ - Add a content-fit property
 
-* Accssibility:
- - Fix a problem in the accessibility tree
+* GtkPopover:
+ - Fix a size allocation problem with the arrow
+
+* GtkTreeView:
+ - Fix a problem with DND
+
+* GtkTreePopover:
+ - Support scrolling
+
+* GtkGridView:
+ - Fix issues with rubberband selection
+
+* GtkLabel:
+ - Add a tabs property
+
+* GtkSnapshot:
+ - Make GtkSnapshot work from bindings
+
+* GtkScrolledWindow:
+ - Scroll at a reasonable speed
+
+* GtkPaned:
+ - Avoid an infinite loop
+
+* GtkWindow:
+ - Improve generation and handling of crossing events
+
+* CSS:
+ - Fix handling of certain transform values
+
+* Media support:
+ - Add audio support to the ffmpeg backend
+ - Avoid oom with pathological jpeg images
+
+* GDK:
+ - Fix handling of touchpad hold events
+ - Add support for hi-resolution scroll events
+
+* X11:
+ - Fix preferred action for DND
+
+* Windows:
+ - Fix DND
+
+* List models:
+ - Fix items-changed emission
+ - Add more list model tests
+
+* Demos:
+ - Add a winning sound to game demos
+ - Make app icons work uninstalled
 
 * Translation updates:
- Brazilian Portuguese
+ Abkhazian
+ Basque
+ Catalan
+ Georgian
  German
+ Indonesian
+ Occitan
+ Persian
+ Portuguese
+ Russian
+ Spanish
+ Ukrainian
+
+
+Overview of Changes in 4.7.1, 12-07-2022
+========================================
+
+* GtkInscription:
+ - A new label-like widget for use in list views
+
+* GtkColorChooser:
+ - Style improvements
+
+* GtkFontChooser:
+ - Improve support for OpenType features a bit
+
+* GtkLabel:
+ - Allow selectable labels to be activated via mnemonic
+
+* GtkTextView:
+ - Implement GetCharacterExtents for accessibility
+
+* GtkStack:
+ - Fix a poblem with stack page accessibility
+
+* GtkListView:
+ - Cull listitems that are out of view
+ - Make all our list models implement ::n-items and
+   ::item-type properties
+
+* Translations:
+ - Stop translating property nicks and blurbs
+ - Fix extracting translations from ui files
+
+* Debugging:
+ - Support GTK_DEBUG=invert-text-dir
+ - Allow inspecting inspectors
+ - Replace GTK_USE_PORTAL with GDK_DEBUG=portals
+ - Improve responsiveness of the inspector
+
+* CSS:
+ - Allow fractional letterspacing
+
+* Theme:
+ - Improve legibility of selectable labels
+
+* Demos:
+ - Improve the font features demo
+ - Add demos for GtkInscription
+
+* Wayland:
+ - Freeze popups when hidden
+ - Only send smooth scroll events for tablet tools
+ - Make scaled cursor image have the right size
+ - Fix problems with the activation protocol
+ - Don't force the HighContrast icon theme
+ - Support xdg_toplevel.bounds
+
+* X11:
+ - Always update the shadoe size
+
+* Windows:
+ - Improve touchpad support by using DirectManipulation
+ - Add more directories to the builtin hicolor icon theme
+
+* Translation updates:
+ Basque
+ Catalan
+ Chinese (China)
+ Galician
+ German
+ Lithuanian
+ Nepali
+ Occitan
  Persian
  Polish
  Portuguese
  Russian
+ Serbian
+ Spanish
  Swedish
  Turkish
  Ukrainian
 
 
-Overview of Changes in 4.6.4, 13-05-2022
+Overview of Changes in 4.7.0, 07-05-2022
 ========================================
 
+* GtkTextView:
+ - Reduce overdraws
+
+* GtkViewport:
+ - Default scroll-to-focus to TRUE
+
+* GtkText:
+ - Stop blinking when we lose focus
+
+* GtkSearchEntry:
+ - Make search delay configurable
+
+* GtkPopoverMenu:
+ - Fix RTL positioning of buttons
+
+* GtkLabel:
+ - Fix focus keynav with links
+
 * GtkFileChooser:
- - Fix select button sensitivity in select_folder mode
- - Fix some fallout from list model porting
+ - Prevent undesirable completion popups
+ - Fix a corner case in save mode
+ - Keep the portal filechooser alive long enough
 
-* GtkListView, GtkColumnView:
- - Optimize scrolling
+* GtkCheckButton:
+ - Allow setting a custom child
 
-* print-to-file:
- - Handle nonexisting files better in the dialog
+* GtkEditableLabel:
+ - Make the :editing property writable
 
-* Avoid infinite loops in size allocation
+* GtkColumnView:
+ - Various optimizations to improve scrolling performance
+
+* GtkTreeStore:
+ - Allow populating tree stores from ui files
+
+* GtkBoxLayout:
+ - Avoid infinite loops
 
 * CSS:
- - Optimize a case of reparenting that is important in GtkListView
+ - Optimize reordering within the same parent
 
-* GSK:
+* Emoji:
+ - Update to CLDR v40 / Unicode 14
+ - Add more locales
+
+* Input:
+ - Add scroll unit handling
+ - Handle display changes in GtkIMMultiContext
+ - Always populate GDK_AXIS_X/Y in event history
+ - Don't crash for large compose tables
+
+* Accessibility:
+ - Fix a crash at start when orca is running
+
+* Theme:
+ - Refresh icons
+ - Fix selection in vertical spin buttons
+ - Fix selection in editable labels
+
+* gdk:
+ - Optimize pixel format conversions
+ - Use EGL_KHR_swap_buffers_with_damage for NVidia
+
+* gsk:
+ - Handle large viewports
+ - Prepare texture libraries for glyphy rendering
+ - Don't leak big glyphs in the glyph cache
+ - Align offscreen rendering with th pixel grid
  - Check for half-float support before using it
 
 * Wayland:
- - Ignore empty preedit updates This fixes a problem with
-   textview scrolling
- - Freeze popups when hidden. This addresses a frame rate drop
-
-* Translation updates
- Hebrew
- Nepali
-
-
-Overview of Changes in 4.6.3, 21-04-2022
-========================================
-
-* GtkOverlay:
- - Bring back positional style classes
-
-* GtkFileChooser:
- - Prevent unwanted completion popups
- - Fix small problems in save mode
- - Fix buildable suport of GtkFileFilter
-
-* GtkPopover:
- - Fix button positions in right-to-left locales
-
-* GtkLabel:
- - Fix small issues with link handling
-
-* Tooltips:
- - Don't restrict the minimum tooltip length
-
-* Theme:
- - Don't use opacity for overlay scrollbars
- - Fix selection text color in  vertical spin buttons
-
-* GSK:
- - Accept textures that are generated by webkit
- - Align offscreen rendering to the pixel grid
-
-* Accessibility
- - Fix a crash in startup when orca is running
-
-* Input:
- - Fix display changes in GtkIMMultiContext
- - Fix activating on-screen keyboards
- - Always propagate hold events in GtkEventControllerScroll
-
-* Windows:
- - Fix a critical warning in clipboard handling
- - Report serial numbers for events
+ - Use xdg-activation protocol
+ - Fix text caret coordinates
+ - Fix on-screen keyboard activation
 
 * MacOS:
- - Prevent fullscreen transition reentrancy
-
-
-* Translation updates
- British English
- Czech
- German
- Indonesian
- Latvian
-
-
-Overview of Changes in 4.6.2, 18-03-2022
-========================================
-
-* GtkScrolledWindow:
- - Set scroll-to-focus on viewports
- - Avoid doubly triggering deceleration
-
-* GtkEntry:
- - Stop cursor blinking on focus-out
-
-* Emoji:
- - Update Emoji data to CLDR 40 and Unicode 14
- - Add more locales for Emoji data (da, de, en, es,
-   fr hu, it, ko, lt, ms, nl, pl, pt, ru, s, uk zh)
-
-* GDK
- - Optimize texture conversions on x86 and ARM
- - Use EGK_KHR_swap_buffers_with_damage if available
-
-* GSK
- - Avoid clearing opaque regions
- - Support using a non-default framebuffer
- - Handle large viewports by tiling
-
-* Wayland:
- - Prefer xdg-activation over gtk-shell
- - text protocol: Fix text caret location
- - text protocol: Use serials to control outbound messages
-
-* Inspector:
- - Show app ID and resource path
-
-* Demos:
- - widget-factory: Handle F11 to toggle fullscreen
-
-* Tools:
- - gtk-builder-tool: Allow use without display
+ - Fix sluggish and reversed scrolling
+ - Improve monitor detection
+ - Event handling fixes
+ - Fix keyboard input on popovers
+ - Support OpenGL-based video playback
+ - Suport fullscreen
+ - Improve native filechoooser size allocation
+ - Use CALayer and IOSurface for rendering
+ - Use a per-monitor CVDisplayLink
+ - Fix kinetic scrolling
+ - Improve window placement
+ - Improve multi-monitor handling
+ - Start applications in the foreground
+ - Fix cursor blink time
 
 * Windows:
  - Fix preedit window placement on HiDPI
- - Build improvements
- - Fix fullscreen handling
 
-* MacOS:
- - Fix scrolling with an external mouse
- - Fix kinetic scrolling with overshoot
- - Improve monitor detection
- - Many input handling fixes
- - Support OpenGL accelerated video playback
- - Support fullscreen
- - Improve interactive window resizing and moving
- - Fix backdrop state handling
- - Fix GtkFileChooserNative filtering
- - Use CALayer and IOSurface for rendering
- - Use per monitor CVDisplayLink to support mixed-rate monitors
- - Start applications in foreground
- - Fix cursor blink time
+* Tools:
+ - gtk4-builder-tool: Don't require a display for all commands
+ - gtk4-builder-tool: Add a screenshot command
+ - gtk4-node-editor: Install this utility
+
+* Debugging:
+ - inspector: Show more application data
+ - inspector: Allow viewing PangoAttrList properties
+
+* Documentation:
+ - Use the gtk-builder-tool to generate screenshots
+
+* Build:
+ - Fix cross-compilation
+ - Fix build on aarch64
+ - Fix build with gcc 12
 
 * Translation updates
  Basque
  Brazilian Portuguese
+ British English
  Catalan
  Chinese (China)
+ Chinese (Taiwan)
  Croatian
  Czech
  Danish
  Finnish
  Galician
+ Georgian
  German
  Hebrew
  Hungarian
+ Indonesian
  Italian
  Kazakh
  Korean
+ Latvian
  Lithuanian
  Norwegian Bokmål
  Persian
- Poliah
+ Polish
  Portuguese
  Russian
+ Serbian
  Slovak
  Slovenian
  Spanish

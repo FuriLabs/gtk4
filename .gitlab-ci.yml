@@ -21,12 +21,12 @@ stages:
 
 # Common variables
 variables:
-  COMMON_MESON_FLAGS: "-Dwerror=true -Dglib:werror=false -Dpango:werror=false -Dgtk-doc:werror=false -Dwayland-protocols:werror=false -Dsysprof:werror=false"
+  COMMON_MESON_FLAGS: "-Dwerror=true -Dglib:werror=false -Dpango:werror=false -Dgtk-doc:werror=false -Dwayland-protocols:werror=false -Dsysprof:werror=false -Dwayland:werror=false"
   BACKEND_FLAGS: "-Dx11-backend=true -Dwayland-backend=true -Dbroadway-backend=true"
   FEATURE_FLAGS: "-Dvulkan=enabled -Dcloudproviders=enabled"
   MESON_TEST_TIMEOUT_MULTIPLIER: 3
-  FEDORA_IMAGE: "registry.gitlab.gnome.org/gnome/gtk/fedora:v36"
-  FLATPAK_IMAGE: "registry.gitlab.gnome.org/gnome/gnome-runtime-images/gnome:master"
+  FEDORA_IMAGE: "registry.gitlab.gnome.org/gnome/gtk/fedora:v38"
+  FLATPAK_IMAGE: "quay.io/gnome_infrastructure/gnome-runtime-images:gnome-master"
 
 .only-default:
   only:
@@ -58,6 +58,7 @@ style-check-diff:
       - "${CI_PROJECT_DIR}/_build/report*.xml"
       - "${CI_PROJECT_DIR}/_build/report*.html"
       - "${CI_PROJECT_DIR}/_build/testsuite/reftests/output/*/*.png"
+      - "${CI_PROJECT_DIR}/_build/testsuite/reftests/output/*/*.node"
       - "${CI_PROJECT_DIR}/_build/testsuite/tools/output/*/*"
       - "${CI_PROJECT_DIR}/_build/testsuite/gsk/compare/*/*/*.png"
       - "${CI_PROJECT_DIR}/_build/testsuite/css/output/*/*.syscap"
@@ -172,7 +173,7 @@ macos:
   needs: []
   before_script:
     - bash .gitlab-ci/show-info-osx.sh
-    - pip3 install --user meson==0.59
+    - pip3 install --user meson==0.60.3
     - pip3 install --user ninja
     - export PATH=/Users/gitlabrunner/Library/Python/3.7/bin:$PATH
     - export MESON_FORCE_BACKTRACE=1
@@ -268,6 +269,18 @@ flatpak-main:icon-browser:
   variables:
     APPID: org.gtk.IconBrowser4
 
+flatpak-manual:node-editor:
+  extends: .flatpak-manual
+  needs: []
+  variables:
+    APPID: org.gtk.gtk4.NodeEditor
+
+flatpak-main:node-editor:
+  extends: .flatpak-main
+  needs: []
+  variables:
+    APPID: org.gtk.gtk4.NodeEditor
+
 # Publish the demo apps to the GNOME Nightly repo
 # https://wiki.gnome.org/Apps/Nightly
 # https://gitlab.gnome.org/GNOME/Initiatives/-/wikis/DevOps-with-Flatpak
@@ -285,6 +298,11 @@ nightly icon-browser:
     extends: '.publish_nightly'
     dependencies: ['flatpak-main:icon-browser']
     needs: ['flatpak-main:icon-browser']
+
+nightly node-editor:
+    extends: '.publish_nightly'
+    dependencies: ['flatpak-main:node-editor']
+    needs: ['flatpak-main:node-editor']
 
 static-scan:
   image: $FEDORA_IMAGE
@@ -345,6 +363,7 @@ reference:
       - _reference
 
 publish-docs:
+  image: fedora:latest
   stage: publish
   needs: ['reference']
   script:

@@ -69,6 +69,23 @@ parse_rect (GtkCssParser    *parser,
 }
 
 static gboolean
+parse_vec4 (GtkCssParser    *parser,
+            gpointer         out_vec4)
+{
+  double numbers[4];
+
+  if (!gtk_css_parser_consume_number (parser, &numbers[0]) ||
+      !gtk_css_parser_consume_number (parser, &numbers[1]) ||
+      !gtk_css_parser_consume_number (parser, &numbers[2]) ||
+      !gtk_css_parser_consume_number (parser, &numbers[3]))
+    return FALSE;
+
+  graphene_vec4_init (out_vec4, numbers[0], numbers[1], numbers[2], numbers[3]);
+
+  return TRUE;
+}
+
+static gboolean
 parse_texture (GtkCssParser *parser,
                gpointer      out_data)
 {
@@ -965,7 +982,7 @@ parse_color_node (GtkCssParser *parser)
     { "color", parse_color, NULL, &color },
   };
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
 
   return gsk_color_node_new (&color, &bounds);
 }
@@ -986,7 +1003,7 @@ parse_linear_gradient_node_internal (GtkCssParser *parser,
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (stops == NULL)
     {
       GskColorStop from = { 0.0, GDK_RGBA("AAFF00") };
@@ -1041,7 +1058,7 @@ parse_radial_gradient_node_internal (GtkCssParser *parser,
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (stops == NULL)
     {
       GskColorStop from = { 0.0, GDK_RGBA("AAFF00") };
@@ -1091,7 +1108,7 @@ parse_conic_gradient_node (GtkCssParser *parser)
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (stops == NULL)
     {
       GskColorStop from = { 0.0, GDK_RGBA("AAFF00") };
@@ -1102,7 +1119,7 @@ parse_conic_gradient_node (GtkCssParser *parser)
       g_array_append_val (stops, to);
     }
 
-  result = gsk_conic_gradient_node_new (&bounds, &center, rotation, 
+  result = gsk_conic_gradient_node_new (&bounds, &center, rotation,
                                         (GskColorStop *) stops->data, stops->len);
 
   g_array_free (stops, TRUE);
@@ -1125,7 +1142,7 @@ parse_inset_shadow_node (GtkCssParser *parser)
     { "blur", parse_double, NULL, &blur }
   };
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
 
   return gsk_inset_shadow_node_new (&outline, &color, dx, dy, spread, blur);
 }
@@ -1308,7 +1325,7 @@ parse_glshader_node (GtkCssParser *parser)
   GBytes *args = NULL;
   int len, i;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
 
   for (len = 0; len < 4; len++)
     {
@@ -1345,7 +1362,7 @@ parse_border_node (GtkCssParser *parser)
     { "colors", parse_colors4, NULL, &colors }
   };
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
 
   return gsk_border_node_new (&outline, widths, colors);
 }
@@ -1361,7 +1378,7 @@ parse_texture_node (GtkCssParser *parser)
   };
   GskRenderNode *node;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
 
   if (texture == NULL)
     texture = create_default_texture ();
@@ -1385,10 +1402,10 @@ parse_cairo_node (GtkCssParser *parser)
   };
   GskRenderNode *node;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
 
   node = gsk_cairo_node_new (&bounds);
-  
+
   if (surface != NULL)
     {
       cairo_t *cr = gsk_cairo_node_get_draw_context (node);
@@ -1430,7 +1447,7 @@ parse_outset_shadow_node (GtkCssParser *parser)
     { "blur", parse_double, NULL, &blur }
   };
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
 
   return gsk_outset_shadow_node_new (&outline, &color, dx, dy, spread, blur);
 }
@@ -1446,7 +1463,7 @@ parse_transform_node (GtkCssParser *parser)
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (child == NULL)
     child = create_default_render_node ();
 
@@ -1473,7 +1490,7 @@ parse_opacity_node (GtkCssParser *parser)
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (child == NULL)
     child = create_default_render_node ();
 
@@ -1490,22 +1507,19 @@ parse_color_matrix_node (GtkCssParser *parser)
   GskRenderNode *child = NULL;
   graphene_matrix_t matrix;
   GskTransform *transform = NULL;
-  graphene_rect_t offset_rect = GRAPHENE_RECT_INIT (0, 0, 0, 0);
   graphene_vec4_t offset;
   const Declaration declarations[] = {
     { "matrix", parse_transform, clear_transform, &transform },
-    { "offset", parse_rect, NULL, &offset_rect },
+    { "offset", parse_vec4, NULL, &offset },
     { "child", parse_node, clear_node, &child }
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  graphene_vec4_init (&offset, 0, 0, 0, 0);
+
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (child == NULL)
     child = create_default_render_node ();
-
-  graphene_vec4_init (&offset,
-                      offset_rect.origin.x, offset_rect.origin.y,
-                      offset_rect.size.width, offset_rect.size.height);
 
   gsk_transform_to_matrix (transform, &matrix);
 
@@ -1530,7 +1544,7 @@ parse_cross_fade_node (GtkCssParser *parser)
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (start == NULL)
     start = gsk_color_node_new (&GDK_RGBA("AAFF00"), &GRAPHENE_RECT_INIT (0, 0, 50, 50));
   if (end == NULL)
@@ -1557,7 +1571,7 @@ parse_blend_node (GtkCssParser *parser)
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (bottom == NULL)
     bottom = gsk_color_node_new (&GDK_RGBA("AAFF00"), &GRAPHENE_RECT_INIT (0, 0, 50, 50));
   if (top == NULL)
@@ -1585,7 +1599,7 @@ parse_repeat_node (GtkCssParser *parser)
   GskRenderNode *result;
   guint parse_result;
 
-  parse_result = parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_result = parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (child == NULL)
     child = create_default_render_node ();
 
@@ -1649,7 +1663,7 @@ parse_text_node (GtkCssParser *parser)
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
 
   if (font == NULL)
     {
@@ -1707,7 +1721,7 @@ parse_blur_node (GtkCssParser *parser)
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (child == NULL)
     child = create_default_render_node ();
 
@@ -1729,7 +1743,7 @@ parse_clip_node (GtkCssParser *parser)
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (child == NULL)
     child = create_default_render_node ();
 
@@ -1754,7 +1768,7 @@ parse_rounded_clip_node (GtkCssParser *parser)
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (child == NULL)
     child = create_default_render_node ();
 
@@ -1776,7 +1790,7 @@ parse_shadow_node (GtkCssParser *parser)
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (child == NULL)
     child = create_default_render_node ();
 
@@ -1805,7 +1819,7 @@ parse_debug_node (GtkCssParser *parser)
   };
   GskRenderNode *result;
 
-  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
   if (child == NULL)
     child = create_default_render_node ();
 
@@ -2697,10 +2711,41 @@ render_node_print (Printer       *p,
         start_node (p, "texture");
         append_rect_param (p, "bounds", &node->bounds);
 
-        bytes = gdk_texture_save_to_png_bytes (texture);
-
         _indent (p);
-        g_string_append (p->str, "texture: url(\"data:image/png;base64,");
+
+        switch (gdk_texture_get_format (texture))
+          {
+          case GDK_MEMORY_B8G8R8A8_PREMULTIPLIED:
+          case GDK_MEMORY_A8R8G8B8_PREMULTIPLIED:
+          case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
+          case GDK_MEMORY_B8G8R8A8:
+          case GDK_MEMORY_A8R8G8B8:
+          case GDK_MEMORY_R8G8B8A8:
+          case GDK_MEMORY_A8B8G8R8:
+          case GDK_MEMORY_R8G8B8:
+          case GDK_MEMORY_B8G8R8:
+          case GDK_MEMORY_R16G16B16:
+          case GDK_MEMORY_R16G16B16A16_PREMULTIPLIED:
+          case GDK_MEMORY_R16G16B16A16:
+            bytes = gdk_texture_save_to_png_bytes (texture);
+            g_string_append (p->str, "texture: url(\"data:image/png;base64,");
+            break;
+
+          case GDK_MEMORY_R16G16B16_FLOAT:
+          case GDK_MEMORY_R16G16B16A16_FLOAT_PREMULTIPLIED:
+          case GDK_MEMORY_R16G16B16A16_FLOAT:
+          case GDK_MEMORY_R32G32B32_FLOAT:
+          case GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED:
+          case GDK_MEMORY_R32G32B32A32_FLOAT:
+            bytes = gdk_texture_save_to_tiff_bytes (texture);
+            g_string_append (p->str, "texture: url(\"data:image/tiff;base64,");
+            break;
+
+          case GDK_MEMORY_N_FORMATS:
+          default:
+            g_assert_not_reached ();
+          }
+
         b64 = base64_encode_with_linebreaks (g_bytes_get_data (bytes, NULL),
                                              g_bytes_get_size (bytes));
         append_escaping_newlines (p->str, b64);

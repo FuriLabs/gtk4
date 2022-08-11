@@ -1409,13 +1409,13 @@ expression_info_construct (GtkBuilder      *builder,
             return NULL;
           }
 
-        if (g_type_is_a (type, G_TYPE_OBJECT))
+        if (g_type_fundamental (type) == G_TYPE_OBJECT)
           {
             GObjectClass *class = g_type_class_ref (type);
             pspec = g_object_class_find_property (class, info->property.property_name);
             g_type_class_unref (class);
           }
-        else if (g_type_is_a (type, G_TYPE_INTERFACE))
+        else if (g_type_fundamental (type) == G_TYPE_INTERFACE)
           {
             GTypeInterface *iface = g_type_default_interface_ref (type);
             pspec = g_object_interface_find_property (iface, info->property.property_name);
@@ -1495,7 +1495,7 @@ parse_signal (ParserData   *data,
       return;
     }
 
-  if (!g_signal_parse_name (name, object_info->type, &id, &detail, FALSE))
+  if (!g_signal_parse_name (name, object_info->type, &id, &detail, TRUE))
     {
       g_set_error (error,
                    GTK_BUILDER_ERROR,

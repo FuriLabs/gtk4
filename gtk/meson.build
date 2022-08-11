@@ -283,6 +283,7 @@ gtk_public_sources = files([
   'gtkimmodule.c',
   'gtkimmulticontext.c',
   'gtkinfobar.c',
+  'gtkinscription.c',
   'gtklabel.c',
   'gtklayoutchild.c',
   'gtklayoutmanager.c',
@@ -570,6 +571,7 @@ gtk_public_headers = files([
   'gtkimmodule.h',
   'gtkimmulticontext.h',
   'gtkinfobar.h',
+  'gtkinscription.h',
   'gtklabel.h',
   'gtklayoutchild.h',
   'gtklayoutmanager.h',
@@ -942,7 +944,8 @@ if not meson.is_cross_build() and build_machine.cpu_family() != 'arm' and build_
     output : 'gtkresources_blob2.o',
     command : [objcopy,
                  '--strip-all',
-                 '--add-symbol','_gtk_resource_data=.data:0',
+                 '--rename-section', '.data=.gresource.gtk',
+                 '--add-symbol','_gtk_resource_data=.gresource.gtk:0',
                  '@INPUT@',
                  '@OUTPUT@'])
 
@@ -1110,6 +1113,7 @@ gtk_deps = [
   gobject_dep,
   platform_gio_dep,
   pangocairo_dep,
+  harfbuzz_dep,
   fribidi_dep,
   cairogobj_dep,
   fontconfig_dep,

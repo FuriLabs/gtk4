@@ -67,6 +67,7 @@
 
 #define SCROLL_CAPTURE_THRESHOLD_MS 150
 #define HOLD_TIMEOUT_MS 50
+#define SURFACE_UNIT_DISCRETE_MAPPING 10
 
 typedef struct
 {
@@ -84,6 +85,10 @@ struct _GtkEventControllerScroll
   /* For discrete event coalescing */
   double cur_dx;
   double cur_dy;
+  double last_cur_dx;
+  double last_cur_dy;
+
+  GdkScrollUnit cur_unit;
 
   guint hold_timeout_id;
   guint active : 1;
@@ -335,6 +340,17 @@ gtk_event_controller_scroll_handle_hold_event (GtkEventController *controller,
 }
 
 static gboolean
+should_reset_discrete_acc (double current_delta,
+                           double last_delta)
+{
+  if (last_delta == 0)
+    return TRUE;
+
+  return (current_delta < 0 && last_delta > 0) ||
+         (current_delta > 0 && last_delta < 0);
+}
+
+static gboolean
 gtk_event_controller_scroll_handle_event (GtkEventController *controller,
                                           GdkEvent           *event,
                                           double              x,
@@ -345,6 +361,7 @@ gtk_event_controller_scroll_handle_event (GtkEventController *controller,
   double dx = 0, dy = 0;
   gboolean handled = GDK_EVENT_PROPAGATE;
   GdkEventType event_type;
+  GdkScrollUnit scroll_unit;
 
   event_type = gdk_event_get_event_type (event);
 
@@ -359,6 +376,8 @@ gtk_event_controller_scroll_handle_event (GtkEventController *controller,
     return FALSE;
 
   g_clear_handle_id (&scroll->hold_timeout_id, g_source_remove);
+
+  scroll_unit = gdk_scroll_event_get_unit (event);
 
   /* FIXME: Handle device changes */
   direction = gdk_scroll_event_get_direction (event);
@@ -380,6 +399,67 @@ gtk_event_controller_scroll_handle_event (GtkEventController *controller,
           scroll->cur_dy += dy;
           dx = dy = 0;
 
+          if (scroll_unit == GDK_SCROLL_UNIT_SURFACE)
+            {
+              dx = (int) scroll->cur_dx / SURFACE_UNIT_DISCRETE_MAPPING;
+              scroll->cur_dx -= dx * SURFACE_UNIT_DISCRETE_MAPPING;
+
+              dy = (int) scroll->cur_dy / SURFACE_UNIT_DISCRETE_MAPPING;
+              scroll->cur_dy -= dy * SURFACE_UNIT_DISCRETE_MAPPING;
+
+              scroll_unit = GDK_SCROLL_UNIT_WHEEL;
+            }
+          else
+            {
+              if (ABS (scroll->cur_dx) >= 1)
+                {
+                  steps = trunc (scroll->cur_dx);
+                  scroll->cur_dx -= steps;
+                  dx = steps;
+                }
+
+              if (ABS (scroll->cur_dy) >= 1)
+                {
+                  steps = trunc (scroll->cur_dy);
+                  scroll->cur_dy -= steps;
+                  dy = steps;
+                }
+            }
+        }
+    }
+  else
+    {
+      gdk_scroll_event_get_deltas (event, &dx, &dy);
+
+      if ((scroll->flags & GTK_EVENT_CONTROLLER_SCROLL_VERTICAL) == 0)
+        dy = 0;
+      if ((scroll->flags & GTK_EVENT_CONTROLLER_SCROLL_HORIZONTAL) == 0)
+        dx = 0;
+
+      if (scroll->flags & GTK_EVENT_CONTROLLER_SCROLL_DISCRETE)
+        {
+          int steps;
+
+          if (dx != 0)
+            {
+              if (should_reset_discrete_acc (dx, scroll->last_cur_dx))
+                scroll->cur_dx = 0;
+
+              scroll->last_cur_dx = dx;
+            }
+
+          if (dy != 0)
+            {
+              if (should_reset_discrete_acc (dy, scroll->last_cur_dy))
+                scroll->cur_dy = 0;
+
+              scroll->last_cur_dy = dy;
+            }
+
+          scroll->cur_dx += dx;
+          scroll->cur_dy += dy;
+          dx = dy = 0;
+
           if (ABS (scroll->cur_dx) >= 1)
             {
               steps = trunc (scroll->cur_dx);
@@ -395,33 +475,8 @@ gtk_event_controller_scroll_handle_event (GtkEventController *controller,
             }
         }
     }
-  else
-    {
-      switch (direction)
-        {
-        case GDK_SCROLL_UP:
-          dy -= 1;
-          break;
-        case GDK_SCROLL_DOWN:
-          dy += 1;
-          break;
-        case GDK_SCROLL_LEFT:
-          dx -= 1;
-          break;
-        case GDK_SCROLL_RIGHT:
-          dx += 1;
-          break;
-        case GDK_SCROLL_SMOOTH:
-        default:
-          g_assert_not_reached ();
-          break;
-        }
 
-      if ((scroll->flags & GTK_EVENT_CONTROLLER_SCROLL_VERTICAL) == 0)
-        dy = 0;
-      if ((scroll->flags & GTK_EVENT_CONTROLLER_SCROLL_HORIZONTAL) == 0)
-        dx = 0;
-    }
+  scroll->cur_unit = scroll_unit;
 
   if (dx != 0 || dy != 0)
     g_signal_emit (controller, signals[SCROLL], 0, dx, dy, &handled);
@@ -460,9 +515,7 @@ gtk_event_controller_scroll_class_init (GtkEventControllerScrollClass *klass)
    * The flags affecting event controller behavior.
    */
   pspecs[PROP_FLAGS] =
-    g_param_spec_flags ("flags",
-                        P_("Flags"),
-                        P_("Flags"),
+    g_param_spec_flags ("flags", NULL, NULL,
                         GTK_TYPE_EVENT_CONTROLLER_SCROLL_FLAGS,
                         GTK_EVENT_CONTROLLER_SCROLL_NONE,
                         GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
@@ -491,6 +544,9 @@ gtk_event_controller_scroll_class_init (GtkEventControllerScrollClass *klass)
    *
    * Signals that the widget should scroll by the
    * amount specified by @dx and @dy.
+   *
+   * For the representation unit of the deltas, see
+   * [method@Gtk.EventControllerScroll.get_unit].
    *
    * Returns: %TRUE if the scroll event was handled,
    *   %FALSE otherwise.
@@ -608,4 +664,27 @@ gtk_event_controller_scroll_get_flags (GtkEventControllerScroll *scroll)
                         GTK_EVENT_CONTROLLER_SCROLL_NONE);
 
   return scroll->flags;
+}
+
+/**
+ * gtk_event_controller_scroll_get_unit:
+ * @scroll: a `GtkEventControllerScroll`.
+ *
+ * Gets the scroll unit of the last
+ * [signal@Gtk.EventControllerScroll::scroll] signal received.
+ *
+ * Always returns %GDK_SCROLL_UNIT_WHEEL if the
+ * %GTK_EVENT_CONTROLLER_SCROLL_DISCRETE flag is set.
+ *
+ * Returns: the scroll unit.
+ *
+ * Since: 4.8
+ */
+GdkScrollUnit
+gtk_event_controller_scroll_get_unit (GtkEventControllerScroll *scroll)
+{
+  g_return_val_if_fail (GTK_IS_EVENT_CONTROLLER_SCROLL (scroll),
+                        GDK_SCROLL_UNIT_WHEEL);
+
+  return scroll->cur_unit;
 }

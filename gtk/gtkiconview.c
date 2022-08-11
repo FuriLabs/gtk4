@@ -356,9 +356,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
 				   PROP_SELECTION_MODE,
-				   g_param_spec_enum ("selection-mode",
-						      P_("Selection mode"),
-						      P_("The selection mode"),
+				   g_param_spec_enum ("selection-mode", NULL, NULL,
 						      GTK_TYPE_SELECTION_MODE,
 						      GTK_SELECTION_SINGLE,
 						      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
@@ -373,9 +371,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
 				   PROP_PIXBUF_COLUMN,
-				   g_param_spec_int ("pixbuf-column",
-						     P_("Pixbuf column"),
-						     P_("Model column used to retrieve the icon pixbuf from"),
+				   g_param_spec_int ("pixbuf-column", NULL, NULL,
 						     -1, G_MAXINT, -1,
 						     GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -389,9 +385,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
 				   PROP_TEXT_COLUMN,
-				   g_param_spec_int ("text-column",
-						     P_("Text column"),
-						     P_("Model column used to retrieve the text from"),
+				   g_param_spec_int ("text-column", NULL, NULL,
 						     -1, G_MAXINT, -1,
 						     GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -407,17 +401,13 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
 				   PROP_MARKUP_COLUMN,
-				   g_param_spec_int ("markup-column",
-						     P_("Markup column"),
-						     P_("Model column used to retrieve the text if using Pango markup"),
+				   g_param_spec_int ("markup-column", NULL, NULL,
 						     -1, G_MAXINT, -1,
 						     GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
   
   g_object_class_install_property (gobject_class,
                                    PROP_MODEL,
-                                   g_param_spec_object ("model",
-							P_("Icon View Model"),
-							P_("The model for the icon view"),
+                                   g_param_spec_object ("model", NULL, NULL,
 							GTK_TYPE_TREE_MODEL,
 							GTK_PARAM_READWRITE));
   
@@ -430,9 +420,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
 				   PROP_COLUMNS,
-				   g_param_spec_int ("columns",
-						     P_("Number of columns"),
-						     P_("Number of columns to display"),
+				   g_param_spec_int ("columns", NULL, NULL,
 						     -1, G_MAXINT, -1,
 						     GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
   
@@ -446,9 +434,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
 				   PROP_ITEM_WIDTH,
-				   g_param_spec_int ("item-width",
-						     P_("Width for each item"),
-						     P_("The width used for each item"),
+				   g_param_spec_int ("item-width", NULL, NULL,
 						     -1, G_MAXINT, -1,
 						     GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -460,9 +446,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_SPACING,
-                                   g_param_spec_int ("spacing",
-						     P_("Spacing"),
-						     P_("Space which is inserted between cells of an item"),
+                                   g_param_spec_int ("spacing", NULL, NULL,
 						     0, G_MAXINT, 0,
 						     GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -474,9 +458,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_ROW_SPACING,
-                                   g_param_spec_int ("row-spacing",
-						     P_("Row Spacing"),
-						     P_("Space which is inserted between grid rows"),
+                                   g_param_spec_int ("row-spacing", NULL, NULL,
 						     0, G_MAXINT, 6,
 						     GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -488,9 +470,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_COLUMN_SPACING,
-                                   g_param_spec_int ("column-spacing",
-						     P_("Column Spacing"),
-						     P_("Space which is inserted between grid columns"),
+                                   g_param_spec_int ("column-spacing", NULL, NULL,
 						     0, G_MAXINT, 6,
 						     GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -502,9 +482,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_MARGIN,
-                                   g_param_spec_int ("margin",
-						     P_("Margin"),
-						     P_("Space which is inserted at the edges of the icon view"),
+                                   g_param_spec_int ("margin", NULL, NULL,
 						     0, G_MAXINT, 6,
 						     GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -516,9 +494,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
 				   PROP_ITEM_ORIENTATION,
-				   g_param_spec_enum ("item-orientation",
-						      P_("Item Orientation"),
-						      P_("How the text and icon of each item are positioned relative to each other"),
+				   g_param_spec_enum ("item-orientation", NULL, NULL,
 						      GTK_TYPE_ORIENTATION,
 						      GTK_ORIENTATION_VERTICAL,
 						      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
@@ -531,17 +507,13 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_REORDERABLE,
-                                   g_param_spec_boolean ("reorderable",
-							 P_("Reorderable"),
-							 P_("View is reorderable"),
+                                   g_param_spec_boolean ("reorderable", NULL, NULL,
 							 FALSE,
 							 G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
     g_object_class_install_property (gobject_class,
                                      PROP_TOOLTIP_COLUMN,
-                                     g_param_spec_int ("tooltip-column",
-                                                       P_("Tooltip Column"),
-                                                       P_("The column in the model containing the tooltip texts for the items"),
+                                     g_param_spec_int ("tooltip-column", NULL, NULL,
                                                        -1,
                                                        G_MAXINT,
                                                        -1,
@@ -555,9 +527,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_ITEM_PADDING,
-                                   g_param_spec_int ("item-padding",
-						     P_("Item Padding"),
-						     P_("Padding around icon view items"),
+                                   g_param_spec_int ("item-padding", NULL, NULL,
 						     0, G_MAXINT, 6,
 						     GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -571,9 +541,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
 				   PROP_CELL_AREA,
-				   g_param_spec_object ("cell-area",
-							P_("Cell Area"),
-							P_("The GtkCellArea used to layout cells"),
+				   g_param_spec_object ("cell-area", NULL, NULL,
 							GTK_TYPE_CELL_AREA,
 							GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
@@ -585,9 +553,7 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_ACTIVATE_ON_SINGLE_CLICK,
-                                   g_param_spec_boolean ("activate-on-single-click",
-							 P_("Activate on Single Click"),
-							 P_("Activate row on a single click"),
+                                   g_param_spec_boolean ("activate-on-single-click", NULL, NULL,
 							 FALSE,
 							 GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -5726,8 +5692,35 @@ drag_scroll_timeout (gpointer data)
   return TRUE;
 }
 
+static GdkDragAction
+gtk_icon_view_get_action (GtkWidget *widget,
+                          GdkDrop   *drop)
+{
+  GtkIconView *iconview = GTK_ICON_VIEW (widget);
+  GdkDrag *drag = gdk_drop_get_drag (drop);
+  GdkDragAction actions;
+
+  actions = gdk_drop_get_actions (drop);
+
+  if (drag == iconview->priv->drag &&
+      actions & GDK_ACTION_MOVE)
+    return GDK_ACTION_MOVE;
+
+  if (actions & GDK_ACTION_COPY)
+    return GDK_ACTION_COPY;
+
+  if (actions & GDK_ACTION_MOVE)
+    return GDK_ACTION_MOVE;
+
+  if (actions & GDK_ACTION_LINK)
+    return GDK_ACTION_LINK;
+
+  return 0;
+}
+
 static gboolean
 set_destination (GtkIconView        *icon_view,
+		 GdkDrop            *drop,
 		 GtkDropTargetAsync *dest,
 		 int                 x,
 		 int                 y,
@@ -5814,7 +5807,7 @@ set_destination (GtkIconView        *icon_view,
 out:
   if (can_drop)
     {
-      *suggested_action = GDK_ACTION_ALL;
+      *suggested_action = gtk_icon_view_get_action (widget, drop);
 
       gtk_icon_view_set_drag_dest_item (GTK_ICON_VIEW (widget),
 					path, pos);
@@ -6054,7 +6047,7 @@ gtk_icon_view_drag_motion (GtkDropTargetAsync *dest,
   gboolean empty;
   GdkDragAction result;
 
-  if (!set_destination (icon_view, dest, x, y, &suggested_action, &target))
+  if (!set_destination (icon_view, drop, dest, x, y, &suggested_action, &target))
     return 0;
 
   gtk_icon_view_get_drag_dest_item (icon_view, &path, &pos);
@@ -6119,7 +6112,7 @@ gtk_icon_view_drag_drop (GtkDropTargetAsync *dest,
   if (!check_model_dnd (model, GTK_TYPE_TREE_DRAG_DEST, "drop"))
     return FALSE;
 
-  if (!set_destination (icon_view, dest, x, y, &suggested_action, &target))
+  if (!set_destination (icon_view, drop, dest, x, y, &suggested_action, &target))
     return FALSE;
   
   path = get_logical_destination (icon_view, &drop_append_mode);
@@ -6147,32 +6140,6 @@ gtk_icon_view_drag_drop (GtkDropTargetAsync *dest,
     }
   else
     return FALSE;
-}
-
-static GdkDragAction
-gtk_icon_view_get_action (GtkWidget *widget,
-                          GdkDrop   *drop)
-{
-  GtkIconView *iconview = GTK_ICON_VIEW (widget);
-  GdkDrag *drag = gdk_drop_get_drag (drop);
-  GdkDragAction actions;
-
-  actions = gdk_drop_get_actions (drop);
-
-  if (drag == iconview->priv->drag &&
-      actions & GDK_ACTION_MOVE)
-    return GDK_ACTION_MOVE;
-
-  if (actions & GDK_ACTION_COPY)
-    return GDK_ACTION_COPY;
-
-  if (actions & GDK_ACTION_MOVE)
-    return GDK_ACTION_MOVE;
-
-  if (actions & GDK_ACTION_LINK)
-    return GDK_ACTION_LINK;
-
-  return 0;
 }
 
 static void

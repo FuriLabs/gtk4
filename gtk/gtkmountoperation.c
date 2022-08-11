@@ -169,9 +169,7 @@ gtk_mount_operation_class_init (GtkMountOperationClass *klass)
    */
   g_object_class_install_property (object_class,
                                    PROP_PARENT,
-                                   g_param_spec_object ("parent",
-                                                        P_("Parent"),
-                                                        P_("The parent window"),
+                                   g_param_spec_object ("parent", NULL, NULL,
                                                         GTK_TYPE_WINDOW,
                                                         GTK_PARAM_READWRITE));
 
@@ -182,9 +180,7 @@ gtk_mount_operation_class_init (GtkMountOperationClass *klass)
    */
   g_object_class_install_property (object_class,
                                    PROP_IS_SHOWING,
-                                   g_param_spec_boolean ("is-showing",
-                                                         P_("Is Showing"),
-                                                         P_("Are we showing a dialog"),
+                                   g_param_spec_boolean ("is-showing", NULL, NULL,
                                                          FALSE,
                                                          GTK_PARAM_READABLE));
 
@@ -195,9 +191,7 @@ gtk_mount_operation_class_init (GtkMountOperationClass *klass)
    */
   g_object_class_install_property (object_class,
                                    PROP_DISPLAY,
-                                   g_param_spec_object ("display",
-                                                        P_("Display"),
-                                                        P_("The display where this window will be displayed."),
+                                   g_param_spec_object ("display", NULL, NULL,
                                                         GDK_TYPE_DISPLAY,
                                                         GTK_PARAM_READWRITE));
 }
@@ -406,6 +400,10 @@ pw_dialog_got_response (GtkDialog         *dialog,
   else
     g_mount_operation_reply (op, G_MOUNT_OPERATION_ABORTED);
 
+  if (priv->user_widgets)
+    g_list_free (priv->user_widgets);
+
+  priv->user_widgets = NULL;
   priv->dialog = NULL;
   g_object_notify (G_OBJECT (op), "is-showing");
   gtk_window_destroy (GTK_WINDOW (dialog));
@@ -684,6 +682,7 @@ gtk_mount_operation_ask_password_do_gtk (GtkMountOperation *operation,
       gtk_grid_attach (GTK_GRID (grid), anon_box, 1, rows++, 1, 1);
 
       choice = gtk_check_button_new_with_mnemonic (_("_Anonymous"));
+      gtk_check_button_set_active (GTK_CHECK_BUTTON (choice), TRUE);
       gtk_box_append (GTK_BOX (anon_box), choice);
       g_signal_connect (choice, "toggled",
                         G_CALLBACK (pw_dialog_anonymous_toggled), operation);

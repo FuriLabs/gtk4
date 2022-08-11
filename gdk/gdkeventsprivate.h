@@ -206,12 +206,11 @@ struct _GdkTouchEvent
  *   %GDK_SCROLL_SMOOTH).
  * @delta_x: the x coordinate of the scroll delta
  * @delta_y: the y coordinate of the scroll delta
- * @pointer_emulated: whether the scroll event was the result of
- *   a pointer emulation
  * @tool: a `GdkDeviceTool`
  * @history: (element-type GdkTimeCoord): array of times and deltas
  *   for other scroll events that were compressed before delivering the
  *   current event
+ * @unit: The scroll unit in which delta_x and delta_y are represented.
  *
  * Generated from button presses for the buttons 4 to 7. Wheel mice are
  * usually configured to generate button press events for buttons 4 and 5
@@ -230,10 +229,10 @@ struct _GdkScrollEvent
   GdkScrollDirection direction;
   double delta_x;
   double delta_y;
-  gboolean pointer_emulated;
   gboolean is_stop;
   GdkDeviceTool *tool;
   GArray *history; /* <GdkTimeCoord> */
+  GdkScrollUnit unit;
 };
 
 /*
@@ -486,15 +485,24 @@ GdkEvent * gdk_scroll_event_new         (GdkSurface      *surface,
                                          GdkModifierType  state,
                                          double           delta_x,
                                          double           delta_y,
-                                         gboolean         is_stop);
+                                         gboolean         is_stop,
+                                         GdkScrollUnit    unit);
 
 GdkEvent * gdk_scroll_event_new_discrete (GdkSurface         *surface,
                                           GdkDevice          *device,
                                           GdkDeviceTool      *tool,
                                           guint32             time,
                                           GdkModifierType     state,
+                                          GdkScrollDirection  direction);
+
+GdkEvent * gdk_scroll_event_new_value120 (GdkSurface         *surface,
+                                          GdkDevice          *device,
+                                          GdkDeviceTool      *tool,
+                                          guint32             time,
+                                          GdkModifierType     state,
                                           GdkScrollDirection  direction,
-                                          gboolean            emulated);
+                                          double              delta_x,
+                                          double              delta_y);
 
 GdkEvent * gdk_touch_event_new          (GdkEventType      type,
                                          GdkEventSequence *sequence,
@@ -534,6 +542,7 @@ GdkEvent * gdk_touchpad_event_new_pinch (GdkSurface              *surface,
                                          double                   angle_delta);
 
 GdkEvent * gdk_touchpad_event_new_hold  (GdkSurface              *surface,
+                                         GdkEventSequence        *sequence,
                                          GdkDevice               *device,
                                          guint32                  time,
                                          GdkModifierType          state,

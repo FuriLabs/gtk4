@@ -11,6 +11,11 @@
             <property name="visible">1</property>
           </object>
         </child>
+        <child>
+          <object class="GtkImage">
+            <property name="visible">1</property>
+          </object>
+        </child>
       </object>
     </child>
   </object>

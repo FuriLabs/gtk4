@@ -43,7 +43,10 @@ enum {
   PROP_FILENAME,
   PROP_ATTRIBUTES,
   PROP_IO_PRIORITY,
+  PROP_ITEM_TYPE,
   PROP_LOADING,
+  PROP_N_ITEMS,
+
   NUM_PROPERTIES
 };
 
@@ -149,10 +152,10 @@ gtk_bookmark_list_set_property (GObject      *object,
 }
 
 static void
-gtk_bookmark_list_get_property (GObject     *object,
-                                    guint        prop_id,
-                                    GValue      *value,
-                                    GParamSpec  *pspec)
+gtk_bookmark_list_get_property (GObject    *object,
+                                guint       prop_id,
+                                GValue     *value,
+                                GParamSpec *pspec)
 {
   GtkBookmarkList *self = GTK_BOOKMARK_LIST (object);
 
@@ -162,16 +165,24 @@ gtk_bookmark_list_get_property (GObject     *object,
       g_value_set_string (value, self->attributes);
       break;
 
-    case PROP_IO_PRIORITY:
-      g_value_set_int (value, self->io_priority);
-      break;
-
     case PROP_FILENAME:
       g_value_set_string (value, self->filename);
       break;
 
+    case PROP_IO_PRIORITY:
+      g_value_set_int (value, self->io_priority);
+      break;
+
+    case PROP_ITEM_TYPE:
+      g_value_set_gtype (value, G_TYPE_FILE_INFO);
+      break;
+
     case PROP_LOADING:
       g_value_set_boolean (value, gtk_bookmark_list_is_loading (self));
+      break;
+
+    case PROP_N_ITEMS:
+      g_value_set_uint (value, g_sequence_get_length (self->items));
       break;
 
     default:
@@ -213,9 +224,7 @@ gtk_bookmark_list_class_init (GtkBookmarkListClass *class)
    * The bookmark file to load.
    */
   properties[PROP_FILENAME] =
-      g_param_spec_string ("filename",
-                           P_("Filename"),
-                           P_("Bookmark file to load"),
+      g_param_spec_string ("filename", NULL, NULL,
                            NULL,
                            GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_EXPLICIT_NOTIFY);
   /**
@@ -224,9 +233,7 @@ gtk_bookmark_list_class_init (GtkBookmarkListClass *class)
    * The attributes to query.
    */
   properties[PROP_ATTRIBUTES] =
-      g_param_spec_string ("attributes",
-                           P_("Attributes"),
-                           P_("Attributes to query"),
+      g_param_spec_string ("attributes", NULL, NULL,
                            NULL,
                            GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -236,11 +243,21 @@ gtk_bookmark_list_class_init (GtkBookmarkListClass *class)
    * Priority used when loading.
    */
   properties[PROP_IO_PRIORITY] =
-      g_param_spec_int ("io-priority",
-                        P_("IO priority"),
-                        P_("Priority used when loading"),
+      g_param_spec_int ("io-priority", NULL, NULL,
                         -G_MAXINT, G_MAXINT, G_PRIORITY_DEFAULT,
                         GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * GtkBookmarkList:item-type:
+   *
+   * The type of items. See [method@Gio.ListModel.get_item_type].
+   *
+   * Since: 4.8
+   **/
+  properties[PROP_ITEM_TYPE] =
+    g_param_spec_gtype ("item-type", NULL, NULL,
+                        G_TYPE_FILE_INFO,
+                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GtkBookmarkList:loading: (attributes org.gtk.Property.get=gtk_bookmark_list_is_loading)
@@ -248,11 +265,21 @@ gtk_bookmark_list_class_init (GtkBookmarkListClass *class)
    * %TRUE if files are being loaded.
    */
   properties[PROP_LOADING] =
-      g_param_spec_boolean ("loading",
-                            P_("loading"),
-                            P_("TRUE if files are being loaded"),
+      g_param_spec_boolean ("loading", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * GtkBookmarkList:n-items:
+   *
+   * The number of items. See [method@Gio.ListModel.get_n_items].
+   *
+   * Since: 4.8
+   **/
+  properties[PROP_N_ITEMS] =
+    g_param_spec_uint ("n-items", NULL, NULL,
+                       0, G_MAXUINT, 0,
+                       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (gobject_class, NUM_PROPERTIES, properties);
 }
@@ -314,6 +341,7 @@ got_file_info (GObject      *source,
 
       g_sequence_append (self->items, info);
       g_list_model_items_changed (G_LIST_MODEL (self), g_sequence_get_length (self->items) - 1, 0, 1);
+      g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
 
       g_free (uri);
     }
@@ -339,6 +367,7 @@ gtk_bookmark_list_clear_items (GtkBookmarkList *self)
                                g_sequence_get_end_iter (self->items));
 
       g_list_model_items_changed (G_LIST_MODEL (self), 0, n_items, 0);
+      g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
     }
 }
 

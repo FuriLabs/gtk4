@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.6.6',
+        version: '4.7.2',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -12,12 +12,13 @@ project('gtk', 'c',
 
 glib_req           = '>= 2.66.0'
 pango_req          = '>= 1.50.0' # keep this in sync with .gitlab-ci/test-msys.sh
+harfbuzz_req	   = '>= 2.6.0'
 fribidi_req        = '>= 0.19.7'
 cairo_req          = '>= 1.14.0'
 gdk_pixbuf_req     = '>= 2.30.0'
 introspection_req  = '>= 1.39.0'
-wayland_proto_req  = '>= 1.23'
-wayland_req        = '>= 1.20.0'
+wayland_proto_req  = '>= 1.25'
+wayland_req        = '>= 1.21.0'
 graphene_req       = '>= 1.9.1'
 epoxy_req          = '>= 1.4'
 cloudproviders_req = '>= 0.3.1'
@@ -393,6 +394,9 @@ pango_dep      = dependency('pango', version: pango_req,
                             fallback : ['pango', 'libpango_dep'])
 fribidi_dep    = dependency('fribidi', version: fribidi_req,
                             fallback : ['fribidi', 'libfribidi_dep'])
+harfbuzz_dep   = dependency('harfbuzz', version: harfbuzz_req,
+                            fallback: ['harfbuzz', 'libharfbuzz_dep'],
+                            default_options: ['coretext=enabled'])
 
 # Require PangoFT2 if on X11 or wayland
 require_pangoft2 = wayland_enabled or x11_enabled
@@ -466,9 +470,6 @@ if not os_win32
     cdata.set_quoted('ISO_CODES_PREFIX', '/usr')
   endif
 endif
-
-
-pc_gdk_extra_libs = []
 
 cairo_backends = []
 foreach backend: [ ['cairo-xlib', cairo_req, x11_enabled],
@@ -600,26 +601,14 @@ if x11_enabled
   cdata.set('HAVE_RANDR15', xrandr15_dep.found())
 endif
 
-if broadway_enabled
-  pc_gdk_extra_libs += ['-lz']
-endif
-
-if macos_enabled
-  pc_gdk_extra_libs += ['-framework Cocoa', '-framework Carbon']
-endif
-
 extra_demo_ldflags = []
 if win32_enabled
-  pc_gdk_extra_libs += ['-lgdi32', '-limm32', '-lshell32', '-lole32']
   if cc.get_id() == 'msvc'
     # Since the demo programs are now built as pure GUI programs, we
     # need to pass in /entry:mainCRTStartup so that they will properly
     # link on Visual Studio builds
     extra_demo_ldflags = ['/entry:mainCRTStartup']
-  else
-    pc_gdk_extra_libs += ['-Wl,-luuid']
   endif
-  pc_gdk_extra_libs += ['-lwinmm', '-ldwmapi', '-lsetupapi', '-lcfgmgr32', '-lhid']
 
   # Check whether libepoxy is built with EGL support on Windows
 endif
@@ -681,6 +670,7 @@ if not get_option('sysprof').disabled()
   libsysprof_capture_dep = dependency('sysprof-capture-4', version: sysprof_req,
     required: get_option('sysprof'),
     default_options: [
+      'agent=false',
       'examples=false',
       'gtk=false',
       'tests=false',
@@ -695,6 +685,7 @@ if not get_option('sysprof').disabled()
   libsysprof_dep = dependency('sysprof-4',
     required: false,
     default_options: [
+      'agent=false',
       'examples=false',
       'gtk=false',
       'tests=false',
@@ -837,16 +828,7 @@ gsk_private_packages = [] # all already in gdk_private_packages
 pangoft2_pkgs = (wayland_enabled or x11_enabled) ? ['pangoft2'] : []
 gtk_private_packages = pangoft2_pkgs
 
-gdk_extra_libs = pc_gdk_extra_libs
-gsk_extra_libs = []
-gtk_extra_libs = []
-
-gdk_extra_cflags = []
-gsk_extra_cflags = []
-gtk_extra_cflags = []
-
-pkgs = [ 'gtk4' ]
-
+pkgs = []
 pkg_targets = []
 display_backends = []
 foreach backend: [ 'broadway', 'macos', 'wayland', 'win32', 'x11', ]
@@ -863,18 +845,23 @@ common_pc_variables = [
   'gtk_host=@0@-@1@'.format(host_machine.cpu_family(), host_machine.system()), # FIXME
 ]
 
+pkg_config.generate(libgtk,
+  filebase: 'gtk4',
+  unescaped_variables: common_pc_variables,
+  name: 'GTK',
+  description: 'GTK Graphical UI Library',
+  requires: gdk_packages + gsk_packages + gtk_packages,
+  subdirs: ['gtk-@0@'.format(gtk_api_version)],
+)
+meson.override_dependency('gtk4', libgtk_dep)
+
 foreach pkg: pkgs
   pkg_config.generate(
     filebase: pkg,
     unescaped_variables: common_pc_variables,
     name: 'GTK',
     description: 'GTK Graphical UI Library',
-    requires: gdk_packages + gsk_packages + gtk_packages,
-    requires_private: gdk_private_packages + gsk_private_packages + gtk_private_packages,
-    libraries: ['-L${libdir}', '-lgtk-4'],
-    libraries_private: gdk_extra_libs + gsk_extra_libs + gtk_extra_libs,
-    subdirs: ['gtk-@0@'.format(gtk_api_version)],
-    extra_cflags: gdk_extra_cflags + gsk_extra_cflags + gtk_extra_cflags,
+    requires: 'gtk4',
   )
   meson.override_dependency(pkg, libgtk_dep)
 endforeach
@@ -885,16 +872,14 @@ if os_unix
     unescaped_variables: common_pc_variables,
     name: 'GTK',
     description: 'GTK Unix print support',
-    requires: ['gtk4'] + gtk_packages,
-    libraries: [],
+    requires: 'gtk4',
     subdirs: ['gtk-@0@/unix-print'.format(gtk_api_version)],
   )
+  meson.override_dependency('gtk4-unix-print', libgtk_dep)
 endif
 
 subdir('po')
-subdir('po-properties')
 
-subdir('docs/tools')
 subdir('docs/reference')
 
 if not meson.is_cross_build()

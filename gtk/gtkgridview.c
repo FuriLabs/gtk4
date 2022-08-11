@@ -204,7 +204,7 @@ cell_augment (GtkRbTree *tree,
  *   index of the returned row
  * @offset: (out caller-allocates) (optional): stores the offset
  *   in pixels between y and top of cell.
- * @offset: (out caller-allocates) (optional): stores the height
+ * @size: (out caller-allocates) (optional): stores the height
  *   of the cell
  *
  * Gets the Cell that occupies the leftmost position in the row at offset
@@ -413,6 +413,19 @@ gtk_grid_view_get_allocation_across (GtkListBase *base,
   return TRUE;
 }
 
+static int
+gtk_grid_view_compute_total_height (GtkGridView *self)
+{
+  Cell *cell;
+  CellAugment *aug;
+
+  cell = gtk_list_item_manager_get_root (self->item_manager);
+  if (cell == NULL)
+    return 0;
+  aug = gtk_list_item_manager_get_item_augment (self->item_manager, cell);
+  return aug->size;
+}
+
 static gboolean
 gtk_grid_view_get_position_from_allocation (GtkListBase           *base,
                                             int                    across,
@@ -428,6 +441,7 @@ gtk_grid_view_get_position_from_allocation (GtkListBase           *base,
     return FALSE;
 
   n_items = gtk_list_base_get_n_items (base);
+  along = CLAMP (along, 0, gtk_grid_view_compute_total_height (self) - 1);
   if (!gtk_grid_view_get_cell_at_y (self,
                                     along,
                                     &pos,
@@ -467,16 +481,19 @@ gtk_grid_view_get_items_in_rect (GtkListBase        *base,
 
   result = gtk_bitset_new_empty ();
 
+  if (rect->y >= gtk_grid_view_compute_total_height (self))
+    return result;
+
   n_items = gtk_list_base_get_n_items (base);
   if (n_items == 0)
     return result;
 
-  first_column = floor (rect->x / self->column_width);
-  last_column = floor ((rect->x + rect->width) / self->column_width);
+  first_column = fmax (floor (rect->x / self->column_width), 0);
+  last_column = fmin (floor ((rect->x + rect->width) / self->column_width), self->n_columns - 1);
   if (!gtk_grid_view_get_cell_at_y (self, rect->y, &first_row, NULL, NULL))
     first_row = rect->y < 0 ? 0 : n_items - 1;
   if (!gtk_grid_view_get_cell_at_y (self, rect->y + rect->height, &last_row, NULL, NULL))
-    last_row = rect->y < 0 ? 0 : n_items - 1;
+    last_row = rect->y + rect->height < 0 ? 0 : n_items - 1;
 
   gtk_bitset_add_rectangle (result,
                             first_row + first_column,
@@ -722,19 +739,6 @@ cell_set_size (Cell  *cell,
   gtk_rb_tree_node_mark_dirty (cell);
 }
 
-static int
-gtk_grid_view_compute_total_height (GtkGridView *self)
-{
-  Cell *cell;
-  CellAugment *aug;
-
-  cell = gtk_list_item_manager_get_root (self->item_manager);
-  if (cell == NULL)
-    return 0;
-  aug = gtk_list_item_manager_get_item_augment (self->item_manager, cell);
-  return aug->size;
-}
-
 static void
 gtk_grid_view_size_allocate (GtkWidget *widget,
                              int        width,
@@ -758,7 +762,10 @@ gtk_grid_view_size_allocate (GtkWidget *widget,
 
   /* step 0: exit early if list is empty */
   if (gtk_list_item_manager_get_root (self->item_manager) == NULL)
-    return;
+    {
+      gtk_list_base_update_adjustments (GTK_LIST_BASE (self), 0, 0, 0, 0, &x, &y);
+      return;
+    }
 
   /* step 1: determine width of the list */
   gtk_grid_view_measure_column_size (self, &col_min, &col_nat);
@@ -1054,9 +1061,7 @@ gtk_grid_view_class_init (GtkGridViewClass *klass)
    * Factory for populating list items.
    */
   properties[PROP_FACTORY] =
-    g_param_spec_object ("factory",
-                         P_("Factory"),
-                         P_("Factory for populating list items"),
+    g_param_spec_object ("factory", NULL, NULL,
                          GTK_TYPE_LIST_ITEM_FACTORY,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
@@ -1070,9 +1075,7 @@ gtk_grid_view_class_init (GtkGridViewClass *klass)
    * that value is used instead.
    */
   properties[PROP_MAX_COLUMNS] =
-    g_param_spec_uint ("max-columns",
-                       P_("Max columns"),
-                       P_("Maximum number of columns per row"),
+    g_param_spec_uint ("max-columns", NULL, NULL,
                        1, G_MAXUINT, DEFAULT_MAX_COLUMNS,
                        G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
@@ -1082,9 +1085,7 @@ gtk_grid_view_class_init (GtkGridViewClass *klass)
    * Minimum number of columns per row.
    */
   properties[PROP_MIN_COLUMNS] =
-    g_param_spec_uint ("min-columns",
-                       P_("Min columns"),
-                       P_("Minimum number of columns per row"),
+    g_param_spec_uint ("min-columns", NULL, NULL,
                        1, G_MAXUINT, 1,
                        G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
@@ -1094,9 +1095,7 @@ gtk_grid_view_class_init (GtkGridViewClass *klass)
    * Model for the items displayed.
    */
   properties[PROP_MODEL] =
-    g_param_spec_object ("model",
-                         P_("Model"),
-                         P_("Model for the items displayed"),
+    g_param_spec_object ("model", NULL, NULL,
                          GTK_TYPE_SELECTION_MODEL,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
@@ -1106,9 +1105,7 @@ gtk_grid_view_class_init (GtkGridViewClass *klass)
    * Activate rows on single click and select them on hover.
    */
   properties[PROP_SINGLE_CLICK_ACTIVATE] =
-    g_param_spec_boolean ("single-click-activate",
-                          P_("Single click activate"),
-                          P_("Activate rows on single click"),
+    g_param_spec_boolean ("single-click-activate", NULL, NULL,
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1118,9 +1115,7 @@ gtk_grid_view_class_init (GtkGridViewClass *klass)
    * Allow rubberband selection.
    */
   properties[PROP_ENABLE_RUBBERBAND] =
-    g_param_spec_boolean ("enable-rubberband",
-                          P_("Enable rubberband selection"),
-                          P_("Allow selecting items by dragging with the mouse"),
+    g_param_spec_boolean ("enable-rubberband", NULL, NULL,
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 

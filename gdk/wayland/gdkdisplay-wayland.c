@@ -145,10 +145,6 @@ zxdg_shell_v6_ping (void                 *data,
                     struct zxdg_shell_v6 *xdg_shell,
                     uint32_t              serial)
 {
-  GdkWaylandDisplay *display_wayland = data;
-
-  _gdk_wayland_display_update_serial (display_wayland, serial);
-
   GDK_DISPLAY_NOTE (GDK_DISPLAY (data), EVENTS,
             g_message ("ping, shell %p, serial %u\n", xdg_shell, serial));
 
@@ -236,7 +232,7 @@ _gdk_wayland_display_add_seat (GdkWaylandDisplay *display_wayland,
 {
   struct wl_seat *seat;
 
-  display_wayland->seat_version = MIN (version, 7);
+  display_wayland->seat_version = MIN (version, 8);
   seat = wl_registry_bind (display_wayland->wl_registry,
                            id, &wl_seat_interface,
                            display_wayland->seat_version);
@@ -623,7 +619,7 @@ _gdk_wayland_display_open (const char *display_name)
         wl_registry_bind (display_wayland->wl_registry,
                           display_wayland->xdg_wm_base_id,
                           &xdg_wm_base_interface,
-                          MIN (display_wayland->xdg_wm_base_version, 3));
+                          MIN (display_wayland->xdg_wm_base_version, 4));
       xdg_wm_base_add_listener (display_wayland->xdg_wm_base,
                                 &xdg_wm_base_listener,
                                 display_wayland);
@@ -1122,19 +1118,6 @@ _gdk_wayland_display_load_cursor_theme (GdkWaylandDisplay *display_wayland)
 
   gdk_profiler_end_mark (before, "wayland", "load cursor theme");
 
-}
-
-guint32
-_gdk_wayland_display_get_serial (GdkWaylandDisplay *display_wayland)
-{
-  return display_wayland->serial;
-}
-
-void
-_gdk_wayland_display_update_serial (GdkWaylandDisplay *display_wayland,
-                                    guint32            serial)
-{
-  display_wayland->serial = serial;
 }
 
 /**

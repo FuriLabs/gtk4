@@ -103,7 +103,7 @@ index d0fdd0d..3029f53 100644
                  'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
                  'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir())
 diff --git a/testsuite/css/style/meson.build b/testsuite/css/style/meson.build
-index 9dc0f4c..c543a16 100644
+index 3228049..a17b0c4 100644
 --- a/testsuite/css/style/meson.build
 +++ b/testsuite/css/style/meson.build
 @@ -28,7 +28,7 @@ test_style = executable(
@@ -116,10 +116,10 @@ index 9dc0f4c..c543a16 100644
    suite: 'css',
  )
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index 14b2c85..533cd9b 100644
+index af93721..6fea1f6 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
-@@ -41,7 +41,7 @@ foreach t : tests
+@@ -40,7 +40,7 @@ foreach t : tests
  
    test(test_name, test_exe,
      args: [ '--tap', '-k' ],
@@ -138,10 +138,10 @@ index 14b2c85..533cd9b 100644
        'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
        'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
-index 8c3ff1f..9c60dbd 100644
+index c780008..db97e03 100644
 --- a/testsuite/gsk/meson.build
 +++ b/testsuite/gsk/meson.build
-@@ -233,7 +233,7 @@ foreach t : tests
+@@ -262,7 +262,7 @@ foreach t : tests
  
    test(test_name, test_exe,
      args: [ '--tap', '-k' ],
@@ -150,7 +150,7 @@ index 8c3ff1f..9c60dbd 100644
      env: [
        'GSK_RENDERER=cairo',
        'GTK_A11Y=test',
-@@ -265,7 +265,7 @@ foreach t : internal_tests
+@@ -296,7 +296,7 @@ foreach t : internal_tests
  
    test(test_name, test_exe,
      args: [ '--tap', '-k' ],
@@ -160,10 +160,10 @@ index 8c3ff1f..9c60dbd 100644
        'GSK_RENDERER=cairo',
        'GTK_A11Y=test',
 diff --git a/testsuite/gtk/meson.build b/testsuite/gtk/meson.build
-index 3324664..de24177 100644
+index 4c5d70a..e02e37a 100644
 --- a/testsuite/gtk/meson.build
 +++ b/testsuite/gtk/meson.build
-@@ -184,7 +184,7 @@ foreach t : tests
+@@ -187,7 +187,7 @@ foreach t : tests
  
    test(test_name, test_exe,
      args: [ '--tap', '-k' ],
@@ -172,7 +172,7 @@ index 3324664..de24177 100644
      timeout: test_timeout,
      env: test_env,
      suite: ['gtk'] + test_extra_suites,
-@@ -217,7 +217,7 @@ foreach t : internal_tests
+@@ -220,7 +220,7 @@ foreach t : internal_tests
  
    test(test_name, test_exe,
      args: [ '--tap', '-k' ],
@@ -181,7 +181,7 @@ index 3324664..de24177 100644
      timeout: test_timeout,
      env: test_env,
      suite: ['gtk'] + test_extra_suites,
-@@ -235,7 +235,7 @@ if add_languages('cpp', required: false, native: false)
+@@ -238,7 +238,7 @@ if add_languages('cpp', required: false, native: false)
    )
    test('c++ keywords', test_exe,
      args: [ '--tap', '-k' ],
@@ -209,10 +209,10 @@ index 97344f3..05d6a57 100644
    'GIO_USE_VOLUME_MONITOR=unix',
    'GSETTINGS_BACKEND=memory',
 diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
-index aa4d3c7..3706baf 100644
+index 8062854..9af1bf9 100644
 --- a/testsuite/reftests/gtk-reftest.c
 +++ b/testsuite/reftests/gtk-reftest.c
-@@ -602,9 +602,5 @@ main (int argc, char **argv)
+@@ -618,9 +618,5 @@ main (int argc, char **argv)
  
    result = g_test_run ();
  
@@ -223,10 +223,10 @@ index aa4d3c7..3706baf 100644
  }
 -
 diff --git a/testsuite/reftests/meson.build b/testsuite/reftests/meson.build
-index 2c6e104..33e307a 100644
+index e5fe2af..504ea01 100644
 --- a/testsuite/reftests/meson.build
 +++ b/testsuite/reftests/meson.build
-@@ -607,7 +607,7 @@ foreach testname : testdata
+@@ -631,7 +631,7 @@ foreach testname : testdata
          '-o', join_paths(meson.current_build_dir(), 'output'),
          join_paths(meson.current_source_dir(), testname),
        ],

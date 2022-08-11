@@ -37,6 +37,13 @@
 #include "gtktypebuiltins.h"
 #include "gtkwidgetprivate.h"
 
+/* Allow shadows to overdraw without immediately culling the widget at the viewport
+ * boundary.
+ * Choose this so that roughly 1 extra widget gets drawn on each side of the viewport,
+ * but not more. Icons are 16px, text height is somewhere there, too.
+ */
+#define GTK_LIST_BASE_CHILD_MAX_OVERDRAW 10
+
 typedef struct _RubberbandData RubberbandData;
 
 struct _RubberbandData
@@ -1141,9 +1148,7 @@ gtk_list_base_class_init (GtkListBaseClass *klass)
    * for details.
    */
   properties[PROP_ORIENTATION] =
-    g_param_spec_enum ("orientation",
-                       P_("Orientation"),
-                       P_("The orientation of the orientable"),
+    g_param_spec_enum ("orientation", NULL, NULL,
                        GTK_TYPE_ORIENTATION,
                        GTK_ORIENTATION_VERTICAL,
                        G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
@@ -1353,6 +1358,10 @@ gtk_list_base_size_allocate_child (GtkListBase *self,
                                    int          height)
 {
   GtkAllocation child_allocation;
+  int self_width, self_height;
+
+  self_width = gtk_widget_get_width (GTK_WIDGET (self));
+  self_height = gtk_widget_get_height (GTK_WIDGET (self));
 
   if (gtk_list_base_get_orientation (GTK_LIST_BASE (self)) == GTK_ORIENTATION_VERTICAL)
     {
@@ -1360,18 +1369,14 @@ gtk_list_base_size_allocate_child (GtkListBase *self,
         {
           child_allocation.x = x;
           child_allocation.y = y;
-          child_allocation.width = width;
-          child_allocation.height = height;
         }
       else
         {
-          int mirror_point = gtk_widget_get_width (GTK_WIDGET (self));
-
-          child_allocation.x = mirror_point - x - width;
+          child_allocation.x = self_width - x - width;
           child_allocation.y = y;
-          child_allocation.width = width;
-          child_allocation.height = height;
         }
+      child_allocation.width = width;
+      child_allocation.height = height;
     }
   else
     {
@@ -1379,19 +1384,31 @@ gtk_list_base_size_allocate_child (GtkListBase *self,
         {
           child_allocation.x = y;
           child_allocation.y = x;
-          child_allocation.width = height;
-          child_allocation.height = width;
         }
       else
         {
-          int mirror_point = gtk_widget_get_width (GTK_WIDGET (self));
-
-          child_allocation.x = mirror_point - y - height;
+          child_allocation.x = self_width - y - height;
           child_allocation.y = x;
-          child_allocation.width = height;
-          child_allocation.height = width;
         }
+      child_allocation.width = height;
+      child_allocation.height = width;
     }
+
+  if (!gdk_rectangle_intersect (&child_allocation,
+                                &(GdkRectangle) {
+                                  - GTK_LIST_BASE_CHILD_MAX_OVERDRAW,
+                                  - GTK_LIST_BASE_CHILD_MAX_OVERDRAW,
+                                  self_width + GTK_LIST_BASE_CHILD_MAX_OVERDRAW,
+                                  self_height + GTK_LIST_BASE_CHILD_MAX_OVERDRAW
+                                },
+                                NULL))
+    {
+      /* child is fully outside the viewport, hide it and don't allocate it */
+      gtk_widget_set_child_visible (child, FALSE);
+      return;
+    }
+
+  gtk_widget_set_child_visible (child, TRUE);
 
   gtk_widget_size_allocate (child, &child_allocation, -1);
 }
@@ -1566,25 +1583,28 @@ gtk_list_base_stop_rubberband (GtkListBase *self,
         return;
 
       rubberband_selection = gtk_list_base_get_items_in_rect (self, &rect);
-      if (gtk_bitset_is_empty (rubberband_selection))
-        {
-          gtk_bitset_unref (rubberband_selection);
-          return;
-        }
 
       if (modify && extend) /* Ctrl + Shift */
         {
-          GtkBitset *current;
-          guint min = gtk_bitset_get_minimum (rubberband_selection);
-          guint max = gtk_bitset_get_maximum (rubberband_selection);
-          /* toggle the rubberband, keep the rest */
-          current = gtk_selection_model_get_selection_in_range (model, min, max - min + 1);
-          selected = gtk_bitset_copy (current);
-          gtk_bitset_unref (current);
-          gtk_bitset_intersect (selected, rubberband_selection);
-          gtk_bitset_difference (selected, rubberband_selection);
+          if (gtk_bitset_is_empty (rubberband_selection))
+            {
+              selected = gtk_bitset_ref (rubberband_selection);
+              mask = gtk_bitset_ref (rubberband_selection);
+            }
+          else
+            {
+              GtkBitset *current;
+              guint min = gtk_bitset_get_minimum (rubberband_selection);
+              guint max = gtk_bitset_get_maximum (rubberband_selection);
+              /* toggle the rubberband, keep the rest */
+              current = gtk_selection_model_get_selection_in_range (model, min, max - min + 1);
+              selected = gtk_bitset_copy (current);
+              gtk_bitset_unref (current);
+              gtk_bitset_intersect (selected, rubberband_selection);
+              gtk_bitset_difference (selected, rubberband_selection);
 
-          mask = gtk_bitset_ref (rubberband_selection);
+              mask = gtk_bitset_ref (rubberband_selection);
+            }
         }
       else if (modify) /* Ctrl */
         {
@@ -1723,7 +1743,11 @@ gtk_list_base_drag_end (GtkGestureDrag *gesture,
                         double          offset_y,
                         GtkListBase    *self)
 {
+  GtkListBasePrivate *priv = gtk_list_base_get_instance_private (self);
   gboolean modify, extend;
+
+  if (!priv->rubberband)
+    return;
 
   gtk_list_base_drag_update (gesture, offset_x, offset_y, self);
   get_selection_modifiers (GTK_GESTURE (gesture), &modify, &extend);

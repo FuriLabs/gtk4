@@ -29,6 +29,7 @@
 
 #include "gtkadjustment.h"
 #include "gtkbox.h"
+#include "gtkbutton.h"
 #include "gtkdropdown.h"
 #include "gtkcssproviderprivate.h"
 #include "gtkdebug.h"
@@ -1060,11 +1061,21 @@ update_gl_flag (GtkSwitch     *sw,
 }
 
 static void
-software_gl_activate (GtkSwitch *sw,
-                      GParamSpec *pspec,
+software_gl_activate (GtkSwitch          *sw,
+                      GParamSpec         *pspec,
                       GtkInspectorVisual *vis)
 {
   update_gl_flag (sw, GDK_DEBUG_GL_SOFTWARE, vis);
+}
+
+static void
+inspect_inspector (GtkButton          *button,
+                   GtkInspectorVisual *vis)
+{
+  GtkWidget *inspector_window;
+
+  inspector_window = gtk_inspector_window_get (gtk_widget_get_display (GTK_WIDGET (button)));
+  gtk_window_present (GTK_WINDOW (inspector_window));
 }
 
 static void
@@ -1080,12 +1091,12 @@ gtk_inspector_visual_constructed (GObject *object)
 
   G_OBJECT_CLASS (gtk_inspector_visual_parent_class)->constructed (object);
 
-   g_signal_connect (vis->visual_box, "keynav-failed", G_CALLBACK (keynav_failed), vis);
-   g_signal_connect (vis->debug_box, "keynav-failed", G_CALLBACK (keynav_failed), vis);
-   g_signal_connect (vis->misc_box, "keynav-failed", G_CALLBACK (keynav_failed), vis);
-   g_signal_connect (vis->visual_box, "row-activated", G_CALLBACK (row_activated), vis);
-   g_signal_connect (vis->debug_box, "row-activated", G_CALLBACK (row_activated), vis);
-   g_signal_connect (vis->misc_box, "row-activated", G_CALLBACK (row_activated), vis);
+  g_signal_connect (vis->visual_box, "keynav-failed", G_CALLBACK (keynav_failed), vis);
+  g_signal_connect (vis->debug_box, "keynav-failed", G_CALLBACK (keynav_failed), vis);
+  g_signal_connect (vis->misc_box, "keynav-failed", G_CALLBACK (keynav_failed), vis);
+  g_signal_connect (vis->visual_box, "row-activated", G_CALLBACK (row_activated), vis);
+  g_signal_connect (vis->debug_box, "row-activated", G_CALLBACK (row_activated), vis);
+  g_signal_connect (vis->misc_box, "row-activated", G_CALLBACK (row_activated), vis);
 }
 
 static void
@@ -1123,7 +1134,7 @@ gtk_inspector_visual_dispose (GObject *object)
 {
   GtkInspectorVisual *vis = GTK_INSPECTOR_VISUAL (object);
 
-  g_clear_pointer (&vis->swin, gtk_widget_unparent);
+  gtk_widget_dispose_template (GTK_WIDGET (vis), GTK_TYPE_INSPECTOR_VISUAL);
 
   G_OBJECT_CLASS (gtk_inspector_visual_parent_class)->dispose (object);
 }
@@ -1177,6 +1188,7 @@ gtk_inspector_visual_class_init (GtkInspectorVisualClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, layout_activate);
   gtk_widget_class_bind_template_callback (widget_class, focus_activate);
   gtk_widget_class_bind_template_callback (widget_class, software_gl_activate);
+  gtk_widget_class_bind_template_callback (widget_class, inspect_inspector);
 
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
 }

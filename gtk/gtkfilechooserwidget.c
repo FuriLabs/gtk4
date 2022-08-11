@@ -515,7 +515,7 @@ static GSList  *get_selected_infos           (GtkFileChooserWidget *impl);
 static void     search_setup_widgets         (GtkFileChooserWidget *impl);
 static void     search_stop_searching        (GtkFileChooserWidget *impl,
                                               gboolean               remove_query);
-static void     search_clear_model           (GtkFileChooserWidget *impl, 
+static void     search_clear_model           (GtkFileChooserWidget *impl,
                                               gboolean               remove_from_treeview);
 static void     search_entry_activate_cb     (GtkFileChooserWidget *impl);
 static void     search_entry_stop_cb         (GtkFileChooserWidget *impl);
@@ -720,8 +720,8 @@ error_creating_folder_dialog (GtkFileChooserWidget *impl,
                               GFile                 *file,
                               GError                *error)
 {
-  error_dialog (impl, 
-                _("The folder could not be created"), 
+  error_dialog (impl,
+                _("The folder could not be created"),
                 error);
 }
 
@@ -3122,10 +3122,11 @@ gtk_file_chooser_widget_dispose (GObject *object)
   GtkFileChooserWidget *impl = (GtkFileChooserWidget *) object;
 
   cancel_all_operations (impl);
-  g_clear_pointer (&impl->rename_file_popover, gtk_widget_unparent);
+
+  /* browse_files_popover is not a template child */
   g_clear_pointer (&impl->browse_files_popover, gtk_widget_unparent);
-  g_clear_object (&impl->extra_widget);
   g_clear_pointer (&impl->bookmarks_manager, _gtk_bookmarks_manager_free);
+  g_clear_object (&impl->extra_widget);
 
   if (impl->external_entry && impl->location_entry == impl->external_entry)
     {
@@ -3133,9 +3134,10 @@ gtk_file_chooser_widget_dispose (GObject *object)
       location_entry_disconnect (impl);
       impl->external_entry = NULL;
     }
+
   remove_settings_signal (impl);
 
-  g_clear_pointer (&impl->box, gtk_widget_unparent);
+  gtk_widget_dispose_template (GTK_WIDGET (impl), GTK_TYPE_FILE_CHOOSER_WIDGET);
 
   G_OBJECT_CLASS (gtk_file_chooser_widget_parent_class)->dispose (object);
 }
@@ -6258,7 +6260,7 @@ gtk_file_chooser_widget_should_respond (GtkFileChooserWidget *impl)
         case SAVE_ENTRY:
           goto save_entry;
 
-        case NOT_REACHED: 
+        case NOT_REACHED:
         default:
           g_assert_not_reached ();
         }
@@ -7657,16 +7659,12 @@ gtk_file_chooser_widget_class_init (GtkFileChooserWidgetClass *class)
                                          "(i)", i);
 
   g_object_class_install_property (gobject_class, PROP_SEARCH_MODE,
-                                   g_param_spec_boolean ("search-mode",
-                                                         P_("Search mode"),
-                                                         P_("Search mode"),
+                                   g_param_spec_boolean ("search-mode", NULL, NULL,
                                                          FALSE,
                                                          GTK_PARAM_READWRITE));
 
   g_object_class_install_property (gobject_class, PROP_SUBTITLE,
-                                   g_param_spec_string ("subtitle",
-                                                        P_("Subtitle"),
-                                                        P_("Subtitle"),
+                                   g_param_spec_string ("subtitle", NULL, NULL,
                                                         "",
                                                         GTK_PARAM_READABLE));
 
@@ -7762,6 +7760,14 @@ captured_key (GtkEventControllerKey *controller,
 
   if (keyval == GDK_KEY_slash)
     return GDK_EVENT_PROPAGATE;
+
+  if (impl->location_entry)
+    {
+      GtkWidget *focus = gtk_root_get_focus (gtk_widget_get_root (GTK_WIDGET (impl)));
+
+      if (focus && gtk_widget_is_ancestor (focus, impl->location_entry))
+        return GDK_EVENT_PROPAGATE;
+    }
 
   handled = gtk_event_controller_key_forward (controller, GTK_WIDGET (impl->search_entry));
   if (handled == GDK_EVENT_STOP)

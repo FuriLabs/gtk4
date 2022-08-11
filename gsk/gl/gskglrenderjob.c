@@ -2512,7 +2512,9 @@ gsk_gl_render_job_visit_blurred_outset_shadow_node (GskGLRenderJob      *job,
       scaled_outline.corner[i].height *= scale_y;
     }
 
-  cached_tid = gsk_gl_shadow_library_lookup (job->driver->shadows, &scaled_outline, blur_radius);
+  cached_tid = gsk_gl_shadow_library_lookup (job->driver->shadows_library,
+                                             &scaled_outline,
+                                             blur_radius);
 
   if (cached_tid == 0)
     {
@@ -2574,7 +2576,7 @@ gsk_gl_render_job_visit_blurred_outset_shadow_node (GskGLRenderJob      *job,
                                            blur_radius * scale_x,
                                            blur_radius * scale_y);
 
-      gsk_gl_shadow_library_insert (job->driver->shadows,
+      gsk_gl_shadow_library_insert (job->driver->shadows_library,
                                     &scaled_outline,
                                     blur_radius,
                                     blurred_texture_id);
@@ -2858,58 +2860,6 @@ gsk_gl_render_job_visit_cross_fade_node (GskGLRenderJob      *job,
   gsk_gl_render_job_end_draw (job);
 }
 
-static gboolean
-is_non_branching (const GskRenderNode *node)
-{
-  switch ((int)gsk_render_node_get_node_type (node))
-    {
-    case GSK_COLOR_NODE:
-    case GSK_LINEAR_GRADIENT_NODE:
-    case GSK_REPEATING_LINEAR_GRADIENT_NODE:
-    case GSK_RADIAL_GRADIENT_NODE:
-    case GSK_REPEATING_RADIAL_GRADIENT_NODE:
-    case GSK_CONIC_GRADIENT_NODE:
-    case GSK_BORDER_NODE:
-    case GSK_TEXTURE_NODE:
-    case GSK_INSET_SHADOW_NODE:
-    case GSK_OUTSET_SHADOW_NODE:
-    case GSK_TEXT_NODE:
-    case GSK_CAIRO_NODE:
-      return TRUE;
-
-    case GSK_TRANSFORM_NODE:
-      return is_non_branching (gsk_transform_node_get_child (node));
-
-    case GSK_OPACITY_NODE:
-      return is_non_branching (gsk_opacity_node_get_child (node));
-
-    case GSK_COLOR_MATRIX_NODE:
-      return is_non_branching (gsk_color_matrix_node_get_child (node));
-
-    case GSK_CLIP_NODE:
-      return is_non_branching (gsk_clip_node_get_child (node));
-
-    case GSK_ROUNDED_CLIP_NODE:
-      return is_non_branching (gsk_rounded_clip_node_get_child (node));
-
-    case GSK_SHADOW_NODE:
-      return is_non_branching (gsk_shadow_node_get_child (node));
-
-    case GSK_BLUR_NODE:
-      return is_non_branching (gsk_shadow_node_get_child (node));
-
-    case GSK_DEBUG_NODE:
-      return is_non_branching (gsk_debug_node_get_child (node));
-
-    case GSK_CONTAINER_NODE:
-      return gsk_container_node_get_n_children (node) == 1 &&
-             is_non_branching (gsk_container_node_get_child (node, 0));
-
-    default:
-      return FALSE;
-    }
-}
-
 static inline void
 gsk_gl_render_job_visit_opacity_node (GskGLRenderJob      *job,
                                       const GskRenderNode *node)
@@ -2922,11 +2872,7 @@ gsk_gl_render_job_visit_opacity_node (GskGLRenderJob      *job,
     {
       float prev_alpha = gsk_gl_render_job_set_alpha (job, new_alpha);
 
-      /* Handle a few easy cases without offscreen. We bail out
-       * as soon as we see nodes with multiple children - in theory,
-       * we would only need offscreens for overlapping children.
-       */
-      if (is_non_branching (child))
+      if (!gsk_render_node_use_offscreen_for_opacity (child))
         {
           gsk_gl_render_job_visit_node (job, child);
           gsk_gl_render_job_set_alpha (job, prev_alpha);
@@ -2996,7 +2942,7 @@ gsk_gl_render_job_visit_text_node (GskGLRenderJob      *job,
   guint num_glyphs = gsk_text_node_get_num_glyphs (node);
   float x = offset->x + job->offset_x;
   float y = offset->y + job->offset_y;
-  GskGLGlyphLibrary *library = job->driver->glyphs;
+  GskGLGlyphLibrary *library = job->driver->glyphs_library;
   GskGLCommandBatch *batch;
   int x_position = 0;
   GskGLGlyphKey lookup;
@@ -3499,14 +3445,14 @@ gsk_gl_render_job_upload_texture (GskGLRenderJob       *job,
                                   GdkTexture           *texture,
                                   GskGLRenderOffscreen *offscreen)
 {
-  if (gsk_gl_texture_library_can_cache ((GskGLTextureLibrary *)job->driver->icons,
+  if (gsk_gl_texture_library_can_cache ((GskGLTextureLibrary *)job->driver->icons_library,
                                         texture->width,
                                         texture->height) &&
       !GDK_IS_GL_TEXTURE (texture))
     {
       const GskGLIconData *icon_data;
 
-      gsk_gl_icon_library_lookup_or_add (job->driver->icons, texture, &icon_data);
+      gsk_gl_icon_library_lookup_or_add (job->driver->icons_library, texture, &icon_data);
       offscreen->texture_id = GSK_GL_TEXTURE_ATLAS_ENTRY_TEXTURE (icon_data);
       memcpy (&offscreen->area, &icon_data->entry.area, sizeof offscreen->area);
     }

@@ -386,8 +386,27 @@
  * static void
  * foo_widget_init (FooWidget *self)
  * {
- *   // ...
  *   gtk_widget_init_template (GTK_WIDGET (self));
+ *
+ *   // Initialize the rest of the widget...
+ * }
+ * ```
+ *
+ * as well as calling [method@Gtk.Widget.dispose_template] from the dispose
+ * function:
+ *
+ * ```c
+ * static void
+ * foo_widget_dispose (GObject *gobject)
+ * {
+ *   FooWidget *self = FOO_WIDGET (gobject);
+ *
+ *   // Dispose objects for which you have a reference...
+ *
+ *   // Clear the template children for this widget type
+ *   gtk_widget_dispose_template (GTK_WIDGET (self), FOO_TYPE_WIDGET);
+ *
+ *   G_OBJECT_CLASS (foo_widget_parent_class)->dispose (gobject);
  * }
  * ```
  *
@@ -408,9 +427,19 @@
  * G_DEFINE_TYPE_WITH_PRIVATE (FooWidget, foo_widget, GTK_TYPE_BOX)
  *
  * static void
+ * foo_widget_dispose (GObject *gobject)
+ * {
+ *   gtk_widget_dispose_template (GTK_WIDGET (gobject), FOO_TYPE_WIDGET);
+ *
+ *   G_OBJECT_CLASS (foo_widget_parent_class)->dispose (gobject);
+ * }
+ *
+ * static void
  * foo_widget_class_init (FooWidgetClass *klass)
  * {
  *   // ...
+ *   G_OBJECT_CLASS (klass)->dispose = foo_widget_dispose;
+ *
  *   gtk_widget_class_set_template_from_resource (GTK_WIDGET_CLASS (klass),
  *                                                "/com/example/ui/foowidget.ui");
  *   gtk_widget_class_bind_template_child_private (GTK_WIDGET_CLASS (klass),
@@ -422,7 +451,7 @@
  * static void
  * foo_widget_init (FooWidget *widget)
  * {
- *
+ *   gtk_widget_init_template (GTK_WIDGET (widget));
  * }
  * ```
  *
@@ -1186,9 +1215,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * The name of the widget.
    */
   widget_props[PROP_NAME] =
-      g_param_spec_string ("name",
-                           P_("Widget name"),
-                           P_("The name of the widget"),
+      g_param_spec_string ("name", NULL, NULL,
                            NULL,
                            GTK_PARAM_READWRITE);
 
@@ -1198,9 +1225,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * The parent widget of this widget.
    */
   widget_props[PROP_PARENT] =
-      g_param_spec_object ("parent",
-                           P_("Parent widget"),
-                           P_("The parent widget of this widget."),
+      g_param_spec_object ("parent", NULL, NULL,
                            GTK_TYPE_WIDGET,
                            GTK_PARAM_READABLE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1212,9 +1237,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * This will be %NULL if the widget is not contained in a root widget.
    */
   widget_props[PROP_ROOT] =
-      g_param_spec_object ("root",
-                           P_("Root widget"),
-                           P_("The root widget in the widget tree."),
+      g_param_spec_object ("root", NULL, NULL,
                            GTK_TYPE_ROOT,
                            GTK_PARAM_READABLE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1226,9 +1249,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * If this is -1, the natural request will be used.
    */
   widget_props[PROP_WIDTH_REQUEST] =
-      g_param_spec_int ("width-request",
-                        P_("Width request"),
-                        P_("Override for width request of the widget, or -1 if natural request should be used"),
+      g_param_spec_int ("width-request", NULL, NULL,
                         -1, G_MAXINT,
                         -1,
                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -1241,9 +1262,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * If this is -1, the natural request will be used.
    */
   widget_props[PROP_HEIGHT_REQUEST] =
-      g_param_spec_int ("height-request",
-                        P_("Height request"),
-                        P_("Override for height request of the widget, or -1 if natural request should be used"),
+      g_param_spec_int ("height-request", NULL, NULL,
                         -1, G_MAXINT,
                         -1,
                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -1254,9 +1273,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * Whether the widget is visible.
    */
   widget_props[PROP_VISIBLE] =
-      g_param_spec_boolean ("visible",
-                            P_("Visible"),
-                            P_("Whether the widget is visible"),
+      g_param_spec_boolean ("visible", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1266,9 +1283,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * Whether the widget responds to input.
    */
   widget_props[PROP_SENSITIVE] =
-      g_param_spec_boolean ("sensitive",
-                            P_("Sensitive"),
-                            P_("Whether the widget responds to input"),
+      g_param_spec_boolean ("sensitive", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1282,9 +1297,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * typically in their instance init function.
    */
   widget_props[PROP_CAN_FOCUS] =
-      g_param_spec_boolean ("can-focus",
-                            P_("Can focus"),
-                            P_("Whether the widget can accept the input focus"),
+      g_param_spec_boolean ("can-focus", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1294,9 +1307,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * Whether this widget itself will accept the input focus.
    */
   widget_props[PROP_FOCUSABLE] =
-      g_param_spec_boolean ("focusable",
-                            P_("Focusable"),
-                            P_("Whether the widget can accept the input focus"),
+      g_param_spec_boolean ("focusable", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1306,9 +1317,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * Whether the widget has the input focus.
    */
   widget_props[PROP_HAS_FOCUS] =
-      g_param_spec_boolean ("has-focus",
-                            P_("Has focus"),
-                            P_("Whether the widget has the input focus"),
+      g_param_spec_boolean ("has-focus", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READABLE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1318,9 +1327,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * Whether the widget can receive pointer events.
    */
   widget_props[PROP_CAN_TARGET] =
-      g_param_spec_boolean ("can-target",
-                            P_("Can target"),
-                            P_("Whether the widget can receive pointer events"),
+      g_param_spec_boolean ("can-target", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1332,9 +1339,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * This property is only relevant for widgets that can take focus.
    */
   widget_props[PROP_FOCUS_ON_CLICK] =
-      g_param_spec_boolean ("focus-on-click",
-                            P_("Focus on click"),
-                            P_("Whether the widget should grab focus when it is clicked with the mouse"),
+      g_param_spec_boolean ("focus-on-click", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1344,9 +1349,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * Whether the widget is the default widget.
    */
   widget_props[PROP_HAS_DEFAULT] =
-      g_param_spec_boolean ("has-default",
-                            P_("Has default"),
-                            P_("Whether the widget is the default widget"),
+      g_param_spec_boolean ("has-default", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READABLE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1356,9 +1359,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * Whether the widget will receive the default action when it is focused.
    */
   widget_props[PROP_RECEIVES_DEFAULT] =
-      g_param_spec_boolean ("receives-default",
-                            P_("Receives default"),
-                            P_("If TRUE, the widget will receive the default action when it is focused"),
+      g_param_spec_boolean ("receives-default", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1368,9 +1369,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
  * The cursor used by @widget.
  */
   widget_props[PROP_CURSOR] =
-      g_param_spec_object("cursor",
-                          P_("Cursor"),
-                          P_("The cursor to show when hovering above widget"),
+      g_param_spec_object("cursor", NULL, NULL,
                           GDK_TYPE_CURSOR,
                           GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1384,9 +1383,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
  * determine whether it will provide a tooltip or not.
  */
   widget_props[PROP_HAS_TOOLTIP] =
-      g_param_spec_boolean ("has-tooltip",
-                            P_("Has tooltip"),
-                            P_("Whether this widget has a tooltip"),
+      g_param_spec_boolean ("has-tooltip", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1407,9 +1404,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * [property@Gtk.Widget:tooltip-markup] are set, the last one wins.
    */
   widget_props[PROP_TOOLTIP_TEXT] =
-      g_param_spec_string ("tooltip-text",
-                           P_("Tooltip Text"),
-                           P_("The contents of the tooltip for this widget"),
+      g_param_spec_string ("tooltip-text", NULL, NULL,
                            NULL,
                            GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1431,9 +1426,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * [property@Gtk.Widget:tooltip-markup] are set, the last one wins.
    */
   widget_props[PROP_TOOLTIP_MARKUP] =
-      g_param_spec_string ("tooltip-markup",
-                           P_("Tooltip markup"),
-                           P_("The contents of the tooltip for this widget"),
+      g_param_spec_string ("tooltip-markup", NULL, NULL,
                            NULL,
                            GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1443,9 +1436,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * How to distribute horizontal space if widget gets extra space.
    */
   widget_props[PROP_HALIGN] =
-      g_param_spec_enum ("halign",
-                         P_("Horizontal Alignment"),
-                         P_("How to position in extra horizontal space"),
+      g_param_spec_enum ("halign", NULL, NULL,
                          GTK_TYPE_ALIGN,
                          GTK_ALIGN_FILL,
                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -1456,9 +1447,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * How to distribute vertical space if widget gets extra space.
    */
   widget_props[PROP_VALIGN] =
-      g_param_spec_enum ("valign",
-                         P_("Vertical Alignment"),
-                         P_("How to position in extra vertical space"),
+      g_param_spec_enum ("valign", NULL, NULL,
                          GTK_TYPE_ALIGN,
                          GTK_ALIGN_FILL,
                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -1476,9 +1465,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * [method@Gtk.Widget.set_size_request] for example.
    */
   widget_props[PROP_MARGIN_START] =
-      g_param_spec_int ("margin-start",
-                        P_("Margin on Start"),
-                        P_("Pixels of extra space on the start"),
+      g_param_spec_int ("margin-start", NULL, NULL,
                         0, G_MAXINT16,
                         0,
                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -1496,9 +1483,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * [method@Gtk.Widget.set_size_request] for example.
    */
   widget_props[PROP_MARGIN_END] =
-      g_param_spec_int ("margin-end",
-                        P_("Margin on End"),
-                        P_("Pixels of extra space on the end"),
+      g_param_spec_int ("margin-end", NULL, NULL,
                         0, G_MAXINT16,
                         0,
                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -1513,9 +1498,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * [method@Gtk.Widget.set_size_request] for example.
    */
   widget_props[PROP_MARGIN_TOP] =
-      g_param_spec_int ("margin-top",
-                        P_("Margin on Top"),
-                        P_("Pixels of extra space on the top side"),
+      g_param_spec_int ("margin-top", NULL, NULL,
                         0, G_MAXINT16,
                         0,
                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -1530,9 +1513,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * [method@Gtk.Widget.set_size_request] for example.
    */
   widget_props[PROP_MARGIN_BOTTOM] =
-      g_param_spec_int ("margin-bottom",
-                        P_("Margin on Bottom"),
-                        P_("Pixels of extra space on the bottom side"),
+      g_param_spec_int ("margin-bottom", NULL, NULL,
                         0, G_MAXINT16,
                         0,
                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -1543,9 +1524,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * Whether to expand horizontally.
    */
   widget_props[PROP_HEXPAND] =
-      g_param_spec_boolean ("hexpand",
-                            P_("Horizontal Expand"),
-                            P_("Whether widget wants more horizontal space"),
+      g_param_spec_boolean ("hexpand", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1555,9 +1534,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * Whether to use the `hexpand` property.
    */
   widget_props[PROP_HEXPAND_SET] =
-      g_param_spec_boolean ("hexpand-set",
-                            P_("Horizontal Expand Set"),
-                            P_("Whether to use the hexpand property"),
+      g_param_spec_boolean ("hexpand-set", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1567,9 +1544,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * Whether to expand vertically.
    */
   widget_props[PROP_VEXPAND] =
-      g_param_spec_boolean ("vexpand",
-                            P_("Vertical Expand"),
-                            P_("Whether widget wants more vertical space"),
+      g_param_spec_boolean ("vexpand", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1579,9 +1554,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * Whether to use the `vexpand` property.
    */
   widget_props[PROP_VEXPAND_SET] =
-      g_param_spec_boolean ("vexpand-set",
-                            P_("Vertical Expand Set"),
-                            P_("Whether to use the vexpand property"),
+      g_param_spec_boolean ("vexpand-set", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1591,9 +1564,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * The requested opacity of the widget.
    */
   widget_props[PROP_OPACITY] =
-      g_param_spec_double ("opacity",
-                           P_("Opacity for Widget"),
-                           P_("The opacity of the widget, from 0 to 1"),
+      g_param_spec_double ("opacity", NULL, NULL,
                            0.0, 1.0,
                            1.0,
                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -1607,9 +1578,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * typically in their instance init function.
    */
   widget_props[PROP_OVERFLOW] =
-      g_param_spec_enum ("overflow",
-                         P_("Overflow"),
-                         P_("How content outside the widget’s content area is treated"),
+      g_param_spec_enum ("overflow", NULL, NULL,
                          GTK_TYPE_OVERFLOW,
                          GTK_OVERFLOW_VISIBLE,
                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -1620,9 +1589,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * The scale factor of the widget.
    */
   widget_props[PROP_SCALE_FACTOR] =
-      g_param_spec_int ("scale-factor",
-                        P_("Scale factor"),
-                        P_("The scaling factor of the window"),
+      g_param_spec_int ("scale-factor", NULL, NULL,
                         1, G_MAXINT,
                         1,
                         GTK_PARAM_READABLE);
@@ -1636,9 +1603,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * typically in their instance init function.
    */
   widget_props[PROP_CSS_NAME] =
-      g_param_spec_string ("css-name",
-                           P_("CSS Name"),
-                           P_("The name of this widget in the CSS tree"),
+      g_param_spec_string ("css-name", NULL, NULL,
                            NULL,
                            GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
@@ -1648,9 +1613,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * A list of css classes applied to this widget.
    */
   widget_props[PROP_CSS_CLASSES] =
-      g_param_spec_boxed ("css-classes",
-                          P_("CSS Style Classes"),
-                          P_("List of CSS classes"),
+      g_param_spec_boxed ("css-classes", NULL, NULL,
                           G_TYPE_STRV,
                           GTK_PARAM_READWRITE);
 
@@ -1664,9 +1627,7 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * typically in their instance init function.
    */
   widget_props[PROP_LAYOUT_MANAGER] =
-    g_param_spec_object ("layout-manager",
-                         P_("Layout Manager"),
-                         P_("The layout manager used to layout children of the widget"),
+    g_param_spec_object ("layout-manager", NULL, NULL,
                          GTK_TYPE_LAYOUT_MANAGER,
                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -6883,7 +6844,7 @@ gtk_widget_get_display (GtkWidget *widget)
  * The default `focus()` virtual function for a widget should return `TRUE` if
  * moving in @direction left the focus on a focusable location inside that
  * widget, and `FALSE` if moving in @direction moved the focus outside the
- * widget. When returning `TRUE`, widgets normallycall [method@Gtk.Widget.grab_focus]
+ * widget. When returning `TRUE`, widgets normally call [method@Gtk.Widget.grab_focus]
  * to place the focus accordingly; when returning `FALSE`, they don’t modify
  * the current focus location.
  *
@@ -7505,16 +7466,7 @@ gtk_widget_real_destroy (GtkWidget *object)
                   GObject *child_object = gtk_widget_get_template_child (widget,
                                                                          class_type,
                                                                          child_class->name);
-
-                  g_assert (child_object);
-
-                  if (!G_IS_OBJECT (child_object))
-                    {
-                      g_critical ("Automated component '%s' of class '%s' seems to"
-                                  " have been prematurely finalized",
-                                  child_class->name, g_type_name (class_type));
-                    }
-                  else
+                  if (G_IS_OBJECT (child_object))
                     {
                       FinalizeAssertion *assertion = g_slice_new0 (FinalizeAssertion);
                       assertion->child_class = child_class;
@@ -11044,6 +10996,81 @@ gtk_widget_init_template (GtkWidget *widget)
 
 out:
   g_object_unref (builder);
+}
+
+/**
+ * gtk_widget_dispose_template:
+ * @widget: the widget with a template
+ * @widget_type: the type of the widget to finalize the template for
+ *
+ * Clears the template children for the given widget.
+ *
+ * This function is the opposite of [method@Gtk.Widget.init_template], and
+ * it is used to clear all the template children from a widget instance.
+ * If you bound a template child to a field in the instance structure, or
+ * in the instance private data structure, the field will be set to `NULL`
+ * after this function returns.
+ *
+ * You should call this function inside the `GObjectClass.dispose()`
+ * implementation of any widget that called `gtk_widget_init_template()`.
+ * Typically, you will want to call this function last, right before
+ * chaining up to the parent type's dispose implementation, e.g.
+ *
+ * ```c
+ * static void
+ * some_widget_dispose (GObject *gobject)
+ * {
+ *   SomeWidget *self = SOME_WIDGET (gobject);
+ *
+ *   // Clear the template data for SomeWidget
+ *   gtk_widget_dispose_template (GTK_WIDGET (self), SOME_TYPE_WIDGET);
+ *
+ *   G_OBJECT_CLASS (some_widget_parent_class)->dispose (gobject);
+ * }
+ * ```
+ *
+ * Since: 4.8
+ */
+void
+gtk_widget_dispose_template (GtkWidget *widget,
+                             GType      widget_type)
+{
+  g_return_if_fail (GTK_IS_WIDGET (widget));
+  g_return_if_fail (g_type_name (widget_type) != NULL);
+
+  GtkWidgetTemplate *template = GTK_WIDGET_GET_CLASS (widget)->priv->template;
+  g_return_if_fail (template != NULL);
+
+  /* Tear down the automatic child data */
+  GHashTable *auto_child_hash = get_auto_child_hash (widget, widget_type, FALSE);
+
+  for (GSList *l = template->children; l != NULL; l = l->next)
+    {
+      AutomaticChildClass *child_class = l->data;
+
+      /* This will drop the reference on the template children */
+      if (auto_child_hash != NULL)
+        {
+          gpointer child = g_hash_table_lookup (auto_child_hash, child_class->name);
+
+          g_assert (child != NULL);
+
+          /* We have to explicitly unparent direct children of this widget */
+          if (GTK_IS_WIDGET (child) && _gtk_widget_get_parent (child) == widget)
+            gtk_widget_unparent (child);
+
+          g_hash_table_remove (auto_child_hash, child_class->name);
+        }
+
+      /* Nullify the field last, to avoid re-entrancy issues */
+      if (child_class->offset != 0)
+        {
+          gpointer field_p;
+
+          field_p = G_STRUCT_MEMBER_P (widget, child_class->offset);
+          (* (gpointer *) field_p) = NULL;
+        }
+    }
 }
 
 /**

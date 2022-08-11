@@ -78,6 +78,7 @@ test_type (gconstpointer data)
   if (g_type_is_a (type, GTK_TYPE_APPLICATION) ||
       g_type_is_a (type, GDK_TYPE_PIXBUF_LOADER) ||
       g_type_is_a (type, GTK_TYPE_LAYOUT_CHILD) ||
+      g_type_is_a (type, GTK_TYPE_STACK_PAGE) ||
 #ifdef G_OS_UNIX
       g_type_is_a (type, GTK_TYPE_PRINT_JOB) ||
 #endif
@@ -297,6 +298,10 @@ G_GNUC_END_IGNORE_DEPRECATIONS
            g_type_is_a (type, GTK_TYPE_MULTI_SELECTION)) &&
           strcmp (pspec->name, "model") == 0)
         check = FALSE;
+
+      if (g_type_is_a (type, GTK_TYPE_TREE_LIST_MODEL) &&
+	  (strcmp (pspec->name, "item-type") == 0)) /* might be a treelistrow */
+	check = FALSE;
 
       /* This is set in init() */
       if (g_type_is_a (type, GTK_TYPE_FONT_CHOOSER_WIDGET) &&

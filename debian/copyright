@@ -10,6 +10,8 @@ Files-Excluded:
  docs/reference/gtk/gtk4
  gtk/theme/Default/Default-*.css
  subprojects/gi-docgen
+ subprojects/wayland
+ subprojects/wayland-protocols
 
 Files: *
 Copyright:

@@ -201,13 +201,10 @@ gtk_menu_tracker_item_finalize (GObject *object)
 {
   GtkMenuTrackerItem *self = GTK_MENU_TRACKER_ITEM (object);
 
-  g_free (self->action_namespace);
-  g_free (self->action_and_target);
-
-  if (self->observable)
-    g_object_unref (self->observable);
-
-  g_object_unref (self->item);
+  g_clear_pointer (&self->action_namespace, g_free);
+  g_clear_pointer (&self->action_and_target, g_free);
+  g_clear_object (&self->observable);
+  g_clear_object (&self->item);
 
   G_OBJECT_CLASS (gtk_menu_tracker_item_parent_class)->finalize (object);
 }
@@ -224,29 +221,29 @@ gtk_menu_tracker_item_class_init (GtkMenuTrackerItemClass *class)
   class->finalize = gtk_menu_tracker_item_finalize;
 
   gtk_menu_tracker_item_pspecs[PROP_IS_SEPARATOR] =
-    g_param_spec_boolean ("is-separator", "", "", FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
+    g_param_spec_boolean ("is-separator", NULL, NULL, FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
   gtk_menu_tracker_item_pspecs[PROP_LABEL] =
-    g_param_spec_string ("label", "", "", NULL, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
+    g_param_spec_string ("label", NULL, NULL, NULL, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
   gtk_menu_tracker_item_pspecs[PROP_USE_MARKUP] =
-    g_param_spec_boolean ("use-markup", "", "", FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
+    g_param_spec_boolean ("use-markup", NULL, NULL, FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
   gtk_menu_tracker_item_pspecs[PROP_ICON] =
-    g_param_spec_object ("icon", "", "", G_TYPE_ICON, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
+    g_param_spec_object ("icon", NULL, NULL, G_TYPE_ICON, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
   gtk_menu_tracker_item_pspecs[PROP_VERB_ICON] =
-    g_param_spec_object ("verb-icon", "", "", G_TYPE_ICON, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
+    g_param_spec_object ("verb-icon", NULL, NULL, G_TYPE_ICON, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
   gtk_menu_tracker_item_pspecs[PROP_SENSITIVE] =
-    g_param_spec_boolean ("sensitive", "", "", FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
+    g_param_spec_boolean ("sensitive", NULL, NULL, FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
   gtk_menu_tracker_item_pspecs[PROP_ROLE] =
-    g_param_spec_enum ("role", "", "",
+    g_param_spec_enum ("role", NULL, NULL,
                        GTK_TYPE_MENU_TRACKER_ITEM_ROLE, GTK_MENU_TRACKER_ITEM_ROLE_NORMAL,
                        G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
   gtk_menu_tracker_item_pspecs[PROP_TOGGLED] =
-    g_param_spec_boolean ("toggled", "", "", FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
+    g_param_spec_boolean ("toggled", NULL, NULL, FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
   gtk_menu_tracker_item_pspecs[PROP_ACCEL] =
-    g_param_spec_string ("accel", "", "", NULL, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
+    g_param_spec_string ("accel", NULL, NULL, NULL, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
   gtk_menu_tracker_item_pspecs[PROP_SUBMENU_SHOWN] =
-    g_param_spec_boolean ("submenu-shown", "", "", FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
+    g_param_spec_boolean ("submenu-shown", NULL, NULL, FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
   gtk_menu_tracker_item_pspecs[PROP_IS_VISIBLE] =
-    g_param_spec_boolean ("is-visible", "", "", FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
+    g_param_spec_boolean ("is-visible", NULL, NULL, FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
 
   g_object_class_install_properties (class, N_PROPS, gtk_menu_tracker_item_pspecs);
 }
@@ -873,18 +870,27 @@ gtk_menu_tracker_opener_finalize (GObject *object)
 {
   GtkMenuTrackerOpener *opener = (GtkMenuTrackerOpener *)object;
 
-  gtk_action_observable_unregister_observer (opener->item->observable,
-                                             opener->submenu_action,
-                                             (GtkActionObserver *)opener);
+  if (opener->item != NULL)
+    {
+      GtkMenuTrackerItem *item = g_object_ref (opener->item);
 
-  if (GTK_IS_ACTION_MUXER (opener->item->observable))
-    gtk_action_muxer_change_action_state (GTK_ACTION_MUXER (opener->item->observable),
-                                          opener->submenu_action,
-                                          g_variant_new_boolean (FALSE));
+      g_clear_weak_pointer (&opener->item);
 
-  gtk_menu_tracker_item_set_submenu_shown (opener->item, FALSE);
+      gtk_action_observable_unregister_observer (item->observable,
+                                                 opener->submenu_action,
+                                                 (GtkActionObserver *)opener);
 
-  g_free (opener->submenu_action);
+      if (GTK_IS_ACTION_MUXER (item->observable))
+        gtk_action_muxer_change_action_state (GTK_ACTION_MUXER (item->observable),
+                                              opener->submenu_action,
+                                              g_variant_new_boolean (FALSE));
+
+      gtk_menu_tracker_item_set_submenu_shown (item, FALSE);
+
+      g_object_unref (item);
+    }
+
+  g_clear_pointer (&opener->submenu_action, g_free);
 
   G_OBJECT_CLASS (gtk_menu_tracker_opener_parent_class)->finalize (object);
 }
@@ -995,7 +1001,8 @@ gtk_menu_tracker_opener_new (GtkMenuTrackerItem *item,
   opener = g_object_new (gtk_menu_tracker_opener_get_type (), NULL);
 
   opener->first_time = TRUE;
-  opener->item = item;
+
+  g_set_weak_pointer (&opener->item, item);
 
   if (item->action_namespace)
     opener->submenu_action = g_strjoin (".", item->action_namespace, submenu_action, NULL);

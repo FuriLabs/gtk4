@@ -57,6 +57,7 @@ struct _NodeEditorWindow
   GtkWidget *testcase_cairo_checkbutton;
   GtkWidget *testcase_name_entry;
   GtkWidget *testcase_save_button;
+  GtkWidget *scale_scale;
 
   GtkWidget *renderer_listbox;
   GListStore *renderers;
@@ -171,6 +172,7 @@ text_changed (GtkTextBuffer    *buffer,
   GBytes *bytes;
   GtkTextIter iter;
   GtkTextIter start, end;
+  float scale;
 
   g_array_remove_range (self->errors, 0, self->errors->len);
   text = get_current_text (self->text_buffer);
@@ -181,6 +183,17 @@ text_changed (GtkTextBuffer    *buffer,
 
   /* If this is too slow, go fix the parser performance */
   self->node = gsk_render_node_deserialize (bytes, deserialize_error_func, self);
+
+  scale = gtk_scale_button_get_value (GTK_SCALE_BUTTON (self->scale_scale));
+  if (self->node && scale != 1.0)
+    {
+      GskRenderNode *node;
+
+      node = gsk_transform_node_new (self->node, gsk_transform_scale (NULL, scale, scale));
+      gsk_render_node_unref (self->node);
+      self->node = node;
+    }
+
   g_bytes_unref (bytes);
   if (self->node)
     {
@@ -275,6 +288,14 @@ text_changed (GtkTextBuffer    *buffer,
   gtk_text_buffer_get_bounds (self->text_buffer, &start, &end);
   gtk_text_buffer_apply_tag_by_name (self->text_buffer, "no-hyphens",
                                      &start, &end);
+}
+
+static void
+scale_changed (GObject          *object,
+               GParamSpec       *pspec,
+               NodeEditorWindow *self)
+{
+  text_changed (self->text_buffer, self);
 }
 
 static gboolean
@@ -853,6 +874,14 @@ dark_mode_cb (GtkToggleButton *button,
 }
 
 static void
+node_editor_window_dispose (GObject *object)
+{
+  gtk_widget_dispose_template (GTK_WIDGET (object), NODE_EDITOR_WINDOW_TYPE);
+
+  G_OBJECT_CLASS (node_editor_window_parent_class)->dispose (object);
+}
+
+static void
 node_editor_window_finalize (GObject *object)
 {
   NodeEditorWindow *self = (NodeEditorWindow *)object;
@@ -946,6 +975,7 @@ node_editor_window_class_init (NodeEditorWindowClass *class)
   GObjectClass *object_class = G_OBJECT_CLASS (class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (class);
 
+  object_class->dispose = node_editor_window_dispose;
   object_class->finalize = node_editor_window_finalize;
 
   gtk_widget_class_set_template_from_resource (widget_class,
@@ -962,6 +992,7 @@ node_editor_window_class_init (NodeEditorWindowClass *class)
   gtk_widget_class_bind_template_child (widget_class, NodeEditorWindow, testcase_cairo_checkbutton);
   gtk_widget_class_bind_template_child (widget_class, NodeEditorWindow, testcase_name_entry);
   gtk_widget_class_bind_template_child (widget_class, NodeEditorWindow, testcase_save_button);
+  gtk_widget_class_bind_template_child (widget_class, NodeEditorWindow, scale_scale);
 
   gtk_widget_class_bind_template_callback (widget_class, text_view_query_tooltip_cb);
   gtk_widget_class_bind_template_callback (widget_class, open_cb);
@@ -1068,6 +1099,7 @@ node_editor_window_init (NodeEditorWindow *self)
 
   self->text_buffer = gtk_text_buffer_new (self->tag_table);
   g_signal_connect (self->text_buffer, "changed", G_CALLBACK (text_changed), self);
+  g_signal_connect (self->scale_scale, "notify::value", G_CALLBACK (scale_changed), self);
   gtk_text_view_set_buffer (GTK_TEXT_VIEW (self->text_view), self->text_buffer);
 
   /* Default */

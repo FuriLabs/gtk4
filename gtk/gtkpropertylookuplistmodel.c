@@ -39,6 +39,7 @@
 enum {
   PROP_0,
   PROP_ITEM_TYPE,
+  PROP_N_ITEMS,
   PROP_OBJECT,
   PROP_PROPERTY,
   NUM_PROPERTIES
@@ -184,6 +185,8 @@ gtk_property_lookup_list_model_notify_cb (GObject                    *object,
 
   if (removed > 0 || added > 0)
     g_list_model_items_changed (G_LIST_MODEL (self), position, removed, added);
+  if (removed != added)
+    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
 }
 
 static guint
@@ -318,6 +321,10 @@ gtk_property_lookup_list_model_get_property (GObject     *object,
       g_value_set_gtype (value, self->item_type);
       break;
 
+    case PROP_N_ITEMS:
+      g_value_set_uint (value, gtk_property_lookup_list_model_get_n_items (G_LIST_MODEL (self)));
+      break;
+
     case PROP_OBJECT:
       g_value_set_object (value, gtk_property_lookup_list_model_get_object (self));
       break;
@@ -366,14 +373,24 @@ gtk_property_lookup_list_model_class_init (GtkPropertyLookupListModelClass *klas
   /**
    * GtkPropertyLookupListModel:item-type:
    *
-   * The `GType` for elements of this object
+   * The `GType` for elements of this object. See [method@Gio.ListModel.get_item_type].
    */
   properties[PROP_ITEM_TYPE] =
-      g_param_spec_gtype ("item-type",
-                          P_("Item type"),
-                          P_("The type of elements of this object"),
+      g_param_spec_gtype ("item-type", NULL, NULL,
                           G_TYPE_OBJECT,
                           GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * GtkPropertyLookupListModel:n-items:
+   *
+   * The number of items. See [method@Gio.ListModel.get_n_items].
+   *
+   * Since: 4.8
+   **/
+  properties[PROP_N_ITEMS] =
+    g_param_spec_uint ("n-items", NULL, NULL,
+                       0, G_MAXUINT, 0,
+                       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GtkPropertyLookupListModel:property:
@@ -381,9 +398,7 @@ gtk_property_lookup_list_model_class_init (GtkPropertyLookupListModelClass *klas
    * Name of the property used for lookups
    */
   properties[PROP_PROPERTY] =
-      g_param_spec_string ("property",
-                           P_("type"),
-                           P_("Name of the property used for lookups"),
+      g_param_spec_string ("property", NULL, NULL,
                            NULL,
                            GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -393,9 +408,7 @@ gtk_property_lookup_list_model_class_init (GtkPropertyLookupListModelClass *klas
    * The root object
    */
   properties[PROP_OBJECT] =
-      g_param_spec_object ("object",
-                           P_("Object"),
-                           P_("The root object"),
+      g_param_spec_object ("object", NULL, NULL,
                            G_TYPE_LIST_MODEL,
                            GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -462,6 +475,8 @@ gtk_property_lookup_list_model_set_object (GtkPropertyLookupListModel *self,
   g_assert (removed != 0 || added != 0);
 
   g_list_model_items_changed (G_LIST_MODEL (self), 0, removed, added);
+  if (removed != added)
+    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
 }
 
 gpointer

@@ -43,7 +43,9 @@ enum {
   PROP_0,
   PROP_FILTER,
   PROP_INCREMENTAL,
+  PROP_ITEM_TYPE,
   PROP_MODEL,
+  PROP_N_ITEMS,
   PROP_PENDING,
   NUM_PROPERTIES
 };
@@ -206,14 +208,18 @@ gtk_filter_list_model_emit_items_changed_for_changes (GtkFilterListModel *self,
   gtk_bitset_difference (changes, old);
   if (!gtk_bitset_is_empty (changes))
     {
-      guint min, max;
+      guint min, max, removed, added;
 
       min = gtk_bitset_get_minimum (changes);
       max = gtk_bitset_get_maximum (changes);
+      removed = gtk_bitset_get_size_in_range (old, min, max);
+      added = gtk_bitset_get_size_in_range (self->matches, min, max);
       g_list_model_items_changed (G_LIST_MODEL (self),
                                   min > 0 ? gtk_bitset_get_size_in_range (self->matches, 0, min - 1) : 0,
-                                  gtk_bitset_get_size_in_range (old, min, max),
-                                  gtk_bitset_get_size_in_range (self->matches, min, max));
+                                  removed,
+                                  added);
+      if (removed != added)
+        g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
     }
   gtk_bitset_unref (changes);
   gtk_bitset_unref (old);
@@ -286,6 +292,8 @@ gtk_filter_list_model_items_changed_cb (GListModel         *model,
 
     case GTK_FILTER_MATCH_ALL:
       g_list_model_items_changed (G_LIST_MODEL (self), position, removed, added);
+      if (removed != added)
+        g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
       return;
 
     case GTK_FILTER_MATCH_SOME:
@@ -316,6 +324,8 @@ gtk_filter_list_model_items_changed_cb (GListModel         *model,
     g_list_model_items_changed (G_LIST_MODEL (self),
                                 position > 0 ? gtk_bitset_get_size_in_range (self->matches, 0, position - 1) : 0,
                                 filter_removed, filter_added);
+  if (filter_removed != filter_added)
+    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
 }
 
 static void
@@ -364,8 +374,16 @@ gtk_filter_list_model_get_property (GObject     *object,
       g_value_set_boolean (value, self->incremental);
       break;
 
+    case PROP_ITEM_TYPE:
+      g_value_set_gtype (value, gtk_filter_list_model_get_item_type (G_LIST_MODEL (self)));
+      break;
+
     case PROP_MODEL:
       g_value_set_object (value, self->model);
+      break;
+
+    case PROP_N_ITEMS:
+      g_value_set_uint (value, gtk_filter_list_model_get_n_items (G_LIST_MODEL (self)));
       break;
 
     case PROP_PENDING:
@@ -415,7 +433,10 @@ gtk_filter_list_model_refilter (GtkFilterListModel *self,
         self->strictness = new_strictness;
         gtk_filter_list_model_stop_filtering (self);
         if (n_before > 0)
-          g_list_model_items_changed (G_LIST_MODEL (self), 0, n_before, 0);
+          {
+            g_list_model_items_changed (G_LIST_MODEL (self), 0, n_before, 0);
+            g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
+          }
       }
       break;
 
@@ -423,8 +444,17 @@ gtk_filter_list_model_refilter (GtkFilterListModel *self,
       switch (self->strictness)
         {
         case GTK_FILTER_MATCH_NONE:
-          self->strictness = new_strictness;
-          g_list_model_items_changed (G_LIST_MODEL (self), 0, 0, g_list_model_get_n_items (self->model));
+          {
+            guint n_items;
+
+            self->strictness = new_strictness;
+            n_items = g_list_model_get_n_items (self->model);
+            if (n_items > 0)
+              {
+                g_list_model_items_changed (G_LIST_MODEL (self), 0, 0, n_items);
+                g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
+              }
+          }
           break;
         case GTK_FILTER_MATCH_ALL:
           self->strictness = new_strictness;
@@ -460,6 +490,7 @@ gtk_filter_list_model_refilter (GtkFilterListModel *self,
 
                 g_clear_pointer (&self->matches, gtk_bitset_unref);
                 g_list_model_items_changed (G_LIST_MODEL (self), start, n_before - end - start, n_after - end - start);
+                g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
               }
           }
           break;
@@ -557,9 +588,7 @@ gtk_filter_list_model_class_init (GtkFilterListModelClass *class)
    * The filter for this model.
    */
   properties[PROP_FILTER] =
-      g_param_spec_object ("filter",
-                           P_("Filter"),
-                           P_("The filter set for this model"),
+      g_param_spec_object ("filter", NULL, NULL,
                            GTK_TYPE_FILTER,
                            GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -569,11 +598,21 @@ gtk_filter_list_model_class_init (GtkFilterListModelClass *class)
    * If the model should filter items incrementally.
    */
   properties[PROP_INCREMENTAL] =
-      g_param_spec_boolean ("incremental",
-                            P_("Incremental"),
-                            P_("Filter items incrementally"),
+      g_param_spec_boolean ("incremental", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * GtkFilterListModel:item-type:
+   *
+   * The type of items. See [method@Gio.ListModel.get_item_type].
+   *
+   * Since: 4.8
+   **/
+  properties[PROP_ITEM_TYPE] =
+    g_param_spec_gtype ("item-type", NULL, NULL,
+                        G_TYPE_OBJECT,
+                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GtkFilterListModel:model: (attributes org.gtk.Property.get=gtk_filter_list_model_get_model org.gtk.Property.set=gtk_filter_list_model_set_model)
@@ -581,11 +620,21 @@ gtk_filter_list_model_class_init (GtkFilterListModelClass *class)
    * The model being filtered.
    */
   properties[PROP_MODEL] =
-      g_param_spec_object ("model",
-                           P_("Model"),
-                           P_("The model being filtered"),
+      g_param_spec_object ("model", NULL, NULL,
                            G_TYPE_LIST_MODEL,
                            GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * GtkFilterListModel:n-items:
+   *
+   * The number of items. See [method@Gio.ListModel.get_n_items].
+   *
+   * Since: 4.8
+   **/
+  properties[PROP_N_ITEMS] =
+    g_param_spec_uint ("n-items", NULL, NULL,
+                       0, G_MAXUINT, 0,
+                       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GtkFilterListModel:pending: (attributes org.gtk.Property.get=gtk_filter_list_model_get_pending)
@@ -593,9 +642,7 @@ gtk_filter_list_model_class_init (GtkFilterListModelClass *class)
    * Number of items not yet filtered.
    */
   properties[PROP_PENDING] =
-      g_param_spec_uint ("pending",
-                         P_("Pending"),
-                         P_("Number of items not yet filtered"),
+      g_param_spec_uint ("pending", NULL, NULL,
                          0, G_MAXUINT, 0,
                          GTK_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -745,6 +792,8 @@ gtk_filter_list_model_set_model (GtkFilterListModel *self,
 
   if (removed > 0 || added > 0)
     g_list_model_items_changed (G_LIST_MODEL (self), 0, removed, added);
+  if (removed != added)
+    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_MODEL]);
 }

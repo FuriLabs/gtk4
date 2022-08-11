@@ -162,6 +162,7 @@ uniform_type_from_glsl (const char *str)
   return  GSK_GL_UNIFORM_TYPE_NONE;
 }
 
+#ifdef G_ENABLE_DEBUG
 static const char *
 uniform_type_name (GskGLUniformType type)
 {
@@ -194,6 +195,7 @@ uniform_type_name (GskGLUniformType type)
       return NULL;
     }
 }
+#endif
 
 static int
 uniform_type_size (GskGLUniformType type)
@@ -397,6 +399,7 @@ gsk_gl_shader_constructed (GObject *object)
 
   shader->n_textures = max_texture_seen;
 
+#ifdef G_ENABLE_DEBUG
   if (GSK_DEBUG_CHECK(SHADERS))
     {
       GString *s;
@@ -414,6 +417,7 @@ gsk_gl_shader_constructed (GObject *object)
                  s->str);
       g_string_free (s, TRUE);
     }
+#endif
 }
 
 #define SPACE_RE "[ \\t]+" // Don't use \s, we don't want to match newlines
@@ -444,9 +448,7 @@ gsk_gl_shader_class_init (GskGLShaderClass *klass)
    * The source code for the shader, as a `GBytes`.
    */
   gsk_gl_shader_properties[GLSHADER_PROP_SOURCE] =
-    g_param_spec_boxed ("source",
-                        "Source",
-                        "The sourcecode for the shader",
+    g_param_spec_boxed ("source", NULL, NULL,
                         G_TYPE_BYTES,
                         G_PARAM_READWRITE |
                         G_PARAM_CONSTRUCT_ONLY |
@@ -461,9 +463,7 @@ gsk_gl_shader_class_init (GskGLShaderClass *klass)
    * will be %NULL.
    */
   gsk_gl_shader_properties[GLSHADER_PROP_RESOURCE] =
-    g_param_spec_string ("resource",
-                         "Resources",
-                         "Resource path to the source code",
+    g_param_spec_string ("resource", NULL, NULL,
                          NULL,
                          G_PARAM_READWRITE |
                          G_PARAM_CONSTRUCT_ONLY |
@@ -635,6 +635,7 @@ gsk_gl_shader_get_uniform_name (GskGLShader *shader,
                                 int          idx)
 {
   g_return_val_if_fail (GSK_IS_GL_SHADER (shader), NULL);
+  g_return_val_if_fail (0 <= idx && idx < shader->uniforms->len, NULL);
 
   return g_array_index (shader->uniforms, GskGLUniform, idx).name;
 }
@@ -679,6 +680,7 @@ gsk_gl_shader_get_uniform_type (GskGLShader *shader,
                                 int          idx)
 {
   g_return_val_if_fail (GSK_IS_GL_SHADER (shader), 0);
+  g_return_val_if_fail (0 <= idx && idx < shader->uniforms->len, 0);
 
   return g_array_index (shader->uniforms, GskGLUniform, idx).type;
 }
@@ -697,6 +699,7 @@ gsk_gl_shader_get_uniform_offset (GskGLShader *shader,
                                   int          idx)
 {
   g_return_val_if_fail (GSK_IS_GL_SHADER (shader), 0);
+  g_return_val_if_fail (0 <= idx && idx < shader->uniforms->len, 0);
 
   return g_array_index (shader->uniforms, GskGLUniform, idx).offset;
 }

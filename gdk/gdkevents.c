@@ -597,7 +597,8 @@ _gdk_event_unqueue (GdkDisplay *display)
 
 /*
  * If the last N events in the event queue are smooth scroll events
- * for the same surface and device, combine them into one.
+ * for the same surface, the same device and the same scroll unit,
+ * combine them into one.
  *
  * We give the remaining event a history with N items, and deltas
  * that are the sum over the history entries.
@@ -611,6 +612,8 @@ gdk_event_queue_handle_scroll_compression (GdkDisplay *display)
   GdkEvent *last_event = NULL;
   GList *scrolls = NULL;
   GArray *history = NULL;
+  GdkScrollUnit scroll_unit = GDK_SCROLL_UNIT_WHEEL;
+  gboolean scroll_unit_defined = FALSE;
   GdkTimeCoord hist;
 
   l = g_queue_peek_tail_link (&display->queued_events);
@@ -618,6 +621,7 @@ gdk_event_queue_handle_scroll_compression (GdkDisplay *display)
   while (l)
     {
       GdkEvent *event = l->data;
+      GdkScrollEvent *scroll_event = (GdkScrollEvent *) event;
 
       if (event->flags & GDK_EVENT_PENDING)
         break;
@@ -634,11 +638,17 @@ gdk_event_queue_handle_scroll_compression (GdkDisplay *display)
           device != event->device)
         break;
 
+      if (scroll_unit_defined &&
+          scroll_unit != scroll_event->unit)
+        break;
+
       if (!last_event)
         last_event = event;
 
       surface = event->surface;
       device = event->device;
+      scroll_unit = scroll_event->unit;
+      scroll_unit_defined = TRUE;
       scrolls = l;
 
       l = l->prev;
@@ -710,7 +720,8 @@ gdk_event_queue_handle_scroll_compression (GdkDisplay *display)
                                     gdk_event_get_modifier_state (old_event),
                                     dx,
                                     dy,
-                                    gdk_scroll_event_is_stop (old_event));
+                                    gdk_scroll_event_is_stop (old_event),
+                                    scroll_unit);
 
       ((GdkScrollEvent *)event)->history = history;
 
@@ -746,15 +757,21 @@ gdk_motion_event_push_history (GdkEvent *event,
 
   memset (&hist, 0, sizeof (GdkTimeCoord));
   hist.time = gdk_event_get_time (history_event);
+
   if (tool)
     {
       hist.flags = gdk_device_tool_get_axes (tool);
       for (i = GDK_AXIS_X; i < GDK_AXIS_LAST; i++)
         gdk_event_get_axis (history_event, i, &hist.axes[i]);
     }
-  else
+
+  /* GdkTimeCoord has no dedicated fields to record event position. For plain
+   * pointer events, and for tools which don't report GDK_AXIS_X/GDK_AXIS_Y
+   * on their own, we surface the position using the X and Y input axes.
+   */
+  if (!(hist.flags & GDK_AXIS_FLAG_X) || !(hist.flags & GDK_AXIS_FLAG_Y))
     {
-      hist.flags = GDK_AXIS_FLAG_X | GDK_AXIS_FLAG_Y;
+      hist.flags |= GDK_AXIS_FLAG_X | GDK_AXIS_FLAG_Y;
       gdk_event_get_position (history_event, &hist.axes[GDK_AXIS_X], &hist.axes[GDK_AXIS_Y]);
     }
 
@@ -901,14 +918,6 @@ gdk_event_get_pointer_emulated (GdkEvent *event)
         GdkTouchEvent *tevent = (GdkTouchEvent *) event;
 
         return tevent->pointer_emulated;
-      }
-
-    case GDK_SCROLL:
-    case GDK_SCROLL_SMOOTH:
-      {
-        GdkScrollEvent *sevent = (GdkScrollEvent *) event;
-
-        return sevent->pointer_emulated;
       }
 
     default:
@@ -2334,7 +2343,8 @@ gdk_scroll_event_new (GdkSurface      *surface,
                       GdkModifierType  state,
                       double           delta_x,
                       double           delta_y,
-                      gboolean         is_stop)
+                      gboolean         is_stop,
+                      GdkScrollUnit    unit)
 {
   GdkScrollEvent *self = gdk_event_alloc (GDK_SCROLL, surface, device, time);
 
@@ -2344,6 +2354,7 @@ gdk_scroll_event_new (GdkSurface      *surface,
   self->delta_x = delta_x;
   self->delta_y = delta_y;
   self->is_stop = is_stop;
+  self->unit = unit;
 
   return (GdkEvent *) self;
 }
@@ -2354,15 +2365,79 @@ gdk_scroll_event_new_discrete (GdkSurface         *surface,
                                GdkDeviceTool      *tool,
                                guint32             time,
                                GdkModifierType     state,
+                               GdkScrollDirection  direction)
+{
+  GdkScrollEvent *self = gdk_event_alloc (GDK_SCROLL, surface, device, time);
+  double delta_x = 0, delta_y = 0;
+
+  switch (direction)
+    {
+    case GDK_SCROLL_UP:
+      delta_y = -1;
+      break;
+    case GDK_SCROLL_DOWN:
+      delta_y = 1;
+      break;
+    case GDK_SCROLL_LEFT:
+      delta_x = -1;
+      break;
+    case GDK_SCROLL_RIGHT:
+      delta_x = 1;
+      break;
+    case GDK_SCROLL_SMOOTH:
+    default:
+      g_assert_not_reached ();
+      break;
+    }
+
+  self->tool = tool != NULL ? g_object_ref (tool) : NULL;
+  self->state = state;
+  self->direction = direction;
+  self->delta_x = delta_x;
+  self->delta_y = delta_y;
+  self->unit = GDK_SCROLL_UNIT_WHEEL;
+
+  return (GdkEvent *) self;
+}
+
+/*< private >
+ * gtk_scroll_event_new_value120:
+ * @surface: the `GdkSurface` of the event
+ * @device: the `GdkDevice` of the event
+ * @tool: (nullable): the tool that generated to event
+ * @time: the event serial
+ * @state: Flags to indicate the state of modifier keys and mouse buttons
+ *   in events.
+ * @direction: scroll direction.
+ * @delta_x: delta on the X axis in the 120.0 scale
+ * @delta_x: delta on the Y axis in the 120.0 scale
+ *
+ * Creates a new discrete GdkScrollEvent for high resolution mouse wheels.
+ *
+ * Both axes send data in fractions of 120 where each multiple of 120
+ * amounts to one logical scroll event. Fractions of 120 indicate a wheel
+ * movement less than one detent.
+ *
+ * Returns: the newly created scroll event
+ */
+GdkEvent *
+gdk_scroll_event_new_value120 (GdkSurface         *surface,
+                               GdkDevice          *device,
+                               GdkDeviceTool      *tool,
+                               guint32             time,
+                               GdkModifierType     state,
                                GdkScrollDirection  direction,
-                               gboolean            emulated)
+                               double              delta_x,
+                               double              delta_y)
 {
   GdkScrollEvent *self = gdk_event_alloc (GDK_SCROLL, surface, device, time);
 
   self->tool = tool != NULL ? g_object_ref (tool) : NULL;
   self->state = state;
   self->direction = direction;
-  self->pointer_emulated = emulated;
+  self->delta_x = delta_x / 120.0;
+  self->delta_y = delta_y / 120.0;
+  self->unit = GDK_SCROLL_UNIT_WHEEL;
 
   return (GdkEvent *) self;
 }
@@ -2396,6 +2471,9 @@ gdk_scroll_event_get_direction (GdkEvent *event)
  *
  * The deltas will be zero unless the scroll direction
  * is %GDK_SCROLL_SMOOTH.
+ *
+ * For the representation unit of these deltas, see
+ * [method@Gdk.ScrollEvent.get_unit].
  */
 void
 gdk_scroll_event_get_deltas (GdkEvent *event,
@@ -2436,6 +2514,31 @@ gdk_scroll_event_is_stop (GdkEvent *event)
   g_return_val_if_fail (GDK_IS_EVENT_TYPE (event, GDK_SCROLL), FALSE);
 
   return self->is_stop;
+}
+
+/**
+ * gdk_scroll_event_get_unit:
+ * @event: (type GdkScrollEvent): a scroll event.
+ *
+ * Extracts the scroll delta unit of a scroll event.
+ *
+ * The unit will always be %GDK_SCROLL_UNIT_WHEEL if the scroll direction is not
+ * %GDK_SCROLL_SMOOTH.
+ *
+ * Returns: the scroll unit.
+ *
+ * Since: 4.8
+ */
+GdkScrollUnit
+gdk_scroll_event_get_unit (GdkEvent *event)
+{
+  GdkScrollEvent *self = (GdkScrollEvent *) event;
+
+  g_return_val_if_fail (GDK_IS_EVENT (event), GDK_SCROLL_UNIT_WHEEL);
+  g_return_val_if_fail (GDK_IS_EVENT_TYPE (event, GDK_SCROLL),
+                        GDK_SCROLL_UNIT_WHEEL);
+
+  return self->unit;
 }
 
 /* }}} */
@@ -2573,6 +2676,7 @@ gdk_touchpad_event_new_pinch (GdkSurface              *surface,
 
 GdkEvent *
 gdk_touchpad_event_new_hold (GdkSurface              *surface,
+                             GdkEventSequence        *sequence,
                              GdkDevice               *device,
                              guint32                  time,
                              GdkModifierType          state,
@@ -2585,6 +2689,7 @@ gdk_touchpad_event_new_hold (GdkSurface              *surface,
 
   self->state = state;
   self->phase = phase;
+  self->sequence = sequence;
   self->x = x;
   self->y = y;
   self->n_fingers = n_fingers;

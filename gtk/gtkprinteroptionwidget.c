@@ -34,7 +34,6 @@
 #include "gtkliststore.h"
 #include "gtkcheckbutton.h"
 #include "gtkgrid.h"
-#include "gtktogglebutton.h"
 #include "gtkorientable.h"
 #include "gtkprivate.h"
 #include "gtkstringlist.h"
@@ -125,9 +124,7 @@ gtk_printer_option_widget_class_init (GtkPrinterOptionWidgetClass *class)
 
   g_object_class_install_property (object_class,
                                    PROP_SOURCE,
-                                   g_param_spec_object ("source",
-							P_("Source option"),
-							P_("The PrinterOption backing this widget"),
+                                   g_param_spec_object ("source", NULL, NULL,
 							GTK_TYPE_PRINTER_OPTION,
 							GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT));
 
@@ -359,13 +356,13 @@ gtk_string_pair_class_init (GtkStringPairClass *class)
   object_class->set_property = gtk_string_pair_set_property;
   object_class->get_property = gtk_string_pair_get_property;
 
-  pspec = g_param_spec_string ("string", "String", "String",
+  pspec = g_param_spec_string ("string", NULL, NULL,
                                NULL,
                                G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_property (object_class, PROP_STRING, pspec);
 
-  pspec = g_param_spec_string ("id", "ID", "ID",
+  pspec = g_param_spec_string ("id", NULL, NULL,
                                NULL,
                                G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -631,14 +628,14 @@ deconstruct_widgets (GtkPrinterOptionWidget *widget)
 }
 
 static void
-check_toggled_cb (GtkToggleButton        *toggle_button,
+check_toggled_cb (GtkCheckButton         *check_button,
 		  GtkPrinterOptionWidget *widget)
 {
   GtkPrinterOptionWidgetPrivate *priv = widget->priv;
 
   g_signal_handler_block (priv->source, priv->source_changed_handler);
   gtk_printer_option_set_boolean (priv->source,
-				  gtk_toggle_button_get_active (toggle_button));
+                                  gtk_check_button_get_active (check_button));
   g_signal_handler_unblock (priv->source, priv->source_changed_handler);
   emit_changed (widget);
 }

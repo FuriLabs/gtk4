@@ -94,6 +94,10 @@
 #include "wayland/gdksurface-wayland.h"
 #endif
 
+#ifdef GDK_WINDOWING_MACOS
+#include "macos/gdkmacos.h"
+#endif
+
 #ifdef GDK_WINDOWING_BROADWAY
 #include "broadway/gdkbroadway.h"
 #endif
@@ -773,9 +777,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * The title of the window.
    */
   window_props[PROP_TITLE] =
-      g_param_spec_string ("title",
-                           P_("Window Title"),
-                           P_("The title of the window"),
+      g_param_spec_string ("title", NULL, NULL,
                            NULL,
                            GTK_PARAM_READWRITE);
 
@@ -785,9 +787,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * A write-only property for setting window's startup notification identifier.
    */
   window_props[PROP_STARTUP_ID] =
-      g_param_spec_string ("startup-id",
-                           P_("Startup ID"),
-                           P_("Unique startup identifier for the window used by startup-notification"),
+      g_param_spec_string ("startup-id", NULL, NULL,
                            NULL,
                            GTK_PARAM_WRITABLE);
 
@@ -797,9 +797,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * If %TRUE, users can resize the window.
    */
   window_props[PROP_RESIZABLE] =
-      g_param_spec_boolean ("resizable",
-                            P_("Resizable"),
-                            P_("If TRUE, users can resize the window"),
+      g_param_spec_boolean ("resizable", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -809,9 +807,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * If %TRUE, the window is modal.
    */
   window_props[PROP_MODAL] =
-      g_param_spec_boolean ("modal",
-                            P_("Modal"),
-                            P_("If TRUE, the window is modal (other windows are not usable while this one is up)"),
+      g_param_spec_boolean ("modal", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -821,9 +817,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * The default width of the window.
    */
   window_props[PROP_DEFAULT_WIDTH] =
-      g_param_spec_int ("default-width",
-                        P_("Default Width"),
-                        P_("The default width of the window"),
+      g_param_spec_int ("default-width", NULL, NULL,
                         -1, G_MAXINT,
                         0,
                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -834,9 +828,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * The default height of the window.
    */
   window_props[PROP_DEFAULT_HEIGHT] =
-      g_param_spec_int ("default-height",
-                        P_("Default Height"),
-                        P_("The default height of the window"),
+      g_param_spec_int ("default-height", NULL, NULL,
                         -1, G_MAXINT,
                         0,
                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -847,9 +839,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * If this window should be destroyed when the parent is destroyed.
    */
   window_props[PROP_DESTROY_WITH_PARENT] =
-      g_param_spec_boolean ("destroy-with-parent",
-                            P_("Destroy with Parent"),
-                            P_("If this window should be destroyed when the parent is destroyed"),
+      g_param_spec_boolean ("destroy-with-parent", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -859,9 +849,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * If this window should be hidden when the users clicks the close button.
    */
   window_props[PROP_HIDE_ON_CLOSE] =
-      g_param_spec_boolean ("hide-on-close",
-                            P_("Hide on close"),
-                            P_("If this window should be hidden when the user clicks the close button"),
+      g_param_spec_boolean ("hide-on-close", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -874,9 +862,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * and should not be set by applications.
    */
   window_props[PROP_MNEMONICS_VISIBLE] =
-      g_param_spec_boolean ("mnemonics-visible",
-                            P_("Mnemonics Visible"),
-                            P_("Whether mnemonics are currently visible in this window"),
+      g_param_spec_boolean ("mnemonics-visible", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -889,9 +875,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * and should not be set by applications.
    */
   window_props[PROP_FOCUS_VISIBLE] =
-      g_param_spec_boolean ("focus-visible",
-                            P_("Focus Visible"),
-                            P_("Whether focus rectangles are currently visible in this window"),
+      g_param_spec_boolean ("focus-visible", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -903,9 +887,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * See [class@Gtk.IconTheme] for more details.
    */
   window_props[PROP_ICON_NAME] =
-      g_param_spec_string ("icon-name",
-                           P_("Icon Name"),
-                           P_("Name of the themed icon for this window"),
+      g_param_spec_string ("icon-name", NULL, NULL,
                            NULL,
                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -915,9 +897,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * The display that will display this window.
    */
   window_props[PROP_DISPLAY] =
-      g_param_spec_object ("display",
-                           P_("Display"),
-                           P_("The display that will display this window"),
+      g_param_spec_object ("display", NULL, NULL,
                            GDK_TYPE_DISPLAY,
                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -927,9 +907,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * Whether the toplevel is the currently active window.
    */
   window_props[PROP_IS_ACTIVE] =
-      g_param_spec_boolean ("is-active",
-                            P_("Is Active"),
-                            P_("Whether the toplevel is the current active window"),
+      g_param_spec_boolean ("is-active", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READABLE);
 
@@ -939,9 +917,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * Whether the window should have a frame (also known as *decorations*).
    */
   window_props[PROP_DECORATED] =
-      g_param_spec_boolean ("decorated",
-                            P_("Decorated"),
-                            P_("Whether the window should be decorated by the window manager"),
+      g_param_spec_boolean ("decorated", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -951,9 +927,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * Whether the window frame should have a close button.
    */
   window_props[PROP_DELETABLE] =
-      g_param_spec_boolean ("deletable",
-                            P_("Deletable"),
-                            P_("Whether the window frame should have a close button"),
+      g_param_spec_boolean ("deletable", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -963,9 +937,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * The transient parent of the window.
    */
   window_props[PROP_TRANSIENT_FOR] =
-      g_param_spec_object ("transient-for",
-                           P_("Transient for Window"),
-                           P_("The transient parent of the dialog"),
+      g_param_spec_object ("transient-for", NULL, NULL,
                            GTK_TYPE_WINDOW,
                            GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -981,9 +953,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * operation was successful.
    */
   window_props[PROP_MAXIMIZED] =
-      g_param_spec_boolean ("maximized",
-                            P_("Is Maximized"),
-                            P_("Whether the window is maximized"),
+      g_param_spec_boolean ("maximized", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -999,9 +969,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * operation was successful.
    */
   window_props[PROP_FULLSCREENED] =
-      g_param_spec_boolean ("fullscreened",
-                            P_("Is fullscreen"),
-                            P_("Whether the window is fullscreen"),
+      g_param_spec_boolean ("fullscreened", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1019,9 +987,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * remove it by setting the :application property to %NULL.
    */
   window_props[PROP_APPLICATION] =
-      g_param_spec_object ("application",
-                           P_("GtkApplication"),
-                           P_("The GtkApplication for the window"),
+      g_param_spec_object ("application", NULL, NULL,
                            GTK_TYPE_APPLICATION,
                            GTK_PARAM_READWRITE|G_PARAM_STATIC_STRINGS|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1031,9 +997,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * The default widget.
    */
   window_props[PROP_DEFAULT_WIDGET] =
-      g_param_spec_object ("default-widget",
-                           P_("Default widget"),
-                           P_("The default widget"),
+      g_param_spec_object ("default-widget", NULL, NULL,
                            GTK_TYPE_WIDGET,
                            GTK_PARAM_READWRITE|G_PARAM_STATIC_STRINGS|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1043,9 +1007,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * The focus widget.
    */
   window_props[PROP_FOCUS_WIDGET] =
-      g_param_spec_object ("focus-widget",
-                           P_("Focus widget"),
-                           P_("The focus widget"),
+      g_param_spec_object ("focus-widget", NULL, NULL,
                            GTK_TYPE_WIDGET,
                            GTK_PARAM_READWRITE|G_PARAM_STATIC_STRINGS|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1055,9 +1017,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * The child widget.
    */
   window_props[PROP_CHILD] =
-      g_param_spec_object ("child",
-                           P_("Child"),
-                           P_("The child widget"),
+      g_param_spec_object ("child", NULL, NULL,
                            GTK_TYPE_WIDGET,
                            GTK_PARAM_READWRITE|G_PARAM_STATIC_STRINGS|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1069,9 +1029,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * Since: 4.6
    */
   window_props[PROP_TITLEBAR] =
-      g_param_spec_object ("titlebar",
-                           P_("Titlebar"),
-                           P_("The titlebar widget"),
+      g_param_spec_object ("titlebar", NULL, NULL,
                            GTK_TYPE_WIDGET,
                            GTK_PARAM_READWRITE|G_PARAM_STATIC_STRINGS|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -1084,9 +1042,7 @@ gtk_window_class_init (GtkWindowClass *klass)
    * Since: 4.2
    */
   window_props[PROP_HANDLE_MENUBAR_ACCEL] =
-      g_param_spec_boolean ("handle-menubar-accel",
-                            P_("Handle Menubar accels"),
-                            P_("Whether the window should handle F10"),
+      g_param_spec_boolean ("handle-menubar-accel", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -5012,6 +4968,9 @@ synthesize_focus_change_events (GtkWindow       *window,
   GtkWidget *prev;
   gboolean seen_ancestor;
 
+  if (old_focus == new_focus)
+    return;
+
   if (old_focus && new_focus)
     ancestor = gtk_widget_common_ancestor (old_focus, new_focus);
   else
@@ -6312,6 +6271,27 @@ gtk_window_export_handle (GtkWindow               *window,
         }
     }
 #endif
+#ifdef GDK_WINDOWING_MACOS
+  if (GDK_IS_MACOS_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
+    {
+      callback (window, NULL, user_data);
+      return TRUE;
+    }
+#endif
+#ifdef GDK_WINDOWING_WIN32
+  if (GDK_IS_WIN32_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
+    {
+      callback (window, NULL, user_data);
+      return TRUE;
+    }
+#endif
+#ifdef GDK_WINDOWING_BROADWAY
+  if (GDK_IS_BROADWAY_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
+    {
+      callback (window, NULL, user_data);
+      return TRUE;
+    }
+#endif
 
   g_warning ("Couldn't export handle for %s surface, unsupported windowing system",
              G_OBJECT_TYPE_NAME (priv->surface));
@@ -6330,6 +6310,22 @@ gtk_window_unexport_handle (GtkWindow *window)
       gdk_wayland_toplevel_unexport_handle (GDK_TOPLEVEL (priv->surface));
       return;
     }
+#endif
+#ifdef GDK_WINDOWING_X11
+  if (GDK_IS_X11_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
+    return;
+#endif
+#ifdef GDK_WINDOWING_MACOS
+  if (GDK_IS_MACOS_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
+    return;
+#endif
+#ifdef GDK_WINDOWING_WIN32
+  if (GDK_IS_WIN32_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
+    return;
+#endif
+#ifdef GDK_WINDOWING_BROADWAY
+  if (GDK_IS_BROADWAY_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
+    return;
 #endif
 
   g_warning ("Couldn't unexport handle for %s surface, unsupported windowing system",
@@ -6462,7 +6458,17 @@ gtk_window_update_pointer_focus_on_state_change (GtkWindow *window,
       else if (focus->target == widget ||
                gtk_widget_is_ancestor (focus->target, widget))
         {
+          GtkWidget *old_target;
+
+          old_target = g_object_ref (focus->target);
           gtk_pointer_focus_repick_target (focus);
+          gtk_synthesize_crossing_events (GTK_ROOT (window),
+                                          GTK_CROSSING_POINTER,
+                                          old_target, focus->target,
+                                          focus->x, focus->y,
+                                          GDK_CROSSING_NORMAL,
+                                          NULL);
+          g_object_unref (old_target);
         }
 
       gtk_pointer_focus_unref (focus);

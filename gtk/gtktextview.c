@@ -857,9 +857,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_PIXELS_ABOVE_LINES,
-                                   g_param_spec_int ("pixels-above-lines",
-                                                     P_("Pixels Above Lines"),
-                                                     P_("Pixels of blank space above paragraphs"),
+                                   g_param_spec_int ("pixels-above-lines", NULL, NULL,
                                                      0, G_MAXINT, 0,
                                                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -870,9 +868,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_PIXELS_BELOW_LINES,
-                                   g_param_spec_int ("pixels-below-lines",
-                                                     P_("Pixels Below Lines"),
-                                                     P_("Pixels of blank space below paragraphs"),
+                                   g_param_spec_int ("pixels-below-lines", NULL, NULL,
                                                      0, G_MAXINT, 0,
                                                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -883,9 +879,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_PIXELS_INSIDE_WRAP,
-                                   g_param_spec_int ("pixels-inside-wrap",
-                                                     P_("Pixels Inside Wrap"),
-                                                     P_("Pixels of blank space between wrapped lines in a paragraph"),
+                                   g_param_spec_int ("pixels-inside-wrap", NULL, NULL,
                                                      0, G_MAXINT, 0,
                                                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -896,9 +890,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_EDITABLE,
-                                   g_param_spec_boolean ("editable",
-                                                         P_("Editable"),
-                                                         P_("Whether the text can be modified by the user"),
+                                   g_param_spec_boolean ("editable", NULL, NULL,
                                                          TRUE,
                                                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -909,9 +901,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_WRAP_MODE,
-                                   g_param_spec_enum ("wrap-mode",
-                                                      P_("Wrap Mode"),
-                                                      P_("Whether to wrap lines never, at word boundaries, or at character boundaries"),
+                                   g_param_spec_enum ("wrap-mode", NULL, NULL,
                                                       GTK_TYPE_WRAP_MODE,
                                                       GTK_WRAP_NONE,
                                                       GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
@@ -923,9 +913,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_JUSTIFICATION,
-                                   g_param_spec_enum ("justification",
-                                                      P_("Justification"),
-                                                      P_("Left, right, or center justification"),
+                                   g_param_spec_enum ("justification", NULL, NULL,
                                                       GTK_TYPE_JUSTIFICATION,
                                                       GTK_JUSTIFY_LEFT,
                                                       GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
@@ -943,9 +931,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_LEFT_MARGIN,
-                                   g_param_spec_int ("left-margin",
-                                                     P_("Left Margin"),
-                                                     P_("Width of the left margin in pixels"),
+                                   g_param_spec_int ("left-margin", NULL, NULL,
                                                      0, G_MAXINT, 0,
                                                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -962,9 +948,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_RIGHT_MARGIN,
-                                   g_param_spec_int ("right-margin",
-                                                     P_("Right Margin"),
-                                                     P_("Width of the right margin in pixels"),
+                                   g_param_spec_int ("right-margin", NULL, NULL,
                                                      0, G_MAXINT, 0,
                                                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -981,9 +965,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_TOP_MARGIN,
-                                   g_param_spec_int ("top-margin",
-                                                     P_("Top Margin"),
-                                                     P_("Height of the top margin in pixels"),
+                                   g_param_spec_int ("top-margin", NULL, NULL,
                                                      0, G_MAXINT, 0,
                                                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -1000,9 +982,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_BOTTOM_MARGIN,
-                                   g_param_spec_int ("bottom-margin",
-                                                     P_("Bottom Margin"),
-                                                     P_("Height of the bottom margin in pixels"),
+                                   g_param_spec_int ("bottom-margin", NULL, NULL,
                                                      0, G_MAXINT, 0,
                                                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -1013,9 +993,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_INDENT,
-                                   g_param_spec_int ("indent",
-                                                     P_("Indent"),
-                                                     P_("Amount to indent the paragraph, in pixels"),
+                                   g_param_spec_int ("indent", NULL, NULL,
                                                      G_MININT, G_MAXINT, 0,
                                                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -1026,9 +1004,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_TABS,
-                                   g_param_spec_boxed ("tabs",
-                                                       P_("Tabs"),
-                                                       P_("Custom tabs for this text"),
+                                   g_param_spec_boxed ("tabs", NULL, NULL,
                                                        PANGO_TYPE_TAB_ARRAY,
 						       GTK_PARAM_READWRITE));
 
@@ -1039,9 +1015,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_CURSOR_VISIBLE,
-                                   g_param_spec_boolean ("cursor-visible",
-                                                         P_("Cursor Visible"),
-                                                         P_("If the insertion cursor is shown"),
+                                   g_param_spec_boolean ("cursor-visible", NULL, NULL,
                                                          TRUE,
                                                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -1052,9 +1026,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_BUFFER,
-                                   g_param_spec_object ("buffer",
-							P_("Buffer"),
-							P_("The buffer which is displayed"),
+                                   g_param_spec_object ("buffer", NULL, NULL,
 							GTK_TYPE_TEXT_BUFFER,
 							GTK_PARAM_READWRITE));
 
@@ -1065,9 +1037,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_OVERWRITE,
-                                   g_param_spec_boolean ("overwrite",
-                                                         P_("Overwrite mode"),
-                                                         P_("Whether entered text overwrites existing contents"),
+                                   g_param_spec_boolean ("overwrite", NULL, NULL,
                                                          FALSE,
                                                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -1078,9 +1048,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_ACCEPTS_TAB,
-                                   g_param_spec_boolean ("accepts-tab",
-                                                         P_("Accepts tab"),
-                                                         P_("Whether Tab will result in a tab character being entered"),
+                                   g_param_spec_boolean ("accepts-tab", NULL, NULL,
                                                          TRUE,
                                                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -1096,9 +1064,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
     */
    g_object_class_install_property (gobject_class,
                                     PROP_IM_MODULE,
-                                    g_param_spec_string ("im-module",
-                                                         P_("IM module"),
-                                                         P_("Which IM module should be used"),
+                                    g_param_spec_string ("im-module", NULL, NULL,
                                                          NULL,
                                                          GTK_PARAM_READWRITE));
 
@@ -1112,9 +1078,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_INPUT_PURPOSE,
-                                   g_param_spec_enum ("input-purpose",
-                                                      P_("Purpose"),
-                                                      P_("Purpose of the text field"),
+                                   g_param_spec_enum ("input-purpose", NULL, NULL,
                                                       GTK_TYPE_INPUT_PURPOSE,
                                                       GTK_INPUT_PURPOSE_FREE_FORM,
                                                       GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
@@ -1128,9 +1092,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_INPUT_HINTS,
-                                   g_param_spec_flags ("input-hints",
-                                                       P_("hints"),
-                                                       P_("Hints for the text field behaviour"),
+                                   g_param_spec_flags ("input-hints", NULL, NULL,
                                                        GTK_TYPE_INPUT_HINTS,
                                                        GTK_INPUT_HINT_NONE,
                                                        GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
@@ -1146,9 +1108,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_MONOSPACE,
-                                   g_param_spec_boolean ("monospace",
-                                                         P_("Monospace"),
-                                                         P_("Whether to use a monospace font"),
+                                   g_param_spec_boolean ("monospace", NULL, NULL,
                                                          FALSE,
                                                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -1159,9 +1119,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_EXTRA_MENU,
-                                   g_param_spec_object ("extra-menu",
-                                                        P_("Extra menu"),
-                                                        P_("Menu model to append to the context menu"),
+                                   g_param_spec_object ("extra-menu", NULL, NULL,
                                                         G_TYPE_MENU_MODEL,
                                                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -4333,7 +4291,9 @@ gtk_text_view_measure (GtkWidget      *widget,
 static void
 gtk_text_view_compute_child_allocation (GtkTextView         *text_view,
                                         const AnchoredChild *vc,
-                                        GtkAllocation       *allocation)
+                                        GtkAllocation       *allocation,
+                                        int                  gutter_width,
+                                        int                  gutter_height)
 {
   int buffer_y;
   GtkTextIter iter;
@@ -4348,8 +4308,8 @@ gtk_text_view_compute_child_allocation (GtkTextView         *text_view,
 
   buffer_y += vc->from_top_of_line;
 
-  allocation->x = vc->from_left_of_buffer - text_view->priv->xoffset;
-  allocation->y = buffer_y - text_view->priv->yoffset;
+  allocation->x = vc->from_left_of_buffer - text_view->priv->xoffset + gutter_width;
+  allocation->y = buffer_y - text_view->priv->yoffset + gutter_height;
 
   gtk_widget_get_preferred_size (vc->widget, &req, NULL);
   allocation->width = req.width;
@@ -4358,11 +4318,13 @@ gtk_text_view_compute_child_allocation (GtkTextView         *text_view,
 
 static void
 gtk_text_view_update_child_allocation (GtkTextView         *text_view,
-                                       const AnchoredChild *vc)
+                                       const AnchoredChild *vc,
+                                       int                  gutter_width,
+                                       int                  gutter_height)
 {
   GtkAllocation allocation;
 
-  gtk_text_view_compute_child_allocation (text_view, vc, &allocation);
+  gtk_text_view_compute_child_allocation (text_view, vc, &allocation, gutter_width, gutter_height);
 
   gtk_widget_size_allocate (vc->widget, &allocation, -1);
 
@@ -4376,6 +4338,44 @@ gtk_text_view_update_child_allocation (GtkTextView         *text_view,
 }
 
 static void
+calculate_gutter_offsets (GtkTextView *text_view,
+                          int         *width,
+                          int         *height)
+{
+  GtkWidget *x_gutter;
+  GtkWidget *y_gutter;
+
+  g_return_if_fail (GTK_IS_TEXT_VIEW (text_view));
+  g_return_if_fail (width != NULL && height != NULL);
+
+  x_gutter = gtk_text_view_get_gutter (text_view, GTK_TEXT_WINDOW_LEFT);
+
+  if (x_gutter != NULL)
+    {
+      GtkRequisition x_req = {0};
+      gtk_widget_get_preferred_size (x_gutter, &x_req, NULL);
+      *width = x_req.width;
+    }
+  else
+    {
+      *width = 0;
+    }
+
+  y_gutter = gtk_text_view_get_gutter (text_view, GTK_TEXT_WINDOW_TOP);
+
+  if (y_gutter != NULL)
+    {
+      GtkRequisition y_req = {0};
+      gtk_widget_get_preferred_size (y_gutter, &y_req, NULL);
+      *height = y_req.height;
+    }
+  else
+    {
+      *height = 0;
+    }
+}
+
+static void
 gtk_anchored_child_allocated (GtkTextLayout *layout,
                               GtkWidget     *child,
                               int            x,
@@ -4384,6 +4384,10 @@ gtk_anchored_child_allocated (GtkTextLayout *layout,
 {
   AnchoredChild *vc = NULL;
   GtkTextView *text_view = data;
+  int x_offset = 0;
+  int y_offset = 0;
+
+  calculate_gutter_offsets (text_view, &x_offset, &y_offset);
 
   /* x,y is the position of the child from the top of the line, and
    * from the left of the buffer. We have to translate that into text
@@ -4399,7 +4403,7 @@ gtk_anchored_child_allocated (GtkTextLayout *layout,
   vc->from_left_of_buffer = x;
   vc->from_top_of_line = y;
 
-  gtk_text_view_update_child_allocation (text_view, vc);
+  gtk_text_view_update_child_allocation (text_view, vc, x_offset, y_offset);
 }
 
 static void
@@ -4900,6 +4904,10 @@ changed_handler (GtkTextLayout     *layout,
       GtkTextIter first;
       int new_first_para_top;
       int old_first_para_top;
+      int x_offset = 0;
+      int y_offset = 0;
+
+      calculate_gutter_offsets (text_view, &x_offset, &y_offset);
 
       /* If the bottom of the old area was above the top of the
        * screen, we need to scroll to keep the current top of the
@@ -4929,7 +4937,7 @@ changed_handler (GtkTextLayout     *layout,
       for (iter = priv->anchored_children.head; iter; iter = iter->next)
         {
           const AnchoredChild *ac = iter->data;
-          gtk_text_view_update_child_allocation (text_view, ac);
+          gtk_text_view_update_child_allocation (text_view, ac, x_offset, y_offset);
         }
 
       gtk_widget_queue_resize (widget);

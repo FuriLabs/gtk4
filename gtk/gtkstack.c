@@ -395,6 +395,20 @@ gtk_stack_page_set_property (GObject      *object,
       break;
     }
 }
+
+static void
+gtk_stack_page_constructed (GObject *gobject)
+{
+  GtkStackPage *self = GTK_STACK_PAGE (gobject);
+
+  if (G_UNLIKELY (self->widget == NULL))
+    g_error ("GtkStackPage '%s' [%p] is missing a child widget",
+             self->name != NULL ? self->name : "<unnamed>",
+             self);
+
+  G_OBJECT_CLASS (gtk_stack_page_parent_class)->constructed (gobject);
+}
+
 static void
 gtk_stack_page_class_init (GtkStackPageClass *class)
 {
@@ -404,6 +418,7 @@ gtk_stack_page_class_init (GtkStackPageClass *class)
   object_class->dispose = gtk_stack_page_dispose;
   object_class->get_property = gtk_stack_page_get_property;
   object_class->set_property = gtk_stack_page_set_property;
+  object_class->constructed = gtk_stack_page_constructed;
 
   /**
    * GtkStackPage:child: (attributes org.gtk.Property.get=gtk_stack_page_get_child)
@@ -411,9 +426,7 @@ gtk_stack_page_class_init (GtkStackPageClass *class)
    * The child that this page is for.
    */
   stack_page_props[CHILD_PROP_CHILD] =
-    g_param_spec_object ("child",
-                         P_("Child"),
-                         P_("The child of the page"),
+    g_param_spec_object ("child", NULL, NULL,
                          GTK_TYPE_WIDGET,
                          GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
@@ -423,9 +436,7 @@ gtk_stack_page_class_init (GtkStackPageClass *class)
    * The name of the child page.
    */
   stack_page_props[CHILD_PROP_NAME] =
-    g_param_spec_string ("name",
-                         P_("Name"),
-                         P_("The name of the child page"),
+    g_param_spec_string ("name", NULL, NULL,
                          NULL,
                          GTK_PARAM_READWRITE);
 
@@ -435,9 +446,7 @@ gtk_stack_page_class_init (GtkStackPageClass *class)
    * The title of the child page.
    */
   stack_page_props[CHILD_PROP_TITLE] =
-    g_param_spec_string ("title",
-                         P_("Title"),
-                         P_("The title of the child page"),
+    g_param_spec_string ("title", NULL, NULL,
                          NULL,
                          GTK_PARAM_READWRITE);
 
@@ -447,9 +456,7 @@ gtk_stack_page_class_init (GtkStackPageClass *class)
    * The icon name of the child page.
    */
   stack_page_props[CHILD_PROP_ICON_NAME] =
-    g_param_spec_string ("icon-name",
-                         P_("Icon name"),
-                         P_("The icon name of the child page"),
+    g_param_spec_string ("icon-name", NULL, NULL,
                          NULL,
                          GTK_PARAM_READWRITE);
 
@@ -463,9 +470,7 @@ gtk_stack_page_class_init (GtkStackPageClass *class)
    * attention and it is not the current one.
    */
   stack_page_props[CHILD_PROP_NEEDS_ATTENTION] =
-    g_param_spec_boolean ("needs-attention",
-                         P_("Needs Attention"),
-                         P_("Whether this page needs attention"),
+    g_param_spec_boolean ("needs-attention", NULL, NULL,
                          FALSE,
                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -475,9 +480,7 @@ gtk_stack_page_class_init (GtkStackPageClass *class)
    * Whether this page is visible.
    */
   stack_page_props[CHILD_PROP_VISIBLE] =
-    g_param_spec_boolean ("visible",
-                         P_("Visible"),
-                         P_("Whether this page is visible"),
+    g_param_spec_boolean ("visible", NULL, NULL,
                          TRUE,
                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -487,9 +490,7 @@ gtk_stack_page_class_init (GtkStackPageClass *class)
    * If set, an underline in the title indicates a mnemonic.
    */
   stack_page_props[CHILD_PROP_USE_UNDERLINE] =
-    g_param_spec_boolean ("use-underline",
-                         P_("Use underline"),
-                         P_("If set, an underline in the title indicates the next character should be used for the mnemonic accelerator key"),
+    g_param_spec_boolean ("use-underline", NULL, NULL,
                          FALSE,
                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -511,6 +512,16 @@ struct _GtkStackPagesClass
 {
   GObjectClass parent_class;
 };
+
+enum {
+  PAGES_PROP_0,
+  PAGES_PROP_ITEM_TYPE,
+  PAGES_PROP_N_ITEMS,
+
+  PAGES_N_PROPS
+};
+
+static GParamSpec *pages_properties[PAGES_N_PROPS] = { NULL, };
 
 static GType
 gtk_stack_pages_get_item_type (GListModel *model)
@@ -597,13 +608,52 @@ G_DEFINE_TYPE_WITH_CODE (GtkStackPages, gtk_stack_pages, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_SELECTION_MODEL, gtk_stack_pages_selection_model_init))
 
 static void
+gtk_stack_pages_get_property (GObject    *object,
+                              guint       prop_id,
+                              GValue     *value,
+                              GParamSpec *pspec)
+{
+  GtkStackPages *self = GTK_STACK_PAGES (object);
+
+  switch (prop_id)
+    {
+    case PAGES_PROP_ITEM_TYPE:
+      g_value_set_gtype (value, GTK_TYPE_STACK_PAGE);
+      break;
+
+    case PAGES_PROP_N_ITEMS:
+      g_value_set_uint (value, gtk_stack_pages_get_n_items (G_LIST_MODEL (self)));
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
 gtk_stack_pages_init (GtkStackPages *pages)
 {
 }
 
 static void
-gtk_stack_pages_class_init (GtkStackPagesClass *class)
+gtk_stack_pages_class_init (GtkStackPagesClass *klass)
 {
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->get_property = gtk_stack_pages_get_property;
+
+  pages_properties[PAGES_PROP_ITEM_TYPE] =
+    g_param_spec_gtype ("item-type", NULL, NULL,
+                        GTK_TYPE_STACK_PAGE,
+                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  pages_properties[PAGES_PROP_N_ITEMS] =
+    g_param_spec_uint ("n-items", NULL, NULL,
+                       0, G_MAXUINT, 0,
+                       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_properties (object_class, PAGES_N_PROPS, pages_properties);
 }
 
 static GtkStackPages *
@@ -694,8 +744,11 @@ gtk_stack_dispose (GObject *obj)
   while ((child = gtk_widget_get_first_child (GTK_WIDGET (stack))))
     stack_remove (stack, child, TRUE);
 
-  if (priv->pages)
-    g_list_model_items_changed (G_LIST_MODEL (priv->pages), 0, n_pages, 0);
+  if (priv->pages && n_pages > 0)
+    {
+      g_list_model_items_changed (G_LIST_MODEL (priv->pages), 0, n_pages, 0);
+      g_object_notify_by_pspec (G_OBJECT (priv->pages), pages_properties[PAGES_PROP_N_ITEMS]);
+    }
 
   G_OBJECT_CLASS (gtk_stack_parent_class)->dispose (obj);
 }
@@ -817,7 +870,7 @@ gtk_stack_class_init (GtkStackClass *klass)
    * %TRUE if the stack allocates the same width for all children.
    */
   stack_props[PROP_HHOMOGENEOUS] =
-      g_param_spec_boolean ("hhomogeneous", P_("Horizontally homogeneous"), P_("Horizontally homogeneous sizing"),
+      g_param_spec_boolean ("hhomogeneous", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -827,7 +880,7 @@ gtk_stack_class_init (GtkStackClass *klass)
    * %TRUE if the stack allocates the same height for all children.
    */
   stack_props[PROP_VHOMOGENEOUS] =
-      g_param_spec_boolean ("vhomogeneous", P_("Vertically homogeneous"), P_("Vertically homogeneous sizing"),
+      g_param_spec_boolean ("vhomogeneous", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -837,7 +890,7 @@ gtk_stack_class_init (GtkStackClass *klass)
    * The widget currently visible in the stack.
    */
   stack_props[PROP_VISIBLE_CHILD] =
-      g_param_spec_object ("visible-child", P_("Visible child"), P_("The widget currently visible in the stack"),
+      g_param_spec_object ("visible-child", NULL, NULL,
                            GTK_TYPE_WIDGET,
                            GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -847,7 +900,7 @@ gtk_stack_class_init (GtkStackClass *klass)
    * The name of the widget currently visible in the stack.
    */
   stack_props[PROP_VISIBLE_CHILD_NAME] =
-      g_param_spec_string ("visible-child-name", P_("Name of visible child"), P_("The name of the widget currently visible in the stack"),
+      g_param_spec_string ("visible-child-name", NULL, NULL,
                            NULL,
                            GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -857,7 +910,7 @@ gtk_stack_class_init (GtkStackClass *klass)
    * The animation duration, in milliseconds.
    */
   stack_props[PROP_TRANSITION_DURATION] =
-      g_param_spec_uint ("transition-duration", P_("Transition duration"), P_("The animation duration, in milliseconds"),
+      g_param_spec_uint ("transition-duration", NULL, NULL,
                          0, G_MAXUINT, 200,
                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -867,7 +920,7 @@ gtk_stack_class_init (GtkStackClass *klass)
    * The type of animation used to transition.
    */
   stack_props[PROP_TRANSITION_TYPE] =
-      g_param_spec_enum ("transition-type", P_("Transition type"), P_("The type of animation used to transition"),
+      g_param_spec_enum ("transition-type", NULL, NULL,
                          GTK_TYPE_STACK_TRANSITION_TYPE, GTK_STACK_TRANSITION_TYPE_NONE,
                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -877,7 +930,7 @@ gtk_stack_class_init (GtkStackClass *klass)
    * Whether or not the transition is currently running.
    */
   stack_props[PROP_TRANSITION_RUNNING] =
-      g_param_spec_boolean ("transition-running", P_("Transition running"), P_("Whether or not the transition is currently running"),
+      g_param_spec_boolean ("transition-running", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READABLE);
 
@@ -887,7 +940,7 @@ gtk_stack_class_init (GtkStackClass *klass)
    * Whether or not the size should smoothly change during the transition.
    */
   stack_props[PROP_INTERPOLATE_SIZE] =
-      g_param_spec_boolean ("interpolate-size", P_("Interpolate size"), P_("Whether or not the size should smoothly change when changing between differently sized children"),
+      g_param_spec_boolean ("interpolate-size", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -897,7 +950,7 @@ gtk_stack_class_init (GtkStackClass *klass)
    * A selection model with the stack pages.
    */
   stack_props[PROP_PAGES] =
-      g_param_spec_object ("pages", P_("Pages"), P_("A selection model with the stacks pages"),
+      g_param_spec_object ("pages", NULL, NULL,
                            GTK_TYPE_SELECTION_MODEL,
                            GTK_PARAM_READABLE);
 
@@ -1505,13 +1558,11 @@ gtk_stack_add_internal (GtkStack   *stack,
 
   g_return_val_if_fail (child != NULL, NULL);
 
-  child_info = g_object_new (GTK_TYPE_STACK_PAGE, NULL);
-  child_info->widget = g_object_ref (child);
-  child_info->name = g_strdup (name);
-  child_info->title = g_strdup (title);
-  child_info->icon_name = NULL;
-  child_info->needs_attention = FALSE;
-  child_info->last_focus = NULL;
+  child_info = g_object_new (GTK_TYPE_STACK_PAGE,
+                             "child", child,
+                             "name", name,
+                             "title", title,
+                             NULL);
 
   gtk_stack_add_page (stack, child_info);
 
@@ -1549,7 +1600,10 @@ gtk_stack_add_page (GtkStack     *stack,
   gtk_widget_set_parent (child_info->widget, GTK_WIDGET (stack));
 
   if (priv->pages)
-    g_list_model_items_changed (G_LIST_MODEL (priv->pages), g_list_length (priv->children) - 1, 0, 1);
+    {
+      g_list_model_items_changed (G_LIST_MODEL (priv->pages), g_list_length (priv->children) - 1, 0, 1);
+      g_object_notify_by_pspec (G_OBJECT (priv->pages), pages_properties[PAGES_PROP_N_ITEMS]);
+    }
 
   g_signal_connect (child_info->widget, "notify::visible",
                     G_CALLBACK (stack_child_visibility_notify_cb), stack);
@@ -1630,7 +1684,10 @@ gtk_stack_remove (GtkStack  *stack,
   stack_remove (stack, child, FALSE);
 
   if (priv->pages)
-    g_list_model_items_changed (G_LIST_MODEL (priv->pages), position, 1, 0);
+    {
+      g_list_model_items_changed (G_LIST_MODEL (priv->pages), position, 1, 0);
+      g_object_notify_by_pspec (G_OBJECT (priv->pages), pages_properties[PAGES_PROP_N_ITEMS]);
+    }
 }
 
 /**
@@ -1638,9 +1695,9 @@ gtk_stack_remove (GtkStack  *stack,
  * @stack: a `GtkStack`
  * @child: a child of @stack
  *
- * Returns the `GtkStackPage` object for @child or NULL if @child isn't a `GtkStack` child.
+ * Returns the `GtkStackPage` object for @child.
  *
- * Returns: (transfer none) (nullable): the `GtkStackPage` for @child
+ * Returns: (transfer none): the `GtkStackPage` for @child
  */
 GtkStackPage *
 gtk_stack_get_page (GtkStack  *stack,

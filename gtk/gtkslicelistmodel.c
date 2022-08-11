@@ -38,7 +38,9 @@
 
 enum {
   PROP_0,
+  PROP_ITEM_TYPE,
   PROP_MODEL,
+  PROP_N_ITEMS,
   PROP_OFFSET,
   PROP_SIZE,
   NUM_PROPERTIES
@@ -162,6 +164,8 @@ gtk_slice_list_model_items_changed_cb (GListModel        *model,
       n_before = CLAMP (n_before, self->offset, self->offset + self->size) - self->offset;
 
       g_list_model_items_changed (G_LIST_MODEL (self), skip, n_before - skip, n_after - skip);
+      if (n_before != n_after)
+        g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
     }
 }
 
@@ -203,8 +207,16 @@ gtk_slice_list_model_get_property (GObject     *object,
 
   switch (prop_id)
     {
+    case PROP_ITEM_TYPE:
+      g_value_set_gtype (value, gtk_slice_list_model_get_item_type (G_LIST_MODEL (self)));
+      break;
+
     case PROP_MODEL:
       g_value_set_object (value, self->model);
+      break;
+
+    case PROP_N_ITEMS:
+      g_value_set_uint (value, gtk_slice_list_model_get_n_items (G_LIST_MODEL (self)));
       break;
 
     case PROP_OFFSET:
@@ -251,16 +263,38 @@ gtk_slice_list_model_class_init (GtkSliceListModelClass *class)
   gobject_class->dispose = gtk_slice_list_model_dispose;
 
   /**
+   * GtkSliceListModel:item-type:
+   *
+   * The type of items. See [method@Gio.ListModel.get_item_type].
+   *
+   * Since: 4.8
+   **/
+  properties[PROP_ITEM_TYPE] =
+    g_param_spec_gtype ("item-type", NULL, NULL,
+                        G_TYPE_OBJECT,
+                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  /**
    * GtkSliceListModel:model: (attributes org.gtk.Property.get=gtk_slice_list_model_get_model org.gtk.Property.set=gtk_slice_list_model_set_model)
    *
    * Child model to take slice from.
    */
   properties[PROP_MODEL] =
-      g_param_spec_object ("model",
-                           P_("Model"),
-                           P_("Child model to take slice from"),
+      g_param_spec_object ("model", NULL, NULL,
                            G_TYPE_LIST_MODEL,
                            GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * GtkSliceListModel:n-items:
+   *
+   * The number of items. See [method@Gio.ListModel.get_n_items].
+   *
+   * Since: 4.8
+   **/
+  properties[PROP_N_ITEMS] =
+    g_param_spec_uint ("n-items", NULL, NULL,
+                       0, G_MAXUINT, 0,
+                       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GtkSliceListModel:offset: (attributes org.gtk.Property.get=gtk_slice_list_model_get_offset org.gtk.Property.set=gtk_slice_list_model_set_offset)
@@ -268,9 +302,7 @@ gtk_slice_list_model_class_init (GtkSliceListModelClass *class)
    * Offset of slice.
    */
   properties[PROP_OFFSET] =
-      g_param_spec_uint ("offset",
-                         P_("Offset"),
-                         P_("Offset of slice"),
+      g_param_spec_uint ("offset", NULL, NULL,
                          0, G_MAXUINT, 0,
                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -280,9 +312,7 @@ gtk_slice_list_model_class_init (GtkSliceListModelClass *class)
    * Maximum size of slice.
    */
   properties[PROP_SIZE] =
-      g_param_spec_uint ("size",
-                         P_("Size"),
-                         P_("Maximum size of slice"),
+      g_param_spec_uint ("size", NULL, NULL,
                          0, G_MAXUINT, DEFAULT_SIZE,
                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -366,6 +396,8 @@ gtk_slice_list_model_set_model (GtkSliceListModel *self,
 
   if (removed > 0 || added > 0)
     g_list_model_items_changed (G_LIST_MODEL (self), 0, removed, added);
+  if (removed != added)
+    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_MODEL]);
 }
@@ -415,6 +447,8 @@ gtk_slice_list_model_set_offset (GtkSliceListModel *self,
 
   if (before > 0 || after > 0)
     g_list_model_items_changed (G_LIST_MODEL (self), 0, before, after);
+  if (before != after)
+    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_OFFSET]);
 }
@@ -464,9 +498,15 @@ gtk_slice_list_model_set_size (GtkSliceListModel *self,
   after = g_list_model_get_n_items (G_LIST_MODEL (self));
 
   if (before > after)
-    g_list_model_items_changed (G_LIST_MODEL (self), after, before - after, 0);
+    {
+      g_list_model_items_changed (G_LIST_MODEL (self), after, before - after, 0);
+      g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
+    }
   else if (before < after)
-    g_list_model_items_changed (G_LIST_MODEL (self), before, 0, after - before);
+    {
+      g_list_model_items_changed (G_LIST_MODEL (self), before, 0, after - before);
+      g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
+    }
   /* else nothing */
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SIZE]);

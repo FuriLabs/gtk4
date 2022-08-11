@@ -144,6 +144,14 @@ items_changed (GListModel *model,
 }
 
 static void
+notify_n_items (GObject    *object,
+                GParamSpec *pspec,
+                GString    *changes)
+{
+  g_string_append_c (changes, '*');
+}
+
+static void
 free_changes (gpointer data)
 {
   GString *changes = data;
@@ -171,6 +179,7 @@ new_model (guint               size,
   changes = g_string_new ("");
   g_object_set_qdata_full (G_OBJECT(result), changes_quark, changes, free_changes);
   g_signal_connect (result, "items-changed", G_CALLBACK (items_changed), changes);
+  g_signal_connect (result, "notify::n-items", G_CALLBACK (notify_n_items), changes);
 
   return result;
 }
@@ -207,10 +216,19 @@ static void
 test_create (void)
 {
   GtkFilterListModel *filter;
-  
+
   filter = new_model (10, NULL, NULL);
   assert_model (filter, "1 2 3 4 5 6 7 8 9 10");
   assert_changes (filter, "");
+
+  g_assert_true (g_list_model_get_item_type (G_LIST_MODEL (filter)) == G_TYPE_OBJECT);
+  g_assert_false (gtk_filter_list_model_get_incremental (filter));
+  g_assert_null (gtk_filter_list_model_get_filter (filter));
+
+  gtk_filter_list_model_set_model (GTK_FILTER_LIST_MODEL (filter), NULL);
+  assert_model (filter, "");
+  assert_changes (filter, "0-10*");
+
   g_object_unref (filter);
 
   filter = new_model (10, is_smaller_than, GUINT_TO_POINTER (20));
@@ -248,7 +266,7 @@ test_empty_set_filter (void)
   gtk_filter_list_model_set_filter (filter, custom);
   g_object_unref (custom);
   assert_model (filter, "1 2 3 4 5 6");
-  assert_changes (filter, "6-4");
+  assert_changes (filter, "6-4*");
   g_object_unref (filter);
 
   filter = new_model (10, NULL, NULL);
@@ -256,7 +274,7 @@ test_empty_set_filter (void)
   gtk_filter_list_model_set_filter (filter, custom);
   g_object_unref (custom);
   assert_model (filter, "");
-  assert_changes (filter, "0-10");
+  assert_changes (filter, "0-10*");
   g_object_unref (filter);
 
   filter = new_model (10, NULL, NULL);
@@ -272,7 +290,7 @@ test_empty_set_filter (void)
   gtk_filter_list_model_set_filter (filter, custom);
   g_object_unref (custom);
   assert_model (filter, "4 5 6 7 8 9 10");
-  assert_changes (filter, "0-3");
+  assert_changes (filter, "0-3*");
   g_object_unref (filter);
 
   filter = new_model (10, NULL, NULL);
@@ -280,7 +298,7 @@ test_empty_set_filter (void)
   gtk_filter_list_model_set_filter (filter, custom);
   g_object_unref (custom);
   assert_model (filter, "");
-  assert_changes (filter, "0-10");
+  assert_changes (filter, "0-10*");
   g_object_unref (filter);
 
   filter = new_model (10, NULL, NULL);
@@ -288,7 +306,7 @@ test_empty_set_filter (void)
   gtk_filter_list_model_set_filter (filter, custom);
   g_object_unref (custom);
   assert_model (filter, "3 4 5 6 7");
-  assert_changes (filter, "0-10+5");
+  assert_changes (filter, "0-10+5*");
   g_object_unref (filter);
 
   filter = new_model (10, NULL, NULL);
@@ -296,7 +314,7 @@ test_empty_set_filter (void)
   gtk_filter_list_model_set_filter (filter, custom);
   g_object_unref (custom);
   assert_model (filter, "1 2 8 9 10");
-  assert_changes (filter, "2-5");
+  assert_changes (filter, "2-5*");
   g_object_unref (filter);
 }
 
@@ -320,19 +338,19 @@ test_change_filter (void)
   gtk_filter_list_model_set_filter (filter, custom);
   g_object_unref (custom);
   assert_model (filter, "1 2 3 4 5 6");
-  assert_changes (filter, "3-2+3");
+  assert_changes (filter, "3-2+3*");
 
   custom = GTK_FILTER (gtk_custom_filter_new (is_smaller_than, GUINT_TO_POINTER (6), NULL));
   gtk_filter_list_model_set_filter (filter, custom);
   g_object_unref (custom);
   assert_model (filter, "1 2 3 4 5");
-  assert_changes (filter, "-5");
+  assert_changes (filter, "-5*");
 
   custom = GTK_FILTER (gtk_custom_filter_new (is_larger_than, GUINT_TO_POINTER (4), NULL));
   gtk_filter_list_model_set_filter (filter, custom);
   g_object_unref (custom);
   assert_model (filter, "5 6 7 8 9 10");
-  assert_changes (filter, "0-5+6");
+  assert_changes (filter, "0-5+6*");
 
   custom = GTK_FILTER (gtk_custom_filter_new (is_not_near, GUINT_TO_POINTER (2), NULL));
   gtk_filter_list_model_set_filter (filter, custom);
@@ -344,7 +362,7 @@ test_change_filter (void)
   gtk_filter_list_model_set_filter (filter, custom);
   g_object_unref (custom);
   assert_model (filter, "1 7 8 9 10");
-  assert_changes (filter, "0-2+1");
+  assert_changes (filter, "0-2+1*");
 
   g_object_unref (filter);
 }
@@ -370,6 +388,10 @@ test_incremental (void)
   while (g_main_context_pending (NULL))
     g_main_context_iteration (NULL, TRUE);
   assert_model (filter, "510 511 512 513 514");
+
+  gtk_filter_list_model_set_incremental (filter, FALSE);
+  assert_model (filter, "510 511 512 513 514");
+
   /* implementation detail */
   ignore_changes (filter);
 
@@ -405,6 +427,36 @@ test_empty (void)
   g_object_unref (filter);
 }
 
+static void
+test_add_remove_item (void)
+{
+  GtkFilterListModel *filter;
+  GListStore *store;
+
+  filter = new_model (10, is_smaller_than, GUINT_TO_POINTER (7));
+  assert_model (filter, "1 2 3 4 5 6");
+  assert_changes (filter, "");
+
+  store = G_LIST_STORE (gtk_filter_list_model_get_model (filter));
+  add (store, 9);
+  assert_model (filter, "1 2 3 4 5 6");
+  assert_changes (filter, "");
+
+  add (store, 1);
+  assert_model (filter, "1 2 3 4 5 6 1");
+  assert_changes (filter, "+6*");
+
+  g_list_store_remove (store, 10);
+  assert_model (filter, "1 2 3 4 5 6 1");
+  assert_changes (filter, "");
+
+  g_list_store_remove (store, 10);
+  assert_model (filter, "1 2 3 4 5 6");
+  assert_changes (filter, "-6*");
+
+  g_object_unref (filter);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -419,6 +471,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/filterlistmodel/change_filter", test_change_filter);
   g_test_add_func ("/filterlistmodel/incremental", test_incremental);
   g_test_add_func ("/filterlistmodel/empty", test_empty);
+  g_test_add_func ("/filterlistmodel/add_remove_item", test_add_remove_item);
 
   return g_test_run ();
 }

@@ -1,5 +1,5 @@
 /* Lists/Words
- * #Keywords: GtkListView, GtkFilterListModel
+ * #Keywords: GtkListView, GtkFilterListModel, GtkInscription
  *
  * This demo shows filtering a long list - of words.
  *
@@ -17,10 +17,9 @@ const char *factory_text =
 "<interface>\n"
 "  <template class='GtkListItem'>\n"
 "    <property name='child'>\n"
-"      <object class='GtkLabel'>\n"
-"        <property name='ellipsize'>end</property>\n"
+"      <object class='GtkInscription'>\n"
 "        <property name='xalign'>0</property>\n"
-"        <binding name='label'>\n"
+"        <binding name='text'>\n"
 "          <lookup name='string' type='GtkStringObject'>\n"
 "            <lookup name='item'>GtkListItem</lookup>\n"
 "          </lookup>\n"

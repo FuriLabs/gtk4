@@ -1,6 +1,10 @@
 gtk4 (4.7.2+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release
+    - Fix crashes involving GL/GLES version selection on PinePhone
+      (Closes: #1009917)
+  * Repack with wayland and wayland-protocols subprojects omitted.
+    The versions in unstable are sufficiently new.
 
  -- Simon McVittie <smcv@debian.org>  Thu, 11 Aug 2022 23:35:52 +0100
 

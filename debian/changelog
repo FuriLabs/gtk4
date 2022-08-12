@@ -1,12 +1,20 @@
-gtk4 (4.7.2+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.7.2+ds-1) experimental; urgency=medium
 
-  * New upstream release
+  * New upstream development release
     - Fix crashes involving GL/GLES version selection on PinePhone
       (Closes: #1009917)
   * Repack with wayland and wayland-protocols subprojects omitted.
     The versions in unstable are sufficiently new.
+  * d/control.in: Update dependency versions
+  * d/copyright: Update
+  * Refresh patch series
+  * Skip inscription-markup.ui reftest for now.
+    The whole thing is rendered 1px offset from where it should be, which is
+    not a serious problem for practical use of GTK, but makes the tests fail.
+  * d/gtk-4-examples.install: Include the new NodeEditor demo
+  * Update symbols file for new ABI
 
- -- Simon McVittie <smcv@debian.org>  Thu, 11 Aug 2022 23:35:52 +0100
+ -- Simon McVittie <smcv@debian.org>  Fri, 12 Aug 2022 11:46:07 +0100
 
 gtk4 (4.6.6+ds-2) unstable; urgency=medium
 

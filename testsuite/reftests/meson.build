@@ -622,6 +622,8 @@ flaky = [
   'shorthand-entry-border.ui',
   # blinking cursors and timing issues make this unreliable
   'fixed-widget-stacking.ui',
+  # https://gitlab.gnome.org/GNOME/gtk/-/issues/5099
+  'inscription-markup.ui',
 ]
 
 reftest_env = environment()

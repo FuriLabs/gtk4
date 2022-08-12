@@ -254,6 +254,8 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_events_get_distance@Base 4.0.0
  gdk_file_list_get_files@Base 4.6.0
  gdk_file_list_get_type@Base 4.0.0
+ gdk_file_list_new_from_array@Base 4.7.2
+ gdk_file_list_new_from_list@Base 4.7.2
  gdk_focus_event_get_in@Base 4.0.0
  gdk_focus_event_get_type@Base 4.0.0
  gdk_frame_clock_begin_updating@Base 4.0.0
@@ -413,7 +415,9 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_scroll_event_get_deltas@Base 4.0.0
  gdk_scroll_event_get_direction@Base 4.0.0
  gdk_scroll_event_get_type@Base 4.0.0
+ gdk_scroll_event_get_unit@Base 4.7.2
  gdk_scroll_event_is_stop@Base 4.0.0
+ gdk_scroll_unit_get_type@Base 4.7.2
  gdk_seat_capabilities_get_type@Base 4.0.0
  gdk_seat_get_capabilities@Base 4.0.0
  gdk_seat_get_devices@Base 4.0.0
@@ -1396,6 +1400,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_center_layout_set_orientation@Base 4.0.0
  gtk_center_layout_set_start_widget@Base 4.0.0
  gtk_check_button_get_active@Base 4.0.0
+ gtk_check_button_get_child@Base 4.7.2
  gtk_check_button_get_inconsistent@Base 4.0.0
  gtk_check_button_get_label@Base 4.0.0
  gtk_check_button_get_type@Base 4.0.0
@@ -1404,6 +1409,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_check_button_new_with_label@Base 4.0.0
  gtk_check_button_new_with_mnemonic@Base 4.0.0
  gtk_check_button_set_active@Base 4.0.0
+ gtk_check_button_set_child@Base 4.7.2
  gtk_check_button_set_group@Base 4.0.0
  gtk_check_button_set_inconsistent@Base 4.0.0
  gtk_check_button_set_label@Base 4.0.0
@@ -1559,6 +1565,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_constraint_target_get_type@Base 4.0.0
  gtk_constraint_vfl_parser_error_get_type@Base 4.0.0
  gtk_constraint_vfl_parser_error_quark@Base 4.0.0
+ gtk_content_fit_get_type@Base 4.7.2
  gtk_corner_type_get_type@Base 4.0.0
  gtk_css_parser_error_get_type@Base 4.0.0
  gtk_css_parser_error_quark@Base 4.0.0
@@ -1852,6 +1859,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_event_controller_scroll_flags_get_type@Base 4.0.0
  gtk_event_controller_scroll_get_flags@Base 4.0.0
  gtk_event_controller_scroll_get_type@Base 4.0.0
+ gtk_event_controller_scroll_get_unit@Base 4.7.2
  gtk_event_controller_scroll_new@Base 4.0.0
  gtk_event_controller_scroll_set_flags@Base 4.0.0
  gtk_event_controller_set_name@Base 4.0.0
@@ -2377,6 +2385,30 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_init_check@Base 4.0.0
  gtk_input_hints_get_type@Base 4.0.0
  gtk_input_purpose_get_type@Base 4.0.0
+ gtk_inscription_get_attributes@Base 4.7.2
+ gtk_inscription_get_min_chars@Base 4.7.2
+ gtk_inscription_get_min_lines@Base 4.7.2
+ gtk_inscription_get_nat_chars@Base 4.7.2
+ gtk_inscription_get_nat_lines@Base 4.7.2
+ gtk_inscription_get_text@Base 4.7.2
+ gtk_inscription_get_text_overflow@Base 4.7.2
+ gtk_inscription_get_type@Base 4.7.2
+ gtk_inscription_get_wrap_mode@Base 4.7.2
+ gtk_inscription_get_xalign@Base 4.7.2
+ gtk_inscription_get_yalign@Base 4.7.2
+ gtk_inscription_new@Base 4.7.2
+ gtk_inscription_overflow_get_type@Base 4.7.2
+ gtk_inscription_set_attributes@Base 4.7.2
+ gtk_inscription_set_markup@Base 4.7.2
+ gtk_inscription_set_min_chars@Base 4.7.2
+ gtk_inscription_set_min_lines@Base 4.7.2
+ gtk_inscription_set_nat_chars@Base 4.7.2
+ gtk_inscription_set_nat_lines@Base 4.7.2
+ gtk_inscription_set_text@Base 4.7.2
+ gtk_inscription_set_text_overflow@Base 4.7.2
+ gtk_inscription_set_wrap_mode@Base 4.7.2
+ gtk_inscription_set_xalign@Base 4.7.2
+ gtk_inscription_set_yalign@Base 4.7.2
  gtk_is_initialized@Base 4.0.0
  gtk_justification_get_type@Base 4.0.0
  gtk_keyval_trigger_get_keyval@Base 4.0.0
@@ -2399,6 +2431,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_label_get_selectable@Base 4.0.0
  gtk_label_get_selection_bounds@Base 4.0.0
  gtk_label_get_single_line_mode@Base 4.0.0
+ gtk_label_get_tabs@Base 4.7.2
  gtk_label_get_text@Base 4.0.0
  gtk_label_get_type@Base 4.0.0
  gtk_label_get_use_markup@Base 4.0.0
@@ -2424,6 +2457,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_label_set_natural_wrap_mode@Base 4.6.0
  gtk_label_set_selectable@Base 4.0.0
  gtk_label_set_single_line_mode@Base 4.0.0
+ gtk_label_set_tabs@Base 4.7.2
  gtk_label_set_text@Base 4.0.0
  gtk_label_set_text_with_mnemonic@Base 4.0.0
  gtk_label_set_use_markup@Base 4.0.0
@@ -2892,6 +2926,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_pick_flags_get_type@Base 4.0.0
  gtk_picture_get_alternative_text@Base 4.0.0
  gtk_picture_get_can_shrink@Base 4.0.0
+ gtk_picture_get_content_fit@Base 4.7.2
  gtk_picture_get_file@Base 4.0.0
  gtk_picture_get_keep_aspect_ratio@Base 4.0.0
  gtk_picture_get_paintable@Base 4.0.0
@@ -2904,6 +2939,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_picture_new_for_resource@Base 4.0.0
  gtk_picture_set_alternative_text@Base 4.0.0
  gtk_picture_set_can_shrink@Base 4.0.0
+ gtk_picture_set_content_fit@Base 4.7.2
  gtk_picture_set_file@Base 4.0.0
  gtk_picture_set_filename@Base 4.0.0
  gtk_picture_set_keep_aspect_ratio@Base 4.0.0
@@ -3417,9 +3453,11 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_search_bar_set_search_mode@Base 4.0.0
  gtk_search_bar_set_show_close_button@Base 4.0.0
  gtk_search_entry_get_key_capture_widget@Base 4.0.0
+ gtk_search_entry_get_search_delay@Base 4.7.2
  gtk_search_entry_get_type@Base 4.0.0
  gtk_search_entry_new@Base 4.0.0
  gtk_search_entry_set_key_capture_widget@Base 4.0.0
+ gtk_search_entry_set_search_delay@Base 4.7.2
  gtk_selection_filter_model_get_model@Base 4.0.0
  gtk_selection_filter_model_get_type@Base 4.0.0
  gtk_selection_filter_model_new@Base 4.0.0
@@ -4475,6 +4513,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_widget_contains@Base 4.0.0
  gtk_widget_create_pango_context@Base 4.0.0
  gtk_widget_create_pango_layout@Base 4.0.0
+ gtk_widget_dispose_template@Base 4.7.2
  gtk_widget_error_bell@Base 4.0.0
  gtk_widget_get_allocated_baseline@Base 4.0.0
  gtk_widget_get_allocated_height@Base 4.0.0

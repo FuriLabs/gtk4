@@ -3,3 +3,4 @@ reftests-Allow-minor-differences-to-be-tolerated.patch
 debian/Skip-some-known-failing-tests-on-mips-family-architecture.patch
 debian/Disable-clipboard-test.patch
 Work-around-1014417-in-Meson.patch
+Disable-inscription-markup.ui-reftest.patch

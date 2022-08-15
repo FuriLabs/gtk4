@@ -1,0 +1,72 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Mon, 15 Aug 2022 22:24:26 +0100
+Subject: build: Add an option to use more conservative GResource embedding
+
+Doing clever things with objcopy is faster, but also doesn't work on
+all toolchains and architectures: in particular, Debian has had trouble
+with this on arm and mips.
+
+Developers will want to leave this option switched on for faster
+incremental builds (unless their toolchain doesn't support it), but in
+a distro build environment where we are compiling all of GTK every time,
+the cost of potentially unreliable builds is higher than the cost of
+using slower but more conservative GResource embedding.
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/5107
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/4956
+Signed-off-by: Simon McVittie <smcv@debian.org>
+---
+ gtk/meson.build   | 15 ++++++++++++++-
+ meson_options.txt |  5 +++++
+ 2 files changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/gtk/meson.build b/gtk/meson.build
+index 2e404f2..46f886f 100644
+--- a/gtk/meson.build
++++ b/gtk/meson.build
+@@ -866,15 +866,28 @@ if not fs.exists('theme/Default/Default-light.css')
+ endif
+ 
+ 
++fast_gresource_embedding = get_option('fast_gresource_embedding')
++
+ objcopy_supports_add_symbol = false
+ objcopy = find_program('objcopy', required : false)
+ if objcopy.found()
+   objcopy_supports_add_symbol = run_command(objcopy, '--help').stdout().contains('--add-symbol')
+ endif
++fast_gresource_embedding = fast_gresource_embedding and objcopy_supports_add_symbol
+ 
+ ld = find_program('ld', required : false)
++fast_gresource_embedding = fast_gresource_embedding and ld.found()
++
++if meson.is_cross_build() or build_machine.system() != 'linux'
++  fast_gresource_embedding = false
++endif
++
++if build_machine.cpu_family() in ['arm', 'mips']
++  # Known not to work reliably on these architectures
++  fast_gresource_embedding = false
++endif
+ 
+-if not meson.is_cross_build() and build_machine.cpu_family() != 'arm' and build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and ld.found()
++if fast_gresource_embedding
+   glib_compile_resources = find_program('glib-compile-resources')
+ 
+   # Create the resource blob
+diff --git a/meson_options.txt b/meson_options.txt
+index 2084ab8..078e76f 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -78,6 +78,11 @@ option('f16c',
+        value: 'enabled',
+        description: 'Enable F16C fast paths (requires F16C)')
+ 
++option('fast_gresource_embedding',
++       type: 'boolean',
++       value: true,
++       description: 'Speed up GResource compilation (does not work on all architectures)')
++
+ # Documentation and introspection
+ 
+ option('gtk_doc',

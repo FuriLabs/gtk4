@@ -32,7 +32,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libfribidi-dev (>= 0.19.7),
                libgdk-pixbuf-2.0-dev (>= 2.30.0),
                libgirepository1.0-dev (>= 1.39.0),
-               libglib2.0-dev (>= 2.66.0),
+               libglib2.0-dev (>= 2.68.0),
                libgraphene-1.0-dev (>= 1.10.4~),
                libgstreamer1.0-dev (>= 1.12.3),
                libgstreamer-plugins-bad1.0-dev (>= 1.12.3),
@@ -65,7 +65,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                meson (>= 0.59),
                pkg-config,
                python3-docutils <!nodoc>,
-               python3-gi (>= 3.40) <!nocheck>,
+               python3-gi (>= 3.40),
                sassc,
                ttf-bitstream-vera <!nocheck>,
                wayland-protocols (>= 1.23) [linux-any],
@@ -79,9 +79,9 @@ Build-Depends-Indep: gi-docgen <!nodoc>,
                      libpango1.0-doc <!nodoc>,
                      pandoc,
 Rules-Requires-Root: no
-Standards-Version: 4.6.0
+Standards-Version: 4.6.1
 XS-Debian-Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4
-XS-Debian-Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git
+XS-Debian-Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git -b debian/unstable
 Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4/tree/ubuntu/jammy
 Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git -b ubuntu/jammy
 Homepage: https://www.gtk.org/

@@ -76,11 +76,12 @@ debian/%: debian/%.in
 
 configure_flags_common = \
 	--libdir=/$(LIBDIR) \
+	-Dfast_gresource_embedding=false \
 	${NULL}
 
 configure_flags_deb = \
 	-Dauto_features=enabled \
-	-Dbroadway-backend=false \
+	-Dbroadway-backend=true \
 	-Dx11-backend=true \
 	${NULL}
 
@@ -217,6 +218,12 @@ $(info Architecture with qemu buildds detected, increasing test timeout a lot)
 test_timeout_multiplier = 20
 endif
 
+ifneq ($(filter mips%,$(DEB_HOST_ARCH_CPU)),)
+$(info Disabling use of llvmpipe due to mips family CPU, see https://bugs.debian.org/993550)
+export GALLIUM_DRIVER=softpipe
+export LIBGL_ALWAYS_SOFTWARE=true
+endif
+
 fuzzy_gsk_compare = \
 	$(NULL)
 
@@ -255,11 +262,6 @@ ifeq (big,$(DEB_HOST_ARCH_ENDIAN))
 		$(NULL)
 endif
 
-# Workaround for https://bugs.debian.org/1010838
-ifeq (mipsel,$(DEB_HOST_ARCH_CPU))
-export GALLIUM_DRIVER=softpipe
-endif
-
 override_dh_auto_test:
 	env \
 		BUILDDIR=debian/build/deb \
@@ -284,7 +286,6 @@ override_dh_install:
 	rm -fv debian/install/udeb/usr/bin/gtk4-update-icon-cache
 	rm -frv debian/install/udeb/usr/share/gtk-4.0/valgrind
 	rm -frv debian/install/udeb/usr/share/metainfo
-	rm -fv debian/install/deb/usr/share/man/man1/gtk4-broadwayd.1
 	:
 	dh_install -p$(UDEB_PKG) --sourcedir=debian/install/udeb
 	dh_install --remaining-packages --sourcedir=debian/install/deb

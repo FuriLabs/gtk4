@@ -1,3 +1,9 @@
+gtk4 (4.7.2+ds-2) experimental; urgency=medium
+
+  * Merge packaging changes from unstable
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 16 Aug 2022 11:24:01 +0100
+
 gtk4 (4.6.6+ds-3) unstable; urgency=medium
 
   * Branch 4.6.x for unstable

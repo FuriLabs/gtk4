@@ -311,9 +311,10 @@ gtk_inspector_window_dispose (GObject *object)
 
   g_object_set_data (G_OBJECT (iw->inspected_display), "-gtk-inspector", NULL);
 
-  g_clear_pointer (&iw->top_stack, gtk_widget_unparent);
   g_clear_object (&iw->flash_overlay);
   g_clear_pointer (&iw->objects, g_array_unref);
+
+  gtk_widget_dispose_template (GTK_WIDGET (iw), GTK_TYPE_INSPECTOR_WINDOW);
 
   G_OBJECT_CLASS (gtk_inspector_window_parent_class)->dispose (object);
 }
@@ -604,7 +605,7 @@ gtk_inspector_window_class_init (GtkInspectorWindowClass *klass)
   window_class->enable_debugging = gtk_inspector_window_enable_debugging;
 
   properties[PROP_INSPECTED_DISPLAY] =
-      g_param_spec_object ("inspected-display", "Inspected display", "Inspected display",
+      g_param_spec_object ("inspected-display", NULL, NULL,
                            GDK_TYPE_DISPLAY,
                            G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
   g_object_class_install_properties (object_class, NUM_PROPERTIES, properties);
@@ -679,20 +680,16 @@ gtk_inspector_window_class_init (GtkInspectorWindowClass *klass)
 static GdkDisplay *
 get_inspector_display (void)
 {
-  static GdkDisplay *display = NULL;
+  GdkDisplay *display;
+  const char *name;
 
-  if (display == NULL)
-    {
-      const char *name;
+  name = g_getenv ("GTK_INSPECTOR_DISPLAY");
+  display = gdk_display_open (name);
 
-      name = g_getenv ("GTK_INSPECTOR_DISPLAY");
-      display = gdk_display_open (name);
-
-      if (display)
-        g_debug ("Using display %s for GtkInspector", name);
-      else
-        g_message ("Failed to open display %s", name);
-    }
+  if (display)
+    g_debug ("Using display %s for GtkInspector", name);
+  else
+    g_message ("Failed to open display %s", name);
 
   if (!display)
     {
@@ -706,7 +703,6 @@ get_inspector_display (void)
 
   if (display)
     {
-      const char *name;
       GdkDebugFlags flags;
 
       name = g_getenv ("GTK_INSPECTOR_RENDERER");

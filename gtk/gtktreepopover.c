@@ -30,6 +30,8 @@
 #include "gtkgizmoprivate.h"
 #include "gtkwidgetprivate.h"
 #include "gtkbuiltiniconprivate.h"
+#include "gtkscrolledwindow.h"
+#include "gtkviewport.h"
 
 // TODO
 // positioning + sizing
@@ -202,17 +204,13 @@ gtk_tree_popover_class_init (GtkTreePopoverClass *class)
 
   g_object_class_install_property (object_class,
                                    PROP_MODEL,
-                                   g_param_spec_object ("model",
-                                                        P_("model"),
-                                                        P_("The model for the popover"),
+                                   g_param_spec_object ("model", NULL, NULL,
                                                         GTK_TYPE_TREE_MODEL,
                                                         GTK_PARAM_READWRITE));
 
   g_object_class_install_property (object_class,
                                    PROP_CELL_AREA,
-                                   g_param_spec_object ("cell-area",
-                                                        P_("Cell Area"),
-                                                        P_("The GtkCellArea used to layout cells"),
+                                   g_param_spec_object ("cell-area", NULL, NULL,
                                                         GTK_TYPE_CELL_AREA,
                                                         GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
@@ -226,12 +224,22 @@ gtk_tree_popover_class_init (GtkTreePopoverClass *class)
                   G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
+static GtkWidget *
+gtk_tree_popover_get_stack (GtkTreePopover *popover)
+{
+  GtkWidget *sw = gtk_popover_get_child (GTK_POPOVER (popover));
+  GtkWidget *vp = gtk_scrolled_window_get_child (GTK_SCROLLED_WINDOW (sw));
+  GtkWidget *stack = gtk_viewport_get_child (GTK_VIEWPORT (vp));
+
+  return stack;
+}
+
 static void
 gtk_tree_popover_add_submenu (GtkTreePopover *popover,
                               GtkWidget      *submenu,
                               const char     *name)
 {
-  GtkWidget *stack = gtk_popover_get_child (GTK_POPOVER (popover));
+  GtkWidget *stack = gtk_tree_popover_get_stack (popover);
   gtk_stack_add_named (GTK_STACK (stack), submenu, name);
 }
 
@@ -239,7 +247,7 @@ static GtkWidget *
 gtk_tree_popover_get_submenu (GtkTreePopover *popover,
                               const char     *name)
 {
-  GtkWidget *stack = gtk_popover_get_child (GTK_POPOVER (popover));
+  GtkWidget *stack = gtk_tree_popover_get_stack (popover);
   return gtk_stack_get_child_by_name (GTK_STACK (stack), name);
 }
 
@@ -247,20 +255,27 @@ void
 gtk_tree_popover_open_submenu (GtkTreePopover *popover,
                                const char     *name)
 {
-  GtkWidget *stack = gtk_popover_get_child (GTK_POPOVER (popover));
+  GtkWidget *stack = gtk_tree_popover_get_stack (popover);
   gtk_stack_set_visible_child_name (GTK_STACK (stack), name);
 }
 
 static void
 gtk_tree_popover_init (GtkTreePopover *popover)
 {
+  GtkWidget *sw;
   GtkWidget *stack;
+
+  sw = gtk_scrolled_window_new ();
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_set_propagate_natural_width (GTK_SCROLLED_WINDOW (sw), TRUE);
+  gtk_scrolled_window_set_propagate_natural_height (GTK_SCROLLED_WINDOW (sw), TRUE);
+  gtk_popover_set_child (GTK_POPOVER (popover), sw);
 
   stack = gtk_stack_new ();
   gtk_stack_set_vhomogeneous (GTK_STACK (stack), FALSE);
   gtk_stack_set_transition_type (GTK_STACK (stack), GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
   gtk_stack_set_interpolate_size (GTK_STACK (stack), TRUE);
-  gtk_popover_set_child (GTK_POPOVER (popover), stack);
+  gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (sw), stack);
 
   gtk_widget_add_css_class (GTK_WIDGET (popover), "menu");
 }
@@ -465,7 +480,7 @@ static GtkWidget *
 gtk_tree_popover_get_path_item (GtkTreePopover *popover,
                                 GtkTreePath    *search)
 {
-  GtkWidget *stack = gtk_popover_get_child (GTK_POPOVER (popover));
+  GtkWidget *stack = gtk_tree_popover_get_stack (popover);
   GtkWidget *item = NULL;
   GtkWidget *stackchild;
   GtkWidget *child;
@@ -779,7 +794,7 @@ rebuild_menu (GtkTreePopover *popover)
   GtkWidget *stack;
   GtkWidget *child;
 
-  stack = gtk_popover_get_child (GTK_POPOVER (popover));
+  stack = gtk_tree_popover_get_stack (popover);
   while ((child = gtk_widget_get_first_child (stack)))
     gtk_stack_remove (GTK_STACK (stack), child);
 

@@ -305,9 +305,7 @@ gtk_builder_class_init (GtkBuilderClass *klass)
   * otherwise g_dgettext().
   */
   builder_props[PROP_TRANSLATION_DOMAIN] =
-      g_param_spec_string ("translation-domain",
-                           P_("Translation Domain"),
-                           P_("The translation domain used by gettext"),
+      g_param_spec_string ("translation-domain", NULL, NULL,
                            NULL,
                            GTK_PARAM_READWRITE);
 
@@ -317,9 +315,7 @@ gtk_builder_class_init (GtkBuilderClass *klass)
   * The object the builder is evaluating for.
   */
   builder_props[PROP_CURRENT_OBJECT] =
-      g_param_spec_object ("current-object",
-                           P_("Current object"),
-                           P_("The object the builder is evaluating for"),
+      g_param_spec_object ("current-object", NULL, NULL,
                            G_TYPE_OBJECT,
                            GTK_PARAM_READWRITE);
 
@@ -329,9 +325,7 @@ gtk_builder_class_init (GtkBuilderClass *klass)
   * The scope the builder is operating in
   */
   builder_props[PROP_SCOPE] =
-      g_param_spec_object ("scope",
-                           P_("Scope"),
-                           P_("The scope the builder is operating in"),
+      g_param_spec_object ("scope", NULL, NULL,
                            GTK_TYPE_BUILDER_SCOPE,
                            GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
@@ -1359,8 +1353,8 @@ gtk_builder_add_objects_from_file (GtkBuilder   *builder,
  * Main private entry point for building composite components
  * from template XML.
  *
- * This is exported purely to let `gtk-builder-tool` validate
- * templates, applications have no need to call this function.
+ * Most likely you do not need to call this function in applications as
+ * templates are handled by `GtkWidget`.
  *
  * Returns: A positive value on success, 0 if an error occurred
  */
@@ -1373,6 +1367,7 @@ gtk_builder_extend_with_template (GtkBuilder   *builder,
                                   GError      **error)
 {
   GtkBuilderPrivate *priv = gtk_builder_get_instance_private (builder);
+  const char *name;
   GError *tmp_error;
   char *filename;
 
@@ -1390,8 +1385,15 @@ gtk_builder_extend_with_template (GtkBuilder   *builder,
   priv->resource_prefix = NULL;
   priv->template_type = template_type;
 
-  filename = g_strconcat ("<", g_type_name (template_type), " template>", NULL);
-  gtk_builder_expose_object (builder, g_type_name (template_type), object);
+  /* We specifically allow this function to be called multiple times with
+   * the same @template_type as that is used in applications like Builder
+   * to implement UI merging.
+   */
+  name = g_type_name (template_type);
+  if (gtk_builder_get_object (builder, name) != object)
+    gtk_builder_expose_object (builder, name, object);
+
+  filename = g_strconcat ("<", name, " template>", NULL);
   _gtk_builder_parser_parse_buffer (builder, filename,
                                     buffer, length,
                                     NULL,
@@ -1778,6 +1780,11 @@ gtk_builder_get_translation_domain (GtkBuilder *builder)
  *
  * Add @object to the @builder object pool so it can be
  * referenced just like any other object built by builder.
+ *
+ * Only a single object may be added using @name. However,
+ * it is not an error to expose the same object under multiple
+ * names. `gtk_builder_get_object()` may be used to determine
+ * if an object has already been added with @name.
  */
 void
 gtk_builder_expose_object (GtkBuilder    *builder,
@@ -2997,20 +3004,46 @@ _gtk_builder_check_parent (GtkBuilder                *builder,
                            const char                *parent_name,
                            GError                   **error)
 {
+  return _gtk_builder_check_parents (builder, context, error, parent_name, NULL);
+}
+
+gboolean
+_gtk_builder_check_parents (GtkBuilder                *builder,
+                            GtkBuildableParseContext  *context,
+                            GError                   **error,
+                            ...)
+{
   GtkBuilderPrivate *priv = gtk_builder_get_instance_private (builder);
   GPtrArray *stack;
   int line, col;
   const char *parent;
   const char *element;
+  va_list args;
+  gboolean in_template;
 
   stack = gtk_buildable_parse_context_get_element_stack (context);
 
   element = g_ptr_array_index (stack, stack->len - 1);
   parent = stack->len > 1 ? g_ptr_array_index (stack, stack->len - 2) : "";
 
-  if (g_str_equal (parent_name, parent) ||
-      (g_str_equal (parent_name, "object") && g_str_equal (parent, "template")))
-    return TRUE;
+  in_template = g_str_equal (parent, "template");
+
+  va_start (args, error);
+
+  while (1) {
+    char *parent_name = va_arg (args, char *);
+
+    if (parent_name == NULL)
+      break;
+
+    if (g_str_equal (parent_name, parent) || (in_template && g_str_equal (parent_name, "object")))
+      {
+        va_end (args);
+        return TRUE;
+      }
+  }
+
+  va_end (args);
 
   gtk_buildable_parse_context_get_position (context, &line, &col);
   g_set_error (error,

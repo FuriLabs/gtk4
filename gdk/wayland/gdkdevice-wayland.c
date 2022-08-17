@@ -112,7 +112,7 @@ struct _GdkWaylandPointerFrameData
 
   /* Specific to the scroll event */
   double delta_x, delta_y;
-  int32_t discrete_x, discrete_y;
+  int32_t value120_x, value120_y;
   gint8 is_scroll_stop;
   enum wl_pointer_axis_source source;
 };
@@ -1383,21 +1383,54 @@ static GdkDevice * get_scroll_device (GdkWaylandSeat              *seat,
 
 static void
 flush_discrete_scroll_event (GdkWaylandSeat     *seat,
-                             GdkScrollDirection  direction)
+                             gint                value120_x,
+                             gint                value120_y)
 {
-  GdkEvent *event;
+  GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (seat->display);
+  GdkEvent *event = NULL;
   GdkDevice *source;
+  GdkScrollDirection direction;
+
+  if (value120_x > 0)
+    direction = GDK_SCROLL_LEFT;
+  else if (value120_x < 0)
+    direction = GDK_SCROLL_RIGHT;
+  else if (value120_y > 0)
+    direction = GDK_SCROLL_DOWN;
+  else
+    direction = GDK_SCROLL_UP;
 
   source = get_scroll_device (seat, seat->pointer_info.frame.source);
-  event = gdk_scroll_event_new_discrete (seat->pointer_info.focus,
-                                         source,
-                                         NULL,
-                                         seat->pointer_info.time,
-                                         device_get_modifiers (seat->logical_pointer),
-                                         direction,
-                                         TRUE);
 
-  _gdk_wayland_display_deliver_event (seat->display, event);
+  if (display_wayland->seat_version >= WL_POINTER_AXIS_VALUE120_SINCE_VERSION)
+    {
+      event = gdk_scroll_event_new_value120 (seat->pointer_info.focus,
+                                             source,
+                                             NULL,
+                                             seat->pointer_info.time,
+                                             device_get_modifiers (seat->logical_pointer),
+                                             direction,
+                                             value120_x,
+                                             value120_y);
+    }
+  else
+    {
+      gint discrete_x = value120_x / 120;
+      gint discrete_y = value120_y / 120;
+
+      if (discrete_x != 0 || discrete_y != 0)
+        {
+          event = gdk_scroll_event_new_discrete (seat->pointer_info.focus,
+                                                 source,
+                                                 NULL,
+                                                 seat->pointer_info.time,
+                                                 device_get_modifiers (seat->logical_pointer),
+                                                 direction);
+        }
+    }
+
+  if (event)
+    _gdk_wayland_display_deliver_event (seat->display, event);
 }
 
 static void
@@ -1416,7 +1449,8 @@ flush_smooth_scroll_event (GdkWaylandSeat *seat,
                                 seat->pointer_info.time,
                                 device_get_modifiers (seat->logical_pointer),
                                 delta_x, delta_y,
-                                is_stop);
+                                is_stop,
+                                GDK_SCROLL_UNIT_SURFACE);
 
   _gdk_wayland_display_deliver_event (seat->display, event);
 }
@@ -1427,22 +1461,13 @@ flush_scroll_event (GdkWaylandSeat             *seat,
 {
   gboolean is_stop = FALSE;
 
-  if (pointer_frame->discrete_x || pointer_frame->discrete_y)
+  if (pointer_frame->value120_x || pointer_frame->value120_y)
     {
-      GdkScrollDirection direction;
-
-      if (pointer_frame->discrete_x > 0)
-        direction = GDK_SCROLL_LEFT;
-      else if (pointer_frame->discrete_x < 0)
-        direction = GDK_SCROLL_RIGHT;
-      else if (pointer_frame->discrete_y > 0)
-        direction = GDK_SCROLL_DOWN;
-      else
-        direction = GDK_SCROLL_UP;
-
-      flush_discrete_scroll_event (seat, direction);
-      pointer_frame->discrete_x = 0;
-      pointer_frame->discrete_y = 0;
+      flush_discrete_scroll_event (seat,
+                                   pointer_frame->value120_x,
+                                   pointer_frame->value120_y);
+      pointer_frame->value120_x = 0;
+      pointer_frame->value120_y = 0;
     }
   else if (pointer_frame->is_scroll_stop ||
            pointer_frame->delta_x != 0 ||
@@ -1462,8 +1487,8 @@ flush_scroll_event (GdkWaylandSeat             *seat,
                                  is_stop);
     }
 
-  pointer_frame->discrete_x = 0;
-  pointer_frame->discrete_y = 0;
+  pointer_frame->value120_x = 0;
+  pointer_frame->value120_y = 0;
   pointer_frame->delta_x = 0;
   pointer_frame->delta_y = 0;
   pointer_frame->is_scroll_stop = FALSE;
@@ -1514,8 +1539,6 @@ pointer_handle_enter (void              *data,
   if (!GDK_IS_SURFACE (wl_surface_get_user_data (surface)))
     return;
 
-  _gdk_wayland_display_update_serial (display_wayland, serial);
-
   seat->pointer_info.focus = wl_surface_get_user_data (surface);
   g_object_ref (seat->pointer_info.focus);
 
@@ -1557,16 +1580,9 @@ pointer_handle_leave (void              *data,
   GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (seat->display);
   GdkDeviceGrabInfo *grab;
 
-  if (!surface)
-    return;
-
-  if (!GDK_IS_SURFACE (wl_surface_get_user_data (surface)))
-    return;
-
   if (!seat->pointer_info.focus)
     return;
 
-  _gdk_wayland_display_update_serial (display_wayland, serial);
   grab = _gdk_display_get_last_device_grab (seat->display,
                                             seat->logical_pointer);
 
@@ -1666,8 +1682,6 @@ pointer_handle_button (void              *data,
   if (!seat->pointer_info.focus)
     return;
 
-  _gdk_wayland_display_update_serial (display, serial);
-
   switch (button)
     {
     case BTN_LEFT:
@@ -1755,10 +1769,10 @@ pointer_handle_axis (void              *data,
   switch (axis)
     {
     case WL_POINTER_AXIS_VERTICAL_SCROLL:
-      pointer_frame->delta_y = wl_fixed_to_double (value) / 10.0;
+      pointer_frame->delta_y = wl_fixed_to_double (value);
       break;
     case WL_POINTER_AXIS_HORIZONTAL_SCROLL:
-      pointer_frame->delta_x = wl_fixed_to_double (value) / 10.0;
+      pointer_frame->delta_x = wl_fixed_to_double (value);
       break;
     default:
       g_return_if_reached ();
@@ -1768,7 +1782,7 @@ pointer_handle_axis (void              *data,
 
   GDK_SEAT_NOTE (seat, EVENTS,
             g_message ("scroll, axis %s, value %f, seat %p",
-                       get_axis_name (axis), wl_fixed_to_double (value) / 10.0,
+                       get_axis_name (axis), wl_fixed_to_double (value),
                        seat));
 
   if (display->seat_version < WL_POINTER_HAS_FRAME)
@@ -1873,10 +1887,10 @@ pointer_handle_axis_discrete (void              *data,
   switch (axis)
     {
     case WL_POINTER_AXIS_VERTICAL_SCROLL:
-      pointer_frame->discrete_y = value;
+      pointer_frame->value120_y = value * 120;
       break;
     case WL_POINTER_AXIS_HORIZONTAL_SCROLL:
-      pointer_frame->discrete_x = value;
+      pointer_frame->value120_x = value * 120;
       break;
     default:
       g_return_if_reached ();
@@ -1884,6 +1898,35 @@ pointer_handle_axis_discrete (void              *data,
 
   GDK_SEAT_NOTE (seat, EVENTS,
             g_message ("discrete scroll, axis %s, value %d, seat %p",
+                       get_axis_name (axis), value, seat));
+}
+
+static void
+pointer_handle_axis_value120 (void              *data,
+                              struct wl_pointer *pointer,
+                              uint32_t           axis,
+                              int32_t            value)
+{
+  GdkWaylandSeat *seat = data;
+  GdkWaylandPointerFrameData *pointer_frame = &seat->pointer_info.frame;
+
+  if (!seat->pointer_info.focus)
+    return;
+
+  switch (axis)
+    {
+    case WL_POINTER_AXIS_VERTICAL_SCROLL:
+      pointer_frame->value120_y = value;
+      break;
+    case WL_POINTER_AXIS_HORIZONTAL_SCROLL:
+      pointer_frame->value120_x = value;
+      break;
+    default:
+      g_return_if_reached ();
+    }
+
+  GDK_SEAT_NOTE (seat, EVENTS,
+            g_message ("value120 scroll, axis %s, value %d, seat %p",
                        get_axis_name (axis), value, seat));
 }
 
@@ -1986,15 +2029,12 @@ keyboard_handle_enter (void               *data,
 {
   GdkWaylandSeat *seat = data;
   GdkEvent *event;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
 
   if (!surface)
     return;
 
   if (!GDK_IS_SURFACE (wl_surface_get_user_data (surface)))
     return;
-
-  _gdk_wayland_display_update_serial (display, serial);
 
   seat->keyboard_focus = wl_surface_get_user_data (surface);
   g_object_ref (seat->keyboard_focus);
@@ -2021,7 +2061,6 @@ keyboard_handle_leave (void               *data,
 {
   GdkWaylandSeat *seat = data;
   GdkEvent *event;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
 
   if (!seat->keyboard_focus)
     return;
@@ -2031,8 +2070,6 @@ keyboard_handle_leave (void               *data,
    * surface before losing keyboard focus.
    */
   stop_key_repeat (seat);
-
-  _gdk_wayland_display_update_serial (display, serial);
 
   event = gdk_focus_event_new (seat->keyboard_focus,
                                seat->logical_keyboard,
@@ -2272,7 +2309,6 @@ keyboard_handle_key (void               *data,
                      uint32_t            state_w)
 {
   GdkWaylandSeat *seat = data;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
 
   if (!seat->keyboard_focus)
     return;
@@ -2280,7 +2316,6 @@ keyboard_handle_key (void               *data,
   seat->keyboard_time = time;
   seat->keyboard_key_serial = serial;
   seat->repeat_count = 0;
-  _gdk_wayland_display_update_serial (display, serial);
   deliver_key_event (data, time, key + 8, state_w, FALSE);
 
 }
@@ -2470,11 +2505,8 @@ touch_handle_down (void              *data,
                    wl_fixed_t         y)
 {
   GdkWaylandSeat *seat = data;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
   GdkWaylandTouchData *touch;
   GdkEvent *event;
-
-  _gdk_wayland_display_update_serial (display, serial);
 
   if (!wl_surface)
     return;
@@ -2519,11 +2551,8 @@ touch_handle_up (void            *data,
                  int32_t          id)
 {
   GdkWaylandSeat *seat = data;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
   GdkWaylandTouchData *touch;
   GdkEvent *event;
-
-  _gdk_wayland_display_update_serial (display, serial);
 
   touch = gdk_wayland_seat_get_touch (seat, id);
   if (!touch)
@@ -2704,9 +2733,6 @@ gesture_swipe_begin (void                                *data,
                      uint32_t                             fingers)
 {
   GdkWaylandSeat *seat = data;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
-
-  _gdk_wayland_display_update_serial (display, serial);
 
   emit_gesture_swipe_event (seat,
                             GDK_TOUCHPAD_GESTURE_PHASE_BEGIN,
@@ -2739,10 +2765,7 @@ gesture_swipe_end (void                                *data,
                    int32_t                              cancelled)
 {
   GdkWaylandSeat *seat = data;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
   GdkTouchpadGesturePhase phase;
-
-  _gdk_wayland_display_update_serial (display, serial);
 
   phase = (cancelled) ?
     GDK_TOUCHPAD_GESTURE_PHASE_CANCEL :
@@ -2806,9 +2829,7 @@ gesture_pinch_begin (void                                *data,
                      uint32_t                             fingers)
 {
   GdkWaylandSeat *seat = data;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
 
-  _gdk_wayland_display_update_serial (display, serial);
   emit_gesture_pinch_event (seat,
                             GDK_TOUCHPAD_GESTURE_PHASE_BEGIN,
                             time, fingers, 0, 0, 1, 0);
@@ -2843,10 +2864,7 @@ gesture_pinch_end (void                                *data,
                    int32_t                              cancelled)
 {
   GdkWaylandSeat *seat = data;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
   GdkTouchpadGesturePhase phase;
-
-  _gdk_wayland_display_update_serial (display, serial);
 
   phase = (cancelled) ?
     GDK_TOUCHPAD_GESTURE_PHASE_CANCEL :
@@ -2870,7 +2888,11 @@ emit_gesture_hold_event (GdkWaylandSeat          *seat,
 
   seat->pointer_info.time = _time;
 
+  if (phase == GDK_TOUCHPAD_GESTURE_PHASE_BEGIN)
+    seat->pointer_info.touchpad_event_sequence++;
+
   event = gdk_touchpad_event_new_hold (seat->pointer_info.focus,
+                                       GDK_SLOT_TO_EVENT_SEQUENCE (seat->pointer_info.touchpad_event_sequence),
                                        seat->logical_pointer,
                                        _time,
                                        device_get_modifiers (seat->logical_pointer),
@@ -2901,9 +2923,6 @@ gesture_hold_begin (void                               *data,
                     uint32_t                            fingers)
 {
   GdkWaylandSeat *seat = data;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
-
-  _gdk_wayland_display_update_serial (display, serial);
 
   emit_gesture_hold_event (seat,
                            GDK_TOUCHPAD_GESTURE_PHASE_BEGIN,
@@ -2919,10 +2938,7 @@ gesture_hold_end (void                               *data,
                   int32_t                             cancelled)
 {
   GdkWaylandSeat *seat = data;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
   GdkTouchpadGesturePhase phase;
-
-  _gdk_wayland_display_update_serial (display, serial);
 
   phase = (cancelled) ?
     GDK_TOUCHPAD_GESTURE_PHASE_CANCEL :
@@ -3108,6 +3124,7 @@ static const struct wl_pointer_listener pointer_listener = {
   pointer_handle_axis_source,
   pointer_handle_axis_stop,
   pointer_handle_axis_discrete,
+  pointer_handle_axis_value120,
 };
 
 static const struct wl_keyboard_listener keyboard_listener = {
@@ -3630,8 +3647,6 @@ tablet_tool_handle_proximity_in (void                      *data,
 {
   GdkWaylandTabletToolData *tool = data;
   GdkWaylandTabletData *tablet = zwp_tablet_v2_get_user_data (wp_tablet);
-  GdkWaylandSeat *seat = GDK_WAYLAND_SEAT (tablet->seat);
-  GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (seat->display);
   GdkSurface *surface;
   GdkEvent *event;
 
@@ -3648,7 +3663,6 @@ tablet_tool_handle_proximity_in (void                      *data,
   tool->current_tablet = tablet;
   tablet->current_tool = tool;
 
-  _gdk_wayland_display_update_serial (display_wayland, serial);
   tablet->pointer_info.enter_serial = serial;
 
   tablet->pointer_info.focus = g_object_ref (surface);
@@ -3669,9 +3683,9 @@ tablet_tool_handle_proximity_in (void                      *data,
                     gdk_wayland_surface_get_wl_output (surface));
   pointer_surface_update_scale (tablet->logical_device);
 
-  GDK_SEAT_NOTE (seat, EVENTS,
+  GDK_SEAT_NOTE (tablet->seat, EVENTS,
             g_message ("proximity in, seat %p surface %p tool %d",
-                       seat, tablet->pointer_info.focus,
+                       tablet->seat, tablet->pointer_info.focus,
                        gdk_device_tool_get_tool_type (tool->tool)));
 }
 
@@ -3748,13 +3762,10 @@ tablet_tool_handle_down (void                      *data,
 {
   GdkWaylandTabletToolData *tool = data;
   GdkWaylandTabletData *tablet = tool->current_tablet;
-  GdkWaylandSeat *seat = GDK_WAYLAND_SEAT (tool->seat);
-  GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (seat->display);
 
   if (!tablet || !tablet->pointer_info.focus)
     return;
 
-  _gdk_wayland_display_update_serial (display_wayland, serial);
   tablet->pointer_info.press_serial = serial;
 
   tablet_create_button_event_frame (tablet, GDK_BUTTON_PRESS, GDK_BUTTON_PRIMARY);
@@ -3994,18 +4005,8 @@ tablet_tool_handle_wheel (void                      *data,
                                 tablet->pointer_info.time,
                                 device_get_modifiers (tablet->logical_device),
                                 0, clicks,
-                                FALSE);
-
-  _gdk_wayland_display_deliver_event (seat->display, event);
-
-  /* Send discrete event */
-  event = gdk_scroll_event_new_discrete (tablet->pointer_info.focus,
-                                         tablet->stylus_device,
-                                         tablet->current_tool->tool,
-                                         tablet->pointer_info.time,
-                                         device_get_modifiers (tablet->logical_device),
-                                         clicks > 0 ? GDK_SCROLL_DOWN : GDK_SCROLL_UP,
-                                         TRUE);
+                                FALSE,
+                                GDK_SCROLL_UNIT_WHEEL);
 
   _gdk_wayland_display_deliver_event (seat->display, event);
 }
@@ -5315,15 +5316,13 @@ gdk_wayland_device_set_selection (GdkDevice             *gdk_device,
                                   struct wl_data_source *source)
 {
   GdkWaylandSeat *seat;
-  GdkWaylandDisplay *display_wayland;
+  guint32 serial;
 
   g_return_if_fail (GDK_IS_WAYLAND_DEVICE (gdk_device));
 
   seat = GDK_WAYLAND_SEAT (gdk_device_get_seat (gdk_device));
-  display_wayland = GDK_WAYLAND_DISPLAY (seat->display);
-
-  wl_data_device_set_selection (seat->data_device, source,
-                                _gdk_wayland_display_get_serial (display_wayland));
+  serial = _gdk_wayland_seat_get_implicit_grab_serial (GDK_SEAT (seat), NULL);
+  wl_data_device_set_selection (seat->data_device, source, serial);
 }
 
 /**

@@ -10,6 +10,8 @@ Files-Excluded:
  docs/reference/gtk/gtk4
  gtk/theme/Default/Default-*.css
  subprojects/gi-docgen
+ subprojects/wayland
+ subprojects/wayland-protocols
 
 Files: *
 Copyright:
@@ -60,7 +62,7 @@ Copyright:
  2008 BOSS GNU/Linux
  2006-2009 Baris Cicek
  2009 Bastien Nocera
- 2016-2021 Benjamin Otte
+ 2016-2022 Benjamin Otte
  2006 Benoît Dejean
  2003 Besnik Bleta
  2002 Borislav Aleksandrov
@@ -362,7 +364,7 @@ Copyright:
  2016-2020 The CRoaring authors
  2004-2020 The GNOME Foundation
  2007-2010 The GNOME Project
- 1997-2021 The GTK Team
+ 1997-2022 The GTK Team
  1986-1998 The Open Group
  1992-1994 The Regents of the University of California.
  2005-2010 Theppitak Karoonboonyanan

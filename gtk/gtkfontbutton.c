@@ -502,9 +502,7 @@ gtk_font_button_class_init (GtkFontButtonClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_TITLE,
-                                   g_param_spec_string ("title",
-                                                        P_("Title"),
-                                                        P_("The title of the font chooser dialog"),
+                                   g_param_spec_string ("title", NULL, NULL,
                                                         _("Pick a Font"),
                                                         GTK_PARAM_READWRITE));
 
@@ -515,9 +513,7 @@ gtk_font_button_class_init (GtkFontButtonClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_USE_FONT,
-                                   g_param_spec_boolean ("use-font",
-                                                         P_("Use font in label"),
-                                                         P_("Whether the label is drawn in the selected font"),
+                                   g_param_spec_boolean ("use-font", NULL, NULL,
                                                          FALSE,
                                                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -528,9 +524,7 @@ gtk_font_button_class_init (GtkFontButtonClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_USE_SIZE,
-                                   g_param_spec_boolean ("use-size",
-                                                         P_("Use size in label"),
-                                                         P_("Whether the label is drawn with the selected font size"),
+                                   g_param_spec_boolean ("use-size", NULL, NULL,
                                                          FALSE,
                                                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -541,9 +535,7 @@ gtk_font_button_class_init (GtkFontButtonClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_MODAL,
-                                   g_param_spec_boolean ("modal",
-                                                         P_("Modal"),
-                                                         P_("Whether the dialog is modal"),
+                                   g_param_spec_boolean ("modal", NULL, NULL,
                                                          TRUE,
                                                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
@@ -1214,43 +1206,8 @@ pango_font_description_to_css (PangoFontDescription *desc,
         }
     }
   if (set & PANGO_FONT_MASK_WEIGHT)
-    {
-      switch (pango_font_description_get_weight (desc))
-        {
-        case PANGO_WEIGHT_THIN:
-          g_string_append (s, "font-weight: 100; ");
-          break;
-        case PANGO_WEIGHT_ULTRALIGHT:
-          g_string_append (s, "font-weight: 200; ");
-          break;
-        case PANGO_WEIGHT_LIGHT:
-        case PANGO_WEIGHT_SEMILIGHT:
-          g_string_append (s, "font-weight: 300; ");
-          break;
-        case PANGO_WEIGHT_BOOK:
-        case PANGO_WEIGHT_NORMAL:
-          g_string_append (s, "font-weight: 400; ");
-          break;
-        case PANGO_WEIGHT_MEDIUM:
-          g_string_append (s, "font-weight: 500; ");
-          break;
-        case PANGO_WEIGHT_SEMIBOLD:
-          g_string_append (s, "font-weight: 600; ");
-          break;
-        case PANGO_WEIGHT_BOLD:
-          g_string_append (s, "font-weight: 700; ");
-          break;
-        case PANGO_WEIGHT_ULTRABOLD:
-          g_string_append (s, "font-weight: 800; ");
-          break;
-        case PANGO_WEIGHT_HEAVY:
-        case PANGO_WEIGHT_ULTRAHEAVY:
-          g_string_append (s, "font-weight: 900; ");
-          break;
-        default:
-          break;
-        }
-    }
+    g_string_append_printf (s, "font-weight: %d; ", pango_font_description_get_weight (desc));
+
   if (set & PANGO_FONT_MASK_STRETCH)
     {
       switch (pango_font_description_get_stretch (desc))
@@ -1277,6 +1234,7 @@ pango_font_description_to_css (PangoFontDescription *desc,
           g_string_append (s, "font-stretch: expanded; ");
           break;
         case PANGO_STRETCH_EXTRA_EXPANDED:
+          g_string_append (s, "font-stretch: extra-expanded; ");
           break;
         case PANGO_STRETCH_ULTRA_EXPANDED:
           g_string_append (s, "font-stretch: ultra-expanded; ");

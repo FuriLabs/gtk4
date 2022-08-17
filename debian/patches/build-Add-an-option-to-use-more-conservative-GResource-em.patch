@@ -21,10 +21,10 @@ Signed-off-by: Simon McVittie <smcv@debian.org>
  2 files changed, 19 insertions(+), 1 deletion(-)
 
 diff --git a/gtk/meson.build b/gtk/meson.build
-index 3a8457a..de40b91 100644
+index 2e404f2..46f886f 100644
 --- a/gtk/meson.build
 +++ b/gtk/meson.build
-@@ -864,15 +864,28 @@ if not fs.exists('theme/Default/Default-light.css')
+@@ -866,15 +866,28 @@ if not fs.exists('theme/Default/Default-light.css')
  endif
  
  
@@ -55,7 +55,7 @@ index 3a8457a..de40b91 100644
  
    # Create the resource blob
 diff --git a/meson_options.txt b/meson_options.txt
-index bb2530d..73ed3ab 100644
+index 2084ab8..078e76f 100644
 --- a/meson_options.txt
 +++ b/meson_options.txt
 @@ -78,6 +78,11 @@ option('f16c',

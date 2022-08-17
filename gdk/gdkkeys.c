@@ -123,9 +123,7 @@ gdk_keymap_class_init (GdkKeymapClass *klass)
   klass->keys_changed = gdk_keymap_keys_changed;
 
   props[PROP_DISPLAY] =
-    g_param_spec_object ("display",
-                         "Display",
-                         "The display of the keymap",
+    g_param_spec_object ("display", NULL, NULL,
                          GDK_TYPE_DISPLAY,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
@@ -199,22 +197,6 @@ gdk_keymap_init (GdkKeymap *keymap)
   g_array_append_val (keymap->cached_keys, key);
 
   keymap->cache = g_hash_table_new (g_direct_hash, g_direct_equal);
-}
-
-/*< private >
- * gdk_keymap_get_display:
- * @keymap: a `GdkKeymap`
- *
- * Retrieves the `GdkDisplay` associated to the @keymap.
- *
- * Returns: (transfer none): a `GdkDisplay`
- */
-GdkDisplay *
-gdk_keymap_get_display (GdkKeymap *keymap)
-{
-  g_return_val_if_fail (GDK_IS_KEYMAP (keymap), NULL);
-
-  return keymap->display;
 }
 
 /* Other key-handling stuff

@@ -1,3 +1,21 @@
+gtk4 (4.7.2+ds-2ubuntu1) UNRELEASED; urgency=medium
+
+  * Sync with Debian. Remaining changes:
+    - debian/tests:
+      + include the memorytexture test in the flaky set, it has been unreliable
+    - debian/control:
+      + Build-Depend on dh-sequence-translations
+    - debian/rules: Handle the 2nd translation template file.
+      This override can be dropped with 4.7.1
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 17 Aug 2022 04:32:21 -0400
+
+gtk4 (4.7.2+ds-2) experimental; urgency=medium
+
+  * Merge packaging changes from unstable
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 16 Aug 2022 11:24:01 +0100
+
 gtk4 (4.6.6+ds-3ubuntu1) kinetic; urgency=medium
 
   * Sync with Debian. Remaining changes:
@@ -31,6 +49,24 @@ gtk4 (4.6.6+ds-3) unstable; urgency=medium
     Pidgin unit tests. (Closes: #994944)
 
  -- Simon McVittie <smcv@debian.org>  Tue, 16 Aug 2022 09:23:59 +0100
+
+gtk4 (4.7.2+ds-1) experimental; urgency=medium
+
+  * New upstream development release
+    - Fix crashes involving GL/GLES version selection on PinePhone
+      (Closes: #1009917)
+  * Repack with wayland and wayland-protocols subprojects omitted.
+    The versions in unstable are sufficiently new.
+  * d/control.in: Update dependency versions
+  * d/copyright: Update
+  * Refresh patch series
+  * Skip inscription-markup.ui reftest for now.
+    The whole thing is rendered 1px offset from where it should be, which is
+    not a serious problem for practical use of GTK, but makes the tests fail.
+  * d/gtk-4-examples.install: Include the new NodeEditor demo
+  * Update symbols file for new ABI
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 12 Aug 2022 11:46:07 +0100
 
 gtk4 (4.6.6+ds-2) unstable; urgency=medium
 

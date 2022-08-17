@@ -24,7 +24,7 @@
 #include <gtk/gtkdragsource.h>
 #include <gtk/gtkeventcontroller.h>
 #include <gtk/gtkfilechooserdialog.h>
-#include <gtk/gtksignallistitemfactory.h>
+#include <gtk/gtkinscription.h>
 #include <gtk/gtklabel.h>
 #include <gtk/gtklistbox.h>
 #include <gtk/gtklistitem.h>
@@ -33,6 +33,7 @@
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkpicture.h>
 #include <gtk/gtkpopover.h>
+#include <gtk/gtksignallistitemfactory.h>
 #include <gtk/gtksingleselection.h>
 #include <gtk/gtktogglebutton.h>
 #include <gtk/gtktreeexpander.h>
@@ -401,7 +402,8 @@ setup_widget_for_render_node (GtkSignalListItemFactory *factory,
   gtk_box_append (GTK_BOX (box), child);
 
   /* name */
-  child = gtk_label_new (NULL);
+  child = gtk_inscription_new (NULL);
+  gtk_widget_set_hexpand (child, TRUE);
   gtk_box_append (GTK_BOX (box), child);
 }
 
@@ -431,7 +433,7 @@ bind_widget_for_render_node (GtkSignalListItemFactory *factory,
   /* name */
   name = node_name (node);
   child = gtk_widget_get_last_child (box);
-  gtk_label_set_label (GTK_LABEL (child), name);
+  gtk_inscription_set_text (GTK_INSCRIPTION (child), name);
   g_free (name);
 
   g_object_unref (paintable);
@@ -1423,6 +1425,17 @@ gesture_phase_name (GdkTouchpadGesturePhase phase)
   return name[phase];
 }
 
+static const char *
+scroll_unit_name (GdkScrollUnit unit)
+{
+  if (unit == GDK_SCROLL_UNIT_WHEEL)
+    return "Wheel";
+  else if (unit == GDK_SCROLL_UNIT_SURFACE)
+    return "Surface";
+  else
+    return "Incorrect value";
+}
+
 static void
 populate_event_properties (GtkListStore *store,
                            GdkEvent     *event)
@@ -1434,6 +1447,7 @@ populate_event_properties (GtkListStore *store,
   double dx, dy;
   char *tmp;
   GdkModifierType state;
+  GdkScrollUnit scroll_unit;
 
   gtk_list_store_clear (store);
 
@@ -1517,6 +1531,9 @@ populate_event_properties (GtkListStore *store,
           tmp = g_strdup_printf ("%.2f %.2f", x, y);
           add_text_row (store, "Delta", tmp);
           g_free (tmp);
+
+          scroll_unit = gdk_scroll_event_get_unit (event);
+          add_text_row (store, "Unit", scroll_unit_name (scroll_unit));
         }
       else
         {
@@ -2022,10 +2039,11 @@ gtk_inspector_recorder_dispose (GObject *object)
 {
   GtkInspectorRecorder *recorder = GTK_INSPECTOR_RECORDER (object);
 
-  g_clear_pointer (&recorder->box, gtk_widget_unparent);
   g_clear_object (&recorder->render_node_model);
   g_clear_object (&recorder->render_node_root_model);
   g_clear_object (&recorder->render_node_selection);
+
+  gtk_widget_dispose_template (GTK_WIDGET (recorder), GTK_TYPE_INSPECTOR_RECORDER);
 
   G_OBJECT_CLASS (gtk_inspector_recorder_parent_class)->dispose (object);
 }
@@ -2041,20 +2059,16 @@ gtk_inspector_recorder_class_init (GtkInspectorRecorderClass *klass)
   object_class->dispose = gtk_inspector_recorder_dispose;
 
   props[PROP_RECORDING] =
-    g_param_spec_boolean ("recording",
-                          "Recording",
-                          "Whether the recorder is currently recording",
+    g_param_spec_boolean ("recording", NULL, NULL,
                           FALSE,
                           G_PARAM_READWRITE);
   props[PROP_DEBUG_NODES] =
-    g_param_spec_boolean ("debug-nodes",
-                          "Debug nodes",
-                          "Whether to insert extra debug nodes in the tree",
+    g_param_spec_boolean ("debug-nodes", NULL, NULL,
                           FALSE,
                           G_PARAM_READWRITE);
 
-  props[PROP_HIGHLIGHT_SEQUENCES] = g_param_spec_boolean ("highlight-sequences", "", "", FALSE, G_PARAM_READWRITE);
-  props[PROP_SELECTED_SEQUENCE] = g_param_spec_pointer ("selected-sequence", "", "", G_PARAM_READWRITE);
+  props[PROP_HIGHLIGHT_SEQUENCES] = g_param_spec_boolean ("highlight-sequences", NULL, NULL, FALSE, G_PARAM_READWRITE);
+  props[PROP_SELECTED_SEQUENCE] = g_param_spec_pointer ("selected-sequence", NULL, NULL, G_PARAM_READWRITE);
 
   g_object_class_install_properties (object_class, LAST_PROP, props);
 

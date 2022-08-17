@@ -32,12 +32,15 @@
 #include "gtkatcontextprivate.h"
 #include "gtkdebug.h"
 #include "gtkeditable.h"
-#include "gtklabelprivate.h"
 #include "gtkentryprivate.h"
-#include "gtksearchentryprivate.h"
+#include "gtkinscriptionprivate.h"
+#include "gtklabelprivate.h"
+#include "gtkpango.h"
 #include "gtkpasswordentryprivate.h"
+#include "gtksearchentryprivate.h"
 #include "gtkspinbuttonprivate.h"
-#include "gtktextview.h"
+#include "gtktextbufferprivate.h"
+#include "gtktextviewprivate.h"
 
 #include <gio/gio.h>
 
@@ -403,6 +406,274 @@ label_get_property (GDBusConnection  *connection,
 static const GDBusInterfaceVTable label_vtable = {
   label_handle_method,
   label_get_property,
+  NULL,
+};
+
+/* }}} */
+/* {{{ GtkInscription */
+
+static void
+inscription_handle_method (GDBusConnection       *connection,
+                           const gchar           *sender,
+                           const gchar           *object_path,
+                           const gchar           *interface_name,
+                           const gchar           *method_name,
+                           GVariant              *parameters,
+                           GDBusMethodInvocation *invocation,
+                           gpointer               user_data)
+{
+  GtkATContext *self = user_data;
+  GtkAccessible *accessible = gtk_at_context_get_accessible (self);
+  GtkWidget *widget = GTK_WIDGET (accessible);
+
+  if (g_strcmp0 (method_name, "GetCaretOffset") == 0)
+    {
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(i)", 0));
+    }
+  else if (g_strcmp0 (method_name, "SetCaretOffset") == 0)
+    {
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(b)", FALSE));
+    }
+  else if (g_strcmp0 (method_name, "GetText") == 0)
+    {
+      int start, end;
+      const char *text;
+      int len;
+      char *string;
+
+      g_variant_get (parameters, "(ii)", &start, &end);
+
+      text = gtk_inscription_get_text (GTK_INSCRIPTION (widget));
+      len = g_utf8_strlen (text, -1);
+
+      start = CLAMP (start, 0, len);
+      end = CLAMP (end, 0, len);
+
+      if (end <= start)
+        string = g_strdup ("");
+      else
+        {
+          const char *p, *q;
+          p = g_utf8_offset_to_pointer (text, start);
+          q = g_utf8_offset_to_pointer (text, end);
+          string = g_strndup (p, q - p);
+        }
+
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(s)", string));
+      g_free (string);
+    }
+  else if (g_strcmp0 (method_name, "GetTextBeforeOffset") == 0)
+    {
+      PangoLayout *layout = gtk_inscription_get_layout (GTK_INSCRIPTION (widget));;
+      int offset;
+      AtspiTextBoundaryType boundary_type;
+      char *string;
+      int start, end;
+
+      g_variant_get (parameters, "(iu)", &offset, &boundary_type);
+
+      string = gtk_pango_get_text_before (layout, offset, boundary_type, &start, &end);
+
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(sii)", string, start, end));
+      g_free (string);
+    }
+  else if (g_strcmp0 (method_name, "GetTextAtOffset") == 0)
+    {
+      PangoLayout *layout = gtk_inscription_get_layout (GTK_INSCRIPTION (widget));;
+      int offset;
+      AtspiTextBoundaryType boundary_type;
+      char *string;
+      int start, end;
+
+      g_variant_get (parameters, "(iu)", &offset, &boundary_type);
+
+      string = gtk_pango_get_text_at (layout, offset, boundary_type, &start, &end);
+
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(sii)", string, start, end));
+      g_free (string);
+    }
+  else if (g_strcmp0 (method_name, "GetTextAfterOffset") == 0)
+    {
+      PangoLayout *layout = gtk_inscription_get_layout (GTK_INSCRIPTION (widget));;
+      int offset;
+      AtspiTextBoundaryType boundary_type;
+      char *string;
+      int start, end;
+
+      g_variant_get (parameters, "(iu)", &offset, &boundary_type);
+
+      string = gtk_pango_get_text_after (layout, offset, boundary_type, &start, &end);
+
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(sii)", string, start, end));
+      g_free (string);
+    }
+  else if (g_strcmp0 (method_name, "GetCharacterAtOffset") == 0)
+    {
+      int offset;
+      const char *text;
+      gunichar ch = 0;
+
+      g_variant_get (parameters, "(i)", &offset);
+
+      text = gtk_inscription_get_text (GTK_INSCRIPTION (widget));
+
+      if (0 <= offset && offset < g_utf8_strlen (text, -1))
+        ch = g_utf8_get_char (g_utf8_offset_to_pointer (text, offset));
+
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(i)", ch));
+    }
+  else if (g_strcmp0 (method_name, "GetStringAtOffset") == 0)
+    {
+      PangoLayout *layout = gtk_inscription_get_layout (GTK_INSCRIPTION (widget));;
+      int offset;
+      AtspiTextGranularity granularity;
+      char *string;
+      int start, end;
+
+      g_variant_get (parameters, "(iu)", &offset, &granularity);
+
+      string = gtk_pango_get_string_at (layout, offset, granularity, &start, &end);
+
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(sii)", string, start, end));
+      g_free (string);
+    }
+  else if (g_strcmp0 (method_name, "GetAttributes") == 0)
+    {
+      PangoLayout *layout = gtk_inscription_get_layout (GTK_INSCRIPTION (widget));;
+      GVariantBuilder builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE ("a{ss}"));
+      int offset;
+      int start, end;
+
+      g_variant_get (parameters, "(i)", &offset);
+
+      gtk_pango_get_run_attributes (layout, &builder, offset, &start, &end);
+
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(a{ss}ii)", &builder, start, end));
+    }
+  else if (g_strcmp0 (method_name, "GetAttributeValue") == 0)
+    {
+      PangoLayout *layout = gtk_inscription_get_layout (GTK_INSCRIPTION (widget));;
+      GVariantBuilder builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE ("a{ss}"));
+      int offset;
+      const char *name;
+      int start, end;
+      GVariant *attrs;
+      const char *val;
+
+      g_variant_get (parameters, "(i&s)", &offset, &name);
+
+      gtk_pango_get_run_attributes (layout, &builder, offset, &start, &end);
+
+      attrs = g_variant_builder_end (&builder);
+      if (!g_variant_lookup (attrs, name, "&s", &val))
+        val = "";
+
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(s)", val));
+      g_variant_unref (attrs);
+    }
+  else if (g_strcmp0 (method_name, "GetAttributeRun") == 0)
+    {
+      PangoLayout *layout = gtk_inscription_get_layout (GTK_INSCRIPTION (widget));;
+      GVariantBuilder builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE ("a{ss}"));
+      int offset;
+      gboolean include_defaults;
+      int start, end;
+
+      g_variant_get (parameters, "(ib)", &offset, &include_defaults);
+
+      if (include_defaults)
+        gtk_pango_get_default_attributes (layout, &builder);
+
+      gtk_pango_get_run_attributes (layout, &builder, offset, &start, &end);
+
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(a{ss}ii)", &builder, start, end));
+    }
+  else if (g_strcmp0 (method_name, "GetDefaultAttributes") == 0 ||
+           g_strcmp0 (method_name, "GetDefaultAttributeSet") == 0)
+    {
+      PangoLayout *layout = gtk_inscription_get_layout (GTK_INSCRIPTION (widget));;
+      GVariantBuilder builder = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE ("a{ss}"));
+
+      gtk_pango_get_default_attributes (layout, &builder);
+
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(a{ss})", &builder));
+    }
+  else if (g_strcmp0 (method_name, "GetNSelections") == 0)
+    {
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(i)", 0));
+    }
+  else if (g_strcmp0 (method_name, "GetSelection") == 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS, "No selections available");
+    }
+  else if (g_strcmp0 (method_name, "AddSelection") == 0)
+    {
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(b)", FALSE));
+    }
+  else if (g_strcmp0 (method_name, "RemoveSelection") == 0)
+    {
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(b)", FALSE));
+    }
+  else if (g_strcmp0 (method_name, "SetSelection") == 0)
+    {
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(b)", FALSE));
+    }
+  else if (g_strcmp0 (method_name, "GetCharacterExtents") == 0)
+    {
+      g_dbus_method_invocation_return_error_literal (invocation, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED, "");
+    }
+  else if (g_strcmp0 (method_name, "GetRangeExtents") == 0)
+    {
+      g_dbus_method_invocation_return_error_literal (invocation, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED, "");
+    }
+  else if (g_strcmp0 (method_name, "GetBoundedRanges") == 0)
+    {
+      g_dbus_method_invocation_return_error_literal (invocation, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED, "");
+    }
+  else if (g_strcmp0 (method_name, "ScrollSubstringTo") == 0)
+    {
+      g_dbus_method_invocation_return_error_literal (invocation, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED, "");
+    }
+  else if (g_strcmp0 (method_name, "ScrollSubstringToPoint") == 0)
+    {
+      g_dbus_method_invocation_return_error_literal (invocation, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED, "");
+    }
+}
+
+static GVariant *
+inscription_get_property (GDBusConnection  *connection,
+                          const gchar      *sender,
+                          const gchar      *object_path,
+                          const gchar      *interface_name,
+                          const gchar      *property_name,
+                          GError          **error,
+                          gpointer          user_data)
+{
+  GtkATContext *self = user_data;
+  GtkAccessible *accessible = gtk_at_context_get_accessible (self);
+  GtkWidget *widget = GTK_WIDGET (accessible);
+
+  if (g_strcmp0 (property_name, "CharacterCount") == 0)
+    {
+      const char *text;
+      int len;
+
+      text = gtk_inscription_get_text (GTK_INSCRIPTION (widget));
+      len = g_utf8_strlen (text, -1);
+
+      return g_variant_new_int32 (len);
+    }
+  else if (g_strcmp0 (property_name, "CaretOffset") == 0)
+    {
+      return g_variant_new_int32 (0);
+    }
+
+  return NULL;
+}
+
+static const GDBusInterfaceVTable inscription_vtable = {
+  inscription_handle_method,
+  inscription_get_property,
   NULL,
 };
 
@@ -1098,7 +1369,47 @@ text_view_handle_method (GDBusConnection       *connection,
     }
   else if (g_strcmp0 (method_name, "GetCharacterExtents") == 0)
     {
-      g_dbus_method_invocation_return_error_literal (invocation, G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED, "");
+      int offset = 0;
+      guint coords_type;
+
+      g_variant_get (parameters, "(iu)", &offset, &coords_type);
+
+      if (coords_type != ATSPI_COORD_TYPE_WINDOW)
+        {
+          g_dbus_method_invocation_return_error_literal (invocation,
+                                                         G_DBUS_ERROR,
+                                                         G_DBUS_ERROR_NOT_SUPPORTED,
+                                                         "Unsupported coordinate space");
+          return;
+        }
+
+      GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (widget));
+
+      GtkTextIter iter;
+      gtk_text_buffer_get_iter_at_offset (buffer, &iter, offset);
+
+      GdkRectangle rect = { 0, };
+      gtk_text_view_get_iter_location (GTK_TEXT_VIEW (widget), &iter, &rect);
+
+      int x, y;
+      gtk_text_view_buffer_to_window_coords (GTK_TEXT_VIEW (widget),
+                                             GTK_TEXT_WINDOW_WIDGET,
+                                             rect.x, rect.y,
+                                             &x, &y);
+
+      double dx, dy;
+      gtk_widget_translate_coordinates (widget,
+                                        GTK_WIDGET (gtk_widget_get_native (widget)),
+                                        (double) x, (double) y, &dx, &dy);
+      x = floor (dx);
+      y = floor (dy);
+
+      g_dbus_method_invocation_return_value (invocation,
+                                             g_variant_new ("(iiii)",
+                                                            x,
+                                                            y,
+                                                            rect.width,
+                                                            rect.height));
     }
   else if (g_strcmp0 (method_name, "GetRangeExtents") == 0)
     {
@@ -1261,6 +1572,8 @@ gtk_atspi_get_text_vtable (GtkAccessible *accessible)
 {
   if (GTK_IS_LABEL (accessible))
     return &label_vtable;
+  else if (GTK_IS_INSCRIPTION (accessible))
+    return &inscription_vtable;
   else if (GTK_IS_EDITABLE (accessible) &&
            GTK_IS_TEXT (gtk_editable_get_delegate (GTK_EDITABLE (accessible))))
     return &editable_vtable;

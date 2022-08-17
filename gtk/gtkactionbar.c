@@ -47,6 +47,13 @@
  * the full width of the box, even if the children at either side take
  * up different amounts of space.
  *
+ * # GtkActionBar as GtkBuildable
+ *
+ * The `GtkActionBar` implementation of the `GtkBuildable` interface supports
+ * adding children at the start or end sides by specifying “start” or “end” as
+ * the “type” attribute of a `<child>` element, or setting the center widget
+ * by specifying “center” value.
+ *
  * # CSS nodes
  *
  * ```
@@ -171,9 +178,7 @@ gtk_action_bar_class_init (GtkActionBarClass *klass)
    * Controls whether the action bar shows its contents.
    */
   props[PROP_REVEALED] =
-    g_param_spec_boolean ("revealed",
-                          P_("Reveal"),
-                          P_("Controls whether the action bar shows its contents or not"),
+    g_param_spec_boolean ("revealed", NULL, NULL,
                           TRUE,
                           GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 

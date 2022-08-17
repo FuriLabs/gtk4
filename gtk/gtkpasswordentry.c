@@ -169,12 +169,12 @@ visibility_toggled (GObject          *object,
 {
   if (gtk_text_get_visibility (GTK_TEXT (entry->entry)))
     {
-      gtk_image_set_from_icon_name (GTK_IMAGE (entry->peek_icon), "eye-open-negative-filled-symbolic");
+      gtk_image_set_from_icon_name (GTK_IMAGE (entry->peek_icon), "view-conceal-symbolic");
       gtk_widget_set_tooltip_text (entry->peek_icon, _("Hide Text"));
     }
   else
     {
-      gtk_image_set_from_icon_name (GTK_IMAGE (entry->peek_icon), "eye-not-looking-symbolic");
+      gtk_image_set_from_icon_name (GTK_IMAGE (entry->peek_icon), "view-reveal-symbolic");
       gtk_widget_set_tooltip_text (entry->peek_icon, _("Show Text"));
     }
 
@@ -207,6 +207,7 @@ gtk_password_entry_init (GtkPasswordEntry *entry)
   entry->entry = gtk_text_new ();
   gtk_text_set_buffer (GTK_TEXT (entry->entry), buffer);
   gtk_text_set_visibility (GTK_TEXT (entry->entry), FALSE);
+  gtk_text_set_input_purpose (GTK_TEXT (entry->entry), GTK_INPUT_PURPOSE_PASSWORD);
   gtk_widget_set_parent (entry->entry, GTK_WIDGET (entry));
   gtk_editable_init_delegate (GTK_EDITABLE (entry));
   g_signal_connect_swapped (entry->entry, "notify::has-focus", G_CALLBACK (focus_changed), entry);
@@ -463,9 +464,7 @@ gtk_password_entry_class_init (GtkPasswordEntryClass *klass)
    * when it is empty and unfocused.
    */
   props[PROP_PLACEHOLDER_TEXT] =
-      g_param_spec_string ("placeholder-text",
-                           P_("Placeholder text"),
-                           P_("Show text in the entry when it’s empty and unfocused"),
+      g_param_spec_string ("placeholder-text", NULL, NULL,
                            NULL,
                            GTK_PARAM_READWRITE);
 
@@ -475,9 +474,7 @@ gtk_password_entry_class_init (GtkPasswordEntryClass *klass)
    * Whether to activate the default widget when Enter is pressed.
    */
   props[PROP_ACTIVATES_DEFAULT] =
-      g_param_spec_boolean ("activates-default",
-                            P_("Activates default"),
-                            P_("Whether to activate the default widget (such as the default button in a dialog) when Enter is pressed"),
+      g_param_spec_boolean ("activates-default", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -487,9 +484,7 @@ gtk_password_entry_class_init (GtkPasswordEntryClass *klass)
    * Whether to show an icon for revealing the content.
    */
   props[PROP_SHOW_PEEK_ICON] =
-      g_param_spec_boolean ("show-peek-icon",
-                            P_("Show Peek Icon"),
-                            P_("Whether to show an icon for revealing the content"),
+      g_param_spec_boolean ("show-peek-icon", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -500,9 +495,7 @@ gtk_password_entry_class_init (GtkPasswordEntryClass *klass)
    * the context menu.
    */
   props[PROP_EXTRA_MENU] =
-      g_param_spec_object ("extra-menu",
-                           P_("Extra menu"),
-                           P_("Model menu to append to the context menu"),
+      g_param_spec_object ("extra-menu", NULL, NULL,
                            G_TYPE_MENU_MODEL,
                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -625,7 +618,7 @@ gtk_password_entry_set_show_peek_icon (GtkPasswordEntry *entry,
     {
       GtkGesture *press;
 
-      entry->peek_icon = gtk_image_new_from_icon_name ("eye-not-looking-symbolic");
+      entry->peek_icon = gtk_image_new_from_icon_name ("view-reveal-symbolic");
       gtk_widget_set_tooltip_text (entry->peek_icon, _("Show Text"));
       gtk_widget_set_parent (entry->peek_icon, GTK_WIDGET (entry));
 
@@ -703,7 +696,7 @@ gtk_password_entry_set_extra_menu (GtkPasswordEntry *entry,
 
   section = g_menu_new ();
   item = g_menu_item_new (_("_Show Text"), "misc.toggle-visibility");
-  g_menu_item_set_attribute (item, "touch-icon", "s", "eye-not-looking-symbolic");
+  g_menu_item_set_attribute (item, "touch-icon", "s", "view-reveal-symbolic");
   g_menu_append_item (section, item);
   g_object_unref (item);
 

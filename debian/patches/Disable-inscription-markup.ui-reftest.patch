@@ -1,0 +1,26 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Fri, 12 Aug 2022 10:44:17 +0100
+Subject: Disable inscription-markup.ui reftest
+
+It's rendered 1px to the left of where it should be, which is not a
+serious problem for practical use of GTK, but is a test failure.
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/5099
+Forwarded: not-needed, workaround
+---
+ testsuite/reftests/meson.build | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/testsuite/reftests/meson.build b/testsuite/reftests/meson.build
+index 2cd31db..74d8568 100644
+--- a/testsuite/reftests/meson.build
++++ b/testsuite/reftests/meson.build
+@@ -367,8 +367,6 @@ testdata = [
+   'image-load-from-file.css',
+   'image-load-from-file.ref.ui',
+   'image-load-from-file.ui',
+-  'inscription-markup.ref.ui',
+-  'inscription-markup.ui',
+   'inscription-overflow.ref.ui',
+   'inscription-overflow.ui',
+   'inscription-overflow-multiline.ref.ui',

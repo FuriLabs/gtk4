@@ -383,9 +383,7 @@ gtk_print_unix_dialog_class_init (GtkPrintUnixDialogClass *class)
    */
   g_object_class_install_property (object_class,
                                    PROP_PAGE_SETUP,
-                                   g_param_spec_object ("page-setup",
-                                                        P_("Page Setup"),
-                                                        P_("The GtkPageSetup to use"),
+                                   g_param_spec_object ("page-setup", NULL, NULL,
                                                         GTK_TYPE_PAGE_SETUP,
                                                         GTK_PARAM_READWRITE));
 
@@ -396,9 +394,7 @@ gtk_print_unix_dialog_class_init (GtkPrintUnixDialogClass *class)
    */
   g_object_class_install_property (object_class,
                                    PROP_CURRENT_PAGE,
-                                   g_param_spec_int ("current-page",
-                                                     P_("Current Page"),
-                                                     P_("The current page in the document"),
+                                   g_param_spec_int ("current-page", NULL, NULL,
                                                      -1,
                                                      G_MAXINT,
                                                      -1,
@@ -411,9 +407,7 @@ gtk_print_unix_dialog_class_init (GtkPrintUnixDialogClass *class)
    */
   g_object_class_install_property (object_class,
                                    PROP_PRINT_SETTINGS,
-                                   g_param_spec_object ("print-settings",
-                                                        P_("Print Settings"),
-                                                        P_("The GtkPrintSettings used for initializing the dialog"),
+                                   g_param_spec_object ("print-settings", NULL, NULL,
                                                         GTK_TYPE_PRINT_SETTINGS,
                                                         GTK_PARAM_READWRITE));
 
@@ -424,9 +418,7 @@ gtk_print_unix_dialog_class_init (GtkPrintUnixDialogClass *class)
    */
   g_object_class_install_property (object_class,
                                    PROP_SELECTED_PRINTER,
-                                   g_param_spec_object ("selected-printer",
-                                                        P_("Selected Printer"),
-                                                        P_("The GtkPrinter which is selected"),
+                                   g_param_spec_object ("selected-printer", NULL, NULL,
                                                         GTK_TYPE_PRINTER,
                                                         GTK_PARAM_READABLE));
 
@@ -437,9 +429,7 @@ gtk_print_unix_dialog_class_init (GtkPrintUnixDialogClass *class)
    */
   g_object_class_install_property (object_class,
                                    PROP_MANUAL_CAPABILITIES,
-                                   g_param_spec_flags ("manual-capabilities",
-                                                       P_("Manual Capabilities"),
-                                                       P_("Capabilities the application can handle"),
+                                   g_param_spec_flags ("manual-capabilities", NULL, NULL,
                                                        GTK_TYPE_PRINT_CAPABILITIES,
                                                        0,
                                                        GTK_PARAM_READWRITE));
@@ -451,9 +441,7 @@ gtk_print_unix_dialog_class_init (GtkPrintUnixDialogClass *class)
    */
   g_object_class_install_property (object_class,
                                    PROP_SUPPORT_SELECTION,
-                                   g_param_spec_boolean ("support-selection",
-                                                         P_("Support Selection"),
-                                                         P_("Whether the dialog supports selection"),
+                                   g_param_spec_boolean ("support-selection", NULL, NULL,
                                                          FALSE,
                                                          GTK_PARAM_READWRITE));
 
@@ -464,9 +452,7 @@ gtk_print_unix_dialog_class_init (GtkPrintUnixDialogClass *class)
    */
   g_object_class_install_property (object_class,
                                    PROP_HAS_SELECTION,
-                                   g_param_spec_boolean ("has-selection",
-                                                         P_("Has Selection"),
-                                                         P_("Whether the application has a selection"),
+                                   g_param_spec_boolean ("has-selection", NULL, NULL,
                                                          FALSE,
                                                          GTK_PARAM_READWRITE));
 
@@ -477,9 +463,7 @@ gtk_print_unix_dialog_class_init (GtkPrintUnixDialogClass *class)
     */
    g_object_class_install_property (object_class,
                                    PROP_EMBED_PAGE_SETUP,
-                                   g_param_spec_boolean ("embed-page-setup",
-                                                         P_("Embed Page Setup"),
-                                                         P_("TRUE if page setup combos are embedded in GtkPrintUnixDialog"),
+                                   g_param_spec_boolean ("embed-page-setup", NULL, NULL,
                                                          FALSE,
                                                          GTK_PARAM_READWRITE));
 
@@ -958,6 +942,7 @@ static void
 gtk_print_unix_dialog_finalize (GObject *object)
 {
   GtkPrintUnixDialog *dialog = GTK_PRINT_UNIX_DIALOG (object);
+  GList *iter;
 
   unschedule_idle_mark_conflicts (dialog);
   disconnect_printer_details_request (dialog, FALSE);
@@ -983,7 +968,9 @@ gtk_print_unix_dialog_finalize (GObject *object)
   g_clear_pointer (&dialog->waiting_for_printer, (GDestroyNotify)g_free);
   g_clear_pointer (&dialog->format_for_printer, (GDestroyNotify)g_free);
 
-  g_list_free (dialog->print_backends);
+  for (iter = dialog->print_backends; iter != NULL; iter = iter->next)
+    gtk_print_backend_destroy (GTK_PRINT_BACKEND (iter->data));
+  g_list_free_full (dialog->print_backends, g_object_unref);
   dialog->print_backends = NULL;
 
   g_clear_object (&dialog->page_setup_list);

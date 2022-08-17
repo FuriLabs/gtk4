@@ -30,6 +30,7 @@
 #include "gtkaccessible.h"
 #include "gtkadjustmentprivate.h"
 #include "gtkcolorscaleprivate.h"
+#include "gtkcssboxesprivate.h"
 #include "gtkenums.h"
 #include "gtkeventcontrollerkey.h"
 #include "gtkeventcontrollerscroll.h"
@@ -42,6 +43,7 @@
 #include "gtkorientable.h"
 #include "gtkprivate.h"
 #include "gtkscale.h"
+#include "gtksnapshot.h"
 #include "gtktypebuiltins.h"
 #include "gtkwidgetprivate.h"
 
@@ -368,9 +370,7 @@ gtk_range_class_init (GtkRangeClass *class)
    * The adjustment that is controlled by the range.
    */
   properties[PROP_ADJUSTMENT] =
-      g_param_spec_object ("adjustment",
-                           P_("Adjustment"),
-                           P_("The GtkAdjustment that contains the current value of this range object"),
+      g_param_spec_object ("adjustment", NULL, NULL,
                            GTK_TYPE_ADJUSTMENT,
                            GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT);
 
@@ -380,9 +380,7 @@ gtk_range_class_init (GtkRangeClass *class)
    * If %TRUE, the direction in which the slider moves is inverted.
    */
   properties[PROP_INVERTED] =
-      g_param_spec_boolean ("inverted",
-                            P_("Inverted"),
-                            P_("Invert direction slider moves to increase range value"),
+      g_param_spec_boolean ("inverted", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -393,9 +391,7 @@ gtk_range_class_init (GtkRangeClass *class)
    * on the trough.
    */
   properties[PROP_SHOW_FILL_LEVEL] =
-      g_param_spec_boolean ("show-fill-level",
-                            P_("Show Fill Level"),
-                            P_("Whether to display a fill level indicator graphics on trough."),
+      g_param_spec_boolean ("show-fill-level", NULL, NULL,
                             FALSE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -406,9 +402,7 @@ gtk_range_class_init (GtkRangeClass *class)
    * upper boundary set by the fill level.
    */
   properties[PROP_RESTRICT_TO_FILL_LEVEL] =
-      g_param_spec_boolean ("restrict-to-fill-level",
-                            P_("Restrict to Fill Level"),
-                            P_("Whether to restrict the upper boundary to the fill level."),
+      g_param_spec_boolean ("restrict-to-fill-level", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
@@ -418,9 +412,7 @@ gtk_range_class_init (GtkRangeClass *class)
    * The fill level (e.g. prebuffering of a network stream).
    */
   properties[PROP_FILL_LEVEL] =
-      g_param_spec_double ("fill-level",
-                           P_("Fill Level"),
-                           P_("The fill level."),
+      g_param_spec_double ("fill-level", NULL, NULL,
                            -G_MAXDOUBLE, G_MAXDOUBLE,
                            G_MAXDOUBLE,
                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -434,9 +426,7 @@ gtk_range_class_init (GtkRangeClass *class)
    * See [signal@Gtk.Range::change-value].
    */
   properties[PROP_ROUND_DIGITS] =
-      g_param_spec_int ("round-digits",
-                        P_("Round Digits"),
-                        P_("The number of digits to round the value to."),
+      g_param_spec_int ("round-digits", NULL, NULL,
                         -1, G_MAXINT,
                         -1,
                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
@@ -1670,9 +1660,15 @@ gtk_range_render_trough (GtkGizmo    *gizmo,
    * so we let it...
    */
   if (GTK_IS_COLOR_SCALE (widget))
-    gtk_color_scale_snapshot_trough (GTK_COLOR_SCALE (widget), snapshot,
-                                     gtk_widget_get_width (GTK_WIDGET (gizmo)),
-                                     gtk_widget_get_height (GTK_WIDGET (gizmo)));
+    {
+      GtkCssBoxes boxes;
+      gtk_css_boxes_init (&boxes, GTK_WIDGET (gizmo));
+      gtk_snapshot_push_rounded_clip (snapshot, gtk_css_boxes_get_padding_box (&boxes));
+      gtk_color_scale_snapshot_trough (GTK_COLOR_SCALE (widget), snapshot,
+                                       gtk_widget_get_width (GTK_WIDGET (gizmo)),
+                                       gtk_widget_get_height (GTK_WIDGET (gizmo)));
+      gtk_snapshot_pop (snapshot);
+    }
 
   if (priv->show_fill_level &&
       gtk_adjustment_get_upper (priv->adjustment) - gtk_adjustment_get_page_size (priv->adjustment) -
@@ -2202,25 +2198,27 @@ gtk_range_scroll_controller_scroll (GtkEventControllerScroll *scroll,
                                     GtkRange                 *range)
 {
   GtkRangePrivate *priv = gtk_range_get_instance_private (range);
-  double scroll_unit, delta;
+  double delta;
   gboolean handled;
   GtkOrientation move_orientation;
-
-#ifdef GDK_WINDOWING_MACOS
-  scroll_unit = 1;
-#else
-  scroll_unit = gtk_adjustment_get_page_increment (priv->adjustment);
-#endif
+  GdkScrollUnit scroll_unit;
 
   if (priv->orientation == GTK_ORIENTATION_HORIZONTAL && dx != 0)
     {
       move_orientation = GTK_ORIENTATION_HORIZONTAL;
-      delta = dx * scroll_unit;
+      delta = dx;
     }
   else
     {
       move_orientation = GTK_ORIENTATION_VERTICAL;
-      delta = dy * scroll_unit;
+      delta = dy;
+    }
+
+  scroll_unit = gtk_event_controller_scroll_get_unit (scroll);
+
+  if (scroll_unit == GDK_SCROLL_UNIT_WHEEL)
+    {
+      delta *= gtk_adjustment_get_page_increment (priv->adjustment);
     }
 
   if (delta != 0 && should_invert_move (range, move_orientation))

@@ -19,6 +19,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                gsettings-desktop-schemas <!nocheck>,
                iso-codes <!nocheck>,
                libavcodec-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
+               libavdevice-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
                libavfilter-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
                libavformat-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
                libavutil-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
@@ -36,7 +37,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libgraphene-1.0-dev (>= 1.10.4~),
                libgstreamer1.0-dev (>= 1.12.3),
                libgstreamer-plugins-bad1.0-dev (>= 1.12.3),
-               libharfbuzz-dev (>= 2.1.0),
+               libharfbuzz-dev (>= 2.6.0),
                libjpeg-dev,
                libjson-glib-dev:native,
                libpango1.0-dev (>= 1.50.0),
@@ -44,11 +45,12 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libpolkit-gobject-1-dev (>= 0.105) [linux-any],
                librsvg2-common [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32] <!nocheck>,
                librsvg2-dev (>= 2.52.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
+               libswresample-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
                libswscale-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
                libsysprof-capture-4-dev (>= 3.40.1) [linux-any],
                libtiff-dev,
                libvulkan-dev [linux-any],
-               libwayland-dev (>= 1.20.0) [linux-any],
+               libwayland-dev (>= 1.21.0) [linux-any],
                libx11-dev,
                libxcomposite-dev,
                libxcursor-dev,
@@ -68,7 +70,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                python3-gi (>= 3.40),
                sassc,
                ttf-bitstream-vera <!nocheck>,
-               wayland-protocols (>= 1.23) [linux-any],
+               wayland-protocols (>= 1.25) [linux-any],
                weston [linux-any] <!nocheck>,
                xauth <!nocheck>,
                xsltproc,
@@ -82,8 +84,8 @@ Rules-Requires-Root: no
 Standards-Version: 4.6.1
 XS-Debian-Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4
 XS-Debian-Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git -b debian/unstable
-Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4/tree/ubuntu/jammy
-Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git -b ubuntu/jammy
+Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4/tree/ubuntu/master
+Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git -b ubuntu/master
 Homepage: https://www.gtk.org/
 
 Package: libgtk-4-1

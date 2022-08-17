@@ -203,6 +203,7 @@ static const GdkDebugKey gtk_debug_keys[] = {
   { "snapshot", GTK_DEBUG_SNAPSHOT, "Generate debug render nodes" },
   { "accessibility", GTK_DEBUG_A11Y, "Information about accessibility state changes" },
   { "iconfallback", GTK_DEBUG_ICONFALLBACK, "Information about icon fallback" },
+  { "invert-text-dir", GTK_DEBUG_INVERT_TEXT_DIR, "Invert the default text direction" },
 };
 
 /* This checks to see if the process is running suid or sgid
@@ -523,6 +524,7 @@ static void
 do_post_parse_initialization (void)
 {
   GdkDisplayManager *display_manager;
+  GtkTextDirection text_dir;
   gint64 before G_GNUC_UNUSED;
 
   if (gtk_initialized)
@@ -536,7 +538,16 @@ do_post_parse_initialization (void)
   signal (SIGPIPE, SIG_IGN);
 #endif
 
-  gtk_widget_set_default_direction (gtk_get_locale_direction ());
+  text_dir = gtk_get_locale_direction ();
+
+  /* We always allow inverting the text direction, even in
+   * production builds, as SDK/IDE tooling may provide the
+   * ability for developers to test rtl/ltr inverted.
+   */
+  if (gtk_get_debug_flags () & GTK_DEBUG_INVERT_TEXT_DIR)
+    text_dir = (text_dir == GTK_TEXT_DIR_LTR) ? GTK_TEXT_DIR_RTL : GTK_TEXT_DIR_LTR;
+
+  gtk_widget_set_default_direction (text_dir);
 
   gdk_event_init_types ();
 
@@ -897,30 +908,10 @@ rewrite_event_for_surface (GdkEvent  *event,
 			   GdkSurface *new_surface)
 {
   GdkEventType type;
-  double x, y;
+  double x = -G_MAXDOUBLE, y = -G_MAXDOUBLE;
   double dx, dy;
 
   type = gdk_event_get_event_type (event);
-
-  switch ((guint) type)
-    {
-    case GDK_BUTTON_PRESS:
-    case GDK_BUTTON_RELEASE:
-    case GDK_MOTION_NOTIFY:
-    case GDK_TOUCH_BEGIN:
-    case GDK_TOUCH_UPDATE:
-    case GDK_TOUCH_END:
-    case GDK_TOUCH_CANCEL:
-    case GDK_TOUCHPAD_SWIPE:
-    case GDK_TOUCHPAD_PINCH:
-    case GDK_TOUCHPAD_HOLD:
-      gdk_event_get_position (event, &x, &y);
-      gdk_surface_translate_coordinates (gdk_event_get_surface (event), new_surface, &x, &y);
-      break;
-    default:
-      x = y = 0;
-      break;
-    }
 
   switch ((guint) type)
     {
@@ -982,6 +973,7 @@ rewrite_event_for_surface (GdkEvent  *event,
                                            gdk_touchpad_event_get_pinch_angle_delta (event));
     case GDK_TOUCHPAD_HOLD:
       return gdk_touchpad_event_new_hold (new_surface,
+                                          gdk_event_get_event_sequence (event),
                                           gdk_event_get_device (event),
                                           gdk_event_get_time (event),
                                           gdk_event_get_modifier_state (event),
@@ -1031,8 +1023,7 @@ rewrite_event_for_grabs (GdkEvent *event)
       display = gdk_event_get_display (event);
       device = gdk_event_get_device (event);
 
-      if (!gdk_device_grab_info (display, device, &grab_surface, &owner_events) ||
-          !owner_events)
+      if (!gdk_device_grab_info (display, device, &grab_surface, &owner_events))
         return NULL;
       break;
     default:
@@ -1042,11 +1033,24 @@ rewrite_event_for_grabs (GdkEvent *event)
   event_widget = gtk_get_event_widget (event);
   grab_widget = GTK_WIDGET (gtk_native_get_for_surface (grab_surface));
 
-  if (grab_widget &&
-      gtk_main_get_window_group (grab_widget) != gtk_main_get_window_group (event_widget))
-    return rewrite_event_for_surface (event, grab_surface);
-  else
+  if (!grab_widget)
     return NULL;
+
+  /* If owner_events was set, events in client surfaces get forwarded
+   * as normal, but we consider other window groups foreign surfaces.
+   */
+  if (owner_events &&
+      gtk_main_get_window_group (grab_widget) == gtk_main_get_window_group (event_widget))
+    return NULL;
+
+  /* If owner_events was not set, events only get sent to the grabbing
+   * surface.
+   */
+  if (!owner_events &&
+      grab_surface == gtk_native_get_surface (gtk_widget_get_native (event_widget)))
+    return NULL;
+
+  return rewrite_event_for_surface (event, grab_surface);
 }
 
 static GdkEvent *
@@ -1082,30 +1086,19 @@ rewrite_event_for_toplevel (GdkEvent *event)
 }
 
 static gboolean
-translate_event_coordinates (GdkEvent  *event,
-                             double    *x,
-                             double    *y,
-                             GtkWidget *widget)
+translate_coordinates (double     event_x,
+                       double     event_y,
+                       double    *x,
+                       double    *y,
+                       GtkWidget *widget)
 {
-  GtkWidget *event_widget;
   GtkNative *native;
   graphene_point_t p;
-  double event_x, event_y;
-  double native_x, native_y;
 
   *x = *y = 0;
+  native = gtk_widget_get_native (widget);
 
-  if (!gdk_event_get_position (event, &event_x, &event_y))
-    return FALSE;
-
-  event_widget = gtk_get_event_widget (event);
-  native = gtk_widget_get_native (event_widget);
-
-  gtk_native_get_surface_transform (GTK_NATIVE (native), &native_x, &native_y);
-  event_x -= native_x;
-  event_y -= native_y;
-
-  if (!gtk_widget_compute_point (event_widget,
+  if (!gtk_widget_compute_point (GTK_WIDGET (native),
                                  widget,
                                  &GRAPHENE_POINT_INIT (event_x, event_y),
                                  &p))
@@ -1117,12 +1110,13 @@ translate_event_coordinates (GdkEvent  *event,
   return TRUE;
 }
 
-static void
+void
 gtk_synthesize_crossing_events (GtkRoot         *toplevel,
                                 GtkCrossingType  crossing_type,
                                 GtkWidget       *old_target,
                                 GtkWidget       *new_target,
-                                GdkEvent        *event,
+                                double           surface_x,
+                                double           surface_y,
                                 GdkCrossingMode  mode,
                                 GdkDrop         *drop)
 {
@@ -1178,7 +1172,7 @@ gtk_synthesize_crossing_events (GtkRoot         *toplevel,
           crossing.new_descendent = NULL;
         }
       check_crossing_invariants (widget, &crossing);
-      translate_event_coordinates (event, &x, &y, widget);
+      translate_coordinates (surface_x, surface_y, &x, &y, widget);
       gtk_widget_handle_crossing (widget, &crossing, x, y);
       if (crossing_type == GTK_CROSSING_POINTER)
         gtk_widget_unset_state_flags (widget, GTK_STATE_FLAG_PRELIGHT);
@@ -1221,7 +1215,7 @@ gtk_synthesize_crossing_events (GtkRoot         *toplevel,
           crossing.old_descendent = old_target ? crossing.new_descendent : NULL;
         }
 
-      translate_event_coordinates (event, &x, &y, widget);
+      translate_coordinates (surface_x, surface_y, &x, &y, widget);
       gtk_widget_handle_crossing (widget, &crossing, x, y);
       if (crossing_type == GTK_CROSSING_POINTER)
         gtk_widget_set_state_flags (widget, GTK_STATE_FLAG_PRELIGHT, FALSE);
@@ -1388,7 +1382,7 @@ handle_pointing_event (GdkEvent *event)
 
       old_target = update_pointer_focus_state (toplevel, event, NULL);
       gtk_synthesize_crossing_events (GTK_ROOT (toplevel), GTK_CROSSING_POINTER, old_target, NULL,
-                                      event, gdk_crossing_event_get_mode (event), NULL);
+                                      x, y, gdk_crossing_event_get_mode (event), NULL);
       break;
     case GDK_TOUCH_END:
     case GDK_TOUCH_CANCEL:
@@ -1401,7 +1395,7 @@ handle_pointing_event (GdkEvent *event)
         old_target = update_pointer_focus_state (toplevel, event, NULL);
         gtk_drop_begin_event (drop, GDK_DRAG_LEAVE);
         gtk_synthesize_crossing_events (GTK_ROOT (toplevel), GTK_CROSSING_DROP, old_target, NULL,
-                                        event, GDK_CROSSING_NORMAL, drop);
+                                        x, y, GDK_CROSSING_NORMAL, drop);
         gtk_drop_end_event (drop);
       }
       break;
@@ -1428,7 +1422,7 @@ handle_pointing_event (GdkEvent *event)
                                                               sequence))
             {
               gtk_synthesize_crossing_events (GTK_ROOT (toplevel), GTK_CROSSING_POINTER, old_target, target,
-                                              event, GDK_CROSSING_NORMAL, NULL);
+                                              x, y, GDK_CROSSING_NORMAL, NULL);
             }
 
           gtk_window_maybe_update_cursor (toplevel, NULL, device);
@@ -1439,7 +1433,7 @@ handle_pointing_event (GdkEvent *event)
           GdkDrop *drop = gdk_dnd_event_get_drop (event);
           gtk_drop_begin_event (drop, type);
           gtk_synthesize_crossing_events (GTK_ROOT (toplevel), GTK_CROSSING_DROP, old_target, target,
-                                          event, GDK_CROSSING_NORMAL, gdk_dnd_event_get_drop (event));
+                                          x, y, GDK_CROSSING_NORMAL, gdk_dnd_event_get_drop (event));
           gtk_drop_end_event (drop);
         }
       else if (type == GDK_TOUCH_BEGIN)
@@ -1479,7 +1473,7 @@ handle_pointing_event (GdkEvent *event)
             new_target = GTK_WIDGET (toplevel);
 
           gtk_synthesize_crossing_events (GTK_ROOT (toplevel), GTK_CROSSING_POINTER, target, new_target,
-                                          event, GDK_CROSSING_UNGRAB, NULL);
+                                          x, y, GDK_CROSSING_UNGRAB, NULL);
           gtk_window_maybe_update_cursor (toplevel, NULL, device);
           update_pointer_focus_state (toplevel, event, new_target);
         }

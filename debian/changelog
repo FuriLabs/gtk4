@@ -5,8 +5,8 @@ gtk4 (4.7.2+ds-2ubuntu1) UNRELEASED; urgency=medium
       + include the memorytexture test in the flaky set, it has been unreliable
     - debian/control:
       + Build-Depend on dh-sequence-translations
-    - debian/rules: Handle the 2nd translation template file.
-      This override can be dropped with 4.7.1
+  * Drop the debian/rules translation override since there is only one
+    translation template now
 
  -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 17 Aug 2022 04:32:21 -0400
 

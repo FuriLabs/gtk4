@@ -1,3 +1,16 @@
+gtk4 (4.7.2+ds-3) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * debian/libgtk-4-1.symbols.in: Mark more Wayland symbols as Linux-specific
+  * Build-depend on dh-exec
+  * Avoid trying to install Wayland documentation on non-Linux
+    (Closes: #1017866)
+
+  [ Jeremy Bicha ]
+  * Release to unstable
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Sun, 21 Aug 2022 17:40:46 -0400
+
 gtk4 (4.7.2+ds-2) experimental; urgency=medium
 
   * Merge packaging changes from unstable

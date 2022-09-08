@@ -1487,13 +1487,13 @@ gtk_text_class_init (GtkTextClass *class)
                                        NULL);
 
   /* Emoji */
-  gtk_widget_class_add_binding_signal (widget_class,
+  gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_period, GDK_CONTROL_MASK,
-                                       "insert-emoji",
+                                       "misc.insert-emoji",
                                        NULL);
-  gtk_widget_class_add_binding_signal (widget_class,
+  gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_semicolon, GDK_CONTROL_MASK,
-                                       "insert-emoji",
+                                       "misc.insert-emoji",
                                        NULL);
 
   /* Undo/Redo */
@@ -1856,7 +1856,7 @@ gtk_text_init (GtkText *self)
   GTK_TEXT_CONTENT (priv->selection_content)->self = self;
 
   target = gtk_drop_target_new (G_TYPE_STRING, GDK_ACTION_COPY | GDK_ACTION_MOVE);
-  gtk_event_controller_set_name (GTK_EVENT_CONTROLLER (target), "gtk-text-drop-target");
+  gtk_event_controller_set_static_name (GTK_EVENT_CONTROLLER (target), "gtk-text-drop-target");
   g_signal_connect (target, "accept", G_CALLBACK (gtk_text_drag_accept), self);
   g_signal_connect (target, "enter", G_CALLBACK (gtk_text_drag_motion), self);
   g_signal_connect (target, "motion", G_CALLBACK (gtk_text_drag_motion), self);
@@ -1881,7 +1881,7 @@ gtk_text_init (GtkText *self)
                     G_CALLBACK (gtk_text_delete_surrounding_cb), self);
 
   priv->drag_gesture = gtk_gesture_drag_new ();
-  gtk_event_controller_set_name (GTK_EVENT_CONTROLLER (priv->drag_gesture), "gtk-text-drag-gesture");
+  gtk_event_controller_set_static_name (GTK_EVENT_CONTROLLER (priv->drag_gesture), "gtk-text-drag-gesture");
   g_signal_connect (priv->drag_gesture, "drag-update",
                     G_CALLBACK (gtk_text_drag_gesture_update), self);
   g_signal_connect (priv->drag_gesture, "drag-end",
@@ -1891,7 +1891,7 @@ gtk_text_init (GtkText *self)
   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (priv->drag_gesture));
 
   gesture = gtk_gesture_click_new ();
-  gtk_event_controller_set_name (GTK_EVENT_CONTROLLER (gesture), "gtk-text-click-gesture");
+  gtk_event_controller_set_static_name (GTK_EVENT_CONTROLLER (gesture), "gtk-text-click-gesture");
   g_signal_connect (gesture, "pressed",
                     G_CALLBACK (gtk_text_click_gesture_pressed), self);
   gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 0);
@@ -1899,24 +1899,24 @@ gtk_text_init (GtkText *self)
   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (gesture));
 
   controller = gtk_event_controller_motion_new ();
-  gtk_event_controller_set_name (controller, "gtk-text-motion-controller");
+  gtk_event_controller_set_static_name (controller, "gtk-text-motion-controller");
   g_signal_connect (controller, "motion",
                     G_CALLBACK (gtk_text_motion_controller_motion), self);
   gtk_widget_add_controller (GTK_WIDGET (self), controller);
 
   priv->key_controller = gtk_event_controller_key_new ();
   gtk_event_controller_set_propagation_phase (priv->key_controller, GTK_PHASE_TARGET);
-  gtk_event_controller_set_name (priv->key_controller, "gtk-text-key-controller");
+  gtk_event_controller_set_static_name (priv->key_controller, "gtk-text-key-controller");
   g_signal_connect (priv->key_controller, "key-pressed",
                     G_CALLBACK (gtk_text_key_controller_key_pressed), self);
   g_signal_connect_swapped (priv->key_controller, "im-update",
-                            G_CALLBACK (gtk_text_schedule_im_reset), self);
+                            G_CALLBACK (gtk_im_context_reset), priv->im_context);
   gtk_event_controller_key_set_im_context (GTK_EVENT_CONTROLLER_KEY (priv->key_controller),
                                            priv->im_context);
   gtk_widget_add_controller (GTK_WIDGET (self), priv->key_controller);
 
   priv->focus_controller = gtk_event_controller_focus_new ();
-  gtk_event_controller_set_name (priv->focus_controller, "gtk-text-focus-controller");
+  gtk_event_controller_set_static_name (priv->focus_controller, "gtk-text-focus-controller");
   g_signal_connect (priv->focus_controller, "notify::is-focus",
                     G_CALLBACK (gtk_text_focus_changed), self);
   gtk_widget_add_controller (GTK_WIDGET (self), priv->focus_controller);
@@ -3773,8 +3773,6 @@ gtk_text_move_cursor (GtkText         *self,
   GtkTextPrivate *priv = gtk_text_get_instance_private (self);
   int new_pos = priv->current_pos;
 
-  gtk_text_reset_im_context (self);
-
   if (priv->current_pos != priv->selection_bound && !extend_selection)
     {
       /* If we have a current selection and aren't extending it, move to the
@@ -3901,6 +3899,9 @@ gtk_text_move_cursor (GtkText         *self,
     gtk_text_set_selection_bounds (self, new_pos, new_pos);
 
   gtk_text_pend_cursor_blink (self);
+
+  priv->need_im_reset = TRUE;
+  gtk_text_reset_im_context (self);
 }
 
 static void
@@ -3928,8 +3929,6 @@ gtk_text_delete_from_cursor (GtkText       *self,
   int end_pos = priv->current_pos;
   int old_n_bytes = gtk_entry_buffer_get_bytes (get_buffer (self));
 
-  gtk_text_reset_im_context (self);
-
   if (!priv->editable)
     {
       gtk_widget_error_bell (GTK_WIDGET (self));
@@ -3939,6 +3938,8 @@ gtk_text_delete_from_cursor (GtkText       *self,
   if (priv->selection_bound != priv->current_pos)
     {
       gtk_text_delete_selection (self);
+      gtk_text_schedule_im_reset (self);
+      gtk_text_reset_im_context (self);
       return;
     }
 
@@ -4003,6 +4004,11 @@ gtk_text_delete_from_cursor (GtkText       *self,
 
   if (gtk_entry_buffer_get_bytes (get_buffer (self)) == old_n_bytes)
     gtk_widget_error_bell (GTK_WIDGET (self));
+  else
+    {
+      gtk_text_schedule_im_reset (self);
+      gtk_text_reset_im_context (self);
+    }
 
   gtk_text_pend_cursor_blink (self);
 }
@@ -4013,8 +4019,6 @@ gtk_text_backspace (GtkText *self)
   GtkTextPrivate *priv = gtk_text_get_instance_private (self);
   int prev_pos;
 
-  gtk_text_reset_im_context (self);
-
   if (!priv->editable)
     {
       gtk_widget_error_bell (GTK_WIDGET (self));
@@ -4024,6 +4028,8 @@ gtk_text_backspace (GtkText *self)
   if (priv->selection_bound != priv->current_pos)
     {
       gtk_text_delete_selection (self);
+      gtk_text_schedule_im_reset (self);
+      gtk_text_reset_im_context (self);
       return;
     }
 
@@ -4068,6 +4074,9 @@ gtk_text_backspace (GtkText *self)
         {
           gtk_editable_delete_text (GTK_EDITABLE (self), prev_pos, priv->current_pos);
         }
+
+      gtk_text_schedule_im_reset (self);
+      gtk_text_reset_im_context (self);
     }
   else
     {

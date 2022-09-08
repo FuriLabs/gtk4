@@ -388,7 +388,7 @@ low_level_keyboard_proc (int    code,
     if (kbd_focus_owner == NULL)
       break;
 
-    gdk_kbd_focus_owner = gdk_win32_handle_table_lookup (kbd_focus_owner);
+    gdk_kbd_focus_owner = gdk_win32_handle_table_lookup_ (kbd_focus_owner);
 
     if (gdk_kbd_focus_owner == NULL)
       break;
@@ -618,7 +618,7 @@ find_window_for_mouse_event (GdkSurface* reported_window,
 	  ScreenToClient (hwnd, &client_pt);
 	  GetClientRect (hwnd, &rect);
 	  if (PtInRect (&rect, client_pt))
-	    event_surface = gdk_win32_handle_table_lookup (hwnd);
+	    event_surface = gdk_win32_handle_table_lookup_ (hwnd);
 	}
       if (event_surface == NULL)
 	event_surface = grab->surface;
@@ -1433,35 +1433,42 @@ handle_nchittest (HWND hwnd,
                   gint16 screen_y,
                   int *ret_valp)
 {
-  RECT rect;
   GdkWin32Surface *impl;
+  RECT client_rect;
+  POINT client_pt;
 
-  if (window == NULL || window->input_region == NULL)
+  if (window == NULL)
     return FALSE;
 
-  /* If the window has decorations, DefWindowProc() will take
-   * care of NCHITTEST.
-   */
-  if (!_gdk_win32_surface_lacks_wm_decorations (window))
+  /* If the window has no particular input pass-through region,
+   * then we can simply let DefWindowProc() handle the message */
+  if (window->input_region == NULL)
     return FALSE;
 
-  if (!GetWindowRect (hwnd, &rect))
+  if (!GetClientRect (hwnd, &client_rect))
+    return FALSE;
+
+  client_pt.x = screen_x;
+  client_pt.y = screen_y;
+  if (!ScreenToClient (hwnd, &client_pt))
+    return FALSE;
+
+  /* Check whether the point lies within the client area */
+  if (!PtInRect (&client_rect, client_pt))
     return FALSE;
 
   impl = GDK_WIN32_SURFACE (window);
-  rect.left = screen_x - rect.left;
-  rect.top = screen_y - rect.top;
 
-  /* If it's inside the rect, return FALSE and let DefWindowProc() handle it */
+  /* If the point lies inside the input region, return HTCLIENT,
+   * otherwise return HTTRANSPARENT. */
   if (cairo_region_contains_point (window->input_region,
-                                   rect.left / impl->surface_scale,
-                                   rect.top / impl->surface_scale))
-    return FALSE;
+                                   client_pt.x / impl->surface_scale,
+                                   client_pt.y / impl->surface_scale))
+    *ret_valp = HTCLIENT;
+  else
+    *ret_valp = HTTRANSPARENT;
 
-  /* Otherwise override DefWindowProc() and tell WM that the point is not
-   * within the window
-   */
-  *ret_valp = HTNOWHERE;
+  /* We handled the message, no need to call DefWindowProc() */
   return TRUE;
 }
 
@@ -1775,7 +1782,7 @@ gdk_event_translate (MSG *msg,
 	return TRUE;
     }
 
-  window = gdk_win32_handle_table_lookup (msg->hwnd);
+  window = gdk_win32_handle_table_lookup_ (msg->hwnd);
 
   if (window == NULL)
     {
@@ -2290,7 +2297,7 @@ gdk_event_translate (MSG *msg,
               ScreenToClient (hwnd, &client_pt);
               GetClientRect (hwnd, &rect);
               if (PtInRect (&rect, client_pt))
-                new_window = gdk_win32_handle_table_lookup (hwnd);
+                new_window = gdk_win32_handle_table_lookup_ (hwnd);
             }
 
           synthesize_crossing_events (display,
@@ -2431,7 +2438,7 @@ gdk_event_translate (MSG *msg,
 	  ScreenToClient (hwnd, &client_pt);
 	  GetClientRect (hwnd, &rect);
 	  if (PtInRect (&rect, client_pt))
-	    new_window = gdk_win32_handle_table_lookup (hwnd);
+	    new_window = gdk_win32_handle_table_lookup_ (hwnd);
 	}
 
       if (!ignore_leave)
@@ -2669,6 +2676,7 @@ gdk_event_translate (MSG *msg,
     {
       int16_t scroll_x = 0;
       int16_t scroll_y = 0;
+      GdkScrollDirection direction;
 
       char classname[64];
 
@@ -2708,7 +2716,7 @@ gdk_event_translate (MSG *msg,
 
       msg->hwnd = hwnd;
 
-      g_set_object (&window, gdk_win32_handle_table_lookup (hwnd));
+      g_set_object (&window, gdk_win32_handle_table_lookup_ (hwnd));
       if (!window)
         break;
 
@@ -2720,15 +2728,24 @@ gdk_event_translate (MSG *msg,
       _gdk_device_virtual_set_active (_gdk_device_manager->core_pointer,
                                       _gdk_device_manager->system_pointer);
 
-      event = gdk_scroll_event_new (window,
-                                    device_manager_win32->core_pointer,
-                                    NULL,
-                                    _gdk_win32_get_next_tick (msg->time),
-                                    build_pointer_event_state (msg),
-                                    (double) scroll_x / (double) WHEEL_DELTA,
-                                    (double) -scroll_y / (double) WHEEL_DELTA,
-                                    FALSE,
-                                    GDK_SCROLL_UNIT_WHEEL);
+      direction = 0;
+      if (msg->message == WM_MOUSEWHEEL)
+        direction = (((short) HIWORD (msg->wParam)) > 0)
+                      ? GDK_SCROLL_UP
+                      : GDK_SCROLL_DOWN;
+      else if (msg->message == WM_MOUSEHWHEEL)
+        direction = (((short) HIWORD (msg->wParam)) > 0)
+                      ? GDK_SCROLL_RIGHT
+                      : GDK_SCROLL_LEFT;
+
+      event = gdk_scroll_event_new_value120 (window,
+                                             device_manager_win32->core_pointer,
+                                             NULL,
+                                             _gdk_win32_get_next_tick (msg->time),
+                                             build_pointer_event_state (msg),
+                                             direction,
+                                             (double) scroll_x,
+                                             (double) -scroll_y);
 
       _gdk_win32_append_event (event);
 
@@ -3229,7 +3246,7 @@ gdk_event_translate (MSG *msg,
         {
           if (msg->lParam != 0)
             {
-               GdkSurface *other_surface = gdk_win32_handle_table_lookup ((HWND) msg->lParam);
+               GdkSurface *other_surface = gdk_win32_handle_table_lookup_ ((HWND) msg->lParam);
                if (other_surface != NULL &&
                    (GDK_IS_POPUP (other_surface) || GDK_IS_DRAG_SURFACE (other_surface)))
                 {

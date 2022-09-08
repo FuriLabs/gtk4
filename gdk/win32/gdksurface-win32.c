@@ -1180,6 +1180,11 @@ gdk_win32_surface_layout_popup (GdkSurface     *surface,
 
   monitor = gdk_surface_get_layout_monitor (surface, layout,
                                             gdk_win32_monitor_get_workarea);
+  if (!monitor)
+    {
+      GdkDisplay *display = gdk_surface_get_display (surface);
+      monitor = gdk_win32_display_get_primary_monitor (display);
+    }
   gdk_win32_monitor_get_workarea (monitor, &bounds);
 
   gdk_popup_layout_get_shadow_width (layout,
@@ -1305,19 +1310,27 @@ gdk_win32_surface_raise (GdkSurface *window)
     }
 }
 
+/**
+ * gdk_win32_surface_set_urgency_hint:
+ * @surface: (type GdkWin32Surface): a native `GdkSurface`.
+ * @urgent: if %TRUE, flashes both the window and the taskbar button
+ *          continuously.
+ *
+ * Flashes the specified @surface.
+ */
 void
-gdk_win32_surface_set_urgency_hint (GdkSurface *window,
+gdk_win32_surface_set_urgency_hint (GdkSurface *surface,
                                     gboolean    urgent)
 {
   FLASHWINFO flashwinfo;
 
-  g_return_if_fail (GDK_IS_SURFACE (window));
+  g_return_if_fail (GDK_IS_WIN32_SURFACE (surface));
 
-  if (GDK_SURFACE_DESTROYED (window))
+  if (GDK_SURFACE_DESTROYED (surface))
     return;
 
   flashwinfo.cbSize = sizeof (flashwinfo);
-  flashwinfo.hwnd = GDK_SURFACE_HWND (window);
+  flashwinfo.hwnd = GDK_SURFACE_HWND (surface);
   if (urgent)
     flashwinfo.dwFlags = FLASHW_ALL | FLASHW_TIMER;
   else
@@ -4233,19 +4246,34 @@ gdk_win32_surface_focus (GdkSurface *window,
   SetFocus (GDK_SURFACE_HWND (window));
 }
 
+/**
+ * gdk_win32_surface_lookup_for_display:
+ * @display: a %GdkDisplay
+ * @anid: a HWND window handle
+ *
+ * Returns: (nullable): the %GdkSurface associated with the given @anid, or %NULL.
+ */
 GdkSurface *
 gdk_win32_surface_lookup_for_display (GdkDisplay *display,
                                      HWND        anid)
 {
   g_return_val_if_fail (display == gdk_display_get_default (), NULL);
 
-  return (GdkSurface*) gdk_win32_handle_table_lookup (anid);
+  return (GdkSurface*) gdk_win32_handle_table_lookup_ (anid);
 }
 
+/**
+ * gdk_win32_surface_is_win32:
+ * @surface: a `GdkSurface`
+ *
+ * Returns: %TRUE if the @surface is a win32 implemented surface.
+ *
+ * Deprecated: 4.8: Use `GDK_IS_WIN32_SURFACE` instead.
+ */
 gboolean
-gdk_win32_surface_is_win32 (GdkSurface *window)
+gdk_win32_surface_is_win32 (GdkSurface *surface)
 {
-  return GDK_IS_WIN32_SURFACE (window);
+  return GDK_IS_WIN32_SURFACE (surface);
 }
 
 static gboolean
@@ -4279,11 +4307,19 @@ gdk_win32_surface_show_window_menu (GdkSurface *surface,
   return TRUE;
 }
 
+/**
+ * gdk_win32_surface_get_impl_hwnd:
+ * @surface: a `GdkSurface`
+ *
+ * Returns: the associated @surface HWND handle.
+ *
+ * Deprecated: 4.8: Use gdk_win32_surface_get_handle() instead.
+ */
 HWND
-gdk_win32_surface_get_impl_hwnd (GdkSurface *window)
+gdk_win32_surface_get_impl_hwnd (GdkSurface *surface)
 {
-  if (GDK_IS_WIN32_SURFACE (window))
-    return GDK_SURFACE_HWND (window);
+  if (GDK_IS_WIN32_SURFACE (surface))
+    return GDK_SURFACE_HWND (surface);
   return NULL;
 }
 
@@ -4449,9 +4485,8 @@ static void
 gdk_win32_surface_set_input_region (GdkSurface     *window,
                                     cairo_region_t *input_region)
 {
-  /* Partial input shape support is implemented by handling the
-   * NC_NCHITTEST message
-   */
+  /* Input region support is implemented by handling the
+   * WM_NCHITTEST message. */
 }
 
 static void
@@ -4614,16 +4649,20 @@ gdk_win32_surface_class_init (GdkWin32SurfaceClass *klass)
   impl_class->compute_size = _gdk_win32_surface_compute_size;
 }
 
-HGDIOBJ
-gdk_win32_surface_get_handle (GdkSurface *window)
+/**
+ * gdk_win32_surface_get_handle:
+ * @surface: (type GdkWin32Surface): a native `GdkSurface`.
+ *
+ * Returns the HWND handle belonging to @surface.
+ *
+ * Returns: the associated HWND handle.
+ */
+HWND
+gdk_win32_surface_get_handle (GdkSurface *surface)
 {
-  if (!GDK_IS_WIN32_SURFACE (window))
-    {
-      g_warning (G_STRLOC " window is not a native Win32 window");
-      return NULL;
-    }
+  g_return_val_if_fail (GDK_IS_WIN32_SURFACE (surface), NULL);
 
-  return GDK_SURFACE_HWND (window);
+  return GDK_SURFACE_HWND (surface);
 }
 
 #define LAST_PROP 1

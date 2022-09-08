@@ -344,9 +344,9 @@ get_line_pixels (GtkInscription *self,
   int ascent, descent;
 
   metrics = gtk_inscription_get_font_metrics (self);
-
   ascent = pango_font_metrics_get_ascent (metrics);
   descent = pango_font_metrics_get_descent (metrics);
+  pango_font_metrics_unref (metrics);
 
   if (baseline)
     *baseline = ascent;
@@ -490,6 +490,7 @@ gtk_inscription_allocate (GtkWidget *widget,
                   }
               }
           }
+        pango_layout_iter_free (iter);
       }
       break;
 
@@ -793,6 +794,11 @@ gtk_inscription_set_text (GtkInscription *self,
 
   g_free (self->text);
   self->text = g_strdup (text);
+
+  gtk_accessible_update_property (GTK_ACCESSIBLE (self),
+                                 GTK_ACCESSIBLE_PROPERTY_LABEL, self->text,
+                                 -1);
+
 
   pango_layout_set_text (self->layout,
                          self->text ? self->text : "",

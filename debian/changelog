@@ -1,8 +1,9 @@
-gtk4 (4.7.2+ds-4) UNRELEASED; urgency=medium
+gtk4 (4.8.0+ds-1) UNRELEASED; urgency=medium
 
   * Replace transitional libfontconfig1-dev with libfontconfig-dev
+  * New upstream release
 
- -- Simon McVittie <smcv@debian.org>  Thu, 08 Sep 2022 15:43:33 +0100
+ -- Simon McVittie <smcv@debian.org>  Thu, 08 Sep 2022 15:46:37 +0100
 
 gtk4 (4.7.2+ds-3) unstable; urgency=medium
 

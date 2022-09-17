@@ -1876,6 +1876,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_event_controller_set_name@Base 4.0.0
  gtk_event_controller_set_propagation_limit@Base 4.0.0
  gtk_event_controller_set_propagation_phase@Base 4.0.0
+ gtk_event_controller_set_static_name@Base 4.8.0
  gtk_event_sequence_state_get_type@Base 4.0.0
  gtk_every_filter_get_type@Base 4.0.0
  gtk_every_filter_new@Base 4.0.0

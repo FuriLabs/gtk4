@@ -1,0 +1,31 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Sat, 17 Sep 2022 21:50:38 +0100
+Subject: build: Use more conservative GResource embedding on non-x86_64
+
+Doing clever things with objcopy is faster and seems to be reliable on
+x86_64 Linux, but also doesn't work on all toolchains and architectures:
+in particular, Debian has had trouble with this on arm and mips.
+In a distro build environment where we are compiling all of GTK every
+time, the cost of potentially unreliable builds is higher than the cost
+of using slower but more conservative GResource embedding.
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/5107
+Signed-off-by: Simon McVittie <smcv@debian.org>
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/4956
+---
+ gtk/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gtk/meson.build b/gtk/meson.build
+index 080bffe..225b0b8 100644
+--- a/gtk/meson.build
++++ b/gtk/meson.build
+@@ -877,7 +877,7 @@ endif
+ 
+ ld = find_program('ld', required : false)
+ 
+-if not meson.is_cross_build() and build_machine.cpu_family() != 'arm' and build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and ld.found()
++if not meson.is_cross_build() and build_machine.cpu_family() == 'x86_64' and build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and ld.found()
+   glib_compile_resources = find_program('glib-compile-resources')
+ 
+   # Create the resource blob

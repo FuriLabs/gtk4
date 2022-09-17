@@ -1,5 +1,5 @@
 gdkevents-Don-t-ignore-modifiers-that-are-not-currently-a.patch
-build-Add-an-option-to-use-more-conservative-GResource-em.patch
+build-Use-more-conservative-GResource-embedding-on-non-x8.patch
 reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
 reftests-Allow-minor-differences-to-be-tolerated.patch
 debian/Disable-clipboard-test.patch

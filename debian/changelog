@@ -1,9 +1,17 @@
-gtk4 (4.8.1+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.8.1+ds-1) unstable; urgency=medium
 
-  * Replace transitional libfontconfig1-dev with libfontconfig-dev
   * New upstream release
+  * debian/libgtk-4-1.symbols.in: Add a new symbol
+  * d/control.in: Replace transitional libfontconfig1-dev with
+    libfontconfig-dev
+  * d/missing-sources: Update for upstream updates to Compose data
+  * d/p/gdkevents-Don-t-ignore-modifiers-that-are-not-currently-a.patch:
+    Add proposed patch to fix keyboard shortcuts with X11 backend
+    (Closes: #1016927)
+  * d/p/build-Use-more-conservative-GResource-embedding-on-non-x8.patch:
+    Update patch for GResource embedding based on upstream feedback
 
- -- Simon McVittie <smcv@debian.org>  Sat, 17 Sep 2022 21:02:13 +0100
+ -- Simon McVittie <smcv@debian.org>  Sat, 17 Sep 2022 22:23:08 +0100
 
 gtk4 (4.7.2+ds-3) unstable; urgency=medium
 

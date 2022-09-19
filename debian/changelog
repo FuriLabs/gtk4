@@ -1,4 +1,4 @@
-gtk4 (4.8.1+ds-1ubuntu1) UNRELEASED; urgency=medium
+gtk4 (4.8.1+ds-1ubuntu1) kinetic; urgency=medium
 
   * Sync with Debian. Remaining changes:
     - debian/tests:
@@ -6,7 +6,7 @@ gtk4 (4.8.1+ds-1ubuntu1) UNRELEASED; urgency=medium
     - debian/control:
       + Build-Depend on dh-sequence-translations
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 19 Sep 2022 16:38:31 -0400
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 19 Sep 2022 16:39:04 -0400
 
 gtk4 (4.8.1+ds-1) unstable; urgency=medium
 

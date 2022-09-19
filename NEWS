@@ -1,3 +1,104 @@
+Overview of Changes in 4.8.1, 16-09-2022
+========================================
+
+* Input:
+ - Fix problems with input method interactions that caused
+   dead keys not to work
+ - Accept single-key compose sequences (these are used with
+   some keyboard layouts)
+
+* GtkColumnView:
+ - Flip column order in right-to-left context
+
+* GtkGridView:
+ - Fix problems with rubberbanding
+
+* GtkFileChooser:
+ - Fix positioning of popovers in the places view
+ - Make ~ and . keyboard shortcuts work again
+
+* gsk:
+ - Make glyph upload more similar to icons
+
+* Make file transfer via portals work, this fixes file
+  copy/paste and dnd in flatpaks
+
+* Translation updates:
+ Catalan
+ Chinese (China)
+ Chinese (Taiwan)
+ Latvian
+
+
+Overview of Changes in 4.8.0, 06-09-2022
+========================================
+
+* GtkTreeView:
+ - Fix a problem with scrolling animations
+ - Fix some event handling problems
+ - Drop unreachable code
+
+* GtkText:
+ - Respect the no-emoji input hint fully
+
+* GtkEmojiChooser:
+ - Fix arrow key navigation
+
+* GtkFontChooser:
+ - Improve the handling of OpenType font features
+
+* GtkTreeListModel:
+ - Fix handling of collapsed child nodes
+
+* GtkInscription:
+ - Fix accessible name
+
+* Theme:
+ - Fix placeholder text in HighContrast
+
+* Increase the memory limit for the jpeg loader to 300M
+
+* Miscellaneous memory leak fixes
+
+* Wayland:
+ - Refator handling of text protocol client updates
+
+* Windows:
+ - Support high-resolution scroll wheel events
+ - Generate GdkWin32.gir
+ - Implement color picking
+
+* Translation updates
+ Abkhazian
+ Basque
+ Brazilian Portuguese
+ Bulgarian
+ Catalan
+ Chinese (China)
+ Croatian
+ Czech
+ Danish
+ Dutch
+ Galician
+ Georgian
+ German
+ Hungarian
+ Icelandic
+ Indonesian
+ Korean
+ Latvian
+ Lithuanian
+ Persian
+ Polish
+ Portuguese
+ Russian
+ Serbian
+ Spanish
+ Swedish
+ Turkish
+ Ukrainian
+
+
 Overview of Changes in 4.7.2, 10-08-2022
 ========================================
 

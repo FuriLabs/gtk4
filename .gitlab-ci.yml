@@ -3,6 +3,7 @@ include:
     file: 'flatpak/flatpak_ci_initiative.yml'
 
 stages:
+  - check
   - build
   - analysis
   - docs
@@ -37,7 +38,7 @@ variables:
 style-check-diff:
   extends: .only-default
   image: $FEDORA_IMAGE
-  stage: .pre
+  stage: check
   allow_failure: true
   script:
     - .gitlab-ci/run-style-check-diff.sh
@@ -108,6 +109,29 @@ release-build:
             _build
     - ninja -C _build
     - .gitlab-ci/run-tests.sh _build x11
+
+fedora-mingw64:
+  extends: .build-fedora-default
+  stage: build
+  needs: []
+  before_script:
+    - sudo dnf install -y
+            mingw64-filesystem
+            mingw64-gcc
+            mingw64-binutils
+            mingw64-cairo
+            mingw64-gdk-pixbuf
+            mingw64-gstreamer1-plugins-bad-free
+            mingw64-glib2
+            mingw64-libepoxy
+            mingw64-pango
+            # mingw64-graphene (rawhide)
+  script:
+    - .gitlab-ci/show-info-linux.sh
+    - meson subprojects update
+    - mkdir _build && cd _build
+    - mingw64-meson -Dintrospection=disabled -Dgraphene:introspection=disabled
+    - ninja
 
 installed-tests:
   extends: .build-fedora-default

@@ -77,7 +77,6 @@ debian/%: debian/%.in
 
 configure_flags_common = \
 	--libdir=/$(LIBDIR) \
-	-Dfast_gresource_embedding=false \
 	${NULL}
 
 configure_flags_deb = \

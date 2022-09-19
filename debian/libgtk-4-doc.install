@@ -1,5 +1,6 @@
+#! /usr/bin/dh-exec
 usr/share/doc/gdk4 usr/share/doc/${env:DOC_PKG}
-usr/share/doc/gdk4-wayland usr/share/doc/${env:DOC_PKG}
+[linux-any] usr/share/doc/gdk4-wayland usr/share/doc/${env:DOC_PKG}
 usr/share/doc/gdk4-x11 usr/share/doc/${env:DOC_PKG}
 usr/share/doc/gsk4 usr/share/doc/${env:DOC_PKG}
 usr/share/doc/gtk4 usr/share/doc/${env:DOC_PKG}

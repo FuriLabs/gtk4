@@ -793,7 +793,10 @@ if os_win32
   ])
 
   gtk_sources += gtk_win32_print_sources
-  gtk_sources += ['gtkimcontextime.c']
+  gtk_sources += [
+    'gtkcolorpickerwin32.c',
+    'gtkimcontextime.c'
+  ]
 
   if cc.has_header_symbol('windows.h', 'IPrintDialogCallback')
     cdata.set('HAVE_IPRINTDIALOGCALLBACK', 1)
@@ -1307,6 +1310,24 @@ if build_gir
       fatal_warnings: get_option('werror'),
     )
     gtk_dep_sources += gdk_wayland_gir
+  endif
+
+  if win32_enabled
+    gdk_win32_gir = gnome.generate_gir(libgtk,
+      sources: gdk_win32_public_headers + gdk_win32_public_sources,
+      namespace: 'GdkWin32',
+      nsversion: gtk_api_version,
+      identifier_prefix: 'Gdk',
+      symbol_prefix: 'gdk',
+      export_packages: 'gtk4-win32',
+      includes: [ gdk_gir[0], 'win32-1.0', ],
+      install: true,
+      dependencies: libgdk_dep,
+      header: 'gdk/win32/gdkwin32.h',
+      extra_args: gir_args,
+      fatal_warnings: get_option('werror'),
+    )
+    gtk_dep_sources += gdk_win32_gir
   endif
 
   gsk_gir_inc = [ gdk_gir[0], 'Graphene-1.0' ]

@@ -5524,17 +5524,8 @@ gtk_text_view_key_controller_im_update (GtkEventControllerKey *controller,
                                         GtkTextView           *text_view)
 {
   GtkTextViewPrivate *priv = text_view->priv;
-  GtkTextMark *insert;
-  GtkTextIter iter;
-  gboolean can_insert;
-
-  insert = gtk_text_buffer_get_insert (get_buffer (text_view));
-  gtk_text_buffer_get_iter_at_mark (get_buffer (text_view), &iter, insert);
-  can_insert = gtk_text_iter_can_insert (&iter, priv->editable);
 
   priv->need_im_reset = TRUE;
-  if (!can_insert)
-    gtk_text_view_reset_im_context (text_view);
 }
 
 static gboolean
@@ -6366,8 +6357,6 @@ gtk_text_view_move_cursor (GtkTextView     *text_view,
       return;
     }
 
-  gtk_text_view_reset_im_context (text_view);
-
   if (step == GTK_MOVEMENT_PAGES)
     {
       if (!gtk_text_view_scroll_pages (text_view, count, extend_selection))
@@ -6551,6 +6540,9 @@ gtk_text_view_move_cursor (GtkTextView     *text_view,
 
   gtk_text_view_check_cursor_blink (text_view);
   gtk_text_view_pend_cursor_blink (text_view);
+
+  priv->need_im_reset = TRUE;
+  gtk_text_view_reset_im_context (text_view);
 }
 
 static void
@@ -6841,14 +6833,16 @@ gtk_text_view_delete_from_cursor (GtkTextView   *text_view,
 
   priv = text_view->priv;
 
-  gtk_text_view_reset_im_context (text_view);
-
   if (type == GTK_DELETE_CHARS)
     {
       /* Char delete deletes the selection, if one exists */
       if (gtk_text_buffer_delete_selection (get_buffer (text_view), TRUE,
                                             priv->editable))
-        return;
+        {
+          priv->need_im_reset = TRUE;
+          gtk_text_view_reset_im_context (text_view);
+          return;
+        }
     }
 
   gtk_text_buffer_get_iter_at_mark (get_buffer (text_view), &insert,
@@ -6975,6 +6969,9 @@ gtk_text_view_delete_from_cursor (GtkTextView   *text_view,
     {
       gtk_widget_error_bell (GTK_WIDGET (text_view));
     }
+
+  priv->need_im_reset = TRUE;
+  gtk_text_view_reset_im_context (text_view);
 }
 
 static void
@@ -6985,12 +6982,14 @@ gtk_text_view_backspace (GtkTextView *text_view)
 
   priv = text_view->priv;
 
-  gtk_text_view_reset_im_context (text_view);
-
   /* Backspace deletes the selection, if one exists */
   if (gtk_text_buffer_delete_selection (get_buffer (text_view), TRUE,
                                         priv->editable))
-    return;
+    {
+      priv->need_im_reset = TRUE;
+      gtk_text_view_reset_im_context (text_view);
+      return;
+    }
 
   gtk_text_buffer_get_iter_at_mark (get_buffer (text_view),
                                     &insert,
@@ -7003,6 +7002,9 @@ gtk_text_view_backspace (GtkTextView *text_view)
       DV(g_print (G_STRLOC": scrolling onscreen\n"));
       gtk_text_view_scroll_mark_onscreen (text_view,
                                           gtk_text_buffer_get_insert (get_buffer (text_view)));
+
+      priv->need_im_reset = TRUE;
+      gtk_text_view_reset_im_context (text_view);
     }
   else
     {
@@ -8483,6 +8485,7 @@ gtk_text_view_commit_handler (GtkIMContext  *context,
   gtk_text_view_commit_text (text_view, str);
   gtk_text_view_reset_blink_time (text_view);
   gtk_text_view_pend_cursor_blink (text_view);
+  gtk_im_context_reset (context);
 }
 
 static void
@@ -8692,8 +8695,9 @@ gtk_text_view_delete_surrounding_handler (GtkIMContext  *context,
   gtk_text_iter_forward_chars (&start, offset);
   gtk_text_iter_forward_chars (&end, offset + n_chars);
 
-  gtk_text_buffer_delete_interactive (priv->buffer, &start, &end,
-				      priv->editable);
+  if (gtk_text_buffer_delete_interactive (priv->buffer, &start, &end,
+                                          priv->editable))
+    gtk_im_context_reset (context);
 
   return TRUE;
 }

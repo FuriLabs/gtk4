@@ -12,6 +12,7 @@ of using slower but more conservative GResource embedding.
 Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/5107
 Signed-off-by: Simon McVittie <smcv@debian.org>
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/4956
+Applied-upstream: 4.9.0, commit:60a83a51c3c3ae926df991a1e92a61a6129adaa6
 ---
  gtk/meson.build | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

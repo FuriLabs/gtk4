@@ -28,6 +28,7 @@ Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/5095
 Bug-Debian: https://bugs.debian.org/1016927
 Signed-off-by: Simon McVittie <smcv@debian.org>
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/5037
+Applied-upstream: 4.9.0, commit:79285bd63ee9834c2e77ff9639d14a4cd6b7c3c8
 ---
  gdk/gdkevents.c | 22 +++++++++++++++++++---
  1 file changed, 19 insertions(+), 3 deletions(-)

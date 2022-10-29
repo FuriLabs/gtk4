@@ -32,7 +32,6 @@
 #include "gtkbuilderprivate.h"
 #include "gtkgizmoprivate.h"
 #include "gtkicontheme.h"
-#include "gtkintl.h"
 #include "gtklabel.h"
 #include "gtkmarshalers.h"
 #include "gtkorientable.h"
@@ -312,7 +311,7 @@ gtk_scale_notify (GObject    *object,
 
       g_free (values);
     }
-  else if (strcmp (pspec->name, "adjustment"))
+  else if (strcmp (pspec->name, "adjustment") == 0)
     {
       if (priv->value_widget)
         update_label_request (scale);

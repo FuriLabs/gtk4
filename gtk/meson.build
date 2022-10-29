@@ -700,7 +700,6 @@ gtk_public_headers = files([
   'gtkwindowcontrols.h',
   'gtkwindowgroup.h',
   'gtkwindowhandle.h',
-  'gtk-autocleanups.h',
   'gtk.h',
 ])
 
@@ -877,7 +876,7 @@ endif
 
 ld = find_program('ld', required : false)
 
-if not meson.is_cross_build() and build_machine.cpu_family() != 'arm' and build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and ld.found()
+if not meson.is_cross_build() and build_machine.cpu_family() == 'x86_64' and build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and ld.found()
   glib_compile_resources = find_program('glib-compile-resources')
 
   # Create the resource blob
@@ -1032,10 +1031,11 @@ gtkmarshalers = gnome.genmarshal('gtkmarshalers',
 
 gtkmarshal_h = gtkmarshalers[1]
 
-gtktypebuiltins = gnome.mkenums('gtktypebuiltins',
+gtktypebuiltins = gnome.mkenums_simple('gtktypebuiltins',
   sources: gtk_public_headers + gtk_deprecated_headers,
-  c_template: 'gtktypebuiltins.c.template',
-  h_template: 'gtktypebuiltins.h.template',
+  decorator: 'GDK_AVAILABLE_IN_ALL',
+  body_prefix: '#include "config.h"',
+  header_prefix: '#include <gdk/gdk.h>',
   install_dir: gtk_includedir / 'gtk-4.0/gtk',
   install_header: true,
 )

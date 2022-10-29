@@ -23,7 +23,6 @@
 #include "gtkbuildableprivate.h"
 #include "gtkbuilderscopeprivate.h"
 #include "gtkdebug.h"
-#include "gtkintl.h"
 #include "gtktypebuiltins.h"
 #include "gtkversion.h"
 #include "gdkprofilerprivate.h"
@@ -648,9 +647,8 @@ parse_object (GtkBuildableParseContext  *context,
         {
           data->requested_object_level = data->cur_object_level;
 
-          GTK_NOTE (BUILDER,
-                    g_message ("requested object \"%s\" found at level %d",
-                               object_id, data->requested_object_level));
+          GTK_DEBUG (BUILDER, "requested object \"%s\" found at level %d",
+                              object_id, data->requested_object_level);
 
           data->inside_requested_object = TRUE;
         }
@@ -1848,7 +1846,7 @@ end_element (GtkBuildableParseContext  *context,
 {
   ParserData *data = (ParserData*)user_data;
 
-  GTK_NOTE (BUILDER, g_message ("</%s>", element_name));
+  GTK_DEBUG (BUILDER, "</%s>", element_name);
 
   if (data->subparser && data->subparser->start)
     {
@@ -1930,9 +1928,8 @@ end_element (GtkBuildableParseContext  *context,
       if (data->requested_objects && data->inside_requested_object &&
           (data->cur_object_level == data->requested_object_level))
         {
-          GTK_NOTE (BUILDER,
-                    g_message ("requested object end found at level %d",
-                               data->requested_object_level));
+          GTK_DEBUG (BUILDER, "requested object end found at level %d",
+                              data->requested_object_level);
 
           data->inside_requested_object = FALSE;
         }

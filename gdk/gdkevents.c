@@ -28,10 +28,10 @@
 #include "gdkdragprivate.h"
 #include "gdkdropprivate.h"
 #include "gdkeventsprivate.h"
-#include "gdkintl.h"
+#include <glib/gi18n-lib.h>
 #include "gdkkeysprivate.h"
 #include "gdkkeysyms.h"
-#include "gdk-private.h"
+#include "gdkprivate.h"
 
 #include <gobject/gvaluecollector.h>
 
@@ -402,12 +402,15 @@ gdk_event_alloc (GdkEventType event_type,
 
   GdkEvent *event = (GdkEvent *) g_type_create_instance (gdk_event_types[event_type]);
 
-  GDK_NOTE (EVENTS, {
-            char *str = g_enum_to_string (GDK_TYPE_EVENT_TYPE, event_type);
-            g_message ("Allocating a new %s for event type %s",
-                       g_type_name (gdk_event_types[event_type]), str);
-            g_free (str);
-            });
+#ifdef G_ENABLE_DEBUG
+  if (GDK_DEBUG_CHECK (EVENTS))
+    {
+      char *str = g_enum_to_string (GDK_TYPE_EVENT_TYPE, event_type);
+      gdk_debug_message ("Allocating a new %s for event type %s",
+                         g_type_name (gdk_event_types[event_type]), str);
+      g_free (str);
+    }
+#endif
 
   event->event_type = event_type;
   event->surface = surface != NULL ? g_object_ref (surface) : NULL;
@@ -1514,6 +1517,16 @@ gdk_button_event_get_button (GdkEvent *event)
  * An event related to a key-based device.
  */
 
+static void
+gdk_key_event_finalize (GdkEvent *event)
+{
+  GdkKeyEvent *self = (GdkKeyEvent *) event;
+
+  g_free (self->compose_sequence);
+
+  GDK_EVENT_SUPER (event)->finalize (event);
+}
+
 static GdkModifierType
 gdk_key_event_get_state (GdkEvent *event)
 {
@@ -1525,7 +1538,7 @@ gdk_key_event_get_state (GdkEvent *event)
 static const GdkEventTypeInfo gdk_key_event_info = {
   sizeof (GdkKeyEvent),
   NULL,
-  NULL,
+  gdk_key_event_finalize,
   gdk_key_event_get_state,
   NULL,
   NULL,
@@ -1549,6 +1562,10 @@ GDK_DEFINE_EVENT_TYPE (GdkKeyEvent, gdk_key_event,
  * @is_modifier: whether the event is a modifiers only event
  * @translated: the translated key data for the given @state
  * @no_lock: the translated key data without the given @state
+ * @compose_sequence: (transfer none) (nullable):
+ *   The compose sequence string, either partial or only the
+ *   final composed string, if that can be determined at event
+ *   creation time. Used by selected IM modules.
  *
  * Creates a new `GdkKeyEvent`.
  *
@@ -1563,7 +1580,8 @@ gdk_key_event_new (GdkEventType      type,
                    GdkModifierType   state,
                    gboolean          is_modifier,
                    GdkTranslatedKey *translated,
-                   GdkTranslatedKey *no_lock)
+                   GdkTranslatedKey *no_lock,
+                   char             *compose_sequence)
 {
   g_return_val_if_fail (type == GDK_KEY_PRESS ||
                         type == GDK_KEY_RELEASE, NULL);
@@ -1576,6 +1594,7 @@ gdk_key_event_new (GdkEventType      type,
   self->key_is_modifier = is_modifier;
   self->translated[0] = *translated;
   self->translated[1] = *no_lock;
+  self->compose_sequence = g_strdup (compose_sequence);
 
   return event;
 }
@@ -1604,6 +1623,26 @@ gdk_key_event_get_translated_key (GdkEvent *event,
     return &(self->translated[1]);
 
   return &(self->translated[0]);
+}
+
+/*< private >
+ * gdk_key_event_get_compose_sequence:
+ * @event: (type GdkKeyEvent): a key event
+ *
+ * Extracts the compose sequence string from a key event.
+ *
+ * Returns: (transfer none): the compose sequence string
+ */
+char *
+gdk_key_event_get_compose_sequence (GdkEvent *event)
+{
+  GdkKeyEvent *self = (GdkKeyEvent *) event;
+
+  g_return_val_if_fail (GDK_IS_EVENT (event), 0);
+  g_return_val_if_fail (GDK_IS_EVENT_TYPE (event, GDK_KEY_PRESS) ||
+                        GDK_IS_EVENT_TYPE (event, GDK_KEY_RELEASE), FALSE);
+
+  return self->compose_sequence;
 }
 
 /**
@@ -1773,7 +1812,7 @@ gdk_key_event_matches (GdkEvent        *event,
   guint ev_keyval;
   int layout;
   int level;
-  GdkModifierType consumed_modifiers;
+  GdkModifierType ignored_modifiers;
   GdkModifierType shift_group_mask;
   gboolean group_mod_is_accel_mod = FALSE;
   const GdkModifierType mask = GDK_CONTROL_MASK |
@@ -1792,7 +1831,23 @@ gdk_key_event_matches (GdkEvent        *event,
   ev_keyval = self->translated[1].keyval;
   layout = self->translated[1].layout;
   level = self->translated[1].level;
-  consumed_modifiers = self->translated[1].consumed;
+
+  /*
+   * If a modifier is currently active (e.g. Shift is pressed) and was marked
+   * as consumed, we ignore it for the purposes of matching shortcuts.
+   * For example, when Ctrl+Shift+[plus/equals key] is translated into
+   * Ctrl+plus on a keyboard where Shift+equals is the plus sign, we want
+   * shortcuts for either <Control><Shift>plus or <Control>plus to match.
+   * (See https://bugzilla.gnome.org/show_bug.cgi?id=100439)
+   *
+   * If a modifier is *not* currently active, the X11 backend can sometimes
+   * mark it as consumed where the Wayland and Windows backends do not.
+   * In this case, we still want to pay attention to its state.
+   * For example, when Ctrl+x is translated into Ctrl+x, we only want to
+   * trigger shortcuts for <Control>x, not for <Control><Shift>x.
+   * (See https://gitlab.gnome.org/GNOME/gtk/-/issues/5095)
+   */
+  ignored_modifiers = (self->translated[1].consumed & state);
 
   /* if the group-toggling modifier is part of the default accel mod
    * mask, and it is active, disable it for matching
@@ -1804,7 +1859,7 @@ gdk_key_event_matches (GdkEvent        *event,
   if (mask & shift_group_mask)
     group_mod_is_accel_mod = TRUE;
 
-  if ((modifiers & ~consumed_modifiers & mask) == (state & ~consumed_modifiers & mask))
+  if ((modifiers & ~ignored_modifiers & mask) == (state & ~ignored_modifiers & mask))
     {
       /* modifier match */
       GdkKeymapKey *keys;

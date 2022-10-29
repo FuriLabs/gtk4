@@ -29,7 +29,7 @@
 
 #include "gdksurface.h"
 
-#include "gdk-private.h"
+#include "gdkprivate.h"
 #include "gdkcontentprovider.h"
 #include "gdkdeviceprivate.h"
 #include "gdkdisplayprivate.h"
@@ -37,7 +37,7 @@
 #include "gdkeventsprivate.h"
 #include "gdkframeclockidleprivate.h"
 #include "gdkglcontextprivate.h"
-#include "gdkintl.h"
+#include <glib/gi18n-lib.h>
 #include "gdkmarshalers.h"
 #include "gdkpopupprivate.h"
 #include "gdkrectangle.h"
@@ -1220,7 +1220,7 @@ gdk_surface_create_vulkan_context (GdkSurface  *surface,
   g_return_val_if_fail (GDK_IS_SURFACE (surface), NULL);
   g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-  if (GDK_DISPLAY_DEBUG_CHECK (surface->display, VULKAN_DISABLE))
+  if (gdk_display_get_debug_flags (surface->display) & GDK_DEBUG_VULKAN_DISABLE)
     {
       g_set_error_literal (error, GDK_VULKAN_ERROR, GDK_VULKAN_ERROR_NOT_AVAILABLE,
                            _("Vulkan support disabled via GDK_DEBUG"));
@@ -1623,8 +1623,8 @@ gdk_surface_thaw_updates (GdkSurface *surface)
       if (surface->request_motion && surface->request_motion_id == 0)
         {
           surface->request_motion_id =
-            g_idle_add_full (GDK_PRIORITY_REDRAW + 20,
-                             request_motion_cb, surface, NULL);
+            g_idle_add_full (GDK_PRIORITY_REDRAW + 20, request_motion_cb, surface, NULL);
+          gdk_source_set_static_name_by_id (surface->request_motion_id, "[gtk] request_motion_cb");
         }
     }
 }
@@ -2779,9 +2779,8 @@ gdk_surface_queue_set_is_mapped (GdkSurface *surface,
       g_return_if_fail (!surface->set_is_mapped_source_id);
 
       surface->set_is_mapped_source_id =
-        g_idle_add_full (G_PRIORITY_HIGH - 10,
-                         set_is_mapped_idle,
-                         surface, NULL);
+        g_idle_add_full (G_PRIORITY_HIGH - 10, set_is_mapped_idle, surface, NULL);
+      gdk_source_set_static_name_by_id (surface->set_is_mapped_source_id, "[gtk] set_is_mapped_idle");
     }
 }
 

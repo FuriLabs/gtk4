@@ -26,9 +26,9 @@
 
 #include "gdkframeclockidleprivate.h"
 
-#include "gdkdebug.h"
+#include "gdkdebugprivate.h"
 #include "gdkframeclockprivate.h"
-#include "gdk-private.h"
+#include "gdkprivate.h"
 #include "gdkprofilerprivate.h"
 
 #ifdef G_OS_WIN32
@@ -123,6 +123,7 @@ get_sleep_serial (void)
     {
       sleep_source = g_source_new (&sleep_source_funcs, sizeof (GSource));
 
+      g_source_set_static_name (sleep_source, "[gtk] sleep serial");
       g_source_set_priority (sleep_source, G_PRIORITY_HIGH);
       g_source_attach (sleep_source, NULL);
       g_source_unref (sleep_source);

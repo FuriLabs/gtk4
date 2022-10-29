@@ -26,10 +26,10 @@
 
 #include "gdkdisplaylinksource.h"
 
-#include "gdkdebug.h"
+#include "gdkdebugprivate.h"
 #include "gdkmacoseventsource-private.h"
 #include "gdkmacosmonitor-private.h"
-#include "gdk-private.h"
+#include "gdkprivate.h"
 
 static gint64 host_to_frame_clock_time (gint64 val);
 
@@ -217,11 +217,10 @@ gdk_display_link_source_new (CGDirectDisplayID display_id,
     }
 
   name = _gdk_macos_monitor_get_connector_name (display_id);
-  GDK_NOTE (MISC,
-            g_message ("Monitor \"%s\" discovered with Refresh Rate %d and Interval %"G_GINT64_FORMAT,
-                       name ? name : "unknown",
-                       impl->refresh_rate,
-                       impl->refresh_interval));
+  GDK_DEBUG (MISC, "Monitor \"%s\" discovered with Refresh Rate %d and Interval %"G_GINT64_FORMAT,
+                   name ? name : "unknown",
+                   impl->refresh_rate,
+                   impl->refresh_interval);
   g_free (name);
 
   /* Wire up our callback to be executed within the high-priority thread. */

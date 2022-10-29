@@ -27,7 +27,7 @@
 
 #include "gdkmacossurface-private.h"
 
-#include "gdkdebug.h"
+#include "gdkdebugprivate.h"
 #include "gdkdeviceprivate.h"
 #include "gdkdisplay.h"
 #include "gdkeventsprivate.h"
@@ -944,7 +944,8 @@ _gdk_macos_surface_synthesize_null_key (GdkMacosSurface *self)
                              0,
                              FALSE,
                              &translated,
-                             &no_lock);
+                             &no_lock,
+                             NULL);
   _gdk_event_queue_append (display, event);
 }
 
@@ -1152,10 +1153,9 @@ _gdk_macos_surface_monitor_changed (GdkMacosSurface *self)
 
   if (g_set_object (&self->best_monitor, best))
     {
-      GDK_NOTE (MISC,
-                g_message ("Surface \"%s\" moved to monitor \"%s\"",
-                           self->title ? self->title : "unknown",
-                           gdk_monitor_get_connector (best)));
+      GDK_DEBUG (MISC, "Surface \"%s\" moved to monitor \"%s\"",
+                       self->title ? self->title : "unknown",
+                       gdk_monitor_get_connector (best));
 
       _gdk_macos_surface_configure (self);
 

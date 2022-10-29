@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.8.1',
+        version: '4.8.2',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -7,7 +7,7 @@ project('gtk', 'c',
           # https://github.com/mesonbuild/meson/issues/2289
           'c_std=gnu99',
         ],
-        meson_version : '>= 0.59',
+        meson_version : '>= 0.60.0',
         license: 'LGPL-2.1-or-later')
 
 glib_req           = '>= 2.66.0'
@@ -254,8 +254,9 @@ if cc.get_id() == 'msvc'
   # in GLib, based on _Win32_Programming_ by Rector and Newcomer
   test_cflags = [
     '-FImsvc_recommended_pragmas.h',
-	'-D_USE_MATH_DEFINES',
-	'-utf-8',
+    '-D_USE_MATH_DEFINES',
+    '-utf-8',
+    '-Zc:preprocessor'
   ]
   add_project_arguments(cc.get_supported_arguments(test_cflags), language: 'c')
 
@@ -443,7 +444,8 @@ iso_codes_dep  = dependency('iso-codes', required: false)
 
 gidocgen_dep    = dependency('gi-docgen', version: '>= 2021.1',
                              fallback: ['gi-docgen', 'dummy_dep'],
-                             required: get_option('gtk_doc'))
+                             required: get_option('gtk_doc') and get_option('introspection').enabled(),
+                             native: true)
 gi_dep         = dependency('gobject-introspection-1.0', version: introspection_req,
                             required: get_option('introspection').enabled() and
                                       get_option('build-tests'))
@@ -883,20 +885,11 @@ subdir('po')
 subdir('docs/reference')
 
 if not meson.is_cross_build()
-  if meson.version().version_compare('>=0.57.0')
-    gnome.post_install(
-      glib_compile_schemas: true,
-      gio_querymodules: gio_module_dirs,
-      gtk_update_icon_cache: get_option('demos'),
-    )
-  else
-    meson.add_install_script('build-aux/meson/post-install.py',
-                             gtk_api_version,
-                             gtk_binary_version,
-                             gtk_libdir,
-                             gtk_datadir,
-                             gtk_bindir)
-  endif
+  gnome.post_install(
+    glib_compile_schemas: true,
+    gio_querymodules: gio_module_dirs,
+    gtk_update_icon_cache: get_option('demos'),
+  )
 else
   message('Not executing post-install steps automatically when cross compiling')
 endif

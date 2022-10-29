@@ -32,7 +32,7 @@
 #include "gdkdevice-broadway.h"
 #include "gdkdeviceprivate.h"
 #include <gdk/gdktextureprivate.h>
-#include "gdk-private.h"
+#include "gdkprivate.h"
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -213,7 +213,7 @@ _gdk_broadway_display_open (const char *display_name)
   broadway_display->server = _gdk_broadway_server_new (display, display_name, &error);
   if (broadway_display->server == NULL)
     {
-      GDK_NOTE (MISC, g_message ("Unable to init Broadway server: %s\n", error->message));
+      GDK_DEBUG (MISC, "Unable to init Broadway server: %s", error->message);
       g_error_free (error);
       return NULL;
     }

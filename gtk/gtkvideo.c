@@ -24,13 +24,14 @@
 #include "gtkbinlayout.h"
 #include "gtkeventcontrollermotion.h"
 #include "gtkimage.h"
-#include "gtkintl.h"
+#include <glib/gi18n-lib.h>
 #include "gtkmediacontrols.h"
 #include "gtkmediafile.h"
 #include "gtknative.h"
 #include "gtkpicture.h"
 #include "gtkrevealer.h"
 #include "gtkwidgetprivate.h"
+#include "gtkprivate.h"
 
 /**
  * GtkVideo:
@@ -109,6 +110,7 @@ gtk_video_reveal_controls (GtkVideo *self)
   self->controls_hide_source = g_timeout_add (5 * 1000,
                                               gtk_video_hide_controls,
                                               self);
+  gdk_source_set_static_name_by_id (self->controls_hide_source, "[gtk] gtk_video_hide_controls");
 }
 
 static void

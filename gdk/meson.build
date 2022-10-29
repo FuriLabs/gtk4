@@ -35,7 +35,7 @@ gdk_public_sources = files([
   'gdkmonitor.c',
   'gdkpaintable.c',
   'gdkpango.c',
-  'gdkpixbuf-drawable.c',
+  'gdkpixbuf.c',
   'gdkpipeiostream.c',
   'gdkrectangle.c',
   'gdkrgba.c',
@@ -58,7 +58,6 @@ gdk_public_sources = files([
 ])
 
 gdk_public_headers = files([
-  'gdk-autocleanup.h',
   'gdk.h',
   'gdkapplaunchcontext.h',
   'gdkcairo.h',
@@ -137,10 +136,11 @@ gdkresources = gnome.compile_resources('gdkresources',
 
 gdk_headers = gdk_public_headers
 
-gdk_enums = gnome.mkenums('gdkenumtypes',
+gdk_enums = gnome.mkenums_simple('gdkenumtypes',
   sources: gdk_public_headers,
-  c_template: 'gdkenumtypes.c.template',
-  h_template: 'gdkenumtypes.h.template',
+  decorator: 'GDK_AVAILABLE_IN_ALL',
+  body_prefix: '#include "config.h"',
+  header_prefix: '#include "gdkversionmacros.h"',
   install_dir: gtk_includedir / 'gtk-4.0/gdk',
   install_header: true,
 )

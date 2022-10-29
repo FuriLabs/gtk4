@@ -1,8 +1,12 @@
 gtk4 (4.8.2+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release
+  * d/control.in: Update Meson build-dependency
+  * d/copyright: Stop listing wayland and wayland-protocols as excluded.
+    They are no longer in the upstream source release.
+  * d/patches: Remove patches that were applied upstream
 
- -- Simon McVittie <smcv@debian.org>  Sat, 29 Oct 2022 11:34:38 +0100
+ -- Simon McVittie <smcv@debian.org>  Sat, 29 Oct 2022 11:53:12 +0100
 
 gtk4 (4.8.1+ds-1) unstable; urgency=medium
 

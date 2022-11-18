@@ -1,0 +1,24 @@
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Thu, 20 Oct 2022 19:15:38 +0000
+Subject: wayland: Fix keycode->keyval mapping
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/5277
+Origin: upstream, 4.8.3, commit:bb61b5fb5b9d9c6118a484bb2f5d83e5f97895cc
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/5167
+---
+ gdk/wayland/gdkkeys-wayland.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gdk/wayland/gdkkeys-wayland.c b/gdk/wayland/gdkkeys-wayland.c
+index b546fa0..ed43ac4 100644
+--- a/gdk/wayland/gdkkeys-wayland.c
++++ b/gdk/wayland/gdkkeys-wayland.c
+@@ -203,7 +203,7 @@ gdk_wayland_keymap_get_entries_for_keycode (GdkKeymap     *keymap,
+         {
+           const xkb_keysym_t *syms;
+           int num_syms;
+-          num_syms = xkb_keymap_key_get_syms_by_level (xkb_keymap, hardware_keycode, layout, 0, &syms);
++          num_syms = xkb_keymap_key_get_syms_by_level (xkb_keymap, hardware_keycode, layout, level, &syms);
+           if (keys)
+             {
+               (*keys)[i].keycode = hardware_keycode;

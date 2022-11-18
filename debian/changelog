@@ -1,3 +1,22 @@
+gtk4 (4.8.2+ds-2) unstable; urgency=medium
+
+  * d/watch, d/gbp.conf: Only watch for 4.8.x versions.
+    Development release 4.9.1 has already happened, but is unlikely to reach
+    a stable branch before the Debian 12 freeze.
+  * Build-/test-depend on dbus-daemon instead of dbus.
+    We only need dbus-run-session here, not the system bus.
+  * d/patches: Update to upstream gtk-4-8 branch commit 4.8.2-18-g205783d9b0
+    - Fix handling of AltGr when multiple keyboard layouts use it
+    - Fix handling of back/forward mouse buttons
+    - Fix a focus handling regression
+    - Fix a regression that caused a very narrow combo box drop-down in
+      GNOME Settings since 4.8
+    - Fix a regression with copying under Phosh since 4.8
+    - Don't confine resized windows to the geometry of the first monitor
+    - Translation updates
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 18 Nov 2022 09:56:14 +0000
+
 gtk4 (4.8.2+ds-1) unstable; urgency=medium
 
   * New upstream release

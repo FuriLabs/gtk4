@@ -1,3 +1,13 @@
+gtk4 (4.8.2+ds-3) UNRELEASED; urgency=medium
+
+  * Skip border-image-excess-size reftest on big-endian machines.
+    Mitigates: #1024391
+  * Update to upstream gtk-4-8 branch commit 4.8.2-21-g753c6f2435
+    - Trigger on-screen keyboard more reliably
+    - Don't dismiss popups unnecessarily
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 18 Nov 2022 22:11:40 +0000
+
 gtk4 (4.8.2+ds-2) unstable; urgency=medium
 
   * d/watch, d/gbp.conf: Only watch for 4.8.x versions.

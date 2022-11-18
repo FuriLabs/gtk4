@@ -1,4 +1,4 @@
-gtk4 (4.8.2+ds-3) UNRELEASED; urgency=medium
+gtk4 (4.8.2+ds-3) unstable; urgency=medium
 
   * Skip border-image-excess-size reftest on big-endian machines.
     Mitigates: #1024391
@@ -6,7 +6,7 @@ gtk4 (4.8.2+ds-3) UNRELEASED; urgency=medium
     - Trigger on-screen keyboard more reliably
     - Don't dismiss popups unnecessarily
 
- -- Simon McVittie <smcv@debian.org>  Fri, 18 Nov 2022 22:11:40 +0000
+ -- Simon McVittie <smcv@debian.org>  Fri, 18 Nov 2022 22:12:24 +0000
 
 gtk4 (4.8.2+ds-2) unstable; urgency=medium
 

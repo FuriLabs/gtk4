@@ -45,7 +45,6 @@ export EXAMPLES_PKG := gtk-$(APIVER)-examples
 export TESTS_PKG := gtk-$(APIVER)-tests
 
 # files larger than 4k in size will be compressed by dh_compress
-
 # so append a .gz suffix to avoid dangling symlinks
 export README_MD_MAYBE_GZ := README.md$(shell find -maxdepth 1 -size +4k -name README.md -exec echo ".gz" \;)
 

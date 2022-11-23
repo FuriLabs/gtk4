@@ -1,3 +1,42 @@
+gtk4 (4.8.2+ds-3) unstable; urgency=medium
+
+  * Skip border-image-excess-size reftest on big-endian machines.
+    Mitigates: #1024391
+  * Update to upstream gtk-4-8 branch commit 4.8.2-21-g753c6f2435
+    - Trigger on-screen keyboard more reliably
+    - Don't dismiss popups unnecessarily
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 18 Nov 2022 22:12:24 +0000
+
+gtk4 (4.8.2+ds-2) unstable; urgency=medium
+
+  * d/watch, d/gbp.conf: Only watch for 4.8.x versions.
+    Development release 4.9.1 has already happened, but is unlikely to reach
+    a stable branch before the Debian 12 freeze.
+  * Build-/test-depend on dbus-daemon instead of dbus.
+    We only need dbus-run-session here, not the system bus.
+  * d/patches: Update to upstream gtk-4-8 branch commit 4.8.2-18-g205783d9b0
+    - Fix handling of AltGr when multiple keyboard layouts use it
+    - Fix handling of back/forward mouse buttons
+    - Fix a focus handling regression
+    - Fix a regression that caused a very narrow combo box drop-down in
+      GNOME Settings since 4.8
+    - Fix a regression with copying under Phosh since 4.8
+    - Don't confine resized windows to the geometry of the first monitor
+    - Translation updates
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 18 Nov 2022 09:56:14 +0000
+
+gtk4 (4.8.2+ds-1) unstable; urgency=medium
+
+  * New upstream release
+  * d/control.in: Update Meson build-dependency
+  * d/copyright: Stop listing wayland and wayland-protocols as excluded.
+    They are no longer in the upstream source release.
+  * d/patches: Remove patches that were applied upstream
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 29 Oct 2022 11:54:46 +0100
+
 gtk4 (4.8.1+ds-1ubuntu1) kinetic; urgency=medium
 
   * Sync with Debian. Remaining changes:
@@ -118,9 +157,6 @@ gtk4 (4.6.6+ds-2) unstable; urgency=medium
   * Migrate GLib 2.68.0 build-dependency from d/control to d/control.in
   * d/copyright: Drop unused GPL license stanzas
   * d/gtk-4-tests.lintian-overrides: Update syntax for current Lintian
-
- -- Simon McVittie <smcv@debian.org>  Mon, 08 Aug 2022 19:22:54 +0100
- 
  gtk4 (4.6.6+ds-1ubuntu1) kinetic; urgency=medium
 
   * Sync with Debian. Remaining changes:
@@ -131,7 +167,9 @@ gtk4 (4.6.6+ds-2) unstable; urgency=medium
     - debian/rules: Handle the 2nd translation template file.
       This override can be dropped with 4.7.1
 
+
  -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 05 Jul 2022 14:09:40 -0400
+ 
 
 gtk4 (4.6.6+ds-1) unstable; urgency=medium
 

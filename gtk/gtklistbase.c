@@ -27,7 +27,6 @@
 #include "gtkdropcontrollermotion.h"
 #include "gtkgesturedrag.h"
 #include "gtkgizmoprivate.h"
-#include "gtkintl.h"
 #include "gtklistitemwidgetprivate.h"
 #include "gtkmultiselection.h"
 #include "gtkorientable.h"
@@ -568,6 +567,20 @@ gtk_list_base_focus (GtkWidget        *widget,
     return gtk_list_base_grab_focus_on_item (GTK_LIST_BASE (self), pos, TRUE, FALSE, FALSE);
 
   return gtk_widget_child_focus (item->widget, direction);
+}
+
+static gboolean
+gtk_list_base_grab_focus (GtkWidget *widget)
+{
+  GtkListBase *self = GTK_LIST_BASE (widget);
+  GtkListBasePrivate *priv = gtk_list_base_get_instance_private (self);
+  guint pos;
+
+  pos = gtk_list_item_tracker_get_position (priv->item_manager, priv->focus);
+  if (gtk_list_base_grab_focus_on_item (self, pos, FALSE, FALSE, FALSE))
+    return TRUE;
+
+  return GTK_WIDGET_CLASS (gtk_list_base_parent_class)->grab_focus (widget);
 }
 
 static void
@@ -1121,6 +1134,7 @@ gtk_list_base_class_init (GtkListBaseClass *klass)
   gpointer iface;
 
   widget_class->focus = gtk_list_base_focus;
+  widget_class->grab_focus = gtk_list_base_grab_focus;
 
   gobject_class->dispose = gtk_list_base_dispose;
   gobject_class->get_property = gtk_list_base_get_property;

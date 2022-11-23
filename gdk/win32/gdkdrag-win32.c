@@ -30,12 +30,14 @@
 
 #include "gdkeventsprivate.h"
 #include "gdkseatprivate.h"
-#include "gdk-private.h"
+#include "gdkprivate.h"
 
 #include <fcntl.h>
 #include <io.h>
 #include <math.h>
 #include <string.h>
+
+#define GDK_NOTE(a,b)
 
 /*
  * Support for OLE-2 drag and drop added at Archaeopteryx Software, 2001
@@ -212,7 +214,7 @@
 #include <shlobj.h>
 #include <shlguid.h>
 #include <objidl.h>
-#include "gdkintl.h"
+#include <glib/gi18n-lib.h>
 
 #include <gdk/gdk.h>
 #include <glib/gstdio.h>

@@ -253,6 +253,11 @@ xfail_reftests = \
 skipped_suites = \
 	$(NULL)
 
+# https://bugs.debian.org/1024391
+ifeq (big,$(DEB_HOST_ARCH_ENDIAN))
+	ignore_reftests += border-image-excess-size
+endif
+
 # TODO: Known failures: https://gitlab.gnome.org/GNOME/gtk/-/issues/4110
 # s390x: many (endianness?)
 ifeq (big,$(DEB_HOST_ARCH_ENDIAN))

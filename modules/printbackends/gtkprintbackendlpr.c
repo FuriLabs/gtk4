@@ -33,6 +33,7 @@
 
 #include <gtk/gtk.h>
 #include "gtkprinterprivate.h"
+#include "gtkprivate.h"
 
 #include "gtkprintbackendlpr.h"
 
@@ -155,8 +156,7 @@ _cairo_write (void                *closure,
 
   error = NULL;
 
-  GTK_NOTE (PRINTING,
-            g_print ("LPR Backend: Writing %i byte chunk to temp file\n", length));
+  GTK_DEBUG (PRINTING, "LPR Backend: Writing %i byte chunk to temp file", length);
 
   while (length > 0) 
     {
@@ -164,15 +164,13 @@ _cairo_write (void                *closure,
 
       if (error != NULL)
 	{
-	  GTK_NOTE (PRINTING,
-                     g_print ("LPR Backend: Error writing to temp file, %s\n", error->message));
+	  GTK_DEBUG (PRINTING, "LPR Backend: Error writing to temp file, %s", error->message);
 
           g_error_free (error);
 	  return CAIRO_STATUS_WRITE_ERROR;
 	}    
 
-      GTK_NOTE (PRINTING,
-                g_print ("LPR Backend: Wrote %" G_GSIZE_FORMAT " bytes to temp file\n", written));
+      GTK_DEBUG (PRINTING, "LPR Backend: Wrote %" G_GSIZE_FORMAT " bytes to temp file", written);
 
       data += written;
       length -= written;
@@ -274,8 +272,7 @@ lpr_write (GIOChannel   *source,
 
       if (error != NULL)
         {
-          GTK_NOTE (PRINTING,
-                    g_print ("LPR Backend: %s\n", error->message));
+          GTK_DEBUG (PRINTING, "LPR Backend: %s", error->message);
 
           g_error_free (error);
         } 
@@ -283,9 +280,7 @@ lpr_write (GIOChannel   *source,
       return FALSE;
     }
 
-  GTK_NOTE (PRINTING,
-            g_print ("LPR Backend: Writing %" G_GSIZE_FORMAT " byte chunk to lpr pipe\n", bytes_read));
-
+  GTK_DEBUG (PRINTING, "LPR Backend: Writing %" G_GSIZE_FORMAT " byte chunk to lpr pipe", bytes_read);
 
   return TRUE;
 }

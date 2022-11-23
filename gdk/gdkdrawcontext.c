@@ -22,8 +22,8 @@
 
 #include "gdkdrawcontextprivate.h"
 
-#include "gdkdebug.h"
-#include "gdkintl.h"
+#include "gdkdebugprivate.h"
+#include <glib/gi18n-lib.h>
 #include "gdkprofilerprivate.h"
 #include "gdksurfaceprivate.h"
 
@@ -364,7 +364,7 @@ gdk_draw_context_begin_frame_full (GdkDrawContext       *context,
       return;
     }
 
-  if (GDK_DISPLAY_DEBUG_CHECK (priv->display, HIGH_DEPTH))
+  if (gdk_display_get_debug_flags (priv->display) & GDK_DEBUG_HIGH_DEPTH)
     prefers_high_depth = TRUE;
 
   priv->frame_region = cairo_region_copy (region);

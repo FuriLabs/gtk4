@@ -8,18 +8,21 @@ locally.
 Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/4229
 Forwarded: no
 ---
- testsuite/gdk/meson.build | 1 -
- 1 file changed, 1 deletion(-)
+ testsuite/gdk/meson.build | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index 03528a3..af93721 100644
+index 3236ce7..45c4744 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
-@@ -12,7 +12,6 @@ clipboard_client = executable('clipboard-client',
+@@ -12,7 +12,9 @@ clipboard_client = executable('clipboard-client',
  tests = [
    { 'name': 'array' },
    { 'name': 'cairo' },
 -  { 'name': 'clipboard', 'parallel': false, },
++  { 'name': 'clipboard',
++    'parallel': false,
++    'suites': ['flaky'], },
    { 'name': 'contentformats' },
    { 'name': 'contentserializer' },
    { 'name': 'cursor' },

@@ -74,10 +74,6 @@ debian/%: debian/%.in
 		-e "s#@DEB_VERSION_UPSTREAM@#$(DEB_VERSION_UPSTREAM)#g" \
 		$@.in > $@
 
-configure_flags_common = \
-	--libdir=/$(LIBDIR) \
-	${NULL}
-
 configure_flags_deb = \
 	-Dauto_features=enabled \
 	-Dbroadway-backend=true \
@@ -182,14 +178,12 @@ override_dh_auto_configure: debian/control
 	dh_auto_configure \
 		--builddirectory=debian/build/deb \
 		-- \
-		$(configure_flags_common) \
 		$(configure_flags_deb) \
 		$(NULL)
 ifneq ($(filter %-udeb,$(built_binaries)),)
 	dh_auto_configure \
 		--builddirectory=debian/build/udeb \
 		-- \
-		$(configure_flags_common) \
 		$(configure_flags_udeb) \
 		$(NULL)
 endif

@@ -26,6 +26,9 @@ usage () {
     exit "$status"
 }
 
+# Workaround for https://bugs.debian.org/1025312
+export LIBGL_ALWAYS_SOFTWARE=1
+
 display="$1"
 
 case "$display" in

@@ -15,11 +15,6 @@ usr/share/icons/hicolor/*/*/org.gtk.IconBrowser4*
 usr/share/icons/hicolor/*/*/org.gtk.PrintEditor4*
 usr/share/icons/hicolor/*/*/org.gtk.WidgetFactory4*
 usr/share/icons/hicolor/*/*/org.gtk.gtk4.NodeEditor*
-usr/share/man/*/gtk4-demo-application.*
-usr/share/man/*/gtk4-demo.*
-usr/share/man/*/gtk4-icon-browser.*
-usr/share/man/*/gtk4-node-editor.*
-usr/share/man/*/gtk4-widget-factory.*
 usr/share/metainfo/org.gtk.Demo4.appdata.xml
 usr/share/metainfo/org.gtk.IconBrowser4.appdata.xml
 usr/share/metainfo/org.gtk.PrintEditor4.appdata.xml

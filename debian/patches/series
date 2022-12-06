@@ -12,6 +12,9 @@ wayland-calculate-union-of-geometry-of-all-monitors-for-t.patch
 gdk-wayland-Use-serial-of-the-latest-implicit-grab-availa.patch
 gtktext-Claim-gesture-more-selectively.patch
 gdksurface-Do-not-consider-GDK_TOUCH_END-CANCEL-as-popup-.patch
+Update-Abkhazian-translation-1.patch
+GLX-Add-extra-glXMakeContextCurrent-call-to-work-around-a.patch
+Update-Basque-translation.patch
 testsuite-Use-separate-setups-for-unstable-tests-instead-.patch
 testsuite-Don-t-create-.test-files-for-flaky-or-failing-t.patch
 node-editor-Save-test-data-relative-to-current-working-di.patch

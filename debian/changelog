@@ -1,4 +1,4 @@
-gtk4 (4.8.2+ds-4) UNRELEASED; urgency=medium
+gtk4 (4.8.2+ds-4) unstable; urgency=medium
 
   * d/patches: Update to upstream gtk-4-8 branch commit 4.8.2-27-g5186430d9d
     - Fix visual artifacts on X11
@@ -15,7 +15,7 @@ gtk4 (4.8.2+ds-4) UNRELEASED; urgency=medium
     The man pages now use python3-docutils instead.
   * d/*.install: Don't try to install man pages under nodoc build-profile
 
- -- Simon McVittie <smcv@debian.org>  Tue, 06 Dec 2022 11:50:33 +0000
+ -- Simon McVittie <smcv@debian.org>  Tue, 06 Dec 2022 11:52:29 +0000
 
 gtk4 (4.8.2+ds-3) unstable; urgency=medium
 

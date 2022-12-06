@@ -1,23 +1,21 @@
 gtk4 (4.8.2+ds-4) UNRELEASED; urgency=medium
 
-  * d/p/testsuite-Use-separate-setups-for-unstable-tests-instead-.patch,
-    d/p/testsuite-Don-t-create-.test-files-for-flaky-or-failing-t.patch:
-    Add patches to improve handling of flaky/failing tests
-  * d/rules: Remove redundant --libdir override
-  * d/tests/run-with-display:
-    Work around Mesa regression #1025312 by forcing software rendering.
-    We expect only software rendering to be available in typical buildd or
-    autopkgtest environments anyway, so this is no real loss.
-  * Drop unused docbook and xsltproc build-dependencies.
-    The man pages now use python3-docutils instead.
-  * Don't try to install man pages under nodoc build-profile
-  * Add patch to make the node editor reproducible
-  * d/patches: Sort Debian-specific patches to the end of the series
-  * Update from upstream gtk-4-8 branch
+  * d/patches: Update to upstream gtk-4-8 branch commit 4.8.2-27-g5186430d9d
     - Fix visual artifacts on X11
     - Update translations
+  * d/patches: Sort Debian-specific patches to the end of the series
+  * d/p/testsuite-Use-separate-setups-for-unstable-tests-instead-.patch,
+    d/p/testsuite-Don-t-create-.test-files-for-flaky-or-failing-t.patch:
+    Add patches from upstream git main to improve handling of
+    flaky/failing tests
+  * d/p/node-editor-Save-test-data-relative-to-current-working-di.patch:
+    Add proposed patch to make the node editor reproducible
+  * d/rules: Remove redundant --libdir override
+  * d/control.in: Drop unused docbook and xsltproc build-dependencies.
+    The man pages now use python3-docutils instead.
+  * d/*.install: Don't try to install man pages under nodoc build-profile
 
- -- Simon McVittie <smcv@debian.org>  Tue, 06 Dec 2022 11:49:54 +0000
+ -- Simon McVittie <smcv@debian.org>  Tue, 06 Dec 2022 11:50:33 +0000
 
 gtk4 (4.8.2+ds-3) unstable; urgency=medium
 

@@ -18,3 +18,4 @@ reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
 reftests-Allow-minor-differences-to-be-tolerated.patch
 Disable-inscription-markup.ui-reftest.patch
 debian/Disable-clipboard-test.patch
+node-editor-Save-test-data-relative-to-current-working-di.patch

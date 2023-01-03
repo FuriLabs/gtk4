@@ -44,7 +44,7 @@ Applied-upstream: 4.9.2, commit:957dd49ef7d371926f90212bdf52b92742062e3e
  7 files changed, 147 insertions(+), 110 deletions(-)
 
 diff --git a/.gitlab-ci.yml b/.gitlab-ci.yml
-index 8829a10..4d36f87 100644
+index dae2128..d2f730f 100644
 --- a/.gitlab-ci.yml
 +++ b/.gitlab-ci.yml
 @@ -51,8 +51,11 @@ style-check-diff:

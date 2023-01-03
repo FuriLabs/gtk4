@@ -77,10 +77,9 @@ for BACKEND in $BACKENDS; do
                     --generate en_US.UTF-8 \
                     --generate sv_SE=ISO-8859-1 \
                     -- \
-                        meson test -C "$BUILDDIR" \
-                        --print-errorlogs \
-                        --setup="$BACKEND" \
-                        "$@" \
+                        dh_auto_test --builddirectory="$BUILDDIR" -- \
+                            --setup="$BACKEND" \
+                            "$@" \
             || touch "$test_data/tests-failed"
 
     # Don't base64-encode the image results for tests that upstream

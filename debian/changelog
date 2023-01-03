@@ -1,9 +1,25 @@
-gtk4 (4.8.3+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.8.3+ds-1) unstable; urgency=medium
 
   * New upstream release
   * Drop patches that were applied upstream
+  * d/tests/run-with-display: Use absolute path to WAYLAND_DISPLAY socket.
+    This means we can still use the Wayland display, even when dh_auto_test
+    changes our XDG_RUNTIME_DIR.
+  * d/run-tests.sh: Use dh_auto_test.
+    In particular this forces the C.UTF-8 locale, which should mean the tests
+    pass even when run under a non-UTF-8 locale like C (which official Debian
+    buildds do not do, but some other environments like reproducible-builds
+    might). (Closes: #1027680)
+  * d/tests: Quote more defensively
+  * d/tests/python3-gi: Explicitly disable a11y.
+    This version of GTK logs a warning (which makes the autopkgtest fail)
+    if we cannot contact the a11y bus provided by AT-SPI.
+  * d/tests/build: Suppress D-Bus/a11y warnings
+  * d/tests/build: Avoid PWD bashism
+  * d/copyright: Move standalone license stanzas to the end
+  * d/copyright: Add details of run-with-display script
 
- -- Simon McVittie <smcv@debian.org>  Tue, 03 Jan 2023 09:47:40 +0000
+ -- Simon McVittie <smcv@debian.org>  Tue, 03 Jan 2023 12:45:21 +0000
 
 gtk4 (4.8.2+ds-4) unstable; urgency=medium
 

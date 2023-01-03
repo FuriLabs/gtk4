@@ -11,6 +11,8 @@ set -e
 set -u
 set -x
 
+export GTK_A11Y=none
+
 TESTDIR="$PWD/$(dirname $0)"
 WORKDIR=$(mktemp -d)
 cleanup () {
@@ -70,5 +72,6 @@ EOF
 echo "build: OK"
 [ -x gtktest ]
 "$TESTDIR"/run-with-display $GDK_BACKEND \
+dbus-run-session -- \
 ./gtktest
 echo "run: OK"

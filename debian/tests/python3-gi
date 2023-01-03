@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export GTK_A11Y=none
+
 debian/tests/run-with-display "$GDK_BACKEND" \
 dbus-run-session \
 python3 <<EOF

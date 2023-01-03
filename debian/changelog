@@ -1,3 +1,9 @@
+gtk4 (4.8.3+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 03 Jan 2023 09:40:49 +0000
+
 gtk4 (4.8.2+ds-4) unstable; urgency=medium
 
   * d/patches: Update to upstream gtk-4-8 branch commit 4.8.2-27-g5186430d9d

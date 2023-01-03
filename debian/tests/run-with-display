@@ -47,7 +47,7 @@ case "$display" in
             echo "Waiting for socket..."
             sleep 1
         done
-        env -u DISPLAY WAYLAND_DISPLAY="$socket" "$@"
+        env -u DISPLAY WAYLAND_DISPLAY="$XDG_RUNTIME_DIR/$socket" "$@"
         exit $?
     ;;
     x11)

@@ -912,6 +912,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_accessible_invalid_state_get_type@Base 4.0.0
  gtk_accessible_property_get_type@Base 4.0.0
  gtk_accessible_property_init_value@Base 4.0.0
+ gtk_accessible_range_get_type@Base 4.9.2
  gtk_accessible_relation_get_type@Base 4.0.0
  gtk_accessible_relation_init_value@Base 4.0.0
  gtk_accessible_reset_property@Base 4.0.0
@@ -963,6 +964,23 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_adjustment_set_step_increment@Base 4.0.0
  gtk_adjustment_set_upper@Base 4.0.0
  gtk_adjustment_set_value@Base 4.0.0
+ gtk_alert_dialog_choose@Base 4.9.2
+ gtk_alert_dialog_choose_finish@Base 4.9.2
+ gtk_alert_dialog_get_buttons@Base 4.9.2
+ gtk_alert_dialog_get_cancel_button@Base 4.9.2
+ gtk_alert_dialog_get_default_button@Base 4.9.2
+ gtk_alert_dialog_get_detail@Base 4.9.2
+ gtk_alert_dialog_get_message@Base 4.9.2
+ gtk_alert_dialog_get_modal@Base 4.9.2
+ gtk_alert_dialog_get_type@Base 4.9.2
+ gtk_alert_dialog_new@Base 4.9.2
+ gtk_alert_dialog_set_buttons@Base 4.9.2
+ gtk_alert_dialog_set_cancel_button@Base 4.9.2
+ gtk_alert_dialog_set_default_button@Base 4.9.2
+ gtk_alert_dialog_set_detail@Base 4.9.2
+ gtk_alert_dialog_set_message@Base 4.9.2
+ gtk_alert_dialog_set_modal@Base 4.9.2
+ gtk_alert_dialog_show@Base 4.9.2
  gtk_align_get_type@Base 4.0.0
  gtk_alternative_trigger_get_first@Base 4.0.0
  gtk_alternative_trigger_get_second@Base 4.0.0
@@ -1340,8 +1358,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_cell_renderer_get_state@Base 4.0.0
  gtk_cell_renderer_get_type@Base 4.0.0
  gtk_cell_renderer_get_visible@Base 4.0.0
- gtk_cell_renderer_graph_get_type@Base 4.0.0
- gtk_cell_renderer_graph_new@Base 4.0.0
  gtk_cell_renderer_is_activatable@Base 4.0.0
  gtk_cell_renderer_mode_get_type@Base 4.0.0
  gtk_cell_renderer_pixbuf_get_type@Base 4.0.0
@@ -1428,6 +1444,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_check_version@Base 4.0.0
  gtk_closure_expression_get_type@Base 4.0.0
  gtk_closure_expression_new@Base 4.0.0
+ gtk_collation_get_type@Base 4.9.2
  gtk_color_button_get_modal@Base 4.0.0
  gtk_color_button_get_title@Base 4.0.0
  gtk_color_button_get_type@Base 4.0.0
@@ -1445,6 +1462,22 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_color_chooser_set_use_alpha@Base 4.0.0
  gtk_color_chooser_widget_get_type@Base 4.0.0
  gtk_color_chooser_widget_new@Base 4.0.0
+ gtk_color_dialog_button_get_dialog@Base 4.9.2
+ gtk_color_dialog_button_get_rgba@Base 4.9.2
+ gtk_color_dialog_button_get_type@Base 4.9.2
+ gtk_color_dialog_button_new@Base 4.9.2
+ gtk_color_dialog_button_set_dialog@Base 4.9.2
+ gtk_color_dialog_button_set_rgba@Base 4.9.2
+ gtk_color_dialog_choose_rgba@Base 4.9.2
+ gtk_color_dialog_choose_rgba_finish@Base 4.9.2
+ gtk_color_dialog_get_modal@Base 4.9.2
+ gtk_color_dialog_get_title@Base 4.9.2
+ gtk_color_dialog_get_type@Base 4.9.2
+ gtk_color_dialog_get_with_alpha@Base 4.9.2
+ gtk_color_dialog_new@Base 4.9.2
+ gtk_color_dialog_set_modal@Base 4.9.2
+ gtk_color_dialog_set_title@Base 4.9.2
+ gtk_color_dialog_set_with_alpha@Base 4.9.2
  gtk_color_picker_kwin_new@Base 4.0.0
  gtk_color_picker_portal_new@Base 4.0.0
  gtk_color_picker_shell_new@Base 4.0.0
@@ -1454,6 +1487,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_column_view_column_get_factory@Base 4.0.0
  gtk_column_view_column_get_fixed_width@Base 4.0.0
  gtk_column_view_column_get_header_menu@Base 4.0.0
+ gtk_column_view_column_get_id@Base 4.9.2
  gtk_column_view_column_get_resizable@Base 4.0.0
  gtk_column_view_column_get_sorter@Base 4.0.0
  gtk_column_view_column_get_title@Base 4.0.0
@@ -1464,6 +1498,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_column_view_column_set_factory@Base 4.0.0
  gtk_column_view_column_set_fixed_width@Base 4.0.0
  gtk_column_view_column_set_header_menu@Base 4.0.0
+ gtk_column_view_column_set_id@Base 4.9.2
  gtk_column_view_column_set_resizable@Base 4.0.0
  gtk_column_view_column_set_sorter@Base 4.0.0
  gtk_column_view_column_set_title@Base 4.0.0
@@ -1487,6 +1522,11 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_column_view_set_show_row_separators@Base 4.0.0
  gtk_column_view_set_single_click_activate@Base 4.0.0
  gtk_column_view_sort_by_column@Base 4.0.0
+ gtk_column_view_sorter_get_n_sort_columns@Base 4.9.2
+ gtk_column_view_sorter_get_nth_sort_column@Base 4.9.2
+ gtk_column_view_sorter_get_primary_sort_column@Base 4.9.2
+ gtk_column_view_sorter_get_primary_sort_order@Base 4.9.2
+ gtk_column_view_sorter_get_type@Base 4.9.2
  gtk_combo_box_get_active@Base 4.0.0
  gtk_combo_box_get_active_id@Base 4.0.0
  gtk_combo_box_get_active_iter@Base 4.0.0
@@ -1614,6 +1654,8 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_dialog_add_action_widget@Base 4.0.0
  gtk_dialog_add_button@Base 4.0.0
  gtk_dialog_add_buttons@Base 4.0.0
+ gtk_dialog_error_get_type@Base 4.9.2
+ gtk_dialog_error_quark@Base 4.9.2
  gtk_dialog_flags_get_type@Base 4.0.0
  gtk_dialog_get_content_area@Base 4.0.0
  gtk_dialog_get_header_bar@Base 4.0.0
@@ -1914,6 +1956,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_file_chooser_add_choice@Base 4.0.0
  gtk_file_chooser_add_filter@Base 4.0.0
  gtk_file_chooser_add_shortcut_folder@Base 4.0.0
+ gtk_file_chooser_cell_get_type@Base 4.9.2
  gtk_file_chooser_dialog_get_type@Base 4.0.0
  gtk_file_chooser_dialog_new@Base 4.0.0
  gtk_file_chooser_error_get_type@Base 4.0.0
@@ -1949,6 +1992,36 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_file_chooser_set_select_multiple@Base 4.0.0
  gtk_file_chooser_widget_get_type@Base 4.0.0
  gtk_file_chooser_widget_new@Base 4.0.0
+ gtk_file_dialog_get_accept_label@Base 4.9.2
+ gtk_file_dialog_get_default_filter@Base 4.9.2
+ gtk_file_dialog_get_filters@Base 4.9.2
+ gtk_file_dialog_get_initial_file@Base 4.9.2
+ gtk_file_dialog_get_initial_folder@Base 4.9.2
+ gtk_file_dialog_get_initial_name@Base 4.9.2
+ gtk_file_dialog_get_modal@Base 4.9.2
+ gtk_file_dialog_get_shortcut_folders@Base 4.9.2
+ gtk_file_dialog_get_title@Base 4.9.2
+ gtk_file_dialog_get_type@Base 4.9.2
+ gtk_file_dialog_new@Base 4.9.2
+ gtk_file_dialog_open@Base 4.9.2
+ gtk_file_dialog_open_finish@Base 4.9.2
+ gtk_file_dialog_open_multiple@Base 4.9.2
+ gtk_file_dialog_open_multiple_finish@Base 4.9.2
+ gtk_file_dialog_save@Base 4.9.2
+ gtk_file_dialog_save_finish@Base 4.9.2
+ gtk_file_dialog_select_folder@Base 4.9.2
+ gtk_file_dialog_select_folder_finish@Base 4.9.2
+ gtk_file_dialog_select_multiple_folders@Base 4.9.2
+ gtk_file_dialog_select_multiple_folders_finish@Base 4.9.2
+ gtk_file_dialog_set_accept_label@Base 4.9.2
+ gtk_file_dialog_set_default_filter@Base 4.9.2
+ gtk_file_dialog_set_filters@Base 4.9.2
+ gtk_file_dialog_set_initial_file@Base 4.9.2
+ gtk_file_dialog_set_initial_folder@Base 4.9.2
+ gtk_file_dialog_set_initial_name@Base 4.9.2
+ gtk_file_dialog_set_modal@Base 4.9.2
+ gtk_file_dialog_set_shortcut_folders@Base 4.9.2
+ gtk_file_dialog_set_title@Base 4.9.2
  gtk_file_filter_add_mime_type@Base 4.0.0
  gtk_file_filter_add_pattern@Base 4.0.0
  gtk_file_filter_add_pixbuf_formats@Base 4.0.0
@@ -1960,6 +2033,14 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_file_filter_new_from_gvariant@Base 4.0.0
  gtk_file_filter_set_name@Base 4.0.0
  gtk_file_filter_to_gvariant@Base 4.0.0
+ gtk_file_launcher_get_file@Base 4.9.2
+ gtk_file_launcher_get_type@Base 4.9.2
+ gtk_file_launcher_launch@Base 4.9.2
+ gtk_file_launcher_launch_finish@Base 4.9.2
+ gtk_file_launcher_new@Base 4.9.2
+ gtk_file_launcher_open_containing_folder@Base 4.9.2
+ gtk_file_launcher_open_containing_folder_finish@Base 4.9.2
+ gtk_file_launcher_set_file@Base 4.9.2
  gtk_filter_change_get_type@Base 4.0.0
  gtk_filter_changed@Base 4.0.0
  gtk_filter_get_strictness@Base 4.0.0
@@ -2071,6 +2152,43 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_font_chooser_set_show_preview_entry@Base 4.0.0
  gtk_font_chooser_widget_get_type@Base 4.0.0
  gtk_font_chooser_widget_new@Base 4.0.0
+ gtk_font_dialog_button_get_dialog@Base 4.9.2
+ gtk_font_dialog_button_get_font_desc@Base 4.9.2
+ gtk_font_dialog_button_get_font_features@Base 4.9.2
+ gtk_font_dialog_button_get_language@Base 4.9.2
+ gtk_font_dialog_button_get_level@Base 4.9.2
+ gtk_font_dialog_button_get_type@Base 4.9.2
+ gtk_font_dialog_button_get_use_font@Base 4.9.2
+ gtk_font_dialog_button_get_use_size@Base 4.9.2
+ gtk_font_dialog_button_new@Base 4.9.2
+ gtk_font_dialog_button_set_dialog@Base 4.9.2
+ gtk_font_dialog_button_set_font_desc@Base 4.9.2
+ gtk_font_dialog_button_set_font_features@Base 4.9.2
+ gtk_font_dialog_button_set_language@Base 4.9.2
+ gtk_font_dialog_button_set_level@Base 4.9.2
+ gtk_font_dialog_button_set_use_font@Base 4.9.2
+ gtk_font_dialog_button_set_use_size@Base 4.9.2
+ gtk_font_dialog_choose_face@Base 4.9.2
+ gtk_font_dialog_choose_face_finish@Base 4.9.2
+ gtk_font_dialog_choose_family@Base 4.9.2
+ gtk_font_dialog_choose_family_finish@Base 4.9.2
+ gtk_font_dialog_choose_font@Base 4.9.2
+ gtk_font_dialog_choose_font_and_features@Base 4.9.2
+ gtk_font_dialog_choose_font_and_features_finish@Base 4.9.2
+ gtk_font_dialog_choose_font_finish@Base 4.9.2
+ gtk_font_dialog_get_filter@Base 4.9.2
+ gtk_font_dialog_get_font_map@Base 4.9.2
+ gtk_font_dialog_get_language@Base 4.9.2
+ gtk_font_dialog_get_modal@Base 4.9.2
+ gtk_font_dialog_get_title@Base 4.9.2
+ gtk_font_dialog_get_type@Base 4.9.2
+ gtk_font_dialog_new@Base 4.9.2
+ gtk_font_dialog_set_filter@Base 4.9.2
+ gtk_font_dialog_set_font_map@Base 4.9.2
+ gtk_font_dialog_set_language@Base 4.9.2
+ gtk_font_dialog_set_modal@Base 4.9.2
+ gtk_font_dialog_set_title@Base 4.9.2
+ gtk_font_level_get_type@Base 4.9.2
  gtk_frame_get_child@Base 4.0.0
  gtk_frame_get_label@Base 4.0.0
  gtk_frame_get_label_align@Base 4.0.0
@@ -2128,8 +2246,10 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_gesture_stylus_get_axis@Base 4.0.0
  gtk_gesture_stylus_get_backlog@Base 4.0.0
  gtk_gesture_stylus_get_device_tool@Base 4.0.0
+ gtk_gesture_stylus_get_stylus_only@Base 4.9.2
  gtk_gesture_stylus_get_type@Base 4.0.0
  gtk_gesture_stylus_new@Base 4.0.0
+ gtk_gesture_stylus_set_stylus_only@Base 4.9.2
  gtk_gesture_swipe_get_type@Base 4.0.0
  gtk_gesture_swipe_get_velocity@Base 4.0.0
  gtk_gesture_swipe_new@Base 4.0.0
@@ -3755,10 +3875,12 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_string_object_get_string@Base 4.0.0
  gtk_string_object_get_type@Base 4.0.0
  gtk_string_object_new@Base 4.0.0
+ gtk_string_sorter_get_collation@Base 4.9.2
  gtk_string_sorter_get_expression@Base 4.0.0
  gtk_string_sorter_get_ignore_case@Base 4.0.0
  gtk_string_sorter_get_type@Base 4.0.0
  gtk_string_sorter_new@Base 4.0.0
+ gtk_string_sorter_set_collation@Base 4.9.2
  gtk_string_sorter_set_expression@Base 4.0.0
  gtk_string_sorter_set_ignore_case@Base 4.0.0
  gtk_style_context_add_class@Base 4.0.0
@@ -4138,12 +4260,16 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_tree_drag_source_get_type@Base 4.0.0
  gtk_tree_drag_source_row_draggable@Base 4.0.0
  gtk_tree_expander_get_child@Base 4.0.0
+ gtk_tree_expander_get_hide_expander@Base 4.9.2
+ gtk_tree_expander_get_indent_for_depth@Base 4.9.2
  gtk_tree_expander_get_indent_for_icon@Base 4.6.0
  gtk_tree_expander_get_item@Base 4.0.0
  gtk_tree_expander_get_list_row@Base 4.0.0
  gtk_tree_expander_get_type@Base 4.0.0
  gtk_tree_expander_new@Base 4.0.0
  gtk_tree_expander_set_child@Base 4.0.0
+ gtk_tree_expander_set_hide_expander@Base 4.9.2
+ gtk_tree_expander_set_indent_for_depth@Base 4.9.2
  gtk_tree_expander_set_indent_for_icon@Base 4.6.0
  gtk_tree_expander_set_list_row@Base 4.0.0
  gtk_tree_get_row_drag_data@Base 4.0.0
@@ -4536,6 +4662,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_widget_get_can_target@Base 4.0.0
  gtk_widget_get_child_visible@Base 4.0.0
  gtk_widget_get_clipboard@Base 4.0.0
+ gtk_widget_get_color@Base 4.9.2
  gtk_widget_get_css_classes@Base 4.0.0
  gtk_widget_get_css_name@Base 4.0.0
  gtk_widget_get_cursor@Base 4.0.0

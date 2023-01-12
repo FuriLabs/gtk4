@@ -1,12 +1,14 @@
-gtk4 (4.8.3+ds-1ubuntu1) UNRELEASED; urgency=medium
+gtk4 (4.9.2+ds-0ubuntu1) UNRELEASED; urgency=medium
 
+  * New upstream release
   * Sync with Debian. Remaining changes:
     - debian/tests:
       + include the memorytexture test in the flaky set, it has been unreliable
     - debian/control:
       + Build-Depend on dh-sequence-translations
+  * Update debian/gbp.conf and debian/watch to track the 4.9 series
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 12 Jan 2023 08:27:39 -0500
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 12 Jan 2023 08:31:09 -0500
 
 gtk4 (4.8.3+ds-1) unstable; urgency=medium
 

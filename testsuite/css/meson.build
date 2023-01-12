@@ -12,10 +12,14 @@ subdir('nodes')
 subdir('style')
 subdir('change')
 
-test_api = executable('api',
-  sources: ['api.c'],
+testexecdir = join_paths(installed_test_bindir, 'css')
+testdatadir = join_paths(installed_test_datadir, 'css')
+
+test_api = executable('api', 'api.c',
   c_args: common_cflags,
   dependencies: libgtk_dep,
+  install: get_option('install-tests'),
+  install_dir: testexecdir,
 )
 
 test('api', test_api,
@@ -25,11 +29,12 @@ test('api', test_api,
   suite: 'css',
 )
 
-test_data = executable('data',
-  sources: ['data.c'],
+test_data = executable('data', 'data.c',
   c_args: common_cflags + ['-DGTK_COMPILATION'],
   include_directories: [confinc, ],
   dependencies: libgtk_static_dep,
+  install: get_option('install-tests'),
+  install_dir: testexecdir,
 )
 
 test('data', test_data,
@@ -39,10 +44,11 @@ test('data', test_data,
   suite: 'css',
 )
 
-transition = executable('transition',
-  sources: ['transition.c'],
+transition = executable('transition', 'transition.c',
   c_args: common_cflags + ['-DGTK_COMPILATION'],
   dependencies: libgtk_static_dep,
+  install: get_option('install-tests'),
+  install_dir: testexecdir,
 )
 
 test('transition', transition,
@@ -51,6 +57,24 @@ test('transition', transition,
      env: csstest_env,
      suite: 'css'
 )
+
+if get_option('install-tests')
+  conf = configuration_data()
+  conf.set('libexecdir', gtk_libexecdir)
+  configure_file(input: 'api.test.in',
+    output: 'api.test',
+    configuration: conf,
+    install_dir: testdatadir,
+  )
+
+  conf = configuration_data()
+  conf.set('libexecdir', gtk_libexecdir)
+  configure_file(input: 'data.test.in',
+    output: 'data.test',
+    configuration: conf,
+    install_dir: testdatadir,
+  )
+endif
 
 if false and get_option ('profiler')
 

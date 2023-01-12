@@ -1,7 +1,12 @@
+testexecdir = join_paths(installed_test_bindir, 'css', 'parser')
+testdatadir = join_paths(installed_test_datadir, 'css')
+
 test_parser = executable('test-css-parser',
   sources: ['test-css-parser.c', '../../testutils.c'],
   c_args: common_cflags,
   dependencies: libgtk_dep,
+  install: get_option('install-tests'),
+  install_dir: testexecdir,
 )
 
 test_data = [
@@ -664,3 +669,15 @@ foreach testname : test_data
          suite: 'css')
   endif
 endforeach
+
+if get_option('install-tests')
+  conf = configuration_data()
+  conf.set('libexecdir', gtk_libexecdir)
+  configure_file(input: 'parser.test.in',
+                 output: 'parser.test',
+                 configuration: conf,
+                 install_dir: testdatadir)
+
+  install_data(test_data, install_dir: testexecdir)
+
+endif

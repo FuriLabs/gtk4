@@ -1,7 +1,12 @@
+testexecdir = join_paths(installed_test_bindir, 'gsk')
+testdatadir = join_paths(installed_test_datadir, 'gsk')
+
 compare_render = executable('compare-render',
   ['compare-render.c', '../reftests/reftest-compare.c', 'replay-node.c'],
   dependencies: libgtk_private_dep,
   c_args: common_cflags + ['-DGTK_COMPILATION'],
+  install: get_option('install-tests'),
+  install_dir: testexecdir
 )
 
 node_parser = executable('node-parser', 
@@ -16,6 +21,8 @@ serialize = executable('serialize',
   link_with: testutils_lib,
   dependencies: libgtk_dep,
   c_args: common_cflags,
+  install: get_option('install-tests'),
+  install_dir: testexecdir
 )
 
 compare_render_tests = [
@@ -799,6 +806,8 @@ foreach t : tests
   test_exe = executable(test_name, test_srcs,
     dependencies : libgtk_dep,
     c_args : test_cargs + common_cflags,
+    install: get_option('install-tests'),
+    install_dir: testexecdir,
   )
 
   test(test_name, test_exe,
@@ -838,6 +847,8 @@ foreach t : internal_tests
   test_exe = executable(test_name,
     sources: test_srcs,
     dependencies : libgtk_private_dep,
+    install: get_option('install-tests'),
+    install_dir: testexecdir,
     c_args : test_cargs + common_cflags + ['-DGTK_COMPILATION'],
   )
 

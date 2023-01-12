@@ -1,9 +1,13 @@
+testexecdir = join_paths(installed_test_bindir, 'gdk')
+testdatadir = join_paths(installed_test_datadir, 'gdk')
+
 clipboard_client = executable('clipboard-client',
   sources: ['clipboard-client.c'],
   include_directories: [confinc],
   c_args: common_cflags,
   dependencies: [ libgtk_dep ],
-  install: false,
+  install: get_option('install-tests'),
+  install_dir: testexecdir
 )
 
 tests = [
@@ -50,7 +54,8 @@ foreach t : tests
     sources: [ '@0@.c'.format(test_name) ] + t.get('sources', []),
     c_args: common_cflags,
     dependencies: libgtk_dep,
-    install: false,
+    install: get_option('install-tests'),
+    install_dir: testexecdir,
   )
 
   suites = ['gdk'] + t.get('suites', [])
@@ -90,7 +95,8 @@ foreach t : internal_tests
     sources: '@0@.c'.format(test_name),
     c_args: common_cflags + ['-DGTK_COMPILATION'],
     dependencies: libgtk_static_dep,
-    install: false,
+    install: get_option('install-tests'),
+    install_dir: testexecdir,
   )
 
   suites = ['gdk'] + t.get('suites', [])
@@ -106,3 +112,28 @@ foreach t : internal_tests
     suite: suites,
   )
 endforeach
+
+
+if get_option('install-tests')
+  foreach t : tests
+    test_name = t.get('name')
+    suites = t.get('suites', [])
+
+    if suites.contains('flaky') or suites.contains('failing')
+      continue
+    endif
+
+    test_cdata = configuration_data()
+    test_cdata.set('testexecdir', testexecdir)
+    test_cdata.set('test', test_name)
+    configure_file(input: 'gdk.test.in',
+      output: '@0@.test'.format(test_name),
+      configuration: test_cdata,
+      install: true,
+      install_dir: testdatadir,
+    )
+  endforeach
+
+  install_subdir('clipboard-data', install_dir: testexecdir)
+  install_subdir('image-data', install_dir: testexecdir)
+endif

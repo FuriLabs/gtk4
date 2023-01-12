@@ -18,7 +18,7 @@ def do_quit(user_data):
 
 window = Gtk.Window()
 window.set_title('Test Window')
-window.show()
+window.set_visible("true")
 GLib.timeout_add_seconds(1, do_quit, None)
 
 loop.run()

@@ -1,0 +1,30 @@
+From: Jeremy Bicha <jeremy.bicha@canonical.com>
+Date: Thu, 12 Jan 2023 10:58:32 -0500
+Subject: Disable gtk template test
+
+** Message: Couldn't connect to D-Bus system bus, avahi printers will not be available:
+ Could not connect: No such file or directory
+
+** (/<<PKGBUILDDIR>>/debian/build/deb/testsuite/gtk/templates): WARNING **:
+ failed to contact colord: Could not connect: No such file or directory
+
+(test program exited with status code -5)
+
+Forwarded: no
+---
+ testsuite/gtk/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/testsuite/gtk/meson.build b/testsuite/gtk/meson.build
+index 3c107ef..620f77f 100644
+--- a/testsuite/gtk/meson.build
++++ b/testsuite/gtk/meson.build
+@@ -82,7 +82,7 @@ tests = [
+   { 'name': 'sortlistmodel-exhaustive' },
+   { 'name': 'spinbutton' },
+   { 'name': 'stringlist' },
+-  { 'name': 'templates' },
++  { 'name': 'templates', 'suites': ['flaky'], },
+   { 'name': 'textiter' },
+   { 'name': 'theme-validate' },
+   { 'name': 'tooltips' },

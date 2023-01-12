@@ -3,3 +3,4 @@ debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
 debian/reftests-Allow-minor-differences-to-be-tolerated.patch
 debian/Disable-inscription-markup.ui-reftest.patch
 debian/Disable-clipboard-test.patch
+debian/Disable-gtk-template-test.patch

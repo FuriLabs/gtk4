@@ -251,6 +251,18 @@ click_released_cb (GtkGestureClick *gesture,
 }
 
 static void
+click_pressed_cb (GtkGestureClick *gesture,
+                  int              n_press,
+                  double           x,
+                  double           y,
+                  GtkColumnView   *self)
+{
+  /* Claim the state here to prevent propagation, the event controllers in
+   * GtkColumView have already been handled in the CAPTURE phase */
+  gtk_gesture_set_state (GTK_GESTURE (gesture), GTK_EVENT_SEQUENCE_CLAIMED);
+}
+
+static void
 gtk_column_view_title_init (GtkColumnViewTitle *self)
 {
   GtkWidget *widget = GTK_WIDGET (self);
@@ -272,6 +284,7 @@ gtk_column_view_title_init (GtkColumnViewTitle *self)
   gesture = gtk_gesture_click_new ();
   gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 0);
   g_signal_connect (gesture, "released", G_CALLBACK (click_released_cb), self);
+  g_signal_connect (gesture, "pressed", G_CALLBACK (click_pressed_cb), self);
   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (gesture));
 }
 
@@ -283,45 +296,56 @@ gtk_column_view_title_new (GtkColumnViewColumn *column)
   title = g_object_new (GTK_TYPE_COLUMN_VIEW_TITLE, NULL);
 
   title->column = g_object_ref (column);
-  gtk_column_view_title_update (title);
+  gtk_column_view_title_update_sort (title);
+  gtk_column_view_title_set_title (title, gtk_column_view_column_get_title (column));
+  gtk_column_view_title_set_menu (title, gtk_column_view_column_get_header_menu (column));
 
   return GTK_WIDGET (title);
 }
 
 void
-gtk_column_view_title_update (GtkColumnViewTitle *self)
+gtk_column_view_title_set_title (GtkColumnViewTitle *self,
+                                 const char         *title)
 {
-  GtkSorter *sorter;
-  GtkColumnView *view;
-  GtkColumnViewSorter *view_sorter;
-  gboolean inverted;
-  GtkColumnViewColumn *active;
+  gtk_label_set_label (GTK_LABEL (self->title), title);
+}
 
-  gtk_label_set_label (GTK_LABEL (self->title), gtk_column_view_column_get_title (self->column));
+void
+gtk_column_view_title_set_menu (GtkColumnViewTitle *self,
+                                GMenuModel         *model)
+{
+  g_clear_pointer (&self->popup_menu, gtk_widget_unparent);
+}
 
-  sorter = gtk_column_view_column_get_sorter (self->column);
-
-  if (sorter)
+void
+gtk_column_view_title_update_sort (GtkColumnViewTitle *self)
+{
+  if (gtk_column_view_column_get_sorter (self->column))
     {
+      GtkColumnView *view;
+      GtkColumnViewSorter *view_sorter;
+      GtkColumnViewColumn *primary;
+      GtkSortType sort_order;
+
       view = gtk_column_view_column_get_column_view (self->column);
       view_sorter = GTK_COLUMN_VIEW_SORTER (gtk_column_view_get_sorter (view));
-      active = gtk_column_view_sorter_get_sort_column (view_sorter, &inverted);
+      primary = gtk_column_view_sorter_get_primary_sort_column (view_sorter);
+      sort_order = gtk_column_view_sorter_get_primary_sort_order (view_sorter);
 
-      gtk_widget_show (self->sort);
+      gtk_widget_set_visible (self->sort, TRUE);
       gtk_widget_remove_css_class (self->sort, "ascending");
       gtk_widget_remove_css_class (self->sort, "descending");
       gtk_widget_remove_css_class (self->sort, "unsorted");
-      if (self->column != active)
+
+      if (self->column != primary)
         gtk_widget_add_css_class (self->sort, "unsorted");
-      else if (inverted)
+      else if (sort_order == GTK_SORT_DESCENDING)
         gtk_widget_add_css_class (self->sort, "descending");
       else
         gtk_widget_add_css_class (self->sort, "ascending");
     }
   else
-    gtk_widget_hide (self->sort);
-
-  g_clear_pointer (&self->popup_menu, gtk_widget_unparent);
+    gtk_widget_set_visible (self->sort, FALSE);
 }
 
 GtkColumnViewColumn *

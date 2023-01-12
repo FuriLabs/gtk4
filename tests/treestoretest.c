@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 GtkTreeStore *base_model;
 static int node_count = 0;
 
@@ -449,7 +451,7 @@ make_window (int view_type)
       iter_append (NULL, GTK_TREE_VIEW (tree_view));
     }
   /* Show it all */
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 }
 
 int

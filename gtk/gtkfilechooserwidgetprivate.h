@@ -22,7 +22,8 @@
 #define __GTK_FILE_CHOOSER_WIDGET_PRIVATE_H__
 
 #include <glib.h>
-#include "gtkfilechooserwidget.h"
+#include "deprecated/gtkfilechooserwidget.h"
+#include "gtkselectionmodel.h"
 
 G_BEGIN_DECLS
 
@@ -35,6 +36,12 @@ gtk_file_chooser_widget_should_respond (GtkFileChooserWidget *chooser);
 
 void
 gtk_file_chooser_widget_initial_focus  (GtkFileChooserWidget *chooser);
+
+GSList *
+gtk_file_chooser_widget_get_selected_files (GtkFileChooserWidget *impl);
+
+GtkSelectionModel *
+gtk_file_chooser_widget_get_selection_model (GtkFileChooserWidget *chooser);
 
 G_END_DECLS
 

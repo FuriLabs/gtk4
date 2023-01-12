@@ -35,6 +35,8 @@
 #  endif
 #endif
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 #if 0
 static GtkWidget *preview_label;
 static GtkWidget *preview_image;
@@ -103,7 +105,7 @@ set_current_folder (GtkFileChooser *chooser,
 				       GTK_BUTTONS_CLOSE,
 				       "Could not set the folder to %s",
 				       name);
-      gtk_widget_show (dialog);
+      gtk_window_present (GTK_WINDOW (dialog));
       g_signal_connect (dialog, "response",
                         G_CALLBACK (gtk_window_destroy),
                         NULL);
@@ -140,7 +142,7 @@ set_filename (GtkFileChooser *chooser,
 				       GTK_BUTTONS_CLOSE,
 				       "Could not select %s",
 				       name);
-      gtk_widget_show (dialog);
+      gtk_window_present (GTK_WINDOW (dialog));
       g_signal_connect (dialog, "response",
                         G_CALLBACK (gtk_window_destroy),
                         NULL);
@@ -201,8 +203,8 @@ static void
 unmap_and_remap_cb (GtkButton *button,
 		    GtkFileChooser *chooser)
 {
-  gtk_widget_hide (GTK_WIDGET (chooser));
-  gtk_widget_show (GTK_WIDGET (chooser));
+  gtk_widget_set_visible (GTK_WIDGET (chooser), FALSE);
+  gtk_widget_set_visible (GTK_WIDGET (chooser), TRUE);
 }
 
 static void
@@ -365,8 +367,7 @@ main (int argc, char **argv)
   if (initial_folder)
     set_current_folder (GTK_FILE_CHOOSER (dialog), initial_folder);
 
-  /* show_all() to reveal bugs in composite widget handling */
-  gtk_widget_show (dialog);
+  gtk_window_present (GTK_WINDOW (dialog));
 
   /* Extra controls for manipulating the test environment
    */

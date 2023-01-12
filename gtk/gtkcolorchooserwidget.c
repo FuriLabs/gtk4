@@ -18,8 +18,8 @@
 
 #include "config.h"
 
-#include "gtkcolorchooserprivate.h"
-#include "gtkcolorchooserwidget.h"
+#include "deprecated/gtkcolorchooserprivate.h"
+#include "deprecated/gtkcolorchooserwidget.h"
 #include "gtkcoloreditorprivate.h"
 #include "gtkcolorswatchprivate.h"
 #include "gtkgrid.h"
@@ -33,6 +33,8 @@
 #include "gdkrgbaprivate.h"
 
 #include <math.h>
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 /**
  * GtkColorChooserWidget:
@@ -61,6 +63,8 @@
  * # CSS names
  *
  * `GtkColorChooserWidget` has a single CSS node with name colorchooser.
+ *
+ * Deprecated: 4.10: Direct use of `GtkColorChooserWidget` is deprecated.
  */
 
 typedef struct _GtkColorChooserWidgetClass   GtkColorChooserWidgetClass;
@@ -502,8 +506,8 @@ gtk_color_chooser_widget_activate_color_customize (GtkWidget  *widget,
 
   gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (cc->editor), &color);
 
-  gtk_widget_hide (cc->palette);
-  gtk_widget_show (cc->editor);
+  gtk_widget_set_visible (cc->palette, FALSE);
+  gtk_widget_set_visible (cc->editor, TRUE);
   g_object_notify (G_OBJECT (cc), "show-editor");
 }
 
@@ -618,7 +622,7 @@ gtk_color_chooser_widget_init (GtkColorChooserWidget *cc)
       gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (cc), &rgba);
     }
 
-  gtk_widget_hide (GTK_WIDGET (cc->editor));
+  gtk_widget_set_visible (GTK_WIDGET (cc->editor), FALSE);
 }
 
 /* GObject implementation {{{1 */
@@ -805,7 +809,6 @@ add_custom_color (GtkColorChooserWidget *cc,
   connect_custom_signals (p, cc);
 
   gtk_box_insert_child_after (GTK_BOX (cc->custom), p, gtk_widget_get_first_child (cc->custom));
-  gtk_widget_show (p);
 
   select_swatch (cc, GTK_COLOR_SWATCH (p));
   save_custom_colors (cc);

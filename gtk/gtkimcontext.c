@@ -18,6 +18,7 @@
 #include "config.h"
 #include <string.h>
 #include "gtkimcontext.h"
+#include "gtkimcontextprivate.h"
 #include "gtkprivate.h"
 #include "gtktypebuiltins.h"
 #include "gtkmarshalers.h"
@@ -933,7 +934,7 @@ gtk_im_context_get_surrounding_with_selection (GtkIMContext  *context,
  * have deleted all the characters that were requested to be deleted.
  *
  * This function is used by an input method that wants to make
- * subsitutions in the existing text in response to new input.
+ * substitutions in the existing text in response to new input.
  * It is not useful for applications.
  *
  * Returns: %TRUE if the signal was handled.
@@ -1004,4 +1005,13 @@ gtk_im_context_set_property (GObject      *obj,
       G_OBJECT_WARN_INVALID_PROPERTY_ID (obj, property_id, pspec);
       break;
     }
+}
+
+void
+gtk_im_context_activate_osk (GtkIMContext *context)
+{
+  g_return_if_fail (GTK_IS_IM_CONTEXT (context));
+
+  if (GTK_IM_CONTEXT_GET_CLASS (context)->activate_osk)
+    GTK_IM_CONTEXT_GET_CLASS (context)->activate_osk (context);
 }

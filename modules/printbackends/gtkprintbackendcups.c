@@ -89,10 +89,6 @@ typedef struct _GtkPrintBackendCupsClass GtkPrintBackendCupsClass;
 #define _CUPS_MAP_ATTR_INT(attr, v, a) {if (!g_ascii_strcasecmp (attr->name, (a))) v = attr->values[0].integer;}
 #define _CUPS_MAP_ATTR_STR(attr, v, a) {if (!g_ascii_strcasecmp (attr->name, (a))) v = attr->values[0].string.text;}
 
-#if !GLIB_CHECK_VERSION (2, 67, 3)
-# define g_memdup2(mem,size)    g_memdup((mem), (size))
-#endif
-
 typedef void (* GtkPrintCupsResponseCallbackFunc) (GtkPrintBackend *print_backend,
                                                    GtkCupsResult   *result,
                                                    gpointer         user_data);
@@ -246,6 +242,7 @@ static void                 secrets_service_vanished_cb             (GDBusConnec
 
 G_DEFINE_DYNAMIC_TYPE(GtkPrintBackendCups, gtk_print_backend_cups, GTK_TYPE_PRINT_BACKEND)
 
+G_MODULE_EXPORT
 void
 g_io_module_load (GIOModule *module)
 {
@@ -260,11 +257,13 @@ g_io_module_load (GIOModule *module)
                                   10);
 }
 
+G_MODULE_EXPORT
 void
 g_io_module_unload (GIOModule *module)
 {
 }
 
+G_MODULE_EXPORT
 char **
 g_io_module_query (void)
 {

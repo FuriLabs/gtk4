@@ -7,13 +7,15 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static void
 on_bar_response (GtkInfoBar *info_bar,
                  int         response_id,
                  gpointer    user_data)
 {
-  GtkWidget *dialog;
-  GtkWidget *window;
+  GtkAlertDialog *dialog;
+  char *detail;
 
   if (response_id == GTK_RESPONSE_CLOSE)
     {
@@ -21,19 +23,12 @@ on_bar_response (GtkInfoBar *info_bar,
       return;
     }
 
-  window = GTK_WIDGET (gtk_widget_get_root (GTK_WIDGET (info_bar)));
-  dialog = gtk_message_dialog_new (GTK_WINDOW (window),
-                                   GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                   GTK_MESSAGE_INFO,
-                                   GTK_BUTTONS_OK,
-                                   "You clicked a button on an info bar");
-  gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
-                                            "Your response has id %d", response_id);
-
-  g_signal_connect_swapped (dialog, "response",
-                            G_CALLBACK (gtk_window_destroy), dialog);
-
-  gtk_widget_show (dialog);
+  dialog = gtk_alert_dialog_new ("You clicked a button on an info bar");
+  detail = g_strdup_printf ("Your response has been %d", response_id);
+  gtk_alert_dialog_set_detail (dialog, detail);
+  g_free (detail);
+  gtk_alert_dialog_show (dialog, GTK_WINDOW (gtk_widget_get_root (GTK_WIDGET (info_bar))));
+  g_object_unref (dialog);
 }
 
 GtkWidget *
@@ -145,7 +140,7 @@ do_infobar (GtkWidget *do_widget)
     }
 
   if (!gtk_widget_get_visible (window))
-    gtk_widget_show (window);
+    gtk_widget_set_visible (window, TRUE);
   else
     gtk_window_destroy (GTK_WINDOW (window));
 

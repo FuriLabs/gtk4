@@ -1,6 +1,3 @@
-testexecdir = join_paths(installed_test_bindir, 'gtk')
-testdatadir = join_paths(installed_test_datadir, 'gtk')
-
 gtk_tests_export_dynamic_ldflag = []
 
 if cc.get_id() != 'msvc'
@@ -23,8 +20,9 @@ endif
 #  - 'suites': (array): additional test suites
 tests = [
   { 'name': 'accel' },
-# sadly, mesons xfail support seems busted
-#  { 'name': 'accessor-apis' },
+  # we are still missing some accessors
+  { 'name': 'accessor-apis',
+    'suites': ['failing'] },
   { 'name': 'action' },
   { 'name': 'adjustment' },
   { 'name': 'bitset' },
@@ -60,6 +58,7 @@ tests = [
   { 'name': 'listlistmodel' },
   { 'name': 'main' },
   { 'name': 'maplistmodel' },
+  { 'name': 'misc' },
   { 'name': 'multiselection' },
   { 'name': 'noselection' },
   { 'name': 'notify' },
@@ -105,6 +104,9 @@ tests = [
   { 'name': 'revealer-size' },
   { 'name': 'widgetorder' },
   { 'name': 'widget-refcount' },
+  # This test was disabled for long enough that it no longer compiles
+  #{ 'name': 'window',
+  #  'suites': ['failing'] },
 ]
 
 # Tests that test private apis and therefore are linked against libgtk-4.a
@@ -126,16 +128,6 @@ internal_tests = [
   { 'name': 'textbuffer' },
   { 'name': 'texthistory' },
   { 'name': 'fnmatch' },
-]
-
-# Tests that are expected to fail
-xfail = [
-  # we are still missing some accessors
-  'accessor-apis',
-  # one of the window resizing tests fails after
-  # the GdkToplevel refactoring, and needs a big
-  # gtkwindow.c configure request cleanup
-  'window',
 ]
 
 is_debug = get_option('buildtype').startswith('debug')
@@ -177,11 +169,7 @@ foreach t : tests
     c_args: test_cargs + test_extra_cargs,
     link_args: test_extra_ldflags,
     dependencies: libgtk_dep,
-    install: get_option('install-tests'),
-    install_dir: testexecdir,
   )
-
-  expect_fail = xfail.contains(test_name)
 
   if test_extra_suites.contains('slow')
     test_timeout = 90
@@ -193,7 +181,6 @@ foreach t : tests
     timeout: test_timeout,
     env: test_env,
     suite: ['gtk'] + test_extra_suites,
-    should_fail: expect_fail,
   )
 endforeach
 
@@ -210,11 +197,7 @@ foreach t : internal_tests
     c_args: test_cargs + test_extra_cargs,
     link_args: test_extra_ldflags,
     dependencies: libgtk_static_dep,
-    install: get_option('install-tests'),
-    install_dir: testexecdir,
   )
-
-  expect_fail = xfail.contains(test_name)
 
   if test_extra_suites.contains('slow')
     test_timeout = 90
@@ -226,17 +209,14 @@ foreach t : internal_tests
     timeout: test_timeout,
     env: test_env,
     suite: ['gtk'] + test_extra_suites,
-    should_fail: expect_fail,
   )
 endforeach
 
 # FIXME: if objc autotestkeywords_CPPFLAGS += -DHAVE_OBJC=1 -x objective-c++
 if add_languages('cpp', required: false, native: false)
   test_exe = executable('autotestkeywords',
-    sources: 'autotestkeywords.cc',
+    sources: ['autotestkeywords.cc'],
     dependencies: libgtk_dep,
-    install: get_option('install-tests'),
-    install_dir: testexecdir,
   )
   test('c++ keywords', test_exe,
     args: [ '--tap', '-k' ],
@@ -244,16 +224,6 @@ if add_languages('cpp', required: false, native: false)
     env: test_env,
     suite: 'gtk',
   )
-  if get_option('install-tests')
-    conf = configuration_data()
-    conf.set('testexecdir', testexecdir)
-    conf.set('test', 'autotestkeywords')
-    configure_file(input: 'gtk.test.in',
-      output: 'autotestkeywords.test',
-      configuration: conf,
-      install_dir: testdatadir,
-    )
-  endif
 endif
 
 
@@ -279,13 +249,10 @@ focus_chain_tests = [
   #[ 'widget-factory3', 'tab-backward' ],
 ]
 
-focus_chain = executable(
-  'test-focus-chain',
+focus_chain = executable('test-focus-chain',
   sources: ['test-focus-chain.c', '../testutils.c'],
   dependencies: libgtk_dep,
   c_args: common_cflags,
-  install: get_option('install-tests'),
-  install_dir: testexecdir
 )
 
 foreach test : focus_chain_tests
@@ -299,24 +266,13 @@ foreach test : focus_chain_tests
   )
 endforeach
 
+# Test that po/POTFILES.in and po/POTFILES.skip are up-to-date
 
-if get_option('install-tests')
-  foreach t : tests
-    test_name = t.get('name')
-    conf = configuration_data()
-    conf.set('testexecdir', testexecdir)
-    conf.set('test', test_name)
-    configure_file(input: 'gtk.test.in',
-      output: '@0@.test'.format(test_name),
-      configuration: conf,
-      install_dir: testdatadir,
-    )
-  endforeach
+make_pot = find_program ('make-pot', dirs: meson.project_source_root())
 
-  install_subdir('icons', install_dir: testexecdir)
-  install_subdir('icons2', install_dir: testexecdir)
-  install_subdir('ui', install_dir: testexecdir)
-endif
+test('potfiles', make_pot,
+     workdir: meson.project_source_root(),
+     suite: ['gtk', 'translations' ])
 
 if false and get_option ('profiler')
 

@@ -7,6 +7,8 @@
 
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static GtkWidget *window = NULL;
 static GtkTreeModel *model = NULL;
 static guint timeout = 0;
@@ -298,7 +300,7 @@ do_list_store (GtkWidget *do_widget)
 
   if (!gtk_widget_get_visible (window))
     {
-      gtk_widget_show (window);
+      gtk_widget_set_visible (window, TRUE);
       if (timeout == 0) {
         /* FIXME this should use the animation-duration instead */
         timeout = g_timeout_add (80, spinner_timeout, NULL);

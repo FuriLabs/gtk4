@@ -195,7 +195,6 @@ gdk_macos_surface_hide (GdkSurface *surface)
 {
   GdkMacosSurface *self = (GdkMacosSurface *)surface;
   GdkSeat *seat;
-  gboolean was_mapped;
   gboolean was_key;
 
   g_assert (GDK_IS_MACOS_SURFACE (self));
@@ -204,7 +203,6 @@ gdk_macos_surface_hide (GdkSurface *surface)
 
   _gdk_macos_surface_cancel_frame (self);
 
-  was_mapped = GDK_SURFACE_IS_MAPPED (surface);
   was_key = [self->window isKeyWindow];
 
   seat = gdk_display_get_default_seat (surface->display);
@@ -285,14 +283,12 @@ gdk_macos_surface_end_frame (GdkMacosSurface *self)
 {
   GdkFrameTimings *timings;
   GdkFrameClock *frame_clock;
-  GdkDisplay *display;
 
   g_assert (GDK_IS_MACOS_SURFACE (self));
 
   if (GDK_SURFACE_DESTROYED (self))
     return;
 
-  display = gdk_surface_get_display (GDK_SURFACE (self));
   frame_clock = gdk_surface_get_frame_clock (GDK_SURFACE (self));
 
   if ((timings = gdk_frame_clock_get_current_timings (frame_clock)))
@@ -420,7 +416,6 @@ gdk_macos_surface_drag_begin (GdkSurface         *surface,
   GdkMacosSurface *drag_surface;
   GdkMacosDrag *drag;
   GdkCursor *cursor;
-  GdkSeat *seat;
   double px;
   double py;
   int sx;
@@ -432,11 +427,10 @@ gdk_macos_surface_drag_begin (GdkSurface         *surface,
   g_assert (GDK_IS_MACOS_DEVICE (device));
   g_assert (GDK_IS_CONTENT_PROVIDER (content));
 
-  seat = gdk_device_get_seat (device);
   gdk_macos_device_query_state (device, surface, NULL, &px, &py, NULL);
   _gdk_macos_surface_get_root_coords (GDK_MACOS_SURFACE (surface), &sx, &sy);
   drag_surface = _gdk_macos_surface_new (GDK_MACOS_DISPLAY (surface->display),
-                                         GDK_SURFACE_TEMP,
+                                         GDK_SURFACE_DRAG,
                                          surface,
                                          sx, sy, 1, 1);
   drag = g_object_new (GDK_TYPE_MACOS_DRAG,
@@ -646,7 +640,7 @@ _gdk_macos_surface_new (GdkMacosDisplay   *display,
       ret = _gdk_macos_popup_surface_new (display, parent, frame_clock, x, y, width, height);
       break;
 
-    case GDK_SURFACE_TEMP:
+    case GDK_SURFACE_DRAG:
       ret = _gdk_macos_drag_surface_new (display, frame_clock, x, y, width, height);
       break;
 

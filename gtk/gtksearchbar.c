@@ -360,7 +360,7 @@ gtk_search_bar_init (GtkSearchBar *bar)
   gtk_widget_set_valign (bar->close_button, GTK_ALIGN_CENTER);
   gtk_widget_add_css_class (bar->close_button, "close");
   gtk_center_box_set_end_widget (GTK_CENTER_BOX (bar->box_center), bar->close_button);
-  gtk_widget_hide (bar->close_button);
+  gtk_widget_set_visible (bar->close_button, FALSE);
 
   gtk_revealer_set_child (GTK_REVEALER (bar->revealer), bar->box_center);
 
@@ -422,7 +422,7 @@ gtk_search_bar_set_entry (GtkSearchBar *bar,
  * @bar: a `GtkSearchBar`
  * @entry: a `GtkEditable`
  *
- * Connects the `GtkEditable widget passed as the one to be used in
+ * Connects the `GtkEditable` widget passed as the one to be used in
  * this search bar.
  *
  * The entry should be a descendant of the search bar. Calling this

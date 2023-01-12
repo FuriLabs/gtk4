@@ -1,4 +1,5 @@
 /* Icon View/Editing and Drag-and-Drop
+ * #Keywords: dnd
  *
  * The GtkIconView widget supports Editing and Drag-and-Drop.
  * This example also demonstrates using the generic GtkCellLayout
@@ -7,6 +8,8 @@
 
 #include <gtk/gtk.h>
 #include <string.h>
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 enum
 {
@@ -148,7 +151,7 @@ do_iconview_edit (GtkWidget *do_widget)
     }
 
   if (!gtk_widget_get_visible (window))
-    gtk_widget_show (window);
+    gtk_widget_set_visible (window, TRUE);
   else
     gtk_window_destroy (GTK_WINDOW (window));
 

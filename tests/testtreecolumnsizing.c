@@ -23,6 +23,8 @@
 #include <gtk/gtk.h>
 #include <string.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 #define NO_EXPAND "No expandable columns"
 #define SINGLE_EXPAND "One expandable column"
 #define MULTI_EXPAND "Multiple expandable columns"
@@ -241,7 +243,7 @@ main (int argc, char **argv)
   gtk_combo_box_set_active (GTK_COMBO_BOX (combo_box), 0);
 
   /* Done */
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (!done)
     g_main_context_iteration (NULL, TRUE);

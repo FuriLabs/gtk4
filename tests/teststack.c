@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 GtkWidget *stack;
 GtkWidget *switcher;
 GtkWidget *sidebar;
@@ -256,7 +258,7 @@ main (int argc,
                     (GCallback)update_forward_button_sensitivity, button);
 
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
   while (TRUE)
     g_main_context_iteration (NULL, TRUE);
 

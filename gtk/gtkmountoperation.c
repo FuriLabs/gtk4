@@ -35,7 +35,7 @@
 #include "gtkbox.h"
 #include <glib/gi18n-lib.h>
 #include "gtklabel.h"
-#include "gtkmessagedialog.h"
+#include "gtkalertdialog.h"
 #include "gtkmountoperation.h"
 #include "gtkprivate.h"
 #include "gtkcheckbutton.h"
@@ -45,11 +45,10 @@
 #include "gtkicontheme.h"
 #include "gtkmain.h"
 #include "gtksettings.h"
-#include "gtkdialogprivate.h"
+#include "deprecated/gtkdialogprivate.h"
 #include "gtkpopover.h"
 #include "gtksnapshot.h"
 #include "gdktextureprivate.h"
-#include "gtkliststore.h"
 #include <glib/gprintf.h>
 #include "gtklistview.h"
 #include "gtksignallistitemfactory.h"
@@ -469,9 +468,11 @@ pw_dialog_verify_input (GtkEditable       *editable,
   gboolean is_valid;
 
   is_valid = pw_dialog_input_is_valid (operation);
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   gtk_dialog_set_response_sensitive (GTK_DIALOG (priv->dialog),
                                      GTK_RESPONSE_OK,
                                      is_valid);
+G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 static void
@@ -494,9 +495,11 @@ pw_dialog_anonymous_toggled (GtkWidget         *widget,
       gtk_widget_set_sensitive (GTK_WIDGET (l->data), !priv->anonymous);
     }
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   gtk_dialog_set_response_sensitive (GTK_DIALOG (priv->dialog),
                                      GTK_RESPONSE_OK,
                                      is_valid);
+G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 
@@ -594,6 +597,7 @@ gtk_mount_operation_ask_password_do_gtk (GtkMountOperation *operation,
 
   priv->dialog = dialog;
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   content_area = gtk_dialog_get_content_area (dialog);
 
   gtk_window_set_resizable (window, FALSE);
@@ -605,6 +609,7 @@ gtk_mount_operation_ask_password_do_gtk (GtkMountOperation *operation,
                           _("Co_nnect"), GTK_RESPONSE_OK,
                           NULL);
   gtk_dialog_set_default_response (dialog, GTK_RESPONSE_OK);
+G_GNUC_END_IGNORE_DEPRECATIONS
 
 
   /* Build contents */
@@ -795,7 +800,11 @@ gtk_mount_operation_ask_password_do_gtk (GtkMountOperation *operation,
       g_signal_emit_by_name (priv->anonymous_toggle, "toggled");
     }
   else if (! pw_dialog_input_is_valid (operation))
-    gtk_dialog_set_response_sensitive (dialog, GTK_RESPONSE_OK, FALSE);
+    {
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+      gtk_dialog_set_response_sensitive (dialog, GTK_RESPONSE_OK, FALSE);
+G_GNUC_END_IGNORE_DEPRECATIONS
+    }
 
   g_object_notify (G_OBJECT (operation), "is-showing");
 
@@ -807,7 +816,7 @@ gtk_mount_operation_ask_password_do_gtk (GtkMountOperation *operation,
   else if (priv->display)
     gtk_window_set_display (GTK_WINDOW (dialog), priv->display);
 
-  gtk_widget_show (GTK_WIDGET (dialog));
+  gtk_window_present (GTK_WINDOW (dialog));
 
   g_object_ref (operation);
 }
@@ -905,27 +914,27 @@ gtk_mount_operation_ask_password (GMountOperation   *mount_op,
 }
 
 static void
-question_dialog_button_clicked (GtkDialog       *dialog,
-                                int              button_number,
-                                GMountOperation *op)
+question_dialog_button_clicked (GObject      *source,
+                                GAsyncResult *result,
+                                void         *user_data)
 {
-  GtkMountOperationPrivate *priv;
+  GtkAlertDialog *dialog = GTK_ALERT_DIALOG (source);
+  GMountOperation *op = user_data;
   GtkMountOperation *operation;
+  int button;
 
   operation = GTK_MOUNT_OPERATION (op);
-  priv = operation->priv;
 
-  if (button_number >= 0)
+  button = gtk_alert_dialog_choose_finish (dialog, result, NULL);
+  if (button >= 0)
     {
-      g_mount_operation_set_choice (op, button_number);
+      g_mount_operation_set_choice (op, button);
       g_mount_operation_reply (op, G_MOUNT_OPERATION_HANDLED);
     }
   else
     g_mount_operation_reply (op, G_MOUNT_OPERATION_ABORTED);
 
-  priv->dialog = NULL;
   g_object_notify (G_OBJECT (operation), "is-showing");
-  gtk_window_destroy (GTK_WINDOW (dialog));
   g_object_unref (op);
 }
 
@@ -935,10 +944,9 @@ gtk_mount_operation_ask_question_do_gtk (GtkMountOperation *op,
                                          const char        *choices[])
 {
   GtkMountOperationPrivate *priv;
-  GtkWidget  *dialog;
+  GtkAlertDialog *dialog;
   const char *secondary = NULL;
   char       *primary;
-  int        count, len = 0;
 
   g_return_if_fail (GTK_IS_MOUNT_OPERATION (op));
   g_return_if_fail (message != NULL);
@@ -953,36 +961,19 @@ gtk_mount_operation_ask_question_do_gtk (GtkMountOperation *op,
       primary = g_strndup (message, primary - message);
     }
 
-  dialog = gtk_message_dialog_new (priv->parent_window, 0,
-                                   GTK_MESSAGE_QUESTION,
-                                   GTK_BUTTONS_NONE, "%s",
-                                   primary != NULL ? primary : message);
+  dialog = gtk_alert_dialog_new ("%s", primary ? primary : message);
+  if (secondary)
+    gtk_alert_dialog_set_detail (dialog, secondary);
+
+  gtk_alert_dialog_set_buttons (dialog, choices);
+
+  gtk_alert_dialog_choose (dialog, priv->parent_window,
+                           NULL,
+                           question_dialog_button_clicked, g_object_ref (op));
+  g_object_unref (dialog);
   g_free (primary);
 
-  if (secondary)
-    gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
-                                              "%s", secondary);
-
-  /* First count the items in the list then
-   * add the buttons in reverse order */
-
-  while (choices[len] != NULL)
-    len++;
-
-  for (count = len - 1; count >= 0; count--)
-    gtk_dialog_add_button (GTK_DIALOG (dialog), choices[count], count);
-
-  g_signal_connect (G_OBJECT (dialog), "response",
-                    G_CALLBACK (question_dialog_button_clicked), op);
-
-  priv->dialog = GTK_DIALOG (dialog);
   g_object_notify (G_OBJECT (op), "is-showing");
-
-  if (priv->parent_window == NULL && priv->display)
-    gtk_window_set_display (GTK_WINDOW (dialog), priv->display);
-
-  gtk_widget_show (dialog);
-  g_object_ref (op);
 }
 
 static void
@@ -1369,18 +1360,6 @@ update_process_list_store (GtkMountOperation *mount_operation,
 }
 
 static void
-on_dialog_response (GtkDialog *dialog,
-                    int        response)
-{
-  /* GTK_RESPONSE_NONE means the dialog were programmatically destroy, e.g. that
-   * GTK_DIALOG_DESTROY_WITH_PARENT kicked in - so it would trigger a warning to
-   * destroy the dialog in that case
-   */
-  if (response != GTK_RESPONSE_NONE)
-    gtk_window_destroy (GTK_WINDOW (dialog));
-}
-
-static void
 on_end_process_activated (GtkButton         *button,
                           GtkMountOperation *op)
 {
@@ -1407,25 +1386,17 @@ on_end_process_activated (GtkButton         *button,
   error = NULL;
   if (!_gtk_mount_operation_kill_process (data->pid, &error))
     {
-      GtkWidget *dialog;
+      GtkAlertDialog *dialog;
 
       /* Use GTK_DIALOG_DESTROY_WITH_PARENT here since the parent dialog can be
        * indeed be destroyed via the GMountOperation::abort signal... for example,
        * this is triggered if the user yanks the device while we are showing
        * the dialog...
        */
-      dialog = gtk_message_dialog_new (GTK_WINDOW (op->priv->dialog),
-                                       GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                       GTK_MESSAGE_ERROR,
-                                       GTK_BUTTONS_CLOSE,
-                                       _("Unable to end process"));
-      gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
-                                                "%s",
-                                                error->message);
-
-      gtk_widget_show (dialog);
-
-      g_signal_connect (dialog, "response", G_CALLBACK (on_dialog_response), NULL);
+      dialog = gtk_alert_dialog_new (_("Unable to end process"));
+      gtk_alert_dialog_set_detail (dialog, error->message);
+      gtk_alert_dialog_show (dialog, GTK_WINDOW (op->priv->dialog));
+      g_object_unref (dialog);
 
       g_error_free (error);
     }
@@ -1498,13 +1469,17 @@ create_show_processes_dialog (GtkMountOperation *op,
       primary = g_strndup (message, primary - message);
     }
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   dialog = gtk_dialog_new ();
+G_GNUC_END_IGNORE_DEPRECATIONS
 
   if (priv->parent_window != NULL)
     gtk_window_set_transient_for (GTK_WINDOW (dialog), priv->parent_window);
   gtk_window_set_title (GTK_WINDOW (dialog), "");
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   content_area = gtk_dialog_get_content_area (GTK_DIALOG (dialog));
+G_GNUC_END_IGNORE_DEPRECATIONS
   vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 12);
   gtk_widget_set_margin_top (vbox, 12);
   gtk_widget_set_margin_bottom (vbox, 12);
@@ -1680,9 +1655,7 @@ gtk_mount_operation_show_processes_do_gtk (GtkMountOperation *op,
                              processes);
 
   if (dialog != NULL)
-    {
-      gtk_widget_show (dialog);
-    }
+    gtk_window_present (GTK_WINDOW (dialog));
 }
 
 

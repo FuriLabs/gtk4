@@ -19,7 +19,7 @@
 #ifndef __GTK_FILE_CHOOSER_ENTRY_H__
 #define __GTK_FILE_CHOOSER_ENTRY_H__
 
-#include "gtkfilechooser.h"
+#include "deprecated/gtkfilechooser.h"
 
 G_BEGIN_DECLS
 
@@ -44,6 +44,8 @@ gboolean           _gtk_file_chooser_entry_get_is_folder      (GtkFileChooserEnt
 void               _gtk_file_chooser_entry_select_filename    (GtkFileChooserEntry *chooser_entry);
 void               _gtk_file_chooser_entry_set_file_filter    (GtkFileChooserEntry *chooser_entry,
                                                                GtkFileFilter       *filter);
+void               gtk_file_chooser_entry_set_text            (GtkFileChooserEntry *entry,
+                                                               const char          *text);
 
 G_END_DECLS
 

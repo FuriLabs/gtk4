@@ -32,12 +32,13 @@
 #include "gtkspinbuttonprivate.h"
 
 #include "gtkaccessibleprivate.h"
+#include "gtkaccessiblerange.h"
 #include "gtkadjustment.h"
 #include "gtkbox.h"
 #include "gtkbutton.h"
 #include "gtkbuttonprivate.h"
 #include "gtkeditable.h"
-#include "gtkcelleditable.h"
+#include "deprecated/gtkcelleditable.h"
 #include "gtkimage.h"
 #include "gtktext.h"
 #include "gtkeventcontrollerkey.h"
@@ -119,7 +120,7 @@
  *   button = gtk_spin_button_new (adjustment, 1.0, 0);
  *   gtk_window_set_child (GTK_WINDOW (window), button);
  *
- *   gtk_widget_show (window);
+ *   gtk_window_present (GTK_WINDOW (window));
  * }
  * ```
  *
@@ -150,7 +151,7 @@
  *   button = gtk_spin_button_new (adjustment, 0.001, 3);
  *   gtk_window_set_child (GTK_WINDOW (window), button);
  *
- *   gtk_widget_show (window);
+ *   gtk_window_present (GTK_WINDOW (window));
  * }
  * ```
  *
@@ -180,7 +181,7 @@
  * below the text node. The orientation of the spin button is reflected in
  * the .vertical or .horizontal style class on the main node.
  *
- * # Accessiblity
+ * # Accessibility
  *
  * `GtkSpinButton` uses the %GTK_ACCESSIBLE_ROLE_SPIN_BUTTON role.
  */
@@ -308,6 +309,8 @@ static void gtk_spin_button_update_width_chars (GtkSpinButton *spin_button);
 
 static void gtk_spin_button_accessible_init (GtkAccessibleInterface *iface);
 
+static void gtk_spin_button_accessible_range_init (GtkAccessibleRangeInterface *iface);
+
 static guint spinbutton_signals[LAST_SIGNAL] = {0};
 static GParamSpec *spinbutton_props[NUM_SPINBUTTON_PROPS] = {NULL, };
 
@@ -315,6 +318,8 @@ G_DEFINE_TYPE_WITH_CODE (GtkSpinButton, gtk_spin_button, GTK_TYPE_WIDGET,
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_ORIENTABLE, NULL)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_ACCESSIBLE,
                                                 gtk_spin_button_accessible_init)
+                         G_IMPLEMENT_INTERFACE (GTK_TYPE_ACCESSIBLE_RANGE,
+                                                gtk_spin_button_accessible_range_init)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_EDITABLE,
                                                 gtk_spin_button_editable_init)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_CELL_EDITABLE,
@@ -632,6 +637,22 @@ gtk_spin_button_accessible_init (GtkAccessibleInterface *iface)
   iface->get_platform_state = gtk_spin_button_accessible_get_platform_state;
 }
 
+static gboolean
+accessible_range_set_current_value (GtkAccessibleRange *accessible_range,
+                                    double              value)
+{
+  gtk_spin_button_set_value (GTK_SPIN_BUTTON (accessible_range), value);
+  return TRUE;
+}
+
+static void
+gtk_spin_button_accessible_range_init (GtkAccessibleRangeInterface *iface)
+{
+  iface->set_current_value = accessible_range_set_current_value;
+}
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static void
 gtk_cell_editable_spin_button_activated (GtkText *text, GtkSpinButton *spin)
 {
@@ -691,6 +712,8 @@ gtk_spin_button_cell_editable_init (GtkCellEditableIface *iface)
 {
   iface->start_editing = gtk_spin_button_start_editing;
 }
+
+G_GNUC_END_IGNORE_DEPRECATIONS
 
 static void
 gtk_spin_button_set_property (GObject      *object,

@@ -1,6 +1,8 @@
 /*  gcc -g -Wall -O2 -o dialog-test dialog-test.c `pkg-config --cflags --libs gtk4` */
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static GtkWidget *window;
 static GtkWidget *width_chars_spin;
 static GtkWidget *max_width_chars_spin;
@@ -81,7 +83,7 @@ show_dialog (void)
   g_signal_connect (dialog, "response",
                     G_CALLBACK (gtk_window_destroy),
                     NULL);
-  gtk_widget_show (dialog);
+  gtk_window_present (GTK_WINDOW (dialog));
 }
 
 static void
@@ -139,7 +141,7 @@ create_window (void)
   g_signal_connect (button, "clicked", G_CALLBACK (show_dialog), NULL);
   gtk_grid_attach (GTK_GRID (grid), button, 2, 4, 1, 1);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 

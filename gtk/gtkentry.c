@@ -34,8 +34,7 @@
 #include "gtkadjustment.h"
 #include "gtkbox.h"
 #include "gtkbutton.h"
-#include "gtkcelleditable.h"
-#include "gtkcelllayout.h"
+#include "deprecated/gtkcelleditable.h"
 #include "gtkdebug.h"
 #include "gtkeditable.h"
 #include "gtkemojichooser.h"
@@ -48,7 +47,7 @@
 #include "gtklabel.h"
 #include "gtkmain.h"
 #include "gtkmarshalers.h"
-#include "gtkpango.h"
+#include "gtkpangoprivate.h"
 #include "gtkpopover.h"
 #include "gtkprivate.h"
 #include "gtkprogressbar.h"
@@ -56,10 +55,8 @@
 #include "gtksnapshot.h"
 #include "gtktextprivate.h"
 #include "gtktexthandleprivate.h"
-#include "gtktextutil.h"
+#include "gtktextutilprivate.h"
 #include "gtktooltip.h"
-#include "gtktreeselection.h"
-#include "gtktreeview.h"
 #include "gtktypebuiltins.h"
 #include "gtkwidgetprivate.h"
 #include "gtkwindow.h"
@@ -512,7 +509,7 @@ gtk_entry_class_init (GtkEntryClass *class)
   /**
    * GtkEntry:has-frame: (attributes org.gtk.Property.get=gtk_entry_get_has_frame org.gtk.Property.set=gtk_entry_set_has_frame)
    *
-   * Whehter the entry should draw a frame.
+   * Whether the entry should draw a frame.
    */
   entry_props[PROP_HAS_FRAME] =
       g_param_spec_boolean ("has-frame", NULL, NULL,
@@ -845,11 +842,13 @@ gtk_entry_class_init (GtkEntryClass *class)
    * GtkEntry:completion: (attributes org.gtk.Property.get=gtk_entry_get_completion org.gtk.Property.set=gtk_entry_set_completion)
    *
    * The auxiliary completion object to use with the entry.
+   *
+   * Deprecated: 4.10: GtkEntryCompletion will be removed in GTK 5.
    */
   entry_props[PROP_COMPLETION] =
       g_param_spec_object ("completion", NULL, NULL,
                            GTK_TYPE_ENTRY_COMPLETION,
-                           GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                           GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY|G_PARAM_DEPRECATED);
 
   /**
    * GtkEntry:input-purpose: (attributes org.gtk.Property.get=gtk_entry_get_input_purpose org.gtk.Property.set=gtk_entry_set_input_purpose)
@@ -910,7 +909,7 @@ gtk_entry_class_init (GtkEntryClass *class)
   /**
    * GtkEntry::show-emoji-icon: 
    *
-   * Whether the entry will sohw an Emoji icon in the secondary icon position
+   * Whether the entry will show an Emoji icon in the secondary icon position
    * to open the Emoji chooser.
    */
   entry_props[PROP_SHOW_EMOJI_ICON] =
@@ -1169,7 +1168,9 @@ gtk_entry_set_property (GObject         *object,
       break;
 
     case PROP_COMPLETION:
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       gtk_entry_set_completion (entry, GTK_ENTRY_COMPLETION (g_value_get_object (value)));
+G_GNUC_END_IGNORE_DEPRECATIONS
       break;
 
     case PROP_SHOW_EMOJI_ICON:
@@ -1329,7 +1330,9 @@ gtk_entry_get_property (GObject         *object,
       break;
 
     case PROP_COMPLETION:
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       g_value_set_object (value, G_OBJECT (gtk_entry_get_completion (entry)));
+G_GNUC_END_IGNORE_DEPRECATIONS
       break;
 
     case PROP_SHOW_EMOJI_ICON:
@@ -1427,7 +1430,9 @@ gtk_entry_dispose (GObject *object)
   gtk_entry_set_icon_from_paintable (entry, GTK_ENTRY_ICON_SECONDARY, NULL);
   gtk_entry_set_icon_tooltip_markup (entry, GTK_ENTRY_ICON_SECONDARY, NULL);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   gtk_entry_set_completion (entry, NULL);
+G_GNUC_END_IGNORE_DEPRECATIONS
 
   if (priv->text)
     {
@@ -1780,11 +1785,13 @@ gtk_entry_size_allocate (GtkWidget *widget,
    */
   if (gtk_widget_get_realized (widget))
     {
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       GtkEntryCompletion *completion;
 
       completion = gtk_entry_get_completion (entry);
       if (completion)
         _gtk_entry_completion_resize_popup (completion);
+G_GNUC_END_IGNORE_DEPRECATIONS
     }
 }
 
@@ -1851,6 +1858,9 @@ gtk_entry_direction_changed (GtkWidget        *widget,
 
 /* GtkCellEditable method implementations
  */
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static void
 gtk_cell_editable_entry_activated (GtkEntry *entry, gpointer data)
 {
@@ -1899,6 +1909,8 @@ gtk_entry_start_editing (GtkCellEditable *cell_editable,
                     G_CALLBACK (gtk_cell_editable_entry_key_pressed),
                     cell_editable);
 }
+
+G_GNUC_END_IGNORE_DEPRECATIONS
 
 /* Internal functions
  */
@@ -2217,7 +2229,7 @@ gtk_entry_get_overwrite_mode (GtkEntry *entry)
  * Sets the maximum allowed length of the contents of the widget.
  *
  * If the current contents are longer than the given length, then
- * they will be truncated to fit. The length is is in characters.
+ * they will be truncated to fit. The length is in characters.
  *
  * This is equivalent to getting @entry's `GtkEntryBuffer` and
  * calling [method@Gtk.EntryBuffer.set_max_length] on it.
@@ -3191,6 +3203,8 @@ gtk_entry_query_tooltip (GtkWidget  *widget,
                                                                    tooltip);
 }
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 /**
  * gtk_entry_set_completion: (attributes org.gtk.Method.set_property=completion)
  * @entry: A `GtkEntry`
@@ -3202,6 +3216,8 @@ gtk_entry_query_tooltip (GtkWidget  *widget,
  * All further configuration of the completion mechanism is
  * done on @completion using the `GtkEntryCompletion` API.
  * Completion is disabled if @completion is set to %NULL.
+ *
+ * Deprecated: 4.10: GtkEntryCompletion will be removed in GTK 5.
  */
 void
 gtk_entry_set_completion (GtkEntry           *entry,
@@ -3248,6 +3264,8 @@ gtk_entry_set_completion (GtkEntry           *entry,
  *
  * Returns: (nullable) (transfer none): The auxiliary
  *   completion object currently in use by @entry
+ *
+ * Deprecated: 4.10: GtkEntryCompletion will be removed in GTK 5.
  */
 GtkEntryCompletion *
 gtk_entry_get_completion (GtkEntry *entry)
@@ -3260,6 +3278,8 @@ gtk_entry_get_completion (GtkEntry *entry)
 
   return completion;
 }
+
+G_GNUC_END_IGNORE_DEPRECATIONS
 
 static void
 gtk_entry_ensure_progress_widget (GtkEntry *entry)
@@ -3543,7 +3563,7 @@ gtk_entry_get_input_hints (GtkEntry *entry)
  *
  * The attributes in the list are applied to the entry text.
  *
- * Since the attributes will be applies to text that changes
+ * Since the attributes will be applied to text that changes
  * as the user types, it makes most sense to use attributes
  * with unlimited extent.
  */
@@ -3603,7 +3623,7 @@ gtk_entry_set_tabs (GtkEntry      *entry,
  * gtk_entry_get_tabs: (attributes org.gtk.Method.get_property=tabs)
  * @entry: a `GtkEntry`
  *
- * Gets the tabstops of the `GtkEntry.
+ * Gets the tabstops of the `GtkEntry`.
  *
  * See [method@Gtk.Entry.set_tabs].
  *

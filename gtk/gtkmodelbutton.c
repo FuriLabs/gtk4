@@ -641,6 +641,22 @@ update_visibility (GtkModelButton *self)
 }
 
 static void
+update_tooltip (GtkModelButton *self)
+{
+  if (self->iconic)
+    {
+      if (gtk_label_get_use_markup (GTK_LABEL (self->label)))
+        gtk_widget_set_tooltip_markup (GTK_WIDGET (self), gtk_label_get_text (GTK_LABEL (self->label)));
+      else
+        gtk_widget_set_tooltip_text (GTK_WIDGET (self), gtk_label_get_text (GTK_LABEL (self->label)));
+    }
+  else
+    {
+      gtk_widget_set_tooltip_text (GTK_WIDGET (self), NULL);
+    }
+}
+
+static void
 gtk_model_button_set_icon (GtkModelButton *self,
                            GIcon          *icon)
 {
@@ -662,6 +678,8 @@ gtk_model_button_set_icon (GtkModelButton *self,
     }
 
   update_visibility (self);
+  update_tooltip (self);
+
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ICON]);
 }
 
@@ -669,9 +687,9 @@ static void
 gtk_model_button_set_text (GtkModelButton *button,
                            const char     *text)
 {
-  gtk_label_set_text_with_mnemonic (GTK_LABEL (button->label),
-                                    text ? text : "");
+  gtk_label_set_text_with_mnemonic (GTK_LABEL (button->label), text ? text : "");
   update_visibility (button);
+  update_tooltip (button);
 
   gtk_accessible_update_relation (GTK_ACCESSIBLE (button),
                                   GTK_ACCESSIBLE_RELATION_LABELLED_BY, button->label, NULL,
@@ -690,6 +708,8 @@ gtk_model_button_set_use_markup (GtkModelButton *button,
 
   gtk_label_set_use_markup (GTK_LABEL (button->label), use_markup);
   update_visibility (button);
+  update_tooltip (button);
+
   g_object_notify_by_pspec (G_OBJECT (button), properties[PROP_USE_MARKUP]);
 }
 
@@ -740,9 +760,9 @@ gtk_model_button_set_iconic (GtkModelButton *self,
   self->iconic = iconic;
 
   widget_node = gtk_widget_get_css_node (widget);
+  gtk_widget_set_visible (self->start_box, !iconic);
   if (iconic)
     {
-      gtk_widget_hide (self->start_box);
       gtk_css_node_set_name (widget_node, g_quark_from_static_string ("button"));
       gtk_widget_add_css_class (widget, "model");
       gtk_widget_add_css_class (widget, "image-button");
@@ -750,7 +770,6 @@ gtk_model_button_set_iconic (GtkModelButton *self,
     }
   else
     {
-      gtk_widget_show (self->start_box);
       gtk_css_node_set_name (widget_node, g_quark_from_static_string ("modelbutton"));
       gtk_widget_remove_css_class (widget, "model");
       gtk_widget_remove_css_class (widget, "image-button");
@@ -769,6 +788,7 @@ gtk_model_button_set_iconic (GtkModelButton *self,
 
   update_node_name (self);
   update_visibility (self);
+  update_tooltip (self);
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ICONIC]);
 }
 

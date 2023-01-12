@@ -23,6 +23,8 @@
 #include <gtk/gtk.h>
 #include "testsuite/testutils.h"
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 #ifdef G_OS_WIN32
 # include <io.h>
 #endif
@@ -96,7 +98,7 @@ load_ui_file (GFile *file, gboolean generate)
   output = NULL;
   g_signal_connect (window, "map", G_CALLBACK (style_context_changed), &output);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (!output)
     g_main_context_iteration (NULL, FALSE);

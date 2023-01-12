@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static GtkWidget *toplevel;
 static GFile *file;
 static GtkWidget *grid, *file_l, *open;
@@ -122,7 +124,7 @@ display_dialog (void)
   if (dialog == NULL)
     prepare_dialog ();
 
-  gtk_widget_show (dialog);
+  gtk_window_present (GTK_WINDOW (dialog));
 }
 
 static void
@@ -251,7 +253,7 @@ main (int argc, char **argv)
 
   gtk_window_set_child (GTK_WINDOW (toplevel), grid);
 
-  gtk_widget_show (toplevel);
+  gtk_window_present (GTK_WINDOW (toplevel));
   g_signal_connect (toplevel, "destroy", G_CALLBACK (quit_cb), &done);
 
   while (!done)

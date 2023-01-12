@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static GtkWidget *antialias;
 static GtkWidget *subpixel;
 static GtkWidget *hintstyle;
@@ -83,7 +85,7 @@ main (int argc, char *argv[])
   gtk_combo_box_set_active (GTK_COMBO_BOX (subpixel), 0);
   gtk_combo_box_set_active (GTK_COMBO_BOX (hintstyle), 0);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (TRUE)
     g_main_context_iteration (NULL, TRUE);

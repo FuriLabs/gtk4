@@ -1,6 +1,3 @@
-testsuite-Use-separate-setups-for-unstable-tests-instead-.patch
-testsuite-Don-t-create-.test-files-for-flaky-or-failing-t.patch
-node-editor-Save-test-data-relative-to-current-working-di.patch
 debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
 debian/reftests-Allow-minor-differences-to-be-tolerated.patch
 debian/Disable-inscription-markup.ui-reftest.patch

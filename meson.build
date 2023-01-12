@@ -966,6 +966,7 @@ summary('Documentation', get_option('documentation'), section: 'Build')
 summary('Man pages', get_option('man-pages'), section: 'Build')
 summary('Testsuite', get_option('build-testsuite'), section: 'Build')
 summary('Tests', get_option('build-tests'), section: 'Build')
+summary('Install tests', get_option('install-tests'), section: 'Build')
 summary('Demos', get_option('build-demos'), section: 'Build')
 summary('Examples', get_option('build-examples'), section: 'Build')
 

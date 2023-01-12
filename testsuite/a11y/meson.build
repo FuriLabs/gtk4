@@ -1,3 +1,6 @@
+testexecdir = join_paths(installed_test_bindir, 'gtk')
+testdatadir = join_paths(installed_test_datadir, 'gtk')
+
 # Available keys for each test:
 #
 #  - 'name': the test name; used for the test and to determine the base
@@ -74,6 +77,8 @@ foreach t : tests
     c_args: test_cargs + test_extra_cargs,
     link_args: test_extra_ldflags,
     dependencies: libgtk_dep,
+    install: get_option('install-tests'),
+    install_dir: testexecdir,
   )
 
   if test_extra_suites.contains('slow')

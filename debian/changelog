@@ -1,3 +1,45 @@
+gtk4 (4.8.3+ds-1) unstable; urgency=medium
+
+  * New upstream release
+  * Drop patches that were applied upstream
+  * d/tests/run-with-display: Use absolute path to WAYLAND_DISPLAY socket.
+    This means we can still use the Wayland display, even when dh_auto_test
+    changes our XDG_RUNTIME_DIR.
+  * d/run-tests.sh: Use dh_auto_test.
+    In particular this forces the C.UTF-8 locale, which should mean the tests
+    pass even when run under a non-UTF-8 locale like C (which official Debian
+    buildds do not do, but some other environments like reproducible-builds
+    might). (Closes: #1027680)
+  * d/tests: Quote more defensively
+  * d/tests/python3-gi: Explicitly disable a11y.
+    This version of GTK logs a warning (which makes the autopkgtest fail)
+    if we cannot contact the a11y bus provided by AT-SPI.
+  * d/tests/build: Suppress D-Bus/a11y warnings
+  * d/tests/build: Avoid PWD bashism
+  * d/copyright: Move standalone license stanzas to the end
+  * d/copyright: Add details of run-with-display script
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 03 Jan 2023 12:45:21 +0000
+
+gtk4 (4.8.2+ds-4) unstable; urgency=medium
+
+  * d/patches: Update to upstream gtk-4-8 branch commit 4.8.2-27-g5186430d9d
+    - Fix visual artifacts on X11
+    - Update translations
+  * d/patches: Sort Debian-specific patches to the end of the series
+  * d/p/testsuite-Use-separate-setups-for-unstable-tests-instead-.patch,
+    d/p/testsuite-Don-t-create-.test-files-for-flaky-or-failing-t.patch:
+    Add patches from upstream git main to improve handling of
+    flaky/failing tests
+  * d/p/node-editor-Save-test-data-relative-to-current-working-di.patch:
+    Add proposed patch to make the node editor reproducible
+  * d/rules: Remove redundant --libdir override
+  * d/control.in: Drop unused docbook and xsltproc build-dependencies.
+    The man pages now use python3-docutils instead.
+  * d/*.install: Don't try to install man pages under nodoc build-profile
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 06 Dec 2022 11:52:29 +0000
+
 gtk4 (4.8.2+ds-3ubuntu1) lunar; urgency=medium
 
   * Sync with Debian. Remaining changes:
@@ -167,7 +209,6 @@ gtk4 (4.6.6+ds-2) unstable; urgency=medium
   * Migrate GLib 2.68.0 build-dependency from d/control to d/control.in
   * d/copyright: Drop unused GPL license stanzas
   * d/gtk-4-tests.lintian-overrides: Update syntax for current Lintian
- gtk4 (4.6.6+ds-1ubuntu1) kinetic; urgency=medium
 
   * Sync with Debian. Remaining changes:
     - debian/tests:

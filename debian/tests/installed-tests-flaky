@@ -18,7 +18,7 @@ debian/tests/run-with-locales \
     --generate en_US.UTF-8 \
     --generate sv_SE=ISO-8859-1 \
     -- \
-debian/tests/run-with-display $GDK_BACKEND \
+debian/tests/run-with-display "$GDK_BACKEND" \
 gnome-desktop-testing-runner \
 --report-directory="$AUTOPKGTEST_ARTIFACTS" \
 --tap \

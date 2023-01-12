@@ -11,7 +11,9 @@ set -e
 set -u
 set -x
 
-TESTDIR="$PWD/$(dirname $0)"
+export GTK_A11Y=none
+
+srcdir="$(pwd)"
 WORKDIR=$(mktemp -d)
 cleanup () {
     rm -fr "$WORKDIR"
@@ -69,6 +71,7 @@ EOF
 "${CROSS_COMPILE}gcc" -o gtktest gtktest.c $("${CROSS_COMPILE}pkg-config" --cflags --libs gtk4)
 echo "build: OK"
 [ -x gtktest ]
-"$TESTDIR"/run-with-display $GDK_BACKEND \
+"${srcdir}"/debian/tests/run-with-display "$GDK_BACKEND" \
+dbus-run-session -- \
 ./gtktest
 echo "run: OK"

@@ -16,9 +16,9 @@ index 329348d..8edf55d 100644
 --- a/testsuite/reftests/meson.build
 +++ b/testsuite/reftests/meson.build
 @@ -608,6 +608,8 @@ flaky = [
-   # to be left enabled. Remove it until somebody figures out
-   # what is going on there.
-   'treeview-headers-hidden.ui',
+   'shorthand-entry-border.ui',
+   # blinking cursors and timing issues make this unreliable
+   'fixed-widget-stacking.ui',
 +  # https://gitlab.gnome.org/GNOME/gtk/-/issues/5099
 +  'inscription-markup.ui',
  ]

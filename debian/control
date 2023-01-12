@@ -268,7 +268,7 @@ Description: example files for GTK 4
  suites.
  .
  This package contains the example files and a demonstration program
- for GTK4. It also contains the installed tests.
+ for GTK4.
 
 Package: gtk-4-tests
 Build-Profiles: <!noinsttest>

@@ -24,7 +24,7 @@
 #include "gtkcssstylechangeprivate.h"
 #include "gtkbitmaskprivate.h"
 #include "gtkcsstypesprivate.h"
-#include "gtkstylecontext.h"
+#include "gtklistlistmodelprivate.h"
 
 G_BEGIN_DECLS
 
@@ -46,6 +46,8 @@ struct _GtkCssNode
   GtkCssNode *next_sibling;
   GtkCssNode *first_child;
   GtkCssNode *last_child;
+
+  GtkListListModel *children_observer;
 
   GtkCssNodeDeclaration *decl;
   GtkCssStyle           *style;
@@ -152,10 +154,19 @@ void                    gtk_css_node_validate           (GtkCssNode            *
 
 GtkStyleProvider *      gtk_css_node_get_style_provider (GtkCssNode            *cssnode) G_GNUC_PURE;
 
-void                    gtk_css_node_print              (GtkCssNode                *cssnode,
-                                                         GtkStyleContextPrintFlags  flags,
-                                                         GString                   *string,
-                                                         guint                      indent);
+typedef enum {
+  GTK_CSS_NODE_PRINT_NONE         = 0,
+  GTK_CSS_NODE_PRINT_RECURSE      = 1 << 0,
+  GTK_CSS_NODE_PRINT_SHOW_STYLE   = 1 << 1,
+  GTK_CSS_NODE_PRINT_SHOW_CHANGE  = 1 << 2
+} GtkCssNodePrintFlags;
+
+void                    gtk_css_node_print              (GtkCssNode           *cssnode,
+                                                         GtkCssNodePrintFlags  flags,
+                                                         GString              *string,
+                                                         guint                 indent);
+
+GListModel *            gtk_css_node_observe_children   (GtkCssNode                *cssnode);
 
 G_END_DECLS
 

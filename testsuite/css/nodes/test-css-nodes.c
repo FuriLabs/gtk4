@@ -27,6 +27,7 @@
 # include <io.h>
 #endif
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 static char *
 test_get_reference_file (const char *ui_file)
@@ -85,7 +86,7 @@ load_ui_file (GFile *file, gboolean generate)
   output = NULL;
   g_signal_connect (window, "map", G_CALLBACK (style_context_changed), &output);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (!output)
     g_main_context_iteration (NULL, FALSE);

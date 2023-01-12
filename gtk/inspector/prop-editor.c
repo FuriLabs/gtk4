@@ -26,14 +26,12 @@
 #include "gtkactionable.h"
 #include "gtkadjustment.h"
 #include "gtkapplicationwindow.h"
-#include "gtkcelllayout.h"
-#include "gtkcellrenderertext.h"
-#include "gtkcolorbutton.h"
-#include "gtkcolorchooser.h"
-#include "gtkcombobox.h"
-#include "gtkfontbutton.h"
-#include "gtkfontchooser.h"
-#include "gtkiconview.h"
+#include "deprecated/gtkcelllayout.h"
+#include "deprecated/gtkcombobox.h"
+#include "deprecated/gtkiconview.h"
+#include "deprecated/gtktreeview.h"
+#include "gtkcolordialogbutton.h"
+#include "gtkfontdialogbutton.h"
 #include "gtklabel.h"
 #include "gtkpopover.h"
 #include "gtkscrolledwindow.h"
@@ -45,6 +43,8 @@
 #include "gtkcssnodeprivate.h"
 #include "gtklistbox.h"
 #include "gtkmenubutton.h"
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 struct _GtkInspectorPropEditor
 {
@@ -743,7 +743,7 @@ object_properties (GtkInspectorPropEditor *self)
 }
 
 static void
-rgba_modified (GtkColorButton *cb, GParamSpec *ignored, ObjectProperty *p)
+rgba_modified (GtkColorDialogButton *cb, GParamSpec *ignored, ObjectProperty *p)
 {
   GValue val = G_VALUE_INIT;
 
@@ -759,25 +759,23 @@ rgba_changed (GObject *object, GParamSpec *pspec, gpointer data)
   GtkColorChooser *cb = GTK_COLOR_CHOOSER (data);
   GValue val = G_VALUE_INIT;
   GdkRGBA *color;
-  GdkRGBA cb_color;
 
   g_value_init (&val, GDK_TYPE_RGBA);
   get_property_value (object, pspec, &val);
 
   color = g_value_get_boxed (&val);
-  gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (cb), &cb_color);
 
-  if (color != NULL && !gdk_rgba_equal (color, &cb_color))
+  if (color != NULL)
     {
       block_controller (G_OBJECT (cb));
-      gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (cb), color);
+      gtk_color_dialog_button_set_rgba (GTK_COLOR_DIALOG_BUTTON (cb), color);
       unblock_controller (G_OBJECT (cb));
     }
  g_value_unset (&val);
 }
 
 static void
-font_modified (GtkFontChooser *fb, GParamSpec *pspec, ObjectProperty *p)
+font_modified (GtkFontDialogButton *fb, GParamSpec *pspec, ObjectProperty *p)
 {
   GValue val = G_VALUE_INIT;
 
@@ -790,28 +788,20 @@ font_modified (GtkFontChooser *fb, GParamSpec *pspec, ObjectProperty *p)
 static void
 font_changed (GObject *object, GParamSpec *pspec, gpointer data)
 {
-  GtkFontChooser *fb = GTK_FONT_CHOOSER (data);
+  GtkFontDialogButton *fb = GTK_FONT_DIALOG_BUTTON (data);
   GValue val = G_VALUE_INIT;
   const PangoFontDescription *font_desc;
-  PangoFontDescription *fb_font_desc;
 
   g_value_init (&val, PANGO_TYPE_FONT_DESCRIPTION);
   get_property_value (object, pspec, &val);
 
   font_desc = g_value_get_boxed (&val);
-  fb_font_desc = gtk_font_chooser_get_font_desc (fb);
 
-  if (font_desc == NULL ||
-      (fb_font_desc != NULL &&
-       !pango_font_description_equal (fb_font_desc, font_desc)))
-    {
-      block_controller (G_OBJECT (fb));
-      gtk_font_chooser_set_font_desc (fb, font_desc);
-      unblock_controller (G_OBJECT (fb));
-    }
+  block_controller (G_OBJECT (fb));
+  gtk_font_dialog_button_set_font_desc (fb, font_desc);
+  unblock_controller (G_OBJECT (fb));
 
   g_value_unset (&val);
-  pango_font_description_free (fb_font_desc);
 }
 
 static char *
@@ -1100,7 +1090,6 @@ property_editor (GObject                *object,
                       "vscrollbar-policy", GTK_POLICY_NEVER,
                       NULL);
         box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
-        gtk_widget_show (box);
         gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (sw), box);
 
         fclass = G_FLAGS_CLASS (g_type_class_ref (spec->value_type));
@@ -1111,7 +1100,6 @@ property_editor (GObject                *object,
 
             b = gtk_check_button_new_with_label (fclass->values[j].value_nick);
             g_object_set_data (G_OBJECT (b), "index", GINT_TO_POINTER (j));
-            gtk_widget_show (b);
             gtk_box_append (GTK_BOX (box), b);
             connect_controller (G_OBJECT (b), "toggled",
                                 object, spec, G_CALLBACK (flags_modified));
@@ -1165,8 +1153,6 @@ property_editor (GObject                *object,
                                 self);
       gtk_box_append (GTK_BOX (prop_edit), label);
       gtk_box_append (GTK_BOX (prop_edit), button);
-      gtk_widget_show (label);
-      gtk_widget_show (button);
 
       g_object_connect_property (object, spec,
                                  G_CALLBACK (object_changed),
@@ -1175,8 +1161,7 @@ property_editor (GObject                *object,
   else if (type == G_TYPE_PARAM_BOXED &&
            G_PARAM_SPEC_VALUE_TYPE (spec) == GDK_TYPE_RGBA)
     {
-      prop_edit = gtk_color_button_new ();
-      gtk_color_chooser_set_use_alpha (GTK_COLOR_CHOOSER (prop_edit), TRUE);
+      prop_edit = gtk_color_dialog_button_new (gtk_color_dialog_new ());
 
       g_object_connect_property (object, spec,
                                  G_CALLBACK (rgba_changed),
@@ -1188,7 +1173,7 @@ property_editor (GObject                *object,
   else if (type == G_TYPE_PARAM_BOXED &&
            G_PARAM_SPEC_VALUE_TYPE (spec) == PANGO_TYPE_FONT_DESCRIPTION)
     {
-      prop_edit = gtk_font_button_new ();
+      prop_edit = gtk_font_dialog_button_new (gtk_font_dialog_new ());
 
       g_object_connect_property (object, spec,
                                  G_CALLBACK (font_changed),
@@ -1248,6 +1233,23 @@ property_editor (GObject                *object,
     }
 
   notify_property (object, spec);
+
+  if (GTK_IS_LABEL (prop_edit))
+    {
+      gtk_widget_set_can_focus (prop_edit, TRUE);
+      gtk_accessible_update_property (GTK_ACCESSIBLE (prop_edit),
+                                      GTK_ACCESSIBLE_PROPERTY_LABEL,
+                                      g_strdup_printf ("%s: %s",
+                                                       self->name,
+                                                       gtk_label_get_text (GTK_LABEL (prop_edit))),
+                                      -1);
+    }
+  else
+    {
+      gtk_accessible_update_property (GTK_ACCESSIBLE (prop_edit),
+                                      GTK_ACCESSIBLE_PROPERTY_LABEL, self->name,
+                                      -1);
+    }
 
   return prop_edit;
 }

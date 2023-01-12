@@ -47,7 +47,7 @@
 #include <glib/gi18n-lib.h>
 #include "gtkmain.h"
 #include "gtkmarshalers.h"
-#include "gtkmessagedialog.h"
+#include "deprecated/gtkmessagedialog.h"
 #include "gtkpointerfocusprivate.h"
 #include "gtkprivate.h"
 #include "gtkroot.h"
@@ -72,6 +72,7 @@
 #include "gdk/gdkprofilerprivate.h"
 #include "gdk/gdksurfaceprivate.h"
 #include "gdk/gdktextureprivate.h"
+#include "gdk/gdktoplevelprivate.h"
 
 #include <cairo-gobject.h>
 #include <errno.h>
@@ -1093,11 +1094,14 @@ gtk_window_class_init (GtkWindowClass *klass)
    *
    * emitted when the set of accelerators or mnemonics that
    * are associated with @window changes.
+   *
+   * Deprecated: 4.10: Use [class@Gtk.Shortcut] and [class@Gtk.EventController]
+   * to implement keyboard shortcuts
    */
   window_signals[KEYS_CHANGED] =
     g_signal_new (I_("keys-changed"),
                   G_TYPE_FROM_CLASS (gobject_class),
-                  G_SIGNAL_RUN_FIRST,
+                  G_SIGNAL_RUN_FIRST | G_SIGNAL_DEPRECATED,
                   G_STRUCT_OFFSET (GtkWindowClass, keys_changed),
                   NULL, NULL,
                   NULL,
@@ -3663,7 +3667,7 @@ gtk_window_close_request (GtkWindow *window)
 
   if (priv->hide_on_close)
     {
-      gtk_widget_hide (GTK_WIDGET (window));
+      gtk_widget_set_visible (GTK_WIDGET (window), FALSE);
       return TRUE;
     }
 
@@ -5270,7 +5274,7 @@ gtk_window_present_with_time (GtkWindow *window,
   else
     {
       priv->initial_timestamp = timestamp;
-      gtk_widget_show (widget);
+      gtk_widget_set_visible (widget, TRUE);
     }
 
   g_assert (priv->surface != NULL);
@@ -5285,7 +5289,7 @@ gtk_window_present_with_time (GtkWindow *window,
  *
  * Note that you shouldn’t assume the window is definitely minimized
  * afterward, because the windowing system might not support this
- * functionality; other entities (e.g. the user or the window manager
+ * functionality; other entities (e.g. the user or the window manager)
  * could unminimize it again, or there may not be a window manager in
  * which case minimization isn’t possible, etc.
  *
@@ -5317,7 +5321,7 @@ gtk_window_minimize (GtkWindow *window)
  *
  * Note that you shouldn’t assume the window is definitely unminimized
  * afterward, because the windowing system might not support this
- * functionality; other entities (e.g. the user or the window manager
+ * functionality; other entities (e.g. the user or the window manager)
  * could minimize it again, or there may not be a window manager in
  * which case minimization isn’t possible, etc.
  *
@@ -5344,7 +5348,7 @@ gtk_window_unminimize (GtkWindow *window)
  * Asks to maximize @window, so that it fills the screen.
  *
  * Note that you shouldn’t assume the window is definitely maximized
- * afterward, because other entities (e.g. the user or window manager
+ * afterward, because other entities (e.g. the user or window manager)
  * could unmaximize it again, and not all window managers support
  * maximization.
  *
@@ -5386,7 +5390,7 @@ gtk_window_maximize (GtkWindow *window)
  * Asks to unmaximize @window.
  *
  * Note that you shouldn’t assume the window is definitely unmaximized
- * afterward, because other entities (e.g. the user or window manager
+ * afterward, because other entities (e.g. the user or window manager)
  * maximize it again, and not all window managers honor requests to
  * unmaximize.
  *
@@ -5436,7 +5440,7 @@ unset_fullscreen_monitor (GtkWindow *window)
  * Asks to place @window in the fullscreen state.
  *
  * Note that you shouldn’t assume the window is definitely fullscreen
- * afterward, because other entities (e.g. the user or window manager
+ * afterward, because other entities (e.g. the user or window manager)
  * unfullscreen it again, and not all window managers honor requests
  * to fullscreen windows.
  *
@@ -5525,7 +5529,7 @@ gtk_window_fullscreen_on_monitor (GtkWindow  *window,
  *
  * Note that you shouldn’t assume the window is definitely not
  * fullscreen afterward, because other entities (e.g. the user or
- * window manager could fullscreen it again, and not all window
+ * window manager) could fullscreen it again, and not all window
  * managers honor requests to unfullscreen windows; normally the
  * window will end up restored to its normal state. Just don’t
  * write code that crashes if not.
@@ -6133,6 +6137,7 @@ gtk_window_set_debugging (GdkDisplay *display,
 
       if (warn)
         {
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
           dialog = gtk_message_dialog_new (GTK_WINDOW (inspector_window),
                                            GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,
                                            GTK_MESSAGE_QUESTION,
@@ -6146,7 +6151,6 @@ gtk_window_set_debugging (GdkDisplay *display,
           area = gtk_message_dialog_get_message_area (GTK_MESSAGE_DIALOG (dialog));
           check = gtk_check_button_new_with_label (_("Don’t show this message again"));
           gtk_widget_set_margin_start (check, 10);
-          gtk_widget_show (check);
           gtk_box_append (GTK_BOX (area), check);
           g_object_set_data (G_OBJECT (dialog), "check", check);
           gtk_dialog_add_button (GTK_DIALOG (dialog), _("_Cancel"), GTK_RESPONSE_NO);
@@ -6154,7 +6158,8 @@ gtk_window_set_debugging (GdkDisplay *display,
           g_signal_connect (dialog, "response", G_CALLBACK (warn_response), inspector_window);
           g_object_set_data (G_OBJECT (inspector_window), "warning_dialog", dialog);
 
-          gtk_widget_show (dialog);
+          gtk_window_present (GTK_WINDOW (dialog));
+G_GNUC_END_IGNORE_DEPRECATIONS
         }
 
       if (select)
@@ -6164,7 +6169,7 @@ gtk_window_set_debugging (GdkDisplay *display,
     {
       inspector_window = gtk_inspector_window_get (display);
 
-      gtk_widget_hide (inspector_window);
+      gtk_widget_set_visible (inspector_window, FALSE);
     }
 }
 
@@ -6245,26 +6250,54 @@ gtk_window_enable_debugging (GtkWindow *window,
   return TRUE;
 }
 
-#ifdef GDK_WINDOWING_WAYLAND
 typedef struct {
   GtkWindow *window;
   GtkWindowHandleExported callback;
   gpointer user_data;
-} WaylandSurfaceHandleExportedData;
+} ExportHandleData;
+
+static char *
+prefix_handle (GdkDisplay *display,
+               char       *handle)
+{
+#ifdef GDK_WINDOWING_WAYLAND
+  if (GDK_IS_WAYLAND_DISPLAY (display))
+    return g_strconcat ("wayland:", handle, NULL);
+  else
+#endif
+#ifdef GDK_WINDOWING_X11
+  if (GDK_IS_X11_DISPLAY (display))
+    return g_strconcat ("x11:", handle, NULL);
+  else
+#endif
+    return NULL;
+}
 
 static void
-wayland_surface_handle_exported (GdkToplevel *toplevel,
-				 const char  *wayland_handle_str,
-				 gpointer     user_data)
+export_handle_done (GObject      *source,
+                    GAsyncResult *result,
+                    void         *user_data)
 {
-  WaylandSurfaceHandleExportedData *data = user_data;
-  char *handle_str;
+  ExportHandleData *data = (ExportHandleData *)user_data;
+  GtkWindowPrivate *priv = gtk_window_get_instance_private (data->window);
+  char *handle;
 
-  handle_str = g_strdup_printf ("wayland:%s", wayland_handle_str);
-  data->callback (data->window, handle_str, data->user_data);
-  g_free (handle_str);
+  handle = gdk_toplevel_export_handle_finish (GDK_TOPLEVEL (priv->surface), result, NULL);
+  if (handle)
+    {
+      char *prefixed;
+
+      prefixed = prefix_handle (priv->display, handle);
+      data->callback (data->window, prefixed, data->user_data);
+      g_free (prefixed);
+      g_free (handle);
+    }
+  else
+    data->callback (data->window, NULL, data->user_data);
+
+
+  g_free (data);
 }
-#endif
 
 gboolean
 gtk_window_export_handle (GtkWindow               *window,
@@ -6272,70 +6305,16 @@ gtk_window_export_handle (GtkWindow               *window,
                           gpointer                 user_data)
 {
   GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
+  ExportHandleData *data;
 
-#ifdef GDK_WINDOWING_X11
-  if (GDK_IS_X11_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
-    {
-      char *handle_str;
-      guint32 xid = (guint32) gdk_x11_surface_get_xid (priv->surface);
+  data = g_new (ExportHandleData, 1);
+  data->window = window;
+  data->callback = callback;
+  data->user_data = user_data;
 
-      handle_str = g_strdup_printf ("x11:%x", xid);
-      callback (window, handle_str, user_data);
-      g_free (handle_str);
+  gdk_toplevel_export_handle (GDK_TOPLEVEL (priv->surface), NULL, export_handle_done, data);
 
-      return TRUE;
-    }
-#endif
-#ifdef GDK_WINDOWING_WAYLAND
-  if (GDK_IS_WAYLAND_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
-    {
-      WaylandSurfaceHandleExportedData *data;
-
-      data = g_new0 (WaylandSurfaceHandleExportedData, 1);
-      data->window = window;
-      data->callback = callback;
-      data->user_data = user_data;
-
-      if (!gdk_wayland_toplevel_export_handle (GDK_TOPLEVEL (priv->surface),
-					       wayland_surface_handle_exported,
-					       data,
-					       g_free))
-        {
-          g_free (data);
-          return FALSE;
-        }
-      else
-        {
-          return TRUE;
-        }
-    }
-#endif
-#ifdef GDK_WINDOWING_MACOS
-  if (GDK_IS_MACOS_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
-    {
-      callback (window, NULL, user_data);
-      return TRUE;
-    }
-#endif
-#ifdef GDK_WINDOWING_WIN32
-  if (GDK_IS_WIN32_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
-    {
-      callback (window, NULL, user_data);
-      return TRUE;
-    }
-#endif
-#ifdef GDK_WINDOWING_BROADWAY
-  if (GDK_IS_BROADWAY_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
-    {
-      callback (window, NULL, user_data);
-      return TRUE;
-    }
-#endif
-
-  g_warning ("Couldn't export handle for %s surface, unsupported windowing system",
-             G_OBJECT_TYPE_NAME (priv->surface));
-
-  return FALSE;
+  return TRUE;
 }
 
 void
@@ -6343,32 +6322,7 @@ gtk_window_unexport_handle (GtkWindow *window)
 {
   GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
 
-#ifdef GDK_WINDOWING_WAYLAND
-  if (GDK_IS_WAYLAND_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
-    {
-      gdk_wayland_toplevel_unexport_handle (GDK_TOPLEVEL (priv->surface));
-      return;
-    }
-#endif
-#ifdef GDK_WINDOWING_X11
-  if (GDK_IS_X11_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
-    return;
-#endif
-#ifdef GDK_WINDOWING_MACOS
-  if (GDK_IS_MACOS_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
-    return;
-#endif
-#ifdef GDK_WINDOWING_WIN32
-  if (GDK_IS_WIN32_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
-    return;
-#endif
-#ifdef GDK_WINDOWING_BROADWAY
-  if (GDK_IS_BROADWAY_DISPLAY (gtk_widget_get_display (GTK_WIDGET (window))))
-    return;
-#endif
-
-  g_warning ("Couldn't unexport handle for %s surface, unsupported windowing system",
-             G_OBJECT_TYPE_NAME (priv->surface));
+  gdk_toplevel_unexport_handle (GDK_TOPLEVEL (priv->surface));
 }
 
 static GtkPointerFocus *

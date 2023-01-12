@@ -19,6 +19,7 @@
 #include <glib/gi18n-lib.h>
 
 #include "strv-editor.h"
+#include "gtkaccessible.h"
 #include "gtkbutton.h"
 #include "gtkentry.h"
 #include "gtkbox.h"
@@ -65,18 +66,22 @@ add_string (GtkInspectorStrvEditor *editor,
 
   box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
   gtk_widget_add_css_class (box, "linked");
-  gtk_widget_show (box);
 
   entry = gtk_entry_new ();
   gtk_editable_set_text (GTK_EDITABLE (entry), str);
-  gtk_widget_show (entry);
+  gtk_accessible_update_property (GTK_ACCESSIBLE (entry),
+                                  GTK_ACCESSIBLE_PROPERTY_LABEL, _("Value"),
+                                  -1);
   gtk_box_append (GTK_BOX (box), entry);
   g_object_set_data (G_OBJECT (box), "entry", entry);
   g_signal_connect_swapped (entry, "notify::text", G_CALLBACK (emit_changed), editor);
 
   button = gtk_button_new_from_icon_name ("user-trash-symbolic");
   gtk_widget_add_css_class (button, "image-button");
-  gtk_widget_show (button);
+  gtk_accessible_update_property (GTK_ACCESSIBLE (button),
+                                  GTK_ACCESSIBLE_PROPERTY_LABEL,
+                                  g_strdup_printf (_("Remove %s"), str),
+                                  -1);
   gtk_box_append (GTK_BOX (box), button);
   g_signal_connect (button, "clicked", G_CALLBACK (remove_string), editor);
 
@@ -100,13 +105,15 @@ gtk_inspector_strv_editor_init (GtkInspectorStrvEditor *editor)
   gtk_box_set_spacing (GTK_BOX (editor), 6);
   gtk_orientable_set_orientation (GTK_ORIENTABLE (editor), GTK_ORIENTATION_VERTICAL);
   editor->box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 6);
-  gtk_widget_show (editor->box);
+  gtk_widget_set_visible (editor->box, TRUE);
 
   editor->button = gtk_button_new_from_icon_name ("list-add-symbolic");
   gtk_widget_add_css_class (editor->button, "image-button");
   gtk_widget_set_focus_on_click (editor->button, FALSE);
   gtk_widget_set_halign (editor->button, GTK_ALIGN_END);
-  gtk_widget_show (editor->button);
+  gtk_accessible_update_property (GTK_ACCESSIBLE (editor->button),
+                                  GTK_ACCESSIBLE_PROPERTY_LABEL, _("Add"),
+                                  -1);
   g_signal_connect (editor->button, "clicked", G_CALLBACK (add_cb), editor);
 
   gtk_box_append (GTK_BOX (editor), editor->box);

@@ -11,6 +11,7 @@
 #include <stdlib.h> /* for exit() */
 #include "paintable.h"
 
+
 static void easter_egg_callback (GtkWidget *button, gpointer data);
 
 static void
@@ -429,11 +430,11 @@ attach_widgets (GtkTextView *text_view)
         }
       else if (i == 1)
         {
-          widget = gtk_combo_box_text_new ();
+          const char *options[] = {
+            "Option 1", "Option 2", "Option 3", NULL
+          };
 
-          gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (widget), "Option 1");
-          gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (widget), "Option 2");
-          gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (widget), "Option 3");
+          widget = gtk_drop_down_new_from_strings (options);
         }
       else if (i == 2)
         {
@@ -522,7 +523,7 @@ do_textview (GtkWidget *do_widget)
 
   if (!gtk_widget_get_visible (window))
     {
-      gtk_widget_show (window);
+      gtk_widget_set_visible (window, TRUE);
     }
   else
     {
@@ -605,5 +606,5 @@ easter_egg_callback (GtkWidget *button,
 
   gtk_window_set_default_size (GTK_WINDOW (window), 300, 400);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 }

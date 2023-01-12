@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 static void
 horizontal_policy_changed (GtkComboBox *combo_box,
@@ -193,7 +194,7 @@ scrollable_policy (void)
   g_signal_connect (G_OBJECT (widget), "toggled",
                     G_CALLBACK (kinetic_scrolling_changed), swindow);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   /* Popover */
   popover = gtk_popover_new ();

@@ -21,17 +21,16 @@
 
 /* Vista or newer */
 #define _WIN32_WINNT 0x0600
-#define WINVER _WIN32_WINNT
-#define NTDDI_VERSION NTDDI_VISTA
+#include <sdkddkver.h>
+
 #define COBJMACROS
 
 #include "gtkfilechoosernativeprivate.h"
 #include "gtknativedialogprivate.h"
 
 #include "gtkprivate.h"
-#include "gtkfilechooserdialog.h"
+#include "deprecated/gtkfilechooserdialog.h"
 #include "gtkfilechooserprivate.h"
-#include "gtkfilechooserwidget.h"
 #include "gtkfilechooserwidgetprivate.h"
 #include "gtkfilechooserutils.h"
 #include "gtksizerequest.h"
@@ -47,6 +46,8 @@
 #include "win32/gdkwin32.h"
 #include <shlobj.h>
 #include <windows.h>
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 typedef struct {
   GtkFileChooserNative *self;
@@ -469,7 +470,7 @@ filechooser_win32_thread (gpointer _data)
   HRESULT hr;
   IFileDialog *pfd = NULL;
   IFileDialog2 *pfd2 = NULL;
-  DWORD flags;
+  DWORD flags = 0;
   DWORD cookie;
   guint j, n_items;
 
@@ -491,7 +492,10 @@ filechooser_win32_thread (gpointer _data)
   if (FAILED (hr))
     g_error ("Can't get FileDialog options: %s", g_win32_error_message (hr));
 
-  flags |= FOS_FORCEFILESYSTEM;
+  flags |= FOS_FORCEFILESYSTEM |
+           FOS_OVERWRITEPROMPT |
+           FOS_NOTESTFILECREATE |
+           FOS_NOCHANGEDIR;
 
   if (data->folder)
     flags |= FOS_PICKFOLDERS;
@@ -501,8 +505,6 @@ filechooser_win32_thread (gpointer _data)
 
   if (data->select_multiple)
     flags |= FOS_ALLOWMULTISELECT;
-
-  flags |= FOS_OVERWRITEPROMPT;
 
   hr = IFileDialog_SetOptions (pfd, flags);
   if (FAILED (hr))

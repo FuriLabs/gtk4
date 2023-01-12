@@ -28,7 +28,7 @@
 #include <glib/gi18n-lib.h>
 #include "gtkprivate.h"
 
-#include "gtkliststore.h"
+#include "deprecated/gtkliststore.h"
 
 #include "gtksignallistitemfactory.h"
 #include "gtklabel.h"
@@ -37,7 +37,7 @@
 #include "gtkcustompaperunixdialog.h"
 #include "gtkprintbackendprivate.h"
 #include "gtkprintutils.h"
-#include "gtkdialogprivate.h"
+#include "deprecated/gtkdialogprivate.h"
 
 #define LEGACY_CUSTOM_PAPER_FILENAME ".gtk-custom-papers"
 #define CUSTOM_PAPER_FILENAME "custom-papers"
@@ -198,29 +198,6 @@ _gtk_load_custom_papers (void)
 }
 
 void
-_gtk_print_load_custom_papers (GtkListStore *store)
-{
-  GtkTreeIter iter;
-  GList *papers, *p;
-  GtkPageSetup *page_setup;
-
-  gtk_list_store_clear (store);
-
-  papers = _gtk_load_custom_papers ();
-  for (p = papers; p; p = p->next)
-    {
-      page_setup = p->data;
-      gtk_list_store_append (store, &iter);
-      gtk_list_store_set (store, &iter,
-                          0, page_setup,
-                          -1);
-      g_object_unref (page_setup);
-    }
-
-  g_list_free (papers);
-}
-
-void
 gtk_print_load_custom_papers (GListStore *store)
 {
   GList *papers, *p;
@@ -306,7 +283,9 @@ gtk_custom_paper_unix_dialog_init (GtkCustomPaperUnixDialog *dialog)
   GListModel *full_list;
   GtkFilter *filter;
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   gtk_dialog_set_use_header_bar_from_setting (GTK_DIALOG (dialog));
+G_GNUC_END_IGNORE_DEPRECATIONS
 
   dialog->print_backends = NULL;
 
@@ -341,6 +320,7 @@ gtk_custom_paper_unix_dialog_constructed (GObject *object)
 
   G_OBJECT_CLASS (gtk_custom_paper_unix_dialog_parent_class)->constructed (object);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   g_object_get (object, "use-header-bar", &use_header, NULL);
   if (!use_header)
     {
@@ -349,6 +329,7 @@ gtk_custom_paper_unix_dialog_constructed (GObject *object)
                               NULL);
       gtk_dialog_set_default_response (GTK_DIALOG (object), GTK_RESPONSE_CLOSE);
     }
+G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 static void
@@ -455,7 +436,6 @@ new_unit_widget (GtkCustomPaperUnixDialog *dialog,
     gtk_spin_button_set_digits (GTK_SPIN_BUTTON (button), 1);
 
   gtk_box_append (GTK_BOX (hbox), button);
-  gtk_widget_show (button);
 
   data->spin_button = button;
 
@@ -469,7 +449,6 @@ new_unit_widget (GtkCustomPaperUnixDialog *dialog,
   gtk_widget_set_valign (label, GTK_ALIGN_BASELINE);
 
   gtk_box_append (GTK_BOX (hbox), label);
-  gtk_widget_show (label);
   gtk_label_set_mnemonic_widget (GTK_LABEL (mnemonic_label), button);
 
   g_object_set_data_full (G_OBJECT (hbox), "unit-data", data, g_free);
@@ -746,7 +725,6 @@ wrap_in_frame (const char *label,
   label_widget = gtk_label_new (NULL);
   gtk_widget_set_halign (label_widget, GTK_ALIGN_START);
   gtk_widget_set_valign (label_widget, GTK_ALIGN_CENTER);
-  gtk_widget_show (label_widget);
 
   bold_text = g_markup_printf_escaped ("<b>%s</b>", label);
   gtk_label_set_markup (GTK_LABEL (label_widget), bold_text);
@@ -760,8 +738,6 @@ wrap_in_frame (const char *label,
   gtk_widget_set_valign (child, GTK_ALIGN_FILL);
 
   gtk_box_append (GTK_BOX (frame), child);
-
-  gtk_widget_show (frame);
 
   return frame;
 }
@@ -870,7 +846,10 @@ populate_dialog (GtkCustomPaperUnixDialog *dialog)
   GtkSelectionModel *model;
   GtkListItemFactory *factory;
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   content_area = gtk_dialog_get_content_area (cpu_dialog);
+G_GNUC_END_IGNORE_DEPRECATIONS
+
   gtk_box_set_spacing (GTK_BOX (content_area), 2); /* 2 * 5 + 2 = 12 */
 
   hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 18);
@@ -879,11 +858,9 @@ populate_dialog (GtkCustomPaperUnixDialog *dialog)
   gtk_widget_set_margin_top (hbox, 20);
   gtk_widget_set_margin_bottom (hbox, 20);
   gtk_box_append (GTK_BOX (content_area), hbox);
-  gtk_widget_show (hbox);
 
   vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
   gtk_box_append (GTK_BOX (hbox), vbox);
-  gtk_widget_show (vbox);
 
   scrolled = gtk_scrolled_window_new ();
   gtk_widget_set_vexpand (scrolled, TRUE);
@@ -891,7 +868,6 @@ populate_dialog (GtkCustomPaperUnixDialog *dialog)
                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_set_has_frame (GTK_SCROLLED_WINDOW (scrolled), TRUE);
   gtk_box_append (GTK_BOX (vbox), scrolled);
-  gtk_widget_show (scrolled);
 
   model = GTK_SELECTION_MODEL (gtk_single_selection_new (g_object_ref (G_LIST_MODEL (dialog->custom_paper_list))));
   g_signal_connect (model, "notify::selected", G_CALLBACK (selected_custom_paper_changed), dialog);
@@ -929,7 +905,6 @@ populate_dialog (GtkCustomPaperUnixDialog *dialog)
   vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 18);
   dialog->values_box = vbox;
   gtk_box_append (GTK_BOX (hbox), vbox);
-  gtk_widget_show (vbox);
 
   grid = gtk_grid_new ();
 
@@ -939,29 +914,23 @@ populate_dialog (GtkCustomPaperUnixDialog *dialog)
   label = gtk_label_new_with_mnemonic (_("_Width:"));
   gtk_widget_set_halign (label, GTK_ALIGN_START);
   gtk_widget_set_valign (label, GTK_ALIGN_BASELINE);
-  gtk_widget_show (label);
   gtk_grid_attach (GTK_GRID (grid), label, 0, 0, 1, 1);
 
   widget = new_unit_widget (dialog, user_units, label);
   dialog->width_widget = widget;
   gtk_grid_attach (GTK_GRID (grid), widget, 1, 0, 1, 1);
-  gtk_widget_show (widget);
 
   label = gtk_label_new_with_mnemonic (_("_Height:"));
   gtk_widget_set_halign (label, GTK_ALIGN_START);
   gtk_widget_set_valign (label, GTK_ALIGN_BASELINE);
-  gtk_widget_show (label);
   gtk_grid_attach (GTK_GRID (grid), label, 0, 1, 1, 1);
 
   widget = new_unit_widget (dialog, user_units, label);
   dialog->height_widget = widget;
   gtk_grid_attach (GTK_GRID (grid), widget, 1, 1, 1, 1);
-  gtk_widget_show (widget);
 
   frame = wrap_in_frame (_("Paper Size"), grid);
-  gtk_widget_show (grid);
   gtk_box_append (GTK_BOX (vbox), frame);
-  gtk_widget_show (frame);
 
   grid = gtk_grid_new ();
   gtk_grid_set_row_spacing (GTK_GRID (grid), 6);
@@ -971,49 +940,40 @@ populate_dialog (GtkCustomPaperUnixDialog *dialog)
   gtk_widget_set_halign (label, GTK_ALIGN_START);
   gtk_widget_set_valign (label, GTK_ALIGN_BASELINE);
   gtk_grid_attach (GTK_GRID (grid), label, 0, 0, 1, 1);
-  gtk_widget_show (label);
 
   widget = new_unit_widget (dialog, user_units, label);
   dialog->top_widget = widget;
   gtk_grid_attach (GTK_GRID (grid), widget, 1, 0, 1, 1);
-  gtk_widget_show (widget);
 
   label = gtk_label_new_with_mnemonic (_("_Bottom:"));
   gtk_widget_set_halign (label, GTK_ALIGN_START);
   gtk_widget_set_valign (label, GTK_ALIGN_BASELINE);
   gtk_grid_attach (GTK_GRID (grid), label, 0, 1, 1, 1);
-  gtk_widget_show (label);
 
   widget = new_unit_widget (dialog, user_units, label);
   dialog->bottom_widget = widget;
   gtk_grid_attach (GTK_GRID (grid), widget, 1, 1, 1, 1);
-  gtk_widget_show (widget);
 
   label = gtk_label_new_with_mnemonic (_("_Left:"));
   gtk_widget_set_halign (label, GTK_ALIGN_START);
   gtk_widget_set_valign (label, GTK_ALIGN_BASELINE);
   gtk_grid_attach (GTK_GRID (grid), label, 0, 2, 1, 1);
-  gtk_widget_show (label);
 
   widget = new_unit_widget (dialog, user_units, label);
   dialog->left_widget = widget;
   gtk_grid_attach (GTK_GRID (grid), widget, 1, 2, 1, 1);
-  gtk_widget_show (widget);
 
   label = gtk_label_new_with_mnemonic (_("_Right:"));
   gtk_widget_set_halign (label, GTK_ALIGN_START);
   gtk_widget_set_valign (label, GTK_ALIGN_BASELINE);
   gtk_grid_attach (GTK_GRID (grid), label, 0, 3, 1, 1);
-  gtk_widget_show (label);
 
   widget = new_unit_widget (dialog, user_units, label);
   dialog->right_widget = widget;
   gtk_grid_attach (GTK_GRID (grid), widget, 1, 3, 1, 1);
-  gtk_widget_show (widget);
 
   hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
   gtk_grid_attach (GTK_GRID (grid), hbox, 0, 4, 2, 1);
-  gtk_widget_show (hbox);
 
   combo = gtk_drop_down_new (g_object_ref (dialog->printer_list), NULL);
 
@@ -1037,9 +997,7 @@ populate_dialog (GtkCustomPaperUnixDialog *dialog)
                             G_CALLBACK (margins_from_printer_changed), dialog);
 
   frame = wrap_in_frame (_("Paper Margins"), grid);
-  gtk_widget_show (grid);
   gtk_box_append (GTK_BOX (vbox), frame);
-  gtk_widget_show (frame);
 
   update_custom_widgets_from_list (dialog);
 

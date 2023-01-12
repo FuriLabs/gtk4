@@ -25,6 +25,8 @@
 
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static GtkTreeModel *
 get_model (void)
 {
@@ -259,7 +261,7 @@ main (int argc, char *argv[])
   gtk_box_append (GTK_BOX (vbox), views.header2);
   gtk_box_append (GTK_BOX (vbox), views.view2);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (TRUE)
     g_main_context_iteration (NULL, TRUE);

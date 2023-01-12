@@ -20,11 +20,11 @@
 
 #include "gtkentry.h"
 
-#include "gtkentrycompletion.h"
+#include "deprecated/gtkentrycompletion.h"
 #include "gtkeventcontrollermotion.h"
-#include "gtkliststore.h"
-#include "gtktreemodelfilter.h"
-#include "gtktreeviewcolumn.h"
+#include "deprecated/gtkliststore.h"
+#include "deprecated/gtktreemodelfilter.h"
+#include "deprecated/gtktreeviewcolumn.h"
 #include "gtkeventcontrollerkey.h"
 #include "gtktextprivate.h"
 
@@ -61,7 +61,8 @@ struct _GtkEntryCompletion
 
   gulong completion_timeout;
   gulong changed_id;
-  gulong insert_text_id;
+
+  GSignalGroup *insert_text_signal_group;
 
   int current_selected;
 

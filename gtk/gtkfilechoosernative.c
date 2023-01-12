@@ -23,9 +23,8 @@
 #include "gtknativedialogprivate.h"
 
 #include "gtkprivate.h"
-#include "gtkfilechooserdialog.h"
 #include "gtkfilechooserprivate.h"
-#include "gtkfilechooserwidget.h"
+#include "deprecated/gtkfilechooserdialog.h"
 #include "gtkfilechooserwidgetprivate.h"
 #include "gtkfilechooserutils.h"
 #include "gtksizerequest.h"
@@ -36,6 +35,8 @@
 #include "gtkheaderbar.h"
 #include "gtklabel.h"
 #include "gtkfilefilterprivate.h"
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 /**
  * GtkFileChooserNative:
@@ -186,6 +187,8 @@
  * are not supported:
  *
  * * Shortcut folders.
+ *
+ * Deprecated: 4.10: Use [class@Gtk.FileDialog] instead
  */
 
 enum {
@@ -218,6 +221,8 @@ G_DEFINE_TYPE_WITH_CODE (GtkFileChooserNative, gtk_file_chooser_native, GTK_TYPE
  * Retrieves the custom label text for the accept button.
  *
  * Returns: (nullable): The custom label
+ *
+ * Deprecated: 4.10: Use [class@Gtk.FileDialog] instead
  */
 const char *
 gtk_file_chooser_native_get_accept_label (GtkFileChooserNative *self)
@@ -240,6 +245,8 @@ gtk_file_chooser_native_get_accept_label (GtkFileChooserNative *self)
  * a keyboard accelerator called a mnemonic.
  *
  * Pressing Alt and that key should activate the button.
+ *
+ * Deprecated: 4.10: Use [class@Gtk.FileDialog] instead
  */
 void
 gtk_file_chooser_native_set_accept_label (GtkFileChooserNative *self,
@@ -260,6 +267,8 @@ gtk_file_chooser_native_set_accept_label (GtkFileChooserNative *self,
  * Retrieves the custom label text for the cancel button.
  *
  * Returns: (nullable): The custom label
+ *
+ * Deprecated: 4.10: Use [class@Gtk.FileDialog] instead
  */
 const char *
 gtk_file_chooser_native_get_cancel_label (GtkFileChooserNative *self)
@@ -282,6 +291,8 @@ gtk_file_chooser_native_get_cancel_label (GtkFileChooserNative *self)
  * a keyboard accelerator called a mnemonic.
  *
  * Pressing Alt and that key should activate the button.
+ *
+ * Deprecated: 4.10: Use [class@Gtk.FileDialog] instead
  */
 void
 gtk_file_chooser_native_set_cancel_label (GtkFileChooserNative *self,
@@ -527,6 +538,8 @@ gtk_file_chooser_native_init (GtkFileChooserNative *self)
  * Creates a new `GtkFileChooserNative`.
  *
  * Returns: a new `GtkFileChooserNative`
+ *
+ * Deprecated: 4.10: Use [class@Gtk.FileDialog] instead
  */
 GtkFileChooserNative *
 gtk_file_chooser_native_new (const char           *title,
@@ -548,6 +561,13 @@ gtk_file_chooser_native_new (const char           *title,
   return result;
 }
 
+void
+gtk_file_chooser_native_set_use_portal (GtkFileChooserNative *self,
+                                        gboolean              use_portal)
+{
+  self->use_portal = use_portal;
+}
+
 static void
 dialog_response_cb (GtkDialog *dialog,
                     int response_id,
@@ -556,7 +576,7 @@ dialog_response_cb (GtkDialog *dialog,
   GtkFileChooserNative *self = data;
 
   g_signal_handlers_disconnect_by_func (self->dialog, dialog_response_cb, self);
-  gtk_widget_hide (self->dialog);
+  gtk_widget_set_visible (self->dialog, FALSE);
 
   _gtk_native_dialog_emit_response (GTK_NATIVE_DIALOG (self), response_id);
 }
@@ -602,7 +622,7 @@ static void
 hide_dialog (GtkFileChooserNative *self)
 {
   g_signal_handlers_disconnect_by_func (self->dialog, dialog_response_cb, self);
-  gtk_widget_hide (self->dialog);
+  gtk_widget_set_visible (self->dialog, FALSE);
 }
 
 static gboolean

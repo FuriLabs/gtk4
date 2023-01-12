@@ -25,17 +25,19 @@
 
 #include "config.h"
 
-#include "gtkmessagedialog.h"
+#include "deprecated/gtkmessagedialog.h"
 
 #include "gtkbox.h"
 #include "gtkbuildable.h"
-#include "gtkdialogprivate.h"
+#include "deprecated/gtkdialogprivate.h"
 #include <glib/gi18n-lib.h>
 #include "gtklabel.h"
 #include "gtkprivate.h"
 #include "gtktypebuiltins.h"
 
 #include <string.h>
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 /**
  * GtkMessageDialog:
@@ -96,6 +98,8 @@
  *
  * The `GtkMessageDialog` implementation of the `GtkBuildable` interface exposes
  * the message area as an internal child with the name “message_area”.
+ *
+ * Deprecated: 4.10: Use [class@Gtk.AlertDialog] instead
  */
 
 typedef struct
@@ -227,15 +231,15 @@ gtk_message_dialog_set_property (GObject      *object,
         if (txt)
           {
             priv->has_secondary_text = TRUE;
-                  gtk_widget_add_css_class (priv->label, "title");
-            gtk_widget_show (priv->secondary_label);
+            gtk_widget_add_css_class (priv->label, "title");
           }
         else
           {
             priv->has_secondary_text = FALSE;
-                  gtk_widget_remove_css_class (priv->label, "title");
-            gtk_widget_hide (priv->secondary_label);
+            gtk_widget_remove_css_class (priv->label, "title");
           }
+
+        gtk_widget_set_visible (priv->secondary_label, priv->has_secondary_text);
       }
       break;
     case PROP_SECONDARY_USE_MARKUP:
@@ -325,10 +329,9 @@ gtk_message_dialog_constructed (GObject *object)
       GtkWidget *label;
 
       box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
-      gtk_widget_show (box);
       gtk_widget_set_size_request (box, -1, 16);
       label = gtk_label_new ("");
-      gtk_widget_hide (label);
+      gtk_widget_set_visible (label, FALSE);
       gtk_widget_set_margin_top (label, 6);
       gtk_widget_set_margin_bottom (label, 6);
       gtk_widget_set_halign (label, GTK_ALIGN_CENTER);
@@ -479,6 +482,8 @@ gtk_message_dialog_init (GtkMessageDialog *dialog)
  * for more details.
  *
  * Returns: (transfer none): a new `GtkMessageDialog`
+ *
+ * Deprecated: 4.10: Use [class@Gtk.AlertDialog] instead
  */
 GtkWidget*
 gtk_message_dialog_new (GtkWindow     *parent,
@@ -565,6 +570,8 @@ gtk_message_dialog_new (GtkWindow     *parent,
  * ```
  *
  * Returns: a new `GtkMessageDialog`
+ *
+ * Deprecated: 4.10: Use [class@Gtk.AlertDialog] instead
  **/
 GtkWidget*
 gtk_message_dialog_new_with_markup (GtkWindow     *parent,
@@ -602,6 +609,8 @@ gtk_message_dialog_new_with_markup (GtkWindow     *parent,
  * @str: string with Pango markup
  *
  * Sets the text of the message dialog.
+ *
+ * Deprecated: 4.10: Use [class@Gtk.AlertDialog] instead
  */
 void
 gtk_message_dialog_set_markup (GtkMessageDialog *message_dialog,
@@ -622,6 +631,8 @@ gtk_message_dialog_set_markup (GtkMessageDialog *message_dialog,
  * @...: arguments for @message_format
  *
  * Sets the secondary text of the message dialog.
+ *
+ * Deprecated: 4.10: Use [class@Gtk.AlertDialog] instead
  */
 void
 gtk_message_dialog_format_secondary_text (GtkMessageDialog *message_dialog,
@@ -643,7 +654,6 @@ gtk_message_dialog_format_secondary_text (GtkMessageDialog *message_dialog,
       msg = g_strdup_vprintf (message_format, args);
       va_end (args);
 
-      gtk_widget_show (priv->secondary_label);
       gtk_label_set_text (GTK_LABEL (priv->secondary_label), msg);
 
       g_free (msg);
@@ -652,8 +662,9 @@ gtk_message_dialog_format_secondary_text (GtkMessageDialog *message_dialog,
     {
       priv->has_secondary_text = FALSE;
       gtk_widget_remove_css_class (priv->label, "title");
-      gtk_widget_hide (priv->secondary_label);
     }
+
+  gtk_widget_set_visible (priv->secondary_label, priv->has_secondary_text);
 }
 
 /**
@@ -679,6 +690,8 @@ gtk_message_dialog_format_secondary_text (GtkMessageDialog *message_dialog,
  *                                             "%s", msg);
  * g_free (msg);
  * ```
+ *
+ * Deprecated: 4.10: Use [class@Gtk.AlertDialog] instead
  */
 void
 gtk_message_dialog_format_secondary_markup (GtkMessageDialog *message_dialog,
@@ -700,7 +713,6 @@ gtk_message_dialog_format_secondary_markup (GtkMessageDialog *message_dialog,
       msg = g_strdup_vprintf (message_format, args);
       va_end (args);
 
-      gtk_widget_show (priv->secondary_label);
       gtk_label_set_markup (GTK_LABEL (priv->secondary_label), msg);
 
       g_free (msg);
@@ -709,8 +721,9 @@ gtk_message_dialog_format_secondary_markup (GtkMessageDialog *message_dialog,
     {
       priv->has_secondary_text = FALSE;
       gtk_widget_remove_css_class (priv->label, "title");
-      gtk_widget_hide (priv->secondary_label);
     }
+
+  gtk_widget_set_visible (priv->secondary_label, priv->has_secondary_text);
 }
 
 /**
@@ -726,6 +739,8 @@ gtk_message_dialog_format_secondary_markup (GtkMessageDialog *message_dialog,
  *
  * Returns: (transfer none): A `GtkBox` corresponding to the
  *   “message area” in the @message_dialog
+ *
+ * Deprecated: 4.10: Use [class@Gtk.AlertDialog] instead
  */
 GtkWidget *
 gtk_message_dialog_get_message_area (GtkMessageDialog *message_dialog)

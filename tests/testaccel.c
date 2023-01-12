@@ -18,6 +18,8 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static void
 accel_edited_callback (GtkCellRendererText *cell,
                        const char          *path_string,
@@ -125,7 +127,7 @@ main (int argc, char **argv)
 
   dialog = key_test ();
 
-  gtk_widget_show (dialog);
+  gtk_window_present (GTK_WINDOW (dialog));
 
   while (TRUE)
     g_main_context_iteration (NULL, TRUE);

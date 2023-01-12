@@ -26,6 +26,7 @@
 
 #include "gtkpaned.h"
 
+#include "gtkaccessiblerange.h"
 #include "gtkcssboxesprivate.h"
 #include "gtkeventcontrollermotion.h"
 #include "gtkgesturepan.h"
@@ -101,13 +102,13 @@
  * gtk_widget_set_size_request (hpaned, 200, -1);
  *
  * gtk_paned_set_start_child (GTK_PANED (hpaned), frame1);
- * gtk_paned_set_start_child_resize (GTK_PANED (hpaned), TRUE);
- * gtk_paned_set_start_child_shrink (GTK_PANED (hpaned), FALSE);
+ * gtk_paned_set_resize_start_child (GTK_PANED (hpaned), TRUE);
+ * gtk_paned_set_shrink_start_child (GTK_PANED (hpaned), FALSE);
  * gtk_widget_set_size_request (frame1, 50, -1);
  *
  * gtk_paned_set_end_child (GTK_PANED (hpaned), frame2);
- * gtk_paned_set_end_child_resize (GTK_PANED (hpaned), FALSE);
- * gtk_paned_set_end_child_shrink (GTK_PANED (hpaned), FALSE);
+ * gtk_paned_set_resize_end_child (GTK_PANED (hpaned), FALSE);
+ * gtk_paned_set_shrink_end_child (GTK_PANED (hpaned), FALSE);
  * gtk_widget_set_size_request (frame2, 50, -1);
  * ```
  */
@@ -246,8 +247,12 @@ static void     update_drag                     (GtkPaned         *paned,
 
 static void gtk_paned_buildable_iface_init (GtkBuildableIface *iface);
 
+static void gtk_paned_accessible_range_init (GtkAccessibleRangeInterface *iface);
+
 G_DEFINE_TYPE_WITH_CODE (GtkPaned, gtk_paned, GTK_TYPE_WIDGET,
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_ORIENTABLE, NULL)
+                         G_IMPLEMENT_INTERFACE (GTK_TYPE_ACCESSIBLE_RANGE,
+                                                gtk_paned_accessible_range_init)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
                                                 gtk_paned_buildable_iface_init))
 
@@ -802,6 +807,20 @@ gtk_paned_buildable_iface_init (GtkBuildableIface *iface)
 {
   parent_buildable_iface = g_type_interface_peek_parent (iface);
   iface->add_child = gtk_paned_buildable_add_child;
+}
+
+static gboolean
+accessible_range_set_current_value (GtkAccessibleRange *accessible_range,
+                                    double              value)
+{
+  gtk_paned_set_position (GTK_PANED (accessible_range), (int) value + 0.5);
+  return TRUE;
+}
+
+static void
+gtk_paned_accessible_range_init (GtkAccessibleRangeInterface *iface)
+{
+  iface->set_current_value = accessible_range_set_current_value;
 }
 
 static gboolean
@@ -2478,7 +2497,7 @@ gtk_paned_toggle_handle_focus (GtkPaned *paned)
 }
 
 /**
- * gtk_paned_set_wide_handle: (attributes org.gtk.Method.set_propery=wide-handle)
+ * gtk_paned_set_wide_handle: (attributes org.gtk.Method.set_property=wide-handle)
  * @paned: a `GtkPaned`
  * @wide: the new value for the [property@Gtk.Paned:wide-handle] property
  *

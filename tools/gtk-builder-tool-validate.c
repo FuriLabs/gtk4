@@ -29,6 +29,8 @@
 #include <gtk/gtk.h>
 #include "gtkbuilderprivate.h"
 #include "gtk-builder-tool.h"
+#include "fake-scope.h"
+
 
 static GType
 make_fake_type (const char *type_name,
@@ -54,16 +56,98 @@ make_fake_type (const char *type_name,
                                         0);
 }
 
-static void
-do_validate_template (const char *filename,
-                      const char *type_name,
-                      const char *parent_name)
+/* {{{ Deprecations */
+
+static gboolean
+is_deprecated (const char *name)
+{
+  const char *names[] = {
+    "GtkAppChooser",
+    "GtkAppChooserButton",
+    "GtkAppChooserDialog",
+    "GtkAppChooserWidget",
+    "GtkCellAreaBox",
+    "GtkCellAreaBoxContext",
+    "GtkCellArea",
+    "GtkCellEditable",
+    "GtkCellLayout",
+    "GtkCellRendererAccel",
+    "GtkCellRenderer",
+    "GtkCellRendererCombo",
+    "GtkCellRendererPixbuf",
+    "GtkCellRendererProgress",
+    "GtkCellRendererSpin",
+    "GtkCellRendererSpinner",
+    "GtkCellRendererText",
+    "GtkCellRendererToggle",
+    "GtkCellView",
+    "GtkComboBox",
+    "GtkComboBoxText",
+    "GtkEntryCompletion",
+    "GtkIconView",
+    "GtkListStore",
+    "GtkStyleContext",
+    "GtkTreeModel",
+    "GtkTreeModelFilter",
+    "GtkTreeModelSort",
+    "GtkTreePopover",
+    "GtkTreeSelection",
+    "GtkTreeSortable",
+    "GtkTreeStore",
+    "GtkTreeView",
+    "GtkTreeViewColumn",
+    NULL
+  };
+
+  return g_strv_contains (names, name);
+}
+
+static gboolean
+fake_scope_check_deprecations (FakeScope  *self,
+                               GError    **error)
+{
+  GPtrArray *types;
+  GString *s;
+
+  types = fake_scope_get_types (self);
+
+  s = g_string_new ("");
+
+  for (int i = 0; i < types->len; i++)
+    {
+      const char *name = g_ptr_array_index (types, i);
+
+      if (is_deprecated (name))
+        {
+          if (s->len == 0)
+            g_string_append (s, "Deprecated types:\n");
+          g_string_append_printf (s, "%s", name);
+          g_string_append (s, "\n");
+        }
+    }
+
+  if (s->len > 0)
+    g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED, s->str);
+
+  g_string_free (s, TRUE);
+
+  return *error == NULL;
+}
+
+/* }}} */
+
+static gboolean
+validate_template (const char *filename,
+                   const char *type_name,
+                   const char *parent_name,
+                   gboolean    deprecations)
 {
   GType template_type;
   GObject *object;
+  FakeScope *scope;
   GtkBuilder *builder;
   GError *error = NULL;
-  int ret;
+  gboolean ret;
 
   /* Only make a fake type if it doesn't exist yet.
    * This lets us e.g. validate the GtkFileChooserWidget template.
@@ -76,20 +160,27 @@ do_validate_template (const char *filename,
   if (!object)
     {
       g_printerr ("Failed to create an instance of the template type %s\n", type_name);
-      exit (1);
+      return FALSE;
     }
 
   builder = gtk_builder_new ();
-  ret = gtk_builder_extend_with_template (builder, object , template_type, " ", 1, &error);
+  scope = fake_scope_new ();
+  gtk_builder_set_scope (builder, GTK_BUILDER_SCOPE (scope));
+  ret = gtk_builder_extend_with_template (builder, object, template_type, " ", 1, &error);
   if (ret)
     ret = gtk_builder_add_from_file (builder, filename, &error);
+  if (ret && deprecations)
+    ret = fake_scope_check_deprecations (scope, &error);
+  g_object_unref (scope);
   g_object_unref (builder);
 
-  if (ret == 0)
+  if (!ret)
     {
       g_printerr ("%s\n", error->message);
-      exit (1);
+      g_error_free (error);
     }
+
+  return ret;
 }
 
 static gboolean
@@ -116,37 +207,45 @@ parse_template_error (const char   *message,
         *p = '\0';
     }
 
-  return TRUE;
+  return *class_name && *parent_name;
 }
 
 static gboolean
-validate_file (const char *filename)
+validate_file (const char *filename,
+               gboolean    deprecations)
 {
+  FakeScope *scope;
   GtkBuilder *builder;
   GError *error = NULL;
-  int ret;
+  gboolean ret;
   char *class_name = NULL;
   char *parent_name = NULL;
 
   builder = gtk_builder_new ();
+  scope = fake_scope_new ();
+  gtk_builder_set_scope (builder, GTK_BUILDER_SCOPE (scope));
   ret = gtk_builder_add_from_file (builder, filename, &error);
+  if (ret && deprecations)
+    ret = fake_scope_check_deprecations (scope, &error);
+  g_object_unref (scope);
   g_object_unref (builder);
 
-  if (ret == 0)
+  if (!ret)
     {
-      if (g_error_matches (error, GTK_BUILDER_ERROR, GTK_BUILDER_ERROR_UNHANDLED_TAG)  &&
+      if (g_error_matches (error, GTK_BUILDER_ERROR, GTK_BUILDER_ERROR_UNHANDLED_TAG) &&
           parse_template_error (error->message, &class_name, &parent_name))
         {
-          do_validate_template (filename, class_name, parent_name);
+          ret = validate_template (filename, class_name, parent_name, deprecations);
         }
       else
         {
           g_printerr ("%s\n", error->message);
-          return FALSE;
         }
+
+      g_error_free (error);
     }
 
-  return TRUE;
+  return ret;
 }
 
 void
@@ -154,8 +253,10 @@ do_validate (int *argc, const char ***argv)
 {
   GError *error = NULL;
   char **filenames = NULL;
+  gboolean deprecations = FALSE;
   GOptionContext *context;
   const GOptionEntry entries[] = {
+    { "deprecations", 0, 0, G_OPTION_ARG_NONE, &deprecations, NULL, NULL },
     { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, N_("FILE") },
     { NULL, }
   };
@@ -178,9 +279,11 @@ do_validate (int *argc, const char ***argv)
 
   for (i = 0; filenames[i]; i++)
     {
-      if (!validate_file (filenames[i]))
+      if (!validate_file (filenames[i], deprecations))
         exit (1);
     }
 
   g_strfreev (filenames);
 }
+
+/* vim:set foldmethod=marker expandtab: */

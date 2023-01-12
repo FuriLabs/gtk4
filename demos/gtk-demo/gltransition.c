@@ -33,7 +33,7 @@ static void
 text_changed (GtkTextBuffer *buffer,
               GtkWidget     *button)
 {
-  gtk_widget_show (button);
+  gtk_widget_set_visible (button, TRUE);
 }
 
 static void
@@ -58,7 +58,7 @@ apply_text (GtkWidget     *button,
   g_object_unref (shader);
   g_bytes_unref (bytes);
 
-  gtk_widget_hide (button);
+  gtk_widget_set_visible (button, FALSE);
 }
 
 static void
@@ -144,7 +144,6 @@ make_shader_stack (const char *name,
   GtkTextBuffer *buffer;
   GBytes *bytes;
   GtkEventController *controller;
-  GtkCssProvider *provider;
   GdkPaintable *paintable;
 
   stack = gtk_shader_stack_new ();
@@ -235,16 +234,10 @@ make_shader_stack (const char *name,
   g_signal_connect (buffer, "changed", G_CALLBACK (text_changed), button);
   g_object_set_data (G_OBJECT (button), "the-stack", stack);
   g_signal_connect (button, "clicked", G_CALLBACK (apply_text), buffer);
-  provider = gtk_css_provider_new ();
-  gtk_css_provider_load_from_data (provider, "button.small { padding: 0; }", -1);
-  gtk_style_context_add_provider (gtk_widget_get_style_context (button),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-  g_object_unref (provider);
   gtk_widget_set_halign (button, GTK_ALIGN_CENTER);
   gtk_widget_set_valign (button, GTK_ALIGN_CENTER);
   gtk_widget_add_css_class (button, "small");
-  gtk_widget_hide (button);
+  gtk_widget_set_visible (button, FALSE);
   gtk_center_box_set_end_widget (GTK_CENTER_BOX (widget), button);
 
   gtk_box_append (GTK_BOX (vbox), widget);
@@ -274,11 +267,21 @@ make_shader_stack (const char *name,
   return vbox;
 }
 
+static void
+remove_provider (gpointer data)
+{
+  GtkStyleProvider *provider = GTK_STYLE_PROVIDER (data);
+
+  gtk_style_context_remove_provider_for_display (gdk_display_get_default (), provider);
+  g_object_unref (provider);
+}
+
 static GtkWidget *
 create_gltransition_window (GtkWidget *do_widget)
 {
   GtkWidget *window, *headerbar, *scale, *outer_grid, *grid, *background;
   GdkPaintable *paintable;
+  GtkCssProvider *provider;
 
   window = gtk_window_new ();
   gtk_window_set_display (GTK_WINDOW (window),  gtk_widget_get_display (do_widget));
@@ -333,6 +336,14 @@ create_gltransition_window (GtkWidget *do_widget)
                    make_shader_stack ("Kaleidoscope", "/gltransition/kaleidoscope.glsl", 3, scale),
                    1, 1, 1, 1);
 
+  provider = gtk_css_provider_new ();
+  gtk_css_provider_load_from_data (provider, "button.small { padding: 0; }", -1);
+  gtk_style_context_add_provider_for_display (gdk_display_get_default (),
+                                              GTK_STYLE_PROVIDER (provider),
+                                              GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+  g_object_set_data_full (G_OBJECT (window), "provider", provider, remove_provider);
+
   return window;
 }
 
@@ -343,7 +354,7 @@ do_gltransition (GtkWidget *do_widget)
     demo_window = create_gltransition_window (do_widget);
 
   if (!gtk_widget_get_visible (demo_window))
-    gtk_widget_show (demo_window);
+    gtk_widget_set_visible (demo_window, TRUE);
   else
     gtk_window_destroy (GTK_WINDOW (demo_window));
 

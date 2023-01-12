@@ -25,6 +25,7 @@
 
 #include "gtkcomposetable.h"
 #include "gtkimcontextsimple.h"
+#include "gtkprivate.h"
 
 
 #define GTK_COMPOSE_TABLE_MAGIC "GtkComposeTable"
@@ -284,6 +285,20 @@ fail:
 static void parser_parse_file (GtkComposeParser *parser,
                                const char       *path);
 
+char *
+gtk_compose_table_get_x11_compose_file_dir (void)
+{
+  char * compose_file_dir;
+
+#if defined (X11_DATA_PREFIX)
+  compose_file_dir = g_strdup (X11_DATA_PREFIX "/share/X11/locale");
+#else
+  compose_file_dir = g_build_filename (_gtk_get_datadir (), "X11", "locale", NULL);
+#endif
+
+  return compose_file_dir;
+}
+
 /* Substitute %H, %L and %S */
 static char *
 handle_substitutions (const char *start,
@@ -305,6 +320,9 @@ handle_substitutions (const char *start,
         }
       else
         {
+          char *x11_compose_file_dir;
+          char *path;
+
           switch (p[1])
             {
             case 'H':
@@ -313,11 +331,17 @@ handle_substitutions (const char *start,
               break;
             case 'L':
               p++;
-              g_string_append_printf (s, "/usr/share/X11/locale/%s/Compose", locale_name);
+              x11_compose_file_dir = gtk_compose_table_get_x11_compose_file_dir ();
+              path = g_build_filename (x11_compose_file_dir, locale_name, "Compose", NULL);
+              g_string_append (s, path);
+              g_free (path);
+              g_free (x11_compose_file_dir);
               break;
             case 'S':
               p++;
-              g_string_append (s, "/usr/share/X11/locale");
+              x11_compose_file_dir = gtk_compose_table_get_x11_compose_file_dir ();
+              g_string_append (s, x11_compose_file_dir);
+              g_free (x11_compose_file_dir);
               break;
             default: ;
               /* do nothing, next iteration handles p[1] */
@@ -939,6 +963,7 @@ parser_get_compose_table (GtkComposeParser *parser)
           if (char_data->len >= 0x8000)
             {
               g_warning ("GTK can't handle compose tables this large (%s)", parser->compose_file ? parser->compose_file : "");
+              g_free (data);
               g_string_free (char_data, TRUE);
               return NULL;
             }
@@ -1403,11 +1428,9 @@ gtk_compose_table_foreach (const GtkComposeTable      *table,
 {
   int index_stride = table->max_seq_len + 2;
   gunichar *sequence;
-  int seqno;
 
   sequence = g_newa (gunichar, table->max_seq_len + 1);
 
-  seqno = 0;
   for (int idx = 0; idx < table->n_index_size; idx++)
     {
       const guint16 *seq_index = table->data + (idx * index_stride);
@@ -1446,7 +1469,6 @@ gtk_compose_table_foreach (const GtkComposeTable      *table,
                 }
 
               callback (sequence, len, value, data);
-              seqno++;
             }
         }
     }

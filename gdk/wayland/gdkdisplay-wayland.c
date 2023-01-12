@@ -39,6 +39,7 @@
 #include "gdkdisplay-wayland.h"
 #include "gdkmonitor-wayland.h"
 #include "gdkseat-wayland.h"
+#include "gdksurface-wayland.h"
 #include "gdksurfaceprivate.h"
 #include "gdkdeviceprivate.h"
 #include "gdkkeysprivate.h"
@@ -52,6 +53,7 @@
 #include "tablet-unstable-v2-client-protocol.h"
 #include <wayland/xdg-shell-unstable-v6-client-protocol.h>
 #include <wayland/xdg-foreign-unstable-v1-client-protocol.h>
+#include <wayland/xdg-foreign-unstable-v2-client-protocol.h>
 #include <wayland/server-decoration-client-protocol.h>
 
 #include "wm-button-layout-translation.h"
@@ -91,6 +93,7 @@
 #define OUTPUT_VERSION_WITH_DONE 2
 #define NO_XDG_OUTPUT_DONE_SINCE_VERSION 3
 #define XDG_ACTIVATION_VERSION   1
+#define OUTPUT_VERSION           3
 
 static void _gdk_wayland_display_load_cursor_theme (GdkWaylandDisplay *display_wayland);
 
@@ -395,8 +398,10 @@ gdk_registry_handle_global (void               *data,
   else if (strcmp (interface, "wl_output") == 0)
     {
       output =
-       wl_registry_bind (display_wayland->wl_registry, id, &wl_output_interface, MIN (version, 2));
-      gdk_wayland_display_add_output (display_wayland, id, output, MIN (version, 2));
+       wl_registry_bind (display_wayland->wl_registry, id, &wl_output_interface,
+                         MIN (version, OUTPUT_VERSION));
+      gdk_wayland_display_add_output (display_wayland, id, output,
+                                      MIN (version, OUTPUT_VERSION));
       _gdk_wayland_display_async_roundtrip (display_wayland);
     }
   else if (strcmp (interface, "wl_seat") == 0)
@@ -455,11 +460,23 @@ gdk_registry_handle_global (void               *data,
         wl_registry_bind (display_wayland->wl_registry, id,
                           &zxdg_exporter_v1_interface, 1);
     }
+  else if (strcmp (interface, "zxdg_exporter_v2") == 0)
+    {
+      display_wayland->xdg_exporter_v2 =
+        wl_registry_bind (display_wayland->wl_registry, id,
+                          &zxdg_exporter_v2_interface, 1);
+    }
   else if (strcmp (interface, "zxdg_importer_v1") == 0)
     {
       display_wayland->xdg_importer =
         wl_registry_bind (display_wayland->wl_registry, id,
                           &zxdg_importer_v1_interface, 1);
+    }
+  else if (strcmp (interface, "zxdg_importer_v2") == 0)
+    {
+      display_wayland->xdg_importer_v2 =
+        wl_registry_bind (display_wayland->wl_registry, id,
+                          &zxdg_importer_v2_interface, 1);
     }
   else if (strcmp (interface, "zwp_keyboard_shortcuts_inhibit_manager_v1") == 0)
     {
@@ -738,8 +755,8 @@ gdk_wayland_display_system_bell (GdkDisplay *display,
   if (!display_wayland->gtk_shell)
     return;
 
-  if (window)
-    gtk_surface = gdk_wayland_surface_get_gtk_surface (window);
+  if (window && GDK_IS_WAYLAND_TOPLEVEL (window))
+    gtk_surface = gdk_wayland_toplevel_get_gtk_surface (GDK_WAYLAND_TOPLEVEL (window));
   else
     gtk_surface = NULL;
 

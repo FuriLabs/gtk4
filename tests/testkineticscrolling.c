@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static void
 on_button_clicked (GtkWidget *widget, gpointer data)
 {
@@ -120,7 +122,7 @@ kinetic_scrolling (void)
 
   gtk_window_set_child (GTK_WINDOW (window), grid);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 }
 
 int

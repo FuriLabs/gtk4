@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 typedef GtkListStore MyModel;
 typedef GtkListStoreClass MyModelClass;
 
@@ -126,7 +128,7 @@ main (int argc, char *argv[])
   gtk_box_append (GTK_BOX (box), get_dragsource ());
   gtk_box_append (GTK_BOX (box), get_droptarget ());
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (TRUE)
     g_main_context_iteration (NULL, TRUE);

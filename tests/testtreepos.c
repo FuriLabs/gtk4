@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static gboolean
 clicked_icon (GtkTreeView  *tv,
               int           x,
@@ -136,7 +138,7 @@ int main (int argc, char *argv[])
                     G_CALLBACK (release_event), tv);
   gtk_widget_add_controller (tv, GTK_EVENT_CONTROLLER (gesture));
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (TRUE)
     g_main_context_iteration (NULL, TRUE);

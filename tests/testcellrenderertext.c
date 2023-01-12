@@ -21,6 +21,8 @@
 
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 #define COL_BACKGROUND 15
 #define COL_LINE_NUM   16
 #define NUM_COLS       17 /* change this when adding columns */
@@ -293,7 +295,7 @@ main (int argc, char **argv)
   gtk_widget_set_vexpand (tree, TRUE);
   gtk_box_append (GTK_BOX (vbox), tree);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (!done)
     g_main_context_iteration (NULL, TRUE);

@@ -27,11 +27,9 @@
 #include "gtklistitem.h"
 #include "gtksignallistitemfactory.h"
 #include "gtkentry.h"
-#include "gtkfilechooserdialog.h"
-#include "gtkfilechooserprivate.h"
+#include "gtkfiledialog.h"
 #include "gtkimage.h"
 #include "gtklabel.h"
-#include "gtkliststore.h"
 #include "gtkcheckbutton.h"
 #include "gtkgrid.h"
 #include "gtkorientable.h"
@@ -641,19 +639,21 @@ check_toggled_cb (GtkCheckButton         *check_button,
 }
 
 static void
-dialog_response_callback (GtkDialog              *dialog,
-                          int                     response_id,
-                          GtkPrinterOptionWidget *widget)
+dialog_response_callback (GObject *source,
+                          GAsyncResult *result,
+                          gpointer data)
 {
+  GtkFileDialog *dialog = GTK_FILE_DIALOG (source);
+  GtkPrinterOptionWidget *widget = data;
   GtkPrinterOptionWidgetPrivate *priv = widget->priv;
   GFile *new_location = NULL;
   char *uri = NULL;
 
-  if (response_id == GTK_RESPONSE_ACCEPT)
+  new_location = gtk_file_dialog_save_finish (dialog, result, NULL);
+  if (new_location)
     {
       GFileInfo *info;
 
-      new_location = gtk_file_chooser_get_file (GTK_FILE_CHOOSER (dialog));
       info = g_file_query_info (new_location,
                                 "standard::display-name",
                                 0,
@@ -682,8 +682,6 @@ dialog_response_callback (GtkDialog              *dialog,
         }
     }
 
-  gtk_window_destroy (GTK_WINDOW (dialog));
-
   if (new_location)
     uri = g_file_get_uri (new_location);
   else
@@ -708,33 +706,31 @@ filesave_choose_cb (GtkWidget              *button,
                     GtkPrinterOptionWidget *widget)
 {
   GtkPrinterOptionWidgetPrivate *priv = widget->priv;
-  GtkWidget *dialog;
-  GtkWindow *toplevel;
+  GtkFileDialog *dialog;
 
   /* this will be unblocked in the dialog_response_callback function */
   g_signal_handler_block (priv->source, priv->source_changed_handler);
 
-  toplevel = GTK_WINDOW (gtk_widget_get_root (GTK_WIDGET (widget)));
-  dialog = gtk_file_chooser_dialog_new (_("Select a filename"),
-                                        toplevel,
-                                        GTK_FILE_CHOOSER_ACTION_SAVE,
-                                        _("_Cancel"), GTK_RESPONSE_CANCEL,
-                                        _("_Select"), GTK_RESPONSE_ACCEPT,
-                                        NULL);
+  dialog = gtk_file_dialog_new ();
+  gtk_file_dialog_set_title (dialog, _("Select a filename"));
 
   /* select the current filename in the dialog */
   if (priv->source != NULL && priv->source->value != NULL)
     {
       priv->last_location = g_file_new_for_uri (priv->source->value);
       if (priv->last_location)
-        gtk_file_chooser_set_file (GTK_FILE_CHOOSER (dialog), priv->last_location, NULL);
+        {
+          if (g_file_query_file_type (priv->last_location, 0, NULL) == G_FILE_TYPE_DIRECTORY)
+            gtk_file_dialog_set_initial_folder (dialog, priv->last_location);
+          else
+            gtk_file_dialog_set_initial_file (dialog, priv->last_location);
+        }
     }
 
-  g_signal_connect (dialog, "response",
-                    G_CALLBACK (dialog_response_callback),
-                    widget);
-  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_present (GTK_WINDOW (dialog));
+  gtk_file_dialog_save (dialog,
+                        GTK_WINDOW (gtk_widget_get_root (GTK_WIDGET (widget))),
+                        NULL,
+                        dialog_response_callback, widget);
 }
 
 static char *
@@ -938,7 +934,6 @@ construct_widgets (GtkPrinterOptionWidget *widget)
       priv->combo = gtk_drop_down_new_from_strings (strings);
       gtk_drop_down_set_selected (GTK_DROP_DOWN (priv->combo), 0);
       gtk_widget_set_sensitive (GTK_WIDGET (widget), FALSE);
-      gtk_widget_show (priv->combo);
       gtk_box_append (GTK_BOX (widget), priv->combo);
     }
   else switch (source->type)
@@ -946,7 +941,6 @@ construct_widgets (GtkPrinterOptionWidget *widget)
     case GTK_PRINTER_OPTION_TYPE_BOOLEAN:
       priv->check = gtk_check_button_new_with_mnemonic (source->display_text);
       g_signal_connect (priv->check, "toggled", G_CALLBACK (check_toggled_cb), widget);
-      gtk_widget_show (priv->check);
       gtk_box_append (GTK_BOX (widget), priv->check);
       break;
     case GTK_PRINTER_OPTION_TYPE_PICKONE:
@@ -975,7 +969,6 @@ construct_widgets (GtkPrinterOptionWidget *widget)
         combo_box_append (priv->combo,
                           source->choices_display[i],
                           source->choices[i]);
-      gtk_widget_show (priv->combo);
       gtk_box_append (GTK_BOX (widget), priv->combo);
       if (GTK_IS_DROP_DOWN (priv->combo))
         g_signal_connect (priv->combo, "notify::selected", G_CALLBACK (combo_changed_cb),widget);
@@ -985,14 +978,12 @@ construct_widgets (GtkPrinterOptionWidget *widget)
       text = g_strdup_printf ("%s:", source->display_text);
       priv->label = gtk_label_new_with_mnemonic (text);
       g_free (text);
-      gtk_widget_show (priv->label);
       break;
 
     case GTK_PRINTER_OPTION_TYPE_ALTERNATIVE:
       group = NULL;
       priv->box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 12);
       gtk_widget_set_valign (priv->box, GTK_ALIGN_BASELINE);
-      gtk_widget_show (priv->box);
       gtk_box_append (GTK_BOX (widget), priv->box);
       for (i = 0; i < source->num_choices; i++)
         {
@@ -1012,7 +1003,6 @@ construct_widgets (GtkPrinterOptionWidget *widget)
 	  priv->label = gtk_label_new_with_mnemonic (text);
           gtk_widget_set_valign (priv->label, GTK_ALIGN_BASELINE);
 	  g_free (text);
-	  gtk_widget_show (priv->label);
 	}
       break;
 
@@ -1020,27 +1010,23 @@ construct_widgets (GtkPrinterOptionWidget *widget)
       priv->entry = gtk_entry_new ();
       gtk_entry_set_activates_default (GTK_ENTRY (priv->entry),
                                        gtk_printer_option_get_activates_default (source));
-      gtk_widget_show (priv->entry);
       gtk_box_append (GTK_BOX (widget), priv->entry);
       g_signal_connect (priv->entry, "changed", G_CALLBACK (entry_changed_cb), widget);
 
       text = g_strdup_printf ("%s:", source->display_text);
       priv->label = gtk_label_new_with_mnemonic (text);
       g_free (text);
-      gtk_widget_show (priv->label);
 
       break;
 
     case GTK_PRINTER_OPTION_TYPE_FILESAVE:
       priv->button = gtk_button_new ();
-      gtk_widget_show (priv->button);
       gtk_box_append (GTK_BOX (widget), priv->button);
       g_signal_connect (priv->button, "clicked", G_CALLBACK (filesave_choose_cb), widget);
 
       text = g_strdup_printf ("%s:", source->display_text);
       priv->label = gtk_label_new_with_mnemonic (text);
       g_free (text);
-      gtk_widget_show (priv->label);
 
       break;
 
@@ -1112,7 +1098,7 @@ update_widgets (GtkPrinterOptionWidget *widget)
 
   if (source == NULL)
     {
-      gtk_widget_hide (priv->image);
+      gtk_widget_set_visible (priv->image, FALSE);
       return;
     }
 
@@ -1179,10 +1165,7 @@ update_widgets (GtkPrinterOptionWidget *widget)
       break;
     }
 
-  if (source->has_conflict)
-    gtk_widget_show (priv->image);
-  else
-    gtk_widget_hide (priv->image);
+  gtk_widget_set_visible (priv->image, source->has_conflict);
 }
 
 gboolean

@@ -141,7 +141,7 @@ gdk_load_jpeg (GBytes  *input_bytes,
   struct jpeg_decompress_struct info;
   struct error_handler_data jerr;
   guint width, height, stride;
-  unsigned char *data;
+  unsigned char *data = NULL;
   unsigned char *row[1];
   GBytes *bytes;
   GdkTexture *texture;
@@ -155,13 +155,15 @@ gdk_load_jpeg (GBytes  *input_bytes,
 
   if (sigsetjmp (jerr.setjmp_buffer, 1))
     {
+      g_free (data);
       jpeg_destroy_decompress (&info);
       return NULL;
     }
 
   jpeg_create_decompress (&info);
 
-  info.mem->max_memory_to_use = 300 * 1024 * 1024;
+  /* Limit to 1GB to avoid OOM with large images */
+  info.mem->max_memory_to_use = 1024 * 1024 * 1024;
 
   jpeg_mem_src (&info,
                 g_bytes_get_data (input_bytes, NULL),
@@ -246,7 +248,7 @@ gdk_save_jpeg (GdkTexture *texture)
   struct jpeg_compress_struct info;
   struct error_handler_data jerr;
   struct jpeg_error_mgr err;
-  guchar *data;
+  guchar *data = NULL;
   gulong size = 0;
   guchar *input = NULL;
   GdkMemoryTexture *memtex = NULL;

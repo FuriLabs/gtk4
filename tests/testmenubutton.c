@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 #define INITIAL_HALIGN          GTK_ALIGN_START
 #define INITIAL_VALIGN          GTK_ALIGN_START
 
@@ -113,7 +115,7 @@ int main (int argc, char **argv)
 	gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (button), G_MENU_MODEL (menu));
 	gtk_grid_attach (GTK_GRID (grid), button, 1, row++, 1, 1);
 
-	gtk_widget_show (window);
+	gtk_window_present (GTK_WINDOW (window));
 
         while (TRUE)
                 g_main_context_iteration (NULL, TRUE);

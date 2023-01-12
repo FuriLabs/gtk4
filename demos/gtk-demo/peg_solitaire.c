@@ -1,5 +1,5 @@
 /* Peg Solitaire
- * #Keywords: GtkGridView, game
+ * #Keywords: GtkGridView, game, drag-and-drop, dnd
  *
  * This demo demonstrates how to use drag-and-drop to implement peg solitaire.
  *
@@ -7,6 +7,7 @@
 
 #include "config.h"
 #include <gtk/gtk.h>
+
 
 /* Create an object for the pegs that get moved around in the game.
  *
@@ -360,6 +361,15 @@ drop_drop (GtkDropTarget *target,
 }
 
 static void
+remove_provider (gpointer data)
+{
+  GtkStyleProvider *provider = GTK_STYLE_PROVIDER (data);
+
+  gtk_style_context_remove_provider_for_display (gdk_display_get_default (), provider);
+  g_object_unref (provider);
+}
+
+static void
 create_board (GtkWidget *window)
 {
   GtkWidget *grid;
@@ -375,6 +385,9 @@ create_board (GtkWidget *window)
 
   provider = gtk_css_provider_new ();
   gtk_css_provider_load_from_data (provider, css, -1);
+  gtk_style_context_add_provider_for_display (gdk_display_get_default (),
+                                              GTK_STYLE_PROVIDER (provider),
+                                              800);
 
   grid = gtk_grid_new ();
   gtk_widget_set_halign (grid, GTK_ALIGN_CENTER);
@@ -393,9 +406,6 @@ create_board (GtkWidget *window)
             continue;
 
           image = gtk_image_new ();
-          gtk_style_context_add_provider (gtk_widget_get_style_context (image),
-                                          GTK_STYLE_PROVIDER (provider),
-                                          800);
           gtk_widget_add_css_class (image, "solitaire-field");
           gtk_image_set_icon_size (GTK_IMAGE (image), GTK_ICON_SIZE_LARGE);
           if (x != 3 || y != 3)
@@ -439,7 +449,7 @@ create_board (GtkWidget *window)
         }
     }
 
-  g_object_unref (provider);
+  g_object_set_data_full (G_OBJECT (window), "provider", provider, remove_provider);
 }
 
 static void
@@ -477,7 +487,7 @@ do_peg_solitaire (GtkWidget *do_widget)
     }
 
   if (!gtk_widget_get_visible (window))
-    gtk_widget_show (window);
+    gtk_widget_set_visible (window, TRUE);
   else
     gtk_window_destroy (GTK_WINDOW (window));
 

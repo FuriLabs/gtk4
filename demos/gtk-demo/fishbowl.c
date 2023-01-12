@@ -68,11 +68,13 @@ create_blurred_button (void)
   return w;
 }
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 static GtkWidget *
 create_font_button (void)
 {
   return gtk_font_button_new ();
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 
 static GtkWidget *
 create_level_bar (void)
@@ -327,7 +329,7 @@ do_fishbowl (GtkWidget *do_widget)
     }
 
   if (!gtk_widget_get_visible (window))
-    gtk_widget_show (window);
+    gtk_widget_set_visible (window, TRUE);
   else
     gtk_window_destroy (GTK_WINDOW (window));
 

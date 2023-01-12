@@ -27,6 +27,8 @@
 # include <io.h>
 #endif
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 /* There shall be no other styles */
 #define GTK_STYLE_PROVIDER_PRIORITY_FORCE G_MAXUINT
 
@@ -113,7 +115,7 @@ load_ui_file (GFile *file, gboolean generate)
   output = NULL;
   g_signal_connect (window, "map", G_CALLBACK (style_context_changed), &output);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (!output)
     g_main_context_iteration (NULL, FALSE);

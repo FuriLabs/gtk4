@@ -23,11 +23,7 @@
 #include "gtkcsscolorvalueprivate.h"
 #include "gtkcssshadowvalueprivate.h"
 #include "gtkdebug.h"
-#include "gtkrenderbackgroundprivate.h"
-#include "gtkrenderborderprivate.h"
-#include "gtkrendericonprivate.h"
 #include "gtkrendernodepaintableprivate.h"
-#include "gtkstylecontextprivate.h"
 #include "gsktransformprivate.h"
 
 #include "gdk/gdkrgbaprivate.h"
@@ -35,7 +31,7 @@
 #include "gsk/gskrendernodeprivate.h"
 #include "gsk/gskroundedrectprivate.h"
 
-#include "gtk/gskpango.h"
+#include "gtk/gskpangoprivate.h"
 
 #define GDK_ARRAY_NAME gtk_snapshot_nodes
 #define GDK_ARRAY_TYPE_NAME GtkSnapshotNodes
@@ -873,7 +869,7 @@ gtk_snapshot_collect_gl_shader (GtkSnapshot      *snapshot,
   shader_node = NULL;
 
   if (n_collected_nodes != 0)
-    g_warning ("Unexpected children when poping gl shader.");
+    g_warning ("Unexpected children when popping gl shader.");
 
   if (state->data.glshader.nodes)
     nodes = state->data.glshader.nodes;
@@ -1975,150 +1971,6 @@ gtk_snapshot_append_color (GtkSnapshot           *snapshot,
   node = gsk_color_node_new (color, &real_bounds);
 
   gtk_snapshot_append_node_internal (snapshot, node);
-}
-
-/**
- * gtk_snapshot_render_background:
- * @snapshot: a `GtkSnapshot`
- * @context: the style context that defines the background
- * @x: X origin of the rectangle
- * @y: Y origin of the rectangle
- * @width: rectangle width
- * @height: rectangle height
- *
- * Creates a render node for the CSS background according to @context,
- * and appends it to the current node of @snapshot, without changing
- * the current node.
- */
-void
-gtk_snapshot_render_background (GtkSnapshot     *snapshot,
-                                GtkStyleContext *context,
-                                double           x,
-                                double           y,
-                                double           width,
-                                double           height)
-{
-  GtkCssBoxes boxes;
-
-  g_return_if_fail (snapshot != NULL);
-  g_return_if_fail (GTK_IS_STYLE_CONTEXT (context));
-
-  gtk_css_boxes_init_border_box (&boxes,
-                                 gtk_style_context_lookup_style (context),
-                                 x, y, width, height);
-  gtk_css_style_snapshot_background (&boxes, snapshot);
-}
-
-/**
- * gtk_snapshot_render_frame:
- * @snapshot: a `GtkSnapshot`
- * @context: the style context that defines the frame
- * @x: X origin of the rectangle
- * @y: Y origin of the rectangle
- * @width: rectangle width
- * @height: rectangle height
- *
- * Creates a render node for the CSS border according to @context,
- * and appends it to the current node of @snapshot, without changing
- * the current node.
- */
-void
-gtk_snapshot_render_frame (GtkSnapshot     *snapshot,
-                           GtkStyleContext *context,
-                           double           x,
-                           double           y,
-                           double           width,
-                           double           height)
-{
-  GtkCssBoxes boxes;
-
-  g_return_if_fail (snapshot != NULL);
-  g_return_if_fail (GTK_IS_STYLE_CONTEXT (context));
-
-  gtk_css_boxes_init_border_box (&boxes,
-                                 gtk_style_context_lookup_style (context),
-                                 x, y, width, height);
-  gtk_css_style_snapshot_border (&boxes, snapshot);
-}
-
-/**
- * gtk_snapshot_render_focus:
- * @snapshot: a `GtkSnapshot`
- * @context: the style context that defines the focus ring
- * @x: X origin of the rectangle
- * @y: Y origin of the rectangle
- * @width: rectangle width
- * @height: rectangle height
- *
- * Creates a render node for the focus outline according to @context,
- * and appends it to the current node of @snapshot, without changing
- * the current node.
- */
-void
-gtk_snapshot_render_focus (GtkSnapshot     *snapshot,
-                           GtkStyleContext *context,
-                           double           x,
-                           double           y,
-                           double           width,
-                           double           height)
-{
-  GtkCssBoxes boxes;
-
-  g_return_if_fail (snapshot != NULL);
-  g_return_if_fail (GTK_IS_STYLE_CONTEXT (context));
-
-  gtk_css_boxes_init_border_box (&boxes,
-                                 gtk_style_context_lookup_style (context),
-                                 x, y, width, height);
-  gtk_css_style_snapshot_outline (&boxes, snapshot);
-}
-
-/**
- * gtk_snapshot_render_layout:
- * @snapshot: a `GtkSnapshot`
- * @context: the style context that defines the text
- * @x: X origin of the rectangle
- * @y: Y origin of the rectangle
- * @layout: the `PangoLayout` to render
- *
- * Creates a render node for rendering @layout according to the style
- * information in @context, and appends it to the current node of @snapshot,
- * without changing the current node.
- */
-void
-gtk_snapshot_render_layout (GtkSnapshot     *snapshot,
-                            GtkStyleContext *context,
-                            double           x,
-                            double           y,
-                            PangoLayout     *layout)
-{
-  const bool needs_translate = (x != 0 || y != 0);
-  const GdkRGBA *fg_color;
-  GtkCssValue *shadows_value;
-  gboolean has_shadow;
-
-  g_return_if_fail (snapshot != NULL);
-  g_return_if_fail (GTK_IS_STYLE_CONTEXT (context));
-  g_return_if_fail (PANGO_IS_LAYOUT (layout));
-
-  if (needs_translate)
-    {
-      gtk_snapshot_save (snapshot);
-      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (x, y));
-    }
-
-  fg_color = gtk_css_color_value_get_rgba (_gtk_style_context_peek_property (context, GTK_CSS_PROPERTY_COLOR));
-
-  shadows_value = _gtk_style_context_peek_property (context, GTK_CSS_PROPERTY_TEXT_SHADOW);
-  has_shadow = gtk_css_shadow_value_push_snapshot (shadows_value, snapshot);
-
-  gtk_snapshot_append_layout (snapshot, layout, fg_color);
-
-  if (has_shadow)
-    gtk_snapshot_pop (snapshot);
-
-  if (needs_translate)
-    gtk_snapshot_restore (snapshot);
 }
 
 void

@@ -20,6 +20,8 @@
 #include <sys/types.h>
 #include <string.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 #define NUMBER_OF_ITEMS   10
 #define SOME_ITEMS       100
 #define MANY_ITEMS     10000
@@ -583,7 +585,7 @@ main (int argc, char **argv)
                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_paned_set_end_child (GTK_PANED (paned), scrolled_window);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (TRUE)
     g_main_context_iteration (NULL, TRUE);

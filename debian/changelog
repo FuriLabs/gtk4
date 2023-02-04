@@ -13,10 +13,15 @@ gtk4 (4.8.3+ds-2) UNRELEASED; urgency=medium
     - Do not mark non-user-facing strings as translatable (GNOME/gtk#5146)
     - Fix animations and transitions randomly stopping (GNOME/gtk#4426)
     - Translation updates: ab, tr
+  * d/p/gdk-x11-Reset-all-scroll-valuators-on-enter.patch:
+    Add patch from 4.9.x to avoid scroll events being sent to more than
+    one window under X11 (Closes: #1029972) (LP: #1993594)
   * d/control.in: Fix description of gtk-4-examples, which no longer
     contains installed-tests (which were separated into gtk-4-tests)
+  * Add overrides for false positive lintian/lintian!452
+  * Standards-Version: 4.6.2 (no changes required)
 
- -- Simon McVittie <smcv@debian.org>  Sat, 04 Feb 2023 11:35:40 +0000
+ -- Simon McVittie <smcv@debian.org>  Sat, 04 Feb 2023 15:13:07 +0000
 
 gtk4 (4.8.3+ds-1) unstable; urgency=medium
 

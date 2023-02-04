@@ -1,3 +1,9 @@
+gtk4 (4.9.2+ds-0ubuntu2) lunar; urgency=medium
+
+  * Rebuild against latest tiff
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Sat, 04 Feb 2023 11:31:27 -0500
+
 gtk4 (4.9.2+ds-0ubuntu1) lunar; urgency=medium
 
   * Sync with Debian. Remaining changes:

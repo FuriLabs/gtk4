@@ -1,9 +1,18 @@
 gtk4 (4.9.3+ds-1) UNRELEASED; urgency=medium
 
-  * d/gbp.conf, d/watch: Branch for experimental
-  * New upstream release
+  [ Jeremy Bicha, via Ubuntu ]
+  * New upstream release 4.9.2
+  * Bump minimum glib to 2.72.0
+  * debian/libgtk-4-1.symbols.in: Update
+  * Revert commit dropping installed tests
+  * Refresh patch series
 
- -- Simon McVittie <smcv@debian.org>  Thu, 09 Feb 2023 09:31:45 +0000
+  [ Simon McVittie ]
+  * d/gbp.conf, d/watch: Branch for experimental
+  * New upstream release 4.9.3
+  * Drop patches that were applied (some a little differently) upstream
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 09 Feb 2023 09:39:58 +0000
 
 gtk4 (4.8.3+ds-2) unstable; urgency=medium
 

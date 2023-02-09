@@ -1,4 +1,4 @@
-gtk4 (4.9.3+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.9.3+ds-1) experimental; urgency=medium
 
   [ Jeremy Bicha, via Ubuntu ]
   * New upstream release 4.9.2
@@ -20,7 +20,7 @@ gtk4 (4.9.3+ds-1) UNRELEASED; urgency=medium
     Ignore removal of gtk_file_dialog_{get,set}_shortcut_folders: they were
     added in the 4.9.x branch and are not yet considered stable ABI.
 
- -- Simon McVittie <smcv@debian.org>  Thu, 09 Feb 2023 10:17:52 +0000
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 09 Feb 2023 11:43:59 -0500
 
 gtk4 (4.8.3+ds-2) unstable; urgency=medium
 

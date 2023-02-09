@@ -346,6 +346,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_memory_texture_new@Base 4.0.0
  gdk_modifier_type_get_type@Base 4.0.0
  gdk_monitor_get_connector@Base 4.0.0
+ gdk_monitor_get_description@Base 4.9.3
  gdk_monitor_get_display@Base 4.0.0
  gdk_monitor_get_geometry@Base 4.0.0
  gdk_monitor_get_height_mm@Base 4.0.0
@@ -907,9 +908,16 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_accelerator_parse_with_keycode@Base 4.0.0
  gtk_accelerator_valid@Base 4.0.0
  gtk_accessible_autocomplete_get_type@Base 4.0.0
+ gtk_accessible_get_accessible_parent@Base 4.9.3
  gtk_accessible_get_accessible_role@Base 4.0.0
+ gtk_accessible_get_at_context@Base 4.9.3
+ gtk_accessible_get_bounds@Base 4.9.3
+ gtk_accessible_get_first_accessible_child@Base 4.9.3
+ gtk_accessible_get_next_accessible_sibling@Base 4.9.3
+ gtk_accessible_get_platform_state@Base 4.9.3
  gtk_accessible_get_type@Base 4.0.0
  gtk_accessible_invalid_state_get_type@Base 4.0.0
+ gtk_accessible_platform_state_get_type@Base 4.9.3
  gtk_accessible_property_get_type@Base 4.0.0
  gtk_accessible_property_init_value@Base 4.0.0
  gtk_accessible_range_get_type@Base 4.9.2
@@ -1748,6 +1756,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_drop_target_set_actions@Base 4.0.0
  gtk_drop_target_set_gtypes@Base 4.0.0
  gtk_drop_target_set_preload@Base 4.0.0
+ gtk_editable_delegate_get_accessible_platform_state@Base 4.9.3
  gtk_editable_delegate_get_property@Base 4.0.0
  gtk_editable_delegate_set_property@Base 4.0.0
  gtk_editable_delete_selection@Base 4.0.0
@@ -1999,7 +2008,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_file_dialog_get_initial_folder@Base 4.9.2
  gtk_file_dialog_get_initial_name@Base 4.9.2
  gtk_file_dialog_get_modal@Base 4.9.2
- gtk_file_dialog_get_shortcut_folders@Base 4.9.2
  gtk_file_dialog_get_title@Base 4.9.2
  gtk_file_dialog_get_type@Base 4.9.2
  gtk_file_dialog_new@Base 4.9.2
@@ -2020,7 +2028,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_file_dialog_set_initial_folder@Base 4.9.2
  gtk_file_dialog_set_initial_name@Base 4.9.2
  gtk_file_dialog_set_modal@Base 4.9.2
- gtk_file_dialog_set_shortcut_folders@Base 4.9.2
  gtk_file_dialog_set_title@Base 4.9.2
  gtk_file_filter_add_mime_type@Base 4.0.0
  gtk_file_filter_add_pattern@Base 4.0.0
@@ -4584,6 +4591,12 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_tree_view_unset_rows_drag_dest@Base 4.0.0
  gtk_tree_view_unset_rows_drag_source@Base 4.0.0
  gtk_unit_get_type@Base 4.0.0
+ gtk_uri_launcher_get_type@Base 4.9.3
+ gtk_uri_launcher_get_uri@Base 4.9.3
+ gtk_uri_launcher_launch@Base 4.9.3
+ gtk_uri_launcher_launch_finish@Base 4.9.3
+ gtk_uri_launcher_new@Base 4.9.3
+ gtk_uri_launcher_set_uri@Base 4.9.3
  gtk_value_dup_expression@Base 4.0.0
  gtk_value_get_expression@Base 4.0.0
  gtk_value_set_expression@Base 4.0.0

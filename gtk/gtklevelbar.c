@@ -64,7 +64,7 @@
  *   //   background-color: magenta;
  *   //   border-style: solid;
  *   //   border-color: black;
- *   //   border-style: 1px;
+ *   //   border-width: 1px;
  *   // }
  *
  *   gtk_level_bar_add_offset_value (bar, "my-offset", 0.60);
@@ -90,8 +90,8 @@
  * # GtkLevelBar as GtkBuildable
  *
  * The `GtkLevelBar` implementation of the `GtkBuildable` interface supports a
- * custom <offsets> element, which can contain any number of <offset> elements,
- * each of which must have name and value attributes.
+ * custom `<offsets>` element, which can contain any number of `<offset>` elements,
+ * each of which must have "name" and "value" attributes.
  *
  * # CSS nodes
  *

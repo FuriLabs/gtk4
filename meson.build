@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.9.2',
+        version: '4.9.3',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -11,15 +11,15 @@ project('gtk', 'c',
         license: 'LGPL-2.1-or-later')
 
 glib_req           = '>= 2.72.0'
+introspection_req  = '>= 1.72.0' # keep this in sync with glib
 pango_req          = '>= 1.50.0' # keep this in sync with .gitlab-ci/test-msys.sh
-harfbuzz_req	     = '>= 2.6.0'
-fribidi_req        = '>= 0.19.7'
+harfbuzz_req       = '>= 2.6.0'
+fribidi_req        = '>= 1.0.6'
 cairo_req          = '>= 1.14.0'
 gdk_pixbuf_req     = '>= 2.30.0'
-introspection_req  = '>= 1.39.0'
 wayland_proto_req  = '>= 1.25'
 wayland_req        = '>= 1.21.0'
-graphene_req       = '>= 1.9.1'
+graphene_req       = '>= 1.10.0'
 epoxy_req          = '>= 1.4'
 cloudproviders_req = '>= 0.3.1'
 xkbcommon_req      = '>= 0.2.0'
@@ -271,6 +271,7 @@ elif cc.get_id() == 'gcc' or cc.get_id() == 'clang'
     '-Wno-c++11-extensions',
     '-Wno-missing-include-dirs',
     '-Wno-typedef-redefinition',
+    '-Wno-tautological-constant-out-of-range-compare',
     '-Wduplicated-branches',
     '-Wduplicated-cond',
     '-Wformat=2',
@@ -404,7 +405,7 @@ jpeg_dep       = dependency('libjpeg', 'jpeg')
 epoxy_dep      = dependency('epoxy', version: epoxy_req)
 xkbdep         = dependency('xkbcommon', version: xkbcommon_req, required: wayland_enabled)
 graphene_dep   = dependency('graphene-gobject-1.0', version: graphene_req,
-                            default_options: ['tests=false'])
+                            default_options: ['tests=false', 'gobject_types=true'])
 iso_codes_dep  = dependency('iso-codes', required: false)
 gi_dep         = dependency('gobject-introspection-1.0', version: introspection_req,
                             required: get_option('introspection').enabled() and
@@ -730,7 +731,7 @@ endif
 
 # Introspection
 gir = find_program('g-ir-scanner', required : get_option('introspection'))
-build_gir = gir.found() and (not meson.is_cross_build() or get_option('introspection').enabled())
+build_gir = gir.found() and get_option('introspection').enabled()
 
 
 project_build_root = meson.current_build_dir()
@@ -746,6 +747,8 @@ endif
 subdir('tools')
 if get_option('build-tests')
   subdir('tests')
+endif
+if get_option('build-testsuite')
   subdir('testsuite')
 endif
 if get_option('build-examples')

@@ -2218,7 +2218,9 @@ _gtk_widget_set_sequence_state_internal (GtkWidget             *widget,
                gtk_gesture_get_sequence_state (gesture, sequence) != GTK_EVENT_SEQUENCE_CLAIMED)
         continue;
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       retval = gtk_gesture_set_sequence_state (gesture, seq, gesture_state);
+G_GNUC_END_IGNORE_DEPRECATIONS
 
       if (retval || gesture == emitter)
         {
@@ -5664,10 +5666,6 @@ gtk_widget_get_state_flags (GtkWidget *widget)
  *
  * Note that setting this to %TRUE doesn’t mean the widget is
  * actually viewable, see [method@Gtk.Widget.get_visible].
- *
- * This function simply calls [method@Gtk.Widget.show] or
- * [method@Gtk.Widget.hide] but is nicer to use when the
- * visibility of the widget depends on some condition.
  */
 void
 gtk_widget_set_visible (GtkWidget *widget,
@@ -8467,11 +8465,78 @@ gtk_widget_accessible_get_platform_state (GtkAccessible              *self,
     }
 }
 
+static GtkAccessible *
+gtk_widget_accessible_get_accessible_parent (GtkAccessible *self)
+{
+  return GTK_ACCESSIBLE (gtk_widget_get_parent (GTK_WIDGET (self)));
+}
+
+static GtkAccessible *
+gtk_widget_accessible_get_next_accessible_sibling (GtkAccessible *self)
+{
+  return GTK_ACCESSIBLE (gtk_widget_get_next_sibling (GTK_WIDGET (self)));
+}
+
+static GtkAccessible *
+gtk_widget_accessible_get_first_accessible_child (GtkAccessible *self)
+{
+  return GTK_ACCESSIBLE (gtk_widget_get_first_child (GTK_WIDGET (self)));
+}
+
+static gboolean
+gtk_widget_accessible_get_bounds (GtkAccessible *self,
+                                  int           *x,
+                                  int           *y,
+                                  int           *width,
+                                  int           *height)
+{
+  GtkWidget *widget;
+  GtkWidget *parent;
+  GtkWidget *bounds_relative_to;
+  double translated_x, translated_y;
+  graphene_rect_t bounds = GRAPHENE_RECT_INIT_ZERO;
+
+  widget = GTK_WIDGET (self);
+  if (!gtk_widget_get_realized (widget))
+    return FALSE;
+
+  parent = gtk_widget_get_parent (widget);
+  if (parent != NULL)
+    {
+      gtk_widget_translate_coordinates (widget, parent, 0., 0., &translated_x, &translated_y);
+      *x = floorf (translated_x);
+      *y = floorf (translated_y);
+      bounds_relative_to = parent;
+    }
+  else
+    {
+      *x = *y = 0;
+      bounds_relative_to = widget;
+    }
+
+  if (!gtk_widget_compute_bounds (widget, bounds_relative_to, &bounds))
+    {
+      *width = 0;
+      *height = 0;
+    }
+  else
+    {
+      *width = ceilf (graphene_rect_get_width (&bounds));
+      *height = ceilf (graphene_rect_get_height (&bounds));
+    }
+
+  return TRUE;
+}
+
 static void
 gtk_widget_accessible_interface_init (GtkAccessibleInterface *iface)
 {
   iface->get_at_context = gtk_widget_accessible_get_at_context;
   iface->get_platform_state = gtk_widget_accessible_get_platform_state;
+  iface->get_accessible_parent = gtk_widget_accessible_get_accessible_parent;
+  iface->get_first_accessible_child = gtk_widget_accessible_get_first_accessible_child;
+  iface->get_next_accessible_sibling = gtk_widget_accessible_get_next_accessible_sibling;
+  iface->get_bounds = gtk_widget_accessible_get_bounds;
 }
 
 static void
@@ -11380,8 +11445,7 @@ gtk_widget_activate_action_variant (GtkWidget  *widget,
  * gtk_widget_activate_action:
  * @widget: a `GtkWidget`
  * @name: the name of the action to activate
- * @format_string: GVariant format string for arguments or %NULL
- *   for no arguments
+ * @format_string: (nullable): GVariant format string for arguments
  * @...: arguments, as given by format string
  *
  * Looks up the action in the action groups associated

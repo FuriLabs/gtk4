@@ -36,7 +36,7 @@
 #include "deprecated/gtkfilechooser.h"
 #include "gtkfilechooserentry.h"
 #include "gtkfilechooserutils.h"
-#include "gtkfilesystemmodel.h"
+#include "gtkfilesystemmodelprivate.h"
 #include "gtkfilethumbnail.h"
 #include "gtkgestureclick.h"
 #include "gtkgesturelongpress.h"
@@ -1565,6 +1565,9 @@ file_list_drag_drop_cb (GtkDropTarget        *dest,
   FileListDragData *data;
 
   files = g_value_get_boxed (value);
+
+  if (files == NULL)
+    return TRUE;
 
   data = g_new0 (FileListDragData, 1);
   data->impl = g_object_ref (impl);
@@ -4914,17 +4917,31 @@ gtk_file_chooser_widget_get_shortcut_folders (GtkFileChooser *chooser)
 static void
 switch_to_selected_folder (GtkFileChooserWidget *impl)
 {
-  GFileInfo *info;
-  GFile *file;
+  GtkBitsetIter iter;
+  GtkBitset *bitset;
+  unsigned int i;
 
-  g_assert (!impl->select_multiple);
-  g_assert (GTK_IS_SINGLE_SELECTION (impl->selection_model));
+  bitset = gtk_selection_model_get_selection (impl->selection_model);
 
-  info = gtk_single_selection_get_selected_item (GTK_SINGLE_SELECTION (impl->selection_model));
-  g_assert (info != NULL);
+  for (gtk_bitset_iter_init_first (&iter, bitset, &i);
+       gtk_bitset_iter_is_valid (&iter);
+       gtk_bitset_iter_next (&iter, &i))
+    {
+      GFileInfo *info;
 
-  file = _gtk_file_info_get_file (info);
-  change_folder_and_display_error (impl, file, FALSE);
+      info = g_list_model_get_item (G_LIST_MODEL (impl->selection_model), i);
+      if (_gtk_file_info_consider_as_directory (info))
+        {
+          GFile *file;
+
+          file = _gtk_file_info_get_file (info);
+          change_folder_and_display_error (impl, file, FALSE);
+          g_object_unref (info);
+          return;
+        }
+
+      g_clear_object (&info);
+    }
 }
 
 /* Gets the display name of the selected file in the file list; assumes single
@@ -7205,16 +7222,21 @@ popup_menu (GtkWidget *widget,
 }
 
 static void
-file_chooser_widget_clicked (GtkEventController *controller,
-                            int                 n_press,
-                            double              x,
-                            double              y,
-                            gpointer            user_data)
+file_chooser_widget_clicked (GtkEventController  *controller,
+                            int                   n_press,
+                            double                x,
+                            double                y,
+                            GtkFileChooserWidget *impl)
 {
-  GtkWidget *widget = user_data;
+  GtkWidget *widget = GTK_WIDGET (impl);
+  GtkWidget *child;
 
-  gtk_gesture_set_state (GTK_GESTURE (controller), GTK_EVENT_SEQUENCE_CLAIMED);
-  popup_menu (widget, x, y);
+  child = gtk_widget_pick (widget, x, y, 0);
+  if (gtk_widget_is_ancestor (child, impl->browse_files_stack))
+    {
+      gtk_gesture_set_state (GTK_GESTURE (controller), GTK_EVENT_SEQUENCE_CLAIMED);
+      popup_menu (widget, x, y);
+    }
 }
 
 static void

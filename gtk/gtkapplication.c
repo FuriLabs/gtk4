@@ -321,10 +321,16 @@ gtk_application_add_platform_data (GApplication    *application,
     {
       const char *startup_id;
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       startup_id = gdk_display_get_startup_notification_id (display);
+G_GNUC_END_IGNORE_DEPRECATIONS
       if (startup_id && g_utf8_validate (startup_id, -1, NULL))
-        g_variant_builder_add (builder, "{sv}", "desktop-startup-id",
-                               g_variant_new_string (startup_id));
+        {
+          g_variant_builder_add (builder, "{sv}", "activation-token",
+                                 g_variant_new_string (startup_id));
+          g_variant_builder_add (builder, "{sv}", "desktop-startup-id",
+                                 g_variant_new_string (startup_id));
+        }
     }
 }
 
@@ -342,17 +348,6 @@ static void
 gtk_application_after_emit (GApplication *application,
                             GVariant     *platform_data)
 {
-  const char *startup_notification_id = NULL;
-
-  g_variant_lookup (platform_data, "desktop-startup-id", "&s", &startup_notification_id);
-  if (startup_notification_id)
-    {
-      GdkDisplay *display;
-
-      display = gdk_display_get_default ();
-      if (display)
-        gdk_display_notify_startup_complete (display, startup_notification_id);
-    }
 }
 
 static void

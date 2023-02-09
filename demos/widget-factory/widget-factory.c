@@ -2057,6 +2057,67 @@ hide_widget (GtkWidget *widget)
 }
 
 static void
+load_texture_thread (GTask *task,
+                     gpointer source_object,
+                     gpointer task_data,
+                     GCancellable *cancellable)
+{
+  const char *resource_path = (const char *) task_data;
+  GBytes *bytes;
+  GdkTexture *texture;
+  GError *error = NULL;
+
+  bytes = g_resources_lookup_data (resource_path, 0, &error);
+  if (!bytes)
+    {
+      g_task_return_error (task, error);
+      return;
+    }
+
+  texture = gdk_texture_new_from_bytes (bytes, &error);
+  g_bytes_unref (bytes);
+
+  if (!texture)
+    {
+      g_task_return_error (task, error);
+      return;
+    }
+
+  g_task_return_pointer (task, texture, g_object_unref);
+}
+
+static void
+load_texture_done (GObject *source,
+                   GAsyncResult *result,
+                   gpointer data)
+{
+  GtkWidget *picture = GTK_WIDGET (source);
+  GdkTexture *texture;
+  GError *error = NULL;
+
+  texture = g_task_propagate_pointer (G_TASK (result), &error);
+  if (!texture)
+    {
+      g_warning ("%s", error->message);
+      g_error_free (error);
+      return;
+    }
+
+  gtk_picture_set_paintable (GTK_PICTURE (picture), GDK_PAINTABLE (texture));
+  g_object_unref (texture);
+}
+
+static void
+load_texture_in_thread (GtkWidget  *picture,
+                        const char *resource_path)
+{
+  GTask *task = g_task_new (picture, NULL, load_texture_done, NULL);
+  g_task_set_task_data (task, (gpointer)resource_path, NULL);
+  g_task_run_in_thread (task, load_texture_thread);
+  g_object_unref (task);
+}
+
+static void
 activate (GApplication *app)
 {
   GtkBuilder *builder;
@@ -2155,6 +2216,13 @@ activate (GApplication *app)
 
   window = (GtkWindow *)gtk_builder_get_object (builder, "window");
 
+  load_texture_in_thread ((GtkWidget *)gtk_builder_get_object (builder, "notebook_sunset"),
+                          "/org/gtk/WidgetFactory4/sunset.jpg");
+  load_texture_in_thread ((GtkWidget *)gtk_builder_get_object (builder, "notebook_nyc"),
+                          "/org/gtk/WidgetFactory4/nyc.jpg");
+  load_texture_in_thread ((GtkWidget *)gtk_builder_get_object (builder, "notebook_beach"),
+                          "/org/gtk/WidgetFactory4/beach.jpg");
+
   if (g_strcmp0 (PROFILE, "devel") == 0)
     gtk_widget_add_css_class (GTK_WIDGET (window), "devel");
 
@@ -2184,11 +2252,13 @@ activate (GApplication *app)
   for (i = 0; i < G_N_ELEMENTS (accels); i++)
     gtk_application_set_accels_for_action (GTK_APPLICATION (app), accels[i].action_and_target, accels[i].accelerators);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   widget = (GtkWidget *)gtk_builder_get_object (builder, "statusbar");
   gtk_statusbar_push (GTK_STATUSBAR (widget), 0, "All systems are operating normally.");
   action = G_ACTION (g_property_action_new ("statusbar", widget, "visible"));
   g_action_map_add_action (G_ACTION_MAP (window), action);
   g_object_unref (G_OBJECT (action));
+G_GNUC_END_IGNORE_DEPRECATIONS
 
   widget = (GtkWidget *)gtk_builder_get_object (builder, "toolbar");
   action = G_ACTION (g_property_action_new ("toolbar", widget, "visible"));
@@ -2362,6 +2432,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
   widget = (GtkWidget *)gtk_builder_get_object (builder, "record_button");
   g_object_set_data (G_OBJECT (window), "record_button", widget);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   widget = (GtkWidget *)gtk_builder_get_object (builder, "lockbox");
   widget2 = (GtkWidget *)gtk_builder_get_object (builder, "lockbutton");
   g_object_set_data (G_OBJECT (window), "lockbutton", widget2);
@@ -2379,6 +2450,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
                           G_BINDING_SYNC_CREATE);
   gtk_lock_button_set_permission (GTK_LOCK_BUTTON (widget2), permission);
   g_object_unref (permission);
+G_GNUC_END_IGNORE_DEPRECATIONS
 
   widget = (GtkWidget *)gtk_builder_get_object (builder, "iconview1");
   widget2 = (GtkWidget *)gtk_builder_get_object (builder, "increase_button");

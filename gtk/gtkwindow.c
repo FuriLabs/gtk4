@@ -93,6 +93,7 @@
 #include "wayland/gdkwayland.h"
 #include "wayland/gdkdisplay-wayland.h"
 #include "wayland/gdksurface-wayland.h"
+#include "wayland/gdktoplevel-wayland-private.h"
 #endif
 
 #ifdef GDK_WINDOWING_MACOS
@@ -118,7 +119,7 @@
  *
  * The `GtkWindow` implementation of the [iface@Gtk.Buildable] interface supports
  * setting a child as the titlebar by specifying “titlebar” as the “type”
- * attribute of a <child> element.
+ * attribute of a `<child>` element.
  *
  * # CSS nodes
  *
@@ -247,7 +248,7 @@ typedef struct
   guint    in_emit_close_request     : 1;
   guint    move_focus                : 1;
   guint    unset_default             : 1;
-
+  guint    in_present                : 1;
 
   GtkGesture *click_gesture;
   GtkEventController *application_shortcut_controller;
@@ -2265,11 +2266,9 @@ gtk_window_set_startup_id (GtkWindow   *window,
 	gtk_window_present_with_time (window, timestamp);
       else
         {
-          gdk_toplevel_set_startup_id (GDK_TOPLEVEL (priv->surface), priv->startup_id);
-
-          /* If window is mapped, terminate the startup-notification too */
+          /* If window is mapped, terminate the startup-notification */
           if (_gtk_widget_get_mapped (widget) && !disable_startup_notification)
-            gdk_display_notify_startup_complete (gtk_widget_get_display (widget), priv->startup_id);
+            gdk_toplevel_set_startup_id (GDK_TOPLEVEL (priv->surface), priv->startup_id);
         }
     }
 
@@ -3896,6 +3895,28 @@ gtk_window_update_toplevel (GtkWindow         *window,
 }
 
 static void
+gtk_window_notify_startup (GtkWindow *window)
+{
+  GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
+
+  if (!disable_startup_notification)
+    {
+      /* Do we have a custom startup-notification id? */
+      if (priv->startup_id != NULL)
+        {
+          /* Make sure we have a "real" id */
+          if (!startup_id_is_fake (priv->startup_id))
+            gdk_toplevel_set_startup_id (GDK_TOPLEVEL (priv->surface), priv->startup_id);
+
+          g_free (priv->startup_id);
+          priv->startup_id = NULL;
+        }
+      else
+        gdk_toplevel_set_startup_id (GDK_TOPLEVEL (priv->surface), NULL);
+    }
+}
+
+static void
 gtk_window_map (GtkWidget *widget)
 {
   GtkWindow *window = GTK_WINDOW (widget);
@@ -3919,21 +3940,8 @@ gtk_window_map (GtkWidget *widget)
 
   gtk_window_set_theme_variant (window);
 
-  if (!disable_startup_notification)
-    {
-      /* Do we have a custom startup-notification id? */
-      if (priv->startup_id != NULL)
-        {
-          /* Make sure we have a "real" id */
-          if (!startup_id_is_fake (priv->startup_id))
-            gdk_display_notify_startup_complete (gtk_widget_get_display (widget), priv->startup_id);
-
-          g_free (priv->startup_id);
-          priv->startup_id = NULL;
-        }
-       else
-         gdk_display_notify_startup_complete (gtk_widget_get_display (widget), NULL);
-    }
+  if (!priv->in_present)
+    gtk_window_notify_startup (window);
 
   /* inherit from transient parent, so that a dialog that is
    * opened via keynav shows focus initially
@@ -4357,8 +4365,6 @@ gtk_window_realize (GtkWidget *widget)
             gdk_x11_surface_set_user_time (surface, timestamp);
         }
 #endif
-      if (!startup_id_is_fake (priv->startup_id))
-        gdk_toplevel_set_startup_id (GDK_TOPLEVEL (surface), priv->startup_id);
     }
 
 #ifdef GDK_WINDOWING_X11
@@ -5200,9 +5206,12 @@ _gtk_window_unset_focus_and_default (GtkWindow *window,
  *
  * Presents a window to the user.
  *
- * This function should not be used as when it is called,
- * it is too late to gather a valid timestamp to allow focus
- * stealing prevention to work correctly.
+ * This may mean raising the window in the stacking order,
+ * unminimizing it, moving it to the current desktop and/or
+ * giving it the keyboard focus (possibly dependent on the user’s
+ * platform, window manager and preferences).
+ *
+ * If @window is hidden, this function also makes it visible.
  */
 void
 gtk_window_present (GtkWindow *window)
@@ -5216,23 +5225,10 @@ gtk_window_present (GtkWindow *window)
  * @timestamp: the timestamp of the user interaction (typically a
  *   button or key press event) which triggered this call
  *
- * Presents a window to the user.
+ * Presents a window to the user in response to an user interaction.
  *
- * This may mean raising the window in the stacking order,
- * unminimizing it, moving it to the current desktop, and/or
- * giving it the keyboard focus, possibly dependent on the user’s
- * platform, window manager, and preferences.
+ * See [method@Gtk.Window.present] for more details.
  *
- * If @window is hidden, this function calls [method@Gtk.Widget.show]
- * as well.
- *
- * This function should be used when the user tries to open a window
- * that’s already open. Say for example the preferences dialog is
- * currently open, and the user chooses Preferences from the menu
- * a second time; use [method@Gtk.Window.present] to move the
- * already-open dialog where the user can see it.
- *
- * Presents a window to the user in response to a user interaction.
  * The timestamp should be gathered when the window was requested
  * to be shown (when clicking a link for example), rather than once
  * the window is ready to be shown.
@@ -5274,11 +5270,14 @@ gtk_window_present_with_time (GtkWindow *window,
   else
     {
       priv->initial_timestamp = timestamp;
+      priv->in_present = TRUE;
       gtk_widget_set_visible (widget, TRUE);
+      priv->in_present = FALSE;
     }
 
   g_assert (priv->surface != NULL);
   gdk_toplevel_focus (GDK_TOPLEVEL (priv->surface), timestamp);
+  gtk_window_notify_startup (window);
 }
 
 /**
@@ -5888,7 +5887,7 @@ _gtk_window_set_is_active (GtkWindow *window,
  * Sets whether the window should request startup notification.
  *
  * By default, after showing the first `GtkWindow`, GTK calls
- * [method@Gdk.Display.notify_startup_complete]. Call this function
+ * [method@Gdk.Toplevel.set_startup_id]. Call this function
  * to disable the automatic startup notification. You might do this
  * if your first window is a splash screen, and you want to delay
  * notification until after your real main window has been shown,

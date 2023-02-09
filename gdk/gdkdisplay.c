@@ -471,8 +471,8 @@ gdk_display_get_event (GdkDisplay *display)
  * Appends the given event onto the front of the event
  * queue for @display.
  *
- * This function is only useful in very special situations
- * and should not be used by applications.
+ * Deprecated: 4.10: This function is only useful in very
+ * special situations and should not be used by applications.
  **/
 void
 gdk_display_put_event (GdkDisplay *display,
@@ -1114,7 +1114,7 @@ gdk_display_get_app_launch_context (GdkDisplay *display)
 
 /**
  * gdk_display_open:
- * @display_name: the name of the display to open
+ * @display_name: (nullable): the name of the display to open
  *
  * Opens a display.
  *
@@ -1148,6 +1148,8 @@ _gdk_display_get_next_serial (GdkDisplay *display)
  * with custom startup-notification identifier unless
  * [method@Gtk.Window.set_auto_startup_notification]
  * is called to disable that feature.
+ *
+ * Deprecated: 4.10: Using [method@Gdk.Toplevel.set_startup_id] is sufficient
  */
 void
 gdk_display_notify_startup_complete (GdkDisplay  *display,
@@ -1166,6 +1168,8 @@ gdk_display_notify_startup_complete (GdkDisplay  *display,
  * if no ID has been defined.
  *
  * Returns: (nullable): the startup notification ID for @display
+ *
+ * Deprecated: 4.10
  */
 const char *
 gdk_display_get_startup_notification_id (GdkDisplay *display)
@@ -1775,11 +1779,11 @@ gdk_display_init_egl (GdkDisplay  *self,
 gpointer
 gdk_display_get_egl_display (GdkDisplay *self)
 {
+#ifdef HAVE_EGL
   GdkDisplayPrivate *priv = gdk_display_get_instance_private (self);
 
   g_return_val_if_fail (GDK_IS_DISPLAY (self), NULL);
 
-#ifdef HAVE_EGL
   if (!priv->egl_display &&
       !gdk_display_prepare_gl (self, NULL))
     return NULL;
@@ -2013,10 +2017,7 @@ gdk_display_get_monitors (GdkDisplay *self)
  * Gets the monitor in which the largest area of @surface
  * resides.
  *
- * Returns a monitor close to @surface if it is outside
- * of all monitors.
- *
- * Returns: (transfer none): the monitor with the largest
+ * Returns: (transfer none) (nullable): the monitor with the largest
  *   overlap with @surface
  */
 GdkMonitor *

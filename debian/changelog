@@ -3,7 +3,8 @@ gtk4 (4.9.3+ds-1) UNRELEASED; urgency=medium
   [ Jeremy Bicha, via Ubuntu ]
   * New upstream release 4.9.2
   * Bump minimum glib to 2.72.0
-  * debian/libgtk-4-1.symbols.in: Update
+  * debian/libgtk-4-1.symbols.in: Update.
+    Some symbols were removed, but they were never considered public ABI.
   * Revert commit dropping installed tests
   * Refresh patch series
 
@@ -11,8 +12,15 @@ gtk4 (4.9.3+ds-1) UNRELEASED; urgency=medium
   * d/gbp.conf, d/watch: Branch for experimental
   * New upstream release 4.9.3
   * Drop patches that were applied (some a little differently) upstream
+  * Refresh patch series
+  * d/copyright: Update
+  * d/control.in: Update versions of build-dependencies
+  * Drop version constraints that have been satisfied since Debian 10
+  * d/libgtk-4-1.symbols.in: Update.
+    Ignore removal of gtk_file_dialog_{get,set}_shortcut_folders: they were
+    added in the 4.9.x branch and are not yet considered stable ABI.
 
- -- Simon McVittie <smcv@debian.org>  Thu, 09 Feb 2023 09:39:58 +0000
+ -- Simon McVittie <smcv@debian.org>  Thu, 09 Feb 2023 10:17:52 +0000
 
 gtk4 (4.8.3+ds-2) unstable; urgency=medium
 

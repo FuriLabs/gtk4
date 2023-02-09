@@ -5609,15 +5609,15 @@ gtk_text_view_click_gesture_pressed (GtkGestureClick *gesture,
   if (n_press == 1 &&
       gdk_event_triggers_context_menu (event))
     {
-      gtk_gesture_set_sequence_state (GTK_GESTURE (gesture), sequence,
-                                      GTK_EVENT_SEQUENCE_CLAIMED);
+      gtk_gesture_set_state (GTK_GESTURE (gesture),
+                             GTK_EVENT_SEQUENCE_CLAIMED);
       gtk_text_view_do_popup (text_view, event);
     }
   else if (button == GDK_BUTTON_MIDDLE &&
            get_middle_click_paste (text_view))
     {
-      gtk_gesture_set_sequence_state (GTK_GESTURE (gesture), sequence,
-                                      GTK_EVENT_SEQUENCE_CLAIMED);
+      gtk_gesture_set_state (GTK_GESTURE (gesture),
+                             GTK_EVENT_SEQUENCE_CLAIMED);
       get_iter_from_gesture (text_view, GTK_GESTURE (gesture),
                              &iter, NULL, NULL);
       gtk_text_buffer_paste_clipboard (get_buffer (text_view),
@@ -5655,8 +5655,8 @@ gtk_text_view_click_gesture_pressed (GtkGestureClick *gesture,
               {
                 if (is_touchscreen)
                   {
-                    gtk_gesture_set_sequence_state (GTK_GESTURE (gesture), sequence,
-                                                    GTK_EVENT_SEQUENCE_CLAIMED);
+                    gtk_gesture_set_state (GTK_GESTURE (gesture),
+                                           GTK_EVENT_SEQUENCE_CLAIMED);
                     if (!priv->selection_bubble ||
                         !gtk_widget_get_visible (priv->selection_bubble))
                       {
@@ -7787,8 +7787,7 @@ gtk_text_view_set_attributes_from_style (GtkTextView        *text_view,
   else
     {
       values->appearance.underline = PANGO_UNDERLINE_NONE;
-      gdk_rgba_free (values->appearance.underline_rgba);
-      values->appearance.underline_rgba = NULL;
+      g_clear_pointer (&values->appearance.underline_rgba, gdk_rgba_free);
     }
 
   if (decoration_line & GTK_CSS_TEXT_DECORATION_LINE_OVERLINE)
@@ -7802,8 +7801,7 @@ gtk_text_view_set_attributes_from_style (GtkTextView        *text_view,
   else
     {
       values->appearance.overline = PANGO_OVERLINE_NONE;
-      gdk_rgba_free (values->appearance.overline_rgba);
-      values->appearance.overline_rgba = NULL;
+      g_clear_pointer (&values->appearance.overline_rgba, gdk_rgba_free);
     }
 
   if (decoration_line & GTK_CSS_TEXT_DECORATION_LINE_LINE_THROUGH)
@@ -7817,8 +7815,7 @@ gtk_text_view_set_attributes_from_style (GtkTextView        *text_view,
   else
     {
       values->appearance.strikethrough = FALSE;
-      gdk_rgba_free (values->appearance.strikethrough_rgba);
-      values->appearance.strikethrough_rgba = NULL;
+      g_clear_pointer (&values->appearance.strikethrough_rgba, gdk_rgba_free);
     }
 
   /* letter-spacing */

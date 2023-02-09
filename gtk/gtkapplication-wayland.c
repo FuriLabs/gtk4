@@ -27,6 +27,7 @@
 #include <gdk/wayland/gdkwayland.h>
 #include <gdk/wayland/gdkdisplay-wayland.h>
 #include <gdk/wayland/gdksurface-wayland.h>
+#include <gdk/wayland/gdktoplevel-wayland-private.h>
 #include <gdk/wayland/idle-inhibit-unstable-v1-client-protocol.h>
 
 typedef struct
@@ -103,9 +104,13 @@ gtk_application_impl_wayland_before_emit (GtkApplicationImpl *impl,
 {
   const char *startup_notification_id = NULL;
 
-  g_variant_lookup (platform_data, "desktop-startup-id", "&s", &startup_notification_id);
+  g_variant_lookup (platform_data, "activation-token", "&s", &startup_notification_id);
+  if (!startup_notification_id)
+    g_variant_lookup (platform_data, "desktop-startup-id", "&s", &startup_notification_id);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   gdk_wayland_display_set_startup_notification_id (gdk_display_get_default (), startup_notification_id);
+G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 static guint

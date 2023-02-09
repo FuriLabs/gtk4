@@ -1,3 +1,27 @@
+gtk4 (4.9.3+ds-1) experimental; urgency=medium
+
+  [ Jeremy Bicha, via Ubuntu ]
+  * New upstream release 4.9.2
+  * Bump minimum glib to 2.72.0
+  * debian/libgtk-4-1.symbols.in: Update.
+    Some symbols were removed, but they were never considered public ABI.
+  * Revert commit dropping installed tests
+  * Refresh patch series
+
+  [ Simon McVittie ]
+  * d/gbp.conf, d/watch: Branch for experimental
+  * New upstream release 4.9.3
+  * Drop patches that were applied (some a little differently) upstream
+  * Refresh patch series
+  * d/copyright: Update
+  * d/control.in: Update versions of build-dependencies
+  * Drop version constraints that have been satisfied since Debian 10
+  * d/libgtk-4-1.symbols.in: Update.
+    Ignore removal of gtk_file_dialog_{get,set}_shortcut_folders: they were
+    added in the 4.9.x branch and are not yet considered stable ABI.
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 09 Feb 2023 11:43:59 -0500
+
 gtk4 (4.9.2+ds-0ubuntu2) lunar; urgency=medium
 
   * Rebuild against latest tiff
@@ -21,6 +45,31 @@ gtk4 (4.9.2+ds-0ubuntu1) lunar; urgency=medium
   * Add patch to mark the gtk template test as flaky
 
  -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 12 Jan 2023 13:58:01 -0500
+
+gtk4 (4.8.3+ds-2) unstable; urgency=medium
+
+  [ Jeremy Bicha ]
+  * debian/tests/python3-gi: stop using deprecated method
+
+  [ Simon McVittie ]
+  * d/patches: Update to gtk-4-8 branch commit 4.8.3-15-g1ef03e6eb8
+    - Optimize column views by not creating list item widgets in columns
+      that are not visible (GNOME/gtk!5374)
+    - In X11, make sure menus, popovers etc. don't interfere with ability
+      to click/select in other applications' windows
+      (GNOME/gtk#5364, GNOME/gtk#5400)
+    - Do not mark non-user-facing strings as translatable (GNOME/gtk#5146)
+    - Fix animations and transitions randomly stopping (GNOME/gtk#4426)
+    - Translation updates: ab, tr
+  * d/p/gdk-x11-Reset-all-scroll-valuators-on-enter.patch:
+    Add patch from 4.9.x to avoid scroll events being sent to more than
+    one window under X11 (Closes: #1029972) (LP: #1993594)
+  * d/control.in: Fix description of gtk-4-examples, which no longer
+    contains installed-tests (which were separated into gtk-4-tests)
+  * Add overrides for false positive lintian/lintian!452
+  * Standards-Version: 4.6.2 (no changes required)
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 04 Feb 2023 15:14:39 +0000
 
 gtk4 (4.8.3+ds-1) unstable; urgency=medium
 

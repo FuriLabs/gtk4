@@ -1,5 +1,5 @@
 /* GTK - The GIMP Toolkit
- * gtkfilesystemmodel.h: GtkTreeModel wrapping a GtkFileSystem
+ * gtkfilesystemmodelprivate.h: GtkTreeModel wrapping a GtkFileSystem
  * Copyright (C) 2003, Red Hat, Inc.
  *
  * This library is free software; you can redistribute it and/or
@@ -16,21 +16,16 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GTK_FILE_SYSTEM_MODEL_H__
-#define __GTK_FILE_SYSTEM_MODEL_H__
+#ifndef __GTK_FILE_SYSTEM_MODEL_PRIVATE_H__
+#define __GTK_FILE_SYSTEM_MODEL_PRIVATE_H__
 
 #include <gio/gio.h>
 #include <gtk/gtkfilefilter.h>
 
 G_BEGIN_DECLS
 
-#define GTK_TYPE_FILE_SYSTEM_MODEL             (_gtk_file_system_model_get_type ())
-#define GTK_FILE_SYSTEM_MODEL(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_FILE_SYSTEM_MODEL, GtkFileSystemModel))
-#define GTK_IS_FILE_SYSTEM_MODEL(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_FILE_SYSTEM_MODEL))
-
-typedef struct _GtkFileSystemModel      GtkFileSystemModel;
-
-GType _gtk_file_system_model_get_type (void) G_GNUC_CONST;
+#define GTK_TYPE_FILE_SYSTEM_MODEL (gtk_file_system_model_get_type ())
+G_DECLARE_FINAL_TYPE (GtkFileSystemModel, gtk_file_system_model, GTK, FILE_SYSTEM_MODEL, GObject)
 
 GtkFileSystemModel *_gtk_file_system_model_new              (void);
 GtkFileSystemModel *_gtk_file_system_model_new_for_directory(GFile              *dir,
@@ -46,9 +41,6 @@ void                _gtk_file_system_model_add_and_query_file  (GtkFileSystemMod
 void                _gtk_file_system_model_add_and_query_files (GtkFileSystemModel *model,
                                                                 GList              *files,
                                                                 const char         *attributes);
-void                _gtk_file_system_model_update_file      (GtkFileSystemModel *model,
-                                                             GFile              *file,
-                                                             GFileInfo          *info);
 void                _gtk_file_system_model_update_files     (GtkFileSystemModel *model,
                                                              GList              *files,
                                                              GList              *infos);
@@ -67,4 +59,4 @@ void                _gtk_file_system_model_set_filter       (GtkFileSystemModel 
 
 G_END_DECLS
 
-#endif /* __GTK_FILE_SYSTEM_MODEL_H__ */
+#endif /* __GTK_FILE_SYSTEM_MODEL_PRIVATE_H__ */

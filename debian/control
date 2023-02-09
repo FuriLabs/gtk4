@@ -3,49 +3,48 @@ Section: libs
 Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Simon McVittie <smcv@debian.org>, Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>, Jeremy Bicha <jbicha@ubuntu.com>
+Uploaders: Simon McVittie <smcv@debian.org>, Jeremy Bicha <jbicha@ubuntu.com>
 Build-Depends: adwaita-icon-theme <!nocheck>,
                at-spi2-core <!nocheck>,
                dbus-daemon <!nocheck>,
                debhelper-compat (= 13),
                dh-exec,
                dh-sequence-translations,
-               dpkg-dev (>= 1.17.14),
                fonts-cantarell <!nocheck>,
                fonts-dejavu-core <!nocheck>,
-               gnome-pkg-tools (>= 0.11),
-               gobject-introspection (>= 1.41.3),
+               gnome-pkg-tools,
+               gobject-introspection (>= 1.72.0),
                gsettings-desktop-schemas <!nocheck>,
                iso-codes <!nocheck>,
-               libavcodec-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libavdevice-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libavfilter-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libavformat-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libavutil-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libcairo2-dev (>= 1.14.0),
-               libcolord-dev (>= 0.1.9),
+               libavcodec-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
+               libavdevice-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
+               libavfilter-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
+               libavformat-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
+               libavutil-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
+               libcairo2-dev,
+               libcolord-dev,
                libcloudproviders-dev (>= 0.3.1),
-               libcups2-dev (>= 2.0),
+               libcups2-dev,
                libegl1-mesa-dev [linux-any],
                libepoxy-dev,
                libfontconfig-dev,
-               libfribidi-dev (>= 0.19.7),
+               libfribidi-dev (>= 1.0.6),
                libgdk-pixbuf-2.0-dev (>= 2.30.0),
-               libgirepository1.0-dev (>= 1.39.0),
+               libgirepository1.0-dev (>= 1.72.0),
                libglib2.0-dev (>= 2.72.0),
                libgraphene-1.0-dev (>= 1.10.4~),
-               libgstreamer1.0-dev (>= 1.12.3),
-               libgstreamer-plugins-bad1.0-dev (>= 1.12.3),
+               libgstreamer1.0-dev,
+               libgstreamer-plugins-bad1.0-dev,
                libharfbuzz-dev (>= 2.6.0),
                libjpeg-dev,
                libjson-glib-dev:native,
                libpango1.0-dev (>= 1.50.0),
                libpng-dev,
-               libpolkit-gobject-1-dev (>= 0.105) [linux-any],
+               libpolkit-gobject-1-dev [linux-any],
                librsvg2-common [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32] <!nocheck>,
                librsvg2-dev (>= 2.52.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
-               libswresample-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libswscale-dev (>= 7:4.1.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
+               libswresample-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
+               libswscale-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
                libsysprof-capture-4-dev (>= 3.40.1) [linux-any],
                libtiff-dev,
                libvulkan-dev [linux-any],
@@ -58,10 +57,10 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libxfixes-dev,
                libxi-dev,
                libxinerama-dev,
-               libxkbcommon-dev (>= 0.2.0),
+               libxkbcommon-dev,
                libxkbfile-dev,
                libxml2-utils,
-               libxrandr-dev (>= 2:1.5.0),
+               libxrandr-dev,
                locales <!nocheck> | locales-all <!nocheck>,
                meson (>= 0.60),
                pkg-config,
@@ -72,7 +71,6 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                wayland-protocols (>= 1.25) [linux-any],
                weston [linux-any] <!nocheck>,
                xauth <!nocheck>,
-               xsltproc,
                xvfb <!nocheck>,
 Build-Depends-Indep: gi-docgen <!nodoc>,
                      libcairo2-doc <!nodoc>,
@@ -80,7 +78,7 @@ Build-Depends-Indep: gi-docgen <!nodoc>,
                      libpango1.0-doc <!nodoc>,
                      pandoc,
 Rules-Requires-Root: no
-Standards-Version: 4.6.1
+Standards-Version: 4.6.2
 XS-Debian-Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4
 XS-Debian-Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git
 Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4/tree/ubuntu/master
@@ -273,7 +271,7 @@ Description: example files for GTK 4
  suites.
  .
  This package contains the example files and a demonstration program
- for GTK4. It also contains the installed tests.
+ for GTK4.
 
 Package: gtk-4-tests
 Build-Profiles: <!noinsttest>
@@ -303,8 +301,6 @@ Depends: ${gir:Depends},
          ${misc:Depends},
          ${shlibs:Depends},
          libgtk-4-common
-Breaks: python-gi (<< 3.18),
-        python3-gi (<< 3.18)
 Provides: gir1.2-gdk-4.0 (= ${binary:Version}),
           gir1.2-gdkwayland-4.0 (= ${binary:Version}) [linux-any],
           gir1.2-gdkx11-4.0 (= ${binary:Version}),

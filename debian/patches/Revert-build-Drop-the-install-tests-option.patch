@@ -7,7 +7,6 @@ autopkgtest system
 
 This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
 ---
- docs/reference/gtk/building.md   |  2 +-
  meson.build                      |  1 +
  meson_options.txt                |  5 +++
  testsuite/a11y/meson.build       |  8 +++--
@@ -20,26 +19,13 @@ This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
  testsuite/gsk/meson.build        | 25 +++++++++----
  testsuite/gtk/meson.build        | 50 ++++++++++++++++++++++++--
  testsuite/tools/meson.build      | 36 ++++++++++++++++---
- 13 files changed, 354 insertions(+), 44 deletions(-)
+ 12 files changed, 353 insertions(+), 43 deletions(-)
 
-diff --git a/docs/reference/gtk/building.md b/docs/reference/gtk/building.md
-index 2be7da9..31073d1 100644
---- a/docs/reference/gtk/building.md
-+++ b/docs/reference/gtk/building.md
-@@ -294,7 +294,7 @@ is mainly useful for shortening turnaround times on developer
- systems. Installed builds of GTK should always have introspection
- support.
- 
--### `build-tests`, `demos`
-+### `build-tests`, `install-tests`, `demos`
- 
- By default, GTK will build quite a few tests and demos.
- While these are useful on a developer system, they are not
 diff --git a/meson.build b/meson.build
-index b7419c6..80304b0 100644
+index 28fb2ec..b003248 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -885,6 +885,7 @@ summary('Introspection', build_gir, section: 'Build')
+@@ -888,6 +888,7 @@ summary('Introspection', build_gir, section: 'Build')
  summary('Documentation', get_option('gtk_doc'), section: 'Build')
  summary('Man pages', get_option('man-pages'), section: 'Build')
  summary('Tests', get_option('build-tests'), section: 'Build')
@@ -48,10 +34,10 @@ index b7419c6..80304b0 100644
  summary('Examples', get_option('build-examples'), section: 'Build')
  
 diff --git a/meson_options.txt b/meson_options.txt
-index 18f6c13..c1df747 100644
+index 5fd4125..2e43a17 100644
 --- a/meson_options.txt
 +++ b/meson_options.txt
-@@ -123,3 +123,8 @@ option('build-tests',
+@@ -128,3 +128,8 @@ option('build-tests',
         type: 'boolean',
         value: true,
         description : 'Build tests')
@@ -418,7 +404,7 @@ index ef703d7..3228049 100644
 +  install_data(test_data, install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index cd36ba0..45c4744 100644
+index f3d3a1b..3236ce7 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
 @@ -1,10 +1,13 @@
@@ -441,7 +427,7 @@ index cd36ba0..45c4744 100644
  
  tests = [
    { 'name': 'array' },
-@@ -34,7 +37,8 @@ foreach t : tests
+@@ -32,7 +35,8 @@ foreach t : tests
      sources: '@0@.c'.format(test_name),
      c_args: common_cflags,
      dependencies: libgtk_dep,
@@ -451,7 +437,7 @@ index cd36ba0..45c4744 100644
    )
  
    suites = ['gdk'] + t.get('suites', [])
-@@ -61,7 +65,8 @@ foreach t : internal_tests
+@@ -59,7 +63,8 @@ foreach t : internal_tests
    test_exe = executable(t, '@0@.c'.format(t),
      c_args: common_cflags,
      dependencies: libgtk_static_dep,
@@ -461,7 +447,7 @@ index cd36ba0..45c4744 100644
    )
  
    test(t, test_exe,
-@@ -75,3 +80,28 @@ foreach t : internal_tests
+@@ -73,3 +78,28 @@ foreach t : internal_tests
      suite: 'gdk',
    )
  endforeach

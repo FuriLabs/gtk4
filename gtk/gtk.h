@@ -46,7 +46,7 @@
 #include <gtk/gtkapplication.h>
 #include <gtk/gtkapplicationwindow.h>
 #include <gtk/gtkaspectframe.h>
-#include <gtk/gtkassistant.h>
+#include <gtk/deprecated/gtkassistant.h>
 #include <gtk/gtkatcontext.h>
 #include <gtk/gtkbinlayout.h>
 #include <gtk/gtkbitset.h>
@@ -177,7 +177,7 @@
 #include <gtk/gtklistitemfactory.h>
 #include <gtk/deprecated/gtkliststore.h>
 #include <gtk/gtklistview.h>
-#include <gtk/gtklockbutton.h>
+#include <gtk/deprecated/gtklockbutton.h>
 #include <gtk/gtkmain.h>
 #include <gtk/gtkmaplistmodel.h>
 #include <gtk/gtkmediacontrols.h>
@@ -252,7 +252,7 @@
 #include <gtk/gtkspinner.h>
 #include <gtk/gtkstack.h>
 #include <gtk/gtkstackswitcher.h>
-#include <gtk/gtkstatusbar.h>
+#include <gtk/deprecated/gtkstatusbar.h>
 #include <gtk/gtkstringfilter.h>
 #include <gtk/gtkstringlist.h>
 #include <gtk/gtkstringsorter.h>
@@ -286,6 +286,7 @@
 #include <gtk/deprecated/gtktreeviewcolumn.h>
 #include <gtk/gtktypebuiltins.h>
 #include <gtk/gtktypes.h>
+#include <gtk/gtkurilauncher.h>
 #include <gtk/gtkversion.h>
 #include <gtk/gtkvideo.h>
 #include <gtk/gtkviewport.h>

@@ -22,9 +22,9 @@ stages:
 
 # Common variables
 variables:
-  COMMON_MESON_FLAGS: "-Dwerror=true -Dglib:werror=false -Dpango:werror=false -Dgtk-doc:werror=false -Dwayland-protocols:werror=false -Dsysprof:werror=false -Dwayland:werror=false"
+  COMMON_MESON_FLAGS: "-Dwerror=true -Dcairo:werror=false -Dgi-docgen:werror=false -Dgraphene:werror=false -Dlibepoxy:werror=false -Dlibsass:werror=false -Dpango:werror=false -Dsassc:werror=false -Dgdk-pixbuf:werror=false -Dglib:werror=false -Dlibcloudproviders:werror=false -Dlibpng:werror=false -Dlibtiff:werror=false -Dsysprof:werror=false -Dwayland-protocols:werror=false -Dharfbuzz:werror=false -Dfreetype2:werror=false -Dfontconfig:werror=false -Dfribidi:werror=false -Dlibffi:werror=false -Dlibjpeg-turbo:werror=false -Dmutest:werror=false -Dpixman:werror=false -Dproxy-libintl:werror=false"
   BACKEND_FLAGS: "-Dx11-backend=true -Dwayland-backend=true -Dbroadway-backend=true"
-  FEATURE_FLAGS: "-Dvulkan=enabled -Dcloudproviders=enabled"
+  FEATURE_FLAGS: "-Dvulkan=enabled -Dcloudproviders=enabled -Ddemos=false -Dbuild-examples=false -Dbuild-tests=false -Dbuild-testsuite=true"
   MESON_TEST_TIMEOUT_MULTIPLIER: 3
   FEDORA_IMAGE: "registry.gitlab.gnome.org/gnome/gtk/fedora:v40"
   FLATPAK_IMAGE: "quay.io/gnome_infrastructure/gnome-runtime-images:gnome-master"
@@ -113,7 +113,12 @@ release-build:
     - pip3 install --user meson~=0.64
     - meson subprojects download
     - meson subprojects update --reset
-    - meson setup ${COMMON_MESON_FLAGS} ${EXTRA_MESON_FLAGS} ${BACKEND_FLAGS} ${FEATURE_FLAGS} _build
+    - meson setup
+            ${COMMON_MESON_FLAGS}
+            ${EXTRA_MESON_FLAGS}
+            ${BACKEND_FLAGS}
+            ${FEATURE_FLAGS}
+            _build
     - meson compile -C _build
     - .gitlab-ci/run-tests.sh _build x11
 
@@ -201,7 +206,7 @@ macos:
     - export PATH=/Users/gitlabrunner/Library/Python/3.7/bin:$PATH
     - export MESON_FORCE_BACKTRACE=1
   script:
-    - meson setup
+    - meson setup ${COMMON_MESON_FLAGS}
             -Dx11-backend=false
             -Dbroadway-backend=true
             -Dmacos-backend=true
@@ -210,6 +215,10 @@ macos:
             -Dcpp_std=c++11
             -Dpixman:tests=disabled
             -Dlibjpeg-turbo:simd=disabled
+            -Ddemos=false
+            -Dbuild-tests=false
+            -Dbuild-examples=false
+            -Dbuild-testsuite=false
             _build
     - meson compile -C _build
   artifacts:
@@ -338,7 +347,10 @@ static-scan:
   script:
     - export PATH="$HOME/.local/bin:$PATH"
     - pip3 install --user meson~=0.64
-    - meson setup ${COMMON_MESON_FLAGS} ${EXTRA_MESON_FLAGS} _scan_build
+    - meson setup
+            ${COMMON_MESON_FLAGS}
+            ${EXTRA_MESON_FLAGS}
+            _scan_build
     - ninja -C _scan_build scan-build
   artifacts:
     paths:
@@ -352,6 +364,7 @@ asan-build:
   tags: [ asan ]
   stage: analysis
   needs: []
+  when: manual
   variables:
   script:
     - export PATH="$HOME/.local/bin:$PATH"
@@ -368,12 +381,22 @@ reference:
   image: $FEDORA_IMAGE
   stage: docs
   needs: []
-  variables:
-    EXTRA_MESON_FLAGS: "--buildtype=release --force-fallback-for=gdk-pixbuf,pango"
   script:
     - export PATH="$HOME/.local/bin:$PATH"
     - pip3 install --user meson~=0.64
-    - meson setup ${COMMON_MESON_FLAGS} ${EXTRA_MESON_FLAGS} -Dgtk_doc=true -Dgdk-pixbuf:gtk_doc=true -Dpango:gtk_doc=true _build
+    - meson setup
+            ${COMMON_MESON_FLAGS}
+            --buildtype=release
+            --force-fallback-for=gdk-pixbuf,pango
+            -Dintrospection=enabled
+            -Dgtk_doc=true
+            -Dgdk-pixbuf:gtk_doc=true
+            -Dpango:gtk_doc=true
+            -Ddemos=false
+            -Dbuild-examples=false
+            -Dbuild-tests=false
+            -Dbuild-testsuite=false
+            _build
     - meson compile -C _build
     - mkdir -p _reference/
     - mv _build/docs/reference/gdk/gdk4/ _reference/gdk4/

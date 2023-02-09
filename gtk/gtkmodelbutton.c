@@ -832,6 +832,8 @@ update_accel (GtkModelButton *self,
                                             "css-name", "accelerator",
                                             NULL);
           gtk_widget_insert_before (self->accel_label, GTK_WIDGET (self), NULL);
+          gtk_widget_set_hexpand (self->accel_label, TRUE),
+          gtk_widget_set_halign (self->accel_label, GTK_ALIGN_END);
         }
 
       gtk_accelerator_parse (accel, &key, &mods);
@@ -1439,13 +1441,10 @@ gesture_pressed (GtkGestureClick *gesture,
                  double           y,
                  GtkWidget       *widget)
 {
-  GdkEventSequence *sequence;
-
   if (gtk_widget_get_focus_on_click (widget) && !gtk_widget_has_focus (widget))
     gtk_widget_grab_focus (widget);
 
-  sequence = gtk_gesture_single_get_current_sequence (GTK_GESTURE_SINGLE (gesture));
-  gtk_gesture_set_sequence_state (GTK_GESTURE (gesture), sequence, GTK_EVENT_SEQUENCE_CLAIMED);
+  gtk_gesture_set_state (GTK_GESTURE (gesture), GTK_EVENT_SEQUENCE_CLAIMED);
 }
 
 static void

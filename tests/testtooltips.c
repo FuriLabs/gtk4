@@ -23,6 +23,8 @@
 
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 typedef struct _MyTooltip MyTooltip;
 typedef struct _MyTooltipClass MyTooltipClass;
 
@@ -445,7 +447,7 @@ main (int argc, char *argv[])
   gtk_box_append (GTK_BOX (box), button);
 
   /* Done! */
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (!done)
     g_main_context_iteration (NULL, TRUE);

@@ -18,6 +18,8 @@
 #include <gtk/gtk.h>
 #include <string.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static char *
 get_content (void)
 {
@@ -103,7 +105,7 @@ main (int argc, char *argv[])
   sb2 = gtk_scrollbar_new (GTK_ORIENTATION_VERTICAL, adj);
   gtk_box_append (GTK_BOX (box), sb2);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (!done)
     g_main_context_iteration (NULL, TRUE);

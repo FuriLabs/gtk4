@@ -35,6 +35,7 @@
 #include "gtkconstraint.h"
 #include "gtkcssboxesprivate.h"
 #include "gtkcssfiltervalueprivate.h"
+#include "gtkcsscolorvalueprivate.h"
 #include "gtkcsstransformvalueprivate.h"
 #include "gtkcsspositionvalueprivate.h"
 #include "gtkcssfontvariationsvalueprivate.h"
@@ -65,7 +66,7 @@
 #include "gtkshortcuttrigger.h"
 #include "gtksizegroup-private.h"
 #include "gtksnapshotprivate.h"
-#include "gtkstylecontextprivate.h"
+#include "deprecated/gtkstylecontextprivate.h"
 #include "gtktooltipprivate.h"
 #include "gsktransformprivate.h"
 #include "gtktypebuiltins.h"
@@ -320,14 +321,14 @@
  * The interface description semantics expected in composite template descriptions
  * is slightly different from regular [class@Gtk.Builder] XML.
  *
- * Unlike regular interface descriptions, [method@Gtk.WidgetClass.set_template] will
- * expect a `<template>` tag as a direct child of the toplevel `<interface>`
- * tag. The `<template>` tag must specify the “class” attribute which must be
- * the type name of the widget. Optionally, the “parent” attribute may be
- * specified to specify the direct parent type of the widget type, this is
- * ignored by `GtkBuilder` but required for UI design tools like
- * [Glade](https://glade.gnome.org/) to introspect what kind of properties and
- * internal children exist for a given type when the actual type does not exist.
+ * Unlike regular interface descriptions, [method@Gtk.WidgetClass.set_template]
+ * will expect a `<template>` tag as a direct child of the toplevel
+ * `<interface>` tag. The `<template>` tag must specify the “class” attribute
+ * which must be the type name of the widget. Optionally, the “parent”
+ * attribute may be specified to specify the direct parent type of the widget
+ * type; this is ignored by `GtkBuilder` but can be used by UI design tools to
+ * introspect what kind of properties and internal children exist for a given
+ * type when the actual type does not exist.
  *
  * The XML which is contained inside the `<template>` tag behaves as if it were
  * added to the `<object>` tag defining the widget itself. You may set properties
@@ -629,8 +630,6 @@ static void             gtk_widget_buildable_custom_finished    (GtkBuildable   
                                                                  GObject            *child,
                                                                  const char         *tagname,
                                                                  gpointer            data);
-static void             gtk_widget_buildable_parser_finished    (GtkBuildable       *buildable,
-                                                                 GtkBuilder         *builder);
 static void             gtk_widget_set_usize_internal           (GtkWidget          *widget,
                                                                  int                 width,
                                                                  int                 height);
@@ -2219,7 +2218,9 @@ _gtk_widget_set_sequence_state_internal (GtkWidget             *widget,
                gtk_gesture_get_sequence_state (gesture, sequence) != GTK_EVENT_SEQUENCE_CLAIMED)
         continue;
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       retval = gtk_gesture_set_sequence_state (gesture, seq, gesture_state);
+G_GNUC_END_IGNORE_DEPRECATIONS
 
       if (retval || gesture == emitter)
         {
@@ -2442,8 +2443,10 @@ gtk_widget_root (GtkWidget *widget)
       priv->root = priv->parent->priv->root;
     }
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   if (priv->context)
     gtk_style_context_set_display (priv->context, gtk_root_get_display (priv->root));
+G_GNUC_END_IGNORE_DEPRECATIONS
 
   if (priv->surface_transform_data)
     add_parent_surface_transform_changed_listener (widget);
@@ -2479,8 +2482,10 @@ gtk_widget_unroot (GtkWidget *widget)
 
   GTK_WIDGET_GET_CLASS (widget)->unroot (widget);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   if (priv->context)
     gtk_style_context_set_display (priv->context, gdk_display_get_default ());
+G_GNUC_END_IGNORE_DEPRECATIONS
 
   if (priv->layout_manager)
     gtk_layout_manager_set_root (priv->layout_manager, NULL);
@@ -2657,6 +2662,8 @@ gtk_widget_pop_paintables (GtkWidget *widget)
  * When a toplevel container is shown, it is immediately realized and
  * mapped; other shown widgets are realized and mapped when their
  * toplevel container is realized and mapped.
+ *
+ * Deprecated: 4.10: Use [method@Gtk.Widget.set_visible] instead
  */
 void
 gtk_widget_show (GtkWidget *widget)
@@ -2723,6 +2730,8 @@ gtk_widget_real_show (GtkWidget *widget)
  * Reverses the effects of gtk_widget_show().
  *
  * This is causing the widget to be hidden (invisible to the user).
+ *
+ * Deprecated: 4.10: Use [method@Gtk.Widget.set_visible] instead
  */
 void
 gtk_widget_hide (GtkWidget *widget)
@@ -3410,10 +3419,12 @@ gtk_widget_realize (GtkWidget *widget)
 
   g_signal_emit (widget, widget_signals[REALIZE], 0);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   if (priv->context)
     gtk_style_context_set_scale (priv->context, gtk_widget_get_scale_factor (widget));
   else
     gtk_widget_get_style_context (widget);
+G_GNUC_END_IGNORE_DEPRECATIONS
 
   gtk_widget_pop_verify_invariants (widget);
 }
@@ -5655,10 +5666,6 @@ gtk_widget_get_state_flags (GtkWidget *widget)
  *
  * Note that setting this to %TRUE doesn’t mean the widget is
  * actually viewable, see [method@Gtk.Widget.get_visible].
- *
- * This function simply calls [method@Gtk.Widget.show] or
- * [method@Gtk.Widget.hide] but is nicer to use when the
- * visibility of the widget depends on some condition.
  */
 void
 gtk_widget_set_visible (GtkWidget *widget,
@@ -5666,10 +5673,12 @@ gtk_widget_set_visible (GtkWidget *widget,
 {
   g_return_if_fail (GTK_IS_WIDGET (widget));
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   if (visible)
     gtk_widget_show (widget);
   else
     gtk_widget_hide (widget);
+G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 void
@@ -6737,12 +6746,12 @@ _gtk_widget_scale_changed (GtkWidget *widget)
 
   g_return_if_fail (GTK_IS_WIDGET (widget));
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   if (priv->context)
     gtk_style_context_set_scale (priv->context, gtk_widget_get_scale_factor (widget));
+G_GNUC_END_IGNORE_DEPRECATIONS
 
   g_object_notify_by_pspec (G_OBJECT (widget), widget_props[PROP_SCALE_FACTOR]);
-
-  gtk_widget_queue_draw (widget);
 
   gtk_widget_forall (widget, (GtkCallback)_gtk_widget_scale_changed, NULL);
 }
@@ -8456,11 +8465,78 @@ gtk_widget_accessible_get_platform_state (GtkAccessible              *self,
     }
 }
 
+static GtkAccessible *
+gtk_widget_accessible_get_accessible_parent (GtkAccessible *self)
+{
+  return GTK_ACCESSIBLE (gtk_widget_get_parent (GTK_WIDGET (self)));
+}
+
+static GtkAccessible *
+gtk_widget_accessible_get_next_accessible_sibling (GtkAccessible *self)
+{
+  return GTK_ACCESSIBLE (gtk_widget_get_next_sibling (GTK_WIDGET (self)));
+}
+
+static GtkAccessible *
+gtk_widget_accessible_get_first_accessible_child (GtkAccessible *self)
+{
+  return GTK_ACCESSIBLE (gtk_widget_get_first_child (GTK_WIDGET (self)));
+}
+
+static gboolean
+gtk_widget_accessible_get_bounds (GtkAccessible *self,
+                                  int           *x,
+                                  int           *y,
+                                  int           *width,
+                                  int           *height)
+{
+  GtkWidget *widget;
+  GtkWidget *parent;
+  GtkWidget *bounds_relative_to;
+  double translated_x, translated_y;
+  graphene_rect_t bounds = GRAPHENE_RECT_INIT_ZERO;
+
+  widget = GTK_WIDGET (self);
+  if (!gtk_widget_get_realized (widget))
+    return FALSE;
+
+  parent = gtk_widget_get_parent (widget);
+  if (parent != NULL)
+    {
+      gtk_widget_translate_coordinates (widget, parent, 0., 0., &translated_x, &translated_y);
+      *x = floorf (translated_x);
+      *y = floorf (translated_y);
+      bounds_relative_to = parent;
+    }
+  else
+    {
+      *x = *y = 0;
+      bounds_relative_to = widget;
+    }
+
+  if (!gtk_widget_compute_bounds (widget, bounds_relative_to, &bounds))
+    {
+      *width = 0;
+      *height = 0;
+    }
+  else
+    {
+      *width = ceilf (graphene_rect_get_width (&bounds));
+      *height = ceilf (graphene_rect_get_height (&bounds));
+    }
+
+  return TRUE;
+}
+
 static void
 gtk_widget_accessible_interface_init (GtkAccessibleInterface *iface)
 {
   iface->get_at_context = gtk_widget_accessible_get_at_context;
   iface->get_platform_state = gtk_widget_accessible_get_platform_state;
+  iface->get_accessible_parent = gtk_widget_accessible_get_accessible_parent;
+  iface->get_first_accessible_child = gtk_widget_accessible_get_first_accessible_child;
+  iface->get_next_accessible_sibling = gtk_widget_accessible_get_next_accessible_sibling;
+  iface->get_bounds = gtk_widget_accessible_get_bounds;
 }
 
 static void
@@ -8496,7 +8572,6 @@ gtk_widget_buildable_interface_init (GtkBuildableIface *iface)
   iface->set_id = gtk_widget_buildable_set_id;
   iface->get_id = gtk_widget_buildable_get_id;
   iface->get_internal_child = gtk_widget_buildable_get_internal_child;
-  iface->parser_finished = gtk_widget_buildable_parser_finished;
   iface->custom_tag_start = gtk_widget_buildable_custom_tag_start;
   iface->custom_tag_end = gtk_widget_buildable_custom_tag_end;
   iface->custom_finished = gtk_widget_buildable_custom_finished;
@@ -8557,11 +8632,6 @@ gtk_widget_buildable_get_internal_child (GtkBuildable *buildable,
   return NULL;
 }
 
-static void
-gtk_widget_buildable_parser_finished (GtkBuildable *buildable,
-                                      GtkBuilder   *builder)
-{
-}
 
 typedef struct
 {
@@ -10714,6 +10784,8 @@ _gtk_widget_peek_style_context (GtkWidget *widget)
  * for the lifetime of @widget.
  *
  * Returns: (transfer none): the widgets `GtkStyleContext`
+ *
+ * Deprecated: 4.10: Style contexts will be removed in GTK 5
  */
 GtkStyleContext *
 gtk_widget_get_style_context (GtkWidget *widget)
@@ -10728,11 +10800,13 @@ gtk_widget_get_style_context (GtkWidget *widget)
 
       priv->context = gtk_style_context_new_for_node (priv->cssnode);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       gtk_style_context_set_scale (priv->context, gtk_widget_get_scale_factor (widget));
 
       display = _gtk_widget_get_display (widget);
       if (display)
         gtk_style_context_set_display (priv->context, display);
+G_GNUC_END_IGNORE_DEPRECATIONS
     }
 
   return priv->context;
@@ -11371,8 +11445,7 @@ gtk_widget_activate_action_variant (GtkWidget  *widget,
  * gtk_widget_activate_action:
  * @widget: a `GtkWidget`
  * @name: the name of the action to activate
- * @format_string: GVariant format string for arguments or %NULL
- *   for no arguments
+ * @format_string: (nullable): GVariant format string for arguments
  * @...: arguments, as given by format string
  *
  * Looks up the action in the action groups associated
@@ -12566,7 +12639,7 @@ determine_type (GParamSpec *pspec)
  * Installs an action called @action_name on @widget_class and
  * binds its state to the value of the @property_name property.
  *
- * This function will perform a few santity checks on the property selected
+ * This function will perform a few sanity checks on the property selected
  * via @property_name. Namely, the property must exist, must be readable,
  * writable and must not be construct-only. There are also restrictions
  * on the type of the given property, it must be boolean, int, unsigned int,
@@ -12857,6 +12930,33 @@ gtk_widget_set_css_classes (GtkWidget   *widget,
 
   gtk_css_node_set_classes (priv->cssnode, classes);
   g_object_notify_by_pspec (G_OBJECT (widget), widget_props[PROP_CSS_CLASSES]);
+}
+
+/**
+ * gtk_widget_get_color:
+ * @widget: a `GtkWidget`
+ * @color: (out): return location for the color
+ *
+ * Gets the current foreground color for the widgets
+ * CSS style.
+ *
+ * This function should only be used in snapshot
+ * implementations that need need to do custom
+ * drawing with the foreground color.
+ *
+ * Since: 4.10
+ */
+void
+gtk_widget_get_color (GtkWidget *widget,
+                      GdkRGBA   *color)
+{
+  GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
+  GtkCssStyle *style;
+
+  g_return_if_fail (GTK_IS_WIDGET (widget));
+
+  style = gtk_css_node_get_style (priv->cssnode);
+  *color = *gtk_css_color_value_get_rgba (style->core->color);
 }
 
 /*< private >

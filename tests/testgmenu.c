@@ -21,6 +21,8 @@
 #include <gio/gio.h>
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 /* TODO
  *
  * - Labeled sections
@@ -691,7 +693,7 @@ main (int argc, char *argv[])
       gtk_box_append (GTK_BOX (box), button);
     }
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (!done)
     g_main_context_iteration (NULL, TRUE);

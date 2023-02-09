@@ -70,7 +70,6 @@ struct _GtkIMContextWayland
 {
   GtkIMContextSimple parent_instance;
   GtkWidget *widget;
-  GtkWidget *controller_widget;
 
   GtkGesture *gesture;
   double press_x;
@@ -239,14 +238,24 @@ text_input_delete_surrounding_text (void                     *data,
 {
   GtkIMContextWaylandGlobal *global = data;
   GtkIMContextWayland *context;
+  char *cursor_pointer;
+  uint32_t char_before_length;
+  uint32_t char_after_length;
 
   if (!global->current)
       return;
   
   context = GTK_IM_CONTEXT_WAYLAND (global->current);
 
-  context->pending_surrounding_delete.before_length = before_length;
-  context->pending_surrounding_delete.after_length = after_length;
+  /* We already got byte lengths from text_input_v3, but GTK uses char lengths
+   * for delete_surrounding, So convert it here.
+   */
+  cursor_pointer = context->surrounding.text + context->surrounding.cursor_idx;
+  char_before_length = g_utf8_pointer_to_offset (cursor_pointer - before_length, cursor_pointer);
+  char_after_length = g_utf8_pointer_to_offset (cursor_pointer, cursor_pointer + after_length);
+
+  context->pending_surrounding_delete.before_length = char_before_length;
+  context->pending_surrounding_delete.after_length = char_after_length;
 }
 
 static void
@@ -576,19 +585,19 @@ gtk_im_context_wayland_set_client_widget (GtkIMContext *context,
   if (context_wayland->widget)
     gtk_im_context_wayland_focus_out (context);
 
-  if (context_wayland->controller_widget)
+  if (context_wayland->widget && context_wayland->gesture)
     {
-      gtk_widget_remove_controller (context_wayland->controller_widget,
+      gtk_widget_remove_controller (context_wayland->widget,
                                     GTK_EVENT_CONTROLLER (context_wayland->gesture));
       context_wayland->gesture = NULL;
-      g_clear_object (&context_wayland->controller_widget);
     }
 
   g_set_object (&context_wayland->widget, widget);
 
-  if (widget)
+  if (widget &&
+      !GTK_IS_TEXT (widget) &&
+      !GTK_IS_TEXT_VIEW (widget))
     {
-      GtkWidget *parent;
       GtkGesture *gesture;
 
       gesture = gtk_gesture_click_new ();
@@ -600,16 +609,7 @@ gtk_im_context_wayland_set_client_widget (GtkIMContext *context,
       g_signal_connect (gesture, "released",
                         G_CALLBACK (released_cb), context);
 
-      parent = gtk_widget_get_parent (widget);
-
-      if (parent &&
-          GTK_IS_EDITABLE (widget) &&
-          GTK_IS_EDITABLE (parent))
-        g_set_object (&context_wayland->controller_widget, parent);
-      else
-        g_set_object (&context_wayland->controller_widget, widget);
-
-      gtk_widget_add_controller (context_wayland->controller_widget,
+      gtk_widget_add_controller (context_wayland->widget,
                                  GTK_EVENT_CONTROLLER (gesture));
       context_wayland->gesture = gesture;
     }
@@ -974,6 +974,20 @@ gtk_im_context_wayland_commit (GtkIMContext *context,
 }
 
 static void
+gtk_im_context_wayland_activate_osk (GtkIMContext *context)
+{
+  GtkIMContextWaylandGlobal *global;
+
+  global = gtk_im_context_wayland_get_global (GTK_IM_CONTEXT_WAYLAND (context));
+  if (global == NULL)
+    return;
+
+  zwp_text_input_v3_enable (global->text_input);
+  notify_im_change (GTK_IM_CONTEXT_WAYLAND (context),
+                    ZWP_TEXT_INPUT_V3_CHANGE_CAUSE_OTHER);
+}
+
+static void
 gtk_im_context_wayland_class_init (GtkIMContextWaylandClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -992,6 +1006,7 @@ gtk_im_context_wayland_class_init (GtkIMContextWaylandClass *klass)
   im_context_class->set_surrounding_with_selection = gtk_im_context_wayland_set_surrounding;
   im_context_class->get_surrounding_with_selection = gtk_im_context_wayland_get_surrounding;
   im_context_class->commit = gtk_im_context_wayland_commit;
+  im_context_class->activate_osk = gtk_im_context_wayland_activate_osk;
 }
 
 static void

@@ -19,6 +19,8 @@
 #include "config.h"
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 typedef struct _TreeStruct TreeStruct;
 struct _TreeStruct
 {
@@ -473,7 +475,7 @@ main (int argc, char *argv[])
 		    NULL);
   gtk_window_set_default_size (GTK_WINDOW (window),
 			       650, 400);
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   window = gtk_window_new ();
   gtk_window_set_title (GTK_WINDOW (window), "Model");
@@ -541,7 +543,7 @@ main (int argc, char *argv[])
   gtk_window_set_default_size (GTK_WINDOW (window),
 			       650, 400);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
   while (!done)
     g_main_context_iteration (NULL, TRUE);
 

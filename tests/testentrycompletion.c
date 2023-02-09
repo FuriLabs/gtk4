@@ -21,6 +21,8 @@
 #include <string.h>
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 /* Don't copy this bad example; inline RGB data is always a better
  * idea than inline XPMs.
  */
@@ -409,7 +411,7 @@ main (int argc, char *argv[])
 
   gtk_box_append (GTK_BOX (vbox), entry);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (!done)
     g_main_context_iteration (NULL, TRUE);

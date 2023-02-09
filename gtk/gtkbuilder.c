@@ -192,9 +192,9 @@
  *
  * Beyond this general structure, several object classes define their
  * own XML DTD fragments for filling in the ANY placeholders in the DTD
- * above. Note that a custom element in a <child> element gets parsed by
+ * above. Note that a custom element in a `<child>` element gets parsed by
  * the custom tag handler of the parent object, while a custom element in
- * an <object> element gets parsed by the custom tag handler of the object.
+ * an `<object>` element gets parsed by the custom tag handler of the object.
  *
  * These XML fragments are explained in the documentation of the
  * respective objects.
@@ -1409,7 +1409,7 @@ gtk_builder_extend_with_template (GtkBuilder   *builder,
  * gtk_builder_add_from_resource:
  * @builder: a `GtkBuilder`
  * @resource_path: the path of the resource file to parse
- * @error: (nullable): return location for an erro
+ * @error: (nullable): return location for an error
  *
  * Parses a resource file containing a UI definition
  * and merges it with the current contents of @builder.
@@ -2324,6 +2324,23 @@ gtk_builder_value_from_string_type (GtkBuilder   *builder,
       else if (G_VALUE_HOLDS (value, G_TYPE_BYTES))
         {
           g_value_take_boxed (value, g_bytes_new (string, strlen (string)));
+        }
+      else if (G_VALUE_HOLDS (value, PANGO_TYPE_ATTR_LIST))
+        {
+          PangoAttrList *attrs;
+
+          attrs = pango_attr_list_from_string (string);
+          if (attrs)
+            g_value_take_boxed (value, attrs);
+          else
+            {
+              g_set_error (error,
+                           GTK_BUILDER_ERROR,
+                           GTK_BUILDER_ERROR_INVALID_VALUE,
+                           "Could not parse PangoAttrList '%s'",
+                           string);
+              ret = FALSE;
+            }
         }
       else
         {

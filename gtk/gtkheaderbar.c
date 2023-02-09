@@ -61,7 +61,7 @@
  *
  * The `GtkHeaderBar` implementation of the `GtkBuildable` interface supports
  * adding children at the start or end sides by specifying “start” or “end” as
- * the “type” attribute of a <child> element, or setting the title widget by
+ * the “type” attribute of a `<child>` element, or setting the title widget by
  * specifying “title” value.
  *
  * By default the `GtkHeaderBar` uses a `GtkLabel` displaying the title of the
@@ -777,7 +777,7 @@ gtk_header_bar_set_show_title_buttons (GtkHeaderBar *bar,
  * from those on the right. Recognized button names are minimize,
  * maximize, close and icon (the window icon).
  *
- * For example, “icon:minimize,maximize,close” specifies a icon
+ * For example, “icon:minimize,maximize,close” specifies an icon
  * on the left, and minimize, maximize and close buttons on the right.
  */
 void

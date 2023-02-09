@@ -23,14 +23,14 @@
 #include <gtk/gtkbox.h>
 #include <gtk/gtkdragsource.h>
 #include <gtk/gtkeventcontroller.h>
-#include <gtk/gtkfilechooserdialog.h>
+#include <gtk/gtkfiledialog.h>
 #include <gtk/gtkinscription.h>
+#include <gtk/gtkimage.h>
 #include <gtk/gtklabel.h>
 #include <gtk/gtklistbox.h>
 #include <gtk/gtklistitem.h>
 #include <gtk/gtklistview.h>
-#include <gtk/gtkliststore.h>
-#include <gtk/gtkmessagedialog.h>
+#include <gtk/gtkalertdialog.h>
 #include <gtk/gtkpicture.h>
 #include <gtk/gtkpopover.h>
 #include <gtk/gtksignallistitemfactory.h>
@@ -38,9 +38,10 @@
 #include <gtk/gtktogglebutton.h>
 #include <gtk/gtktreeexpander.h>
 #include <gtk/gtktreelistmodel.h>
-#include <gtk/gtktreemodel.h>
-#include <gtk/gtktreeview.h>
 #include <gtk/gtkstack.h>
+#include <gtk/gtknoselection.h>
+#include <gtk/gtkcolumnview.h>
+#include <gtk/gtkcolumnviewcolumn.h>
 #include <gsk/gskrendererprivate.h>
 #include <gsk/gskrendernodeprivate.h>
 #include <gsk/gskroundedrectprivate.h>
@@ -57,6 +58,124 @@
 #include "startrecording.h"
 #include "eventrecording.h"
 #include "recorderrow.h"
+
+/* {{{ ObjectProperty object */
+
+typedef struct _ObjectProperty ObjectProperty;
+
+G_DECLARE_FINAL_TYPE (ObjectProperty, object_property, OBJECT, PROPERTY, GObject);
+
+struct _ObjectProperty
+{
+  GObject parent;
+
+  char *name;
+  char *value;
+  GdkTexture *texture;
+};
+
+enum {
+  OBJECT_PROPERTY_PROP_NAME = 1,
+  OBJECT_PROPERTY_PROP_VALUE,
+  OBJECT_PROPERTY_PROP_TEXTURE,
+  OBJECT_PROPERTY_NUM_PROPERTIES
+};
+
+G_DEFINE_TYPE (ObjectProperty, object_property, G_TYPE_OBJECT);
+
+static void
+object_property_init (ObjectProperty *self)
+{
+}
+
+static void
+object_property_finalize (GObject *object)
+{
+  ObjectProperty *self = OBJECT_PROPERTY (object);
+
+  g_free (self->name);
+  g_free (self->value);
+  g_object_unref (self->texture);
+
+  G_OBJECT_CLASS (object_property_parent_class)->finalize (object);
+}
+
+static void
+object_property_get_property (GObject    *object,
+                                   guint       property_id,
+                                   GValue     *value,
+                                   GParamSpec *pspec)
+{
+  ObjectProperty *self = OBJECT_PROPERTY (object);
+
+  switch (property_id)
+    {
+    case OBJECT_PROPERTY_PROP_NAME:
+      g_value_set_string (value, self->name);
+      break;
+
+    case OBJECT_PROPERTY_PROP_VALUE:
+      g_value_set_string (value, self->value);
+      break;
+
+    case OBJECT_PROPERTY_PROP_TEXTURE:
+      g_value_set_object (value, self->value);
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void
+object_property_class_init (ObjectPropertyClass *class)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (class);
+  GParamSpec *pspec;
+
+  object_class->finalize = object_property_finalize;
+  object_class->get_property = object_property_get_property;
+
+  pspec = g_param_spec_string ("name", NULL, NULL,
+                               NULL,
+                               G_PARAM_READABLE |
+                               G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_property (object_class, OBJECT_PROPERTY_PROP_NAME, pspec);
+
+  pspec = g_param_spec_string ("value", NULL, NULL,
+                               NULL,
+                               G_PARAM_READABLE |
+                               G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_property (object_class, OBJECT_PROPERTY_PROP_VALUE, pspec);
+
+  pspec = g_param_spec_object ("texture", NULL, NULL,
+                               GDK_TYPE_TEXTURE,
+                               G_PARAM_READABLE |
+                               G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_property (object_class, OBJECT_PROPERTY_PROP_TEXTURE, pspec);
+}
+
+static ObjectProperty *
+object_property_new (const char *name,
+                     const char *value,
+                     GdkTexture *texture)
+{
+  ObjectProperty *self;
+
+  self = g_object_new (object_property_get_type (), NULL);
+
+  self->name = g_strdup (name);
+  self->value = g_strdup (value);
+  g_set_object (&self->texture, texture);
+
+  return self;
+}
+
+/* }}} */
 
 struct _GtkInspectorRecorder
 {
@@ -75,8 +194,8 @@ struct _GtkInspectorRecorder
   GtkWidget *render_node_clip_button;
   GtkWidget *node_property_tree;
   GtkWidget *recording_data_stack;
-  GtkTreeModel *render_node_properties;
-  GtkTreeModel *event_properties;
+  GListStore *render_node_properties;
+  GListStore *event_properties;
   GtkWidget *event_property_tree;
   GtkWidget *event_view;
 
@@ -466,6 +585,65 @@ show_render_node (GtkInspectorRecorder *recorder,
   g_object_unref (paintable);
 }
 
+static void
+setup_label (GtkSignalListItemFactory *factory,
+             GtkListItem              *list_item)
+{
+  GtkWidget *label;
+
+  label = gtk_label_new (NULL);
+  gtk_label_set_xalign (GTK_LABEL (label), 0.);
+  gtk_list_item_set_child (list_item, label);
+}
+
+static void
+bind_property_name (GtkSignalListItemFactory *factory,
+                    GtkListItem              *list_item)
+{
+  GtkWidget *label;
+  ObjectProperty *property;
+
+  property = gtk_list_item_get_item (list_item);
+  label = gtk_list_item_get_child (list_item);
+  gtk_label_set_text (GTK_LABEL (label), property->name);
+}
+
+static void
+setup_value_widgets (GtkSignalListItemFactory *factory,
+                     GtkListItem              *list_item)
+{
+  GtkWidget *label;
+  GtkWidget *picture;
+  GtkWidget *box;
+
+  box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 10);
+  label = gtk_label_new (NULL);
+  gtk_label_set_xalign (GTK_LABEL (label), 0.);
+  gtk_box_append (GTK_BOX (box), label);
+  picture = gtk_picture_new ();
+  gtk_picture_set_can_shrink (GTK_PICTURE (picture), TRUE);
+  gtk_picture_set_content_fit (GTK_PICTURE (picture), GTK_CONTENT_FIT_CONTAIN);
+  gtk_box_append (GTK_BOX (box), picture);
+  gtk_list_item_set_child (list_item, box);
+}
+
+static void
+bind_value_widgets (GtkSignalListItemFactory *factory,
+                    GtkListItem              *list_item)
+{
+  GtkWidget *box, *label, *picture;
+  ObjectProperty *property;
+
+  property = gtk_list_item_get_item (list_item);
+  box = gtk_list_item_get_child (list_item);
+  label = gtk_widget_get_first_child (box);
+  picture = gtk_widget_get_next_sibling (label);
+  gtk_label_set_text (GTK_LABEL (label), property->value);
+  gtk_widget_set_visible (picture, property->texture != NULL);
+  if (property->texture)
+    gtk_picture_set_paintable (GTK_PICTURE (picture), GDK_PAINTABLE (property->texture));
+}
+
 static GskRenderNode *
 make_dot (double x, double y)
 {
@@ -505,8 +683,8 @@ show_event (GtkInspectorRecorder *recorder,
   gsk_render_node_unref (temp);
 }
 
-static void populate_event_properties (GtkListStore *store,
-                                       GdkEvent     *event);
+static void populate_event_properties (GListStore *store,
+                                       GdkEvent   *event);
 
 static void
 recording_selected (GtkSingleSelection   *selection,
@@ -556,7 +734,7 @@ recording_selected (GtkSingleSelection   *selection,
             }
         }
 
-      populate_event_properties (GTK_LIST_STORE (recorder->event_properties), event);
+      populate_event_properties (recorder->event_properties, event);
 
       if (recorder->highlight_sequences)
         selected_sequence = gdk_event_get_event_sequence (event);
@@ -641,20 +819,15 @@ get_linear_gradient_texture (gsize n_stops, const GskColorStop *stops)
 }
 
 static void
-add_text_row (GtkListStore *store,
-              const char   *name,
-              const char   *text)
+add_text_row (GListStore *store,
+              const char *name,
+              const char *text)
 {
-  gtk_list_store_insert_with_values (store, NULL, -1,
-                                     0, name,
-                                     1, text,
-                                     2, FALSE,
-                                     3, NULL,
-                                     -1);
+  g_list_store_append (store, object_property_new (name, text, NULL));
 }
 
 static void
-add_color_row (GtkListStore  *store,
+add_color_row (GListStore    *store,
                const char    *name,
                const GdkRGBA *color)
 {
@@ -663,20 +836,15 @@ add_color_row (GtkListStore  *store,
 
   text = gdk_rgba_to_string (color);
   texture = get_color_texture (color);
-  gtk_list_store_insert_with_values (store, NULL, -1,
-                                     0, name,
-                                     1, text,
-                                     2, TRUE,
-                                     3, texture,
-                                     -1);
+  g_list_store_append (store, object_property_new (name, text, texture));
   g_free (text);
   g_object_unref (texture);
 }
 
 static void
-add_int_row (GtkListStore  *store,
-             const char    *name,
-             int            value)
+add_int_row (GListStore  *store,
+             const char  *name,
+             int          value)
 {
   char *text = g_strdup_printf ("%d", value);
   add_text_row (store, name, text);
@@ -684,9 +852,9 @@ add_int_row (GtkListStore  *store,
 }
 
 static void
-add_uint_row (GtkListStore  *store,
-              const char    *name,
-              guint          value)
+add_uint_row (GListStore  *store,
+              const char  *name,
+              guint        value)
 {
   char *text = g_strdup_printf ("%u", value);
   add_text_row (store, name, text);
@@ -694,17 +862,17 @@ add_uint_row (GtkListStore  *store,
 }
 
 static void
-add_boolean_row (GtkListStore  *store,
-                 const char    *name,
-                 gboolean       value)
+add_boolean_row (GListStore  *store,
+                 const char  *name,
+                 gboolean     value)
 {
   add_text_row (store, name, value ? "TRUE" : "FALSE");
 }
 
 static void
-add_float_row (GtkListStore  *store,
-               const char    *name,
-               float          value)
+add_float_row (GListStore  *store,
+               const char  *name,
+               float        value)
 {
   char *text = g_strdup_printf ("%.2f", value);
   add_text_row (store, name, text);
@@ -712,13 +880,13 @@ add_float_row (GtkListStore  *store,
 }
 
 static void
-populate_render_node_properties (GtkListStore  *store,
+populate_render_node_properties (GListStore    *store,
                                  GskRenderNode *node)
 {
   graphene_rect_t bounds;
   char *tmp;
 
-  gtk_list_store_clear (store);
+  g_list_store_remove_all (store);
 
   gsk_render_node_get_bounds (node, &bounds);
 
@@ -739,7 +907,6 @@ populate_render_node_properties (GtkListStore  *store,
         GdkTexture *texture;
         cairo_surface_t *drawn_surface;
         cairo_t *cr;
-        gboolean show_inline;
 
         drawn_surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
                                                     ceilf (node->bounds.size.width),
@@ -755,32 +922,14 @@ populate_render_node_properties (GtkListStore  *store,
         texture = gdk_texture_new_for_surface (drawn_surface);
         cairo_surface_destroy (drawn_surface);
 
-        show_inline = gdk_texture_get_height (texture) <= 40 &&
-                      gdk_texture_get_width (texture) <= 100;
-
-        gtk_list_store_insert_with_values (store, NULL, -1,
-                                           0, "Surface",
-                                           1, show_inline ? "" : "Yes (click to show)",
-                                           2, show_inline,
-                                           3, texture,
-                                           -1);
+        g_list_store_append (store, object_property_new ("Surface", "", texture));
       }
       break;
 
     case GSK_TEXTURE_NODE:
       {
         GdkTexture *texture = g_object_ref (gsk_texture_node_get_texture (node));
-        gboolean show_inline;
-
-        show_inline = gdk_texture_get_height (texture) <= 40 &&
-                      gdk_texture_get_width (texture) <= 100;
-
-        gtk_list_store_insert_with_values (store, NULL, -1,
-                                           0, "Texture",
-                                           1, show_inline ? "" : "Yes (click to show)",
-                                           2, show_inline,
-                                           3, texture,
-                                           -1);
+        g_list_store_append (store, object_property_new ("Texture", "", texture));
       }
       break;
 
@@ -812,14 +961,10 @@ populate_render_node_properties (GtkListStore  *store,
           }
 
         texture = get_linear_gradient_texture (n_stops, stops);
-        gtk_list_store_insert_with_values (store, NULL, -1,
-                                           0, "Color Stops",
-                                           1, s->str,
-                                           2, TRUE,
-                                           3, texture,
-                                           -1);
-        g_string_free (s, TRUE);
+        g_list_store_append (store, object_property_new ("Color Stops", s->str, texture));
         g_object_unref (texture);
+
+        g_string_free (s, TRUE);
       }
       break;
 
@@ -858,14 +1003,10 @@ populate_render_node_properties (GtkListStore  *store,
           }
 
         texture = get_linear_gradient_texture (n_stops, stops);
-        gtk_list_store_insert_with_values (store, NULL, -1,
-                                           0, "Color Stops",
-                                           1, s->str,
-                                           2, TRUE,
-                                           3, texture,
-                                           -1);
-        g_string_free (s, TRUE);
+        g_list_store_append (store, object_property_new ("Color Stops", s->str, texture));
         g_object_unref (texture);
+
+        g_string_free (s, TRUE);
       }
       break;
 
@@ -896,14 +1037,10 @@ populate_render_node_properties (GtkListStore  *store,
           }
 
         texture = get_linear_gradient_texture (n_stops, stops);
-        gtk_list_store_insert_with_values (store, NULL, -1,
-                                           0, "Color Stops",
-                                           1, s->str,
-                                           2, TRUE,
-                                           3, texture,
-                                           -1);
-        g_string_free (s, TRUE);
+        g_list_store_append (store, object_property_new ("Color Stops", s->str, texture));
         g_object_unref (texture);
+
+        g_string_free (s, TRUE);
       }
       break;
 
@@ -946,18 +1083,14 @@ populate_render_node_properties (GtkListStore  *store,
             GdkTexture *texture;
             char *text;
 
-            texture = get_color_texture (&colors[i]);
             text = gdk_rgba_to_string (&colors[i]);
             tmp = g_strdup_printf ("%.2f, %s", widths[i], text);
-            gtk_list_store_insert_with_values (store, NULL, -1,
-                                               0, name[i],
-                                               1, tmp,
-                                               2, TRUE,
-                                               3, texture,
-                                               -1);
+            texture = get_color_texture (&colors[i]);
+            g_list_store_append (store, object_property_new (name[i], tmp, texture));
+            g_object_unref (texture);
+
             g_free (text);
             g_free (tmp);
-            g_object_unref (texture);
           }
       }
       break;
@@ -1304,8 +1437,11 @@ event_type_name (GdkEventType type)
     "Pad Button Release",
     "Pad Rind",
     "Pad Strip",
-    "Pad Group Mode"
+    "Pad Group Mode",
+    "Touchpad Hold",
   };
+
+  G_STATIC_ASSERT (G_N_ELEMENTS (event_name) == GDK_EVENT_LAST);
 
   return event_name[type];
 }
@@ -1437,8 +1573,8 @@ scroll_unit_name (GdkScrollUnit unit)
 }
 
 static void
-populate_event_properties (GtkListStore *store,
-                           GdkEvent     *event)
+populate_event_properties (GListStore *store,
+                           GdkEvent   *event)
 {
   GdkEventType type;
   GdkDevice *device;
@@ -1449,7 +1585,7 @@ populate_event_properties (GtkListStore *store,
   GdkModifierType state;
   GdkScrollUnit scroll_unit;
 
-  gtk_list_store_clear (store);
+  g_list_store_remove_all (store);
 
   type = gdk_event_get_event_type (event);
 
@@ -1658,24 +1794,27 @@ render_node_list_selection_changed (GtkListBox           *list,
 
   gtk_picture_set_paintable (GTK_PICTURE (recorder->render_node_view), paintable);
   node = gtk_render_node_paintable_get_render_node (GTK_RENDER_NODE_PAINTABLE (paintable));
-  populate_render_node_properties (GTK_LIST_STORE (recorder->render_node_properties), node);
+  populate_render_node_properties (recorder->render_node_properties, node);
 
   g_object_unref (paintable);
 }
 
 static void
-render_node_save_response (GtkWidget     *dialog,
-                           int            response,
-                           GskRenderNode *node)
+render_node_save_response (GObject *source,
+                           GAsyncResult *result,
+                           gpointer data)
 {
-  gtk_widget_hide (dialog);
+  GtkFileDialog *dialog = GTK_FILE_DIALOG (source);
+  GskRenderNode *node = data;
+  GFile *file;
+  GError *error = NULL;
 
-  if (response == GTK_RESPONSE_ACCEPT)
+  file = gtk_file_dialog_save_finish (dialog, result, &error);
+  if (file)
     {
       GBytes *bytes = gsk_render_node_serialize (node);
-      GError *error = NULL;
 
-      if (!g_file_replace_contents (gtk_file_chooser_get_file (GTK_FILE_CHOOSER (dialog)),
+      if (!g_file_replace_contents (file,
                                     g_bytes_get_data (bytes, NULL),
                                     g_bytes_get_size (bytes),
                                     NULL,
@@ -1685,24 +1824,23 @@ render_node_save_response (GtkWidget     *dialog,
                                     NULL,
                                     &error))
         {
-          GtkWidget *message_dialog;
+          GtkAlertDialog *alert;
 
-          message_dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_window_get_transient_for (GTK_WINDOW (dialog))),
-                                                   GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,
-                                                   GTK_MESSAGE_INFO,
-                                                   GTK_BUTTONS_OK,
-                                                   _("Saving RenderNode failed"));
-          gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (message_dialog),
-                                                    "%s", error->message);
-          g_signal_connect (message_dialog, "response", G_CALLBACK (gtk_window_destroy), NULL);
-          gtk_widget_show (message_dialog);
+          alert = gtk_alert_dialog_new (_("Saving RenderNode failed"));
+          gtk_alert_dialog_set_detail (alert, error->message);
+          gtk_alert_dialog_show (alert, GTK_WINDOW (gtk_window_get_transient_for (GTK_WINDOW (dialog))));
+          g_object_unref (alert);
           g_error_free (error);
         }
 
       g_bytes_unref (bytes);
+      g_object_unref (file);
     }
-
-  gtk_window_destroy (GTK_WINDOW (dialog));
+  else
+    {
+      g_print ("Error saving nodes: %s\n", error->message);
+      g_error_free (error);
+    }
 }
 
 static void
@@ -1710,28 +1848,25 @@ render_node_save (GtkButton            *button,
                   GtkInspectorRecorder *recorder)
 {
   GskRenderNode *node;
-  GtkWidget *dialog;
+  GtkFileDialog *dialog;
   char *filename, *nodename;
 
   node = get_selected_node (recorder);
   if (node == NULL)
     return;
 
-  dialog = gtk_file_chooser_dialog_new ("",
-                                        GTK_WINDOW (gtk_widget_get_root (GTK_WIDGET (recorder))),
-                                        GTK_FILE_CHOOSER_ACTION_SAVE,
-                                        _("_Cancel"), GTK_RESPONSE_CANCEL,
-                                        _("_Save"), GTK_RESPONSE_ACCEPT,
-                                        NULL);
   nodename = node_name (node);
   filename = g_strdup_printf ("%s.node", nodename);
-  g_free (nodename);
-  gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), filename);
+
+  dialog = gtk_file_dialog_new ();
+  gtk_file_dialog_set_initial_name (dialog, filename);
+  gtk_file_dialog_save (dialog,
+                        GTK_WINDOW (gtk_widget_get_root (GTK_WIDGET (recorder))),
+                        NULL,
+                        render_node_save_response, node);
+  g_object_unref (dialog);
   g_free (filename);
-  gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_ACCEPT);
-  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  g_signal_connect (dialog, "response", G_CALLBACK (render_node_save_response), node);
-  gtk_widget_show (dialog);
+  g_free (nodename);
 }
 
 static void
@@ -1930,47 +2065,6 @@ bind_widget_for_recording (GtkListItemFactory *factory,
 }
 
 static void
-node_property_activated (GtkTreeView *tv,
-                         GtkTreePath *path,
-                         GtkTreeViewColumn *col,
-                         GtkInspectorRecorder *recorder)
-{
-  GtkTreeIter iter;
-  GdkRectangle rect;
-  GdkTexture *texture;
-  gboolean visible;
-  GtkWidget *popover;
-  GtkWidget *image;
-
-  gtk_tree_model_get_iter (GTK_TREE_MODEL (recorder->render_node_properties), &iter, path);
-  gtk_tree_model_get (GTK_TREE_MODEL (recorder->render_node_properties), &iter,
-                      2, &visible,
-                      3, &texture,
-                      -1);
-  gtk_tree_view_get_cell_area (tv, path, col, &rect);
-  gtk_tree_view_convert_bin_window_to_widget_coords (tv, rect.x, rect.y, &rect.x, &rect.y);
-
-  if (texture == NULL || visible)
-    return;
-
-  popover = gtk_popover_new ();
-  gtk_widget_set_parent (popover, GTK_WIDGET (tv));
-  gtk_popover_set_pointing_to (GTK_POPOVER (popover), &rect);
-
-  image = gtk_image_new_from_paintable (GDK_PAINTABLE (texture));
-  gtk_widget_set_margin_start (image, 20);
-  gtk_widget_set_margin_end (image, 20);
-  gtk_widget_set_margin_top (image, 20);
-  gtk_widget_set_margin_bottom (image, 20);
-  gtk_popover_set_child (GTK_POPOVER (popover), image);
-  gtk_popover_popup (GTK_POPOVER (popover));
-
-  g_signal_connect (popover, "unmap", G_CALLBACK (gtk_widget_unparent), NULL);
-
-  g_object_unref (texture);
-}
-
-static void
 gtk_inspector_recorder_get_property (GObject    *object,
                                      guint       param_id,
                                      GValue     *value,
@@ -2090,7 +2184,7 @@ gtk_inspector_recorder_class_init (GtkInspectorRecorderClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, recording_selected);
   gtk_widget_class_bind_template_callback (widget_class, render_node_save);
   gtk_widget_class_bind_template_callback (widget_class, render_node_clip);
-  gtk_widget_class_bind_template_callback (widget_class, node_property_activated);
+  //gtk_widget_class_bind_template_callback (widget_class, node_property_activated);
   gtk_widget_class_bind_template_callback (widget_class, toggle_dark_mode);
 
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
@@ -2100,6 +2194,8 @@ static void
 gtk_inspector_recorder_init (GtkInspectorRecorder *recorder)
 {
   GtkListItemFactory *factory;
+  GtkSelectionModel *model;
+  GtkColumnViewColumn *column;
 
   gtk_widget_init_template (GTK_WIDGET (recorder));
 
@@ -2127,13 +2223,55 @@ gtk_inspector_recorder_init (GtkInspectorRecorder *recorder)
   gtk_list_view_set_model (GTK_LIST_VIEW (recorder->render_node_list),
                            GTK_SELECTION_MODEL (recorder->render_node_selection));
 
-  recorder->render_node_properties = GTK_TREE_MODEL (gtk_list_store_new (4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, GDK_TYPE_TEXTURE));
-  gtk_tree_view_set_model (GTK_TREE_VIEW (recorder->node_property_tree), recorder->render_node_properties);
-  g_object_unref (recorder->render_node_properties);
+  recorder->render_node_properties = g_list_store_new (object_property_get_type ());
+  model = GTK_SELECTION_MODEL (gtk_no_selection_new (G_LIST_MODEL (recorder->render_node_properties)));
+  gtk_column_view_set_model (GTK_COLUMN_VIEW (recorder->node_property_tree), model);
+  g_object_unref (model);
 
-  recorder->event_properties = GTK_TREE_MODEL (gtk_list_store_new (4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, GDK_TYPE_TEXTURE));
-  gtk_tree_view_set_model (GTK_TREE_VIEW (recorder->event_property_tree), recorder->event_properties);
-  g_object_unref (recorder->event_properties);
+  column = g_list_model_get_item (gtk_column_view_get_columns (GTK_COLUMN_VIEW (recorder->node_property_tree)), 0);
+
+  factory = gtk_signal_list_item_factory_new ();
+  g_signal_connect (factory, "setup", G_CALLBACK (setup_label), NULL);
+  g_signal_connect (factory, "bind", G_CALLBACK (bind_property_name), NULL);
+
+  gtk_column_view_column_set_factory (column, factory);
+  g_object_unref (factory);
+  g_object_unref (column);
+
+  column = g_list_model_get_item (gtk_column_view_get_columns (GTK_COLUMN_VIEW (recorder->node_property_tree)), 1);
+
+  factory = gtk_signal_list_item_factory_new ();
+  g_signal_connect (factory, "setup", G_CALLBACK (setup_value_widgets), NULL);
+  g_signal_connect (factory, "bind", G_CALLBACK (bind_value_widgets), NULL);
+
+  gtk_column_view_column_set_factory (column, factory);
+  g_object_unref (factory);
+  g_object_unref (column);
+
+  recorder->event_properties = g_list_store_new (object_property_get_type ());
+  model = GTK_SELECTION_MODEL (gtk_no_selection_new (G_LIST_MODEL (recorder->event_properties)));
+  gtk_column_view_set_model (GTK_COLUMN_VIEW (recorder->event_property_tree), model);
+  g_object_unref (model);
+
+  column = g_list_model_get_item (gtk_column_view_get_columns (GTK_COLUMN_VIEW (recorder->event_property_tree)), 0);
+
+  factory = gtk_signal_list_item_factory_new ();
+  g_signal_connect (factory, "setup", G_CALLBACK (setup_label), NULL);
+  g_signal_connect (factory, "bind", G_CALLBACK (bind_property_name), NULL);
+
+  gtk_column_view_column_set_factory (column, factory);
+  g_object_unref (factory);
+  g_object_unref (column);
+
+  column = g_list_model_get_item (gtk_column_view_get_columns (GTK_COLUMN_VIEW (recorder->event_property_tree)), 1);
+
+  factory = gtk_signal_list_item_factory_new ();
+  g_signal_connect (factory, "setup", G_CALLBACK (setup_value_widgets), NULL);
+  g_signal_connect (factory, "bind", G_CALLBACK (bind_value_widgets), NULL);
+
+  gtk_column_view_column_set_factory (column, factory);
+  g_object_unref (factory);
+  g_object_unref (column);
 }
 
 static void
@@ -2306,4 +2444,5 @@ gtk_inspector_recorder_set_selected_sequence (GtkInspectorRecorder *recorder,
   g_object_notify_by_pspec (G_OBJECT (recorder), props[PROP_SELECTED_SEQUENCE]);
 }
 
+/* vim:set foldmethod=marker expandtab: */
 

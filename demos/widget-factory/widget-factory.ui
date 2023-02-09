@@ -1263,8 +1263,7 @@ Suspendisse feugiat quam quis dolor accumsan cursus.</property>
                             <child>
                               <object class="GtkNotebookPage">
                                 <property name="child">
-                                  <object class="GtkPicture">
-                                    <property name="file">resource:///org/gtk/WidgetFactory4/sunset.jpg</property>
+                                  <object class="GtkPicture" id="notebook_sunset">
                                     <property name="content-fit">cover</property>
                                     <child>
                                       <object class="GtkDragSource">
@@ -1290,8 +1289,7 @@ Suspendisse feugiat quam quis dolor accumsan cursus.</property>
                             <child>
                               <object class="GtkNotebookPage">
                                 <property name="child">
-                                  <object class="GtkPicture">
-                                    <property name="file">resource:///org/gtk/WidgetFactory4/nyc.jpg</property>
+                                  <object class="GtkPicture" id="notebook_nyc">
                                     <child>
                                       <object class="GtkDragSource">
                                         <signal name="prepare" handler="on_picture_drag_prepare" swapped="no"/>
@@ -1316,8 +1314,7 @@ Suspendisse feugiat quam quis dolor accumsan cursus.</property>
                             <child>
                               <object class="GtkNotebookPage">
                                 <property name="child">
-                                  <object class="GtkPicture">
-                                    <property name="file">resource:///org/gtk/WidgetFactory4/beach.jpg</property>
+                                  <object class="GtkPicture" id="notebook_beach">
                                     <child>
                                       <object class="GtkDragSource">
                                         <signal name="prepare" handler="on_picture_drag_prepare" swapped="no"/>
@@ -3345,10 +3342,12 @@ bad things might happen.</property>
       <attribute name="display-hint">circular-buttons</attribute>
       <item>
         <attribute name="verb-icon">printer-symbolic</attribute>
+        <attribute name="label" translatable="yes">Print all the things!</attribute>
         <attribute name="action">win.print</attribute>
       </item>
       <item>
         <attribute name="verb-icon">emblem-shared-symbolic</attribute>
+        <attribute name="label" translatable="yes">Share all the things!</attribute>
         <attribute name="action">app.share</attribute>
       </item>
     </section>
@@ -3363,14 +3362,17 @@ bad things might happen.</property>
       <attribute name="label" translatable="yes">Edit</attribute>
       <item>
         <attribute name="verb-icon">edit-cut-symbolic</attribute>
+        <attribute name="label" translatable="yes">Cut</attribute>
         <attribute name="action">app.cut</attribute>
       </item>
       <item>
         <attribute name="verb-icon">edit-copy-symbolic</attribute>
+        <attribute name="label" translatable="yes">Copy</attribute>
         <attribute name="action">app.copy</attribute>
       </item>
       <item>
         <attribute name="verb-icon">edit-paste-symbolic</attribute>
+        <attribute name="label" translatable="yes">Paste</attribute>
         <attribute name="action">app.paste</attribute>
       </item>
     </section>

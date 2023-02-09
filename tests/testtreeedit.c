@@ -19,6 +19,8 @@
 #include "config.h"
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 typedef struct {
   const char *string;
   gboolean is_editable;
@@ -393,7 +395,7 @@ main (int argc, char **argv)
   create_control (cntl_vbox, 3, CNTL_FIXED, &callback[2]);
   create_control (cntl_vbox, 4, CNTL_FIXED, &callback[3]);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (!done)
     g_main_context_iteration (NULL, TRUE);

@@ -460,12 +460,10 @@ gdk_macos_gl_context_begin_frame (GdkDrawContext *context,
 {
   GdkMacosGLContext *self = (GdkMacosGLContext *)context;
   GdkMacosBuffer *buffer;
-  cairo_region_t *copy;
   GdkSurface *surface;
 
   g_assert (GDK_IS_MACOS_GL_CONTEXT (self));
 
-  copy = cairo_region_copy (region);
   surface = gdk_draw_context_get_surface (context);
   buffer = _gdk_macos_surface_get_buffer (GDK_MACOS_SURFACE (surface));
 
@@ -548,6 +546,14 @@ gdk_macos_gl_context_clear_current (GdkGLContext *context)
     }
 
   return TRUE;
+}
+
+static gboolean
+gdk_macos_gl_context_is_current (GdkGLContext *context)
+{
+  GdkMacosGLContext *self = GDK_MACOS_GL_CONTEXT (context);
+
+  return self->cgl_context == CGLGetCurrentContext ();
 }
 
 static gboolean
@@ -641,6 +647,7 @@ gdk_macos_gl_context_class_init (GdkMacosGLContextClass *klass)
 
   gl_class->get_damage = gdk_macos_gl_context_get_damage;
   gl_class->clear_current = gdk_macos_gl_context_clear_current;
+  gl_class->is_current = gdk_macos_gl_context_is_current;
   gl_class->make_current = gdk_macos_gl_context_make_current;
   gl_class->realize = gdk_macos_gl_context_real_realize;
   gl_class->get_default_framebuffer = gdk_macos_gl_context_get_default_framebuffer;

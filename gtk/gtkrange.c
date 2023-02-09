@@ -28,6 +28,7 @@
 #include "gtkrangeprivate.h"
 
 #include "gtkaccessible.h"
+#include "gtkaccessiblerange.h"
 #include "gtkadjustmentprivate.h"
 #include "gtkcolorscaleprivate.h"
 #include "gtkcssboxesprivate.h"
@@ -246,8 +247,12 @@ static gboolean      gtk_range_scroll_controller_scroll (GtkEventControllerScrol
 static void          gtk_range_set_orientation          (GtkRange       *range,
                                                          GtkOrientation  orientation);
 
+static void gtk_range_accessible_range_init (GtkAccessibleRangeInterface *iface);
+
 G_DEFINE_TYPE_WITH_CODE (GtkRange, gtk_range, GTK_TYPE_WIDGET,
                          G_ADD_PRIVATE (GtkRange)
+                         G_IMPLEMENT_INTERFACE (GTK_TYPE_ACCESSIBLE_RANGE,
+                                                gtk_range_accessible_range_init)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_ORIENTABLE,
                                                 NULL))
 
@@ -433,6 +438,21 @@ gtk_range_class_init (GtkRangeClass *class)
   g_object_class_install_properties (gobject_class, LAST_PROP, properties);
 
   gtk_widget_class_set_css_name (widget_class, I_("range"));
+}
+
+static gboolean
+accessible_range_set_current_value (GtkAccessibleRange *accessible_range,
+                                    double              value)
+{
+  gtk_range_set_value (GTK_RANGE (accessible_range), value);
+
+  return TRUE;
+}
+
+static void
+gtk_range_accessible_range_init (GtkAccessibleRangeInterface *iface)
+{
+  iface->set_current_value = accessible_range_set_current_value;
 }
 
 static void
@@ -2328,10 +2348,7 @@ gtk_range_adjustment_changed (GtkAdjustment *adjustment,
   double upper = gtk_adjustment_get_upper (priv->adjustment);
   double lower = gtk_adjustment_get_lower (priv->adjustment);
 
-  if (upper == lower && GTK_IS_SCALE (range))
-    gtk_widget_hide (priv->slider_widget);
-  else
-    gtk_widget_show (priv->slider_widget);
+  gtk_widget_set_visible (priv->slider_widget, upper != lower || !GTK_IS_SCALE (range));
 
   gtk_widget_queue_allocate (priv->trough_widget);
 

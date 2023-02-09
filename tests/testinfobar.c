@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 typedef enum {
   RESPONSE_UNREVEAL,
 } Response;
@@ -12,7 +14,7 @@ on_info_bar_response (GtkInfoBar *info_bar,
   switch (response_id)
   {
   case GTK_RESPONSE_CLOSE:
-    gtk_widget_hide (GTK_WIDGET (info_bar));
+    gtk_widget_set_visible (GTK_WIDGET (info_bar), FALSE);
     break;
 
   case RESPONSE_UNREVEAL:

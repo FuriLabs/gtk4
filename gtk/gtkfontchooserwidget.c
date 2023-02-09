@@ -21,7 +21,7 @@
 #include <glib/gprintf.h>
 #include <string.h>
 
-#include "gtkfontchooserwidget.h"
+#include "deprecated/gtkfontchooserwidget.h"
 #include "gtkfontchooserwidgetprivate.h"
 
 #include "gtkadjustment.h"
@@ -34,7 +34,7 @@
 #include "gtkfilter.h"
 #include "gtkframe.h"
 #include "gtkgrid.h"
-#include "gtkfontchooser.h"
+#include "deprecated/gtkfontchooser.h"
 #include "gtkfontchooserutils.h"
 #include <glib/gi18n-lib.h>
 #include "gtklabel.h"
@@ -48,7 +48,7 @@
 #include "gtktextview.h"
 #include "gtkwidgetprivate.h"
 #include "gtksettings.h"
-#include "gtkdialog.h"
+#include "deprecated/gtkdialog.h"
 #include "gtkgestureclick.h"
 #include "gtkeventcontrollerscroll.h"
 #include "gtkroot.h"
@@ -63,11 +63,14 @@
 #include "gtksortlistmodel.h"
 #include "gtkstringsorter.h"
 #include "gtkdropdown.h"
+#include "gtkmultifilter.h"
 
 #include <hb-ot.h>
 
 #include "language-names.h"
 #include "open-type-layout.h"
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 /**
  * GtkFontChooserWidget:
@@ -89,6 +92,8 @@
  * # CSS nodes
  *
  * `GtkFontChooserWidget` has a single CSS node with name fontchooser.
+ *
+ * Deprecated: 4.10: Direct use of `GtkFontChooserWidget` is deprecated.
  */
 
 typedef struct _GtkFontChooserWidgetClass         GtkFontChooserWidgetClass;
@@ -105,6 +110,7 @@ struct _GtkFontChooserWidget
   GtkSingleSelection *selection;
   GtkCustomFilter      *custom_filter;
   GtkCustomFilter      *user_filter;
+  GtkCustomFilter      *multi_filter;
   GtkFilterListModel   *filter_model;
 
   GtkWidget       *preview;
@@ -143,6 +149,8 @@ struct _GtkFontChooserWidget
   GtkFontFilterFunc filter_func;
   gpointer          filter_data;
   GDestroyNotify    filter_data_destroy;
+
+  GtkFilter *filter;
 
   guint last_fontconfig_timestamp;
 
@@ -1295,6 +1303,8 @@ gtk_font_chooser_widget_init (GtkFontChooserWidget *self)
  * Creates a new `GtkFontChooserWidget`.
  *
  * Returns: a new `GtkFontChooserWidget`
+ *
+ * Deprecated: 4.10: Direct use of `GtkFontChooserWidget` is deprecated.
  */
 GtkWidget *
 gtk_font_chooser_widget_new (void)
@@ -1324,6 +1334,8 @@ gtk_font_chooser_widget_finalize (GObject *object)
   g_hash_table_unref (fontchooser->axes);
 
   g_free (fontchooser->font_features);
+
+  g_clear_object (&fontchooser->filter);
 
   G_OBJECT_CLASS (gtk_font_chooser_widget_parent_class)->finalize (object);
 }
@@ -1598,9 +1610,9 @@ add_axis (GtkFontChooserWidget  *fontchooser,
   g_signal_connect (axis->adjustment, "value-changed", G_CALLBACK (adjustment_changed), axis);
   if (is_named_instance (hb_font) || !should_show_axis (ax))
     {
-      gtk_widget_hide (axis->label);
-      gtk_widget_hide (axis->scale);
-      gtk_widget_hide (axis->spin);
+      gtk_widget_set_visible (axis->label, FALSE);
+      gtk_widget_set_visible (axis->scale, FALSE);
+      gtk_widget_set_visible (axis->spin, FALSE);
 
       return FALSE;
     }
@@ -1870,9 +1882,7 @@ find_affected_text (GtkFontChooserWidget *fontchooser,
 
   hb_ot_layout_table_find_script (hb_face, HB_OT_TAG_GSUB, script_tag, &script_index);
 
-  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-  hb_ot_layout_script_find_language (hb_face, HB_OT_TAG_GSUB, script_index, lang_tag, &lang_index);
-  G_GNUC_END_IGNORE_DEPRECATIONS
+  hb_ot_layout_script_select_language (hb_face, HB_OT_TAG_GSUB, script_index, 1, &lang_tag, &lang_index);
 
   if (hb_ot_layout_language_find_feature (hb_face,
                                           HB_OT_TAG_GSUB,
@@ -2013,9 +2023,7 @@ update_feature_label (GtkFontChooserWidget *fontchooser,
 
   hb_ot_layout_table_find_script (hb_face, HB_OT_TAG_GSUB, script_tag, &script_index);
 
-  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-  hb_ot_layout_script_find_language (hb_face, HB_OT_TAG_GSUB, script_index, lang_tag, &lang_index);
-  G_GNUC_END_IGNORE_DEPRECATIONS
+  hb_ot_layout_script_select_language (hb_face, HB_OT_TAG_GSUB, script_index, 1, &lang_tag, &lang_index);
 
   if (hb_ot_layout_language_find_feature (hb_face, HB_OT_TAG_GSUB, script_index, lang_index, item->tag, &feature_index))
     {
@@ -2528,15 +2536,15 @@ gtk_font_chooser_widget_update_font_features (GtkFontChooserWidget *fontchooser)
       FeatureItem *item = l->data;
       if (item->top)
         {
-          gtk_widget_hide (item->top);
-          gtk_widget_hide (gtk_widget_get_parent (item->top));
+          gtk_widget_set_visible (item->top, FALSE);
+          gtk_widget_set_visible (gtk_widget_get_parent (item->top), FALSE);
         }
       else
         {
-          gtk_widget_hide (gtk_widget_get_parent (item->feat));
-          gtk_widget_hide (item->feat);
-          gtk_widget_hide (gtk_widget_get_prev_sibling (item->feat));
-          gtk_widget_hide (item->example);
+          gtk_widget_set_visible (gtk_widget_get_parent (item->feat), FALSE);
+          gtk_widget_set_visible (item->feat, FALSE);
+          gtk_widget_set_visible (gtk_widget_get_prev_sibling (item->feat), FALSE);
+          gtk_widget_set_visible (item->example, FALSE);
         }
     }
 
@@ -2565,9 +2573,7 @@ gtk_font_chooser_widget_update_font_features (GtkFontChooserWidget *fontchooser)
         {
           hb_ot_layout_table_find_script (hb_face, table[i], script_tag, &script_index);
 
-          G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-          hb_ot_layout_script_find_language (hb_face, table[i], script_index, lang_tag, &lang_index);
-          G_GNUC_END_IGNORE_DEPRECATIONS
+          hb_ot_layout_script_select_language (hb_face, table[i], script_index, 1, &lang_tag, &lang_index);
 
           feat = features + n_features;
           count = G_N_ELEMENTS (features) - n_features;
@@ -2599,15 +2605,15 @@ gtk_font_chooser_widget_update_font_features (GtkFontChooserWidget *fontchooser)
               has_feature = TRUE;
               if (item->top)
                 {
-                  gtk_widget_show (item->top);
-                  gtk_widget_show (gtk_widget_get_parent (item->top));
+                  gtk_widget_set_visible (item->top, TRUE);
+                  gtk_widget_set_visible (gtk_widget_get_parent (item->top), TRUE);
                 }
               else
                 {
-                  gtk_widget_show (gtk_widget_get_parent (item->feat));
-                  gtk_widget_show (item->feat);
-                  gtk_widget_show (gtk_widget_get_prev_sibling (item->feat));
-                  gtk_widget_show (item->example);
+                  gtk_widget_set_visible (gtk_widget_get_parent (item->feat), TRUE);
+                  gtk_widget_set_visible (item->feat, TRUE);
+                  gtk_widget_set_visible (gtk_widget_get_prev_sibling (item->feat), TRUE);
+                  gtk_widget_set_visible (item->example, TRUE);
                 }
 
               update_feature_label (fontchooser, item, hb_font, script_tag, lang_tag);
@@ -2618,8 +2624,8 @@ gtk_font_chooser_widget_update_font_features (GtkFontChooserWidget *fontchooser)
                   GtkWidget *def = GTK_WIDGET (g_object_get_data (G_OBJECT (item->feat), "default"));
                   if (def)
                     {
-                      gtk_widget_show (def);
-                      gtk_widget_show (gtk_widget_get_parent (def));
+                      gtk_widget_set_visible (def, TRUE);
+                      gtk_widget_set_visible (gtk_widget_get_parent (def), TRUE);
                       gtk_check_button_set_active (GTK_CHECK_BUTTON (def), TRUE);
                     }
                   else
@@ -2819,10 +2825,7 @@ gtk_font_chooser_widget_set_show_preview_entry (GtkFontChooserWidget *fontchoose
     {
       fontchooser->show_preview_entry = show_preview_entry;
 
-      if (show_preview_entry)
-        gtk_widget_show (fontchooser->preview);
-      else
-        gtk_widget_hide (fontchooser->preview);
+      gtk_widget_set_visible (fontchooser->preview, show_preview_entry);
 
       g_object_notify (G_OBJECT (fontchooser), "show-preview-entry");
     }
@@ -2913,29 +2916,21 @@ static void
 gtk_font_chooser_widget_set_level (GtkFontChooserWidget *fontchooser,
                                    GtkFontChooserLevel   level)
 {
+  gboolean show_size;
+
   if (fontchooser->level == level)
     return;
 
   fontchooser->level = level;
 
-  if ((level & GTK_FONT_CHOOSER_LEVEL_SIZE) != 0)
-    {
-      gtk_widget_show (fontchooser->size_label);
-      gtk_widget_show (fontchooser->size_slider);
-      gtk_widget_show (fontchooser->size_spin);
-      gtk_widget_show (fontchooser->size_label2);
-      gtk_widget_show (fontchooser->size_slider2);
-      gtk_widget_show (fontchooser->size_spin2);
-    }
-  else
-   {
-      gtk_widget_hide (fontchooser->size_label);
-      gtk_widget_hide (fontchooser->size_slider);
-      gtk_widget_hide (fontchooser->size_spin);
-      gtk_widget_hide (fontchooser->size_label2);
-      gtk_widget_hide (fontchooser->size_slider2);
-      gtk_widget_hide (fontchooser->size_spin2);
-   }
+  show_size = (level & GTK_FONT_CHOOSER_LEVEL_SIZE) != 0;
+
+  gtk_widget_set_visible (fontchooser->size_label, show_size);
+  gtk_widget_set_visible (fontchooser->size_slider, show_size);
+  gtk_widget_set_visible (fontchooser->size_spin, show_size);
+  gtk_widget_set_visible (fontchooser->size_label2, show_size);
+  gtk_widget_set_visible (fontchooser->size_slider2, show_size);
+  gtk_widget_set_visible (fontchooser->size_spin2, show_size);
 
   update_fontlist (fontchooser);
 
@@ -2981,4 +2976,15 @@ gtk_font_chooser_widget_get_tweak_action (GtkWidget *widget)
   GtkFontChooserWidget *fontchooser = GTK_FONT_CHOOSER_WIDGET (widget);
 
   return fontchooser->tweak_action;
+}
+
+void
+gtk_font_chooser_widget_set_filter (GtkFontChooserWidget *widget,
+                                    GtkFilter            *filter)
+{
+  if (widget->filter)
+    gtk_multi_filter_remove (GTK_MULTI_FILTER (widget->multi_filter), 3);
+  g_set_object (&widget->filter, filter);
+  if (widget->filter)
+    gtk_multi_filter_append (GTK_MULTI_FILTER (widget->multi_filter), g_object_ref (filter));
 }

@@ -612,7 +612,6 @@ gdk_event_queue_handle_scroll_compression (GdkDisplay *display)
   GList *l;
   GdkSurface *surface = NULL;
   GdkDevice *device = NULL;
-  GdkEvent *last_event = NULL;
   GList *scrolls = NULL;
   GArray *history = NULL;
   GdkScrollUnit scroll_unit = GDK_SCROLL_UNIT_WHEEL;
@@ -644,9 +643,6 @@ gdk_event_queue_handle_scroll_compression (GdkDisplay *display)
       if (scroll_unit_defined &&
           scroll_unit != scroll_event->unit)
         break;
-
-      if (!last_event)
-        last_event = event;
 
       surface = event->surface;
       device = event->device;
@@ -1178,9 +1174,16 @@ gdk_event_get_axes (GdkEvent  *event,
                     double   **axes,
                     guint     *n_axes)
 {
+  gboolean ret;
+
   g_return_val_if_fail (GDK_IS_EVENT (event), FALSE);
 
-  return GDK_EVENT_GET_CLASS (event)->get_axes (event, axes, n_axes);
+  ret = GDK_EVENT_GET_CLASS (event)->get_axes (event, axes, n_axes);
+
+  if (*axes == NULL)
+    return FALSE;
+
+  return ret;
 }
 
 double *
@@ -1330,7 +1333,7 @@ gdk_event_get_display (GdkEvent *event)
  * gdk_event_get_event_sequence:
  * @event: a `GdkEvent`
  *
- * Retuns the event sequence to which the event belongs.
+ * Returns the event sequence to which the event belongs.
  *
  * Related touch events are connected in a sequence. Other
  * events typically don't have event sequence information.

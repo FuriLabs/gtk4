@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 GSList *pending = NULL;
 guint active = 0;
 
@@ -775,7 +777,7 @@ main (int argc, char *argv[])
 
   g_object_unref (scope);
 
-  gtk_widget_show (win);
+  gtk_window_present (GTK_WINDOW (win));
 
   toplevels = gtk_window_get_toplevels ();
   while (g_list_model_get_n_items (toplevels))

@@ -21,9 +21,9 @@
 #include <glib/gprintf.h>
 #include <string.h>
 
-#include "gtkfontchooserdialog.h"
-#include "gtkfontchooser.h"
-#include "gtkfontchooserwidget.h"
+#include "gtkfontchooserdialogprivate.h"
+#include "deprecated/gtkfontchooser.h"
+#include "deprecated/gtkfontchooserwidget.h"
 #include "gtkfontchooserwidgetprivate.h"
 #include "gtkfontchooserutils.h"
 #include "gtkbox.h"
@@ -32,11 +32,13 @@
 #include "gtkprivate.h"
 #include "gtkwidget.h"
 #include "gtksettings.h"
-#include "gtkdialogprivate.h"
+#include "deprecated/gtkdialogprivate.h"
 #include "gtktogglebutton.h"
 #include "gtkheaderbar.h"
 #include "gtkactionable.h"
 #include "gtkeventcontrollerkey.h"
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 typedef struct _GtkFontChooserDialogClass GtkFontChooserDialogClass;
 
@@ -72,6 +74,8 @@ struct _GtkFontChooserDialogClass
  * The `GtkFontChooserDialog` implementation of the `GtkBuildable`
  * interface exposes the buttons with the names “select_button”
  * and “cancel_button”.
+ *
+ * Deprecated: 4.10: Use [class@Gtk.FontDialog] instead
  */
 
 static void     gtk_font_chooser_dialog_buildable_interface_init     (GtkBuildableIface *iface);
@@ -150,10 +154,9 @@ update_tweak_button (GtkFontChooserDialog *dialog)
     return;
 
   g_object_get (dialog->fontchooser, "level", &level, NULL);
-  if ((level & (GTK_FONT_CHOOSER_LEVEL_FEATURES | GTK_FONT_CHOOSER_LEVEL_VARIATIONS)) != 0)
-    gtk_widget_show (dialog->tweak_button);
-  else
-    gtk_widget_hide (dialog->tweak_button);
+  gtk_widget_set_visible (dialog->tweak_button,
+                          (level & (GTK_FONT_CHOOSER_LEVEL_FEATURES |
+                                    GTK_FONT_CHOOSER_LEVEL_VARIATIONS)) != 0);
 }
 
 static void
@@ -288,6 +291,8 @@ gtk_font_chooser_dialog_init (GtkFontChooserDialog *dialog)
  * Creates a new `GtkFontChooserDialog`.
  *
  * Returns: a new `GtkFontChooserDialog`
+ *
+ * Deprecated: 4.10: Use [class@Gtk.FontDialog] instead
  */
 GtkWidget*
 gtk_font_chooser_dialog_new (const char *title,
@@ -323,4 +328,11 @@ gtk_font_chooser_dialog_buildable_get_internal_child (GtkBuildable *buildable,
     return G_OBJECT (dialog->cancel_button);
 
   return parent_buildable_iface->get_internal_child (buildable, builder, childname);
+}
+
+void
+gtk_font_chooser_dialog_set_filter (GtkFontChooserDialog *dialog,
+                                    GtkFilter            *filter)
+{
+  gtk_font_chooser_widget_set_filter (GTK_FONT_CHOOSER_WIDGET (dialog->fontchooser), filter);
 }

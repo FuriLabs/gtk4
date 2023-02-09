@@ -6,16 +6,21 @@ gdk_wayland_sources = files([
   'gdkclipboard-wayland.c',
   'gdkcursor-wayland.c',
   'gdkdevice-wayland.c',
+  'gdkdevicepad-wayland.c',
   'gdkdisplay-wayland.c',
   'gdkdrag-wayland.c',
+  'gdkdragsurface-wayland.c',
   'gdkdrop-wayland.c',
   'gdkeventsource.c',
   'gdkglcontext-wayland.c',
-  'gdkkeys-wayland.c',
+  'gdkkeymap-wayland.c',
   'gdkmonitor-wayland.c',
   'gdkprimary-wayland.c',
-  'gdkvulkancontext-wayland.c',
+  'gdkseat-wayland.c',
   'gdksurface-wayland.c',
+  'gdktoplevel-wayland.c',
+  'gdkpopup-wayland.c',
+  'gdkvulkancontext-wayland.c',
   'wm-button-layout-translation.c',
 ])
 
@@ -24,8 +29,10 @@ gdk_wayland_public_headers = files([
   'gdkwaylanddisplay.h',
   'gdkwaylandglcontext.h',
   'gdkwaylandmonitor.h',
+  'gdkwaylandpopup.h',
   'gdkwaylandseat.h',
   'gdkwaylandsurface.h',
+  'gdkwaylandtoplevel.h',
 ])
 
 install_headers(gdk_wayland_public_headers, 'gdkwayland.h', subdir: 'gtk-4.0/gdk/wayland/')
@@ -51,6 +58,7 @@ proto_sources = [
   ['xdg-shell', 'unstable', 'v6', ],
   ['xdg-shell', 'stable', ],
   ['xdg-foreign', 'unstable', 'v1', ],
+  ['xdg-foreign', 'unstable', 'v2', ],
   ['tablet', 'unstable', 'v2', ],
   ['keyboard-shortcuts-inhibit', 'unstable', 'v1', ],
   ['server-decoration', 'private' ],

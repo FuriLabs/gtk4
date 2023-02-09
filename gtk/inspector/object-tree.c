@@ -33,14 +33,14 @@
 
 #include "gtkbuildable.h"
 #include "gtkbutton.h"
-#include "gtkcelllayout.h"
+#include "deprecated/gtkcelllayout.h"
 #include "gtkcolumnview.h"
-#include "gtkcomboboxprivate.h"
+#include "deprecated/gtkcomboboxprivate.h"
 #include "gtkfilterlistmodel.h"
 #include "gtkcustomfilter.h"
 #include "gtkflattenlistmodel.h"
 #include "gtkbuiltiniconprivate.h"
-#include "gtkiconview.h"
+#include "deprecated/gtkiconview.h"
 #include "gtkinscription.h"
 #include "gtklabel.h"
 #include "gtklistitem.h"
@@ -52,16 +52,16 @@
 #include "gtktogglebutton.h"
 #include "gtktreeexpander.h"
 #include "gtktreelistmodel.h"
-#include "gtktreeview.h"
-#include "gtktreeselection.h"
-#include "gtktreestore.h"
-#include "gtktreemodelsort.h"
-#include "gtktreemodelfilter.h"
+#include "deprecated/gtktreeview.h"
+#include "deprecated/gtktreeselection.h"
+#include "deprecated/gtktreemodelsort.h"
+#include "deprecated/gtktreemodelfilter.h"
 #include "gtkwidgetprivate.h"
 #include "gtksearchbar.h"
 #include "gtksearchentry.h"
 #include "gtkeventcontrollerkey.h"
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 enum
 {
@@ -1002,7 +1002,6 @@ bind_type_cb (GtkSignalListItemFactory *factory,
   expander = gtk_list_item_get_child (list_item);
   gtk_tree_expander_set_list_row (GTK_TREE_EXPANDER (expander), list_row);
   item = gtk_tree_list_row_get_item (list_row);
-  expander = gtk_list_item_get_child (list_item);
   inscription = gtk_tree_expander_get_child (GTK_TREE_EXPANDER (expander));
 
   gtk_inscription_set_text (GTK_INSCRIPTION (inscription), G_OBJECT_TYPE_NAME (item));

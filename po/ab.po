@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2022-11-18 18:26+0000\n"
+"POT-Creation-Date: 2022-09-28 16:22+0000\n"
 "Last-Translator: Нанба Наала <naala-nanba@rambler.ru>\n"
 "Language-Team: Abkhazian <daniel.abzakh@gmail.com>\n"
 "Language: ab\n"
@@ -9,7 +9,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-DamnedLies-Scope: partial\n"
 
 #: gdk/broadway/gdkbroadway-server.c:135
 #, c-format
@@ -553,7 +552,7 @@ msgid "Reading data failed at row %d"
 msgstr ""
 
 #: gdk/macos/gdkmacosclipboard.c:557 gdk/wayland/gdkclipboard-wayland.c:240
-#: gdk/wayland/gdkdrop-wayland.c:208 gdk/wayland/gdkprimary-wayland.c:336
+#: gdk/wayland/gdkdrop-wayland.c:208 gdk/wayland/gdkprimary-wayland.c:335
 #: gdk/win32/gdkdrop-win32.c:1018 gdk/win32/gdkdrop-win32.c:1063
 #: gdk/x11/gdkclipboard-x11.c:805 gdk/x11/gdkdrop-x11.c:235
 msgid "No compatible transfer format found"
@@ -1560,7 +1559,7 @@ msgstr ""
 #.
 #: gtk/gtkapplication-dbus.c:706
 msgid "Reason not specified"
-msgstr "Амзыз арбаӡам"
+msgstr ""
 
 #: gtk/gtkbookmarksmanager.c:51
 #, c-format
@@ -1683,7 +1682,7 @@ msgstr ""
 
 #: gtk/gtkcolorbutton.c:179 gtk/gtkcolorbutton.c:307
 msgid "Pick a Color"
-msgstr "Аԥштәы алшәх"
+msgstr ""
 
 #: gtk/gtkcolorbutton.c:496 gtk/gtkcolorchooserwidget.c:308
 #, c-format
@@ -1978,7 +1977,7 @@ msgstr ""
 
 #: gtk/gtkcustompaperunixdialog.c:939
 msgid "_Width:"
-msgstr "_Аҭбаара"
+msgstr ""
 
 #: gtk/gtkcustompaperunixdialog.c:950
 msgid "_Height:"
@@ -1994,15 +1993,15 @@ msgstr "_Хыхьтәи:"
 
 #: gtk/gtkcustompaperunixdialog.c:981
 msgid "_Bottom:"
-msgstr "_Ҵаҟа"
+msgstr ""
 
 #: gtk/gtkcustompaperunixdialog.c:992
 msgid "_Left:"
-msgstr "А_рмарахь:"
+msgstr ""
 
 #: gtk/gtkcustompaperunixdialog.c:1003
 msgid "_Right:"
-msgstr "А_рӷьарахь"
+msgstr ""
 
 #: gtk/gtkcustompaperunixdialog.c:1039
 msgid "Paper Margins"
@@ -2078,7 +2077,7 @@ msgstr ""
 #: gtk/gtkmountoperation.c:608 gtk/gtkpagesetupunixdialog.c:283
 #: gtk/gtkprintbackend.c:637 gtk/gtkprinteroptionwidget.c:721
 #: gtk/gtkprintunixdialog.c:651 gtk/gtkprintunixdialog.c:807
-#: gtk/gtkwindow.c:6152 gtk/inspector/css-editor.c:248
+#: gtk/gtkwindow.c:6113 gtk/inspector/css-editor.c:248
 #: gtk/inspector/recorder.c:1723 gtk/ui/gtkappchooserdialog.ui:45
 #: gtk/ui/gtkassistant.ui:52 gtk/ui/gtkcolorchooserdialog.ui:33
 #: gtk/ui/gtkfontchooserdialog.ui:24
@@ -2169,7 +2168,7 @@ msgid "If you delete an item, it will be permanently lost."
 msgstr ""
 
 #: gtk/gtkfilechooserwidget.c:1211 gtk/gtkfilechooserwidget.c:1827
-#: gtk/gtklabel.c:5652 gtk/gtktext.c:6061 gtk/gtktextview.c:8966
+#: gtk/gtklabel.c:5652 gtk/gtktext.c:6049 gtk/gtktextview.c:8966
 msgid "_Delete"
 msgstr "_Аныхра"
 
@@ -2224,7 +2223,7 @@ msgstr ""
 
 #: gtk/gtkfilechooserwidget.c:1856
 msgid "Sort _Folders Before Files"
-msgstr "Афаилқәа раԥхьа аҭаӡқәа_ реилыԥшаара"
+msgstr ""
 
 #. this is the header for the location column in the print dialog
 #: gtk/gtkfilechooserwidget.c:2256 gtk/inspector/css-node-tree.ui:135
@@ -2296,11 +2295,11 @@ msgstr "Аудио"
 #: gtk/gtkfilechooserwidget.c:4325 gtk/gtkfontbutton.c:596
 #: gtk/inspector/visual.ui:170
 msgid "Font"
-msgstr "Ашрифт"
+msgstr ""
 
 #: gtk/gtkfilechooserwidget.c:4326
 msgid "Image"
-msgstr "Асахьа"
+msgstr ""
 
 #: gtk/gtkfilechooserwidget.c:4327
 msgid "Archive"
@@ -2312,7 +2311,7 @@ msgstr "Адырганҵа"
 
 #: gtk/gtkfilechooserwidget.c:4329 gtk/gtkfilechooserwidget.c:4330
 msgid "Text"
-msgstr "Атекст"
+msgstr ""
 
 #: gtk/gtkfilechooserwidget.c:4332
 msgid "Video"
@@ -2369,9 +2368,9 @@ msgstr ""
 msgid "Could not send the search request"
 msgstr ""
 
-#: gtk/gtkfilechooserwidget.c:6877
+#: gtk/gtkfilechooserwidget.c:6876
 msgid "Accessed"
-msgstr "Алагара аамҭарба"
+msgstr ""
 
 #: gtk/gtkfontbutton.c:395
 msgid "Sans 12"
@@ -2388,7 +2387,7 @@ msgstr ""
 
 #: gtk/gtkfontchooserdialog.c:184
 msgid "Change Font Features"
-msgstr "Ашрифт аҟазшьарбагақәа рыԥсахра"
+msgstr ""
 
 #: gtk/gtkfontchooserwidget.c:1534
 msgctxt "Font variation axis"
@@ -2455,7 +2454,7 @@ msgstr "Анимациа"
 
 #: gtk/gtkfontchooserwidget.c:2506
 msgid "Style Variations"
-msgstr "Астильқәа рыхкеиҭагара"
+msgstr ""
 
 #: gtk/gtkfontchooserwidget.c:2508
 msgid "Character Variations"
@@ -2465,21 +2464,21 @@ msgstr "Асимволқәа рвариантқәа"
 msgid "OpenGL context creation failed"
 msgstr ""
 
-#: gtk/gtklabel.c:5649 gtk/gtktext.c:6049 gtk/gtktextview.c:8954
+#: gtk/gtklabel.c:5649 gtk/gtktext.c:6037 gtk/gtktextview.c:8954
 msgid "Cu_t"
 msgstr "_Агәылԥҟара "
 
-#: gtk/gtklabel.c:5650 gtk/gtktext.c:6053 gtk/gtktextview.c:8958
+#: gtk/gtklabel.c:5650 gtk/gtktext.c:6041 gtk/gtktextview.c:8958
 msgid "_Copy"
 msgstr "_Ахкьыҧхьаара"
 
-#: gtk/gtklabel.c:5651 gtk/gtktext.c:6057 gtk/gtktextview.c:8962
+#: gtk/gtklabel.c:5651 gtk/gtktext.c:6045 gtk/gtktextview.c:8962
 msgid "_Paste"
 msgstr "_Абжьаргылара"
 
-#: gtk/gtklabel.c:5657 gtk/gtktext.c:6070 gtk/gtktextview.c:8987
+#: gtk/gtklabel.c:5657 gtk/gtktext.c:6058 gtk/gtktextview.c:8987
 msgid "Select _All"
-msgstr "З_егьы алхра"
+msgstr ""
 
 #: gtk/gtklabel.c:5662
 msgid "_Open Link"
@@ -2581,7 +2580,7 @@ msgid "%d:%02d"
 msgstr ""
 
 #: gtk/gtkmessagedialog.c:158 gtk/gtkmessagedialog.c:176
-#: gtk/gtkprintbackend.c:638 gtk/gtkwindow.c:6153
+#: gtk/gtkprintbackend.c:638 gtk/gtkwindow.c:6114
 msgid "_OK"
 msgstr "_OK"
 
@@ -2595,7 +2594,7 @@ msgstr "_Ааи"
 
 #: gtk/gtkmountoperation.c:609
 msgid "Co_nnect"
-msgstr "_Аҽаҿакра"
+msgstr ""
 
 #: gtk/gtkmountoperation.c:675
 msgid "Connect As"
@@ -2639,7 +2638,7 @@ msgstr "_Ажәамаӡа"
 
 #: gtk/gtkmountoperation.c:759
 msgid "Forget password _immediately"
-msgstr "_Зыԥшрада апароль ахаршҭра"
+msgstr ""
 
 #: gtk/gtkmountoperation.c:769
 msgid "Remember password until you _logout"
@@ -2647,7 +2646,7 @@ msgstr ""
 
 #: gtk/gtkmountoperation.c:780
 msgid "Remember _forever"
-msgstr "Наунагӡа _агәынкылара"
+msgstr ""
 
 #: gtk/gtkmountoperation.c:1206
 #, c-format
@@ -2700,17 +2699,18 @@ msgstr ""
 
 #: gtk/gtknotebook.c:1491
 msgid "Tab list"
-msgstr "Агәылаҵақәа рыхьӡынҵа"
+msgstr ""
 
 #: gtk/gtknotebook.c:3214
 msgid "Previous tab"
-msgstr "Иаԥхьааиуа агәылаҵа"
+msgstr ""
 
 #: gtk/gtknotebook.c:3218
 msgid "Next tab"
-msgstr "Анаҩстәи агәылаҵа"
+msgstr ""
 
 #: gtk/gtknotebook.c:4038
+#, fuzzy
 msgid "Tab"
 msgstr "Агәылаҵа"
 
@@ -2729,7 +2729,7 @@ msgstr ""
 
 #: gtk/gtkpagesetupunixdialog.c:284 gtk/ui/gtkassistant.ui:98
 msgid "_Apply"
-msgstr "_Ахархәара"
+msgstr ""
 
 #: gtk/gtkpagesetupunixdialog.c:318 gtk/gtkpagesetupunixdialog.c:570
 msgid "Any Printer"
@@ -2768,7 +2768,7 @@ msgstr "Caps Lock аҿакуп"
 
 #: gtk/gtkpasswordentry.c:698
 msgid "_Show Text"
-msgstr "_Атекст арбара"
+msgstr ""
 
 #. translators: %s is the name of a cloud provider for files
 #: gtk/gtkplacessidebar.c:914
@@ -2786,11 +2786,11 @@ msgstr ""
 
 #: gtk/gtkplacessidebar.c:1016
 msgid "Starred"
-msgstr "Иалкаау"
+msgstr ""
 
 #: gtk/gtkplacessidebar.c:1018
 msgid "Starred files"
-msgstr "Иалкаау афаилқаә"
+msgstr ""
 
 #: gtk/gtkplacessidebar.c:1029
 msgid "Open your personal folder"
@@ -2813,6 +2813,7 @@ msgid "Manually enter a location"
 msgstr ""
 
 #: gtk/gtkplacessidebar.c:1070
+#, fuzzy
 msgid "Trash"
 msgstr "Аклаҭ"
 
@@ -2908,7 +2909,7 @@ msgstr ""
 #: gtk/gtkplacessidebar.c:3158 gtk/gtkplacessidebar.c:3248
 #: gtk/gtkplacesview.c:1668
 msgid "Open in New _Window"
-msgstr "Аԥенџьыр ҿыц_аҟны аартра"
+msgstr ""
 
 #: gtk/gtkplacessidebar.c:3259
 msgid "_Add Bookmark"
@@ -2994,7 +2995,7 @@ msgstr ""
 #. Restore from Cancel to Connect
 #: gtk/gtkplacesview.c:1228 gtk/ui/gtkplacesview.ui:262
 msgid "Con_nect"
-msgstr "_Аҽаҿакра"
+msgstr ""
 
 #. if it wasn't cancelled show a dialog
 #: gtk/gtkplacesview.c:1367
@@ -3051,7 +3052,7 @@ msgstr "_Аҿыҵра"
 
 #: gtk/gtkplacesview.c:1688
 msgid "_Connect"
-msgstr "_Аҽаҿакра"
+msgstr ""
 
 #: gtk/gtkplacesview.c:1905
 msgid "Unable to get remote server location"
@@ -3078,7 +3079,7 @@ msgstr[1] ""
 
 #: gtk/gtkplacesviewrow.c:471
 msgid "Disconnect"
-msgstr "Аҿыхра"
+msgstr ""
 
 #: gtk/gtkplacesviewrow.c:471 gtk/ui/gtkplacesviewrow.ui:53
 #: gtk/ui/gtksidebarrow.ui:50
@@ -3193,7 +3194,7 @@ msgstr "Print"
 
 #: gtk/gtkprintoperation-unix.c:479 gtk/gtkprintoperation-win32.c:1504
 msgid "Application"
-msgstr "Аҧшьы"
+msgstr ""
 
 #: gtk/gtkprintoperation-win32.c:635
 msgid "Printer offline"
@@ -3343,12 +3344,12 @@ msgstr ""
 #: gtk/gtkrecentmanager.c:1234 gtk/gtkrecentmanager.c:1243
 #, c-format
 msgid "Unable to find an item with URI “%s”"
-msgstr "URI «%s» змоу аелемент аԥшаара залымшеит"
+msgstr ""
 
 #: gtk/gtkrecentmanager.c:1258
 #, c-format
 msgid "Unable to move the item with URI “%s” to “%s”"
-msgstr "аелемент URI «%s» аҟынтә «%s» ахь аиагара залымшахеит"
+msgstr ""
 
 #: gtk/gtkrecentmanager.c:2319
 #, c-format
@@ -3357,7 +3358,7 @@ msgstr ""
 
 #: gtk/gtksearchentry.c:639
 msgid "Clear entry"
-msgstr "Анҵамҭа арыцқьара"
+msgstr ""
 
 #. Translators: This string is used to mark left/right variants of modifier
 #. * keys in the shortcut window (e.g. Control_L vs Control_R). Please keep
@@ -3393,11 +3394,11 @@ msgstr ""
 
 #: gtk/gtkshortcutsshortcut.c:151
 msgid "Rotate clockwise"
-msgstr "Асааҭхыц иқәланы аргьежьра"
+msgstr ""
 
 #: gtk/gtkshortcutsshortcut.c:155
 msgid "Rotate counterclockwise"
-msgstr "Асааҭхыц иаҿагыланы аргьежьра"
+msgstr ""
 
 #: gtk/gtkshortcutsshortcut.c:159
 msgid "Two finger swipe left"
@@ -3409,11 +3410,11 @@ msgstr ""
 
 #: gtk/gtkshortcutsshortcut.c:167
 msgid "Swipe left"
-msgstr "Арӷьарахь аҟьара"
+msgstr ""
 
 #: gtk/gtkshortcutsshortcut.c:171
 msgid "Swipe right"
-msgstr "Армарахь аҟьара"
+msgstr ""
 
 #. Translators: This is the window title for the shortcuts window in normal mode
 #: gtk/gtkshortcutswindow.c:874 gtk/inspector/window.ui:498
@@ -3449,7 +3450,7 @@ msgctxt "accessibility"
 msgid "Sidebar"
 msgstr ""
 
-#: gtk/gtktext.c:6075 gtk/gtktextview.c:8992
+#: gtk/gtktext.c:6063 gtk/gtktextview.c:8992
 msgid "Insert _Emoji"
 msgstr ""
 
@@ -3463,7 +3464,7 @@ msgstr "Ар_хынҳәра"
 
 #: gtk/gtktreeexpander.c:205 gtk/inspector/misc-info.ui:287
 msgid "Expand"
-msgstr "Аиҵыхра"
+msgstr ""
 
 #: gtk/gtkvolumebutton.c:228
 msgid "Muted"
@@ -3484,12 +3485,12 @@ msgctxt "volume percentage"
 msgid "%d %%"
 msgstr ""
 
-#: gtk/gtkwindow.c:6140
+#: gtk/gtkwindow.c:6101
 #, c-format
 msgid "Do you want to use GTK Inspector?"
 msgstr "Шәхы иашәырхәар шәҭахума GTK Inspector?"
 
-#: gtk/gtkwindow.c:6142
+#: gtk/gtkwindow.c:6103
 #, c-format
 msgid ""
 "GTK Inspector is an interactive debugger that lets you explore and modify "
@@ -3497,7 +3498,7 @@ msgid ""
 "break or crash."
 msgstr ""
 
-#: gtk/gtkwindow.c:6147
+#: gtk/gtkwindow.c:6108
 msgid "Don’t show this message again"
 msgstr ""
 
@@ -3523,7 +3524,7 @@ msgstr "Аркра"
 
 #: gtk/gtkwindowcontrols.c:359
 msgid "Close the window"
-msgstr "Аԥенџьвр аркра"
+msgstr ""
 
 #: gtk/gtkwindowhandle.c:223
 msgid "Restore"
@@ -3531,11 +3532,11 @@ msgstr "Аиҭашьақәыргылара"
 
 #: gtk/inspector/a11y.ui:16
 msgid "Role"
-msgstr "Ароль"
+msgstr ""
 
 #: gtk/inspector/a11y.ui:40
 msgid "Object path"
-msgstr "Аобиект ахь амҩа"
+msgstr ""
 
 #: gtk/inspector/a11y.ui:66
 msgid "Attribute"
@@ -3545,7 +3546,7 @@ msgstr "Аҟазшьарбага"
 #: gtk/inspector/prop-list.ui:57 gtk/inspector/recorder.ui:155
 #: gtk/inspector/recorder.ui:221
 msgid "Value"
-msgstr "Аҵакы"
+msgstr ""
 
 #: gtk/inspector/action-editor.c:123
 msgid "Activate"
@@ -3553,7 +3554,7 @@ msgstr "Активациа азура"
 
 #: gtk/inspector/action-editor.c:135
 msgid "Set State"
-msgstr "Аҭагылазаашьа ашьақәыргылара "
+msgstr ""
 
 #: gtk/inspector/actions.ui:30
 msgid "Enabled"
@@ -3566,7 +3567,7 @@ msgstr ""
 #: gtk/inspector/actions.ui:52 gtk/inspector/css-node-tree.ui:74
 #: gtk/inspector/misc-info.ui:121
 msgid "State"
-msgstr "Аҵакыра"
+msgstr ""
 
 #: gtk/inspector/clipboard.c:211 gtk/inspector/misc-info.ui:278
 msgid "Show"
@@ -3574,7 +3575,7 @@ msgstr "Агәарҿыхарақәа"
 
 #: gtk/inspector/clipboard.c:228
 msgid "Hover to load"
-msgstr "Аҭагаларазы ахырхага ақәышәк"
+msgstr ""
 
 #: gtk/inspector/clipboard.c:278
 msgctxt "clipboard"
@@ -3593,7 +3594,7 @@ msgstr ""
 
 #: gtk/inspector/clipboard.ui:31
 msgid "Drag and hold here"
-msgstr "Иқәырҳәазаны абраҟа ишәкыз"
+msgstr ""
 
 #: gtk/inspector/clipboard.ui:75 gtk/inspector/window.ui:574
 msgid "Clipboard"
@@ -3601,7 +3602,7 @@ msgstr "Аԥсахра абуфер"
 
 #: gtk/inspector/clipboard.ui:114
 msgid "Primary"
-msgstr "Ихадоу"
+msgstr ""
 
 #: gtk/inspector/controllers.c:126
 msgctxt "event phase"
@@ -3722,19 +3723,19 @@ msgstr ""
 
 #: gtk/inspector/general.ui:84
 msgid "GSK Renderer"
-msgstr "Арендер GSK"
+msgstr ""
 
 #: gtk/inspector/general.ui:110
 msgid "Pango Fontmap"
-msgstr "Pango ашрифтқәа рыхсаала"
+msgstr ""
 
 #: gtk/inspector/general.ui:136
 msgid "Media Backend"
-msgstr "Амедиа бенкед"
+msgstr ""
 
 #: gtk/inspector/general.ui:162
 msgid "Input Method"
-msgstr "Аҭагалашьа"
+msgstr ""
 
 #: gtk/inspector/general.ui:202
 msgid "Application ID"
@@ -3754,7 +3755,7 @@ msgstr "Аԥшра"
 
 #: gtk/inspector/general.ui:497
 msgid "RGBA Visual"
-msgstr "Лаԥшылатәи RGBA"
+msgstr ""
 
 #: gtk/inspector/general.ui:523
 msgid "Composited"
@@ -3770,7 +3771,7 @@ msgstr ""
 
 #: gtk/inspector/general.ui:665
 msgid "Vulkan Device"
-msgstr "Аиҿартәыра Vulkan"
+msgstr ""
 
 #: gtk/inspector/general.ui:692
 msgid "Vulkan API version"
@@ -3778,7 +3779,7 @@ msgstr "Аверсиа API Vulkan"
 
 #: gtk/inspector/general.ui:719
 msgid "Vulkan driver version"
-msgstr "Vulkan адраивер аверсиа"
+msgstr ""
 
 #: gtk/inspector/menu.c:95
 msgid "Unnamed section"
@@ -3786,7 +3787,7 @@ msgstr "Ихьӡыдоу аҟәша"
 
 #: gtk/inspector/menu.ui:23
 msgid "Label"
-msgstr "Ахҵара"
+msgstr ""
 
 #: gtk/inspector/menu.ui:36 gtk/inspector/shortcuts.ui:23
 msgid "Action"
@@ -3811,11 +3812,11 @@ msgstr "Ахкы"
 
 #: gtk/inspector/misc-info.ui:91
 msgid "Reference Count"
-msgstr "Азхьаԥшрақәа рхыԥхьаӡара"
+msgstr ""
 
 #: gtk/inspector/misc-info.ui:151
 msgid "Direction"
-msgstr "Ахырхарҭа"
+msgstr ""
 
 #: gtk/inspector/misc-info.ui:181
 msgid "Buildable ID"
@@ -3827,11 +3828,11 @@ msgstr ""
 
 #: gtk/inspector/misc-info.ui:240
 msgid "Request Mode"
-msgstr "Адҵаалара арежим"
+msgstr ""
 
 #: gtk/inspector/misc-info.ui:269
 msgid "Measure map"
-msgstr "Ашәагақәа рыхсаала"
+msgstr ""
 
 #: gtk/inspector/misc-info.ui:338
 msgid "Allocation"
@@ -3865,11 +3866,11 @@ msgstr ""
 
 #: gtk/inspector/misc-info.ui:543
 msgid "Frame Count"
-msgstr "Акадрқәа рхыԥхьаӡара"
+msgstr ""
 
 #: gtk/inspector/misc-info.ui:572
 msgid "Frame Rate"
-msgstr "Акадрқәа рыласра"
+msgstr ""
 
 #: gtk/inspector/misc-info.ui:601
 msgid "Mapped"
@@ -3922,7 +3923,7 @@ msgstr ""
 #: gtk/inspector/prop-editor.c:888
 #, c-format
 msgid "%s with value type %s"
-msgstr "%s аҵакы ахкы змоу %s"
+msgstr ""
 
 #: gtk/inspector/prop-editor.c:1242
 #, c-format
@@ -3952,7 +3953,7 @@ msgstr ""
 #: gtk/inspector/prop-editor.c:1527
 #, c-format
 msgid "Action from: %p (%s)"
-msgstr "Аҟаҵара :%p (%s) аҟынтә"
+msgstr ""
 
 #: gtk/inspector/prop-editor.c:1582
 msgid "Reset"
@@ -3994,11 +3995,11 @@ msgstr ""
 #: gtk/inspector/recorder.c:1694
 #, c-format
 msgid "Saving RenderNode failed"
-msgstr "RenderNode аиқәырхараан иҟалеит агха"
+msgstr ""
 
 #: gtk/inspector/recorder.ui:20
 msgid "Record frames"
-msgstr "Анҵамҭа акадрқәа"
+msgstr ""
 
 #: gtk/inspector/recorder.ui:27
 msgid "Clear recorded frames"
@@ -4022,7 +4023,7 @@ msgstr ""
 
 #: gtk/inspector/recorder.ui:67
 msgid "Copy to clipboard"
-msgstr "Абуфер ахь ахькьыпхьаара"
+msgstr ""
 
 #: gtk/inspector/recorder.ui:142 gtk/inspector/recorder.ui:208
 msgid "Property"
@@ -4051,7 +4052,7 @@ msgstr ""
 
 #: gtk/inspector/resource-list.ui:164
 msgid "Size:"
-msgstr "Ашәагаа:"
+msgstr ""
 
 #: gtk/inspector/shortcuts.ui:17
 msgid "Trigger"
@@ -4091,7 +4092,7 @@ msgstr ""
 
 #: gtk/inspector/statistics.ui:71
 msgid "Cumulative 1"
-msgstr "Иеизҳауа 1"
+msgstr ""
 
 #: gtk/inspector/statistics.ui:82
 msgid "Self 2"
@@ -4099,7 +4100,7 @@ msgstr ""
 
 #: gtk/inspector/statistics.ui:93
 msgid "Cumulative 2"
-msgstr "Иеизҳауа 2"
+msgstr ""
 
 #: gtk/inspector/statistics.ui:104
 msgid "Self"
@@ -4107,7 +4108,7 @@ msgstr ""
 
 #: gtk/inspector/statistics.ui:120
 msgid "Cumulative"
-msgstr "Иеизҳауа"
+msgstr ""
 
 #: gtk/inspector/statistics.ui:151
 msgid "Enable statistics with GOBJECT_DEBUG=instance-count"
@@ -4159,15 +4160,15 @@ msgstr ""
 
 #: gtk/inspector/visual.ui:240
 msgid "Text Direction"
-msgstr "Атекст ахырхарҭа"
+msgstr ""
 
 #: gtk/inspector/visual.ui:255
 msgid "Left-to-Right"
-msgstr "Арымарахьтә арӷьарахь"
+msgstr ""
 
 #: gtk/inspector/visual.ui:256
 msgid "Right-to-Left"
-msgstr "Арӷьарахьтә арымарахь"
+msgstr ""
 
 #: gtk/inspector/visual.ui:274
 msgid "Window Scaling"
@@ -4235,7 +4236,7 @@ msgstr ""
 
 #: gtk/inspector/window.ui:42 gtk/inspector/window.ui:107
 msgid "Show Details"
-msgstr "Аԥкаарақәа рырбара"
+msgstr ""
 
 #: gtk/inspector/window.ui:57
 msgid "Show all Objects"
@@ -4303,7 +4304,7 @@ msgstr ""
 
 #: gtk/inspector/window.ui:457
 msgid "Actions"
-msgstr "Аҟаҵарақәа"
+msgstr ""
 
 #: gtk/inspector/window.ui:468
 msgid "Menu"
@@ -4319,7 +4320,7 @@ msgstr ""
 
 #: gtk/inspector/window.ui:508
 msgid "Accessibility"
-msgstr "Ахархәара аманшәалара"
+msgstr ""
 
 #: gtk/inspector/window.ui:532
 msgid "Global"
@@ -4327,19 +4328,19 @@ msgstr ""
 
 #: gtk/inspector/window.ui:545
 msgid "Information"
-msgstr "Аинформациа"
+msgstr ""
 
 #: gtk/inspector/window.ui:554
 msgid "Settings"
-msgstr "Архиарақәа"
+msgstr ""
 
 #: gtk/inspector/window.ui:563
 msgid "Resources"
-msgstr "Аагарҭа"
+msgstr ""
 
 #: gtk/inspector/window.ui:584
 msgid "Statistics"
-msgstr "Астатистика:"
+msgstr ""
 
 #: gtk/inspector/window.ui:595
 msgid "Logging"
@@ -6045,7 +6046,7 @@ msgstr ""
 
 #: gtk/ui/gtkfontchooserdialog.ui:4
 msgid "Select Font"
-msgstr "Ашрифт алхра"
+msgstr ""
 
 #: gtk/ui/gtkfontchooserwidget.ui:64
 msgid "Search font name"
@@ -6061,7 +6062,7 @@ msgstr ""
 
 #: gtk/ui/gtkfontchooserwidget.ui:95
 msgid "Language"
-msgstr "Абызшәа"
+msgstr ""
 
 #: gtk/ui/gtkfontchooserwidget.ui:188 gtk/ui/gtkfontchooserwidget.ui:324
 msgid "Preview Font"
@@ -6097,7 +6098,7 @@ msgstr ""
 
 #: gtk/ui/gtkpagesetupunixdialog.ui:121 gtk/ui/gtkprintunixdialog.ui:676
 msgid "Landscape"
-msgstr "Аҭыҧсахьатә"
+msgstr ""
 
 #: gtk/ui/gtkpagesetupunixdialog.ui:132 gtk/ui/gtkprintunixdialog.ui:678
 msgid "Reverse landscape"
@@ -6129,7 +6130,7 @@ msgstr ""
 
 #: gtk/ui/gtkplacesview.ui:221
 msgid "No results found"
-msgstr "Алҵшәақәа ԥшааӡам"
+msgstr ""
 
 #: gtk/ui/gtkplacesview.ui:252
 msgid "Connect to _Server"
@@ -6142,7 +6143,7 @@ msgstr ""
 #. this is the header for the printer status column in the print dialog
 #: gtk/ui/gtkprintunixdialog.ui:145
 msgid "Status"
-msgstr "Аҭагылазаашьа"
+msgstr ""
 
 #: gtk/ui/gtkprintunixdialog.ui:199
 msgid "Range"
@@ -6742,7 +6743,7 @@ msgstr ""
 
 #: modules/printbackends/gtkprintbackendcups.c:5642
 msgid "High"
-msgstr "Иауу"
+msgstr ""
 
 #: modules/printbackends/gtkprintbackendcups.c:5642
 msgid "Medium"
@@ -6750,7 +6751,7 @@ msgstr "Абжьаратәи"
 
 #: modules/printbackends/gtkprintbackendcups.c:5642
 msgid "Low"
-msgstr "Илаҟәу"
+msgstr ""
 
 #. Translators, this string is used to label the job priority option
 #. * in the print dialog
@@ -7239,3 +7240,3836 @@ msgid ""
 "No theme index file in “%s”.\n"
 "If you really want to create an icon cache here, use --ignore-theme-index.\n"
 msgstr ""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#, fuzzy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#, fuzzy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#, fuzzy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#, fuzzy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#, fuzzy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#, fuzzy
+
+
+
+#, fuzzy
+
+#, fuzzy
+
+
+
+
+
+
+#, fuzzy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#, fuzzy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#, fuzzy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#, fuzzy

@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 typedef struct _Row Row;
 typedef struct _RowClass RowClass;
 
@@ -360,7 +362,7 @@ main (int argc, char *argv[])
   gtk_box_append (GTK_BOX (vbox), button);
   g_signal_connect (button, "clicked", G_CALLBACK (visibility_clicked_cb), row3);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (TRUE)
     g_main_context_iteration (NULL, TRUE);

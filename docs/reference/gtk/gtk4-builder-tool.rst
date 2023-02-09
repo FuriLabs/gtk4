@@ -12,8 +12,8 @@ SYNOPSIS
 --------
 |   **gtk4-builder-tool** <COMMAND> [OPTIONS...] <FILE>
 |
-|   **gtk4-builder-tool** validate <FILE>
-|   **gtk4-builder-tool** enumerate <FILE>
+|   **gtk4-builder-tool** validate [OPTIONS...] <FILE>
+|   **gtk4-builder-tool** enumerate [OPTIONS...] <FILE>
 |   **gtk4-builder-tool** simplify [OPTIONS...] <FILE>
 |   **gtk4-builder-tool** preview [OPTIONS...] <FILE>
 |   **gtk4-builder-tool** screenshot [OPTIONS...] <FILE>
@@ -33,11 +33,19 @@ Validation
 The ``validate`` command validates the given UI definition file and reports
 errors to ``stderr``.
 
+``--deprecations``
+
+  Warn about uses of deprecated types in the UI definition file.
+
 Enumeration
 ^^^^^^^^^^^
 
-The ``enumerate`` command lists all the named objects that are present in the UI
+The ``enumerate`` command prints all the named objects that are present in the UI
 definition file.
+
+``--callbacks``
+
+  Print the names of callbacks as well.
 
 Preview
 ^^^^^^^

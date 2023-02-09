@@ -95,9 +95,6 @@ struct _GtkPlacesView
   GtkSizeGroup                  *path_size_group;
   GtkSizeGroup                  *space_size_group;
 
-  GtkEntryCompletion            *address_entry_completion;
-  GtkListStore                  *completion_store;
-
   GCancellable                  *networks_fetching_cancellable;
 
   GtkPlacesViewRow              *row_for_action;
@@ -552,12 +549,9 @@ populate_servers (GtkPlacesView *view)
   while ((child = gtk_widget_get_first_child (GTK_WIDGET (view->recent_servers_listbox))))
     gtk_list_box_remove (GTK_LIST_BOX (view->recent_servers_listbox), child);
 
-  gtk_list_store_clear (view->completion_store);
-
   for (i = 0; i < num_uris; i++)
     {
       RemoveServerData *data;
-      GtkTreeIter iter;
       GtkWidget *row;
       GtkWidget *grid;
       GtkWidget *button;
@@ -567,14 +561,6 @@ populate_servers (GtkPlacesView *view)
 
       name = g_bookmark_file_get_title (server_list, uris[i], NULL);
       dup_uri = g_strdup (uris[i]);
-
-      /* add to the completion list */
-      gtk_list_store_append (view->completion_store, &iter);
-      gtk_list_store_set (view->completion_store,
-                          &iter,
-                          0, name,
-                          1, uris[i],
-                          -1);
 
       /* add to the recent servers listbox */
       row = gtk_list_box_row_new ();
@@ -884,20 +870,20 @@ update_network_state (GtkPlacesView *view)
        * otherwise just show the spinner in the header */
       if (!has_networks (view))
         {
-          gtk_widget_show (view->network_placeholder);
+          gtk_widget_set_visible (view->network_placeholder, TRUE);
           gtk_label_set_text (GTK_LABEL (view->network_placeholder_label),
                               _("Searching for network locations"));
         }
     }
   else if (!has_networks (view))
     {
-      gtk_widget_show (view->network_placeholder);
+      gtk_widget_set_visible (view->network_placeholder, TRUE);
       gtk_label_set_text (GTK_LABEL (view->network_placeholder_label),
                           _("No network locations found"));
     }
   else
     {
-      gtk_widget_hide (view->network_placeholder);
+      gtk_widget_set_visible (view->network_placeholder, FALSE);
     }
 }
 
@@ -1644,7 +1630,7 @@ populate_available_protocols_grid (GtkGrid *grid)
     }
 
   if (!has_any)
-    gtk_widget_hide (GTK_WIDGET (grid));
+    gtk_widget_set_visible (GTK_WIDGET (grid), FALSE);
 }
 
 static GMenuModel *
@@ -1970,7 +1956,7 @@ on_recent_servers_listbox_row_activated (GtkPlacesView    *view,
 
   gtk_editable_set_text (GTK_EDITABLE (view->address_entry), uri);
 
-  gtk_widget_hide (view->recent_servers_popover);
+  gtk_widget_set_visible (view->recent_servers_popover, FALSE);
 }
 
 static void
@@ -2300,8 +2286,6 @@ gtk_places_view_class_init (GtkPlacesViewClass *klass)
 
   gtk_widget_class_bind_template_child (widget_class, GtkPlacesView, actionbar);
   gtk_widget_class_bind_template_child (widget_class, GtkPlacesView, address_entry);
-  gtk_widget_class_bind_template_child (widget_class, GtkPlacesView, address_entry_completion);
-  gtk_widget_class_bind_template_child (widget_class, GtkPlacesView, completion_store);
   gtk_widget_class_bind_template_child (widget_class, GtkPlacesView, connect_button);
   gtk_widget_class_bind_template_child (widget_class, GtkPlacesView, listbox);
   gtk_widget_class_bind_template_child (widget_class, GtkPlacesView, recent_servers_listbox);

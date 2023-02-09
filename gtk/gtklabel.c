@@ -35,17 +35,19 @@
 #include <glib/gi18n-lib.h>
 #include "gtkmarshalers.h"
 #include "gtknotebook.h"
-#include "gtkpango.h"
+#include "gtkpangoprivate.h"
 #include "gtkprivate.h"
 #include "gtkshortcut.h"
 #include "gtkshortcutcontroller.h"
 #include "gtkshortcuttrigger.h"
-#include "gtkshow.h"
 #include "gtksnapshot.h"
-#include "gtkstylecontextprivate.h"
-#include "gtktextutil.h"
+#include "gtkrenderbackgroundprivate.h"
+#include "gtkrenderborderprivate.h"
+#include "gtkrenderlayoutprivate.h"
+#include "gtktextutilprivate.h"
 #include "gtktooltip.h"
 #include "gtktypebuiltins.h"
+#include "gtkurilauncher.h"
 #include "gtkwidgetprivate.h"
 #include "gtkpopovermenu.h"
 #include "gtknative.h"
@@ -92,7 +94,7 @@
  * # GtkLabel as GtkBuildable
  *
  * The GtkLabel implementation of the GtkBuildable interface supports a
- * custom <attributes> element, which supports any number of <attribute>
+ * custom `<attributes>` element, which supports any number of `<attribute>`
  * elements. The <attribute> element has attributes named “name“, “value“,
  * “start“ and “end“ and allows you to specify [struct@Pango.Attribute]
  * values for this label.
@@ -230,8 +232,8 @@
  *
  * ```c
  * const char *text =
- * "Go to the"
- * "<a href=\"http://www.gtk.org title=\"&lt;i&gt;Our&lt;/i&gt; website\">"
+ * "Go to the "
+ * "<a href=\"https://www.gtk.org\" title=\"&lt;i&gt;Our&lt;/i&gt; website\">"
  * "GTK website</a> for more...";
  * GtkWidget *label = gtk_label_new (NULL);
  * gtk_label_set_markup (GTK_LABEL (label), text);
@@ -1378,19 +1380,20 @@ gtk_label_snapshot (GtkWidget   *widget,
 {
   GtkLabel *self = GTK_LABEL (widget);
   GtkLabelSelectionInfo *info;
-  GtkStyleContext *context;
+  GtkCssStyle *style;
   int lx, ly;
   int width, height;
+  GtkCssBoxes boxes;
 
   if (!self->text || (*self->text == '\0'))
     return;
 
   gtk_label_ensure_layout (self);
 
-  context = _gtk_widget_get_style_context (widget);
   get_layout_location (self, &lx, &ly);
 
-  gtk_snapshot_render_layout (snapshot, context, lx, ly, self->layout);
+  gtk_css_boxes_init (&boxes, widget);
+  gtk_css_style_snapshot_layout (&boxes, snapshot, lx, ly, self->layout);
 
   info = self->select_info;
   if (!info)
@@ -1409,7 +1412,8 @@ gtk_label_snapshot (GtkWidget   *widget,
       range[0] = MIN (info->selection_anchor, info->selection_end);
       range[1] = MAX (info->selection_anchor, info->selection_end);
 
-      gtk_style_context_save_to_node (context, info->selection_node);
+      style = gtk_css_node_get_style (info->selection_node);
+      gtk_css_boxes_init_border_box (&boxes, style, 0, 0, width, height);
 
       range_clip = gdk_pango_layout_get_clip_region (self->layout, lx, ly, range, 1);
       for (i = 0; i < cairo_region_num_rectangles (range_clip); i++)
@@ -1417,14 +1421,12 @@ gtk_label_snapshot (GtkWidget   *widget,
           cairo_region_get_rectangle (range_clip, i, &clip_rect);
 
           gtk_snapshot_push_clip (snapshot, &GRAPHENE_RECT_FROM_RECT (&clip_rect));
-          gtk_snapshot_render_background (snapshot, context, 0, 0, width, height);
-          gtk_snapshot_render_layout (snapshot, context, lx, ly, self->layout);
+          gtk_css_style_snapshot_background (&boxes, snapshot);
+          gtk_css_style_snapshot_layout (&boxes, snapshot, lx, ly, self->layout);
           gtk_snapshot_pop (snapshot);
         }
 
       cairo_region_destroy (range_clip);
-
-      gtk_style_context_restore (context);
     }
   else
     {
@@ -1443,10 +1445,12 @@ gtk_label_snapshot (GtkWidget   *widget,
           PangoDirection cursor_direction;
 
           cursor_direction = get_cursor_direction (self);
-          gtk_snapshot_render_insertion_cursor (snapshot, context,
-                                                lx, ly,
-                                                self->layout, self->select_info->selection_end,
-                                                cursor_direction);
+          gtk_css_style_snapshot_caret (&boxes, gtk_widget_get_display (widget),
+                                        snapshot,
+                                        lx, ly,
+                                        self->layout,
+                                        self->select_info->selection_end,
+                                        cursor_direction);
         }
 
       focus_link = gtk_label_get_focus_link (self, NULL);
@@ -1457,7 +1461,8 @@ gtk_label_snapshot (GtkWidget   *widget,
           range[0] = active_link->start;
           range[1] = active_link->end;
 
-          gtk_style_context_save_to_node (context, active_link->cssnode);
+          style = gtk_css_node_get_style (active_link->cssnode);
+          gtk_css_boxes_init_border_box (&boxes, style, 0, 0, width, height);
 
           range_clip = gdk_pango_layout_get_clip_region (self->layout, lx, ly, range, 1);
           for (i = 0; i < cairo_region_num_rectangles (range_clip); i++)
@@ -1465,14 +1470,12 @@ gtk_label_snapshot (GtkWidget   *widget,
               cairo_region_get_rectangle (range_clip, i, &clip_rect);
 
               gtk_snapshot_push_clip (snapshot, &GRAPHENE_RECT_FROM_RECT (&clip_rect));
-              gtk_snapshot_render_background (snapshot, context, 0, 0, width, height);
-              gtk_snapshot_render_layout (snapshot, context, lx, ly, self->layout);
+              gtk_css_style_snapshot_background (&boxes, snapshot);
+              gtk_css_style_snapshot_layout (&boxes, snapshot, lx, ly, self->layout);
               gtk_snapshot_pop (snapshot);
             }
 
           cairo_region_destroy (range_clip);
-
-          gtk_style_context_restore (context);
         }
 
       if (focus_link && gtk_widget_has_visible_focus (widget))
@@ -1480,16 +1483,15 @@ gtk_label_snapshot (GtkWidget   *widget,
           range[0] = focus_link->start;
           range[1] = focus_link->end;
 
-          gtk_style_context_save_to_node (context, focus_link->cssnode);
+          style = gtk_css_node_get_style (focus_link->cssnode);
 
           range_clip = gdk_pango_layout_get_clip_region (self->layout, lx, ly, range, 1);
           cairo_region_get_extents (range_clip, &rect);
 
-          gtk_snapshot_render_focus (snapshot, context, rect.x, rect.y, rect.width, rect.height);
+          gtk_css_boxes_init_border_box (&boxes, style, rect.x, rect.y, rect.width, rect.height);
+          gtk_css_style_snapshot_outline (&boxes, snapshot);
 
           cairo_region_destroy (range_clip);
-
-          gtk_style_context_restore (context);
         }
     }
 }
@@ -2100,11 +2102,14 @@ gtk_label_activate_link (GtkLabel    *self,
 {
   GtkWidget *widget = GTK_WIDGET (self);
   GtkWidget *toplevel = GTK_WIDGET (gtk_widget_get_root (widget));
+  GtkUriLauncher *launcher;
 
   if (!GTK_IS_WINDOW (toplevel))
     return FALSE;
 
-  gtk_show_uri (GTK_WINDOW (toplevel), uri, GDK_CURRENT_TIME);
+  launcher = gtk_uri_launcher_new (uri);
+  gtk_uri_launcher_launch (launcher, GTK_WINDOW (toplevel), NULL, NULL, NULL);
+  g_object_unref (launcher);
 
   return TRUE;
 }
@@ -2234,7 +2239,7 @@ gtk_label_class_init (GtkLabelClass *class)
    * GtkLabel::copy-clipboard:
    * @self: the object which received the signal
    *
-   * Gets emitted to copy the slection to the clipboard.
+   * Gets emitted to copy the selection to the clipboard.
    *
    * The ::copy-clipboard signal is a [keybinding signal](class.SignalAction.html).
    *
@@ -2279,7 +2284,7 @@ gtk_label_class_init (GtkLabelClass *class)
      * Gets emitted to activate a URI.
      *
      * Applications may connect to it to override the default behaviour,
-     * which is to call gtk_show_uri().
+     * which is to call [method@Gtk.FileLauncher.launch].
      *
      * Returns: %TRUE if the link has been activated
      */
@@ -3137,7 +3142,7 @@ gtk_label_recalculate (GtkLabel *self)
  * It overwrites any text that was there before.
  *
  * This function will clear any previously set mnemonic accelerators,
- * and set the [property@Gtk.Label:use-underline property] to %FALSE as
+ * and set the [property@Gtk.Label:use-underline] property to %FALSE as
  * a side effect.
  *
  * This function will set the [property@Gtk.Label:use-markup] property
@@ -3205,7 +3210,7 @@ gtk_label_set_attributes (GtkLabel         *self,
  * gtk_label_get_attributes: (attributes org.gtk.Method.get_property=attributes)
  * @self: a `GtkLabel`
  *
- * Gets the labels attribute list.
+ * Gets the label's attribute list.
  *
  * This is the [struct@Pango.AttrList] that was set on the label using
  * [method@Gtk.Label.set_attributes], if any. This function does not
@@ -4386,7 +4391,7 @@ gtk_label_click_gesture_released (GtkGestureClick *gesture,
 
   if (info->in_drag)
     {
-      info->in_drag = 0;
+      info->in_drag = FALSE;
       get_layout_index (self, x, y, &index);
       gtk_label_select_region_index (self, index, index);
     }
@@ -4455,7 +4460,7 @@ gtk_label_drag_gesture_begin (GtkGestureDrag *gesture,
   state_mask = gdk_event_get_modifier_state (event);
 
   if ((info->selection_anchor != info->selection_end) &&
-      (state_mask & GDK_SHIFT_MASK))
+      ((state_mask & GDK_SHIFT_MASK) != 0))
     {
       if (index > min && index < max)
         {
@@ -4486,7 +4491,8 @@ gtk_label_drag_gesture_begin (GtkGestureDrag *gesture,
     {
       if (min < max && min <= index && index <= max)
         {
-          info->in_drag = TRUE;
+          if (!info->select_words)
+            info->in_drag = TRUE;
           info->drag_start_x = start_x;
           info->drag_start_y = start_y;
         }

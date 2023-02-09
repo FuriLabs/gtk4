@@ -42,7 +42,7 @@ update_title_cb (GtkFilterListModel *model)
   title = g_strdup_printf ("%u lines", g_list_model_get_n_items (G_LIST_MODEL (model)));
 
   gtk_widget_set_visible (progress, pending != 0);
-  gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (progress), (total - pending) / (double) total);
+  gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (progress), total > 0 ? (total - pending) / (double) total : 0.);
   gtk_window_set_title (GTK_WINDOW (window), title);
   g_free (title);
 }
@@ -141,39 +141,34 @@ load_file (GtkStringList *list,
 }
 
 static void
-open_response_cb (GtkNativeDialog *dialog,
-                  int              response,
-                  GtkStringList   *stringlist)
+open_response_cb (GObject *source,
+                  GAsyncResult *result,
+                  void *user_data)
 {
-  gtk_native_dialog_hide (dialog);
+  GtkFileDialog *dialog = GTK_FILE_DIALOG (source);
+  GtkStringList *stringlist = GTK_STRING_LIST (user_data);
+  GFile *file;
 
-  if (response == GTK_RESPONSE_ACCEPT)
+  file = gtk_file_dialog_open_finish (dialog, result, NULL);
+  if (file)
     {
-      GFile *file;
-
-      file = gtk_file_chooser_get_file (GTK_FILE_CHOOSER (dialog));
       load_file (stringlist, file);
       g_object_unref (file);
     }
-
-  gtk_native_dialog_destroy (dialog);
 }
 
 static void
 file_open_cb (GtkWidget     *button,
               GtkStringList *stringlist)
 {
-  GtkFileChooserNative *dialog;
+  GtkFileDialog *dialog;
 
-  dialog = gtk_file_chooser_native_new ("Open file",
-                                        GTK_WINDOW (gtk_widget_get_root (button)),
-                                        GTK_FILE_CHOOSER_ACTION_OPEN,
-                                        "_Load",
-                                        "_Cancel");
-  gtk_native_dialog_set_modal (GTK_NATIVE_DIALOG (dialog), TRUE);
-
-  g_signal_connect (dialog, "response", G_CALLBACK (open_response_cb), stringlist);
-  gtk_native_dialog_show (GTK_NATIVE_DIALOG (dialog));
+  dialog = gtk_file_dialog_new ();
+  gtk_file_dialog_open (dialog,
+                        GTK_WINDOW (gtk_widget_get_root (button)),
+                        NULL,
+                        open_response_cb, stringlist);
+  g_object_unref (dialog);
 }
 
 GtkWidget *
@@ -253,7 +248,7 @@ do_listview_words (GtkWidget *do_widget)
     }
 
   if (!gtk_widget_get_visible (window))
-    gtk_widget_show (window);
+    gtk_widget_set_visible (window, TRUE);
   else
     gtk_window_destroy (GTK_WINDOW (window));
 

@@ -210,7 +210,7 @@ gtk_popover_menu_close_submenus (GtkPopoverMenu *menu)
   if (submenu)
     {
       gtk_popover_menu_close_submenus (GTK_POPOVER_MENU (submenu));
-      gtk_widget_hide (submenu);
+      gtk_widget_set_visible (submenu, FALSE);
       gtk_popover_menu_set_open_submenu (menu, NULL);
     }
 }
@@ -856,7 +856,7 @@ gtk_popover_menu_add_child (GtkPopoverMenu *popover,
  * @child: the `GtkWidget` to remove
  *
  * Removes a widget that has previously been added with
- * gtk_popover_menu_add_child().
+ * [method@Gtk.PopoverMenu.add_child()]
  *
  * Returns: %TRUE if the widget was removed
  */

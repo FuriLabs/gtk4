@@ -114,6 +114,11 @@ option('profile',
        value: 'default',
        description : 'Profile to use for demos')
 
+option('build-testsuite',
+       type: 'boolean',
+       value: true,
+       description : 'Build testsuite')
+
 option('build-examples',
        type: 'boolean',
        value: true,
@@ -123,8 +128,3 @@ option('build-tests',
        type: 'boolean',
        value: true,
        description : 'Build tests')
-
-option('install-tests',
-       type: 'boolean',
-       value: false,
-       description : 'Install tests')

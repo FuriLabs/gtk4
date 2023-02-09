@@ -870,14 +870,11 @@ _gdk_macos_display_get_surface_at_coords (GdkMacosDisplay *self,
   for (const GList *iter = surfaces; iter; iter = iter->next)
     {
       GdkSurface *surface = iter->data;
-      NSWindow *nswindow;
 
       g_assert (GDK_IS_MACOS_SURFACE (surface));
 
       if (!gdk_surface_get_mapped (surface))
         continue;
-
-      nswindow = _gdk_macos_surface_get_native (GDK_MACOS_SURFACE (surface));
 
       if (x >= GDK_MACOS_SURFACE (surface)->root_x &&
           y >= GDK_MACOS_SURFACE (surface)->root_y &&
@@ -1023,6 +1020,16 @@ _gdk_macos_display_get_nsevent (GdkEvent *event)
       if (map->gdk_event == event)
         return map->nsevent;
     }
+
+  return NULL;
+}
+
+NSEvent *
+_gdk_macos_display_get_last_nsevent ()
+{
+  const GdkToNSEventMap *map = g_queue_peek_tail (&event_map);
+  if (map)
+    return map->nsevent;
 
   return NULL;
 }

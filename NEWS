@@ -1,104 +1,204 @@
-Overview of Changes in 4.8.3, 12-22-2022
+Overview of Changes in 4.9.3, 04-02-2023
 ========================================
 
-* GtkText:
- - Claim gestures more selectively
- - Prevent unexpected notify::direction emissions
+* Add GtkUriLauncher, as replacement for gtk_show_uri
+
+* Add GdkMonitor::description
+
+* Fix problems with tooltip sizing
+
+* Deprecations:
+ - GtkStatusbar
+ - GtkAssistant
+ - GtkLockButton
+ - gtk_gesture_set_sequence_state
+
+* GtkColumnView:
+ - Only create widgets for visible columns
+
+* GtkFileDialog:
+ - Drop shortcut folders API
+
+* GtkCalendar:
+ - Make marked days work again
+
+* GtkSwitch:
+ - Make state and active independently settable
+
+* GtkFileChooser:
+ - Fix a crash with DND
+ - Fix excessively wide sidebar
+ - Make context menus work again
 
 * Accessibility:
- - Remember if we don't find the a11y bus
+ - Make GtkAccessible public, so it can be implemented outside GTK
+ - Support accessible implementation for editables
 
-* DND:
- - Prefer file:// urls over other protocols
+* CSS:
+ - Fix randomly stopping CSS animations
 
-* GtkMountOperation:
- - Work on Wayland
-
-* GtkListView:
- - Cancel rubberband if not handling drag
+* GL:
+ - Fix synchronization with GStreamer
+ - Fix problems with 3rd party GL in the same thread
 
 * Wayland:
- - Fix button masks
+ - Fix startup notification with xdg_activation
 
-* Windows:
- - Fix resizes with native decorations
+* Broadway:
+ - Implement modal windows
+
+* macOS:
+ - Make DND work
+
+* Build:
+ - Require graphene 1.10
+ - Require gobject-introspection 1.72
+
+* Translation updates
+ Catalan
+ Galician
+ German
+ Hebrew
+ Indonesian
+ Portuguese
+ Russian
+ Spanish
+ Swedish
+ Turkish
+ Ukrainian
+
+
+Overview of Changes in 4.9.2, 26-12-2022
+========================================
+
+* GtkFileChooserWidget:
+ - Add a grid view
+
+* GtkText, GtkTextView:
+ - Fix activation of the on-screen keyboard
+ - Prevent unexpected text direction changes
+
+* GtkCenterBox:
+ - Add properties for children
+
+* GtkTreeExpander:
+ - Add a hide-expander property
+
+* GtkStringList:
+ - Add a construct-only strings property
+
+* GtkBuilder:
+ - Support parsing Pango attributes in string form
+
+* GtkGestureStylus:
+ - Add a stylus-only property
+
+* GtkFileLauncher:
+ - New async-style api to replace gtk_show_uri
+
+* GtkColorDialog, GtkFontDialog, GtkFileDialog,
+  GtkAlertDialog:
+ - APIs have seen some tweaks
+ - Prefer portals when available
+ - Fixes for cancellation
+
+* Add GDK_DEBUG=no-portals
+
+* Improve file DND with remote files
+
+* GtkInfoBar has been deprecated
+
+* gtk_widget_show/hide have been deprecated
+
+* gtk_show_uri has been deprecated
+
+* Wayland:
+ - Fix button mask handling
+ - Fix problems with cursor size on hi-dpi screens
+ - Support newer versions of some protocols
+ - Fix handling of surrounding text in input methods
 
 * X11:
  - Fix some ordering problems with surface destruction
 
+* Windows:
+ - Improved system settings integration
+ - Fix window resizing work with native decorations
+ - Include a full hicolor index.theme file as a resource
+
 * Translation updates
- Abkhazian
- Basque
+ Croatian
  Dutch
  Hungarian
- Interlingue
- Georgian
+ Interlingua
  Persian
- Russian
- Spanish
- Turkish
-
-
-Overview of Changes in 4.8.2, 24-10-2022
-========================================
-
-* Input:
- - Give input methods more control over resets and allow
-   them to preserve state
- - Align interpretation of modifiers in key events
-   in X11 and Wayland
-
-* GtkColumnView:
- - Fixes to focus handling
-
-* GtkPopover:
- - Fix problems with focus when dismissing popovers
- - Fix problems with focusing editable labels in popovers
-
-* Build:
- - Fix build problems with resources and non-gnu linkers
- - Fix gi-docgen detection in cross builds
- - Require meson 0.60
-
-* Debugging:
- - Make more debug options available in no-debug builds
- - Improve consistency of debug logging
- - Give names to all sources
-
-* Accessibility:
- - Introduce GtkAccessibleRange
-
-* Wayland:
- - Make monitor bounds handling more robust
- - Prevent shrinking clients due to wrong toplevel bounds
-
-* Broadway:
- - Return correct pointer coordinates from device queries
-
-* Windows:
- - Use native API to translate key events
-
-* Translation updates:
- Brazilian Portuguese
- British English
- Bulgarian
- Catalan
- Croatian
- Czech
- Friulian
- Galician
- Georgian
- German
- Indonesian
- Lithuanian
- Polish
- Portuguese
- Russian
- Serbian
- Slovenian
- Swedish
  Turkish
  Ukrainian
+
+
+Overview of Changes in 4.9.1, 31-10-2022
+========================================
+
+Note that deprecations are an early outlook at changes
+that will appear in an eventual GTK 5 release, which is
+still far away. We are introducing deprecations in 4.10
+as a way to give users time to adapt, and to provide
+feedback on our plans.
+
+* GtkTreeView, GtkIconView, GtkComboBox and
+  auxiliary classes have been deprecated
+
+* GtkEntryCompletion has been deprecated
+
+* GtkStyleContext has been deprecated
+
+* gtk_render_ and gtk_snapshot_render_ APIs
+  have been deprecated
+
+* GtkAppChooser widgets have been deprecated
+
+* GtkMessageDialog has been deprecated and
+  replaced by a new async dialog API
+
+* GtkDialog has been deprecated
+
+* GtkColorChooser, GtkFontChooser, GtkFileChooser
+  interfaces and their implementations have been
+  deprecated. A new family of async dialog APIs
+  has been introduced to replace them
+
+* GtkColorDialog, GtkFontDialog, GtkFileDialog
+  and GtkAlertDialog are new dialog classes with
+  a consistent and well-bindable API
+
+* GtkMountOperation:
+ - Fix the dialog to look reasonable
+ - Make it work under non-X11
+
+* GtkStringSorter:
+ - Support different collation methods
+
+* Accessibility:
+ - Introduce GtkAccessibleRange and implement it
+
+* Debugging:
+ - Unify formatting for debug output
+ - Make make debug options available in
+   non-debug builds
+
+* Increase the memory limit for the jpeg loader to 1G
+
+* Translation updates:
+ Abkhazian
+ Basque
+ Bulgarian
+ Croatian
+ Friulian
+ Georgian
+ German
+ Hungarian
+ Russian
+ Turkish
 
 
 Overview of Changes in 4.8.1, 16-09-2022

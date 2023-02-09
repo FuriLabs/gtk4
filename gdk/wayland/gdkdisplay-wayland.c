@@ -39,6 +39,7 @@
 #include "gdkdisplay-wayland.h"
 #include "gdkmonitor-wayland.h"
 #include "gdkseat-wayland.h"
+#include "gdksurface-wayland.h"
 #include "gdksurfaceprivate.h"
 #include "gdkdeviceprivate.h"
 #include "gdkkeysprivate.h"
@@ -48,10 +49,12 @@
 #include "gdkvulkancontext-wayland.h"
 #include "gdkwaylandmonitor.h"
 #include "gdkprofilerprivate.h"
+#include "gdktoplevel-wayland-private.h"
 #include <wayland/pointer-gestures-unstable-v1-client-protocol.h>
 #include "tablet-unstable-v2-client-protocol.h"
 #include <wayland/xdg-shell-unstable-v6-client-protocol.h>
 #include <wayland/xdg-foreign-unstable-v1-client-protocol.h>
+#include <wayland/xdg-foreign-unstable-v2-client-protocol.h>
 #include <wayland/server-decoration-client-protocol.h>
 
 #include "wm-button-layout-translation.h"
@@ -91,6 +94,7 @@
 #define OUTPUT_VERSION_WITH_DONE 2
 #define NO_XDG_OUTPUT_DONE_SINCE_VERSION 3
 #define XDG_ACTIVATION_VERSION   1
+#define OUTPUT_VERSION           3
 
 static void _gdk_wayland_display_load_cursor_theme (GdkWaylandDisplay *display_wayland);
 
@@ -395,8 +399,10 @@ gdk_registry_handle_global (void               *data,
   else if (strcmp (interface, "wl_output") == 0)
     {
       output =
-       wl_registry_bind (display_wayland->wl_registry, id, &wl_output_interface, MIN (version, 2));
-      gdk_wayland_display_add_output (display_wayland, id, output, MIN (version, 2));
+       wl_registry_bind (display_wayland->wl_registry, id, &wl_output_interface,
+                         MIN (version, OUTPUT_VERSION));
+      gdk_wayland_display_add_output (display_wayland, id, output,
+                                      MIN (version, OUTPUT_VERSION));
       _gdk_wayland_display_async_roundtrip (display_wayland);
     }
   else if (strcmp (interface, "wl_seat") == 0)
@@ -455,11 +461,23 @@ gdk_registry_handle_global (void               *data,
         wl_registry_bind (display_wayland->wl_registry, id,
                           &zxdg_exporter_v1_interface, 1);
     }
+  else if (strcmp (interface, "zxdg_exporter_v2") == 0)
+    {
+      display_wayland->xdg_exporter_v2 =
+        wl_registry_bind (display_wayland->wl_registry, id,
+                          &zxdg_exporter_v2_interface, 1);
+    }
   else if (strcmp (interface, "zxdg_importer_v1") == 0)
     {
       display_wayland->xdg_importer =
         wl_registry_bind (display_wayland->wl_registry, id,
                           &zxdg_importer_v1_interface, 1);
+    }
+  else if (strcmp (interface, "zxdg_importer_v2") == 0)
+    {
+      display_wayland->xdg_importer_v2 =
+        wl_registry_bind (display_wayland->wl_registry, id,
+                          &zxdg_importer_v2_interface, 1);
     }
   else if (strcmp (interface, "zwp_keyboard_shortcuts_inhibit_manager_v1") == 0)
     {
@@ -738,8 +756,8 @@ gdk_wayland_display_system_bell (GdkDisplay *display,
   if (!display_wayland->gtk_shell)
     return;
 
-  if (window)
-    gtk_surface = gdk_wayland_surface_get_gtk_surface (window);
+  if (window && GDK_IS_WAYLAND_TOPLEVEL (window))
+    gtk_surface = gdk_wayland_toplevel_get_gtk_surface (GDK_WAYLAND_TOPLEVEL (window));
   else
     gtk_surface = NULL;
 
@@ -814,6 +832,8 @@ gdk_wayland_display_get_next_serial (GdkDisplay *display)
  * if no ID has been defined.
  *
  * Returns: (nullable): the startup notification ID for @display
+ *
+ * Deprecated: 4.10.
  */
 const char *
 gdk_wayland_display_get_startup_notification_id (GdkDisplay  *display)
@@ -835,6 +855,8 @@ gdk_wayland_display_get_startup_notification_id (GdkDisplay  *display)
  * The startup ID is also what is used to signal that the startup is
  * complete (for example, when opening a window or when calling
  * [method@Gdk.Display.notify_startup_complete]).
+ *
+ * Deprecated: 4.10. Use [method@Gdk.Toplevel.set_startup_id]
  */
 void
 gdk_wayland_display_set_startup_notification_id (GdkDisplay *display,
@@ -963,7 +985,9 @@ gdk_wayland_display_class_init (GdkWaylandDisplayClass *class)
   display_class->queue_events = _gdk_wayland_display_queue_events;
   display_class->get_app_launch_context = _gdk_wayland_display_get_app_launch_context;
   display_class->get_next_serial = gdk_wayland_display_get_next_serial;
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   display_class->get_startup_notification_id = gdk_wayland_display_get_startup_notification_id;
+G_GNUC_END_IGNORE_DEPRECATIONS
   display_class->notify_startup_complete = gdk_wayland_display_notify_startup_complete;
   display_class->create_surface = _gdk_wayland_display_create_surface;
   display_class->get_keymap = _gdk_wayland_display_get_keymap;
@@ -2308,6 +2332,7 @@ apply_monitor_change (GdkWaylandMonitor *monitor)
                               monitor->x, monitor->y,
                               monitor->width, monitor->height });
   gdk_monitor_set_connector (GDK_MONITOR (monitor), monitor->name);
+  gdk_monitor_set_description (GDK_MONITOR (monitor), monitor->description);
   monitor->wl_output_done = FALSE;
   monitor->xdg_output_done = FALSE;
 
@@ -2364,7 +2389,7 @@ xdg_output_handle_name (void                  *data,
 {
   GdkWaylandMonitor *monitor = (GdkWaylandMonitor *) data;
 
-  GDK_DEBUG (MISC, "handle name xdg-output %d", monitor->id);
+  GDK_DEBUG (MISC, "handle name xdg-output %d: %s", monitor->id, name);
 
   monitor->name = g_strdup (name);
 }
@@ -2374,8 +2399,11 @@ xdg_output_handle_description (void                  *data,
                                struct zxdg_output_v1 *xdg_output,
                                const char            *description)
 {
-  GDK_DEBUG (MISC, "handle description xdg-output %d",
-                   ((GdkWaylandMonitor *)data)->id);
+  GdkWaylandMonitor *monitor = (GdkWaylandMonitor *) data;
+
+  GDK_DEBUG (MISC, "handle description xdg-output %d: %s", monitor->id, description);
+
+  monitor->description = g_strdup (description);
 }
 
 static const struct zxdg_output_v1_listener xdg_output_listener = {

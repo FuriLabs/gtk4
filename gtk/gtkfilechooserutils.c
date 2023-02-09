@@ -19,11 +19,13 @@
 
 #include "config.h"
 #include "gtkfilechooserutils.h"
-#include "gtkfilechooser.h"
+#include "deprecated/gtkfilechooser.h"
 #include "gtktypebuiltins.h"
 #include "gtkprivate.h"
 #include <glib/gi18n-lib.h>
 
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 static gboolean       delegate_set_current_folder     (GtkFileChooser    *chooser,
 						       GFile             *file,
@@ -478,4 +480,13 @@ _gtk_file_info_get_icon (GFileInfo    *info,
   /* Use general fallback for all files without icon */
   icon = g_themed_icon_new ("text-x-generic");
   return icon;
+}
+
+GFile *
+_gtk_file_info_get_file (GFileInfo *info)
+{
+  g_assert (G_IS_FILE_INFO (info));
+  g_assert (g_file_info_has_attribute (info, "standard::file"));
+
+  return G_FILE (g_file_info_get_attribute_object (info, "standard::file"));
 }

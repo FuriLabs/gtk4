@@ -19,10 +19,10 @@
 
 #include "config.h"
 
-#include "gtkfilechooserdialog.h"
+#include "deprecated/gtkfilechooserdialog.h"
 
 #include "gtkfilechooserprivate.h"
-#include "gtkfilechooserwidget.h"
+#include "deprecated/gtkfilechooserwidget.h"
 #include "gtkfilechooserwidgetprivate.h"
 #include "gtkfilechooserutils.h"
 #include "gtksizerequest.h"
@@ -31,13 +31,15 @@
 #include "gtksettings.h"
 #include "gtktogglebutton.h"
 #include "gtkheaderbar.h"
-#include "gtkdialogprivate.h"
+#include "deprecated/gtkdialogprivate.h"
 #include "gtklabel.h"
 #include "gtkfilechooserentry.h"
 #include "gtkbox.h"
 
 #include <stdarg.h>
 
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 /**
  * GtkFileChooserDialog:
@@ -96,7 +98,7 @@
  *                                         GTK_RESPONSE_ACCEPT,
  *                                         NULL);
  *
- *   gtk_widget_show (dialog);
+ *   gtk_window_present (GTK_WINDOW (dialog));
  *
  *   g_signal_connect (dialog, "response",
  *                     G_CALLBACK (on_open_response),
@@ -142,7 +144,7 @@
  *   else
  *     gtk_file_chooser_set_file (chooser, existing_filename);
  *
- *   gtk_widget_show (dialog);
+ *   gtk_window_present (GTK_WINDOW (dialog));
  *
  *   g_signal_connect (dialog, "response",
  *                     G_CALLBACK (on_save_response),
@@ -209,6 +211,8 @@
  *
  * To summarize, make sure you use a predefined response code
  * when you use `GtkFileChooserDialog` to ensure proper operation.
+ *
+ * Deprecated: 4.10: Use [class@Gtk.FileDialog] instead
  */
 
 typedef struct _GtkFileChooserDialogPrivate GtkFileChooserDialogPrivate;
@@ -466,7 +470,6 @@ setup_search (GtkFileChooserDialog *dialog)
       gtk_widget_set_focus_on_click (button, FALSE);
       gtk_widget_set_valign (button, GTK_ALIGN_CENTER);
       gtk_button_set_icon_name (GTK_BUTTON (button), "edit-find-symbolic");
-      gtk_widget_show (button);
 
       header = gtk_dialog_get_header_bar (GTK_DIALOG (dialog));
       gtk_header_bar_pack_end (GTK_HEADER_BAR (header), button);
@@ -716,6 +719,8 @@ gtk_file_chooser_dialog_new_valist (const char           *title,
  * This function is analogous to [ctor@Gtk.Dialog.new_with_buttons].
  *
  * Returns: a new `GtkFileChooserDialog`
+ *
+ * Deprecated: 4.10: Use [class@Gtk.FileDialog] instead
  */
 GtkWidget *
 gtk_file_chooser_dialog_new (const char           *title,

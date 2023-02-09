@@ -185,7 +185,7 @@ init_app_id (GtkInspectorGeneral *gen)
   app = g_application_get_default ();
   if (!app)
     {
-      gtk_widget_hide (gen->app_id_frame);
+      gtk_widget_set_visible (gen->app_id_frame, FALSE);
       return;
     }
 
@@ -256,6 +256,8 @@ add_label_row (GtkInspectorGeneral *gen,
   gtk_widget_set_halign (label, GTK_ALIGN_END);
   gtk_widget_set_valign (label, GTK_ALIGN_BASELINE);
   gtk_label_set_xalign (GTK_LABEL (label), 1.0);
+  gtk_label_set_ellipsize (GTK_LABEL (label), PANGO_ELLIPSIZE_END);
+  gtk_label_set_width_chars (GTK_LABEL (label), 25);
   gtk_box_append (GTK_BOX (box), label);
 
   row = gtk_list_box_row_new ();
@@ -552,7 +554,7 @@ set_path_label (GtkWidget   *w,
     {
        GtkWidget *r;
        r = gtk_widget_get_ancestor (w, GTK_TYPE_LIST_BOX_ROW);
-       gtk_widget_hide (r);
+       gtk_widget_set_visible (r, FALSE);
     }
 }
 
@@ -591,7 +593,7 @@ populate_display (GdkDisplay *display, GtkInspectorGeneral *gen)
   GtkWidget *child;
   GtkListBox *list;
 
-  gtk_widget_show (gen->display_composited);
+  gtk_widget_set_visible (gen->display_composited, TRUE);
   list = GTK_LIST_BOX (gen->display_box);
   children = NULL;
   for (child = gtk_widget_get_first_child (GTK_WIDGET (list));
@@ -648,6 +650,7 @@ add_monitor (GtkInspectorGeneral *gen,
   g_free (value);
   g_free (name);
 
+  add_label_row (gen, list, "Description", gdk_monitor_get_description (monitor), 10);
   add_label_row (gen, list, "Connector", gdk_monitor_get_connector (monitor), 10);
 
   gdk_monitor_get_geometry (monitor, &rect);

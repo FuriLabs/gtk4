@@ -123,13 +123,10 @@ caps_lock_state_changed (GdkDevice  *device,
 {
   GtkPasswordEntry *entry = GTK_PASSWORD_ENTRY (widget);
 
-  if (gtk_editable_get_editable (GTK_EDITABLE (entry)) &&
-      gtk_widget_has_focus (entry->entry) &&
-      !gtk_text_get_visibility (GTK_TEXT (entry->entry)) &&
-      gdk_device_get_caps_lock_state (device))
-    gtk_widget_show (entry->icon);
-  else
-    gtk_widget_hide (entry->icon);
+  gtk_widget_set_visible (entry->icon, gtk_editable_get_editable (GTK_EDITABLE (entry)) &&
+                                       gtk_widget_has_focus (entry->entry) &&
+                                       !gtk_text_get_visibility (GTK_TEXT (entry->entry)) &&
+                                       gdk_device_get_caps_lock_state (device));
 }
 
 static void
@@ -254,12 +251,23 @@ gtk_password_entry_realize (GtkWidget *widget)
 }
 
 static void
+gtk_password_entry_unrealize (GtkWidget *widget)
+{
+  GtkPasswordEntry *entry = GTK_PASSWORD_ENTRY (widget);
+
+  if (entry->keyboard)
+    {
+      g_signal_handlers_disconnect_by_func (entry->keyboard, caps_lock_state_changed, entry);
+      entry->keyboard = NULL;
+    }
+
+  GTK_WIDGET_CLASS (gtk_password_entry_parent_class)->unrealize (widget);
+}
+
+static void
 gtk_password_entry_dispose (GObject *object)
 {
   GtkPasswordEntry *entry = GTK_PASSWORD_ENTRY (object);
-
-  if (entry->keyboard)
-    g_signal_handlers_disconnect_by_func (entry->keyboard, caps_lock_state_changed, entry);
 
   if (entry->entry)
     gtk_editable_finish_delegate (GTK_EDITABLE (entry));
@@ -451,6 +459,7 @@ gtk_password_entry_class_init (GtkPasswordEntryClass *klass)
   object_class->set_property = gtk_password_entry_set_property;
 
   widget_class->realize = gtk_password_entry_realize;
+  widget_class->unrealize = gtk_password_entry_unrealize;
   widget_class->measure = gtk_password_entry_measure;
   widget_class->size_allocate = gtk_password_entry_size_allocate;
   widget_class->mnemonic_activate = gtk_password_entry_mnemonic_activate;
@@ -541,19 +550,7 @@ static gboolean
 gtk_password_entry_accessible_get_platform_state (GtkAccessible              *self,
                                                   GtkAccessiblePlatformState  state)
 {
-  GtkPasswordEntry *entry = GTK_PASSWORD_ENTRY (self);
-
-  switch (state)
-    {
-    case GTK_ACCESSIBLE_PLATFORM_STATE_FOCUSABLE:
-      return gtk_widget_get_focusable (GTK_WIDGET (entry->entry));
-    case GTK_ACCESSIBLE_PLATFORM_STATE_FOCUSED:
-      return gtk_widget_has_focus (GTK_WIDGET (entry->entry));
-    case GTK_ACCESSIBLE_PLATFORM_STATE_ACTIVE:
-      return FALSE;
-    default:
-      g_assert_not_reached ();
-    }
+  return gtk_editable_delegate_get_accessible_platform_state (GTK_EDITABLE (self), state);
 }
 
 static void

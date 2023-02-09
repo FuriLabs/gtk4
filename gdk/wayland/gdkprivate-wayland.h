@@ -177,8 +177,6 @@ cairo_surface_t * _gdk_wayland_display_create_shm_surface (GdkWaylandDisplay *di
 struct wl_buffer *_gdk_wayland_shm_surface_get_wl_buffer (cairo_surface_t *surface);
 gboolean _gdk_wayland_is_shm_surface (cairo_surface_t *surface);
 
-struct gtk_surface1 * gdk_wayland_surface_get_gtk_surface (GdkSurface *surface);
-
 void gdk_wayland_seat_set_global_cursor (GdkSeat   *seat,
                                          GdkCursor *cursor);
 void gdk_wayland_seat_set_drag (GdkSeat        *seat,
@@ -192,8 +190,6 @@ void gdk_wayland_surface_restore_shortcuts (GdkSurface *surface,
                                            GdkSeat   *gdk_seat);
 
 void gdk_wayland_surface_update_scale (GdkSurface *surface);
-
-GdkSurface * create_dnd_surface (GdkDisplay *display);
 
 GdkModifierType gdk_wayland_keymap_get_gdk_modifiers (GdkKeymap *keymap,
                                                       guint32    mods);

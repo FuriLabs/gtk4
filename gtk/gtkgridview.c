@@ -627,6 +627,8 @@ gtk_grid_view_compute_n_columns (GtkGridView *self,
 
   n_columns = CLAMP (n_columns, self->min_columns, self->max_columns);
 
+  g_assert (n_columns > 0);
+
   return n_columns;
 }
 
@@ -868,6 +870,8 @@ gtk_grid_view_size_allocate (GtkWidget *widget,
   y = -y;
   i = 0;
   row_height = 0;
+
+  g_assert (self->n_columns > 0);
 
   for (cell = gtk_list_item_manager_get_first (self->item_manager);
        cell != NULL;
@@ -1238,7 +1242,7 @@ gtk_grid_view_get_model (GtkGridView *self)
  * @self: a `GtkGridView`
  * @model: (nullable) (transfer none): the model to use
  *
- * Sets the imodel to use.
+ * Sets the model to use.
  *
  * This must be a [iface@Gtk.SelectionModel].
  */

@@ -44,20 +44,22 @@
 #include "gtkorientable.h"
 #include "gtkscrolledwindow.h"
 #include "gtktextview.h"
-#include "gtkshow.h"
 #include "gtkmain.h"
 #include "gtktogglebutton.h"
 #include "gtktypebuiltins.h"
 #include "gtkstack.h"
 #include "gtkstackswitcher.h"
 #include "gtksettings.h"
+#include "gtkurilauncher.h"
 #include "gtkheaderbar.h"
 #include "gtkprivate.h"
 #include <glib/gi18n-lib.h>
 #include "gtkeventcontrollermotion.h"
 #include "gtkeventcontrollerkey.h"
 #include "gtkgestureclick.h"
-#include "gtkstylecontext.h"
+#include "gtkcssnodeprivate.h"
+#include "gtkwidgetprivate.h"
+#include "gtkcsscolorvalueprivate.h"
 
 
 /**
@@ -76,7 +78,7 @@
  * ![An example GtkAboutDialog](aboutdialog.png)
  *
  * About dialogs often contain links and email addresses. `GtkAboutDialog`
- * displays these as clickable links. By default, it calls [func@Gtk.show_uri]
+ * displays these as clickable links. By default, it calls [method@Gtk.FileLauncher.launch]
  * when a user clicks one. The behaviour can be overridden with the
  * [signal@Gtk.AboutDialog::activate-link] signal.
  *
@@ -196,6 +198,9 @@ struct _GtkAboutDialog
   GtkWidget *system_view;
 
   GPtrArray *visited_links;
+
+  GtkCssNode *link_node;
+  GtkCssNode *visited_link_node;
 
   GtkLicense license_type;
 
@@ -356,7 +361,7 @@ gtk_about_dialog_class_init (GtkAboutDialogClass *klass)
    * Emitted every time a URL is activated.
    *
    * Applications may connect to it to override the default behaviour,
-   * which is to call [func@Gtk.show_uri].
+   * which is to call [method@Gtk.FileLauncher.launch].
    *
    * Returns: `TRUE` if the link has been activated
    */
@@ -707,6 +712,9 @@ update_credits_button_visibility (GtkAboutDialog *about)
 static void
 gtk_about_dialog_init (GtkAboutDialog *about)
 {
+  GtkCssNode *node;
+  GtkStateFlags state;
+
   /* Data */
   about->name = NULL;
   about->version = NULL;
@@ -735,6 +743,21 @@ gtk_about_dialog_init (GtkAboutDialog *about)
   /* force defaults */
   gtk_about_dialog_set_program_name (about, NULL);
   gtk_about_dialog_set_logo (about, NULL);
+
+  node = gtk_widget_get_css_node (GTK_WIDGET (about));
+  state = gtk_css_node_get_state (node);
+
+  about->link_node = gtk_css_node_new ();
+  gtk_css_node_set_name (about->link_node, g_quark_from_static_string ("link"));
+  gtk_css_node_set_parent (about->link_node, node);
+  gtk_css_node_set_state (about->link_node, state | GTK_STATE_FLAG_LINK);
+  g_object_unref (about->link_node);
+
+  about->visited_link_node = gtk_css_node_new ();
+  gtk_css_node_set_name (about->visited_link_node, g_quark_from_static_string ("link"));
+  gtk_css_node_set_parent (about->visited_link_node, node);
+  gtk_css_node_set_state (about->visited_link_node, state | GTK_STATE_FLAG_VISITED);
+  g_object_unref (about->visited_link_node);
 }
 
 static void
@@ -909,14 +932,21 @@ static gboolean
 gtk_about_dialog_activate_link (GtkAboutDialog *about,
                                 const char     *uri)
 {
-  gtk_show_uri (GTK_WINDOW (about), uri, GDK_CURRENT_TIME);
+  GtkUriLauncher *launcher;
+
+  launcher = gtk_uri_launcher_new (uri);
+
+  gtk_uri_launcher_launch (launcher, GTK_WINDOW (about), NULL, NULL, NULL);
+
+  g_object_unref (launcher);
+
   return TRUE;
 }
 
 static void
 update_website (GtkAboutDialog *about)
 {
-  gtk_widget_show (about->website_label);
+  gtk_widget_set_visible (about->website_label, TRUE);
 
   if (about->website_url)
     {
@@ -945,7 +975,7 @@ update_website (GtkAboutDialog *about)
       if (about->website_text)
         gtk_label_set_text (GTK_LABEL (about->website_label), about->website_text);
       else
-        gtk_widget_hide (about->website_label);
+        gtk_widget_set_visible (about->website_label, FALSE);
     }
 }
 
@@ -974,13 +1004,9 @@ update_name_version (GtkAboutDialog *about)
   gtk_window_set_title (GTK_WINDOW (about), title_string);
   g_free (title_string);
 
+  gtk_widget_set_visible (about->version_label, about->version != NULL);
   if (about->version != NULL)
-    {
-      gtk_label_set_markup (GTK_LABEL (about->version_label), about->version);
-      gtk_widget_show (about->version_label);
-    }
-  else
-    gtk_widget_hide (about->version_label);
+    gtk_label_set_markup (GTK_LABEL (about->version_label), about->version);
 
   name_string = g_markup_printf_escaped ("<span weight=\"bold\">%s</span>",
                                          about->name);
@@ -1093,17 +1119,14 @@ gtk_about_dialog_set_copyright (GtkAboutDialog *about,
   about->copyright = g_strdup (copyright);
   g_free (tmp);
 
+  gtk_widget_set_visible (about->copyright_label, about->copyright != NULL);
   if (about->copyright != NULL)
     {
       copyright_string = g_markup_printf_escaped ("<span size=\"small\">%s</span>",
                                                   about->copyright);
       gtk_label_set_markup (GTK_LABEL (about->copyright_label), copyright_string);
       g_free (copyright_string);
-
-      gtk_widget_show (about->copyright_label);
     }
-  else
-    gtk_widget_hide (about->copyright_label);
 
   g_object_notify_by_pspec (G_OBJECT (about), props[PROP_COPYRIGHT]);
 }
@@ -1146,13 +1169,13 @@ gtk_about_dialog_set_comments (GtkAboutDialog *about,
     {
       about->comments = g_strdup (comments);
       gtk_label_set_text (GTK_LABEL (about->comments_label), about->comments);
-      gtk_widget_show (about->comments_label);
     }
   else
     {
       about->comments = NULL;
-      gtk_widget_hide (about->comments_label);
     }
+
+  gtk_widget_set_visible (about->comments_label, about->comments != NULL);
   g_free (tmp);
 
   g_object_notify_by_pspec (G_OBJECT (about), props[PROP_COMMENTS]);
@@ -1205,7 +1228,7 @@ gtk_about_dialog_set_license (GtkAboutDialog *about,
     }
   g_free (tmp);
 
-  gtk_widget_hide (about->license_label);
+  gtk_widget_set_visible (about->license_label, FALSE);
 
   update_license_button_visibility (about);
 
@@ -1677,12 +1700,10 @@ follow_if_link (GtkAboutDialog *about,
       if (uri && !g_ptr_array_find_with_equal_func (about->visited_links, uri, (GCompareFunc)strcmp, NULL))
         {
           GdkRGBA visited_link_color;
-          GtkStyleContext *context = gtk_widget_get_style_context (GTK_WIDGET (about));
-          gtk_style_context_save (context);
-          gtk_style_context_set_state (context, gtk_style_context_get_state (context) | GTK_STATE_FLAG_VISITED);
-          gtk_style_context_get_color (context, &visited_link_color);
-          gtk_style_context_restore (context);
+          GtkCssStyle *style;
 
+          style = gtk_css_node_get_style (about->visited_link_node);
+          visited_link_color = *gtk_css_color_value_get_rgba (style->core->color);
           g_object_set (G_OBJECT (tag), "foreground-rgba", &visited_link_color, NULL);
 
           g_ptr_array_add (about->visited_links, g_strdup (uri));
@@ -1823,15 +1844,13 @@ text_buffer_new (GtkAboutDialog  *about,
   GdkRGBA visited_link_color;
   GtkTextIter start_iter, end_iter;
   GtkTextTag *tag;
-  GtkStateFlags state = gtk_widget_get_state_flags (GTK_WIDGET (about));
-  GtkStyleContext *context = gtk_widget_get_style_context (GTK_WIDGET (about));
+  GtkCssStyle *style;
 
-  gtk_style_context_save (context);
-  gtk_style_context_set_state (context, state | GTK_STATE_FLAG_LINK);
-  gtk_style_context_get_color (context, &link_color);
-  gtk_style_context_set_state (context, state | GTK_STATE_FLAG_VISITED);
-  gtk_style_context_get_color (context, &visited_link_color);
-  gtk_style_context_restore (context);
+  style = gtk_css_node_get_style (about->link_node);
+  link_color = *gtk_css_color_value_get_rgba (style->core->color);
+  style = gtk_css_node_get_style (about->visited_link_node);
+  visited_link_color = *gtk_css_color_value_get_rgba (style->core->color);
+
   buffer = gtk_text_buffer_new (NULL);
 
   for (p = strings; *p; p++)
@@ -2053,7 +2072,7 @@ add_credits_section (GtkAboutDialog  *about,
       gtk_widget_set_halign (label, GTK_ALIGN_START);
       gtk_widget_set_valign (label, GTK_ALIGN_CENTER);
       gtk_grid_attach (grid, label, 1, *row, 1, 1);
-      gtk_widget_show (label);
+      gtk_widget_set_visible (label, TRUE);
       (*row)++;
     }
 
@@ -2148,8 +2167,7 @@ close_cb (GtkAboutDialog *about,
           gpointer        user_data)
 {
   gtk_stack_set_visible_child_name (GTK_STACK (about->stack), "main");
-
-  gtk_widget_hide (GTK_WIDGET (about));
+  gtk_widget_set_visible (GTK_WIDGET (about), FALSE);
 
   return TRUE;
 }
@@ -2237,6 +2255,7 @@ gtk_about_dialog_set_license_type (GtkAboutDialog *about,
 
       about->license_type = license_type;
 
+      gtk_widget_set_visible (about->license_label, TRUE);
       /* custom licenses use the contents of the :license property */
       if (about->license_type != GTK_LICENSE_CUSTOM)
         {
@@ -2264,14 +2283,9 @@ gtk_about_dialog_set_license_type (GtkAboutDialog *about,
                                             about->license);
           gtk_label_set_markup (GTK_LABEL (about->license_label), license_string);
           g_free (license_string);
-          gtk_widget_show (about->license_label);
 
           g_object_notify_by_pspec (G_OBJECT (about), props[PROP_WRAP_LICENSE]);
           g_object_notify_by_pspec (G_OBJECT (about), props[PROP_LICENSE]);
-        }
-      else
-        {
-          gtk_widget_show (about->license_label);
         }
 
       update_license_button_visibility (about);

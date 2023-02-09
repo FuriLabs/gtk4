@@ -34,7 +34,7 @@
 #include "gtkimage.h"
 #include "gtklabel.h"
 #include "gtkrendernodepaintableprivate.h"
-#include "gtktextutil.h"
+#include "gtktextutilprivate.h"
 
 
 /**
@@ -418,7 +418,7 @@ gtk_drag_icon_get_for_drag (GdkDrag *drag)
       g_object_set_qdata_full (G_OBJECT (drag), drag_icon_quark, g_object_ref_sink (self), g_object_unref);
 
       if (GTK_DRAG_ICON (self)->child != NULL)
-        gtk_widget_show (self);
+        gtk_widget_set_visible (self, TRUE);
     }
 
   return self;
@@ -480,7 +480,7 @@ gtk_drag_icon_set_child (GtkDragIcon *self,
   if (self->child)
     {
       gtk_widget_set_parent (self->child, GTK_WIDGET (self));
-      gtk_widget_show (GTK_WIDGET (self));
+      gtk_widget_set_visible (GTK_WIDGET (self), TRUE);
     }
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CHILD]);
@@ -555,6 +555,9 @@ gtk_drag_icon_create_widget_for_value (const GValue *value)
       GtkWidget *image;
 
       info = g_file_query_info (G_FILE (g_value_get_object (value)), "standard::icon", 0, NULL, NULL);
+      if (!info)
+        return NULL;
+
       image = gtk_image_new_from_gicon (g_file_info_get_icon (info));
       gtk_widget_add_css_class (image, "large-icons");
       g_object_unref (info);

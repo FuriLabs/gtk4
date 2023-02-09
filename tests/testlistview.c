@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 #define FILE_INFO_TYPE_SELECTION (file_info_selection_get_type ())
 
 G_DECLARE_FINAL_TYPE (FileInfoSelection, file_info_selection, FILE_INFO, SELECTION, GObject)
@@ -647,7 +649,7 @@ main (int argc, char *argv[])
 
   g_object_unref (selectionmodel);
 
-  gtk_widget_show (win);
+  gtk_window_present (GTK_WINDOW (win));
 
   toplevels = gtk_window_get_toplevels ();
   while (g_list_model_get_n_items (toplevels))

@@ -6,19 +6,11 @@ action_activated (GSimpleAction *action,
                   gpointer       user_data)
 {
   GtkWindow *parent = user_data;
-  GtkWidget *dialog;
+  GtkAlertDialog *dialog;
 
-  dialog = gtk_message_dialog_new (parent,
-                                   GTK_DIALOG_DESTROY_WITH_PARENT,
-                                   GTK_MESSAGE_INFO,
-                                   GTK_BUTTONS_CLOSE,
-                                   "Activated action `%s`",
-                                   g_action_get_name (G_ACTION (action)));
-
-  g_signal_connect_swapped (dialog, "response",
-                            G_CALLBACK (gtk_window_destroy), dialog);
-
-  gtk_widget_show (dialog);
+  dialog = gtk_alert_dialog_new ("Activated action `%s`", g_action_get_name (G_ACTION (action)));
+  gtk_alert_dialog_show (dialog, NULL);
+  g_object_unref (dialog);
 }
 
 static GActionEntry doc_entries[] = {
@@ -114,7 +106,7 @@ activate (GApplication *app,
   gtk_widget_set_halign (GTK_WIDGET (button), GTK_ALIGN_CENTER);
   gtk_widget_set_valign (GTK_WIDGET (button), GTK_ALIGN_START);
   gtk_window_set_child (GTK_WINDOW (window), button);
-  gtk_widget_show (win);
+  gtk_window_present (GTK_WINDOW (win));
 
   g_object_unref (button_menu);
   g_object_unref (doc_actions);

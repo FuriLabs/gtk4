@@ -285,15 +285,9 @@ gtk_shortcuts_shortcut_set_icon (GtkShortcutsShortcut *self,
 static void
 update_visible_from_direction (GtkShortcutsShortcut *self)
 {
-  if (self->direction == GTK_TEXT_DIR_NONE ||
-      self->direction == gtk_widget_get_direction (GTK_WIDGET (self)))
-    {
-      gtk_widget_show (GTK_WIDGET (self));
-    }
-  else
-    {
-      gtk_widget_hide (GTK_WIDGET (self));
-    }
+  gtk_widget_set_visible (GTK_WIDGET (self),
+                          self->direction == GTK_TEXT_DIR_NONE ||
+                          self->direction == gtk_widget_get_direction (GTK_WIDGET (self)));
 }
 
 static void
@@ -561,22 +555,22 @@ gtk_shortcuts_shortcut_class_init (GtkShortcutsShortcutClass *klass)
    * by separating them with a space, but keep in mind that the available width
    * is limited.
    *
-   * It is also possible to specify ranges of shortcuts, using "..." between
-   * the keys. Sequences of keys can be specified using a "+" or "&" between
+   * It is also possible to specify ranges of shortcuts, using `...` between
+   * the keys. Sequences of keys can be specified using a `+` or `&` between
    * the keys.
    *
    * Examples:
    *
-   * - A single shortcut: <ctl><alt>delete
-   * - Two alternative shortcuts: <shift>a Home
-   * - A range of shortcuts: <alt>1...<alt>9
-   * - Several keys pressed together: Control_L&Control_R
-   * - A sequence of shortcuts or keys: <ctl>c+<ctl>x
+   * - A single shortcut: `<ctl><alt>delete`
+   * - Two alternative shortcuts: `<shift>a Home`
+   * - A range of shortcuts: `<alt>1...<alt>9`
+   * - Several keys pressed together: `Control_L&Control_R`
+   * - A sequence of shortcuts or keys: `<ctl>c+<ctl>x`
    *
    * Use "+" instead of "&" when the keys may (or have to be) pressed
    * sequentially (e.g use "t+t" for 'press the t key twice').
    *
-   * Note that <, > and & need to be escaped as &lt;, &gt; and &amp; when used
+   * Note that `<`, `>` and `&` need to be escaped as `&lt;`, `&gt`; and `&amp`; when used
    * in .ui files.
    */
   properties[PROP_ACCELERATOR] =

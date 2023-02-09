@@ -1,6 +1,3 @@
-testexecdir = join_paths(installed_test_bindir, 'gtk')
-testdatadir = join_paths(installed_test_datadir, 'gtk')
-
 # Available keys for each test:
 #
 #  - 'name': the test name; used for the test and to determine the base
@@ -35,10 +32,6 @@ tests = [
 ]
 
 
-# Tests that are expected to fail
-xfail = [
-]
-
 is_debug = get_option('buildtype').startswith('debug')
 
 test_cargs = []
@@ -68,15 +61,12 @@ foreach t : tests
   test_extra_suites = t.get('suites', [])
   test_timeout = 60
 
-  test_exe = executable(test_name, test_srcs,
+  test_exe = executable(test_name,
+    sources: test_srcs,
     c_args: test_cargs + test_extra_cargs,
     link_args: test_extra_ldflags,
     dependencies: libgtk_dep,
-    install: get_option('install-tests'),
-    install_dir: testexecdir,
   )
-
-  expect_fail = xfail.contains(test_name)
 
   if test_extra_suites.contains('slow')
     test_timeout = 90
@@ -88,6 +78,5 @@ foreach t : tests
     timeout: test_timeout,
     env: test_env,
     suite: ['a11y'] + test_extra_suites,
-    should_fail: expect_fail,
   )
 endforeach

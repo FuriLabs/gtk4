@@ -66,7 +66,7 @@
  *
  * The `GtkListBox` implementation of the `GtkBuildable` interface supports
  * setting a child as the placeholder by specifying “placeholder” as the “type”
- * attribute of a <child> element. See [method@Gtk.ListBox.set_placeholder]
+ * attribute of a `<child>` element. See [method@Gtk.ListBox.set_placeholder]
  * for info.
  *
  * # CSS nodes
@@ -864,7 +864,7 @@ gtk_list_box_select_row (GtkListBox    *box,
 /**
  * gtk_list_box_unselect_row:
  * @box: a `GtkListBox`
- * @row: the row to unselected
+ * @row: the row to unselect
  *
  * Unselects a single row of @box, if the selection mode allows it.
  */
@@ -1466,7 +1466,7 @@ gtk_list_box_set_activate_on_single_click (GtkListBox *box,
 }
 
 /**
- * gtk_list_box_get_activate_on_single_click: (attributes org.gtk.Metthod.get_property=activate-on-single-click)
+ * gtk_list_box_get_activate_on_single_click: (attributes org.gtk.Method.get_property=activate-on-single-click)
  * @box: a `GtkListBox`
  *
  * Returns whether rows activate on single clicks.
@@ -2279,7 +2279,7 @@ gtk_list_box_update_header (GtkListBox    *box,
               g_hash_table_insert (box->header_hash, new_header, row);
               gtk_widget_unparent (new_header);
               gtk_widget_set_parent (new_header, GTK_WIDGET (box));
-              gtk_widget_show (new_header);
+              gtk_widget_set_visible (new_header, TRUE);
             }
           gtk_widget_queue_resize (GTK_WIDGET (box));
         }
@@ -3560,7 +3560,7 @@ gtk_list_box_row_class_init (GtkListBoxRowClass *klass)
                           G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
-   * GtkListBoxRow:child: (attributes org.gtk.Proeprty.get=gtk_list_box_row_get_child org.gtk.Property.set=gtk_list_box_row_set_child)
+   * GtkListBoxRow:child: (attributes org.gtk.Property.get=gtk_list_box_row_get_child org.gtk.Property.set=gtk_list_box_row_set_child)
    *
    * The child widget.
    */
@@ -3647,7 +3647,7 @@ gtk_list_box_bound_model_changed (GListModel *list,
       if (g_object_is_floating (widget))
         g_object_ref_sink (widget);
 
-      gtk_widget_show (widget);
+      gtk_widget_set_visible (widget, TRUE);
       gtk_list_box_insert (box, widget, position + i);
 
       g_object_unref (widget);

@@ -19,7 +19,7 @@
 #ifndef __GTK_FILE_CHOOSER_NATIVE_PRIVATE_H__
 #define __GTK_FILE_CHOOSER_NATIVE_PRIVATE_H__
 
-#include <gtk/gtkfilechoosernative.h>
+#include <gtk/deprecated/gtkfilechoosernative.h>
 
 G_BEGIN_DECLS
 
@@ -52,8 +52,12 @@ struct _GtkFileChooserNative
   GtkWidget *accept_button;
   GtkWidget *cancel_button;
 
+  gboolean use_portal;
   gpointer mode_data;
 };
+
+void gtk_file_chooser_native_set_use_portal (GtkFileChooserNative *self,
+                                             gboolean              use_portal);
 
 gboolean gtk_file_chooser_native_win32_show (GtkFileChooserNative *self);
 void gtk_file_chooser_native_win32_hide (GtkFileChooserNative *self);

@@ -45,7 +45,6 @@
 #include "gtkpopovermenuprivate.h"
 #include "gtkorientable.h"
 #include "gtksizerequest.h"
-#include "gtkstylecontextprivate.h"
 #include "gtkprivate.h"
 #include "gtkstack.h"
 #include "gtktypebuiltins.h"
@@ -78,14 +77,14 @@
  *
  * The `GtkNotebook` implementation of the `GtkBuildable` interface
  * supports placing children into tabs by specifying “tab” as the
- * “type” attribute of a <child> element. Note that the content
+ * “type” attribute of a `<child>` element. Note that the content
  * of the tab must be created before the tab can be filled.
- * A tab child can be specified without specifying a <child>
+ * A tab child can be specified without specifying a `<child>`
  * type attribute.
  *
  * To add a child widget in the notebooks action area, specify
  * "action-start" or “action-end” as the “type” attribute of the
- * <child> element.
+ * `<child>` element.
  *
  * An example of a UI definition fragment with `GtkNotebook`:
  *
@@ -589,7 +588,7 @@ gtk_notebook_page_class_init (GtkNotebookPageClass *class)
   /**
    * GtkNotebookPage:tab:
    *
-   * The tab widget for tihs page.
+   * The tab widget for this page.
    */
   g_object_class_install_property (object_class,
                                    CHILD_PROP_TAB,
@@ -600,7 +599,7 @@ gtk_notebook_page_class_init (GtkNotebookPageClass *class)
   /**
    * GtkNotebookPage:menu:
    *
-   * The label widget displayed in the childs menu entry.
+   * The label widget displayed in the child's menu entry.
    */
   g_object_class_install_property (object_class,
                                    CHILD_PROP_MENU,
@@ -644,7 +643,7 @@ gtk_notebook_page_class_init (GtkNotebookPageClass *class)
   /**
    * GtkNotebookPage:tab-expand:
    *
-   * Whether to expand the childs tab.
+   * Whether to expand the child's tab.
    */
   g_object_class_install_property (object_class,
                                    CHILD_PROP_TAB_EXPAND,
@@ -655,7 +654,7 @@ gtk_notebook_page_class_init (GtkNotebookPageClass *class)
   /**
    * GtkNotebookPage:tab-fill:
    *
-   * Whether the childs tab should fill the allocated area.
+   * Whether the child's tab should fill the allocated area.
    */
   g_object_class_install_property (object_class,
                                    CHILD_PROP_TAB_FILL,
@@ -1474,7 +1473,7 @@ gtk_notebook_init (GtkNotebook *notebook)
                                           "css-name", "header",
                                           NULL);
   gtk_widget_add_css_class (notebook->header_widget, "top");
-  gtk_widget_hide (notebook->header_widget);
+  gtk_widget_set_visible (notebook->header_widget, FALSE);
   gtk_widget_set_parent (notebook->header_widget, GTK_WIDGET (notebook));
 
   notebook->tabs_widget = gtk_gizmo_new_with_role ("tabs",
@@ -2170,7 +2169,7 @@ gtk_notebook_get_preferred_tabs_size (GtkNotebook    *notebook,
           vis_pages++;
 
           if (!gtk_widget_get_visible (page->tab_label))
-            gtk_widget_show (page->tab_label);
+            gtk_widget_set_visible (page->tab_label, TRUE);
 
           gtk_widget_measure (page->tab_widget,
                               GTK_ORIENTATION_HORIZONTAL,
@@ -2201,7 +2200,7 @@ gtk_notebook_get_preferred_tabs_size (GtkNotebook    *notebook,
             }
         }
       else if (gtk_widget_get_visible (page->tab_label))
-        gtk_widget_hide (page->tab_label);
+        gtk_widget_set_visible (page->tab_label, FALSE);
     }
 
   children = notebook->children;
@@ -3302,7 +3301,7 @@ gtk_notebook_switch_page_timeout (gpointer data)
   if (switch_page)
     {
       /* FIXME: hack, we don't want the
-       * focus to move fom the source widget
+       * focus to move from the source widget
        */
       notebook->child_has_focus = FALSE;
       gtk_notebook_switch_focus_tab (notebook,
@@ -4071,10 +4070,8 @@ gtk_notebook_insert_notebook_page (GtkNotebook *notebook,
 
   if (page->tab_label)
     {
-      if (notebook->show_tabs && gtk_widget_get_visible (page->child))
-        gtk_widget_show (page->tab_label);
-      else
-        gtk_widget_hide (page->tab_label);
+      gtk_widget_set_visible (page->tab_label,
+                              notebook->show_tabs && gtk_widget_get_visible (page->child));
 
     page->mnemonic_activate_signal =
       g_signal_connect (page->tab_label,
@@ -5607,7 +5604,7 @@ gtk_notebook_menu_item_create (GtkNotebook *notebook,
   g_signal_connect (menu_item, "clicked",
                     G_CALLBACK (gtk_notebook_menu_switch_page), page);
   if (!gtk_widget_get_visible (page->child))
-    gtk_widget_hide (menu_item);
+    gtk_widget_set_visible (menu_item, FALSE);
 }
 
 static void
@@ -6165,16 +6162,14 @@ gtk_notebook_set_show_tabs (GtkNotebook *notebook,
               page->tab_label = NULL;
             }
           else
-            gtk_widget_hide (page->tab_label);
+            gtk_widget_set_visible (page->tab_label, FALSE);
         }
-
-      gtk_widget_hide (notebook->header_widget);
     }
   else
     {
       gtk_notebook_update_labels (notebook);
-      gtk_widget_show (notebook->header_widget);
     }
+  gtk_widget_set_visible (notebook->header_widget, show_tabs);
 
   for (i = 0; i < N_ACTION_WIDGETS; i++)
     {
@@ -6558,7 +6553,7 @@ gtk_notebook_set_tab_label (GtkNotebook *notebook,
 
   if (notebook->show_tabs && gtk_widget_get_visible (child))
     {
-      gtk_widget_show (page->tab_label);
+      gtk_widget_set_visible (page->tab_label, TRUE);
       gtk_widget_queue_resize (GTK_WIDGET (notebook));
     }
 
@@ -6600,7 +6595,7 @@ gtk_notebook_set_tab_label_text (GtkNotebook *notebook,
  * @child.
  *
  * Returns: (nullable): the text of the tab label, or %NULL if
- *   the tab label idget is not a `GtkLabel`. The string is owned
+ *   the tab label widget is not a `GtkLabel`. The string is owned
  *   by the widget and must not be freed.
  */
 const char *
@@ -6988,7 +6983,7 @@ gtk_notebook_get_tab_detachable (GtkNotebook *notebook,
  * Sets whether the tab can be detached from @notebook to another
  * notebook or widget.
  *
- * Note that two notebooks must share a common group identificator
+ * Note that two notebooks must share a common group identifier
  * (see [method@Gtk.Notebook.set_group_name]) to allow automatic tabs
  * interchange between them.
  *

@@ -184,7 +184,7 @@ gsk_gl_driver_shader_weak_cb (gpointer  data,
     }
 }
 
-G_GNUC_NULL_TERMINATED static inline GBytes *
+G_GNUC_UNUSED G_GNUC_NULL_TERMINATED static inline GBytes *
 join_sources (GBytes *first_bytes,
               ...)
 {
@@ -641,7 +641,7 @@ gsk_gl_driver_after_frame (GskGLDriver *self)
       self->texture_pool->len = 0;
     }
 
-  /* Reset command queue to our shared queue incase we have operations
+  /* Reset command queue to our shared queue in case we have operations
    * that need to be processed outside of a frame (such as callbacks
    * from external systems such as GDK).
    */

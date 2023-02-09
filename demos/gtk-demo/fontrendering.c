@@ -43,7 +43,6 @@ update_image (void)
   cairo_t *cr;
   GdkPixbuf *pixbuf;
   GdkPixbuf *pixbuf2;
-  const char *hint;
   cairo_font_options_t *fopt;
   cairo_hint_style_t hintstyle;
   cairo_hint_metrics_t hintmetrics;
@@ -54,22 +53,27 @@ update_image (void)
     context = gtk_widget_create_pango_context (image);
 
   text = gtk_editable_get_text (GTK_EDITABLE (entry));
-  desc = gtk_font_chooser_get_font_desc (GTK_FONT_CHOOSER (font_button));
+  desc = gtk_font_dialog_button_get_font_desc (GTK_FONT_DIALOG_BUTTON (font_button));
 
   fopt = cairo_font_options_copy (pango_cairo_context_get_font_options (context));
 
-  hint = gtk_combo_box_get_active_id (GTK_COMBO_BOX (hinting));
-  hintstyle = CAIRO_HINT_STYLE_DEFAULT;
-  if (hint)
+  switch (gtk_drop_down_get_selected (GTK_DROP_DOWN (hinting)))
     {
-      if (strcmp (hint, "none") == 0)
-        hintstyle = CAIRO_HINT_STYLE_NONE;
-      else if (strcmp (hint, "slight") == 0)
-        hintstyle = CAIRO_HINT_STYLE_SLIGHT;
-      else if (strcmp (hint, "medium") == 0)
-        hintstyle = CAIRO_HINT_STYLE_MEDIUM;
-      else if (strcmp (hint, "full") == 0)
-        hintstyle = CAIRO_HINT_STYLE_FULL;
+    case 0:
+      hintstyle = CAIRO_HINT_STYLE_NONE;
+      break;
+    case 1:
+      hintstyle = CAIRO_HINT_STYLE_SLIGHT;
+      break;
+    case 2:
+      hintstyle = CAIRO_HINT_STYLE_MEDIUM;
+      break;
+    case 3:
+      hintstyle = CAIRO_HINT_STYLE_FULL;
+      break;
+    default:
+      hintstyle = CAIRO_HINT_STYLE_DEFAULT;
+      break;
     }
   cairo_font_options_set_hint_style (fopt, hintstyle);
 
@@ -283,8 +287,6 @@ retry:
   gtk_picture_set_pixbuf (GTK_PICTURE (image), pixbuf2);
 
   g_object_unref (pixbuf2);
-
-  pango_font_description_free (desc);
 }
 
 static gboolean fading = FALSE;
@@ -418,7 +420,7 @@ do_fontrendering (GtkWidget *do_widget)
       g_signal_connect (down_button, "clicked", G_CALLBACK (scale_down), NULL);
       g_signal_connect (entry, "notify::text", G_CALLBACK (update_image), NULL);
       g_signal_connect (font_button, "notify::font-desc", G_CALLBACK (update_image), NULL);
-      g_signal_connect (hinting, "notify::active", G_CALLBACK (update_image), NULL);
+      g_signal_connect (hinting, "notify::selected", G_CALLBACK (update_image), NULL);
       g_signal_connect (anti_alias, "notify::active", G_CALLBACK (update_image), NULL);
       g_signal_connect (hint_metrics, "notify::active", G_CALLBACK (update_image), NULL);
       g_signal_connect (text_radio, "notify::active", G_CALLBACK (update_image), NULL);
@@ -433,7 +435,7 @@ do_fontrendering (GtkWidget *do_widget)
     }
 
   if (!gtk_widget_get_visible (window))
-    gtk_widget_show (window);
+    gtk_widget_set_visible (window, TRUE);
   else
     gtk_window_destroy (GTK_WINDOW (window));
 

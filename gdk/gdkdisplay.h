@@ -83,10 +83,10 @@ GdkClipboard *          gdk_display_get_clipboard               (GdkDisplay     
 GDK_AVAILABLE_IN_ALL
 GdkClipboard *          gdk_display_get_primary_clipboard       (GdkDisplay     *display);
 
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_10_FOR(gdk_toplevel_set_startup_id)
 void     gdk_display_notify_startup_complete   (GdkDisplay    *display,
                                                 const char    *startup_id);
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_10
 const char * gdk_display_get_startup_notification_id (GdkDisplay *display);
 
 GDK_AVAILABLE_IN_ALL
@@ -104,7 +104,7 @@ GDK_AVAILABLE_IN_ALL
 GdkMonitor * gdk_display_get_monitor_at_surface (GdkDisplay *display,
                                                 GdkSurface  *surface);
 
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_10
 void      gdk_display_put_event  (GdkDisplay     *display,
                                   GdkEvent       *event);
 

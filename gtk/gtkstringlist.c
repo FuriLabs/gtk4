@@ -38,8 +38,8 @@
  * # GtkStringList as GtkBuildable
  *
  * The `GtkStringList` implementation of the `GtkBuildable` interface
- * supports adding items directly using the <items> element and
- * specifying <item> elements for each item. Each <item> element
+ * supports adding items directly using the `<items>` element and
+ * specifying `<item>` elements for each item. Each `<item>` element
  * supports the regular translation attributes “translatable”,
  * “context” and “comments”.
  *
@@ -55,6 +55,8 @@
  * </object>
  * ```
  */
+
+/* {{{ GtkStringObject */
 
 /**
  * GtkStringObject:
@@ -183,6 +185,9 @@ gtk_string_object_get_string (GtkStringObject *self)
   return self->string;
 }
 
+/* }}} */
+/* {{{ List model implementation */
+
 struct _GtkStringList
 {
   GObject parent_instance;
@@ -228,6 +233,9 @@ gtk_string_list_model_init (GListModelInterface *iface)
   iface->get_n_items = gtk_string_list_get_n_items;
   iface->get_item = gtk_string_list_get_item;
 }
+
+/* }}} */
+/* {{{ Buildable implementation */
 
 typedef struct
 {
@@ -394,6 +402,13 @@ gtk_string_list_buildable_init (GtkBuildableIface *iface)
   iface->custom_finished = gtk_string_list_buildable_custom_finished;
 }
 
+/* }}} */
+/* {{{ GObject implementation */
+
+enum {
+  PROP_STRINGS = 1
+};
+
 G_DEFINE_TYPE_WITH_CODE (GtkStringList, gtk_string_list, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
                                                 gtk_string_list_buildable_init)
@@ -411,11 +426,43 @@ gtk_string_list_dispose (GObject *object)
 }
 
 static void
+gtk_string_list_set_property (GObject      *object,
+                              unsigned int  prop_id,
+                              const GValue *value,
+                              GParamSpec   *pspec)
+{
+  GtkStringList *self = GTK_STRING_LIST (object);
+
+  switch (prop_id)
+    {
+    case PROP_STRINGS:
+      gtk_string_list_splice (self, 0, 0,
+                              (const char * const *) g_value_get_boxed (value));
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
 gtk_string_list_class_init (GtkStringListClass *class)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (class);
 
   gobject_class->dispose = gtk_string_list_dispose;
+  gobject_class->set_property = gtk_string_list_set_property;
+
+  /**
+   * GtkStringList:strings:
+   *
+   * Since: 4.10
+   */
+  g_object_class_install_property (gobject_class, PROP_STRINGS,
+      g_param_spec_boxed ("strings", NULL, NULL,
+                          G_TYPE_STRV,
+                          G_PARAM_WRITABLE|G_PARAM_STATIC_STRINGS|G_PARAM_CONSTRUCT_ONLY));
 }
 
 static void
@@ -423,6 +470,9 @@ gtk_string_list_init (GtkStringList *self)
 {
   objects_init (&self->items);
 }
+
+/* }}} */
+/* {{{ Public API */
 
 /**
  * gtk_string_list_new:
@@ -435,13 +485,9 @@ gtk_string_list_init (GtkStringList *self)
 GtkStringList *
 gtk_string_list_new (const char * const *strings)
 {
-  GtkStringList *self;
-
-  self = g_object_new (GTK_TYPE_STRING_LIST, NULL);
-
-  gtk_string_list_splice (self, 0, 0, strings);
-
-  return self;
+  return g_object_new (GTK_TYPE_STRING_LIST,
+                       "strings", strings,
+                       NULL);
 }
 
 /**
@@ -583,3 +629,6 @@ gtk_string_list_get_string (GtkStringList *self,
 
   return objects_get (&self->items, position)->string;
 }
+
+/* }}} */
+/* vim:set foldmethod=marker expandtab: */

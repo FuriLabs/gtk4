@@ -53,7 +53,7 @@
  */
 
 #include "config.h"
-#include "gtktextbtree.h"
+#include "gtktextbtreeprivate.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -65,8 +65,8 @@
 #include "gtktextiterprivate.h"
 #include "gtkdebug.h"
 #include "gtktextmarkprivate.h"
-#include "gtktextsegment.h"
-#include "gtkpango.h"
+#include "gtktextsegmentprivate.h"
+#include "gtkpangoprivate.h"
 #include "gdkprivate.h"
 
 /*
@@ -2415,7 +2415,6 @@ _gtk_text_btree_get_text (const GtkTextIter *start_orig,
   GtkTextLineSegment *seg;
   GtkTextLineSegment *end_seg;
   GString *retval;
-  char *str;
   GtkTextIter iter;
   GtkTextIter start;
   GtkTextIter end;
@@ -2447,9 +2446,7 @@ _gtk_text_btree_get_text (const GtkTextIter *start_orig,
 
   copy_segment (retval, include_hidden, include_nonchars, &iter, &end);
 
-  str = retval->str;
-  g_string_free (retval, FALSE);
-  return str;
+  return g_string_free (retval, FALSE);
 }
 
 int

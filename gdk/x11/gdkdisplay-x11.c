@@ -1393,7 +1393,7 @@ gdk_x11_display_init_leader_surface (GdkX11Display *self)
 
   self->leader_gdk_surface =
       _gdk_x11_display_create_surface (display,
-                                       GDK_SURFACE_TEMP,
+                                       GDK_SURFACE_DRAG,
                                        NULL,
                                        -100, -100, 1, 1);
 
@@ -1473,7 +1473,7 @@ gdk_x11_display_open (const char *display_name)
    * as we care about GLX details such as alpha/depth/stencil depth,
    * stereo and double buffering
    *
-   * Note that this also sets up the leader surface while creating the inital
+   * Note that this also sets up the leader surface while creating the initial
    * GL context.
    */
   if (!gdk_display_prepare_gl (display, NULL))
@@ -2074,8 +2074,10 @@ gdk_x11_display_make_default (GdkDisplay *display)
   display_x11->startup_notification_id = NULL;
 
   startup_id = gdk_get_startup_notification_id ();
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   if (startup_id)
     gdk_x11_display_set_startup_notification_id (display, startup_id);
+G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 static void
@@ -2303,6 +2305,8 @@ gdk_x11_display_get_user_time (GdkDisplay *display)
  * Gets the startup notification ID for a display.
  * 
  * Returns: the startup notification ID for @display
+ *
+ * Deprecated: 4.10
  */
 const char *
 gdk_x11_display_get_startup_notification_id (GdkDisplay *display)
@@ -2329,7 +2333,9 @@ gdk_x11_display_get_startup_notification_id (GdkDisplay *display)
  * The startup ID is also what is used to signal that the startup is
  * complete (for example, when opening a window or when calling
  * gdk_display_notify_startup_complete()).
- **/
+ *
+ * Deprecated: 4.10: Using [method@Gdk.Toplevel.set_startup_id] is sufficient
+ */
 void
 gdk_x11_display_set_startup_notification_id (GdkDisplay  *display,
                                              const char *startup_id)
@@ -3042,7 +3048,9 @@ gdk_x11_display_class_init (GdkX11DisplayClass * class)
   display_class->get_app_launch_context = _gdk_x11_display_get_app_launch_context;
 
   display_class->get_next_serial = gdk_x11_display_get_next_serial;
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   display_class->get_startup_notification_id = gdk_x11_display_get_startup_notification_id;
+G_GNUC_END_IGNORE_DEPRECATIONS
   display_class->notify_startup_complete = gdk_x11_display_notify_startup_complete;
   display_class->create_surface = _gdk_x11_display_create_surface;
   display_class->get_keymap = gdk_x11_display_get_keymap;

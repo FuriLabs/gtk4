@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.8.3',
+        version: '4.9.3',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -10,16 +10,16 @@ project('gtk', 'c',
         meson_version : '>= 0.60.0',
         license: 'LGPL-2.1-or-later')
 
-glib_req           = '>= 2.66.0'
+glib_req           = '>= 2.72.0'
+introspection_req  = '>= 1.72.0' # keep this in sync with glib
 pango_req          = '>= 1.50.0' # keep this in sync with .gitlab-ci/test-msys.sh
-harfbuzz_req	   = '>= 2.6.0'
-fribidi_req        = '>= 0.19.7'
+harfbuzz_req       = '>= 2.6.0'
+fribidi_req        = '>= 1.0.6'
 cairo_req          = '>= 1.14.0'
 gdk_pixbuf_req     = '>= 2.30.0'
-introspection_req  = '>= 1.39.0'
 wayland_proto_req  = '>= 1.25'
 wayland_req        = '>= 1.21.0'
-graphene_req       = '>= 1.9.1'
+graphene_req       = '>= 1.10.0'
 epoxy_req          = '>= 1.4'
 cloudproviders_req = '>= 0.3.1'
 xkbcommon_req      = '>= 0.2.0'
@@ -271,6 +271,7 @@ elif cc.get_id() == 'gcc' or cc.get_id() == 'clang'
     '-Wno-c++11-extensions',
     '-Wno-missing-include-dirs',
     '-Wno-typedef-redefinition',
+    '-Wno-tautological-constant-out-of-range-compare',
     '-Wduplicated-branches',
     '-Wduplicated-cond',
     '-Wformat=2',
@@ -342,19 +343,15 @@ endif
 common_cflags = cc.get_supported_arguments(test_cflags)
 
 # Symbol visibility
-
-if os_win32
-  visibility_define = '__declspec(dllexport) extern'
-else
-  visibility_define = '__attribute__((visibility("default"))) extern'
-endif
-
 if get_option('default_library') != 'static'
-  cdata.set('_GDK_EXTERN', visibility_define)
   if os_win32
     cdata.set('DLL_EXPORT', true)
-  endif
-  if cc.get_id() != 'msvc'
+    cdata.set('_GDK_EXTERN', '__declspec(dllexport) extern')
+    if cc.get_id() != 'msvc'
+      common_cflags += ['-fvisibility=hidden']
+    endif
+  else
+    cdata.set('_GDK_EXTERN', '__attribute__((visibility("default"))) extern')
     common_cflags += ['-fvisibility=hidden']
   endif
 endif
@@ -372,80 +369,44 @@ gtkinc = include_directories('gtk')
 testinc = include_directories('tests')
 
 # Dependencies
-glib_dep       = dependency('glib-2.0', version: glib_req,
-                            fallback : ['glib', 'libglib_dep'])
-gobject_dep    = dependency('gobject-2.0', version: glib_req,
-                            fallback : ['glib', 'libgobject_dep'])
+glib_dep       = dependency('glib-2.0', version: glib_req)
+gobject_dep    = dependency('gobject-2.0', version: glib_req)
 if os_win32
-  giowin32_dep = dependency('gio-windows-2.0', version: glib_req, required: win32_enabled,
-                            fallback : ['glib', 'libgio_dep'])
+  giowin32_dep = dependency('gio-windows-2.0', version: glib_req, required: win32_enabled)
 endif
 if os_unix
-  giounix_dep  = dependency('gio-unix-2.0', version: glib_req, required: false,
-                            fallback : ['glib', 'libgio_dep'])
+  giounix_dep  = dependency('gio-unix-2.0', version: glib_req, required: false)
 endif
-gmodule_dep    = dependency('gmodule-2.0', version: glib_req,
-                            fallback : ['glib', 'libgmodule_dep'])
+gmodule_dep    = dependency('gmodule-2.0', version: glib_req)
 cairo_dep      = dependency('cairo', version: cairo_req,
-                            fallback : ['cairo', 'libcairo_dep'],
                             default_options: ['zlib=enabled', 'tests=disabled'])
-cairogobj_dep  = dependency('cairo-gobject', version: cairo_req,
-                            fallback : ['cairo', 'libcairogobject_dep'])
-pango_dep      = dependency('pango', version: pango_req,
-                            fallback : ['pango', 'libpango_dep'])
-fribidi_dep    = dependency('fribidi', version: fribidi_req,
-                            fallback : ['fribidi', 'libfribidi_dep'])
+cairogobj_dep  = dependency('cairo-gobject', version: cairo_req)
+pango_dep      = dependency('pango', version: pango_req)
+fribidi_dep    = dependency('fribidi', version: fribidi_req)
 harfbuzz_dep   = dependency('harfbuzz', version: harfbuzz_req,
-                            fallback: ['harfbuzz', 'libharfbuzz_dep'],
                             default_options: ['coretext=enabled'])
 
 # Require PangoFT2 if on X11 or wayland
-require_pangoft2 = wayland_enabled or x11_enabled
-
-if require_pangoft2
-  pangoft_dep    = dependency('pangoft2', version: pango_req,
-                              fallback : ['pango', 'libpangoft2_dep'])
-else
-  pangoft_dep    = dependency('pangoft2', required: false)
-endif
+pangoft_dep    = dependency('pangoft2', version: pango_req,
+                            required: wayland_enabled or x11_enabled)
 
 if win32_enabled
   # for GTK_IM_CONTEXT_IME
   pangowin32_dep = dependency('pangowin32')
 endif
 
-is_msvc_like = cc.get_argument_syntax() == 'msvc'
-
-pangocairo_dep = dependency('pangocairo', version: pango_req,
-                            fallback : ['pango', 'libpangocairo_dep'])
+pangocairo_dep = dependency('pangocairo', version: pango_req)
 pixbuf_dep     = dependency('gdk-pixbuf-2.0', version: gdk_pixbuf_req,
-                            fallback : ['gdk-pixbuf', 'gdkpixbuf_dep'],
                             default_options: ['png=enabled', 'jpeg=enabled', 'builtin_loaders=png,jpeg', 'man=false'])
-png_dep        = dependency(is_msvc_like ? 'png' : 'libpng',
-                            fallback: ['libpng', 'libpng_dep'],
-                            required: true)
-tiff_dep       = dependency(is_msvc_like ? 'tiff' : 'libtiff-4',
-                            fallback: ['libtiff', 'libtiff4_dep'],
-                            required: true)
-jpeg_dep       = dependency(is_msvc_like ? 'jpeg' : 'libjpeg',
-                            fallback: ['libjpeg-turbo', 'jpeg_dep'],
-                            required: true)
+png_dep        = dependency('libpng', 'png')
+tiff_dep       = dependency('libtiff-4', 'tiff')
+jpeg_dep       = dependency('libjpeg', 'jpeg')
 
-epoxy_dep      = dependency('epoxy', version: epoxy_req,
-                            fallback: ['libepoxy', 'libepoxy_dep'])
-harfbuzz_dep   = dependency('harfbuzz', version: '>= 2.1.0', required: false,
-                            fallback: ['harfbuzz', 'libharfbuzz_dep'],
-                            default_options: ['coretext=enabled'])
+epoxy_dep      = dependency('epoxy', version: epoxy_req)
 xkbdep         = dependency('xkbcommon', version: xkbcommon_req, required: wayland_enabled)
 graphene_dep   = dependency('graphene-gobject-1.0', version: graphene_req,
-                            fallback: ['graphene', 'graphene_dep'],
-                            default_options: ['tests=false'])
+                            default_options: ['tests=false', 'gobject_types=true'])
 iso_codes_dep  = dependency('iso-codes', required: false)
-
-gidocgen_dep    = dependency('gi-docgen', version: '>= 2021.1',
-                             fallback: ['gi-docgen', 'dummy_dep'],
-                             required: get_option('gtk_doc') and get_option('introspection').enabled(),
-                             native: true)
 gi_dep         = dependency('gobject-introspection-1.0', version: introspection_req,
                             required: get_option('introspection').enabled() and
                                       get_option('build-tests'))
@@ -518,11 +479,9 @@ cdata.set('HAVE_PANGOFT', pangoft_dep.found())
 wayland_pkgs = []
 if wayland_enabled
   wlclientdep    = dependency('wayland-client', version:  wayland_req,
-                              fallback: 'wayland',
                               default_options: ['documentation=false'])
   wlprotocolsdep = dependency('wayland-protocols', version: wayland_proto_req)
-  wlegldep       = dependency('wayland-egl',
-                              fallback: 'wayland')
+  wlegldep       = dependency('wayland-egl')
 
   wlproto_dir = wlprotocolsdep.get_variable('pkgdatadir')
 
@@ -658,10 +617,6 @@ endif
 cloudproviders_dep = dependency('cloudproviders',
   required: get_option('cloudproviders'),
   version: cloudproviders_req,
-  fallback: [
-    'libcloudproviders',
-    'libcloudproviders_dep',
-  ],
   default_options: [
     'vapigen=false',
   ])
@@ -681,7 +636,6 @@ if not get_option('sysprof').disabled()
       'sysprofd=none',
       'help=false',
     ],
-    fallback: ['sysprof', 'libsysprof_capture_dep'],
   )
   cdata.set('HAVE_SYSPROF', libsysprof_capture_dep.found())
   libsysprof_dep = dependency('sysprof-4',
@@ -696,7 +650,6 @@ if not get_option('sysprof').disabled()
       'sysprofd=none',
       'help=false',
     ],
-    fallback: ['sysprof', 'libsysprof_dep'],
   )
   profiler_enabled = true
 else
@@ -776,6 +729,11 @@ int main () {
   endif
 endif
 
+# Introspection
+gir = find_program('g-ir-scanner', required : get_option('introspection'))
+build_gir = gir.found() and get_option('introspection').enabled()
+
+
 project_build_root = meson.current_build_dir()
 
 subdir('gtk/css')
@@ -789,6 +747,8 @@ endif
 subdir('tools')
 if get_option('build-tests')
   subdir('tests')
+endif
+if get_option('build-testsuite')
   subdir('testsuite')
 endif
 if get_option('build-examples')
@@ -928,7 +888,6 @@ summary('Introspection', build_gir, section: 'Build')
 summary('Documentation', get_option('gtk_doc'), section: 'Build')
 summary('Man pages', get_option('man-pages'), section: 'Build')
 summary('Tests', get_option('build-tests'), section: 'Build')
-summary('Install tests', get_option('install-tests'), section: 'Build')
 summary('Demos', get_option('demos'), section: 'Build')
 summary('Examples', get_option('build-examples'), section: 'Build')
 

@@ -24,6 +24,8 @@
 
 #include <gtk/gtk.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static void
 combo_changed_cb (GtkWidget *combo,
 		  gpointer   data)
@@ -151,7 +153,7 @@ main (int argc, char *argv[])
 
   g_signal_connect (combo, "changed", G_CALLBACK (combo_changed_cb), label);
 
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
 
   while (!done)
     g_main_context_iteration (NULL, TRUE);

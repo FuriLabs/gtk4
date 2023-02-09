@@ -20,6 +20,8 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 /* Don't copy this bad example; inline RGB data is always a better
  * idea than inline XPMs.
  */
@@ -755,7 +757,7 @@ main (int    argc,
   
   gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (sw), tv);
   
-  gtk_widget_show (window);
+  gtk_window_present (GTK_WINDOW (window));
   
   while (!done)
     g_main_context_iteration (NULL, TRUE);

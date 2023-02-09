@@ -1196,7 +1196,7 @@ _gdk_x11_display_create_surface (GdkDisplay     *display,
                               "frame-clock", frame_clock,
                               NULL);
       break;
-    case GDK_SURFACE_TEMP:
+    case GDK_SURFACE_DRAG:
       surface = g_object_new (GDK_TYPE_X11_DRAG_SURFACE,
                               "display", display,
                               "frame-clock", frame_clock,
@@ -1235,7 +1235,7 @@ _gdk_x11_display_create_surface (GdkDisplay     *display,
   xattributes.colormap = gdk_x11_display_get_window_colormap (display_x11);
   xattributes_mask |= CWColormap;
 
-  if (surface_type == GDK_SURFACE_TEMP ||
+  if (surface_type == GDK_SURFACE_DRAG ||
       surface_type == GDK_SURFACE_POPUP)
     {
       xattributes.save_under = True;
@@ -2648,6 +2648,7 @@ gdk_x11_surface_set_startup_id (GdkSurface   *surface,
 			       const char *startup_id)
 {
   GdkDisplay *display;
+  char *free_this = NULL;
 
   g_return_if_fail (GDK_IS_SURFACE (surface));
 
@@ -2664,6 +2665,23 @@ gdk_x11_surface_set_startup_id (GdkSurface   *surface,
   else
     XDeleteProperty (GDK_DISPLAY_XDISPLAY (display), GDK_SURFACE_XID (surface),
                      gdk_x11_get_xatom_by_name_for_display (display, "_NET_STARTUP_ID"));
+
+  if (startup_id == NULL)
+    {
+      GdkX11Display *display_x11 = GDK_X11_DISPLAY (display);
+
+      startup_id = free_this = display_x11->startup_notification_id;
+      display_x11->startup_notification_id = NULL;
+
+      if (startup_id == NULL)
+        return;
+    }
+
+  gdk_x11_display_broadcast_startup_message (display, "remove",
+                                             "ID", startup_id,
+                                             NULL);
+
+  g_free (free_this);
 }
 
 static void
@@ -3430,7 +3448,7 @@ gdk_x11_surface_apply_fullscreen_mode (GdkSurface *surface)
 	   * Successfully tested on mutter/metacity, kwin, compiz and xfwm4.
 	   *
 	   * Note, this (non documented) mechanism is unlikely to be an issue
-	   * as it's used only for transitionning back from "all monitors" to
+	   * as it's used only for transitioning back from "all monitors" to
 	   * "current monitor" mode.
 	   *
 	   * Applications who don't change the default mode won't trigger this
@@ -4373,7 +4391,7 @@ create_moveresize_surface (MoveResizeData *mv_resize,
 
   mv_resize->moveresize_emulation_surface =
       _gdk_x11_display_create_surface (mv_resize->display,
-                                       GDK_SURFACE_TEMP,
+                                       GDK_SURFACE_DRAG,
                                        NULL,
                                        -100, -100, 1, 1);
 
@@ -5276,6 +5294,35 @@ gdk_x11_toplevel_event_callback (GdkSurface *surface,
 }
 
 static void
+gdk_x11_toplevel_export_handle (GdkToplevel          *toplevel,
+                                GCancellable         *cancellable,
+                                GAsyncReadyCallback   callback,
+                                gpointer              user_data)
+{
+  guint32 xid;
+  GTask *task;
+
+  xid = (guint32) gdk_x11_surface_get_xid (GDK_SURFACE (toplevel));
+
+  task = g_task_new (toplevel, cancellable, callback, user_data);
+  g_task_return_pointer (task, g_strdup_printf ("%x", xid), g_free);
+  g_object_unref (task);
+}
+
+static char *
+gdk_x11_toplevel_export_handle_finish (GdkToplevel   *toplevel,
+                                       GAsyncResult  *result,
+                                       GError       **error)
+{
+  return g_task_propagate_pointer (G_TASK (result), error);
+}
+
+static void
+gdk_x11_toplevel_unexport_handle (GdkToplevel *toplevel)
+{
+}
+
+static void
 gdk_x11_toplevel_iface_init (GdkToplevelInterface *iface)
 {
   iface->present = gdk_x11_toplevel_present;
@@ -5288,6 +5335,9 @@ gdk_x11_toplevel_iface_init (GdkToplevelInterface *iface)
   iface->restore_system_shortcuts = gdk_x11_toplevel_restore_system_shortcuts;
   iface->begin_resize = gdk_x11_toplevel_begin_resize;
   iface->begin_move = gdk_x11_toplevel_begin_move;
+  iface->export_handle = gdk_x11_toplevel_export_handle;
+  iface->export_handle_finish = gdk_x11_toplevel_export_handle_finish;
+  iface->unexport_handle = gdk_x11_toplevel_unexport_handle;
 }
 
 typedef struct {

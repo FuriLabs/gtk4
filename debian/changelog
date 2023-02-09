@@ -1,3 +1,9 @@
+gtk4 (4.8.3+ds-3) UNRELEASED; urgency=medium
+
+  * d/gbp.conf, d/watch: Branch for experimental
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 09 Feb 2023 09:30:41 +0000
+
 gtk4 (4.8.3+ds-2) unstable; urgency=medium
 
   [ Jeremy Bicha ]

@@ -1,8 +1,9 @@
-gtk4 (4.9.4+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.9.4+ds-1) experimental; urgency=medium
 
   * New upstream release
+  * debian/libgtk-4-1.symbols.in: Add new symbols
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 13 Feb 2023 14:17:07 -0500
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 13 Feb 2023 16:14:23 -0500
 
 gtk4 (4.9.3+ds-1) experimental; urgency=medium
 

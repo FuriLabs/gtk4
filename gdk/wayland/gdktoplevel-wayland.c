@@ -2119,7 +2119,10 @@ gdk_wayland_toplevel_focus (GdkToplevel *toplevel,
           xdg_activation_token_v1_commit (token);
 
           while (startup_id == NULL)
-            wl_display_dispatch_queue (display_wayland->wl_display, event_queue);
+            {
+              gdk_wayland_display_dispatch_queue (GDK_DISPLAY (display_wayland),
+                                                  event_queue);
+            }
 
           xdg_activation_token_v1_destroy (token);
           wl_event_queue_destroy (event_queue);

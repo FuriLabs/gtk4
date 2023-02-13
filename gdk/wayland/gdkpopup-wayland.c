@@ -1334,8 +1334,6 @@ gdk_wayland_surface_present_popup (GdkWaylandPopup *wayland_popup,
                                    GdkPopupLayout  *layout)
 {
   GdkSurface *surface = GDK_SURFACE (wayland_popup);
-  GdkWaylandDisplay *display_wayland =
-    GDK_WAYLAND_DISPLAY (gdk_surface_get_display (surface));
   GdkWaylandSurface *wayland_surface = GDK_WAYLAND_SURFACE (wayland_popup);
 
   if (!wayland_surface->mapped)
@@ -1388,7 +1386,10 @@ gdk_wayland_surface_present_popup (GdkWaylandPopup *wayland_popup,
     }
 
   while (wayland_popup->display_server.xdg_popup && !is_relayout_finished (surface))
-    wl_display_dispatch_queue (display_wayland->wl_display, wayland_surface->event_queue);
+    {
+      gdk_wayland_display_dispatch_queue (surface->display,
+                                          wayland_surface->event_queue);
+    }
 
   if (wayland_popup->display_server.xdg_popup)
     {

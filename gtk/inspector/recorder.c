@@ -264,6 +264,7 @@ create_list_model_for_render_node (GskRenderNode *node)
     case GSK_CAIRO_NODE:
     case GSK_TEXT_NODE:
     case GSK_TEXTURE_NODE:
+    case GSK_TEXTURE_SCALE_NODE:
     case GSK_COLOR_NODE:
     case GSK_LINEAR_GRADIENT_NODE:
     case GSK_REPEATING_LINEAR_GRADIENT_NODE:
@@ -303,6 +304,10 @@ create_list_model_for_render_node (GskRenderNode *node)
     case GSK_BLEND_NODE:
       return create_render_node_list_model ((GskRenderNode *[2]) { gsk_blend_node_get_bottom_child (node),
                                                                    gsk_blend_node_get_top_child (node) }, 2);
+
+    case GSK_MASK_NODE:
+      return create_render_node_list_model ((GskRenderNode *[2]) { gsk_mask_node_get_source (node),
+                                                                   gsk_mask_node_get_mask (node) }, 2);
 
     case GSK_CROSS_FADE_NODE:
       return create_render_node_list_model ((GskRenderNode *[2]) { gsk_cross_fade_node_get_start_child (node),
@@ -402,6 +407,8 @@ node_type_name (GskRenderNodeType type)
       return "Border";
     case GSK_TEXTURE_NODE:
       return "Texture";
+    case GSK_TEXTURE_SCALE_NODE:
+      return "Scaled Texture";
     case GSK_INSET_SHADOW_NODE:
       return "Inset Shadow";
     case GSK_OUTSET_SHADOW_NODE:
@@ -422,6 +429,8 @@ node_type_name (GskRenderNodeType type)
       return "Shadow";
     case GSK_BLEND_NODE:
       return "Blend";
+    case GSK_MASK_NODE:
+      return "Mask";
     case GSK_CROSS_FADE_NODE:
       return "CrossFade";
     case GSK_TEXT_NODE:
@@ -459,6 +468,7 @@ node_name (GskRenderNode *node)
     case GSK_ROUNDED_CLIP_NODE:
     case GSK_SHADOW_NODE:
     case GSK_BLEND_NODE:
+    case GSK_MASK_NODE:
     case GSK_CROSS_FADE_NODE:
     case GSK_TEXT_NODE:
     case GSK_BLUR_NODE:
@@ -475,6 +485,11 @@ node_name (GskRenderNode *node)
       {
         GdkTexture *texture = gsk_texture_node_get_texture (node);
         return g_strdup_printf ("%dx%d Texture", gdk_texture_get_width (texture), gdk_texture_get_height (texture));
+      }
+    case GSK_TEXTURE_SCALE_NODE:
+      {
+        GdkTexture *texture = gsk_texture_node_get_texture (node);
+        return g_strdup_printf ("%dx%d Texture, Filter %d", gdk_texture_get_width (texture), gdk_texture_get_height (texture), gsk_texture_scale_node_get_filter (node));
       }
     }
 }
@@ -933,6 +948,18 @@ populate_render_node_properties (GListStore    *store,
       }
       break;
 
+    case GSK_TEXTURE_SCALE_NODE:
+      {
+        GdkTexture *texture = g_object_ref (gsk_texture_scale_node_get_texture (node));
+        GskScalingFilter filter = gsk_texture_scale_node_get_filter (node);
+        g_list_store_append (store, object_property_new ("Texture", "", texture));
+
+        tmp = g_enum_to_string (GSK_TYPE_SCALING_FILTER, filter);
+        add_text_row (store, "Filter", tmp);
+        g_free (tmp);
+      }
+      break;
+
     case GSK_COLOR_NODE:
       add_color_row (store, "Color", gsk_color_node_get_color (node));
       break;
@@ -1110,6 +1137,9 @@ populate_render_node_properties (GListStore    *store,
         add_text_row (store, "Blendmode", tmp);
         g_free (tmp);
       }
+      break;
+
+    case GSK_MASK_NODE:
       break;
 
     case GSK_BLUR_NODE:

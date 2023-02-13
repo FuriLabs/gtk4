@@ -733,6 +733,10 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_linear_gradient_node_get_start@Base 4.0.0
  gsk_linear_gradient_node_get_type@Base 4.0.0
  gsk_linear_gradient_node_new@Base 4.0.0
+ gsk_mask_node_get_mask@Base 4.9.4
+ gsk_mask_node_get_source@Base 4.9.4
+ gsk_mask_node_get_type@Base 4.9.4
+ gsk_mask_node_new@Base 4.9.4
  gsk_ngl_renderer_get_type@Base 4.3.1
  gsk_ngl_renderer_new@Base 4.3.1
  gsk_opacity_node_get_child@Base 4.0.0
@@ -828,6 +832,10 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_texture_node_get_texture@Base 4.0.0
  gsk_texture_node_get_type@Base 4.0.0
  gsk_texture_node_new@Base 4.0.0
+ gsk_texture_scale_node_get_filter@Base 4.9.4
+ gsk_texture_scale_node_get_texture@Base 4.9.4
+ gsk_texture_scale_node_get_type@Base 4.9.4
+ gsk_texture_scale_node_new@Base 4.9.4
  gsk_transform_category_get_type@Base 4.0.0
  gsk_transform_equal@Base 4.0.0
  gsk_transform_get_category@Base 4.0.0
@@ -3505,6 +3513,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_root_get_type@Base 4.0.0
  gtk_root_set_focus@Base 4.0.0
  gtk_scale_add_mark@Base 4.0.0
+ gtk_scale_button_get_active@Base 4.9.4
  gtk_scale_button_get_adjustment@Base 4.0.0
  gtk_scale_button_get_minus_button@Base 4.0.0
  gtk_scale_button_get_plus_button@Base 4.0.0
@@ -3592,10 +3601,12 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_search_bar_set_search_mode@Base 4.0.0
  gtk_search_bar_set_show_close_button@Base 4.0.0
  gtk_search_entry_get_key_capture_widget@Base 4.0.0
+ gtk_search_entry_get_placeholder_text@Base 4.9.4
  gtk_search_entry_get_search_delay@Base 4.7.2
  gtk_search_entry_get_type@Base 4.0.0
  gtk_search_entry_new@Base 4.0.0
  gtk_search_entry_set_key_capture_widget@Base 4.0.0
+ gtk_search_entry_set_placeholder_text@Base 4.9.4
  gtk_search_entry_set_search_delay@Base 4.7.2
  gtk_selection_filter_model_get_model@Base 4.0.0
  gtk_selection_filter_model_get_type@Base 4.0.0
@@ -3718,6 +3729,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_snapshot_append_radial_gradient@Base 4.0.0
  gtk_snapshot_append_repeating_linear_gradient@Base 4.0.0
  gtk_snapshot_append_repeating_radial_gradient@Base 4.0.0
+ gtk_snapshot_append_scaled_texture@Base 4.9.4
  gtk_snapshot_append_texture@Base 4.0.0
  gtk_snapshot_free_to_node@Base 4.0.0
  gtk_snapshot_free_to_paintable@Base 4.0.0
@@ -3733,6 +3745,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_snapshot_push_cross_fade@Base 4.0.0
  gtk_snapshot_push_debug@Base 4.0.0
  gtk_snapshot_push_gl_shader@Base 4.0.0
+ gtk_snapshot_push_mask@Base 4.9.4
  gtk_snapshot_push_opacity@Base 4.0.0
  gtk_snapshot_push_repeat@Base 4.0.0
  gtk_snapshot_push_rounded_clip@Base 4.0.0

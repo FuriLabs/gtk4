@@ -58,7 +58,7 @@ rectangle_init_from_graphene (cairo_rectangle_int_t *cairo,
   cairo->height = ceilf (graphene->origin.y + graphene->size.height) - cairo->y;
 }
 
-/*** GSK_COLOR_NODE ***/
+/* {{{ GSK_COLOR_NODE */
 
 /**
  * GskColorNode:
@@ -147,7 +147,8 @@ gsk_color_node_new (const GdkRGBA         *rgba,
   return node;
 }
 
-/*** GSK_LINEAR_GRADIENT_NODE ***/
+/* }}} */
+/* {{{ GSK_LINEAR_GRADIENT_NODE */
 
 /**
  * GskRepeatingLinearGradientNode:
@@ -420,7 +421,8 @@ gsk_linear_gradient_node_get_color_stops (const GskRenderNode *node,
   return self->stops;
 }
 
-/*** GSK_RADIAL_GRADIENT_NODE ***/
+/* }}} */
+/* {{{ GSK_RADIAL_GRADIENT_NODE */
 
 /**
  * GskRepeatingRadialGradientNode:
@@ -790,7 +792,8 @@ gsk_radial_gradient_node_get_end (const GskRenderNode *node)
   return self->end;
 }
 
-/*** GSK_CONIC_GRADIENT_NODE ***/
+/* }}} */
+/* {{{ GSK_CONIC_GRADIENT_NODE */
 
 /**
  * GskConicGradientNode:
@@ -1147,7 +1150,8 @@ gsk_conic_gradient_node_get_angle (const GskRenderNode *node)
   return self->angle;
 }
 
-/*** GSK_BORDER_NODE ***/
+/* }}} */
+/* {{{ GSK_BORDER_NODE */
 
 /**
  * GskBorderNode:
@@ -1459,7 +1463,8 @@ gsk_border_node_get_uniform_color (const GskRenderNode *self)
   return node->uniform_color;
 }
 
-/*** GSK_TEXTURE_NODE ***/
+/* }}} */
+/* {{{ GSK_TEXTURE_NODE */
 
 /**
  * GskTextureNode:
@@ -1576,7 +1581,193 @@ gsk_texture_node_new (GdkTexture            *texture,
   return node;
 }
 
-/*** GSK_INSET_SHADOW_NODE ***/
+/* }}} */
+/* {{{ GSK_TEXTURE_SCALE_NODE */
+
+/**
+ * GskTextureScaleNode:
+ *
+ * A render node for a `GdkTexture`.
+ */
+struct _GskTextureScaleNode
+{
+  GskRenderNode render_node;
+
+  GdkTexture *texture;
+  GskScalingFilter filter;
+};
+
+static void
+gsk_texture_scale_node_finalize (GskRenderNode *node)
+{
+  GskTextureScaleNode *self = (GskTextureScaleNode *) node;
+  GskRenderNodeClass *parent_class = g_type_class_peek (g_type_parent (GSK_TYPE_TEXTURE_SCALE_NODE));
+
+  g_clear_object (&self->texture);
+
+  parent_class->finalize (node);
+}
+
+static void
+gsk_texture_scale_node_draw (GskRenderNode *node,
+                             cairo_t       *cr)
+{
+  GskTextureScaleNode *self = (GskTextureScaleNode *) node;
+  cairo_surface_t *surface;
+  cairo_pattern_t *pattern;
+  cairo_matrix_t matrix;
+  cairo_filter_t filters[] = {
+    CAIRO_FILTER_BILINEAR,
+    CAIRO_FILTER_NEAREST,
+    CAIRO_FILTER_GOOD,
+  };
+  cairo_t *cr2;
+  cairo_surface_t *surface2;
+
+  surface2 = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
+                                         (int) ceilf (node->bounds.size.width),
+                                         (int) ceilf (node->bounds.size.height));
+  cr2 = cairo_create (surface2);
+
+  cairo_set_source_rgba (cr2, 0, 0, 0, 0);
+  cairo_paint (cr2);
+
+  surface = gdk_texture_download_surface (self->texture);
+  pattern = cairo_pattern_create_for_surface (surface);
+  cairo_pattern_set_extend (pattern, CAIRO_EXTEND_PAD);
+
+  cairo_matrix_init_scale (&matrix,
+                           gdk_texture_get_width (self->texture) / node->bounds.size.width,
+                           gdk_texture_get_height (self->texture) / node->bounds.size.height);
+  cairo_pattern_set_matrix (pattern, &matrix);
+  cairo_pattern_set_filter (pattern, filters[self->filter]);
+
+  cairo_set_source (cr2, pattern);
+  cairo_pattern_destroy (pattern);
+  cairo_surface_destroy (surface);
+
+  cairo_rectangle (cr2, 0, 0, node->bounds.size.width, node->bounds.size.height);
+  cairo_fill (cr2);
+
+  cairo_destroy (cr2);
+
+  cairo_save (cr);
+
+  pattern = cairo_pattern_create_for_surface (surface2);
+  cairo_pattern_set_extend (pattern, CAIRO_EXTEND_PAD);
+
+  cairo_matrix_init_identity (&matrix);
+  cairo_matrix_translate (&matrix,
+                          -node->bounds.origin.x,
+                          -node->bounds.origin.y);
+  cairo_pattern_set_matrix (pattern, &matrix);
+  cairo_set_source (cr, pattern);
+  cairo_pattern_destroy (pattern);
+  cairo_surface_destroy (surface2);
+
+  gsk_cairo_rectangle (cr, &node->bounds);
+  cairo_fill (cr);
+
+  cairo_restore (cr);
+}
+
+static void
+gsk_texture_scale_node_diff (GskRenderNode  *node1,
+                             GskRenderNode  *node2,
+                             cairo_region_t *region)
+{
+  GskTextureScaleNode *self1 = (GskTextureScaleNode *) node1;
+  GskTextureScaleNode *self2 = (GskTextureScaleNode *) node2;
+
+  if (graphene_rect_equal (&node1->bounds, &node2->bounds) &&
+      self1->texture == self2->texture &&
+      self1->filter == self2->filter)
+    return;
+
+  gsk_render_node_diff_impossible (node1, node2, region);
+}
+
+/**
+ * gsk_texture_scale_node_get_texture:
+ * @node: (type GskTextureNode): a `GskRenderNode` of type %GSK_TEXTURE_SCALE_NODE
+ *
+ * Retrieves the `GdkTexture` used when creating this `GskRenderNode`.
+ *
+ * Returns: (transfer none): the `GdkTexture`
+ *
+ * Since: 4.10
+ */
+GdkTexture *
+gsk_texture_scale_node_get_texture (const GskRenderNode *node)
+{
+  const GskTextureScaleNode *self = (const GskTextureScaleNode *) node;
+
+  return self->texture;
+}
+
+/**
+ * gsk_texture_scale_node_get_filter:
+ * @node: (type GskTextureNode): a `GskRenderNode` of type %GSK_TEXTURE_SCALE_NODE
+ *
+ * Retrieves the `GskScalingFilter` used when creating this `GskRenderNode`.
+ *
+ * Returns: (transfer none): the `GskScalingFilter`
+ *
+ * Since: 4.10
+ */
+GskScalingFilter
+gsk_texture_scale_node_get_filter (const GskRenderNode *node)
+{
+  const GskTextureScaleNode *self = (const GskTextureScaleNode *) node;
+
+  return self->filter;
+}
+
+/**
+ * gsk_texture_scale_node_new:
+ * @texture: the texture to scale
+ * @bounds: the size of the texture to scale to
+ * @filter: how to scale the texture
+ *
+ * Creates a node that scales the texture to the size given by the
+ * bounds and the filter and then places it at the bounds' position.
+ *
+ * This node is intended for tight control over scaling applied
+ * to a texture, such as in image editors and requires the
+ * application to be aware of the whole render tree as further
+ * transforms may be applied that conflict with the desired effect
+ * of this node.
+ *
+ * Returns: (transfer full) (type GskTextureScaleNode): A new `GskRenderNode`
+ *
+ * Since: 4.10
+ */
+GskRenderNode *
+gsk_texture_scale_node_new (GdkTexture            *texture,
+                            const graphene_rect_t *bounds,
+                            GskScalingFilter       filter)
+{
+  GskTextureScaleNode *self;
+  GskRenderNode *node;
+
+  g_return_val_if_fail (GDK_IS_TEXTURE (texture), NULL);
+  g_return_val_if_fail (bounds != NULL, NULL);
+
+  self = gsk_render_node_alloc (GSK_TEXTURE_SCALE_NODE);
+  node = (GskRenderNode *) self;
+  node->offscreen_for_opacity = FALSE;
+
+  self->texture = g_object_ref (texture);
+  graphene_rect_init_from_rect (&node->bounds, bounds);
+  self->filter = filter;
+
+  node->prefers_high_depth = gdk_memory_format_prefers_high_depth (gdk_texture_get_format (texture));
+
+  return node;
+}
+
+/* }}} */
+/* {{{ GSK_INSET_SHADOW_NODE */
 
 /**
  * GskInsetShadowNode:
@@ -2132,7 +2323,8 @@ gsk_inset_shadow_node_get_blur_radius (const GskRenderNode *node)
   return self->blur_radius;
 }
 
-/*** GSK_OUTSET_SHADOW_NODE ***/
+/* }}} */
+/* {{{ GSK_OUTSET_SHADOW_NODE */
 
 /**
  * GskOutsetShadowNode:
@@ -2438,7 +2630,8 @@ gsk_outset_shadow_node_get_blur_radius (const GskRenderNode *node)
   return self->blur_radius;
 }
 
-/*** GSK_CAIRO_NODE ***/
+/* }}} */
+/* {{{ GSK_CAIRO_NODE */
 
 /**
  * GskCairoNode:
@@ -2576,7 +2769,8 @@ gsk_cairo_node_get_draw_context (GskRenderNode *node)
   return res;
 }
 
-/**** GSK_CONTAINER_NODE ***/
+/* }}} */
+/* {{{ GSK_CONTAINER_NODE */
 
 /**
  * GskContainerNode:
@@ -2835,7 +3029,8 @@ gsk_container_node_is_disjoint (const GskRenderNode *node)
   return self->disjoint;
 }
 
-/*** GSK_TRANSFORM_NODE ***/
+/* }}} */
+/* {{{ GSK_TRANSFORM_NODE */
 
 /**
  * GskTransformNode:
@@ -3058,7 +3253,8 @@ gsk_transform_node_get_translate (const GskRenderNode *node,
   *dy = self->dy;
 }
 
-/*** GSK_OPACITY_NODE ***/
+/* }}} */
+/* {{{ GSK_OPACITY_NODE */
 
 /**
  * GskOpacityNode:
@@ -3185,7 +3381,8 @@ gsk_opacity_node_get_opacity (const GskRenderNode *node)
   return self->opacity;
 }
 
-/*** GSK_COLOR_MATRIX_NODE ***/
+/* }}} */
+/* {{{ GSK_COLOR_MATRIX_NODE */
 
 /**
  * GskColorMatrixNode:
@@ -3406,7 +3603,8 @@ gsk_color_matrix_node_get_color_offset (const GskRenderNode *node)
   return &self->color_offset;
 }
 
-/*** GSK_REPEAT_NODE ***/
+/* }}} */
+/* {{{ GSK_REPEAT_NODE */
 
 /**
  * GskRepeatNode:
@@ -3542,7 +3740,8 @@ gsk_repeat_node_get_child_bounds (const GskRenderNode *node)
   return &self->child_bounds;
 }
 
-/*** GSK_CLIP_NODE ***/
+/* }}} */
+/* {{{ GSK_CLIP_NODE */
 
 /**
  * GskClipNode:
@@ -3676,7 +3875,8 @@ gsk_clip_node_get_clip (const GskRenderNode *node)
   return &self->clip;
 }
 
-/*** GSK_ROUNDED_CLIP_NODE ***/
+/* }}} */
+/* {{{ GSK_ROUNDED_CLIP_NODE */
 
 /**
  * GskRoundedClipNode:
@@ -3810,7 +4010,8 @@ gsk_rounded_clip_node_get_clip (const GskRenderNode *node)
   return &self->clip;
 }
 
-/*** GSK_SHADOW_NODE ***/
+/* }}} */
+/* {{{ GSK_SHADOW_NODE */
 
 /**
  * GskShadowNode:
@@ -4050,7 +4251,8 @@ gsk_shadow_node_get_n_shadows (const GskRenderNode *node)
   return self->n_shadows;
 }
 
-/*** GSK_BLEND_NODE ***/
+/* }}} */
+/* {{{ GSK_BLEND_NODE */
 
 /**
  * GskBlendNode:
@@ -4244,7 +4446,8 @@ gsk_blend_node_get_blend_mode (const GskRenderNode *node)
   return self->blend_mode;
 }
 
-/*** GSK_CROSS_FADE_NODE ***/
+/* }}} */
+/* {{{ GSK_CROSS_FADE_NODE */
 
 /**
  * GskCrossFadeNode:
@@ -4395,7 +4598,8 @@ gsk_cross_fade_node_get_progress (const GskRenderNode *node)
   return self->progress;
 }
 
-/*** GSK_TEXT_NODE ***/
+/* }}} */
+/* {{{ GSK_TEXT_NODE */
 
 /**
  * GskTextNode:
@@ -4660,7 +4864,8 @@ gsk_text_node_get_offset (const GskRenderNode *node)
   return &self->offset;
 }
 
-/*** GSK_BLUR_NODE ***/
+/* }}} */
+/* {{{ GSK_BLUR_NODE */
 
 /**
  * GskBlurNode:
@@ -4979,7 +5184,137 @@ gsk_blur_node_get_radius (const GskRenderNode *node)
   return self->radius;
 }
 
-/*** GSK_DEBUG_NODE ***/
+/* }}} */
+/* {{{ GSK_MASK_NODE */
+
+/**
+ * GskMaskNode:
+ *
+ * A render node masking one child node with another.
+ *
+ * Since: 4.10
+ */
+typedef struct _GskMaskNode GskMaskNode;
+
+struct _GskMaskNode
+{
+  GskRenderNode render_node;
+
+  GskRenderNode *mask;
+  GskRenderNode *source;
+};
+
+static void
+gsk_mask_node_finalize (GskRenderNode *node)
+{
+  GskMaskNode *self = (GskMaskNode *) node;
+
+  gsk_render_node_unref (self->source);
+  gsk_render_node_unref (self->mask);
+}
+
+static void
+gsk_mask_node_draw (GskRenderNode *node,
+                    cairo_t       *cr)
+{
+  GskMaskNode *self = (GskMaskNode *) node;
+  cairo_pattern_t *mask_pattern;
+
+  cairo_push_group (cr);
+  gsk_render_node_draw (self->source, cr);
+  cairo_pop_group_to_source (cr);
+
+  cairo_push_group (cr);
+  gsk_render_node_draw (self->mask, cr);
+  mask_pattern = cairo_pop_group (cr);
+
+  cairo_mask (cr, mask_pattern);
+}
+
+static void
+gsk_mask_node_diff (GskRenderNode  *node1,
+                    GskRenderNode  *node2,
+                    cairo_region_t *region)
+{
+  GskMaskNode *self1 = (GskMaskNode *) node1;
+  GskMaskNode *self2 = (GskMaskNode *) node2;
+
+  gsk_render_node_diff (self1->source, self2->source, region);
+  gsk_render_node_diff (self1->mask, self2->mask, region);
+}
+
+/**
+ * gsk_mask_node_new:
+ * @source: The bottom node to be drawn
+ * @mask: The node to be blended onto the @bottom node
+ *
+ * Creates a `GskRenderNode` that will use @blend_mode to blend the @top
+ * node onto the @bottom node.
+ *
+ * Returns: (transfer full) (type GskMaskNode): A new `GskRenderNode`
+ *
+ * Since: 4.10
+ */
+GskRenderNode *
+gsk_mask_node_new (GskRenderNode *source,
+                   GskRenderNode *mask)
+{
+  GskMaskNode *self;
+
+  g_return_val_if_fail (GSK_IS_RENDER_NODE (source), NULL);
+  g_return_val_if_fail (GSK_IS_RENDER_NODE (mask), NULL);
+
+  self = gsk_render_node_alloc (GSK_MASK_NODE);
+  self->source = gsk_render_node_ref (source);
+  self->mask = gsk_render_node_ref (mask);
+
+  graphene_rect_union (&source->bounds, &mask->bounds, &self->render_node.bounds);
+
+  return &self->render_node;
+}
+
+/**
+ * gsk_mask_node_get_source:
+ * @node: (type GskBlendNode): a mask `GskRenderNode`
+ *
+ * Retrieves the source `GskRenderNode` child of the @node.
+ *
+ * Returns: (transfer none): the source child node
+ *
+ * Since: 4.10
+ */
+GskRenderNode *
+gsk_mask_node_get_source (const GskRenderNode *node)
+{
+  const GskMaskNode *self = (const GskMaskNode *) node;
+
+  g_return_val_if_fail (GSK_IS_RENDER_NODE_TYPE (node, GSK_MASK_NODE), NULL);
+
+  return self->source;
+}
+
+/**
+ * gsk_mask_node_get_mask:
+ * @node: (type GskBlendNode): a mask `GskRenderNode`
+ *
+ * Retrieves the mask `GskRenderNode` child of the @node.
+ *
+ * Returns: (transfer none): the mask child node
+ *
+ * Since: 4.10
+ */
+GskRenderNode *
+gsk_mask_node_get_mask (const GskRenderNode *node)
+{
+  const GskMaskNode *self = (const GskMaskNode *) node;
+
+  g_return_val_if_fail (GSK_IS_RENDER_NODE_TYPE (node, GSK_MASK_NODE), NULL);
+
+  return self->mask;
+}
+
+/* }}} */
+/* {{{ GSK_DEBUG_NODE */
 
 /**
  * GskDebugNode:
@@ -5104,7 +5439,8 @@ gsk_debug_node_get_message (const GskRenderNode *node)
   return self->message;
 }
 
-/*** GSK_GL_SHADER_NODE ***/
+/* }}} */
+/* {{{ GSK_GL_SHADER_NODE */
 
 /**
  * GskGLShaderNode:
@@ -5309,6 +5645,8 @@ gsk_gl_shader_node_get_args (const GskRenderNode *node)
   return self->args;
 }
 
+/* }}} */
+
 GType gsk_render_node_types[GSK_RENDER_NODE_TYPE_N_TYPES];
 
 #ifndef I_
@@ -5333,6 +5671,7 @@ GSK_DEFINE_RENDER_NODE_TYPE (gsk_repeating_radial_gradient_node, GSK_REPEATING_R
 GSK_DEFINE_RENDER_NODE_TYPE (gsk_conic_gradient_node, GSK_CONIC_GRADIENT_NODE)
 GSK_DEFINE_RENDER_NODE_TYPE (gsk_border_node, GSK_BORDER_NODE)
 GSK_DEFINE_RENDER_NODE_TYPE (gsk_texture_node, GSK_TEXTURE_NODE)
+GSK_DEFINE_RENDER_NODE_TYPE (gsk_texture_scale_node, GSK_TEXTURE_SCALE_NODE)
 GSK_DEFINE_RENDER_NODE_TYPE (gsk_inset_shadow_node, GSK_INSET_SHADOW_NODE)
 GSK_DEFINE_RENDER_NODE_TYPE (gsk_outset_shadow_node, GSK_OUTSET_SHADOW_NODE)
 GSK_DEFINE_RENDER_NODE_TYPE (gsk_transform_node, GSK_TRANSFORM_NODE)
@@ -5346,6 +5685,7 @@ GSK_DEFINE_RENDER_NODE_TYPE (gsk_blend_node, GSK_BLEND_NODE)
 GSK_DEFINE_RENDER_NODE_TYPE (gsk_cross_fade_node, GSK_CROSS_FADE_NODE)
 GSK_DEFINE_RENDER_NODE_TYPE (gsk_text_node, GSK_TEXT_NODE)
 GSK_DEFINE_RENDER_NODE_TYPE (gsk_blur_node, GSK_BLUR_NODE)
+GSK_DEFINE_RENDER_NODE_TYPE (gsk_mask_node, GSK_MASK_NODE)
 GSK_DEFINE_RENDER_NODE_TYPE (gsk_gl_shader_node, GSK_GL_SHADER_NODE)
 GSK_DEFINE_RENDER_NODE_TYPE (gsk_debug_node, GSK_DEBUG_NODE)
 
@@ -5510,6 +5850,22 @@ gsk_render_node_init_types_once (void)
 
     GType node_type = gsk_render_node_type_register_static (I_("GskTextureNode"), &node_info);
     gsk_render_node_types[GSK_TEXTURE_NODE] = node_type;
+  }
+
+  {
+    const GskRenderNodeTypeInfo node_info =
+    {
+      GSK_TEXTURE_SCALE_NODE,
+      sizeof (GskTextureScaleNode),
+      NULL,
+      gsk_texture_scale_node_finalize,
+      gsk_texture_scale_node_draw,
+      NULL,
+      gsk_texture_scale_node_diff,
+    };
+
+    GType node_type = gsk_render_node_type_register_static (I_("GskTextureScaleNode"), &node_info);
+    gsk_render_node_types[GSK_TEXTURE_SCALE_NODE] = node_type;
   }
 
   {
@@ -5723,6 +6079,22 @@ gsk_render_node_init_types_once (void)
   {
     const GskRenderNodeTypeInfo node_info =
     {
+      GSK_MASK_NODE,
+      sizeof (GskMaskNode),
+      NULL,
+      gsk_mask_node_finalize,
+      gsk_mask_node_draw,
+      NULL,
+      gsk_mask_node_diff,
+    };
+
+    GType node_type = gsk_render_node_type_register_static (I_("GskMaskNode"), &node_info);
+    gsk_render_node_types[GSK_MASK_NODE] = node_type;
+  }
+
+  {
+    const GskRenderNodeTypeInfo node_info =
+    {
       GSK_GL_SHADER_NODE,
       sizeof (GskGLShaderNode),
       NULL,
@@ -5884,3 +6256,5 @@ gsk_render_node_init_types (void)
       g_once_init_leave (&register_types__volatile, initialized);
     }
 }
+
+/* vim:set foldmethod=marker expandtab: */

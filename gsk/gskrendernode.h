@@ -142,6 +142,7 @@ GskRenderNode *         gsk_render_node_deserialize             (GBytes         
 #define GSK_TYPE_DEBUG_NODE                     (gsk_debug_node_get_type())
 #define GSK_TYPE_COLOR_NODE                     (gsk_color_node_get_type())
 #define GSK_TYPE_TEXTURE_NODE                   (gsk_texture_node_get_type())
+#define GSK_TYPE_TEXTURE_SCALE_NODE             (gsk_texture_scale_node_get_type())
 #define GSK_TYPE_LINEAR_GRADIENT_NODE           (gsk_linear_gradient_node_get_type())
 #define GSK_TYPE_REPEATING_LINEAR_GRADIENT_NODE (gsk_repeating_linear_gradient_node_get_type())
 #define GSK_TYPE_RADIAL_GRADIENT_NODE           (gsk_radial_gradient_node_get_type())
@@ -163,11 +164,13 @@ GskRenderNode *         gsk_render_node_deserialize             (GBytes         
 #define GSK_TYPE_CROSS_FADE_NODE                (gsk_cross_fade_node_get_type())
 #define GSK_TYPE_TEXT_NODE                      (gsk_text_node_get_type())
 #define GSK_TYPE_BLUR_NODE                      (gsk_blur_node_get_type())
+#define GSK_TYPE_MASK_NODE                      (gsk_mask_node_get_type())
 #define GSK_TYPE_GL_SHADER_NODE                 (gsk_gl_shader_node_get_type())
 
 typedef struct _GskDebugNode                    GskDebugNode;
 typedef struct _GskColorNode                    GskColorNode;
 typedef struct _GskTextureNode                  GskTextureNode;
+typedef struct _GskTextureScaleNode             GskTextureScaleNode;
 typedef struct _GskLinearGradientNode           GskLinearGradientNode;
 typedef struct _GskRepeatingLinearGradientNode  GskRepeatingLinearGradientNode;
 typedef struct _GskRadialGradientNode           GskRadialGradientNode;
@@ -189,6 +192,7 @@ typedef struct _GskBlendNode                    GskBlendNode;
 typedef struct _GskCrossFadeNode                GskCrossFadeNode;
 typedef struct _GskTextNode                     GskTextNode;
 typedef struct _GskBlurNode                     GskBlurNode;
+typedef struct _GskMaskNode                     GskMaskNode;
 typedef struct _GskGLShaderNode                 GskGLShaderNode;
 
 GDK_AVAILABLE_IN_ALL
@@ -216,6 +220,17 @@ GskRenderNode *         gsk_texture_node_new                    (GdkTexture     
                                                                  const graphene_rect_t    *bounds);
 GDK_AVAILABLE_IN_ALL
 GdkTexture *            gsk_texture_node_get_texture            (const GskRenderNode      *node) G_GNUC_PURE;
+
+GDK_AVAILABLE_IN_4_10
+GType                   gsk_texture_scale_node_get_type         (void) G_GNUC_CONST;
+GDK_AVAILABLE_IN_4_10
+GskRenderNode *         gsk_texture_scale_node_new              (GdkTexture               *texture,
+                                                                 const graphene_rect_t    *bounds,
+                                                                 GskScalingFilter          filter);
+GDK_AVAILABLE_IN_4_10
+GdkTexture *            gsk_texture_scale_node_get_texture      (const GskRenderNode      *node) G_GNUC_PURE;
+GDK_AVAILABLE_IN_4_10
+GskScalingFilter        gsk_texture_scale_node_get_filter       (const GskRenderNode      *node) G_GNUC_PURE;
 
 GDK_AVAILABLE_IN_ALL
 GType                   gsk_linear_gradient_node_get_type           (void) G_GNUC_CONST;
@@ -516,8 +531,18 @@ GskRenderNode *         gsk_blur_node_get_child                 (const GskRender
 GDK_AVAILABLE_IN_ALL
 float                   gsk_blur_node_get_radius                (const GskRenderNode      *node) G_GNUC_PURE;
 
+GDK_AVAILABLE_IN_4_10
+GType                  gsk_mask_node_get_type                   (void) G_GNUC_CONST;
+GDK_AVAILABLE_IN_4_10
+GskRenderNode *        gsk_mask_node_new                        (GskRenderNode            *source,
+                                                                 GskRenderNode            *mask);
+GDK_AVAILABLE_IN_4_10
+GskRenderNode *        gsk_mask_node_get_source                 (const GskRenderNode      *node);
+GDK_AVAILABLE_IN_4_10
+GskRenderNode *        gsk_mask_node_get_mask                   (const GskRenderNode      *node);
+
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_gl_shader_node_get_type              (void) G_GNUC_CONST;
+GType                   gsk_gl_shader_node_get_type             (void) G_GNUC_CONST;
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_gl_shader_node_new                  (GskGLShader              *shader,
                                                                  const graphene_rect_t    *bounds,

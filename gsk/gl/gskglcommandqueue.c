@@ -570,7 +570,10 @@ gsk_gl_command_queue_end_draw (GskGLCommandQueue *self)
   g_assert (self->batches.len > 0);
 
   if (will_ignore_batch (self))
-    return;
+    {
+      self->in_draw = FALSE;
+      return;
+    }
 
   batch = gsk_gl_command_batches_tail (&self->batches);
 
@@ -1439,8 +1442,7 @@ gsk_gl_command_queue_upload_texture (GskGLCommandQueue *self,
 
   g_assert (GSK_IS_GL_COMMAND_QUEUE (self));
   g_assert (!GDK_IS_GL_TEXTURE (texture));
-  g_assert (min_filter == GL_LINEAR || min_filter == GL_NEAREST);
-  g_assert (mag_filter == GL_LINEAR || min_filter == GL_NEAREST);
+  g_assert (mag_filter == GL_LINEAR || mag_filter == GL_NEAREST);
 
   width = gdk_texture_get_width (texture);
   height = gdk_texture_get_height (texture);
@@ -1463,6 +1465,9 @@ gsk_gl_command_queue_upload_texture (GskGLCommandQueue *self,
   glBindTexture (GL_TEXTURE_2D, texture_id);
 
   gsk_gl_command_queue_do_upload_texture (self, texture);
+
+  if (min_filter == GL_LINEAR_MIPMAP_LINEAR)
+    glGenerateMipmap (GL_TEXTURE_2D);
 
   /* Restore previous texture state if any */
   if (self->attachments->textures[0].id > 0)

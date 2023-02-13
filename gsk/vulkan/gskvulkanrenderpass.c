@@ -440,6 +440,9 @@ gsk_vulkan_render_pass_add_node (GskVulkanRenderPass           *self,
       g_array_append_val (self->render_ops, op);
       return;
 
+    case GSK_TEXTURE_SCALE_NODE:
+      goto fallback;
+
     case GSK_COLOR_NODE:
       if (gsk_vulkan_clip_contains_rect (&constants->clip, &node->bounds))
         pipeline_type = GSK_VULKAN_PIPELINE_COLOR;
@@ -500,6 +503,9 @@ gsk_vulkan_render_pass_add_node (GskVulkanRenderPass           *self,
       op.render.pipeline = gsk_vulkan_render_get_pipeline (render, pipeline_type);
       g_array_append_val (self->render_ops, op);
       return;
+
+    case GSK_MASK_NODE:
+      goto fallback;
 
     case GSK_COLOR_MATRIX_NODE:
       if (gsk_vulkan_clip_contains_rect (&constants->clip, &node->bounds))

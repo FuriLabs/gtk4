@@ -602,6 +602,32 @@ clear_shadows (gpointer inout_shadows)
 
 static const struct
 {
+  GskScalingFilter filter;
+  const char *name;
+} scaling_filters[] = {
+  { GSK_SCALING_FILTER_LINEAR, "linear" },
+  { GSK_SCALING_FILTER_NEAREST, "nearest" },
+  { GSK_SCALING_FILTER_TRILINEAR, "trilinear" },
+};
+
+static gboolean
+parse_scaling_filter (GtkCssParser *parser,
+                      gpointer      out_filter)
+{
+  for (unsigned int i = 0; i < G_N_ELEMENTS (scaling_filters); i++)
+    {
+      if (gtk_css_parser_try_ident (parser, scaling_filters[i].name))
+        {
+          *(GskScalingFilter *) out_filter = scaling_filters[i].filter;
+          return TRUE;
+        }
+    }
+
+  return FALSE;
+}
+
+static const struct
+{
   GskBlendMode mode;
   const char *name;
 } blend_modes[] = {
@@ -1351,6 +1377,31 @@ parse_glshader_node (GtkCssParser *parser)
 }
 
 static GskRenderNode *
+parse_mask_node (GtkCssParser *parser)
+{
+  GskRenderNode *source = NULL;
+  GskRenderNode *mask = NULL;
+  const Declaration declarations[] = {
+    { "source", parse_node, clear_node, &source },
+    { "mask", parse_node, clear_node, &mask },
+  };
+  GskRenderNode *result;
+
+  parse_declarations (parser, declarations, G_N_ELEMENTS(declarations));
+  if (source == NULL)
+    source = create_default_render_node ();
+  if (mask == NULL)
+    mask = gsk_color_node_new (&GDK_RGBA("AAFF00"), &GRAPHENE_RECT_INIT (0, 0, 50, 50));
+
+  result = gsk_mask_node_new (source, mask);
+
+  gsk_render_node_unref (source);
+  gsk_render_node_unref (mask);
+
+  return result;
+}
+
+static GskRenderNode *
 parse_border_node (GtkCssParser *parser)
 {
   GskRoundedRect outline = GSK_ROUNDED_RECT_INIT (0, 0, 50, 50);
@@ -1384,6 +1435,30 @@ parse_texture_node (GtkCssParser *parser)
     texture = create_default_texture ();
 
   node = gsk_texture_node_new (texture, &bounds);
+  g_object_unref (texture);
+
+  return node;
+}
+
+static GskRenderNode *
+parse_texture_scale_node (GtkCssParser *parser)
+{
+  graphene_rect_t bounds = GRAPHENE_RECT_INIT (0, 0, 50, 50);
+  GdkTexture *texture = NULL;
+  GskScalingFilter filter = GSK_SCALING_FILTER_LINEAR;
+  const Declaration declarations[] = {
+    { "bounds", parse_rect, NULL, &bounds },
+    { "texture", parse_texture, clear_texture, &texture },
+    { "filter", parse_scaling_filter, NULL, &filter }
+  };
+  GskRenderNode *node;
+
+  parse_declarations (parser, declarations, G_N_ELEMENTS (declarations));
+
+  if (texture == NULL)
+    texture = create_default_texture ();
+
+  node = gsk_texture_scale_node_new (texture, &bounds, filter);
   g_object_unref (texture);
 
   return node;
@@ -1861,8 +1936,10 @@ parse_node (GtkCssParser *parser,
     { "shadow", parse_shadow_node },
     { "text", parse_text_node },
     { "texture", parse_texture_node },
+    { "texture-scale", parse_texture_scale_node },
     { "transform", parse_transform_node },
     { "glshader", parse_glshader_node },
+    { "mask", parse_mask_node },
   };
   GskRenderNode **node_p = out_node;
   guint i;
@@ -2757,6 +2834,73 @@ render_node_print (Printer       *p,
       }
       break;
 
+    case GSK_TEXTURE_SCALE_NODE:
+      {
+        GdkTexture *texture = gsk_texture_scale_node_get_texture (node);
+        GskScalingFilter filter = gsk_texture_scale_node_get_filter (node);
+        GBytes *bytes;
+
+        start_node (p, "texture-scale");
+        append_rect_param (p, "bounds", &node->bounds);
+
+        if (filter != GSK_SCALING_FILTER_LINEAR)
+          {
+            _indent (p);
+            for (unsigned int i = 0; i < G_N_ELEMENTS (scaling_filters); i++)
+              {
+                if (scaling_filters[i].filter == filter)
+                  {
+                    g_string_append_printf (p->str, "filter: %s;\n", scaling_filters[i].name);
+                    break;
+                  }
+              }
+          }
+        _indent (p);
+
+        switch (gdk_texture_get_format (texture))
+          {
+          case GDK_MEMORY_B8G8R8A8_PREMULTIPLIED:
+          case GDK_MEMORY_A8R8G8B8_PREMULTIPLIED:
+          case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
+          case GDK_MEMORY_B8G8R8A8:
+          case GDK_MEMORY_A8R8G8B8:
+          case GDK_MEMORY_R8G8B8A8:
+          case GDK_MEMORY_A8B8G8R8:
+          case GDK_MEMORY_R8G8B8:
+          case GDK_MEMORY_B8G8R8:
+          case GDK_MEMORY_R16G16B16:
+          case GDK_MEMORY_R16G16B16A16_PREMULTIPLIED:
+          case GDK_MEMORY_R16G16B16A16:
+            bytes = gdk_texture_save_to_png_bytes (texture);
+            g_string_append (p->str, "texture: url(\"data:image/png;base64,");
+            break;
+
+          case GDK_MEMORY_R16G16B16_FLOAT:
+          case GDK_MEMORY_R16G16B16A16_FLOAT_PREMULTIPLIED:
+          case GDK_MEMORY_R16G16B16A16_FLOAT:
+          case GDK_MEMORY_R32G32B32_FLOAT:
+          case GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED:
+          case GDK_MEMORY_R32G32B32A32_FLOAT:
+            bytes = gdk_texture_save_to_tiff_bytes (texture);
+            g_string_append (p->str, "texture: url(\"data:image/tiff;base64,");
+            break;
+
+          case GDK_MEMORY_N_FORMATS:
+          default:
+            g_assert_not_reached ();
+          }
+
+        b64 = base64_encode_with_linebreaks (g_bytes_get_data (bytes, NULL),
+                                             g_bytes_get_size (bytes));
+        append_escaping_newlines (p->str, b64);
+        g_free (b64);
+        g_string_append (p->str, "\");\n");
+        end_node (p);
+
+        g_bytes_unref (bytes);
+      }
+      break;
+
     case GSK_TEXT_NODE:
       {
         const graphene_point_t *offset = gsk_text_node_get_offset (node);
@@ -2977,6 +3121,17 @@ render_node_print (Printer       *p,
           }
         append_node_param (p, "bottom", gsk_blend_node_get_bottom_child (node));
         append_node_param (p, "top", gsk_blend_node_get_top_child (node));
+
+        end_node (p);
+      }
+      break;
+
+    case GSK_MASK_NODE:
+      {
+        start_node (p, "mask");
+
+        append_node_param (p, "source", gsk_mask_node_get_source (node));
+        append_node_param (p, "mask", gsk_mask_node_get_mask (node));
 
         end_node (p);
       }

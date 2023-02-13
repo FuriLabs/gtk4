@@ -35,6 +35,7 @@
  * @GSK_CONIC_GRADIENT_NODE: A node drawing a conic gradient
  * @GSK_BORDER_NODE: A node stroking a border around an area
  * @GSK_TEXTURE_NODE: A node drawing a `GdkTexture`
+ * @GSK_TEXTURE_SCALE_NODE: A node drawing a `GdkTexture` scaled and filtered
  * @GSK_INSET_SHADOW_NODE: A node drawing an inset shadow
  * @GSK_OUTSET_SHADOW_NODE: A node drawing an outset shadow
  * @GSK_TRANSFORM_NODE: A node that renders its child after applying a matrix transform
@@ -45,6 +46,7 @@
  * @GSK_ROUNDED_CLIP_NODE: A node that clips its child to a rounded rectangle
  * @GSK_SHADOW_NODE: A node that draws a shadow below its child
  * @GSK_BLEND_NODE: A node that blends two children together
+ * @GSK_MASK_NODE: A node that masks one child with another
  * @GSK_CROSS_FADE_NODE: A node that cross-fades between two children
  * @GSK_TEXT_NODE: A node containing a glyph string
  * @GSK_BLUR_NODE: A node that applies a blur
@@ -65,6 +67,7 @@ typedef enum {
   GSK_CONIC_GRADIENT_NODE,
   GSK_BORDER_NODE,
   GSK_TEXTURE_NODE,
+  GSK_TEXTURE_SCALE_NODE,
   GSK_INSET_SHADOW_NODE,
   GSK_OUTSET_SHADOW_NODE,
   GSK_TRANSFORM_NODE,
@@ -75,6 +78,7 @@ typedef enum {
   GSK_ROUNDED_CLIP_NODE,
   GSK_SHADOW_NODE,
   GSK_BLEND_NODE,
+  GSK_MASK_NODE,
   GSK_CROSS_FADE_NODE,
   GSK_TEXT_NODE,
   GSK_BLUR_NODE,

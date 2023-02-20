@@ -25,6 +25,7 @@
 #include "gtkboxlayout.h"
 #include "gtkbutton.h"
 #include "gtkenums.h"
+#include "deprecated/gtkdialog.h"
 #include "gtkicontheme.h"
 #include "gtkimage.h"
 #include <glib/gi18n-lib.h>
@@ -134,9 +135,16 @@ get_layout (GtkWindowControls *self)
   if (self->decoration_layout)
     layout_desc = g_strdup (self->decoration_layout);
   else
-    g_object_get (gtk_widget_get_settings (widget),
-                  "gtk-decoration-layout", &layout_desc,
-                  NULL);
+    {
+      gboolean is_mobile_dialog = GTK_IS_DIALOG (root) || !!gtk_window_get_transient_for (GTK_WINDOW (root));
+
+      if (is_mobile_dialog)
+        layout_desc = g_strdup (":close");
+      else
+        g_object_get (gtk_widget_get_settings (widget),
+                      "gtk-decoration-layout", &layout_desc,
+                      NULL);
+    }
 
   if (layout_desc == NULL || layout_desc[0] == '\0')
     {

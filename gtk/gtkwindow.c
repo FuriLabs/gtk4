@@ -32,6 +32,7 @@
 #include "gtkbuildable.h"
 #include "gtkcheckbutton.h"
 #include "gtkcssshadowvalueprivate.h"
+#include "deprecated/gtkdialog.h"
 #include "gtkdroptargetasync.h"
 #include "gtkeventcontrollerlegacy.h"
 #include "gtkeventcontrollerkey.h"
@@ -64,6 +65,7 @@
 
 #include "inspector/window.h"
 
+#include "gdk/gdkmonitor.h"
 #include "gdk/gdkprofilerprivate.h"
 #include "gdk/gdksurfaceprivate.h"
 #include "gdk/gdktextureprivate.h"
@@ -3943,6 +3945,8 @@ gtk_window_map (GtkWidget *widget)
   GtkWindow *window = GTK_WINDOW (widget);
   GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
   GtkWidget *child = priv->child;
+  GdkMonitor *monitor;
+  gboolean is_dialog, on_small_screen;
 
   GTK_WIDGET_CLASS (gtk_window_parent_class)->map (widget);
 
@@ -3955,6 +3959,13 @@ gtk_window_map (GtkWidget *widget)
     gtk_widget_map (priv->title_box);
 
   gtk_window_present_toplevel (window);
+
+  /* Transient windows can be considered pseudo-dialogs. */
+  monitor = gdk_display_get_monitor_at_surface (priv->display, priv->surface);
+  on_small_screen = gdk_monitor_get_width_mm (monitor) < 120;
+  is_dialog = GTK_IS_DIALOG (widget) || !!gtk_window_get_transient_for (window);
+  if (on_small_screen && is_dialog && gtk_window_get_resizable (window))
+    gtk_window_maximize (window);
 
   if (priv->minimize_initially)
     gdk_toplevel_minimize (GDK_TOPLEVEL (priv->surface));

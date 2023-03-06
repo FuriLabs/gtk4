@@ -219,6 +219,7 @@ struct _GtkStackPage
   guint needs_attention : 1;
   guint visible         : 1;
   guint use_underline   : 1;
+  guint in_destruction  : 1;
 };
 
 typedef struct _GtkStackPageClass GtkStackPageClass;
@@ -235,6 +236,14 @@ gtk_stack_page_accessible_get_at_context (GtkAccessible *accessible)
 {
   GtkStackPage *page = GTK_STACK_PAGE (accessible);
 
+  if (page->in_destruction)
+    {
+      GTK_DEBUG (A11Y, "ATContext for “%s” [%p] accessed during destruction",
+                       G_OBJECT_TYPE_NAME (accessible),
+                       accessible);
+      return NULL;
+    }
+
   if (page->at_context == NULL)
     {
       GtkAccessibleRole role = GTK_ACCESSIBLE_ROLE_TAB_PANEL;
@@ -246,9 +255,11 @@ gtk_stack_page_accessible_get_at_context (GtkAccessible *accessible)
         display = gdk_display_get_default ();
 
       page->at_context = gtk_at_context_create (role, accessible, display);
+      if (page->at_context == NULL)
+        return NULL;
     }
 
-  return page->at_context;
+  return g_object_ref (page->at_context);
 }
 
 static gboolean
@@ -262,30 +273,36 @@ static GtkAccessible *
 gtk_stack_page_accessible_get_accessible_parent (GtkAccessible *accessible)
 {
   GtkStackPage *page = GTK_STACK_PAGE (accessible);
+  GtkWidget *parent;
 
   if (page->widget == NULL)
     return NULL;
-  else
-    return GTK_ACCESSIBLE (gtk_widget_get_parent (page->widget));
+
+  parent = _gtk_widget_get_parent (page->widget);
+
+  return GTK_ACCESSIBLE (g_object_ref (parent));
 }
 
 static GtkAccessible *
-gtk_stack_page_accessible_get_first_accessible_child(GtkAccessible *accessible)
+gtk_stack_page_accessible_get_first_accessible_child (GtkAccessible *accessible)
 {
   GtkStackPage *page = GTK_STACK_PAGE (accessible);
 
-  if (page->widget != NULL)
-    return GTK_ACCESSIBLE (page->widget);
-  else
+  if (page->widget == NULL)
     return NULL;
+
+  return GTK_ACCESSIBLE (g_object_ref (page->widget));
 }
 
 static GtkAccessible *
-gtk_stack_page_accessible_get_next_accessible_sibling(GtkAccessible *accessible)
+gtk_stack_page_accessible_get_next_accessible_sibling (GtkAccessible *accessible)
 {
   GtkStackPage *page = GTK_STACK_PAGE (accessible);
 
-  return GTK_ACCESSIBLE (page->next_page);
+  if (page->next_page == NULL)
+    return NULL;
+
+  return GTK_ACCESSIBLE (g_object_ref (page->next_page));
 }
 
 static gboolean
@@ -344,6 +361,8 @@ static void
 gtk_stack_page_dispose (GObject *object)
 {
   GtkStackPage *page = GTK_STACK_PAGE (object);
+
+  page->in_destruction = TRUE;
 
   g_clear_object (&page->at_context);
 
@@ -410,6 +429,9 @@ gtk_stack_page_set_property (GObject      *object,
     {
     case CHILD_PROP_CHILD:
       g_set_object (&info->widget, g_value_get_object (value));
+      gtk_accessible_set_accessible_parent (GTK_ACCESSIBLE (info->widget),
+                                            GTK_ACCESSIBLE (info),
+                                            NULL);
       break;
 
     case CHILD_PROP_NAME:
@@ -788,7 +810,8 @@ gtk_stack_accessible_get_first_accessible_child (GtkAccessible *accessible)
   GtkStack *stack = GTK_STACK (accessible);
   GtkStackPrivate *priv = gtk_stack_get_instance_private (stack);
   GtkStackPage *page = g_ptr_array_index (priv->children, 0);
-  return GTK_ACCESSIBLE (page);
+
+  return GTK_ACCESSIBLE (g_object_ref (page));
 }
 
 static void

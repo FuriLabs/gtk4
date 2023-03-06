@@ -1,3 +1,13 @@
+gtk4 (4.10.0+ds-1ubuntu1) lunar; urgency=medium
+
+  * Sync with Debian. Remaining changes:
+    - debian/tests:
+      + include the memorytexture test in the flaky set, it has been unreliable
+    - debian/control:
+      + Build-Depend on dh-sequence-translations
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 06 Mar 2023 09:45:47 -0500
+
 gtk4 (4.10.0+ds-1) experimental; urgency=medium
 
   * New upstream release

@@ -19,7 +19,7 @@
  * Modified by the GTK+ Team and others 1997-2001.  See the AUTHORS
  * file for a list of people on the GTK+ Team.  See the ChangeLog
  * files for a list of changes.  These files are distributed with
- * GTK+ at ftp://ftp.gtk.org/pub/gtk/. 
+ * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
 /**
@@ -63,13 +63,11 @@
 
 #include "gtkactionhelperprivate.h"
 #include "gtkbuildable.h"
-#include "gtkcheckbutton.h"
 #include "gtkgestureclick.h"
 #include "gtkeventcontrollerkey.h"
 #include "gtkbinlayout.h"
 #include "gtkimage.h"
 #include "gtklabel.h"
-#include "gtkmain.h"
 #include "gtkmarshalers.h"
 #include "gtkprivate.h"
 #include "gtktypebuiltins.h"
@@ -639,7 +637,7 @@ gtk_button_new_with_label (const char *label)
 
 /**
  * gtk_button_new_from_icon_name:
- * @icon_name: (nullable): an icon name
+ * @icon_name: an icon name
  *
  * Creates a new button containing an icon from the current icon theme.
  *
@@ -830,8 +828,6 @@ gtk_button_set_label (GtkButton   *button,
           gtk_label_set_use_underline (GTK_LABEL (child), priv->use_underline);
           gtk_label_set_mnemonic_widget (GTK_LABEL (child), GTK_WIDGET (button));
         }
-      if (GTK_IS_CHECK_BUTTON (button))
-        gtk_label_set_xalign (GTK_LABEL (child), 0.0);
 
       gtk_button_set_child (button,  child);
     }
@@ -968,10 +964,6 @@ gtk_button_set_icon_name (GtkButton  *button,
     {
       gtk_image_set_from_icon_name (GTK_IMAGE (priv->child), icon_name);
     }
-
-  gtk_accessible_update_relation (GTK_ACCESSIBLE (button),
-                                  GTK_ACCESSIBLE_RELATION_LABELLED_BY, priv->child, NULL,
-                                  -1);
 
   gtk_button_set_child_type (button, ICON_CHILD);
   g_object_notify_by_pspec (G_OBJECT (button), props[PROP_ICON_NAME]);

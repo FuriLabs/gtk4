@@ -60,10 +60,8 @@
 #include "gtksizegroup.h"
 #include "gtksizerequest.h"
 #include "gtkstack.h"
-#include "gtktooltip.h"
 #include "gtkbox.h"
 #include "gtkcheckbutton.h"
-#include "gtkwindowgroup.h"
 #include <glib/gi18n-lib.h>
 #include "gtkfilelauncher.h"
 #include "gtkmain.h"
@@ -71,8 +69,6 @@
 #include "gtkpopover.h"
 #include "gtkrevealer.h"
 #include "gtkspinner.h"
-#include "gtkseparator.h"
-#include "gtkmodelbuttonprivate.h"
 #include "gtkeventcontrollerkey.h"
 #include "gtkdebug.h"
 #include "gtkfilechoosererrorstackprivate.h"
@@ -86,7 +82,6 @@
 #include "gtkshortcuttrigger.h"
 #include "gtkshortcutaction.h"
 #include "gtkshortcut.h"
-#include "gtkstringlist.h"
 #include "gtkfilterlistmodel.h"
 #include "gtkcustomfilter.h"
 #include "gtkcustomsorter.h"
@@ -3554,9 +3549,12 @@ show_and_select_files (GtkFileChooserWidget *impl,
 
       if (!g_file_info_get_attribute_boolean (info, "filechooser::visible"))
         {
+          gboolean has_is_hidden = g_file_info_has_attribute (info, "standard::is-hidden");
+          gboolean has_is_backup = g_file_info_has_attribute (info, "standard::is-backup");
+
           if (!enabled_hidden &&
-              (g_file_info_get_is_hidden (info) ||
-               g_file_info_get_is_backup (info)))
+              ((has_is_hidden && g_file_info_get_is_hidden (info)) ||
+               (has_is_backup && g_file_info_get_is_backup (info))))
             {
               set_show_hidden (impl, TRUE);
               enabled_hidden = TRUE;

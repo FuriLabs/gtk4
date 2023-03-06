@@ -58,6 +58,16 @@ rectangle_init_from_graphene (cairo_rectangle_int_t *cairo,
   cairo->height = ceilf (graphene->origin.y + graphene->size.height) - cairo->y;
 }
 
+static void
+_graphene_rect_init_from_clip_extents (graphene_rect_t *rect,
+                                       cairo_t         *cr)
+{
+  double x1c, y1c, x2c, y2c;
+
+  cairo_clip_extents (cr, &x1c, &y1c, &x2c, &y2c);
+  graphene_rect_init (rect, x1c, y1c, x2c - x1c, y2c - y1c);
+}
+
 /* {{{ GSK_COLOR_NODE */
 
 /**
@@ -1588,6 +1598,8 @@ gsk_texture_node_new (GdkTexture            *texture,
  * GskTextureScaleNode:
  *
  * A render node for a `GdkTexture`.
+ *
+ * Since: 4.10
  */
 struct _GskTextureScaleNode
 {
@@ -1623,14 +1635,20 @@ gsk_texture_scale_node_draw (GskRenderNode *node,
   };
   cairo_t *cr2;
   cairo_surface_t *surface2;
+  graphene_rect_t clip_rect;
+
+  /* Make sure we draw the minimum region by using the clip */
+  gsk_cairo_rectangle (cr, &node->bounds);
+  cairo_clip (cr);
+  _graphene_rect_init_from_clip_extents (&clip_rect, cr);
+  if (clip_rect.size.width <= 0 || clip_rect.size.height <= 0)
+    return;
 
   surface2 = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-                                         (int) ceilf (node->bounds.size.width),
-                                         (int) ceilf (node->bounds.size.height));
+                                         (int) ceilf (clip_rect.size.width),
+                                         (int) ceilf (clip_rect.size.height));
+  cairo_surface_set_device_offset (surface2, -clip_rect.origin.x, -clip_rect.origin.y);
   cr2 = cairo_create (surface2);
-
-  cairo_set_source_rgba (cr2, 0, 0, 0, 0);
-  cairo_paint (cr2);
 
   surface = gdk_texture_download_surface (self->texture);
   pattern = cairo_pattern_create_for_surface (surface);
@@ -1689,7 +1707,7 @@ gsk_texture_scale_node_diff (GskRenderNode  *node1,
 
 /**
  * gsk_texture_scale_node_get_texture:
- * @node: (type GskTextureNode): a `GskRenderNode` of type %GSK_TEXTURE_SCALE_NODE
+ * @node: (type GskTextureScaleNode): a `GskRenderNode` of type %GSK_TEXTURE_SCALE_NODE
  *
  * Retrieves the `GdkTexture` used when creating this `GskRenderNode`.
  *
@@ -1707,7 +1725,7 @@ gsk_texture_scale_node_get_texture (const GskRenderNode *node)
 
 /**
  * gsk_texture_scale_node_get_filter:
- * @node: (type GskTextureNode): a `GskRenderNode` of type %GSK_TEXTURE_SCALE_NODE
+ * @node: (type GskTextureScaleNode): a `GskRenderNode` of type %GSK_TEXTURE_SCALE_NODE
  *
  * Retrieves the `GskScalingFilter` used when creating this `GskRenderNode`.
  *
@@ -2070,15 +2088,15 @@ gsk_inset_shadow_node_draw (GskRenderNode *node,
   GskInsetShadowNode *self = (GskInsetShadowNode *) node;
   GskRoundedRect box, clip_box;
   int clip_radius;
-  double x1c, y1c, x2c, y2c;
+  graphene_rect_t clip_rect;
   double blur_radius;
 
   /* We don't need to draw invisible shadows */
   if (gdk_rgba_is_clear (&self->color))
     return;
 
-  cairo_clip_extents (cr, &x1c, &y1c, &x2c, &y2c);
-  if (!gsk_rounded_rect_intersects_rect (&self->outline, &GRAPHENE_RECT_INIT (x1c, y1c, x2c - x1c, y2c - y1c)))
+  _graphene_rect_init_from_clip_extents (&clip_rect, cr);
+  if (!gsk_rounded_rect_intersects_rect (&self->outline, &clip_rect))
     return;
 
   blur_radius = self->blur_radius / 2;
@@ -2366,7 +2384,7 @@ gsk_outset_shadow_node_draw (GskRenderNode *node,
   GskOutsetShadowNode *self = (GskOutsetShadowNode *) node;
   GskRoundedRect box, clip_box;
   int clip_radius;
-  double x1c, y1c, x2c, y2c;
+  graphene_rect_t clip_rect;
   float top, right, bottom, left;
   double blur_radius;
 
@@ -2374,8 +2392,8 @@ gsk_outset_shadow_node_draw (GskRenderNode *node,
   if (gdk_rgba_is_clear (&self->color))
     return;
 
-  cairo_clip_extents (cr, &x1c, &y1c, &x2c, &y2c);
-  if (gsk_rounded_rect_contains_rect (&self->outline, &GRAPHENE_RECT_INIT (x1c, y1c, x2c - x1c, y2c - y1c)))
+  _graphene_rect_init_from_clip_extents (&clip_rect, cr);
+  if (!gsk_rounded_rect_intersects_rect (&self->outline, &clip_rect))
     return;
 
   blur_radius = self->blur_radius / 2;
@@ -3410,29 +3428,18 @@ gsk_color_matrix_node_finalize (GskRenderNode *node)
 }
 
 static void
-gsk_color_matrix_node_draw (GskRenderNode *node,
-                            cairo_t       *cr)
+apply_color_matrix_to_pattern (cairo_pattern_t         *pattern,
+                               const graphene_matrix_t *color_matrix,
+                               const graphene_vec4_t   *color_offset,
+                               gboolean                 multiply_alpha)
 {
-  GskColorMatrixNode *self = (GskColorMatrixNode *) node;
-  cairo_pattern_t *pattern;
   cairo_surface_t *surface, *image_surface;
-  graphene_vec4_t pixel;
-  guint32* pixel_data;
   guchar *data;
   gsize x, y, width, height, stride;
   float alpha;
+  graphene_vec4_t pixel;
+  guint32* pixel_data;
 
-  cairo_save (cr);
-
-  /* clip so the push_group() creates a smaller surface */
-  gsk_cairo_rectangle (cr, &node->bounds);
-  cairo_clip (cr);
-
-  cairo_push_group (cr);
-
-  gsk_render_node_draw (self->child, cr);
-
-  pattern = cairo_pop_group (cr);
   cairo_pattern_get_surface (pattern, &surface);
   image_surface = cairo_surface_map_to_image (surface, NULL);
 
@@ -3459,12 +3466,20 @@ gsk_color_matrix_node_draw (GskRenderNode *node,
                                   ((pixel_data[x] >>  8) & 0xFF) / (255.0 * alpha),
                                   ( pixel_data[x]        & 0xFF) / (255.0 * alpha),
                                   alpha);
-              graphene_matrix_transform_vec4 (&self->color_matrix, &pixel, &pixel);
+              graphene_matrix_transform_vec4 (color_matrix, &pixel, &pixel);
             }
 
-          graphene_vec4_add (&pixel, &self->color_offset, &pixel);
+          if (multiply_alpha)
+            graphene_vec4_init (&pixel,
+                                graphene_vec4_get_x (&pixel),
+                                graphene_vec4_get_y (&pixel),
+                                graphene_vec4_get_z (&pixel),
+                                alpha * graphene_vec4_get_w (&pixel));
+
+          graphene_vec4_add (&pixel, color_offset, &pixel);
 
           alpha = graphene_vec4_get_w (&pixel);
+
           if (alpha > 0.0)
             {
               alpha = MIN (alpha, 1.0);
@@ -3483,6 +3498,28 @@ gsk_color_matrix_node_draw (GskRenderNode *node,
 
   cairo_surface_mark_dirty (image_surface);
   cairo_surface_unmap_image (surface, image_surface);
+}
+
+static void
+gsk_color_matrix_node_draw (GskRenderNode *node,
+                            cairo_t       *cr)
+{
+  GskColorMatrixNode *self = (GskColorMatrixNode *) node;
+  cairo_pattern_t *pattern;
+
+  cairo_save (cr);
+
+  /* clip so the push_group() creates a smaller surface */
+  gsk_cairo_rectangle (cr, &node->bounds);
+  cairo_clip (cr);
+
+  cairo_push_group (cr);
+
+  gsk_render_node_draw (self->child, cr);
+
+  pattern = cairo_pop_group (cr);
+
+  apply_color_matrix_to_pattern (pattern, &self->color_matrix, &self->color_offset, FALSE);
 
   cairo_set_source (cr, pattern);
   cairo_paint (cr);
@@ -5202,6 +5239,7 @@ struct _GskMaskNode
 
   GskRenderNode *mask;
   GskRenderNode *source;
+  GskMaskMode mask_mode;
 };
 
 static void
@@ -5219,6 +5257,8 @@ gsk_mask_node_draw (GskRenderNode *node,
 {
   GskMaskNode *self = (GskMaskNode *) node;
   cairo_pattern_t *mask_pattern;
+  graphene_matrix_t color_matrix;
+  graphene_vec4_t color_offset;
 
   cairo_push_group (cr);
   gsk_render_node_draw (self->source, cr);
@@ -5227,6 +5267,41 @@ gsk_mask_node_draw (GskRenderNode *node,
   cairo_push_group (cr);
   gsk_render_node_draw (self->mask, cr);
   mask_pattern = cairo_pop_group (cr);
+
+  switch (self->mask_mode)
+    {
+    case GSK_MASK_MODE_ALPHA:
+      break;
+    case GSK_MASK_MODE_INVERTED_ALPHA:
+      graphene_matrix_init_from_float (&color_matrix, (float[]){ 1, 0, 0, 0,
+                                                                 0, 1, 0, 0,
+                                                                 0, 0, 1, 0,
+                                                                 0, 0, 0, -1 });
+      graphene_vec4_init (&color_offset, 0, 0, 0, 1);
+      apply_color_matrix_to_pattern (mask_pattern, &color_matrix, &color_offset, FALSE);
+      break;
+    case GSK_MASK_MODE_LUMINANCE:
+      graphene_matrix_init_from_float (&color_matrix, (float[]){ 1, 0, 0, 0.2126,
+                                                                 0, 1, 0, 0.7152,
+                                                                 0, 0, 1, 0.0722,
+                                                                 0, 0, 0, 0 });
+      graphene_vec4_init (&color_offset, 0, 0, 0, 0);
+      apply_color_matrix_to_pattern (mask_pattern, &color_matrix, &color_offset, TRUE);
+      break;
+    case GSK_MASK_MODE_INVERTED_LUMINANCE:
+      graphene_matrix_init_from_float (&color_matrix, (float[]){ 1, 0, 0, -0.2126,
+                                                                 0, 1, 0, -0.7152,
+                                                                 0, 0, 1, -0.0722,
+                                                                 0, 0, 0,  0 });
+      graphene_vec4_init (&color_offset, 0, 0, 0, 1);
+      apply_color_matrix_to_pattern (mask_pattern, &color_matrix, &color_offset, TRUE);
+      break;
+    default:
+      g_assert_not_reached ();
+    }
+
+  gsk_cairo_rectangle (cr, &node->bounds);
+  cairo_clip (cr);
 
   cairo_mask (cr, mask_pattern);
 }
@@ -5245,11 +5320,15 @@ gsk_mask_node_diff (GskRenderNode  *node1,
 
 /**
  * gsk_mask_node_new:
- * @source: The bottom node to be drawn
- * @mask: The node to be blended onto the @bottom node
+ * @source: The source node to be drawn
+ * @mask: The node to be used as mask
+ * @mask_mode: The mask mode to use
  *
- * Creates a `GskRenderNode` that will use @blend_mode to blend the @top
- * node onto the @bottom node.
+ * Creates a `GskRenderNode` that will mask a given node by another.
+ *
+ * The @mask_mode determines how the 'mask values' are derived from
+ * the colors of the @mask. Applying the mask consists of multiplying
+ * the 'mask value' with the alpha of the source.
  *
  * Returns: (transfer full) (type GskMaskNode): A new `GskRenderNode`
  *
@@ -5257,7 +5336,8 @@ gsk_mask_node_diff (GskRenderNode  *node1,
  */
 GskRenderNode *
 gsk_mask_node_new (GskRenderNode *source,
-                   GskRenderNode *mask)
+                   GskRenderNode *mask,
+                   GskMaskMode    mask_mode)
 {
   GskMaskNode *self;
 
@@ -5267,15 +5347,18 @@ gsk_mask_node_new (GskRenderNode *source,
   self = gsk_render_node_alloc (GSK_MASK_NODE);
   self->source = gsk_render_node_ref (source);
   self->mask = gsk_render_node_ref (mask);
+  self->mask_mode = mask_mode;
 
-  graphene_rect_union (&source->bounds, &mask->bounds, &self->render_node.bounds);
+  self->render_node.bounds = source->bounds;
+
+  self->render_node.prefers_high_depth = gsk_render_node_prefers_high_depth (source);
 
   return &self->render_node;
 }
 
 /**
  * gsk_mask_node_get_source:
- * @node: (type GskBlendNode): a mask `GskRenderNode`
+ * @node: (type GskMaskNode): a mask `GskRenderNode`
  *
  * Retrieves the source `GskRenderNode` child of the @node.
  *
@@ -5295,7 +5378,7 @@ gsk_mask_node_get_source (const GskRenderNode *node)
 
 /**
  * gsk_mask_node_get_mask:
- * @node: (type GskBlendNode): a mask `GskRenderNode`
+ * @node: (type GskMaskNode): a mask `GskRenderNode`
  *
  * Retrieves the mask `GskRenderNode` child of the @node.
  *
@@ -5311,6 +5394,24 @@ gsk_mask_node_get_mask (const GskRenderNode *node)
   g_return_val_if_fail (GSK_IS_RENDER_NODE_TYPE (node, GSK_MASK_NODE), NULL);
 
   return self->mask;
+}
+
+/**
+ * gsk_mask_node_get_mask_mode:
+ * @node: (type GskMaskNode): a blending `GskRenderNode`
+ *
+ * Retrieves the mask mode used by @node.
+ *
+ * Returns: the mask mode
+ *
+ * Since: 4.10
+ */
+GskMaskMode
+gsk_mask_node_get_mask_mode (const GskRenderNode *node)
+{
+  const GskMaskNode *self = (const GskMaskNode *) node;
+
+  return self->mask_mode;
 }
 
 /* }}} */

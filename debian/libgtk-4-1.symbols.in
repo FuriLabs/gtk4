@@ -469,8 +469,19 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_surface_set_opaque_region@Base 4.0.0
  gdk_surface_translate_coordinates@Base 4.0.0
  gdk_texture_download@Base 4.0.0
+ gdk_texture_downloader_copy@Base 4.10.0
+ gdk_texture_downloader_download_bytes@Base 4.10.0
+ gdk_texture_downloader_download_into@Base 4.10.0
+ gdk_texture_downloader_free@Base 4.10.0
+ gdk_texture_downloader_get_format@Base 4.10.0
+ gdk_texture_downloader_get_texture@Base 4.10.0
+ gdk_texture_downloader_get_type@Base 4.10.0
+ gdk_texture_downloader_new@Base 4.10.0
+ gdk_texture_downloader_set_format@Base 4.10.0
+ gdk_texture_downloader_set_texture@Base 4.10.0
  gdk_texture_error_get_type@Base 4.6.0
  gdk_texture_error_quark@Base 4.6.0
+ gdk_texture_get_format@Base 4.10.0
  gdk_texture_get_height@Base 4.0.0
  gdk_texture_get_type@Base 4.0.0
  gdk_texture_get_width@Base 4.0.0
@@ -733,7 +744,9 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_linear_gradient_node_get_start@Base 4.0.0
  gsk_linear_gradient_node_get_type@Base 4.0.0
  gsk_linear_gradient_node_new@Base 4.0.0
+ gsk_mask_mode_get_type@Base 4.10.0
  gsk_mask_node_get_mask@Base 4.9.4
+ gsk_mask_node_get_mask_mode@Base 4.10.0
  gsk_mask_node_get_source@Base 4.9.4
  gsk_mask_node_get_type@Base 4.9.4
  gsk_mask_node_new@Base 4.9.4
@@ -935,10 +948,12 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_accessible_reset_relation@Base 4.0.0
  gtk_accessible_reset_state@Base 4.0.0
  gtk_accessible_role_get_type@Base 4.0.0
+ gtk_accessible_set_accessible_parent@Base 4.10.0
  gtk_accessible_sort_get_type@Base 4.0.0
  gtk_accessible_state_get_type@Base 4.0.0
  gtk_accessible_state_init_value@Base 4.0.0
  gtk_accessible_tristate_get_type@Base 4.0.0
+ gtk_accessible_update_next_accessible_sibling@Base 4.10.0
  gtk_accessible_update_property@Base 4.0.0
  gtk_accessible_update_property_value@Base 4.0.0
  gtk_accessible_update_relation@Base 4.0.0
@@ -2803,6 +2818,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_media_stream_unprepared@Base 4.0.0
  gtk_media_stream_unrealize@Base 4.0.0
  gtk_media_stream_update@Base 4.0.0
+ gtk_menu_button_get_active@Base 4.10.0
  gtk_menu_button_get_always_show_arrow@Base 4.3.2
  gtk_menu_button_get_child@Base 4.6.0
  gtk_menu_button_get_direction@Base 4.0.0
@@ -2817,6 +2833,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_menu_button_new@Base 4.0.0
  gtk_menu_button_popdown@Base 4.0.0
  gtk_menu_button_popup@Base 4.0.0
+ gtk_menu_button_set_active@Base 4.10.0
  gtk_menu_button_set_always_show_arrow@Base 4.3.2
  gtk_menu_button_set_child@Base 4.6.0
  gtk_menu_button_set_create_popup_func@Base 4.0.0

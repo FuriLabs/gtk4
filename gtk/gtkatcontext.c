@@ -85,6 +85,20 @@ gtk_at_context_dispose (GObject *gobject)
 
   gtk_at_context_unrealize (self);
 
+  if (self->accessible_parent != NULL)
+    {
+      g_object_remove_weak_pointer (G_OBJECT (self->accessible_parent),
+                                    (gpointer *) &self->accessible_parent);
+      self->accessible_parent = NULL;
+    }
+
+  if (self->next_accessible_sibling != NULL)
+    {
+      g_object_remove_weak_pointer (G_OBJECT (self->next_accessible_sibling),
+                                    (gpointer *) &self->next_accessible_sibling);
+      self->next_accessible_sibling = NULL;
+    }
+
   G_OBJECT_CLASS (gtk_at_context_parent_class)->dispose (gobject);
 }
 
@@ -445,6 +459,91 @@ gtk_at_context_get_accessible_role (GtkATContext *self)
   g_return_val_if_fail (GTK_IS_AT_CONTEXT (self), GTK_ACCESSIBLE_ROLE_NONE);
 
   return self->accessible_role;
+}
+
+/*< private >
+ * gtk_at_context_get_accessible_parent:
+ * @self: a `GtkAtContext`
+ *
+ * Retrieves the parent accessible object of the given `GtkAtContext`.
+ *
+ * Returns: (nullable) (transfer none): the parent accessible object, or `NULL` if not set.
+ */
+GtkAccessible *
+gtk_at_context_get_accessible_parent (GtkATContext *self)
+{
+  g_return_val_if_fail (GTK_IS_AT_CONTEXT (self), NULL);
+
+  return self->accessible_parent;
+}
+
+/*< private >
+ * gtk_at_context_set_accessible_parent:
+ * @self: a `GtkAtContext`
+ * @parent: (nullable): the parent `GtkAccessible` to set
+ *
+ * Sets the parent accessible object of the given `GtkAtContext`.
+ */
+void
+gtk_at_context_set_accessible_parent (GtkATContext *self,
+                                      GtkAccessible *parent)
+{
+  g_return_if_fail (GTK_IS_AT_CONTEXT (self));
+
+  if (self->accessible_parent != parent)
+    {
+      if (self->accessible_parent != NULL)
+        g_object_remove_weak_pointer (G_OBJECT (self->accessible_parent),
+                                      (gpointer *) &self->accessible_parent);
+
+      self->accessible_parent = parent;
+      if (self->accessible_parent != NULL)
+        g_object_add_weak_pointer (G_OBJECT (self->accessible_parent),
+                                   (gpointer *) &self->accessible_parent);
+    }
+}
+
+/*< private >
+ * gtk_at_context_get_next_accessible_sibling:
+ * @self: a `GtkAtContext`
+ *
+ * Retrieves the next accessible sibling of the given `GtkAtContext`.
+ *
+ * Returns: (nullable) (transfer none): the next accessible sibling.
+ */
+GtkAccessible *
+gtk_at_context_get_next_accessible_sibling (GtkATContext *self)
+{
+  g_return_val_if_fail (GTK_IS_AT_CONTEXT (self), NULL);
+
+  return self->next_accessible_sibling;
+}
+
+/*< private >
+ * gtk_at_context_set_next_accessible_sibling:
+ * @self: a `GtkAtContext`
+ * @sibling: (nullable): the next accessible sibling
+ *
+ * Sets the next accessible sibling object of the given `GtkAtContext`.
+ */
+void
+gtk_at_context_set_next_accessible_sibling (GtkATContext *self,
+                                            GtkAccessible *sibling)
+{
+  g_return_if_fail (GTK_IS_AT_CONTEXT (self));
+
+  if (self->next_accessible_sibling != sibling)
+    {
+      if (self->next_accessible_sibling != NULL)
+        g_object_remove_weak_pointer (G_OBJECT (self->next_accessible_sibling),
+                                      (gpointer *) &self->next_accessible_sibling);
+
+      self->next_accessible_sibling = sibling;
+
+      if (self->next_accessible_sibling != NULL)
+        g_object_add_weak_pointer (G_OBJECT (self->next_accessible_sibling),
+                                   (gpointer *) &self->next_accessible_sibling);
+    }
 }
 
 /*< private >
@@ -929,6 +1028,8 @@ gtk_at_context_get_name_accumulate (GtkATContext *self,
           GtkATContext *rel_context = gtk_accessible_get_at_context (rel);
 
           gtk_at_context_get_name_accumulate (rel_context, names, FALSE);
+
+          g_object_unref (rel_context);
         }
     }
 
@@ -1001,6 +1102,8 @@ gtk_at_context_get_description_accumulate (GtkATContext *self,
           GtkATContext *rel_context = gtk_accessible_get_at_context (rel);
 
           gtk_at_context_get_description_accumulate (rel_context, labels, FALSE);
+
+          g_object_unref (rel_context);
         }
     }
 

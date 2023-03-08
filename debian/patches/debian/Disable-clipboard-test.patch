@@ -12,7 +12,7 @@ Forwarded: no
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index 3236ce7..45c4744 100644
+index 98b57cb..71f955f 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
 @@ -12,7 +12,9 @@ clipboard_client = executable('clipboard-client',

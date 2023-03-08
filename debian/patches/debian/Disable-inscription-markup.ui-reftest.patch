@@ -12,10 +12,10 @@ Forwarded: not-needed, workaround
  1 file changed, 2 insertions(+)
 
 diff --git a/testsuite/reftests/meson.build b/testsuite/reftests/meson.build
-index b8e0ef0..e2ef9c2 100644
+index 1cc8a43..47d0864 100644
 --- a/testsuite/reftests/meson.build
 +++ b/testsuite/reftests/meson.build
-@@ -613,6 +613,8 @@ flaky = [
+@@ -616,6 +616,8 @@ flaky = [
    'shorthand-entry-border.ui',
    # blinking cursors and timing issues make this unreliable
    'fixed-widget-stacking.ui',

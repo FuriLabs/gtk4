@@ -22,10 +22,10 @@ This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
  12 files changed, 353 insertions(+), 43 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index 28fb2ec..b003248 100644
+index ffcfd8a..bf03545 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -888,6 +888,7 @@ summary('Introspection', build_gir, section: 'Build')
+@@ -889,6 +889,7 @@ summary('Introspection', build_gir, section: 'Build')
  summary('Documentation', get_option('gtk_doc'), section: 'Build')
  summary('Man pages', get_option('man-pages'), section: 'Build')
  summary('Tests', get_option('build-tests'), section: 'Build')
@@ -34,10 +34,10 @@ index 28fb2ec..b003248 100644
  summary('Examples', get_option('build-examples'), section: 'Build')
  
 diff --git a/meson_options.txt b/meson_options.txt
-index 5fd4125..2e43a17 100644
+index 9f608e9..5e16043 100644
 --- a/meson_options.txt
 +++ b/meson_options.txt
-@@ -128,3 +128,8 @@ option('build-tests',
+@@ -133,3 +133,8 @@ option('build-tests',
         type: 'boolean',
         value: true,
         description : 'Build tests')
@@ -404,7 +404,7 @@ index ef703d7..3228049 100644
 +  install_data(test_data, install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index f3d3a1b..3236ce7 100644
+index ebaa66f..98b57cb 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
 @@ -1,10 +1,13 @@
@@ -427,7 +427,7 @@ index f3d3a1b..3236ce7 100644
  
  tests = [
    { 'name': 'array' },
-@@ -32,7 +35,8 @@ foreach t : tests
+@@ -31,7 +34,8 @@ foreach t : tests
      sources: '@0@.c'.format(test_name),
      c_args: common_cflags,
      dependencies: libgtk_dep,
@@ -437,7 +437,7 @@ index f3d3a1b..3236ce7 100644
    )
  
    suites = ['gdk'] + t.get('suites', [])
-@@ -59,7 +63,8 @@ foreach t : internal_tests
+@@ -58,7 +62,8 @@ foreach t : internal_tests
    test_exe = executable(t, '@0@.c'.format(t),
      c_args: common_cflags,
      dependencies: libgtk_static_dep,
@@ -447,7 +447,7 @@ index f3d3a1b..3236ce7 100644
    )
  
    test(t, test_exe,
-@@ -73,3 +78,28 @@ foreach t : internal_tests
+@@ -72,3 +77,28 @@ foreach t : internal_tests
      suite: 'gdk',
    )
  endforeach
@@ -477,7 +477,7 @@ index f3d3a1b..3236ce7 100644
 +  install_subdir('image-data', install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
-index 1897562..67514eb 100644
+index f52a770..872897c 100644
 --- a/testsuite/gsk/meson.build
 +++ b/testsuite/gsk/meson.build
 @@ -1,12 +1,22 @@
@@ -505,7 +505,7 @@ index 1897562..67514eb 100644
  )
  
  compare_render_tests = [
-@@ -256,9 +266,11 @@ foreach t : tests
+@@ -266,9 +276,11 @@ foreach t : tests
    test_extra_ldflags = t.get(3, [])
  
    test_exe = executable(test_name, test_srcs,
@@ -518,7 +518,7 @@ index 1897562..67514eb 100644
    )
  
    test(test_name, test_exe,
-@@ -287,11 +299,12 @@ foreach t : internal_tests
+@@ -297,11 +309,12 @@ foreach t : internal_tests
    test_extra_cargs = t.get(2, [])
    test_extra_ldflags = t.get(3, [])
  

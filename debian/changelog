@@ -1,3 +1,9 @@
+gtk4 (4.10.0+ds-2) experimental; urgency=medium
+
+  * Cherry-pick patch to fix combo boxes
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 08 Mar 2023 12:43:20 -0500
+
 gtk4 (4.10.0+ds-1ubuntu1) lunar; urgency=medium
 
   * Sync with Debian. Remaining changes:

@@ -1,3 +1,13 @@
+gtk4 (4.10.0+ds-2ubuntu1) lunar; urgency=medium
+
+  * Sync with Debian. Remaining changes:
+    - debian/tests:
+      + include the memorytexture test in the flaky set, it has been unreliable
+    - debian/control:
+      + Build-Depend on dh-sequence-translations
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 08 Mar 2023 13:07:01 -0500
+
 gtk4 (4.10.0+ds-2) experimental; urgency=medium
 
   * Cherry-pick patch to fix combo boxes

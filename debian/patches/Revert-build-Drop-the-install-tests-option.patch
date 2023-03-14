@@ -22,12 +22,12 @@ This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
  12 files changed, 353 insertions(+), 43 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index ffcfd8a..bf03545 100644
+index 1351771..33b95e5 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -889,6 +889,7 @@ summary('Introspection', build_gir, section: 'Build')
- summary('Documentation', get_option('gtk_doc'), section: 'Build')
+@@ -902,6 +902,7 @@ summary('Documentation', get_option('gtk_doc'), section: 'Build')
  summary('Man pages', get_option('man-pages'), section: 'Build')
+ summary('Testsuite', get_option('build-testsuite'), section: 'Build')
  summary('Tests', get_option('build-tests'), section: 'Build')
 +summary('Install tests', get_option('install-tests'), section: 'Build')
  summary('Demos', get_option('demos'), section: 'Build')
@@ -323,7 +323,7 @@ index b419c29..d0fdd0d 100644
 +
 +endif
 diff --git a/testsuite/css/style/meson.build b/testsuite/css/style/meson.build
-index ef703d7..3228049 100644
+index a6c5e2e..6b2d252 100644
 --- a/testsuite/css/style/meson.build
 +++ b/testsuite/css/style/meson.build
 @@ -7,21 +7,73 @@ styletest_env.set('GIO_USE_VFS', 'local')
@@ -336,7 +336,7 @@ index ef703d7..3228049 100644
  cssresources = gnome.compile_resources(
    'cssresources',
    'test-css-style.gresource.xml',
-   source_dir: '.',
+   source_dir: meson.current_source_dir(),
  )
  
 -test_style = executable('test-css-style',
@@ -477,7 +477,7 @@ index ebaa66f..98b57cb 100644
 +  install_subdir('image-data', install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
-index f52a770..872897c 100644
+index ca8f833..44ad57a 100644
 --- a/testsuite/gsk/meson.build
 +++ b/testsuite/gsk/meson.build
 @@ -1,12 +1,22 @@
@@ -505,7 +505,7 @@ index f52a770..872897c 100644
  )
  
  compare_render_tests = [
-@@ -266,9 +276,11 @@ foreach t : tests
+@@ -277,9 +287,11 @@ foreach t : tests
    test_extra_ldflags = t.get(3, [])
  
    test_exe = executable(test_name, test_srcs,
@@ -518,7 +518,7 @@ index f52a770..872897c 100644
    )
  
    test(test_name, test_exe,
-@@ -297,11 +309,12 @@ foreach t : internal_tests
+@@ -308,11 +320,12 @@ foreach t : internal_tests
    test_extra_cargs = t.get(2, [])
    test_extra_ldflags = t.get(3, [])
  

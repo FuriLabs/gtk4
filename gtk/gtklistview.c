@@ -141,21 +141,6 @@
  * items use the %GTK_ACCESSIBLE_ROLE_LIST_ITEM role.
  */
 
-typedef struct _ListRow ListRow;
-typedef struct _ListRowAugment ListRowAugment;
-
-struct _ListRow
-{
-  GtkListItemManagerItem parent;
-  guint height; /* per row */
-};
-
-struct _ListRowAugment
-{
-  GtkListItemManagerItemAugment parent;
-  guint height; /* total */
-};
-
 enum
 {
   PROP_0,
@@ -181,221 +166,114 @@ static guint signals[LAST_SIGNAL] = { 0 };
 static void G_GNUC_UNUSED
 dump (GtkListView *self)
 {
-  ListRow *row;
+  GtkListTile *tile;
   guint n_widgets, n_list_rows;
 
   n_widgets = 0;
   n_list_rows = 0;
   //g_print ("ANCHOR: %u - %u\n", self->anchor_start, self->anchor_end);
-  for (row = gtk_list_item_manager_get_first (self->item_manager);
-       row;
-       row = gtk_rb_tree_node_get_next (row))
+  for (tile = gtk_list_item_manager_get_first (self->item_manager);
+       tile;
+       tile = gtk_rb_tree_node_get_next (tile))
     {
-      if (row->parent.widget)
+      if (tile->widget)
         n_widgets++;
       n_list_rows++;
-      g_print ("  %4u%s (%upx)\n", row->parent.n_items, row->parent.widget ? " (widget)" : "", row->height);
+      g_print ("  %4u%s %d,%d,%d,%d\n", tile->n_items, tile->widget ? " (widget)" : "",
+               tile->area.x, tile->area.y, tile->area.width, tile->area.height);
     }
 
   g_print ("  => %u widgets in %u list rows\n", n_widgets, n_list_rows);
 }
 
-static void
-list_row_augment (GtkRbTree *tree,
-                  gpointer   node_augment,
-                  gpointer   node,
-                  gpointer   left,
-                  gpointer   right)
+static GtkListTile *
+gtk_list_view_split (GtkListBase *base,
+                     GtkListTile *tile,
+                     guint        n_items)
 {
-  ListRow *row = node;
-  ListRowAugment *aug = node_augment;
+  GtkListView *self = GTK_LIST_VIEW (base);
+  GtkListTile *new_tile;
+  int spacing, row_height;
 
-  gtk_list_item_manager_augment_node (tree, node_augment, node, left, right);
+  gtk_list_base_get_border_spacing (GTK_LIST_BASE (self), NULL, &spacing);
+  row_height = (tile->area.height - (tile->n_items - 1) * spacing) / tile->n_items;
 
-  aug->height = row->height * row->parent.n_items;
+  new_tile = gtk_list_tile_split (self->item_manager, tile, n_items);
+  gtk_list_tile_set_area_size (self->item_manager,
+                               tile,
+                               tile->area.width,
+                               row_height * tile->n_items + spacing * (tile->n_items - 1));
+  gtk_list_tile_set_area (self->item_manager,
+                          new_tile,
+                          &(GdkRectangle) {
+                            tile->area.x,
+                            tile->area.y + tile->area.height + spacing,
+                            tile->area.width,
+                            row_height * new_tile->n_items + spacing * (new_tile->n_items - 1)
+                          });
 
-  if (left)
-    {
-      ListRowAugment *left_aug = gtk_rb_tree_get_augment (tree, left);
-
-      aug->height += left_aug->height;
-    }
-
-  if (right)
-    {
-      ListRowAugment *right_aug = gtk_rb_tree_get_augment (tree, right);
-
-      aug->height += right_aug->height;
-    }
-}
-
-static ListRow *
-gtk_list_view_get_row_at_y (GtkListView *self,
-                            int          y,
-                            int         *offset)
-{
-  ListRow *row, *tmp;
-
-  row = gtk_list_item_manager_get_root (self->item_manager);
-
-  while (row)
-    {
-      tmp = gtk_rb_tree_node_get_left (row);
-      if (tmp)
-        {
-          ListRowAugment *aug = gtk_list_item_manager_get_item_augment (self->item_manager, tmp);
-          if (y < aug->height)
-            {
-              row = tmp;
-              continue;
-            }
-          y -= aug->height;
-        }
-
-      if (y < row->height * row->parent.n_items)
-        break;
-      y -= row->height * row->parent.n_items;
-
-      row = gtk_rb_tree_node_get_right (row);
-    }
-
-  if (offset)
-    *offset = row ? y : 0;
-
-  return row;
-}
-
-static int
-list_row_get_y (GtkListView *self,
-                ListRow     *row)
-{
-  ListRow *parent, *left;
-  int y;
-
-  left = gtk_rb_tree_node_get_left (row);
-  if (left)
-    {
-      ListRowAugment *aug = gtk_list_item_manager_get_item_augment (self->item_manager, left);
-      y = aug->height;
-    }
-  else
-    y = 0; 
-
-  for (parent = gtk_rb_tree_node_get_parent (row);
-       parent != NULL;
-       parent = gtk_rb_tree_node_get_parent (row))
-    {
-      left = gtk_rb_tree_node_get_left (parent);
-
-      if (left != row)
-        {
-          if (left)
-            {
-              ListRowAugment *aug = gtk_list_item_manager_get_item_augment (self->item_manager, left);
-              y += aug->height;
-            }
-          y += parent->height * parent->parent.n_items;
-        }
-
-      row = parent;
-    }
-
-  return y ;
-}
-
-static int
-gtk_list_view_get_list_height (GtkListView *self)
-{
-  ListRow *row;
-  ListRowAugment *aug;
-
-  row = gtk_list_item_manager_get_root (self->item_manager);
-  if (row == NULL)
-    return 0;
-
-  aug = gtk_list_item_manager_get_item_augment (self->item_manager, row);
-  return aug->height;
+  return new_tile;
 }
 
 static gboolean
-gtk_list_view_get_allocation_along (GtkListBase *base,
-                                    guint        pos,
-                                    int         *offset,
-                                    int         *size)
+gtk_list_view_get_allocation (GtkListBase  *base,
+                              guint         pos,
+                              GdkRectangle *area)
 {
   GtkListView *self = GTK_LIST_VIEW (base);
-  ListRow *row;
-  guint skip;
-  int y;
+  GtkListTile *tile;
+  guint offset;
 
-  row = gtk_list_item_manager_get_nth (self->item_manager, pos, &skip);
-  if (row == NULL)
+  tile = gtk_list_item_manager_get_nth (self->item_manager, pos, &offset);
+  if (tile == NULL)
+    return FALSE;
+
+  *area = tile->area;
+  if (area->width || area->height)
     {
+      if (tile->n_items)
+        area->height /= tile->n_items;
       if (offset)
-        *offset = 0;
-      if (size)
-        *size = 0;
-      return FALSE;
+        area->y += offset * area->height;
+    }
+  else
+    {
+      /* item is not allocated yet */
+      GtkListTile *other;
+      int spacing;
+
+      gtk_list_base_get_border_spacing (GTK_LIST_BASE (self), NULL, &spacing);
+
+      for (other = gtk_rb_tree_node_get_previous (tile);
+           other;
+           other = gtk_rb_tree_node_get_previous (other))
+        {
+          if (other->area.width || other->area.height)
+            {
+              area->x = other->area.x;
+              area->width = other->area.width;
+              area->y = other->area.y + other->area.height + spacing;
+              break;
+            }
+        }
+      if (other == NULL)
+        {
+          for (other = gtk_rb_tree_node_get_next (tile);
+               other;
+               other = gtk_rb_tree_node_get_next (other))
+            {
+              if (other->area.width || other->area.height)
+                {
+                  area->x = other->area.x;
+                  area->width = other->area.width;
+                  area->y = MAX (0, other->area.y - spacing);
+                  break;
+                }
+            }
+        }
     }
 
-  y = list_row_get_y (self, row);
-  y += skip * row->height;
-
-  if (offset)
-    *offset = y;
-  if (size)
-    *size = row->height;
-
   return TRUE;
-}
-
-static gboolean
-gtk_list_view_get_allocation_across (GtkListBase *base,
-                                     guint        pos,
-                                     int         *offset,
-                                     int         *size)
-{
-  GtkListView *self = GTK_LIST_VIEW (base);
-
-  if (offset)
-    *offset = 0;
-  if (size)
-    *size = self->list_width;
-
-  return TRUE;
-}
-
-static GtkBitset *
-gtk_list_view_get_items_in_rect (GtkListBase                 *base,
-                                 const cairo_rectangle_int_t *rect)
-{
-  GtkListView *self = GTK_LIST_VIEW (base);
-  guint first, last, n_items;
-  GtkBitset *result;
-  ListRow *row;
-
-  result = gtk_bitset_new_empty ();
-
-  if (rect->y >= gtk_list_view_get_list_height (self))
-    return result;
-
-  n_items = gtk_list_base_get_n_items (base);
-  if (n_items == 0)
-    return result;
-
-  row = gtk_list_view_get_row_at_y (self, rect->y, NULL);
-  if (row)
-    first = gtk_list_item_manager_get_item_position (self->item_manager, row);
-  else
-    first = rect->y < 0 ? 0 : n_items - 1;
-  row = gtk_list_view_get_row_at_y (self, rect->y + rect->height, NULL);
-  if (row)
-    last = gtk_list_item_manager_get_item_position (self->item_manager, row);
-  else
-    last = rect->y + rect->height < 0 ? 0 : n_items - 1;
-
-  gtk_bitset_add_range_closed (result, first, last);
-  return result;
 }
 
 static guint
@@ -415,37 +293,82 @@ gtk_list_view_move_focus_along (GtkListBase *base,
 
 static gboolean
 gtk_list_view_get_position_from_allocation (GtkListBase           *base,
-                                            int                    across,
-                                            int                    along,
+                                            int                    x,
+                                            int                    y,
                                             guint                 *pos,
                                             cairo_rectangle_int_t *area)
 {
   GtkListView *self = GTK_LIST_VIEW (base);
-  ListRow *row;
-  int remaining;
+  GtkListTile *tile;
 
-  if (across >= self->list_width)
+  tile = gtk_list_item_manager_get_nearest_tile (self->item_manager, x, y);
+  if (tile == NULL)
     return FALSE;
 
-  along = CLAMP (along, 0, gtk_list_view_get_list_height (self) - 1);
-
-  row = gtk_list_view_get_row_at_y (self, along, &remaining);
-  if (row == NULL)
-    return FALSE;
-
-  *pos = gtk_list_item_manager_get_item_position (self->item_manager, row);
-  g_assert (remaining < row->height * row->parent.n_items);
-  *pos += remaining / row->height;
-
-  if (area)
+  while (tile && tile->n_items == 0)
+    tile = gtk_rb_tree_node_get_previous (tile);
+  if (tile == NULL)
     {
-      area->x = 0;
-      area->width = self->list_width;
-      area->y = along - remaining % row->height;
-      area->height = row->height;
+      tile = gtk_list_item_manager_get_first (self->item_manager);
+      while (tile && tile->n_items == 0)
+        tile = gtk_rb_tree_node_get_next (tile);
+      if (tile == NULL)
+        return FALSE;
+    }
+
+  *pos = gtk_list_tile_get_position (self->item_manager, tile);
+  if (area)
+    *area = tile->area;
+
+  if (tile->n_items > 1)
+    {
+      int row_height, tile_pos, spacing;
+
+      gtk_list_base_get_border_spacing (GTK_LIST_BASE (self), NULL, &spacing);
+      row_height = (tile->area.height - (tile->n_items - 1) * spacing) / tile->n_items;
+      if (y >= tile->area.y + tile->area.height)
+        tile_pos = tile->n_items - 1;
+      else
+        tile_pos = (y - tile->area.y) / (row_height + spacing);
+
+      *pos += tile_pos;
+      if (area)
+        {
+          area->y = tile->area.y + tile_pos * (row_height + spacing);
+          area->height = row_height;
+        }
     }
 
   return TRUE;
+}
+
+static GtkBitset *
+gtk_list_view_get_items_in_rect (GtkListBase                 *base,
+                                 const cairo_rectangle_int_t *rect)
+{
+  guint first, last;
+  cairo_rectangle_int_t area;
+  GtkBitset *result;
+
+  result = gtk_bitset_new_empty ();
+
+  if (!gtk_list_view_get_position_from_allocation (base, rect->x, rect->y, &first, &area))
+    return result;
+  if (area.y + area.height < rect->y)
+    first++;
+
+  if (!gtk_list_view_get_position_from_allocation (base,
+                                                   rect->x + rect->width - 1,
+                                                   rect->y + rect->height - 1,
+                                                   &last, &area))
+    return result;
+  if (area.y >= rect->y + rect->height)
+    last--;
+
+  if (last >= first)
+    gtk_bitset_add_range_closed (result, first, last);
+
+  return result;
 }
 
 static guint
@@ -483,7 +406,7 @@ gtk_list_view_measure_across (GtkWidget      *widget,
                               int            *natural)
 {
   GtkListView *self = GTK_LIST_VIEW (widget);
-  ListRow *row;
+  GtkListTile *tile;
   int min, nat, child_min, child_nat;
   /* XXX: Figure out how to split a given height into per-row heights.
    * Good luck! */
@@ -492,15 +415,15 @@ gtk_list_view_measure_across (GtkWidget      *widget,
   min = 0;
   nat = 0;
 
-  for (row = gtk_list_item_manager_get_first (self->item_manager);
-       row != NULL;
-       row = gtk_rb_tree_node_get_next (row))
+  for (tile = gtk_list_item_manager_get_first (self->item_manager);
+       tile != NULL;
+       tile = gtk_rb_tree_node_get_next (tile))
     {
       /* ignore unavailable rows */
-      if (row->parent.widget == NULL)
+      if (tile->widget == NULL)
         continue;
 
-      gtk_widget_measure (row->parent.widget,
+      gtk_widget_measure (tile->widget,
                           orientation, for_size,
                           &child_min, &child_nat, NULL, NULL);
       min = MAX (min, child_min);
@@ -519,10 +442,15 @@ gtk_list_view_measure_list (GtkWidget      *widget,
                             int            *natural)
 {
   GtkListView *self = GTK_LIST_VIEW (widget);
-  ListRow *row;
-  int min, nat, child_min, child_nat;
+  GtkListTile *tile;
+  int min, nat, child_min, child_nat, spacing;
   GArray *min_heights, *nat_heights;
-  guint n_unknown;
+  guint n_unknown, n_items;
+
+  n_items = gtk_list_base_get_n_items (GTK_LIST_BASE (self));
+  if (n_items == 0)
+    return;
+  gtk_list_base_get_border_spacing (GTK_LIST_BASE (self), NULL, &spacing);
 
   min_heights = g_array_new (FALSE, FALSE, sizeof (int));
   nat_heights = g_array_new (FALSE, FALSE, sizeof (int));
@@ -530,13 +458,13 @@ gtk_list_view_measure_list (GtkWidget      *widget,
   min = 0;
   nat = 0;
 
-  for (row = gtk_list_item_manager_get_first (self->item_manager);
-       row != NULL;
-       row = gtk_rb_tree_node_get_next (row))
+  for (tile = gtk_list_item_manager_get_first (self->item_manager);
+       tile != NULL;
+       tile = gtk_rb_tree_node_get_next (tile))
     {
-      if (row->parent.widget)
+      if (tile->widget)
         {
-          gtk_widget_measure (row->parent.widget,
+          gtk_widget_measure (tile->widget,
                               orientation, for_size,
                               &child_min, &child_nat, NULL, NULL);
           g_array_append_val (min_heights, child_min);
@@ -546,7 +474,7 @@ gtk_list_view_measure_list (GtkWidget      *widget,
         }
       else
         {
-          n_unknown += row->parent.n_items;
+          n_unknown += tile->n_items;
         }
     }
 
@@ -558,8 +486,8 @@ gtk_list_view_measure_list (GtkWidget      *widget,
   g_array_free (min_heights, TRUE);
   g_array_free (nat_heights, TRUE);
 
-  *minimum = min;
-  *natural = nat;
+  *minimum = min + spacing * (n_items - 1);
+  *natural = nat + spacing * (n_items - 1);
 }
 
 static void
@@ -586,10 +514,9 @@ gtk_list_view_size_allocate (GtkWidget *widget,
                              int        baseline)
 {
   GtkListView *self = GTK_LIST_VIEW (widget);
-  ListRow *row;
+  GtkListTile *tile;
   GArray *heights;
-  int min, nat, row_height;
-  int x, y;
+  int min, nat, row_height, y, list_width, spacing;
   GtkOrientation orientation, opposite_orientation;
   GtkScrollablePolicy scroll_policy, opposite_scroll_policy;
 
@@ -597,11 +524,13 @@ gtk_list_view_size_allocate (GtkWidget *widget,
   opposite_orientation = OPPOSITE_ORIENTATION (orientation);
   scroll_policy = gtk_list_base_get_scroll_policy (GTK_LIST_BASE (self), orientation);
   opposite_scroll_policy = gtk_list_base_get_scroll_policy (GTK_LIST_BASE (self), opposite_orientation);
+  gtk_list_base_get_border_spacing (GTK_LIST_BASE (self), NULL, &spacing);
 
   /* step 0: exit early if list is empty */
-  if (gtk_list_item_manager_get_root (self->item_manager) == NULL)
+  tile = gtk_list_tile_gc (self->item_manager, gtk_list_item_manager_get_first (self->item_manager));
+  if (tile == NULL)
     {
-      gtk_list_base_update_adjustments (GTK_LIST_BASE (self), 0, 0, 0, 0, &x, &y);
+      gtk_list_base_allocate (GTK_LIST_BASE (self));
       return;
     }
 
@@ -609,85 +538,57 @@ gtk_list_view_size_allocate (GtkWidget *widget,
   gtk_list_view_measure_across (widget, opposite_orientation,
                                 -1,
                                 &min, &nat);
-  self->list_width = orientation == GTK_ORIENTATION_VERTICAL ? width : height;
+  list_width = orientation == GTK_ORIENTATION_VERTICAL ? width : height;
   if (opposite_scroll_policy == GTK_SCROLL_MINIMUM)
-    self->list_width = MAX (min, self->list_width);
+    list_width = MAX (min, list_width);
   else
-    self->list_width = MAX (nat, self->list_width);
+    list_width = MAX (nat, list_width);
 
-  /* step 2: determine height of known list items */
+  /* step 2: determine height of known list items and gc the list */
   heights = g_array_new (FALSE, FALSE, sizeof (int));
 
-  for (row = gtk_list_item_manager_get_first (self->item_manager);
-       row != NULL;
-       row = gtk_rb_tree_node_get_next (row))
+  for (;
+       tile != NULL;
+       tile = gtk_list_tile_gc (self->item_manager, gtk_rb_tree_node_get_next (tile)))
     {
-      if (row->parent.widget == NULL)
+      if (tile->widget == NULL)
         continue;
 
-      gtk_widget_measure (row->parent.widget, orientation,
-                          self->list_width,
+      gtk_widget_measure (tile->widget, orientation,
+                          list_width,
                           &min, &nat, NULL, NULL);
       if (scroll_policy == GTK_SCROLL_MINIMUM)
         row_height = min;
       else
         row_height = nat;
-      if (row->height != row_height)
-        {
-          row->height = row_height;
-          gtk_rb_tree_node_mark_dirty (row);
-        }
+      gtk_list_tile_set_area_size (self->item_manager, tile, list_width, row_height);
       g_array_append_val (heights, row_height);
     }
 
-  /* step 3: determine height of unknown items */
+  /* step 3: determine height of unknown items and set the positions */
   row_height = gtk_list_view_get_unknown_row_height (self, heights);
   g_array_free (heights, TRUE);
 
-  for (row = gtk_list_item_manager_get_first (self->item_manager);
-       row != NULL;
-       row = gtk_rb_tree_node_get_next (row))
+  y = 0;
+  for (tile = gtk_list_item_manager_get_first (self->item_manager);
+       tile != NULL;
+       tile = gtk_rb_tree_node_get_next (tile))
     {
-      if (row->parent.widget)
-        continue;
-
-      if (row->height != row_height)
+      gtk_list_tile_set_area_position (self->item_manager, tile, 0, y);
+      if (tile->widget == NULL)
         {
-          row->height = row_height;
-          gtk_rb_tree_node_mark_dirty (row);
-        }
-    }
-
-  /* step 3: update the adjustments */
-  gtk_list_base_update_adjustments (GTK_LIST_BASE (self),
-                                    self->list_width,
-                                    gtk_list_view_get_list_height (self),
-                                    gtk_widget_get_size (widget, opposite_orientation),
-                                    gtk_widget_get_size (widget, orientation),
-                                    &x, &y);
-  x = -x;
-  y = -y;
-
-  /* step 4: actually allocate the widgets */
-
-  for (row = gtk_list_item_manager_get_first (self->item_manager);
-       row != NULL;
-       row = gtk_rb_tree_node_get_next (row))
-    {
-      if (row->parent.widget)
-        {
-          gtk_list_base_size_allocate_child (GTK_LIST_BASE (self),
-                                             row->parent.widget,
-                                             x,
-                                             y,
-                                             self->list_width,
-                                             row->height);
+          gtk_list_tile_set_area_size (self->item_manager,
+                                       tile,
+                                       list_width,
+                                       row_height * tile->n_items
+                                       + spacing * (tile->n_items - 1));
         }
 
-      y += row->height * row->parent.n_items;
+      y += tile->area.height + spacing;
     }
 
-  gtk_list_base_allocate_rubberband (GTK_LIST_BASE (self));
+  /* step 4: allocate the rest */
+  gtk_list_base_allocate (GTK_LIST_BASE (self));
 }
 
 static void
@@ -799,11 +700,8 @@ gtk_list_view_class_init (GtkListViewClass *klass)
 
   list_base_class->list_item_name = "row";
   list_base_class->list_item_role = GTK_ACCESSIBLE_ROLE_LIST_ITEM;
-  list_base_class->list_item_size = sizeof (ListRow);
-  list_base_class->list_item_augment_size = sizeof (ListRowAugment);
-  list_base_class->list_item_augment_func = list_row_augment;
-  list_base_class->get_allocation_along = gtk_list_view_get_allocation_along;
-  list_base_class->get_allocation_across = gtk_list_view_get_allocation_across;
+  list_base_class->split = gtk_list_view_split;
+  list_base_class->get_allocation = gtk_list_view_get_allocation;
   list_base_class->get_items_in_rect = gtk_list_view_get_items_in_rect;
   list_base_class->get_position_from_allocation = gtk_list_view_get_position_from_allocation;
   list_base_class->move_focus_along = gtk_list_view_move_focus_along;

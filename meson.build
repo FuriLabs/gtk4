@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.10.0',
+        version: '4.10.1',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -370,6 +370,13 @@ glib_dep       = dependency('glib-2.0', version: glib_req)
 gobject_dep    = dependency('gobject-2.0', version: glib_req)
 if os_win32
   giowin32_dep = dependency('gio-windows-2.0', version: glib_req, required: win32_enabled)
+  if giowin32_dep.version().version_compare('<2.75.0')
+    if cc.get_id() == 'msvc' and get_option('default_library') != 'static'
+      # Override _GLIB_EXTERN on Visual Studio for media modules for glib <= 2.74.x, so that we
+      # avoid error C2375 (redefinition; different linkage) when building the g_io_module_*() bits
+      cdata.set('MODULES_OVERRIDE_GLIB_EXTERN', true)
+    endif
+  endif
 endif
 if os_unix
   giounix_dep  = dependency('gio-unix-2.0', version: glib_req, required: false)
@@ -728,8 +735,13 @@ endif
 
 # Introspection
 gir = find_program('g-ir-scanner', required : get_option('introspection'))
-build_gir = gir.found() and get_option('introspection').enabled()
 
+if not gir.found() and get_option('introspection').enabled()
+  error('Introspection enabled, but g-ir-scanner not found.')
+endif
+
+build_gir = gir.found() and (get_option('introspection').enabled() or
+                             (get_option('introspection').allowed() and get_option('gtk_doc')))
 
 project_build_root = meson.current_build_dir()
 
@@ -888,6 +900,7 @@ summary('Optimization', get_option('optimization'), section: 'Build')
 summary('Introspection', build_gir, section: 'Build')
 summary('Documentation', get_option('gtk_doc'), section: 'Build')
 summary('Man pages', get_option('man-pages'), section: 'Build')
+summary('Testsuite', get_option('build-testsuite'), section: 'Build')
 summary('Tests', get_option('build-tests'), section: 'Build')
 summary('Demos', get_option('demos'), section: 'Build')
 summary('Examples', get_option('build-examples'), section: 'Build')

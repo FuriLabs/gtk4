@@ -328,7 +328,6 @@ struct _GtkFileChooserWidget
   guint show_type_column : 1;
   guint create_folders : 1;
   guint auto_selecting_first_row : 1;
-  guint starting_search : 1;
   guint browse_files_interaction_frozen : 1;
 };
 
@@ -638,25 +637,36 @@ _gtk_file_chooser_extract_recent_folders (GList *infos)
   for (l = infos; l; l = l->next)
     {
       GtkRecentInfo *info = l->data;
-      const char *uri;
-      GFile *parent;
+      const char *uri, *mime_type;
+      GFile *dir;
       GFile *file;
 
+      if (!gtk_recent_info_is_local (info))
+        continue;
+
       uri = gtk_recent_info_get_uri (info);
-
       file = g_file_new_for_uri (uri);
-      parent = g_file_get_parent (file);
-      g_object_unref (file);
 
-      if (parent)
+      mime_type = gtk_recent_info_get_mime_type (info);
+      if (strcmp (mime_type, "inode/directory") != 0)
         {
-          if (!g_hash_table_lookup (folders, parent))
+          dir = g_file_get_parent (file);
+          g_object_unref (file);
+        }
+      else
+        {
+          dir = file;
+        }
+
+      if (dir)
+        {
+          if (!g_hash_table_lookup (folders, dir))
             {
-              g_hash_table_insert (folders, parent, (gpointer) 1);
-              result = g_list_prepend (result, g_object_ref (parent));
+              g_hash_table_insert (folders, dir, (gpointer) 1);
+              result = g_list_prepend (result, g_object_ref (dir));
             }
 
-          g_object_unref (parent);
+          g_object_unref (dir);
         }
     }
 
@@ -2061,6 +2071,9 @@ file_chooser_get_location (GtkFileChooserWidget *impl,
   else
     location = g_file_get_path (dir_location);
 
+  if (!location)
+    location = g_strdup ("");
+
   g_clear_object (&dir_location);
   g_clear_object (&home_location);
 
@@ -2571,7 +2584,11 @@ set_select_multiple (GtkFileChooserWidget *impl,
   if (select_multiple)
     impl->selection_model = GTK_SELECTION_MODEL (gtk_multi_selection_new (model));
   else
-    impl->selection_model = GTK_SELECTION_MODEL (gtk_single_selection_new (model));
+    {
+      impl->selection_model = GTK_SELECTION_MODEL (gtk_single_selection_new (model));
+      gtk_single_selection_set_can_unselect (GTK_SINGLE_SELECTION (impl->selection_model), TRUE);
+      gtk_single_selection_set_autoselect (GTK_SINGLE_SELECTION (impl->selection_model), FALSE);
+    }
 
   g_signal_connect (impl->selection_model, "selection-changed",
                     G_CALLBACK (list_selection_changed), impl);
@@ -2661,6 +2678,16 @@ location_bar_update (GtkFileChooserWidget *impl)
 }
 
 static void
+search_clear_engine (GtkFileChooserWidget *impl)
+{
+  if (impl->search_engine)
+    {
+      g_signal_handlers_disconnect_by_data (impl->search_engine, impl);
+      g_clear_object (&impl->search_engine);
+    }
+}
+
+static void
 operation_mode_stop (GtkFileChooserWidget *impl,
                      OperationMode         mode)
 {
@@ -2670,6 +2697,7 @@ operation_mode_stop (GtkFileChooserWidget *impl,
       search_stop_searching (impl, TRUE);
       search_clear_model (impl, TRUE);
       gtk_widget_set_visible (impl->remote_warning_bar, FALSE);
+      search_clear_engine (impl);
     }
 }
 
@@ -3073,6 +3101,7 @@ cancel_all_operations (GtkFileChooserWidget *impl)
   g_clear_object (&impl->file_exists_get_info_cancellable);
 
   search_stop_searching (impl, TRUE);
+  search_clear_engine (impl);
 }
 
 static void sorter_changed (GtkSorter            *main_sorter,
@@ -3952,10 +3981,10 @@ set_list_model (GtkFileChooserWidget  *impl,
   set_busy_cursor (impl, TRUE);
 
   impl->browse_files_model =
-    _gtk_file_system_model_new_for_directory (impl->current_folder,
-                                              MODEL_ATTRIBUTES);
+    _gtk_file_system_model_new_for_directory (impl->current_folder, MODEL_ATTRIBUTES);
 
   _gtk_file_system_model_set_show_hidden (impl->browse_files_model, impl->show_hidden);
+  _gtk_file_system_model_set_can_select_files (impl->browse_files_model, impl->action != GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
 
   load_setup_timer (impl); /* This changes the state to LOAD_PRELOAD */
 
@@ -5771,8 +5800,6 @@ search_stop_searching (GtkFileChooserWidget *impl,
   if (impl->search_engine)
     {
       _gtk_search_engine_stop (impl->search_engine);
-      g_signal_handlers_disconnect_by_data (impl->search_engine, impl);
-      g_clear_object (&impl->search_engine);
 
       set_busy_cursor (impl, FALSE);
       gtk_widget_set_visible (impl->search_spinner, FALSE);
@@ -5792,6 +5819,8 @@ search_setup_model (GtkFileChooserWidget *impl)
   g_assert (impl->search_model == NULL);
 
   impl->search_model = _gtk_file_system_model_new ();
+
+  _gtk_file_system_model_set_can_select_files (impl->search_model, impl->action != GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
 
   set_current_model (impl, G_LIST_MODEL (impl->search_model));
   update_columns (impl, TRUE, _("Modified"));
@@ -5897,11 +5926,12 @@ static void
 search_entry_stop_cb (GtkFileChooserWidget *impl)
 {
   if (impl->search_engine)
-    search_stop_searching (impl, FALSE);
+    {
+      search_stop_searching (impl, FALSE);
+      search_clear_engine (impl);
+    }
   else
     g_object_set (impl, "search-mode", FALSE, NULL);
-
-  impl->starting_search = FALSE;
 }
 
 /* Hides the path bar and creates the search entry */
@@ -5958,6 +5988,7 @@ recent_start_loading (GtkFileChooserWidget *impl)
   impl->recent_model = _gtk_file_system_model_new ();
 
   _gtk_file_system_model_set_filter (impl->recent_model, impl->current_filter);
+  _gtk_file_system_model_set_can_select_files (impl->recent_model, impl->action != GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
 
   if (!impl->recent_manager)
     return;
@@ -5979,6 +6010,9 @@ recent_start_loading (GtkFileChooserWidget *impl)
         {
           GtkRecentInfo *info = l->data;
           GFile *file;
+
+          if (!gtk_recent_info_is_local (info))
+            continue;
 
           if (gtk_recent_info_get_private_hint (info) &&
               !gtk_recent_info_has_application (info, app_name))
@@ -6986,15 +7020,20 @@ location_sort_func (gconstpointer a,
                     gpointer      user_data)
 {
   GtkFileChooserWidget *impl = user_data;
+  char *location_a, *location_b;
   char *key_a, *key_b;
   GtkOrdering result;
 
   /* FIXME: use sortkeys for these */
-  key_a = g_utf8_collate_key_for_filename (file_chooser_get_location (impl, (GFileInfo *)a), -1);
-  key_b = g_utf8_collate_key_for_filename (file_chooser_get_location (impl, (GFileInfo *)b), -1);
+  location_a = file_chooser_get_location (impl, (GFileInfo *)a);
+  location_b = file_chooser_get_location (impl, (GFileInfo *)b);
+  key_a = g_utf8_collate_key_for_filename (location_a, -1);
+  key_b = g_utf8_collate_key_for_filename (location_b, -1);
 
   result = g_strcmp0 (key_a, key_b);
 
+  g_free (location_a);
+  g_free (location_b);
   g_free (key_a);
   g_free (key_b);
 
@@ -7077,6 +7116,10 @@ recent_sort_func (gconstpointer a,
   GtkOrdering result;
 
   result = time_sort_func (a, b, user_data);
+
+  /* Recent files should show most recently changed items first
+   */
+  result = -result;
 
   if (result == GTK_ORDERING_EQUAL)
     result = name_sort_func (a, b, user_data);
@@ -7292,6 +7335,9 @@ gtk_file_chooser_widget_init (GtkFileChooserWidget *impl)
                     G_CALLBACK (list_items_changed), impl);
 
   gtk_single_selection_set_model (GTK_SINGLE_SELECTION (impl->selection_model), G_LIST_MODEL (impl->sort_model));
+  gtk_single_selection_set_can_unselect (GTK_SINGLE_SELECTION (impl->selection_model), TRUE);
+  gtk_single_selection_set_autoselect (GTK_SINGLE_SELECTION (impl->selection_model), FALSE);
+
   gtk_sort_list_model_set_model (impl->sort_model, G_LIST_MODEL (impl->filter_model));
 
   gtk_column_view_set_model (GTK_COLUMN_VIEW (impl->browse_files_column_view), impl->selection_model);

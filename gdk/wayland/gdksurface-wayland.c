@@ -561,8 +561,14 @@ gdk_wayland_surface_attach_image (GdkSurface           *surface,
   /* Attach this new buffer to the surface */
   wl_surface_attach (impl->display_server.wl_surface,
                      _gdk_wayland_shm_surface_get_wl_buffer (cairo_surface),
-                     impl->pending_buffer_offset_x,
-                     impl->pending_buffer_offset_y);
+                     0, 0);
+
+  if ((impl->pending_buffer_offset_x || impl->pending_buffer_offset_y) &&
+      wl_surface_get_version (impl->display_server.wl_surface) >=
+      WL_SURFACE_OFFSET_SINCE_VERSION)
+    wl_surface_offset (impl->display_server.wl_surface,
+                       impl->pending_buffer_offset_x,
+                       impl->pending_buffer_offset_y);
   impl->pending_buffer_offset_x = 0;
   impl->pending_buffer_offset_y = 0;
 
@@ -971,6 +977,15 @@ gdk_wayland_surface_hide_surface (GdkSurface *surface)
           impl->display_server.egl_window = NULL;
         }
 
+      impl->awaiting_frame = FALSE;
+      if (impl->awaiting_frame_frozen)
+        {
+          impl->awaiting_frame_frozen = FALSE;
+          gdk_surface_thaw_updates (surface);
+        }
+
+      GDK_WAYLAND_SURFACE_GET_CLASS (impl)->hide_surface (impl);
+
       if (impl->display_server.xdg_surface)
         {
           xdg_surface_destroy (impl->display_server.xdg_surface);
@@ -988,15 +1003,6 @@ gdk_wayland_surface_hide_surface (GdkSurface *surface)
           else
             impl->initial_configure_received = FALSE;
         }
-
-      impl->awaiting_frame = FALSE;
-      if (impl->awaiting_frame_frozen)
-        {
-          impl->awaiting_frame_frozen = FALSE;
-          gdk_surface_thaw_updates (surface);
-        }
-
-      GDK_WAYLAND_SURFACE_GET_CLASS (impl)->hide_surface (impl);
 
       g_clear_pointer (&impl->display_server.wl_surface, wl_surface_destroy);
 

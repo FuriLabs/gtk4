@@ -1,8 +1,10 @@
-gtk4 (4.10.1+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.10.1+ds-1) experimental; urgency=medium
 
   * New upstream release
+  * Drop combobox patch applied in new release
+  * Refresh patch
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 14 Mar 2023 08:37:38 -0400
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 14 Mar 2023 08:43:02 -0400
 
 gtk4 (4.10.0+ds-2) experimental; urgency=medium
 

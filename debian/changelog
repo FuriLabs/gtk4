@@ -1,3 +1,9 @@
+gtk4 (4.10.1+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 14 Mar 2023 08:37:38 -0400
+
 gtk4 (4.10.0+ds-2) experimental; urgency=medium
 
   * Cherry-pick patch to fix combo boxes

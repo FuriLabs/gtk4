@@ -20,61 +20,61 @@
 
 #include "gstplayer-media-info.h"
 
-#ifndef __GST_PLAYER_MEDIA_INFO_PRIVATE_H__
-#define __GST_PLAYER_MEDIA_INFO_PRIVATE_H__
+#ifndef __GTK_GST_PLAYER_MEDIA_INFO_PRIVATE_H__
+#define __GTK_GST_PLAYER_MEDIA_INFO_PRIVATE_H__
 
 #include <gst/play/gstplay-media-info.h>
 
-struct _GstPlayerStreamInfo
+struct _GtkGstPlayerStreamInfo
 {
   GObject parent;
 
   gint stream_index;
-  GstPlayStreamInfo *info;
+  GtkGstPlayStreamInfo *info;
 };
 
-struct _GstPlayerStreamInfoClass
+struct _GtkGstPlayerStreamInfoClass
 {
   GObjectClass parent_class;
 };
 
-struct _GstPlayerSubtitleInfo
+struct _GtkGstPlayerSubtitleInfo
 {
-  GstPlayerStreamInfo parent;
+  GtkGstPlayerStreamInfo parent;
 
-  GstPlaySubtitleInfo *info;
+  GtkGstPlaySubtitleInfo *info;
 };
 
-struct _GstPlayerSubtitleInfoClass
+struct _GtkGstPlayerSubtitleInfoClass
 {
-  GstPlayerStreamInfoClass parent_class;
+  GtkGstPlayerStreamInfoClass parent_class;
 };
 
-struct _GstPlayerAudioInfo
+struct _GtkGstPlayerAudioInfo
 {
-  GstPlayerStreamInfo parent;
+  GtkGstPlayerStreamInfo parent;
 
-  GstPlayAudioInfo *info;
+  GtkGstPlayAudioInfo *info;
 };
 
-struct _GstPlayerAudioInfoClass
+struct _GtkGstPlayerAudioInfoClass
 {
-  GstPlayerStreamInfoClass parent_class;
+  GtkGstPlayerStreamInfoClass parent_class;
 };
 
-struct _GstPlayerVideoInfo
+struct _GtkGstPlayerVideoInfo
 {
-  GstPlayerStreamInfo parent;
+  GtkGstPlayerStreamInfo parent;
 
-  GstPlayVideoInfo *info;
+  GtkGstPlayVideoInfo *info;
 };
 
-struct _GstPlayerVideoInfoClass
+struct _GtkGstPlayerVideoInfoClass
 {
-  GstPlayerStreamInfoClass parent_class;
+  GtkGstPlayerStreamInfoClass parent_class;
 };
 
-struct _GstPlayerMediaInfo
+struct _GtkGstPlayerMediaInfo
 {
   GObject parent;
 
@@ -82,32 +82,32 @@ struct _GstPlayerMediaInfo
   GList *audio_stream_list;
   GList *video_stream_list;
   GList *subtitle_stream_list;
-  GstPlayMediaInfo *info;
+  GtkGstPlayMediaInfo *info;
 };
 
-struct _GstPlayerMediaInfoClass
+struct _GtkGstPlayerMediaInfoClass
 {
   GObjectClass parent_class;
 };
 
-G_GNUC_INTERNAL GstPlayerMediaInfo*   gst_player_media_info_new
+G_GNUC_INTERNAL GtkGstPlayerMediaInfo*   gtk_gst_player_media_info_new
                                       (void);
-G_GNUC_INTERNAL GstPlayerMediaInfo*   gst_player_media_info_copy
-                                      (GstPlayerMediaInfo *ref);
-G_GNUC_INTERNAL GstPlayerStreamInfo*  gst_player_stream_info_new
+G_GNUC_INTERNAL GtkGstPlayerMediaInfo*   gtk_gst_player_media_info_copy
+                                      (GtkGstPlayerMediaInfo *ref);
+G_GNUC_INTERNAL GtkGstPlayerStreamInfo*  gtk_gst_player_stream_info_new
                                       (gint stream_index, GType type);
-G_GNUC_INTERNAL GstPlayerStreamInfo*  gst_player_stream_info_wrapped
-                                      (GstPlayStreamInfo * info);
-G_GNUC_INTERNAL GstPlayerStreamInfo*  gst_player_stream_info_copy
-                                      (GstPlayerStreamInfo *ref);
+G_GNUC_INTERNAL GtkGstPlayerStreamInfo*  gtk_gst_player_stream_info_wrapped
+                                      (GtkGstPlayStreamInfo * info);
+G_GNUC_INTERNAL GtkGstPlayerStreamInfo*  gtk_gst_player_stream_info_copy
+                                      (GtkGstPlayerStreamInfo *ref);
 
-G_GNUC_INTERNAL GstPlayerMediaInfo*   gst_player_media_info_wrapped
-                                      (GstPlayMediaInfo *info);
-G_GNUC_INTERNAL GstPlayerAudioInfo*   gst_player_audio_info_wrapped
-                                      (GstPlayAudioInfo *info);
-G_GNUC_INTERNAL GstPlayerVideoInfo*   gst_player_video_info_wrapped
-                                      (GstPlayVideoInfo *info);
-G_GNUC_INTERNAL GstPlayerSubtitleInfo*  gst_player_subtitle_info_wrapped
-                                        (GstPlaySubtitleInfo *info);
+G_GNUC_INTERNAL GtkGstPlayerMediaInfo*   gtk_gst_player_media_info_wrapped
+                                      (GtkGstPlayMediaInfo *info);
+G_GNUC_INTERNAL GtkGstPlayerAudioInfo*   gtk_gst_player_audio_info_wrapped
+                                      (GtkGstPlayAudioInfo *info);
+G_GNUC_INTERNAL GtkGstPlayerVideoInfo*   gtk_gst_player_video_info_wrapped
+                                      (GtkGstPlayVideoInfo *info);
+G_GNUC_INTERNAL GtkGstPlayerSubtitleInfo*  gtk_gst_player_subtitle_info_wrapped
+                                        (GtkGstPlaySubtitleInfo *info);
 
-#endif /* __GST_PLAYER_MEDIA_INFO_PRIVATE_H__ */
+#endif /* __GTK_GST_PLAYER_MEDIA_INFO_PRIVATE_H__ */

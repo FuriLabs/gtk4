@@ -18,16 +18,16 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAY_VIDEO_RENDERER_PRIVATE_H__
-#define __GST_PLAY_VIDEO_RENDERER_PRIVATE_H__
+#ifndef __GTL_GST_PLAY_VIDEO_RENDERER_PRIVATE_H__
+#define __GTL_GST_PLAY_VIDEO_RENDERER_PRIVATE_H__
 
 #include <gst/play/gstplay-video-renderer.h>
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL GstElement * gst_play_video_renderer_create_video_sink (GstPlayVideoRenderer *
-    self, GstPlay * play);
+G_GNUC_INTERNAL GstElement * gtk_gst_play_video_renderer_create_video_sink (GtkGstPlayVideoRenderer *
+    self, GtkGstPlay * play);
 
 G_END_DECLS
 
-#endif /* __GST_PLAY_VIDEO_RENDERER_PRIVATE_H__ */
+#endif /* __GTL_GST_PLAY_VIDEO_RENDERER_PRIVATE_H__ */

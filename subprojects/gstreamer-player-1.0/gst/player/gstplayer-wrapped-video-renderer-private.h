@@ -18,32 +18,32 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAYER_WRAPPED_VIDEO_RENDERER_H__
-#define __GST_PLAYER_WRAPPED_VIDEO_RENDERER_H__
+#ifndef __GTK_GST_PLAYER_WRAPPED_VIDEO_RENDERER_H__
+#define __GTK_GST_PLAYER_WRAPPED_VIDEO_RENDERER_H__
 
 #include <gst/player/gstplayer-types.h>
 #include <gst/player/gstplayer-video-renderer.h>
 
 G_BEGIN_DECLS
 
-typedef struct _GstPlayerWrappedVideoRenderer
-    GstPlayerWrappedVideoRenderer;
-typedef struct _GstPlayerWrappedVideoRendererClass
-    GstPlayerWrappedVideoRendererClass;
+typedef struct _GtkGstPlayerWrappedVideoRenderer
+    GtkGstPlayerWrappedVideoRenderer;
+typedef struct _GtkGstPlayerWrappedVideoRendererClass
+    GtkGstPlayerWrappedVideoRendererClass;
 
-#define GST_TYPE_PLAYER_WRAPPED_VIDEO_RENDERER             (gst_player_wrapped_video_renderer_get_type ())
+#define GST_TYPE_PLAYER_WRAPPED_VIDEO_RENDERER             (gtk_gst_player_wrapped_video_renderer_get_type ())
 #define GST_IS_PLAYER_WRAPPED_VIDEO_RENDERER(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_PLAYER_WRAPPED_VIDEO_RENDERER))
 #define GST_IS_PLAYER_WRAPPED_VIDEO_RENDERER_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_PLAYER_WRAPPED_VIDEO_RENDERER))
-#define GST_PLAYER_WRAPPED_VIDEO_RENDERER_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_PLAYER_WRAPPED_VIDEO_RENDERER, GstPlayerWrappedVideoRendererClass))
-#define GST_PLAYER_WRAPPED_VIDEO_RENDERER(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PLAYER_WRAPPED_VIDEO_RENDERER, GstPlayerWrappedVideoRenderer))
-#define GST_PLAYER_WRAPPED_VIDEO_RENDERER_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_PLAYER_WRAPPED_VIDEO_RENDERER, GstPlayerWrappedVideoRendererClass))
-#define GST_PLAYER_WRAPPED_VIDEO_RENDERER_CAST(obj)        ((GstPlayerWrappedVideoRenderer*)(obj))
+#define GTK_GST_PLAYER_WRAPPED_VIDEO_RENDERER_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_PLAYER_WRAPPED_VIDEO_RENDERER, GtkGstPlayerWrappedVideoRendererClass))
+#define GTK_GST_PLAYER_WRAPPED_VIDEO_RENDERER(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PLAYER_WRAPPED_VIDEO_RENDERER, GtkGstPlayerWrappedVideoRenderer))
+#define GTK_GST_PLAYER_WRAPPED_VIDEO_RENDERER_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_PLAYER_WRAPPED_VIDEO_RENDERER, GtkGstPlayerWrappedVideoRendererClass))
+#define GTK_GST_PLAYER_WRAPPED_VIDEO_RENDERER_CAST(obj)        ((GtkGstPlayerWrappedVideoRenderer*)(obj))
 
-GType gst_player_wrapped_video_renderer_get_type (void);
+GType gtk_gst_player_wrapped_video_renderer_get_type (void);
 
-GstPlayerVideoRenderer * gst_player_wrapped_video_renderer_new (GstPlayerVideoRenderer * renderer, GstPlayer * player);
+GtkGstPlayerVideoRenderer * gtk_gst_player_wrapped_video_renderer_new (GtkGstPlayerVideoRenderer * renderer, GtkGstPlayer * player);
 
 
 G_END_DECLS
 
-#endif /* __GST_PLAYER_WRAPPED_VIDEO_RENDERER_H__ */
+#endif /* __GTK_GST_PLAYER_WRAPPED_VIDEO_RENDERER_H__ */

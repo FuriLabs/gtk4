@@ -19,21 +19,21 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAY_VISUALIZATION_H__
-#define __GST_PLAY_VISUALIZATION_H__
+#ifndef __GTL_GST_PLAY_VISUALIZATION_H__
+#define __GTL_GST_PLAY_VISUALIZATION_H__
 
 #include <gst/gst.h>
 #include <gst/play/play-prelude.h>
 
 G_BEGIN_DECLS
 
-typedef struct _GstPlayVisualization GstPlayVisualization;
+typedef struct _GstPlayVisualization GtkGstPlayVisualization;
 /**
- * GstPlayVisualization:
+ * GtkGstPlayVisualization:
  * @name: name of the visualization.
  * @description: description of the visualization.
  *
- * A #GstPlayVisualization descriptor.
+ * A #GtkGstPlayVisualization descriptor.
  * Since: 1.20
  */
 struct _GstPlayVisualization {
@@ -41,25 +41,25 @@ struct _GstPlayVisualization {
   gchar *description;
 };
 
-GST_PLAY_API
-GType                     gst_play_visualization_get_type (void);
+GTL_GST_PLAY_API
+GType                     gtk_gst_play_visualization_get_type (void);
 
-GST_PLAY_API
-GstPlayVisualization *  gst_play_visualization_copy  (const GstPlayVisualization *vis);
+GTL_GST_PLAY_API
+GtkGstPlayVisualization *  gtk_gst_play_visualization_copy  (const GtkGstPlayVisualization *vis);
 
-GST_PLAY_API
-void                      gst_play_visualization_free  (GstPlayVisualization *vis);
+GTL_GST_PLAY_API
+void                      gtk_gst_play_visualization_free  (GtkGstPlayVisualization *vis);
 
-GST_PLAY_API
-GstPlayVisualization ** gst_play_visualizations_get  (void);
+GTL_GST_PLAY_API
+GtkGstPlayVisualization ** gtk_gst_play_visualizations_get  (void);
 
-GST_PLAY_API
-void                      gst_play_visualizations_free (GstPlayVisualization **viss);
+GTL_GST_PLAY_API
+void                      gtk_gst_play_visualizations_free (GtkGstPlayVisualization **viss);
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GstPlayVisualization, gst_play_visualization_free)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkGstPlayVisualization, gtk_gst_play_visualization_free)
 #endif
 
 G_END_DECLS
 
-#endif /* __GST_PLAY_VISUALIZATION_H__ */
+#endif /* __GTL_GST_PLAY_VISUALIZATION_H__ */

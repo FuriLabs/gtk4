@@ -20,7 +20,7 @@
 
 /**
  * SECTION:gstplay-videooverlayvideorenderer
- * @title: GstPlayVideoOverlayVideoRenderer
+ * @title: GtkGstPlayVideoOverlayVideoRenderer
  * @short_description: Play Video Overlay Video Renderer
  *
  */
@@ -51,8 +51,8 @@ struct _GstPlayVideoOverlayVideoRendererClass
 };
 
 static void
-    gst_play_video_overlay_video_renderer_interface_init
-    (GstPlayVideoRendererInterface * iface);
+    gtk_gst_play_video_overlay_video_renderer_interface_init
+    (GtkGstPlayVideoRendererInterface * iface);
 
 enum
 {
@@ -62,21 +62,21 @@ enum
   VIDEO_OVERLAY_VIDEO_RENDERER_PROP_LAST
 };
 
-G_DEFINE_TYPE_WITH_CODE (GstPlayVideoOverlayVideoRenderer,
-    gst_play_video_overlay_video_renderer, G_TYPE_OBJECT,
+G_DEFINE_TYPE_WITH_CODE (GtkGstPlayVideoOverlayVideoRenderer,
+    gtk_gst_play_video_overlay_video_renderer, G_TYPE_OBJECT,
     G_IMPLEMENT_INTERFACE (GST_TYPE_PLAY_VIDEO_RENDERER,
-        gst_play_video_overlay_video_renderer_interface_init));
+        gtk_gst_play_video_overlay_video_renderer_interface_init));
 
 static GParamSpec
     * video_overlay_video_renderer_param_specs
     [VIDEO_OVERLAY_VIDEO_RENDERER_PROP_LAST] = { NULL, };
 
 static void
-gst_play_video_overlay_video_renderer_set_property (GObject * object,
+gtk_gst_play_video_overlay_video_renderer_set_property (GObject * object,
     guint prop_id, const GValue * value, GParamSpec * pspec)
 {
-  GstPlayVideoOverlayVideoRenderer *self =
-      GST_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (object);
+  GtkGstPlayVideoOverlayVideoRenderer *self =
+      GTL_GST_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (object);
 
   switch (prop_id) {
     case VIDEO_OVERLAY_VIDEO_RENDERER_PROP_WINDOW_HANDLE:
@@ -95,11 +95,11 @@ gst_play_video_overlay_video_renderer_set_property (GObject * object,
 }
 
 static void
-gst_play_video_overlay_video_renderer_get_property (GObject * object,
+gtk_gst_play_video_overlay_video_renderer_get_property (GObject * object,
     guint prop_id, GValue * value, GParamSpec * pspec)
 {
-  GstPlayVideoOverlayVideoRenderer *self =
-      GST_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (object);
+  GtkGstPlayVideoOverlayVideoRenderer *self =
+      GTL_GST_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (object);
 
   switch (prop_id) {
     case VIDEO_OVERLAY_VIDEO_RENDERER_PROP_WINDOW_HANDLE:
@@ -115,10 +115,10 @@ gst_play_video_overlay_video_renderer_get_property (GObject * object,
 }
 
 static void
-gst_play_video_overlay_video_renderer_finalize (GObject * object)
+gtk_gst_play_video_overlay_video_renderer_finalize (GObject * object)
 {
-  GstPlayVideoOverlayVideoRenderer *self =
-      GST_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (object);
+  GtkGstPlayVideoOverlayVideoRenderer *self =
+      GTL_GST_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (object);
 
   if (self->video_overlay)
     gst_object_unref (self->video_overlay);
@@ -127,20 +127,20 @@ gst_play_video_overlay_video_renderer_finalize (GObject * object)
     gst_object_unref (self->video_sink);
 
   G_OBJECT_CLASS
-      (gst_play_video_overlay_video_renderer_parent_class)->finalize (object);
+      (gtk_gst_play_video_overlay_video_renderer_parent_class)->finalize (object);
 }
 
 static void
-    gst_play_video_overlay_video_renderer_class_init
-    (GstPlayVideoOverlayVideoRendererClass * klass)
+    gtk_gst_play_video_overlay_video_renderer_class_init
+    (GtkGstPlayVideoOverlayVideoRendererClass * klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
   gobject_class->set_property =
-      gst_play_video_overlay_video_renderer_set_property;
+      gtk_gst_play_video_overlay_video_renderer_set_property;
   gobject_class->get_property =
-      gst_play_video_overlay_video_renderer_get_property;
-  gobject_class->finalize = gst_play_video_overlay_video_renderer_finalize;
+      gtk_gst_play_video_overlay_video_renderer_get_property;
+  gobject_class->finalize = gtk_gst_play_video_overlay_video_renderer_finalize;
 
   video_overlay_video_renderer_param_specs
       [VIDEO_OVERLAY_VIDEO_RENDERER_PROP_WINDOW_HANDLE] =
@@ -160,24 +160,24 @@ static void
 }
 
 static void
-    gst_play_video_overlay_video_renderer_init
-    (GstPlayVideoOverlayVideoRenderer * self)
+    gtk_gst_play_video_overlay_video_renderer_init
+    (GtkGstPlayVideoOverlayVideoRenderer * self)
 {
   self->x = self->y = self->width = self->height = -1;
   self->video_sink = NULL;
 }
 
-static GstElement *gst_play_video_overlay_video_renderer_create_video_sink
-    (GstPlayVideoRenderer * iface, GstPlay * play)
+static GstElement *gtk_gst_play_video_overlay_video_renderer_create_video_sink
+    (GtkGstPlayVideoRenderer * iface, GtkGstPlay * play)
 {
   GstElement *video_overlay;
-  GstPlayVideoOverlayVideoRenderer *self =
-      GST_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (iface);
+  GtkGstPlayVideoOverlayVideoRenderer *self =
+      GTL_GST_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (iface);
 
   if (self->video_overlay)
     gst_object_unref (self->video_overlay);
 
-  video_overlay = gst_play_get_pipeline (play);
+  video_overlay = gtk_gst_play_get_pipeline (play);
   g_return_val_if_fail (GST_IS_VIDEO_OVERLAY (video_overlay), NULL);
 
   self->video_overlay = GST_VIDEO_OVERLAY (video_overlay);
@@ -192,29 +192,29 @@ static GstElement *gst_play_video_overlay_video_renderer_create_video_sink
 }
 
 static void
-    gst_play_video_overlay_video_renderer_interface_init
-    (GstPlayVideoRendererInterface * iface)
+    gtk_gst_play_video_overlay_video_renderer_interface_init
+    (GtkGstPlayVideoRendererInterface * iface)
 {
   iface->create_video_sink =
-      gst_play_video_overlay_video_renderer_create_video_sink;
+      gtk_gst_play_video_overlay_video_renderer_create_video_sink;
 }
 
 /**
- * gst_play_video_overlay_video_renderer_new:
+ * gtk_gst_play_video_overlay_video_renderer_new:
  * @window_handle: (allow-none): Window handle to use or %NULL
  *
  * Returns: (transfer full):
  * Since: 1.20
  */
-GstPlayVideoRenderer *
-gst_play_video_overlay_video_renderer_new (gpointer window_handle)
+GtkGstPlayVideoRenderer *
+gtk_gst_play_video_overlay_video_renderer_new (gpointer window_handle)
 {
   return g_object_new (GST_TYPE_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER,
       "window-handle", window_handle, NULL);
 }
 
 /**
- * gst_play_video_overlay_video_renderer_new_with_sink:
+ * gtk_gst_play_video_overlay_video_renderer_new_with_sink:
  * @window_handle: (allow-none): Window handle to use or %NULL
  * @video_sink: (transfer floating): the custom video_sink element to be set for the video renderer
  *
@@ -222,8 +222,8 @@ gst_play_video_overlay_video_renderer_new (gpointer window_handle)
  *
  * Since: 1.20
  */
-GstPlayVideoRenderer *
-gst_play_video_overlay_video_renderer_new_with_sink (gpointer window_handle,
+GtkGstPlayVideoRenderer *
+gtk_gst_play_video_overlay_video_renderer_new_with_sink (gpointer window_handle,
     GstElement * video_sink)
 {
   return g_object_new (GST_TYPE_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER,
@@ -231,16 +231,16 @@ gst_play_video_overlay_video_renderer_new_with_sink (gpointer window_handle,
 }
 
 /**
- * gst_play_video_overlay_video_renderer_set_window_handle:
- * @self: #GstPlayVideoRenderer instance
+ * gtk_gst_play_video_overlay_video_renderer_set_window_handle:
+ * @self: #GtkGstPlayVideoRenderer instance
  * @window_handle: handle referencing to the platform specific window
  *
  * Sets the platform specific window handle into which the video
  * should be rendered
  * Since: 1.20
  **/
-void gst_play_video_overlay_video_renderer_set_window_handle
-    (GstPlayVideoOverlayVideoRenderer * self, gpointer window_handle)
+void gtk_gst_play_video_overlay_video_renderer_set_window_handle
+    (GtkGstPlayVideoOverlayVideoRenderer * self, gpointer window_handle)
 {
   g_return_if_fail (GST_IS_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (self));
 
@@ -248,16 +248,16 @@ void gst_play_video_overlay_video_renderer_set_window_handle
 }
 
 /**
- * gst_play_video_overlay_video_renderer_get_window_handle:
- * @self: #GstPlayVideoRenderer instance
+ * gtk_gst_play_video_overlay_video_renderer_get_window_handle:
+ * @self: #GtkGstPlayVideoRenderer instance
  *
  * Returns: (transfer none): The currently set, platform specific window
  * handle
  * Since: 1.20
  */
 gpointer
-    gst_play_video_overlay_video_renderer_get_window_handle
-    (GstPlayVideoOverlayVideoRenderer * self) {
+    gtk_gst_play_video_overlay_video_renderer_get_window_handle
+    (GtkGstPlayVideoOverlayVideoRenderer * self) {
   gpointer window_handle;
 
   g_return_val_if_fail (GST_IS_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (self), NULL);
@@ -268,15 +268,15 @@ gpointer
 }
 
 /**
- * gst_play_video_overlay_video_renderer_expose:
- * @self: a #GstPlayVideoOverlayVideoRenderer instance.
+ * gtk_gst_play_video_overlay_video_renderer_expose:
+ * @self: a #GtkGstPlayVideoOverlayVideoRenderer instance.
  *
  * Tell an overlay that it has been exposed. This will redraw the current frame
  * in the drawable even if the pipeline is PAUSED.
  * Since: 1.20
  */
-void gst_play_video_overlay_video_renderer_expose
-    (GstPlayVideoOverlayVideoRenderer * self)
+void gtk_gst_play_video_overlay_video_renderer_expose
+    (GtkGstPlayVideoOverlayVideoRenderer * self)
 {
   g_return_if_fail (GST_IS_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (self));
 
@@ -285,19 +285,19 @@ void gst_play_video_overlay_video_renderer_expose
 }
 
 /**
- * gst_play_video_overlay_video_renderer_set_render_rectangle:
- * @self: a #GstPlayVideoOverlayVideoRenderer instance
+ * gtk_gst_play_video_overlay_video_renderer_set_render_rectangle:
+ * @self: a #GtkGstPlayVideoOverlayVideoRenderer instance
  * @x: the horizontal offset of the render area inside the window
  * @y: the vertical offset of the render area inside the window
  * @width: the width of the render area inside the window
  * @height: the height of the render area inside the window
  *
  * Configure a subregion as a video target within the window set by
- * gst_play_video_overlay_video_renderer_set_window_handle(). If this is not
+ * gtk_gst_play_video_overlay_video_renderer_set_window_handle(). If this is not
  * used or not supported the video will fill the area of the window set as the
  * overlay to 100%. By specifying the rectangle, the video can be overlaid to
  * a specific region of that window only. After setting the new rectangle one
- * should call gst_play_video_overlay_video_renderer_expose() to force a
+ * should call gtk_gst_play_video_overlay_video_renderer_expose() to force a
  * redraw. To unset the region pass -1 for the @width and @height parameters.
  *
  * This method is needed for non fullscreen video overlay in UI toolkits that
@@ -305,8 +305,8 @@ void gst_play_video_overlay_video_renderer_expose
  *
  * Since: 1.20
  */
-void gst_play_video_overlay_video_renderer_set_render_rectangle
-    (GstPlayVideoOverlayVideoRenderer * self, gint x, gint y, gint width,
+void gtk_gst_play_video_overlay_video_renderer_set_render_rectangle
+    (GtkGstPlayVideoOverlayVideoRenderer * self, gint x, gint y, gint width,
     gint height)
 {
   g_return_if_fail (GST_IS_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (self));
@@ -322,20 +322,20 @@ void gst_play_video_overlay_video_renderer_set_render_rectangle
 }
 
 /**
- * gst_play_video_overlay_video_renderer_get_render_rectangle:
- * @self: a #GstPlayVideoOverlayVideoRenderer instance
+ * gtk_gst_play_video_overlay_video_renderer_get_render_rectangle:
+ * @self: a #GtkGstPlayVideoOverlayVideoRenderer instance
  * @x: (out) (allow-none): the horizontal offset of the render area inside the window
  * @y: (out) (allow-none): the vertical offset of the render area inside the window
  * @width: (out) (allow-none): the width of the render area inside the window
  * @height: (out) (allow-none): the height of the render area inside the window
  *
- * Return the currently configured render rectangle. See gst_play_video_overlay_video_renderer_set_render_rectangle()
+ * Return the currently configured render rectangle. See gtk_gst_play_video_overlay_video_renderer_set_render_rectangle()
  * for details.
  *
  * Since: 1.20
  */
-void gst_play_video_overlay_video_renderer_get_render_rectangle
-    (GstPlayVideoOverlayVideoRenderer * self, gint * x, gint * y,
+void gtk_gst_play_video_overlay_video_renderer_get_render_rectangle
+    (GtkGstPlayVideoOverlayVideoRenderer * self, gint * x, gint * y,
     gint * width, gint * height)
 {
   g_return_if_fail (GST_IS_PLAY_VIDEO_OVERLAY_VIDEO_RENDERER (self));

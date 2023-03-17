@@ -29,7 +29,7 @@ struct _GtkGstMediaFile
 {
   GtkMediaFile parent_instance;
 
-  GstPlayer *player;
+  GtkGstPlayer *player;
   GdkPaintable *paintable;
 };
 
@@ -132,20 +132,20 @@ g_io_module_query (void)
 static void
 gtk_gst_media_file_ensure_prepared (GtkGstMediaFile *self)
 {
-  GstPlayerMediaInfo *media_info;
+  GtkGstPlayerMediaInfo *media_info;
 
   if (gtk_media_stream_is_prepared (GTK_MEDIA_STREAM (self)))
     return;
 
-  media_info = gst_player_get_media_info (self->player);
+  media_info = gtk_gst_player_get_media_info (self->player);
   if (media_info)
     {
-      GstClockTime duration = gst_player_media_info_get_duration (media_info);
+      GstClockTime duration = gtk_gst_player_media_info_get_duration (media_info);
 
       gtk_media_stream_stream_prepared (GTK_MEDIA_STREAM (self),
-                                        gst_player_media_info_get_audio_streams (media_info) != NULL,
-                                        gst_player_media_info_get_video_streams (media_info) != NULL,
-                                        gst_player_media_info_is_seekable (media_info),
+                                        gtk_gst_player_media_info_get_audio_streams (media_info) != NULL,
+                                        gtk_gst_player_media_info_get_video_streams (media_info) != NULL,
+                                        gtk_gst_player_media_info_is_seekable (media_info),
                                         duration == GST_CLOCK_TIME_NONE ? 0 : FROM_GST_TIME (duration));
 
       g_object_unref (media_info);
@@ -166,7 +166,7 @@ gtk_gst_media_file_ensure_prepared (GtkGstMediaFile *self)
 }
 
 static void
-gtk_gst_media_file_position_updated_cb (GstPlayer       *player,
+gtk_gst_media_file_position_updated_cb (GtkGstPlayer       *player,
                                         GstClockTime     time,
                                         GtkGstMediaFile *self)
 {
@@ -176,16 +176,16 @@ gtk_gst_media_file_position_updated_cb (GstPlayer       *player,
 }
 
 static void
-gtk_gst_media_file_media_info_updated_cb (GstPlayer          *player,
-                                          GstPlayerMediaInfo *media_info,
+gtk_gst_media_file_media_info_updated_cb (GtkGstPlayer          *player,
+                                          GtkGstPlayerMediaInfo *media_info,
                                           GtkGstMediaFile    *self)
 {
   /* clock_time == 0: https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad/-/issues/1588
-   * GstPlayer's first media-info-updated comes with 0 duration
+   * GtkGstPlayer's first media-info-updated comes with 0 duration
    *
    * clock_time == -1: Seen on loading an audio-only ogg
    */
-  GstClockTime clock_time = gst_player_media_info_get_duration (media_info);
+  GstClockTime clock_time = gtk_gst_player_media_info_get_duration (media_info);
   if (clock_time == 0 || clock_time == -1)
     return;
 
@@ -193,7 +193,7 @@ gtk_gst_media_file_media_info_updated_cb (GstPlayer          *player,
 }
 
 static void
-gtk_gst_media_file_seek_done_cb (GstPlayer       *player,
+gtk_gst_media_file_seek_done_cb (GtkGstPlayer       *player,
                                  GstClockTime     time,
                                  GtkGstMediaFile *self)
 {
@@ -204,7 +204,7 @@ gtk_gst_media_file_seek_done_cb (GstPlayer       *player,
 }
 
 static void
-gtk_gst_media_file_error_cb (GstPlayer       *player,
+gtk_gst_media_file_error_cb (GtkGstPlayer       *player,
                              GError          *error,
                              GtkGstMediaFile *self)
 {
@@ -216,7 +216,7 @@ gtk_gst_media_file_error_cb (GstPlayer       *player,
 }
 
 static void
-gtk_gst_media_file_end_of_stream_cb (GstPlayer       *player,
+gtk_gst_media_file_end_of_stream_cb (GtkGstPlayer       *player,
                                      GtkGstMediaFile *self)
 {
   gtk_gst_media_file_ensure_prepared (self);
@@ -226,7 +226,7 @@ gtk_gst_media_file_end_of_stream_cb (GstPlayer       *player,
 
   if (gtk_media_stream_get_loop (GTK_MEDIA_STREAM (self)))
     {
-      gst_player_seek (self->player, 0);
+      gtk_gst_player_seek (self->player, 0);
       return;
     }
 
@@ -256,8 +256,8 @@ gtk_gst_media_file_create_player (GtkGstMediaFile *file)
   if (self->player != NULL)
     return;
 
-  self->player = gst_player_new (GST_PLAYER_VIDEO_RENDERER (g_object_ref (self->paintable)),
-                                 gst_player_g_main_context_signal_dispatcher_new (NULL));
+  self->player = gtk_gst_player_new (GTK_GST_PLAYER_VIDEO_RENDERER (g_object_ref (self->paintable)),
+                                 gtk_gst_player_g_main_context_signal_dispatcher_new (NULL));
   g_signal_connect (self->player, "media-info-updated", G_CALLBACK (gtk_gst_media_file_media_info_updated_cb), self);
   g_signal_connect (self->player, "position-updated", G_CALLBACK (gtk_gst_media_file_position_updated_cb), self);
   g_signal_connect (self->player, "end-of-stream", G_CALLBACK (gtk_gst_media_file_end_of_stream_cb), self);
@@ -280,7 +280,7 @@ gtk_gst_media_file_open (GtkMediaFile *media_file)
       /* XXX: This is technically incorrect because GFile uris aren't real uris */
       char *uri = g_file_get_uri (file);
 
-      gst_player_set_uri (self->player, uri);
+      gtk_gst_player_set_uri (self->player, uri);
 
       g_free (uri);
     }
@@ -290,7 +290,7 @@ gtk_gst_media_file_open (GtkMediaFile *media_file)
       g_assert_not_reached ();
     }
 
-  gst_player_pause (self->player);
+  gtk_gst_player_pause (self->player);
 }
 
 static void
@@ -309,7 +309,7 @@ gtk_gst_media_file_play (GtkMediaStream *stream)
   if (self->player == NULL)
     return FALSE;
 
-  gst_player_play (self->player);
+  gtk_gst_player_play (self->player);
 
   return TRUE;
 }
@@ -319,7 +319,7 @@ gtk_gst_media_file_pause (GtkMediaStream *stream)
 {
   GtkGstMediaFile *self = GTK_GST_MEDIA_FILE (stream);
 
-  gst_player_pause (self->player);
+  gtk_gst_player_pause (self->player);
 }
 
 static void
@@ -328,7 +328,7 @@ gtk_gst_media_file_seek (GtkMediaStream *stream,
 {
   GtkGstMediaFile *self = GTK_GST_MEDIA_FILE (stream);
 
-  gst_player_seek (self->player, TO_GST_TIME (timestamp));
+  gtk_gst_player_seek (self->player, TO_GST_TIME (timestamp));
 }
 
 static void
@@ -338,8 +338,8 @@ gtk_gst_media_file_update_audio (GtkMediaStream *stream,
 {
   GtkGstMediaFile *self = GTK_GST_MEDIA_FILE (stream);
 
-  gst_player_set_mute (self->player, muted);
-  gst_player_set_volume (self->player, volume * volume * volume);
+  gtk_gst_player_set_mute (self->player, muted);
+  gtk_gst_player_set_volume (self->player, volume * volume * volume);
 }
 
 static void

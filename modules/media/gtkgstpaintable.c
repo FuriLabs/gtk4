@@ -128,8 +128,8 @@ gtk_gst_paintable_paintable_init (GdkPaintableInterface *iface)
 }
 
 static GstElement *
-gtk_gst_paintable_video_renderer_create_video_sink (GstPlayerVideoRenderer *renderer,
-                                                    GstPlayer              *player)
+gtk_gst_paintable_video_renderer_create_video_sink (GtkGstPlayerVideoRenderer *renderer,
+                                                    GtkGstPlayer              *player)
 {
   GtkGstPaintable *self = GTK_GST_PAINTABLE (renderer);
   GstElement *sink;
@@ -172,7 +172,7 @@ gtk_gst_paintable_video_renderer_create_video_sink (GstPlayerVideoRenderer *rend
 }
 
 static void
-gtk_gst_paintable_video_renderer_init (GstPlayerVideoRendererInterface *iface)
+gtk_gst_paintable_video_renderer_init (GtkGstPlayerVideoRendererInterface *iface)
 {
   iface->create_video_sink = gtk_gst_paintable_video_renderer_create_video_sink;
 }
@@ -187,7 +187,7 @@ static void
 gtk_gst_paintable_dispose (GObject *object)
 {
   GtkGstPaintable *self = GTK_GST_PAINTABLE (object);
-  
+
   g_clear_object (&self->image);
 
   G_OBJECT_CLASS (gtk_gst_paintable_parent_class)->dispose (object);

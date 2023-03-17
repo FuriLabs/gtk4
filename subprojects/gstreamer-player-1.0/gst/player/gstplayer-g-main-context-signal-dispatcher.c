@@ -20,7 +20,7 @@
 
 /**
  * SECTION:gstplayer-gmaincontextsignaldispatcher
- * @title: GstPlayerGMainContextSignalDispatcher
+ * @title: GtkGstPlayerGMainContextSignalDispatcher
  * @short_description: Player GLib MainContext dispatcher
  *
  */
@@ -31,20 +31,20 @@
 
 #include "gstplayer-g-main-context-signal-dispatcher.h"
 
-struct _GstPlayerGMainContextSignalDispatcher
+struct _GtkGstPlayerGMainContextSignalDispatcher
 {
   GObject parent;
   GMainContext *application_context;
 };
 
-struct _GstPlayerGMainContextSignalDispatcherClass
+struct _GtkGstPlayerGMainContextSignalDispatcherClass
 {
   GObjectClass parent_class;
 };
 
 static void
-    gst_player_g_main_context_signal_dispatcher_interface_init
-    (GstPlayerSignalDispatcherInterface * iface);
+    gtk_gst_player_g_main_context_signal_dispatcher_interface_init
+    (GtkGstPlayerSignalDispatcherInterface * iface);
 
 enum
 {
@@ -53,35 +53,35 @@ enum
   G_MAIN_CONTEXT_SIGNAL_DISPATCHER_PROP_LAST
 };
 
-G_DEFINE_TYPE_WITH_CODE (GstPlayerGMainContextSignalDispatcher,
-    gst_player_g_main_context_signal_dispatcher, G_TYPE_OBJECT,
+G_DEFINE_TYPE_WITH_CODE (GtkGstPlayerGMainContextSignalDispatcher,
+    gtk_gst_player_g_main_context_signal_dispatcher, G_TYPE_OBJECT,
     G_IMPLEMENT_INTERFACE (GST_TYPE_PLAYER_SIGNAL_DISPATCHER,
-        gst_player_g_main_context_signal_dispatcher_interface_init));
+        gtk_gst_player_g_main_context_signal_dispatcher_interface_init));
 
 static GParamSpec
     * g_main_context_signal_dispatcher_param_specs
     [G_MAIN_CONTEXT_SIGNAL_DISPATCHER_PROP_LAST] = { NULL, };
 
 static void
-gst_player_g_main_context_signal_dispatcher_finalize (GObject * object)
+gtk_gst_player_g_main_context_signal_dispatcher_finalize (GObject * object)
 {
-  GstPlayerGMainContextSignalDispatcher *self =
-      GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER (object);
+  GtkGstPlayerGMainContextSignalDispatcher *self =
+      GTK_GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER (object);
 
   if (self->application_context)
     g_main_context_unref (self->application_context);
 
   G_OBJECT_CLASS
-      (gst_player_g_main_context_signal_dispatcher_parent_class)->finalize
+      (gtk_gst_player_g_main_context_signal_dispatcher_parent_class)->finalize
       (object);
 }
 
 static void
-gst_player_g_main_context_signal_dispatcher_set_property (GObject * object,
+gtk_gst_player_g_main_context_signal_dispatcher_set_property (GObject * object,
     guint prop_id, const GValue * value, GParamSpec * pspec)
 {
-  GstPlayerGMainContextSignalDispatcher *self =
-      GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER (object);
+  GtkGstPlayerGMainContextSignalDispatcher *self =
+      GTK_GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER (object);
 
   switch (prop_id) {
     case G_MAIN_CONTEXT_SIGNAL_DISPATCHER_PROP_APPLICATION_CONTEXT:
@@ -96,11 +96,11 @@ gst_player_g_main_context_signal_dispatcher_set_property (GObject * object,
 }
 
 static void
-gst_player_g_main_context_signal_dispatcher_get_property (GObject * object,
+gtk_gst_player_g_main_context_signal_dispatcher_get_property (GObject * object,
     guint prop_id, GValue * value, GParamSpec * pspec)
 {
-  GstPlayerGMainContextSignalDispatcher *self =
-      GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER (object);
+  GtkGstPlayerGMainContextSignalDispatcher *self =
+      GTK_GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER (object);
 
   switch (prop_id) {
     case G_MAIN_CONTEXT_SIGNAL_DISPATCHER_PROP_APPLICATION_CONTEXT:
@@ -113,17 +113,17 @@ gst_player_g_main_context_signal_dispatcher_get_property (GObject * object,
 }
 
 static void
-    gst_player_g_main_context_signal_dispatcher_class_init
-    (GstPlayerGMainContextSignalDispatcherClass * klass)
+    gtk_gst_player_g_main_context_signal_dispatcher_class_init
+    (GtkGstPlayerGMainContextSignalDispatcherClass * klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
   gobject_class->finalize =
-      gst_player_g_main_context_signal_dispatcher_finalize;
+      gtk_gst_player_g_main_context_signal_dispatcher_finalize;
   gobject_class->set_property =
-      gst_player_g_main_context_signal_dispatcher_set_property;
+      gtk_gst_player_g_main_context_signal_dispatcher_set_property;
   gobject_class->get_property =
-      gst_player_g_main_context_signal_dispatcher_get_property;
+      gtk_gst_player_g_main_context_signal_dispatcher_get_property;
 
   g_main_context_signal_dispatcher_param_specs
       [G_MAIN_CONTEXT_SIGNAL_DISPATCHER_PROP_APPLICATION_CONTEXT] =
@@ -137,8 +137,8 @@ static void
 }
 
 static void
-    gst_player_g_main_context_signal_dispatcher_init
-    (G_GNUC_UNUSED GstPlayerGMainContextSignalDispatcher * self)
+    gtk_gst_player_g_main_context_signal_dispatcher_init
+    (G_GNUC_UNUSED GtkGstPlayerGMainContextSignalDispatcher * self)
 {
 }
 
@@ -170,12 +170,12 @@ g_main_context_signal_dispatcher_dispatch_destroy (gpointer user_data)
 }
 
 static void
-gst_player_g_main_context_signal_dispatcher_dispatch (GstPlayerSignalDispatcher
-    * iface, G_GNUC_UNUSED GstPlayer * player, void (*emitter) (gpointer data),
+gtk_gst_player_g_main_context_signal_dispatcher_dispatch (GtkGstPlayerSignalDispatcher
+    * iface, G_GNUC_UNUSED GtkGstPlayer * player, void (*emitter) (gpointer data),
     gpointer data, GDestroyNotify destroy)
 {
-  GstPlayerGMainContextSignalDispatcher *self =
-      GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER (iface);
+  GtkGstPlayerGMainContextSignalDispatcher *self =
+      GTK_GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER (iface);
   GMainContextSignalDispatcherData *gsourcefunc_data =
       g_new (GMainContextSignalDispatcherData, 1);
 
@@ -189,23 +189,23 @@ gst_player_g_main_context_signal_dispatcher_dispatch (GstPlayerSignalDispatcher
 }
 
 static void
-    gst_player_g_main_context_signal_dispatcher_interface_init
-    (GstPlayerSignalDispatcherInterface * iface)
+    gtk_gst_player_g_main_context_signal_dispatcher_interface_init
+    (GtkGstPlayerSignalDispatcherInterface * iface)
 {
-  iface->dispatch = gst_player_g_main_context_signal_dispatcher_dispatch;
+  iface->dispatch = gtk_gst_player_g_main_context_signal_dispatcher_dispatch;
 }
 
 /**
- * gst_player_g_main_context_signal_dispatcher_new:
+ * gtk_gst_player_g_main_context_signal_dispatcher_new:
  * @application_context: (allow-none): GMainContext to use or %NULL
  *
- * Creates a new GstPlayerSignalDispatcher that uses @application_context,
- * or the thread default one if %NULL is used. See gst_player_new().
+ * Creates a new GtkGstPlayerSignalDispatcher that uses @application_context,
+ * or the thread default one if %NULL is used. See gtk_gst_player_new().
  *
- * Returns: (transfer full): the new GstPlayerSignalDispatcher
+ * Returns: (transfer full): the new GtkGstPlayerSignalDispatcher
  */
-GstPlayerSignalDispatcher *
-gst_player_g_main_context_signal_dispatcher_new (GMainContext *
+GtkGstPlayerSignalDispatcher *
+gtk_gst_player_g_main_context_signal_dispatcher_new (GMainContext *
     application_context)
 {
   return g_object_new (GST_TYPE_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER,

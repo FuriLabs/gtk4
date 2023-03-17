@@ -18,8 +18,8 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAY_TYPES_H__
-#define __GST_PLAY_TYPES_H__
+#ifndef __GTL_GST_PLAY_TYPES_H__
+#define __GTL_GST_PLAY_TYPES_H__
 
 #include <gst/gst.h>
 #include <gst/play/play-prelude.h>
@@ -27,21 +27,21 @@
 G_BEGIN_DECLS
 
 /**
- * GstPlay:
+ * GtkGstPlay:
  * Since: 1.20
  */
-typedef struct _GstPlay GstPlay;
-typedef struct _GstPlayClass GstPlayClass;
+typedef struct _GstPlay GtkGstPlay;
+typedef struct _GstPlayClass GtkGstPlayClass;
 
 /**
- * GstPlaySignalAdapter:
+ * GtkGstPlaySignalAdapter:
  * Since: 1.20
  */
-typedef struct _GstPlaySignalAdapter GstPlaySignalAdapter;
-typedef struct _GstPlaySignalAdapterClass GstPlaySignalAdapterClass;
+typedef struct _GstPlaySignalAdapter GtkGstPlaySignalAdapter;
+typedef struct _GstPlaySignalAdapterClass GtkGstPlaySignalAdapterClass;
 
 G_END_DECLS
 
-#endif /* __GST_PLAY_TYPES_H__ */
+#endif /* __GTL_GST_PLAY_TYPES_H__ */
 
 

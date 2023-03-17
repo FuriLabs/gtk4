@@ -29,86 +29,86 @@
 #include "gstplayer-video-renderer-private.h"
 
 /*
- * This object is an internal wrapper created by the GstPlayer, implementing the
- * new GstPlayVideoRenderer interface and acting as a bridge from the legacy
- * GstPlayerVideoRenderer interface.
+ * This object is an internal wrapper created by the GtkGstPlayer, implementing the
+ * new GtkGstPlayVideoRenderer interface and acting as a bridge from the legacy
+ * GtkGstPlayerVideoRenderer interface.
  */
 
-struct _GstPlayerWrappedVideoRenderer
+struct _GtkGstPlayerWrappedVideoRenderer
 {
   GObject parent;
 
-  GstPlayerVideoRenderer *renderer;
-  GstPlayer *player;
+  GtkGstPlayerVideoRenderer *renderer;
+  GtkGstPlayer *player;
 };
 
-struct _GstPlayerWrappedVideoRendererClass
+struct _GtkGstPlayerWrappedVideoRendererClass
 {
   GObjectClass parent_class;
 };
 
 static void
-    gst_player_wrapped_video_renderer_interface_init
-    (GstPlayVideoRendererInterface * iface);
+    gtk_gst_player_wrapped_video_renderer_interface_init
+    (GtkGstPlayVideoRendererInterface * iface);
 
-G_DEFINE_TYPE_WITH_CODE (GstPlayerWrappedVideoRenderer,
-    gst_player_wrapped_video_renderer, G_TYPE_OBJECT,
+G_DEFINE_TYPE_WITH_CODE (GtkGstPlayerWrappedVideoRenderer,
+    gtk_gst_player_wrapped_video_renderer, G_TYPE_OBJECT,
     G_IMPLEMENT_INTERFACE (GST_TYPE_PLAY_VIDEO_RENDERER,
-        gst_player_wrapped_video_renderer_interface_init));
+        gtk_gst_player_wrapped_video_renderer_interface_init));
 
 static void
-gst_player_wrapped_video_renderer_finalize (GObject * object)
+gtk_gst_player_wrapped_video_renderer_finalize (GObject * object)
 {
-  GstPlayerWrappedVideoRenderer *self =
-      GST_PLAYER_WRAPPED_VIDEO_RENDERER (object);
+  GtkGstPlayerWrappedVideoRenderer *self =
+      GTK_GST_PLAYER_WRAPPED_VIDEO_RENDERER (object);
 
   g_clear_object (&self->renderer);
 
   G_OBJECT_CLASS
-      (gst_player_wrapped_video_renderer_parent_class)->finalize (object);
+      (gtk_gst_player_wrapped_video_renderer_parent_class)->finalize (object);
 }
 
 static void
-gst_player_wrapped_video_renderer_class_init (GstPlayerWrappedVideoRendererClass
+gtk_gst_player_wrapped_video_renderer_class_init (GtkGstPlayerWrappedVideoRendererClass
     * klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
-  gobject_class->finalize = gst_player_wrapped_video_renderer_finalize;
+  gobject_class->finalize = gtk_gst_player_wrapped_video_renderer_finalize;
 }
 
 static void
-gst_player_wrapped_video_renderer_init (GstPlayerWrappedVideoRenderer * self)
+gtk_gst_player_wrapped_video_renderer_init (GtkGstPlayerWrappedVideoRenderer * self)
 {
 }
 
 static GstElement *
-gst_player_wrapped_video_renderer_create_video_sink (GstPlayVideoRenderer *
-    iface, GstPlay * player)
+gtk_gst_player_wrapped_video_renderer_create_video_sink (GtkGstPlayVideoRenderer *
+    iface, GtkGstPlay * player)
 {
-  GstPlayerWrappedVideoRenderer *self =
-      GST_PLAYER_WRAPPED_VIDEO_RENDERER (iface);
+  GtkGstPlayerWrappedVideoRenderer *self =
+      GTK_GST_PLAYER_WRAPPED_VIDEO_RENDERER (iface);
 
-  return gst_player_video_renderer_create_video_sink (self->renderer,
+  return gtk_gst_player_video_renderer_create_video_sink (self->renderer,
       self->player);
 }
 
 static void
-gst_player_wrapped_video_renderer_interface_init (GstPlayVideoRendererInterface
+gtk_gst_player_wrapped_video_renderer_interface_init (GtkGstPlayVideoRendererInterface
     * iface)
 {
   iface->create_video_sink =
-      gst_player_wrapped_video_renderer_create_video_sink;
+      gtk_gst_player_wrapped_video_renderer_create_video_sink;
 }
 
-GstPlayerVideoRenderer *
-gst_player_wrapped_video_renderer_new (GstPlayerVideoRenderer * renderer,
-    GstPlayer * player)
+GtkGstPlayerVideoRenderer *
+gtk_gst_player_wrapped_video_renderer_new (GtkGstPlayerVideoRenderer * renderer,
+    GtkGstPlayer * player)
 {
-  GstPlayerWrappedVideoRenderer *self =
+  GtkGstPlayerWrappedVideoRenderer *self =
       g_object_new (GST_TYPE_PLAYER_WRAPPED_VIDEO_RENDERER,
       NULL);
   self->renderer = g_object_ref (renderer);
   self->player = player;
-  return (GstPlayerVideoRenderer *) self;
+  return (GtkGstPlayerVideoRenderer *) self;
 }

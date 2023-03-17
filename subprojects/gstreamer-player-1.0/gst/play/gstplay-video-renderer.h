@@ -18,8 +18,8 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAY_VIDEO_RENDERER_H__
-#define __GST_PLAY_VIDEO_RENDERER_H__
+#ifndef __GTL_GST_PLAY_VIDEO_RENDERER_H__
+#define __GTL_GST_PLAY_VIDEO_RENDERER_H__
 
 #include <gst/gst.h>
 #include <gst/play/gstplay-types.h>
@@ -27,35 +27,35 @@
 G_BEGIN_DECLS
 
 /**
- * GstPlayVideoRenderer:
+ * GtkGstPlayVideoRenderer:
  * Since: 1.20
  */
-typedef struct _GstPlayVideoRenderer GstPlayVideoRenderer;
-typedef struct _GstPlayVideoRendererInterface GstPlayVideoRendererInterface;
+typedef struct _GstPlayVideoRenderer GtkGstPlayVideoRenderer;
+typedef struct _GstPlayVideoRendererInterface GtkGstPlayVideoRendererInterface;
 
-#define GST_TYPE_PLAY_VIDEO_RENDERER                (gst_play_video_renderer_get_type ())
-#define GST_PLAY_VIDEO_RENDERER(obj)                (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PLAY_VIDEO_RENDERER, GstPlayVideoRenderer))
+#define GST_TYPE_PLAY_VIDEO_RENDERER                (gtk_gst_play_video_renderer_get_type ())
+#define GTL_GST_PLAY_VIDEO_RENDERER(obj)                (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PLAY_VIDEO_RENDERER, GtkGstPlayVideoRenderer))
 #define GST_IS_PLAY_VIDEO_RENDERER(obj)             (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_PLAY_VIDEO_RENDERER))
 
 /**
- * GST_PLAY_VIDEO_RENDERER_GET_INTERFACE:
+ * GTL_GST_PLAY_VIDEO_RENDERER_GET_INTERFACE:
  * Since: 1.20
  */
-#define GST_PLAY_VIDEO_RENDERER_GET_INTERFACE(inst) (G_TYPE_INSTANCE_GET_INTERFACE ((inst), GST_TYPE_PLAY_VIDEO_RENDERER, GstPlayVideoRendererInterface))
+#define GTL_GST_PLAY_VIDEO_RENDERER_GET_INTERFACE(inst) (G_TYPE_INSTANCE_GET_INTERFACE ((inst), GST_TYPE_PLAY_VIDEO_RENDERER, GtkGstPlayVideoRendererInterface))
 
 struct _GstPlayVideoRendererInterface {
   GTypeInterface parent_iface;
 
-  GstElement * (*create_video_sink) (GstPlayVideoRenderer * self, GstPlay * play);
+  GstElement * (*create_video_sink) (GtkGstPlayVideoRenderer * self, GtkGstPlay * play);
 };
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GstPlayVideoRenderer, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkGstPlayVideoRenderer, g_object_unref)
 #endif
 
-GST_PLAY_API
-GType        gst_play_video_renderer_get_type       (void);
+GTL_GST_PLAY_API
+GType        gtk_gst_play_video_renderer_get_type       (void);
 
 G_END_DECLS
 
-#endif /* __GST_PLAY_VIDEO_RENDERER_H__ */
+#endif /* __GTL_GST_PLAY_VIDEO_RENDERER_H__ */

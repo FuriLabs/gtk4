@@ -25,24 +25,24 @@
 #include "gstplay-video-renderer.h"
 #include "gstplay-video-renderer-private.h"
 
-G_DEFINE_INTERFACE (GstPlayVideoRenderer, gst_play_video_renderer,
+G_DEFINE_INTERFACE (GtkGstPlayVideoRenderer, gtk_gst_play_video_renderer,
     G_TYPE_OBJECT);
 
 static void
-gst_play_video_renderer_default_init (G_GNUC_UNUSED
-    GstPlayVideoRendererInterface * iface)
+gtk_gst_play_video_renderer_default_init (G_GNUC_UNUSED
+    GtkGstPlayVideoRendererInterface * iface)
 {
 
 }
 
 GstElement *
-gst_play_video_renderer_create_video_sink (GstPlayVideoRenderer * self,
-    GstPlay * play)
+gtk_gst_play_video_renderer_create_video_sink (GtkGstPlayVideoRenderer * self,
+    GtkGstPlay * play)
 {
-  GstPlayVideoRendererInterface *iface;
+  GtkGstPlayVideoRendererInterface *iface;
 
   g_return_val_if_fail (GST_IS_PLAY_VIDEO_RENDERER (self), NULL);
-  iface = GST_PLAY_VIDEO_RENDERER_GET_INTERFACE (self);
+  iface = GTL_GST_PLAY_VIDEO_RENDERER_GET_INTERFACE (self);
   g_return_val_if_fail (iface->create_video_sink != NULL, NULL);
 
   return iface->create_video_sink (self, play);

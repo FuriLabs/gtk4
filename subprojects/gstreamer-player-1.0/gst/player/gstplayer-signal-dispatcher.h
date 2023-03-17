@@ -18,37 +18,37 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAYER_SIGNAL_DISPATCHER_H__
-#define __GST_PLAYER_SIGNAL_DISPATCHER_H__
+#ifndef __GTK_GST_PLAYER_SIGNAL_DISPATCHER_H__
+#define __GTK_GST_PLAYER_SIGNAL_DISPATCHER_H__
 
 #include <gst/gst.h>
 #include <gst/player/gstplayer-types.h>
 
 G_BEGIN_DECLS
 
-typedef struct _GstPlayerSignalDispatcher GstPlayerSignalDispatcher;
-typedef struct _GstPlayerSignalDispatcherInterface GstPlayerSignalDispatcherInterface;
+typedef struct _GtkGstPlayerSignalDispatcher GtkGstPlayerSignalDispatcher;
+typedef struct _GtkGstPlayerSignalDispatcherInterface GtkGstPlayerSignalDispatcherInterface;
 
-#define GST_TYPE_PLAYER_SIGNAL_DISPATCHER                (gst_player_signal_dispatcher_get_type ())
-#define GST_PLAYER_SIGNAL_DISPATCHER(obj)                (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PLAYER_SIGNAL_DISPATCHER, GstPlayerSignalDispatcher))
+#define GST_TYPE_PLAYER_SIGNAL_DISPATCHER                (gtk_gst_player_signal_dispatcher_get_type ())
+#define GTK_GST_PLAYER_SIGNAL_DISPATCHER(obj)                (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PLAYER_SIGNAL_DISPATCHER, GtkGstPlayerSignalDispatcher))
 #define GST_IS_PLAYER_SIGNAL_DISPATCHER(obj)             (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_PLAYER_SIGNAL_DISPATCHER))
-#define GST_PLAYER_SIGNAL_DISPATCHER_GET_INTERFACE(inst) (G_TYPE_INSTANCE_GET_INTERFACE ((inst), GST_TYPE_PLAYER_SIGNAL_DISPATCHER, GstPlayerSignalDispatcherInterface))
+#define GTK_GST_PLAYER_SIGNAL_DISPATCHER_GET_INTERFACE(inst) (G_TYPE_INSTANCE_GET_INTERFACE ((inst), GST_TYPE_PLAYER_SIGNAL_DISPATCHER, GtkGstPlayerSignalDispatcherInterface))
 
-typedef void (*GstPlayerSignalDispatcherFunc) (gpointer data);
+typedef void (*GtkGstPlayerSignalDispatcherFunc) (gpointer data);
 
-struct _GstPlayerSignalDispatcherInterface {
+struct _GtkGstPlayerSignalDispatcherInterface {
   GTypeInterface parent_iface;
 
-  void (*dispatch) (GstPlayerSignalDispatcher * self,
-                    GstPlayer * player,
-                    GstPlayerSignalDispatcherFunc emitter,
+  void (*dispatch) (GtkGstPlayerSignalDispatcher * self,
+                    GtkGstPlayer * player,
+                    GtkGstPlayerSignalDispatcherFunc emitter,
                     gpointer data,
                     GDestroyNotify destroy);
 };
 
-GST_PLAYER_API
-GType        gst_player_signal_dispatcher_get_type    (void);
+GTK_GST_PLAYER_API
+GType        gtk_gst_player_signal_dispatcher_get_type    (void);
 
 G_END_DECLS
 
-#endif /* __GST_PLAYER_SIGNAL_DISPATCHER_H__ */
+#endif /* __GTK_GST_PLAYER_SIGNAL_DISPATCHER_H__ */

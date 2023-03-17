@@ -18,8 +18,8 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAYER_H__
-#define __GST_PLAYER_H__
+#ifndef __GTK_GST_PLAYER_H__
+#define __GTK_GST_PLAYER_H__
 
 #include <gst/gst.h>
 #include <gst/video/video.h>
@@ -31,276 +31,276 @@
 
 G_BEGIN_DECLS
 
-GST_PLAYER_API
-GType        gst_player_state_get_type                (void);
-#define      GST_TYPE_PLAYER_STATE                    (gst_player_state_get_type ())
+GTK_GST_PLAYER_API
+GType        gtk_gst_player_state_get_type                (void);
+#define      GST_TYPE_PLAYER_STATE                    (gtk_gst_player_state_get_type ())
 
 /**
- * GstPlayerState:
- * @GST_PLAYER_STATE_STOPPED: the player is stopped.
- * @GST_PLAYER_STATE_BUFFERING: the player is buffering.
- * @GST_PLAYER_STATE_PAUSED: the player is paused.
- * @GST_PLAYER_STATE_PLAYING: the player is currently playing a
+ * GtkGstPlayerState:
+ * @GTK_GST_PLAYER_STATE_STOPPED: the player is stopped.
+ * @GTK_GST_PLAYER_STATE_BUFFERING: the player is buffering.
+ * @GTK_GST_PLAYER_STATE_PAUSED: the player is paused.
+ * @GTK_GST_PLAYER_STATE_PLAYING: the player is currently playing a
  * stream.
  */
 typedef enum
 {
-  GST_PLAYER_STATE_STOPPED,
-  GST_PLAYER_STATE_BUFFERING,
-  GST_PLAYER_STATE_PAUSED,
-  GST_PLAYER_STATE_PLAYING
-} GstPlayerState;
+  GTK_GST_PLAYER_STATE_STOPPED,
+  GTK_GST_PLAYER_STATE_BUFFERING,
+  GTK_GST_PLAYER_STATE_PAUSED,
+  GTK_GST_PLAYER_STATE_PLAYING
+} GtkGstPlayerState;
 
-GST_PLAYER_API
-const gchar *gst_player_state_get_name                (GstPlayerState state);
+GTK_GST_PLAYER_API
+const gchar *gtk_gst_player_state_get_name                (GtkGstPlayerState state);
 
-GST_PLAYER_API
-GQuark       gst_player_error_quark                   (void);
+GTK_GST_PLAYER_API
+GQuark       gtk_gst_player_error_quark                   (void);
 
-GST_PLAYER_API
-GType        gst_player_error_get_type                (void);
-#define      GST_PLAYER_ERROR                         (gst_player_error_quark ())
-#define      GST_TYPE_PLAYER_ERROR                    (gst_player_error_get_type ())
+GTK_GST_PLAYER_API
+GType        gtk_gst_player_error_get_type                (void);
+#define      GTK_GST_PLAYER_ERROR                         (gtk_gst_player_error_quark ())
+#define      GST_TYPE_PLAYER_ERROR                    (gtk_gst_player_error_get_type ())
 
 /**
- * GstPlayerError:
- * @GST_PLAYER_ERROR_FAILED: generic error.
+ * GtkGstPlayerError:
+ * @GTK_GST_PLAYER_ERROR_FAILED: generic error.
  */
 typedef enum {
-  GST_PLAYER_ERROR_FAILED = 0
-} GstPlayerError;
+  GTK_GST_PLAYER_ERROR_FAILED = 0
+} GtkGstPlayerError;
 
-GST_PLAYER_API
-const gchar *gst_player_error_get_name                (GstPlayerError error);
+GTK_GST_PLAYER_API
+const gchar *gtk_gst_player_error_get_name                (GtkGstPlayerError error);
 
-GST_PLAYER_API
-GType gst_player_color_balance_type_get_type          (void);
-#define GST_TYPE_PLAYER_COLOR_BALANCE_TYPE            (gst_player_color_balance_type_get_type ())
+GTK_GST_PLAYER_API
+GType gtk_gst_player_color_balance_type_get_type          (void);
+#define GST_TYPE_PLAYER_COLOR_BALANCE_TYPE            (gtk_gst_player_color_balance_type_get_type ())
 
 /**
- * GstPlayerColorBalanceType:
- * @GST_PLAYER_COLOR_BALANCE_BRIGHTNESS: brightness or black level.
- * @GST_PLAYER_COLOR_BALANCE_CONTRAST: contrast or luma gain.
- * @GST_PLAYER_COLOR_BALANCE_SATURATION: color saturation or chroma
+ * GtkGstPlayerColorBalanceType:
+ * @GTK_GST_PLAYER_COLOR_BALANCE_BRIGHTNESS: brightness or black level.
+ * @GTK_GST_PLAYER_COLOR_BALANCE_CONTRAST: contrast or luma gain.
+ * @GTK_GST_PLAYER_COLOR_BALANCE_SATURATION: color saturation or chroma
  * gain.
- * @GST_PLAYER_COLOR_BALANCE_HUE: hue or color balance.
+ * @GTK_GST_PLAYER_COLOR_BALANCE_HUE: hue or color balance.
  */
 typedef enum
 {
-  GST_PLAYER_COLOR_BALANCE_BRIGHTNESS,
-  GST_PLAYER_COLOR_BALANCE_CONTRAST,
-  GST_PLAYER_COLOR_BALANCE_SATURATION,
-  GST_PLAYER_COLOR_BALANCE_HUE,
-} GstPlayerColorBalanceType;
+  GTK_GST_PLAYER_COLOR_BALANCE_BRIGHTNESS,
+  GTK_GST_PLAYER_COLOR_BALANCE_CONTRAST,
+  GTK_GST_PLAYER_COLOR_BALANCE_SATURATION,
+  GTK_GST_PLAYER_COLOR_BALANCE_HUE,
+} GtkGstPlayerColorBalanceType;
 
-GST_PLAYER_API
-const gchar *gst_player_color_balance_type_get_name   (GstPlayerColorBalanceType type);
+GTK_GST_PLAYER_API
+const gchar *gtk_gst_player_color_balance_type_get_name   (GtkGstPlayerColorBalanceType type);
 
-#define GST_TYPE_PLAYER             (gst_player_get_type ())
+#define GST_TYPE_PLAYER             (gtk_gst_player_get_type ())
 #define GST_IS_PLAYER(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_PLAYER))
 #define GST_IS_PLAYER_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_PLAYER))
-#define GST_PLAYER_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_PLAYER, GstPlayerClass))
-#define GST_PLAYER(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PLAYER, GstPlayer))
-#define GST_PLAYER_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_PLAYER, GstPlayerClass))
-#define GST_PLAYER_CAST(obj)        ((GstPlayer*)(obj))
+#define GTK_GST_PLAYER_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_PLAYER, GtkGstPlayerClass))
+#define GST_PLAYER(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PLAYER, GtkGstPlayer))
+#define GTK_GST_PLAYER_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_PLAYER, GtkGstPlayerClass))
+#define GTK_GST_PLAYER_CAST(obj)        ((GtkGstPlayer*)(obj))
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GstPlayer, gst_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkGstPlayer, gst_object_unref)
 #endif
 
-GST_PLAYER_API
-GType        gst_player_get_type                      (void);
+GTK_GST_PLAYER_API
+GType        gtk_gst_player_get_type                      (void);
 
-GST_PLAYER_API
-GstPlayer *  gst_player_new                           (GstPlayerVideoRenderer * video_renderer, GstPlayerSignalDispatcher * signal_dispatcher);
+GTK_GST_PLAYER_API
+GtkGstPlayer *  gtk_gst_player_new                           (GtkGstPlayerVideoRenderer * video_renderer, GtkGstPlayerSignalDispatcher * signal_dispatcher);
 
-GST_PLAYER_API
-void         gst_player_play                          (GstPlayer    * player);
+GTK_GST_PLAYER_API
+void         gtk_gst_player_play                          (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-void         gst_player_pause                         (GstPlayer    * player);
+GTK_GST_PLAYER_API
+void         gtk_gst_player_pause                         (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-void         gst_player_stop                          (GstPlayer    * player);
+GTK_GST_PLAYER_API
+void         gtk_gst_player_stop                          (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-void         gst_player_seek                          (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_seek                          (GtkGstPlayer    * player,
                                                        GstClockTime   position);
 
-GST_PLAYER_API
-void         gst_player_set_rate                      (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_set_rate                      (GtkGstPlayer    * player,
                                                        gdouble        rate);
 
-GST_PLAYER_API
-gdouble      gst_player_get_rate                      (GstPlayer    * player);
+GTK_GST_PLAYER_API
+gdouble      gtk_gst_player_get_rate                      (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-gchar *      gst_player_get_uri                       (GstPlayer    * player);
+GTK_GST_PLAYER_API
+gchar *      gtk_gst_player_get_uri                       (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-void         gst_player_set_uri                       (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_set_uri                       (GtkGstPlayer    * player,
                                                        const gchar  * uri);
 
-GST_PLAYER_API
-gchar *      gst_player_get_subtitle_uri              (GstPlayer    * player);
+GTK_GST_PLAYER_API
+gchar *      gtk_gst_player_get_subtitle_uri              (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-void         gst_player_set_subtitle_uri              (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_set_subtitle_uri              (GtkGstPlayer    * player,
                                                        const gchar *uri);
 
-GST_PLAYER_API
-GstClockTime gst_player_get_position                  (GstPlayer    * player);
+GTK_GST_PLAYER_API
+GstClockTime gtk_gst_player_get_position                  (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-GstClockTime gst_player_get_duration                  (GstPlayer    * player);
+GTK_GST_PLAYER_API
+GstClockTime gtk_gst_player_get_duration                  (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-gdouble      gst_player_get_volume                    (GstPlayer    * player);
+GTK_GST_PLAYER_API
+gdouble      gtk_gst_player_get_volume                    (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-void         gst_player_set_volume                    (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_set_volume                    (GtkGstPlayer    * player,
                                                        gdouble        val);
 
-GST_PLAYER_API
-gboolean     gst_player_get_mute                      (GstPlayer    * player);
+GTK_GST_PLAYER_API
+gboolean     gtk_gst_player_get_mute                      (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-void         gst_player_set_mute                      (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_set_mute                      (GtkGstPlayer    * player,
                                                        gboolean       val);
 
-GST_PLAYER_API
-GstElement * gst_player_get_pipeline                  (GstPlayer    * player);
+GTK_GST_PLAYER_API
+GstElement * gtk_gst_player_get_pipeline                  (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-void         gst_player_set_video_track_enabled       (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_set_video_track_enabled       (GtkGstPlayer    * player,
                                                        gboolean enabled);
 
-GST_PLAYER_API
-void         gst_player_set_audio_track_enabled       (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_set_audio_track_enabled       (GtkGstPlayer    * player,
                                                        gboolean enabled);
 
-GST_PLAYER_API
-void         gst_player_set_subtitle_track_enabled    (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_set_subtitle_track_enabled    (GtkGstPlayer    * player,
                                                        gboolean enabled);
 
-GST_PLAYER_API
-gboolean     gst_player_set_audio_track               (GstPlayer    *player,
+GTK_GST_PLAYER_API
+gboolean     gtk_gst_player_set_audio_track               (GtkGstPlayer    *player,
                                                        gint stream_index);
 
-GST_PLAYER_API
-gboolean     gst_player_set_video_track               (GstPlayer    *player,
+GTK_GST_PLAYER_API
+gboolean     gtk_gst_player_set_video_track               (GtkGstPlayer    *player,
                                                        gint stream_index);
 
-GST_PLAYER_API
-gboolean     gst_player_set_subtitle_track            (GstPlayer    *player,
+GTK_GST_PLAYER_API
+gboolean     gtk_gst_player_set_subtitle_track            (GtkGstPlayer    *player,
                                                        gint stream_index);
 
-GST_PLAYER_API
-GstPlayerMediaInfo *    gst_player_get_media_info     (GstPlayer * player);
+GTK_GST_PLAYER_API
+GtkGstPlayerMediaInfo *    gtk_gst_player_get_media_info     (GtkGstPlayer * player);
 
-GST_PLAYER_API
-GstPlayerAudioInfo *    gst_player_get_current_audio_track (GstPlayer * player);
+GTK_GST_PLAYER_API
+GtkGstPlayerAudioInfo *    gtk_gst_player_get_current_audio_track (GtkGstPlayer * player);
 
-GST_PLAYER_API
-GstPlayerVideoInfo *    gst_player_get_current_video_track (GstPlayer * player);
+GTK_GST_PLAYER_API
+GtkGstPlayerVideoInfo *    gtk_gst_player_get_current_video_track (GtkGstPlayer * player);
 
-GST_PLAYER_API
-GstPlayerSubtitleInfo * gst_player_get_current_subtitle_track (GstPlayer * player);
+GTK_GST_PLAYER_API
+GtkGstPlayerSubtitleInfo * gtk_gst_player_get_current_subtitle_track (GtkGstPlayer * player);
 
-GST_PLAYER_API
-gboolean     gst_player_set_visualization             (GstPlayer    * player,
+GTK_GST_PLAYER_API
+gboolean     gtk_gst_player_set_visualization             (GtkGstPlayer    * player,
                                                        const gchar *name);
 
-GST_PLAYER_API
-void         gst_player_set_visualization_enabled     (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_set_visualization_enabled     (GtkGstPlayer    * player,
                                                        gboolean enabled);
 
-GST_PLAYER_API
-gchar *      gst_player_get_current_visualization     (GstPlayer    * player);
+GTK_GST_PLAYER_API
+gchar *      gtk_gst_player_get_current_visualization     (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-gboolean     gst_player_has_color_balance             (GstPlayer    * player);
+GTK_GST_PLAYER_API
+gboolean     gtk_gst_player_has_color_balance             (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-void         gst_player_set_color_balance             (GstPlayer    * player,
-                                                       GstPlayerColorBalanceType type,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_set_color_balance             (GtkGstPlayer    * player,
+                                                       GtkGstPlayerColorBalanceType type,
                                                        gdouble value);
 
-GST_PLAYER_API
-gdouble      gst_player_get_color_balance             (GstPlayer    * player,
-                                                       GstPlayerColorBalanceType type);
+GTK_GST_PLAYER_API
+gdouble      gtk_gst_player_get_color_balance             (GtkGstPlayer    * player,
+                                                       GtkGstPlayerColorBalanceType type);
 
 
-GST_PLAYER_API
-GstVideoMultiviewFramePacking gst_player_get_multiview_mode (GstPlayer    * player);
+GTK_GST_PLAYER_API
+GstVideoMultiviewFramePacking gtk_gst_player_get_multiview_mode (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-void                     gst_player_set_multiview_mode (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void                     gtk_gst_player_set_multiview_mode (GtkGstPlayer    * player,
                                                         GstVideoMultiviewFramePacking mode);
 
-GST_PLAYER_API
-GstVideoMultiviewFlags  gst_player_get_multiview_flags  (GstPlayer  * player);
+GTK_GST_PLAYER_API
+GstVideoMultiviewFlags  gtk_gst_player_get_multiview_flags  (GtkGstPlayer  * player);
 
-GST_PLAYER_API
-void                    gst_player_set_multiview_flags  (GstPlayer  * player,
+GTK_GST_PLAYER_API
+void                    gtk_gst_player_set_multiview_flags  (GtkGstPlayer  * player,
                                                          GstVideoMultiviewFlags flags);
 
-GST_PLAYER_API
-gint64       gst_player_get_audio_video_offset        (GstPlayer    * player);
+GTK_GST_PLAYER_API
+gint64       gtk_gst_player_get_audio_video_offset        (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-void         gst_player_set_audio_video_offset        (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_set_audio_video_offset        (GtkGstPlayer    * player,
                                                        gint64 offset);
 
-GST_PLAYER_API
-gint64       gst_player_get_subtitle_video_offset        (GstPlayer    * player);
+GTK_GST_PLAYER_API
+gint64       gtk_gst_player_get_subtitle_video_offset        (GtkGstPlayer    * player);
 
-GST_PLAYER_API
-void         gst_player_set_subtitle_video_offset        (GstPlayer    * player,
+GTK_GST_PLAYER_API
+void         gtk_gst_player_set_subtitle_video_offset        (GtkGstPlayer    * player,
                                                           gint64 offset);
 
-GST_PLAYER_API
-gboolean       gst_player_set_config                  (GstPlayer * player,
+GTK_GST_PLAYER_API
+gboolean       gtk_gst_player_set_config                  (GtkGstPlayer * player,
                                                        GstStructure * config);
 
-GST_PLAYER_API
-GstStructure * gst_player_get_config                  (GstPlayer * player);
+GTK_GST_PLAYER_API
+GstStructure * gtk_gst_player_get_config                  (GtkGstPlayer * player);
 
 /* helpers for configuring the config structure */
 
-GST_PLAYER_API
-void           gst_player_config_set_user_agent       (GstStructure * config,
+GTK_GST_PLAYER_API
+void           gtk_gst_player_config_set_user_agent       (GstStructure * config,
                                                        const gchar * agent);
 
-GST_PLAYER_API
-gchar *        gst_player_config_get_user_agent       (const GstStructure * config);
+GTK_GST_PLAYER_API
+gchar *        gtk_gst_player_config_get_user_agent       (const GstStructure * config);
 
-GST_PLAYER_API
-void           gst_player_config_set_position_update_interval  (GstStructure * config,
+GTK_GST_PLAYER_API
+void           gtk_gst_player_config_set_position_update_interval  (GstStructure * config,
                                                                 guint          interval);
 
-GST_PLAYER_API
-guint          gst_player_config_get_position_update_interval  (const GstStructure * config);
+GTK_GST_PLAYER_API
+guint          gtk_gst_player_config_get_position_update_interval  (const GstStructure * config);
 
-GST_PLAYER_API
-void           gst_player_config_set_seek_accurate (GstStructure * config, gboolean accurate);
+GTK_GST_PLAYER_API
+void           gtk_gst_player_config_set_seek_accurate (GstStructure * config, gboolean accurate);
 
-GST_PLAYER_API
-gboolean       gst_player_config_get_seek_accurate (const GstStructure * config);
+GTK_GST_PLAYER_API
+gboolean       gtk_gst_player_config_get_seek_accurate (const GstStructure * config);
 
 typedef enum
 {
-  GST_PLAYER_THUMBNAIL_RAW_NATIVE = 0,
-  GST_PLAYER_THUMBNAIL_RAW_xRGB,
-  GST_PLAYER_THUMBNAIL_RAW_BGRx,
-  GST_PLAYER_THUMBNAIL_JPG,
-  GST_PLAYER_THUMBNAIL_PNG
-} GstPlayerSnapshotFormat;
+  GTK_GST_PLAYER_THUMBNAIL_RAW_NATIVE = 0,
+  GTK_GST_PLAYER_THUMBNAIL_RAW_xRGB,
+  GTK_GST_PLAYER_THUMBNAIL_RAW_BGRx,
+  GTK_GST_PLAYER_THUMBNAIL_JPG,
+  GTK_GST_PLAYER_THUMBNAIL_PNG
+} GtkGstPlayerSnapshotFormat;
 
-GST_PLAYER_API
-GstSample * gst_player_get_video_snapshot (GstPlayer * player,
-    GstPlayerSnapshotFormat format, const GstStructure * config);
+GTK_GST_PLAYER_API
+GstSample * gtk_gst_player_get_video_snapshot (GtkGstPlayer * player,
+    GtkGstPlayerSnapshotFormat format, const GstStructure * config);
 
 G_END_DECLS
 
-#endif /* __GST_PLAYER_H__ */
+#endif /* __GTK_GST_PLAYER_H__ */

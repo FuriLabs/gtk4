@@ -20,8 +20,8 @@
 
 #include "gstplay-media-info.h"
 
-#ifndef __GST_PLAY_MEDIA_INFO_PRIVATE_H__
-#define __GST_PLAY_MEDIA_INFO_PRIVATE_H__
+#ifndef __GTL_GST_PLAY_MEDIA_INFO_PRIVATE_H__
+#define __GTL_GST_PLAY_MEDIA_INFO_PRIVATE_H__
 
 struct _GstPlayStreamInfo
 {
@@ -42,19 +42,19 @@ struct _GstPlayStreamInfoClass
 
 struct _GstPlaySubtitleInfo
 {
-  GstPlayStreamInfo  parent;
+  GtkGstPlayStreamInfo  parent;
 
   gchar *language;
 };
 
 struct _GstPlaySubtitleInfoClass
 {
-  GstPlayStreamInfoClass parent_class;
+  GtkGstPlayStreamInfoClass parent_class;
 };
 
 struct _GstPlayAudioInfo
 {
-  GstPlayStreamInfo  parent;
+  GtkGstPlayStreamInfo  parent;
 
   gint channels;
   gint sample_rate;
@@ -67,12 +67,12 @@ struct _GstPlayAudioInfo
 
 struct _GstPlayAudioInfoClass
 {
-  GstPlayStreamInfoClass parent_class;
+  GtkGstPlayStreamInfoClass parent_class;
 };
 
 struct _GstPlayVideoInfo
 {
-  GstPlayStreamInfo  parent;
+  GtkGstPlayStreamInfo  parent;
 
   gint width;
   gint height;
@@ -87,7 +87,7 @@ struct _GstPlayVideoInfo
 
 struct _GstPlayVideoInfoClass
 {
-  GstPlayStreamInfoClass parent_class;
+  GtkGstPlayStreamInfoClass parent_class;
 };
 
 struct _GstPlayMediaInfo
@@ -114,13 +114,13 @@ struct _GstPlayMediaInfoClass
   GObjectClass parent_class;
 };
 
-G_GNUC_INTERNAL GstPlayMediaInfo*   gst_play_media_info_new
+G_GNUC_INTERNAL GtkGstPlayMediaInfo*   gtk_gst_play_media_info_new
                                       (const gchar *uri);
-G_GNUC_INTERNAL GstPlayMediaInfo*   gst_play_media_info_copy
-                                      (GstPlayMediaInfo *ref);
-G_GNUC_INTERNAL GstPlayStreamInfo*  gst_play_stream_info_new
+G_GNUC_INTERNAL GtkGstPlayMediaInfo*   gtk_gst_play_media_info_copy
+                                      (GtkGstPlayMediaInfo *ref);
+G_GNUC_INTERNAL GtkGstPlayStreamInfo*  gtk_gst_play_stream_info_new
                                       (gint stream_index, GType type);
-G_GNUC_INTERNAL GstPlayStreamInfo*  gst_play_stream_info_copy
-                                      (GstPlayStreamInfo *ref);
+G_GNUC_INTERNAL GtkGstPlayStreamInfo*  gtk_gst_play_stream_info_copy
+                                      (GtkGstPlayStreamInfo *ref);
 
-#endif /* __GST_PLAY_MEDIA_INFO_PRIVATE_H__ */
+#endif /* __GTL_GST_PLAY_MEDIA_INFO_PRIVATE_H__ */

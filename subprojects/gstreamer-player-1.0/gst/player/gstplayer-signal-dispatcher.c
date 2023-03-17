@@ -25,22 +25,22 @@
 #include "gstplayer-signal-dispatcher.h"
 #include "gstplayer-signal-dispatcher-private.h"
 
-G_DEFINE_INTERFACE (GstPlayerSignalDispatcher, gst_player_signal_dispatcher,
+G_DEFINE_INTERFACE (GtkGstPlayerSignalDispatcher, gtk_gst_player_signal_dispatcher,
     G_TYPE_OBJECT);
 
 static void
-gst_player_signal_dispatcher_default_init (G_GNUC_UNUSED
-    GstPlayerSignalDispatcherInterface * iface)
+gtk_gst_player_signal_dispatcher_default_init (G_GNUC_UNUSED
+    GtkGstPlayerSignalDispatcherInterface * iface)
 {
 
 }
 
 void
-gst_player_signal_dispatcher_dispatch (GstPlayerSignalDispatcher * self,
-    GstPlayer * player, GstPlayerSignalDispatcherFunc emitter, gpointer data,
+gtk_gst_player_signal_dispatcher_dispatch (GtkGstPlayerSignalDispatcher * self,
+    GtkGstPlayer * player, GtkGstPlayerSignalDispatcherFunc emitter, gpointer data,
     GDestroyNotify destroy)
 {
-  GstPlayerSignalDispatcherInterface *iface;
+  GtkGstPlayerSignalDispatcherInterface *iface;
 
   if (!self) {
     emitter (data);
@@ -50,7 +50,7 @@ gst_player_signal_dispatcher_dispatch (GstPlayerSignalDispatcher * self,
   }
 
   g_return_if_fail (GST_IS_PLAYER_SIGNAL_DISPATCHER (self));
-  iface = GST_PLAYER_SIGNAL_DISPATCHER_GET_INTERFACE (self);
+  iface = GTK_GST_PLAYER_SIGNAL_DISPATCHER_GET_INTERFACE (self);
   g_return_if_fail (iface->dispatch != NULL);
 
   iface->dispatch (self, player, emitter, data, destroy);

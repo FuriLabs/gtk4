@@ -411,6 +411,10 @@ if win32_enabled
   pangowin32_dep = dependency('pangowin32')
 endif
 
+subproject('gstreamer-player-1.0',
+           required: get_option('media-gstreamer'),
+           default_options: 'default_library=static')
+
 pangocairo_dep    = dependency('pangocairo', version: pango_req)
 pixbuf_dep        = dependency('gdk-pixbuf-2.0', version: gdk_pixbuf_req,
                                default_options: ['png=enabled', 'jpeg=enabled', 'builtin_loaders=png,jpeg', 'man=false'])

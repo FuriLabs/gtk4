@@ -22,7 +22,9 @@ gstplayer_headers = files([
   'gstplayer-visualization.h',
 ])
 
+if not meson.is_subproject()
 install_headers(gstplayer_headers, subdir : 'gstreamer-' + api_version + '/gst/player/')
+endif
 
 gstplayer = library('gstplayer-' + api_version,
   gstplayer_sources,
@@ -31,13 +33,15 @@ gstplayer = library('gstplayer-' + api_version,
   version : libversion,
   soversion : soversion,
   darwin_versions : osxversion,
-  install : true,
+  install : false,
   dependencies : [gstbase_dep, gstvideo_dep, gstaudio_dep, gstplay_dep,
                   gsttag_dep, gstpbutils_dep],
 )
 
 library_def = {'lib': gstplayer}
+
 pkg_name = 'gstreamer-player-1.0'
+if not meson.is_subproject()
 pkgconfig.generate(gstplayer,
   libraries : [gst_dep, gstvideo_dep],
   variables : pkgconfig_variables,
@@ -45,6 +49,7 @@ pkgconfig.generate(gstplayer,
   name : 'gstreamer-player-1.0',
   description : 'GStreamer Player convenience library',
 )
+endif
 
 gen_sources = []
 if build_gir
@@ -57,7 +62,7 @@ if build_gir
     'export_packages' : pkg_name,
     'includes' : ['Gst-1.0', 'GstPbutils-1.0', 'GstBase-1.0', 'GstVideo-1.0',
       'GstAudio-1.0', 'GstTag-1.0'],
-    'install' : true,
+    'install' : not meson.is_subproject(),
     'extra_args' : gir_init_section + ['-DGST_USE_UNSTABLE_API'] + ['--c-include=gst/player/player.h'],
     'dependencies' : [gstbase_dep, gstvideo_dep, gstaudio_dep, gstplay_dep,
                       gsttag_dep, gstpbutils_dep]

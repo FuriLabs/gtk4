@@ -21,7 +21,7 @@
 
 /**
  * SECTION:gstplayer-visualization
- * @title: GstPlayerVisualization
+ * @title: GtkGstPlayerVisualization
  * @short_description: Player Visualization
  *
  */
@@ -38,18 +38,18 @@ static GMutex vis_lock;
 static GQueue vis_list = G_QUEUE_INIT;
 static guint32 vis_cookie;
 
-G_DEFINE_BOXED_TYPE (GstPlayerVisualization, gst_player_visualization,
-    (GBoxedCopyFunc) gst_player_visualization_copy,
-    (GBoxedFreeFunc) gst_player_visualization_free);
+G_DEFINE_BOXED_TYPE (GtkGstPlayerVisualization, gtk_gst_player_visualization,
+    (GBoxedCopyFunc) gtk_gst_player_visualization_copy,
+    (GBoxedFreeFunc) gtk_gst_player_visualization_free);
 
 /**
- * gst_player_visualization_free:
- * @vis: #GstPlayerVisualization instance
+ * gtk_gst_player_visualization_free:
+ * @vis: #GtkGstPlayerVisualization instance
  *
- * Frees a #GstPlayerVisualization.
+ * Frees a #GtkGstPlayerVisualization.
  */
 void
-gst_player_visualization_free (GstPlayerVisualization * vis)
+gtk_gst_player_visualization_free (GtkGstPlayerVisualization * vis)
 {
   g_return_if_fail (vis != NULL);
 
@@ -59,22 +59,22 @@ gst_player_visualization_free (GstPlayerVisualization * vis)
 }
 
 /**
- * gst_player_visualization_copy:
- * @vis: #GstPlayerVisualization instance
+ * gtk_gst_player_visualization_copy:
+ * @vis: #GtkGstPlayerVisualization instance
  *
- * Makes a copy of the #GstPlayerVisualization. The result must be
- * freed using gst_player_visualization_free().
+ * Makes a copy of the #GtkGstPlayerVisualization. The result must be
+ * freed using gtk_gst_player_visualization_free().
  *
  * Returns: (transfer full): an allocated copy of @vis.
  */
-GstPlayerVisualization *
-gst_player_visualization_copy (const GstPlayerVisualization * vis)
+GtkGstPlayerVisualization *
+gtk_gst_player_visualization_copy (const GtkGstPlayerVisualization * vis)
 {
-  GstPlayerVisualization *ret;
+  GtkGstPlayerVisualization *ret;
 
   g_return_val_if_fail (vis != NULL, NULL);
 
-  ret = g_new0 (GstPlayerVisualization, 1);
+  ret = g_new0 (GtkGstPlayerVisualization, 1);
   ret->name = vis->name ? g_strdup (vis->name) : NULL;
   ret->description = vis->description ? g_strdup (vis->description) : NULL;
 
@@ -82,15 +82,15 @@ gst_player_visualization_copy (const GstPlayerVisualization * vis)
 }
 
 /**
- * gst_player_visualizations_free:
- * @viss: a %NULL terminated array of #GstPlayerVisualization to free
+ * gtk_gst_player_visualizations_free:
+ * @viss: a %NULL terminated array of #GtkGstPlayerVisualization to free
  *
- * Frees a %NULL terminated array of #GstPlayerVisualization.
+ * Frees a %NULL terminated array of #GtkGstPlayerVisualization.
  */
 void
-gst_player_visualizations_free (GstPlayerVisualization ** viss)
+gtk_gst_player_visualizations_free (GtkGstPlayerVisualization ** viss)
 {
-  GstPlayerVisualization **p;
+  GtkGstPlayerVisualization **p;
 
   g_return_if_fail (viss != NULL);
 
@@ -105,12 +105,12 @@ gst_player_visualizations_free (GstPlayerVisualization ** viss)
 }
 
 static void
-gst_player_update_visualization_list (void)
+gtk_gst_player_update_visualization_list (void)
 {
   GList *features;
   GList *l;
   guint32 cookie;
-  GstPlayerVisualization *vis;
+  GtkGstPlayerVisualization *vis;
 
   g_mutex_lock (&vis_lock);
 
@@ -123,7 +123,7 @@ gst_player_update_visualization_list (void)
 
   /* if update is needed then first free the existing list */
   while ((vis = g_queue_pop_head (&vis_list)))
-    gst_player_visualization_free (vis);
+    gtk_gst_player_visualization_free (vis);
 
   features = gst_registry_get_feature_list (gst_registry_get (),
       GST_TYPE_ELEMENT_FACTORY);
@@ -136,7 +136,7 @@ gst_player_update_visualization_list (void)
         GST_ELEMENT_METADATA_KLASS);
 
     if (strstr (klass, "Visualization")) {
-      vis = g_new0 (GstPlayerVisualization, 1);
+      vis = g_new0 (GtkGstPlayerVisualization, 1);
 
       vis->name = g_strdup (gst_plugin_feature_get_name (feature));
       vis->description =
@@ -153,26 +153,26 @@ gst_player_update_visualization_list (void)
 }
 
 /**
- * gst_player_visualizations_get:
+ * gtk_gst_player_visualizations_get:
  *
- * Returns: (transfer full) (array zero-terminated=1) (element-type GstPlayerVisualization):
+ * Returns: (transfer full) (array zero-terminated=1) (element-type GtkGstPlayerVisualization):
  *  a %NULL terminated array containing all available
- *  visualizations. Use gst_player_visualizations_free() after
+ *  visualizations. Use gtk_gst_player_visualizations_free() after
  *  usage.
  */
-GstPlayerVisualization **
-gst_player_visualizations_get (void)
+GtkGstPlayerVisualization **
+gtk_gst_player_visualizations_get (void)
 {
   gint i = 0;
   GList *l;
-  GstPlayerVisualization **ret;
+  GtkGstPlayerVisualization **ret;
 
-  gst_player_update_visualization_list ();
+  gtk_gst_player_update_visualization_list ();
 
   g_mutex_lock (&vis_lock);
-  ret = g_new0 (GstPlayerVisualization *, g_queue_get_length (&vis_list) + 1);
+  ret = g_new0 (GtkGstPlayerVisualization *, g_queue_get_length (&vis_list) + 1);
   for (l = vis_list.head; l; l = l->next)
-    ret[i++] = gst_player_visualization_copy (l->data);
+    ret[i++] = gtk_gst_player_visualization_copy (l->data);
   g_mutex_unlock (&vis_lock);
 
   return ret;

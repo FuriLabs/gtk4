@@ -24,7 +24,7 @@ gst_libraries = []
 configinc = include_directories('.')
 libsinc = include_directories('.')
 
-gst_plugins_bad_args = ['-DGST_API_EXPORT=__attribute__((visibility("default")))']
+gst_plugins_bad_args = ['-DGTK_GST_PLAYER_API=__attribute__((visibility("default")))']
 
 gst_dep = dependency('gstreamer-1.0')
 gstaudio_dep = dependency('gstreamer-audio-1.0')

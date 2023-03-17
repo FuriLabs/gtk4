@@ -18,8 +18,8 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAYER_MEDIA_INFO_H__
-#define __GST_PLAYER_MEDIA_INFO_H__
+#ifndef __GTK_GST_PLAYER_MEDIA_INFO_H__
+#define __GTK_GST_PLAYER_MEDIA_INFO_H__
 
 #include <gst/gst.h>
 #include <gst/player/player-prelude.h>
@@ -27,229 +27,229 @@
 G_BEGIN_DECLS
 
 #define GST_TYPE_PLAYER_STREAM_INFO \
-  (gst_player_stream_info_get_type ())
-#define GST_PLAYER_STREAM_INFO(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_PLAYER_STREAM_INFO,GstPlayerStreamInfo))
-#define GST_PLAYER_STREAM_INFO_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_PLAYER_STREAM_INFO,GstPlayerStreamInfo))
+  (gtk_gst_player_stream_info_get_type ())
+#define GTK_GST_PLAYER_STREAM_INFO(obj) \
+  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_PLAYER_STREAM_INFO,GtkGstPlayerStreamInfo))
+#define GTK_GST_PLAYER_STREAM_INFO_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_PLAYER_STREAM_INFO,GtkGstPlayerStreamInfo))
 #define GST_IS_PLAYER_STREAM_INFO(obj) \
   (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_PLAYER_STREAM_INFO))
 #define GST_IS_PLAYER_STREAM_INFO_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_PLAYER_STREAM_INFO))
 
 /**
- * GstPlayerStreamInfo:
+ * GtkGstPlayerStreamInfo:
  *
  * Base structure for information concerning a media stream. Depending on
  * the stream type, one can find more media-specific information in
- * #GstPlayerVideoInfo, #GstPlayerAudioInfo, #GstPlayerSubtitleInfo.
+ * #GtkGstPlayerVideoInfo, #GtkGstPlayerAudioInfo, #GtkGstPlayerSubtitleInfo.
  */
-typedef struct _GstPlayerStreamInfo GstPlayerStreamInfo;
-typedef struct _GstPlayerStreamInfoClass GstPlayerStreamInfoClass;
+typedef struct _GtkGstPlayerStreamInfo GtkGstPlayerStreamInfo;
+typedef struct _GtkGstPlayerStreamInfoClass GtkGstPlayerStreamInfoClass;
 
-GST_PLAYER_API
-GType         gst_player_stream_info_get_type (void);
+GTK_GST_PLAYER_API
+GType         gtk_gst_player_stream_info_get_type (void);
 
-GST_PLAYER_API
-gint          gst_player_stream_info_get_index (const GstPlayerStreamInfo *info);
+GTK_GST_PLAYER_API
+gint          gtk_gst_player_stream_info_get_index (const GtkGstPlayerStreamInfo *info);
 
-GST_PLAYER_API
-const gchar*  gst_player_stream_info_get_stream_type (const GstPlayerStreamInfo *info);
+GTK_GST_PLAYER_API
+const gchar*  gtk_gst_player_stream_info_get_stream_type (const GtkGstPlayerStreamInfo *info);
 
-GST_PLAYER_API
-GstTagList*   gst_player_stream_info_get_tags  (const GstPlayerStreamInfo *info);
+GTK_GST_PLAYER_API
+GstTagList*   gtk_gst_player_stream_info_get_tags  (const GtkGstPlayerStreamInfo *info);
 
-GST_PLAYER_API
-GstCaps*      gst_player_stream_info_get_caps  (const GstPlayerStreamInfo *info);
+GTK_GST_PLAYER_API
+GstCaps*      gtk_gst_player_stream_info_get_caps  (const GtkGstPlayerStreamInfo *info);
 
-GST_PLAYER_API
-const gchar*  gst_player_stream_info_get_codec (const GstPlayerStreamInfo *info);
+GTK_GST_PLAYER_API
+const gchar*  gtk_gst_player_stream_info_get_codec (const GtkGstPlayerStreamInfo *info);
 
 #define GST_TYPE_PLAYER_VIDEO_INFO \
-  (gst_player_video_info_get_type ())
-#define GST_PLAYER_VIDEO_INFO(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_PLAYER_VIDEO_INFO, GstPlayerVideoInfo))
-#define GST_PLAYER_VIDEO_INFO_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((obj),GST_TYPE_PLAYER_VIDEO_INFO, GstPlayerVideoInfoClass))
+  (gtk_gst_player_video_info_get_type ())
+#define GTK_GST_PLAYER_VIDEO_INFO(obj) \
+  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_PLAYER_VIDEO_INFO, GtkGstPlayerVideoInfo))
+#define GTK_GST_PLAYER_VIDEO_INFO_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST((obj),GST_TYPE_PLAYER_VIDEO_INFO, GtkGstPlayerVideoInfoClass))
 #define GST_IS_PLAYER_VIDEO_INFO(obj) \
   (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_PLAYER_VIDEO_INFO))
 #define GST_IS_PLAYER_VIDEO_INFO_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE((obj),GST_TYPE_PLAYER_VIDEO_INFO))
 
 /**
- * GstPlayerVideoInfo:
+ * GtkGstPlayerVideoInfo:
  *
- * #GstPlayerStreamInfo specific to video streams.
+ * #GtkGstPlayerStreamInfo specific to video streams.
  */
-typedef struct _GstPlayerVideoInfo GstPlayerVideoInfo;
-typedef struct _GstPlayerVideoInfoClass GstPlayerVideoInfoClass;
+typedef struct _GtkGstPlayerVideoInfo GtkGstPlayerVideoInfo;
+typedef struct _GtkGstPlayerVideoInfoClass GtkGstPlayerVideoInfoClass;
 
-GST_PLAYER_API
-GType         gst_player_video_info_get_type (void);
+GTK_GST_PLAYER_API
+GType         gtk_gst_player_video_info_get_type (void);
 
-GST_PLAYER_API
-gint          gst_player_video_info_get_bitrate     (const GstPlayerVideoInfo * info);
+GTK_GST_PLAYER_API
+gint          gtk_gst_player_video_info_get_bitrate     (const GtkGstPlayerVideoInfo * info);
 
-GST_PLAYER_API
-gint          gst_player_video_info_get_max_bitrate (const GstPlayerVideoInfo * info);
+GTK_GST_PLAYER_API
+gint          gtk_gst_player_video_info_get_max_bitrate (const GtkGstPlayerVideoInfo * info);
 
-GST_PLAYER_API
-gint          gst_player_video_info_get_width       (const GstPlayerVideoInfo * info);
+GTK_GST_PLAYER_API
+gint          gtk_gst_player_video_info_get_width       (const GtkGstPlayerVideoInfo * info);
 
-GST_PLAYER_API
-gint          gst_player_video_info_get_height      (const GstPlayerVideoInfo * info);
+GTK_GST_PLAYER_API
+gint          gtk_gst_player_video_info_get_height      (const GtkGstPlayerVideoInfo * info);
 
-GST_PLAYER_API
-void          gst_player_video_info_get_framerate   (const GstPlayerVideoInfo * info,
+GTK_GST_PLAYER_API
+void          gtk_gst_player_video_info_get_framerate   (const GtkGstPlayerVideoInfo * info,
                                                      gint * fps_n,
                                                      gint * fps_d);
 
-GST_PLAYER_API
-void          gst_player_video_info_get_pixel_aspect_ratio (const GstPlayerVideoInfo * info,
+GTK_GST_PLAYER_API
+void          gtk_gst_player_video_info_get_pixel_aspect_ratio (const GtkGstPlayerVideoInfo * info,
                                                             guint * par_n,
                                                             guint * par_d);
 
 #define GST_TYPE_PLAYER_AUDIO_INFO \
-  (gst_player_audio_info_get_type ())
-#define GST_PLAYER_AUDIO_INFO(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_PLAYER_AUDIO_INFO, GstPlayerAudioInfo))
-#define GST_PLAYER_AUDIO_INFO_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_PLAYER_AUDIO_INFO, GstPlayerAudioInfoClass))
+  (gtk_gst_player_audio_info_get_type ())
+#define GTK_GST_PLAYER_AUDIO_INFO(obj) \
+  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_PLAYER_AUDIO_INFO, GtkGstPlayerAudioInfo))
+#define GTK_GST_PLAYER_AUDIO_INFO_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_PLAYER_AUDIO_INFO, GtkGstPlayerAudioInfoClass))
 #define GST_IS_PLAYER_AUDIO_INFO(obj) \
   (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_PLAYER_AUDIO_INFO))
 #define GST_IS_PLAYER_AUDIO_INFO_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_PLAYER_AUDIO_INFO))
 
 /**
- * GstPlayerAudioInfo:
+ * GtkGstPlayerAudioInfo:
  *
- * #GstPlayerStreamInfo specific to audio streams.
+ * #GtkGstPlayerStreamInfo specific to audio streams.
  */
-typedef struct _GstPlayerAudioInfo GstPlayerAudioInfo;
-typedef struct _GstPlayerAudioInfoClass GstPlayerAudioInfoClass;
+typedef struct _GtkGstPlayerAudioInfo GtkGstPlayerAudioInfo;
+typedef struct _GtkGstPlayerAudioInfoClass GtkGstPlayerAudioInfoClass;
 
-GST_PLAYER_API
-GType         gst_player_audio_info_get_type (void);
+GTK_GST_PLAYER_API
+GType         gtk_gst_player_audio_info_get_type (void);
 
-GST_PLAYER_API
-gint          gst_player_audio_info_get_channels    (const GstPlayerAudioInfo* info);
+GTK_GST_PLAYER_API
+gint          gtk_gst_player_audio_info_get_channels    (const GtkGstPlayerAudioInfo* info);
 
-GST_PLAYER_API
-gint          gst_player_audio_info_get_sample_rate (const GstPlayerAudioInfo* info);
+GTK_GST_PLAYER_API
+gint          gtk_gst_player_audio_info_get_sample_rate (const GtkGstPlayerAudioInfo* info);
 
-GST_PLAYER_API
-gint          gst_player_audio_info_get_bitrate     (const GstPlayerAudioInfo* info);
+GTK_GST_PLAYER_API
+gint          gtk_gst_player_audio_info_get_bitrate     (const GtkGstPlayerAudioInfo* info);
 
-GST_PLAYER_API
-gint          gst_player_audio_info_get_max_bitrate (const GstPlayerAudioInfo* info);
+GTK_GST_PLAYER_API
+gint          gtk_gst_player_audio_info_get_max_bitrate (const GtkGstPlayerAudioInfo* info);
 
-GST_PLAYER_API
-const gchar*  gst_player_audio_info_get_language    (const GstPlayerAudioInfo* info);
+GTK_GST_PLAYER_API
+const gchar*  gtk_gst_player_audio_info_get_language    (const GtkGstPlayerAudioInfo* info);
 
 #define GST_TYPE_PLAYER_SUBTITLE_INFO \
-  (gst_player_subtitle_info_get_type ())
-#define GST_PLAYER_SUBTITLE_INFO(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_PLAYER_SUBTITLE_INFO, GstPlayerSubtitleInfo))
-#define GST_PLAYER_SUBTITLE_INFO_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_PLAYER_SUBTITLE_INFO,GstPlayerSubtitleInfoClass))
+  (gtk_gst_player_subtitle_info_get_type ())
+#define GTK_GST_PLAYER_SUBTITLE_INFO(obj) \
+  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_PLAYER_SUBTITLE_INFO, GtkGstPlayerSubtitleInfo))
+#define GTK_GST_PLAYER_SUBTITLE_INFO_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_PLAYER_SUBTITLE_INFO,GtkGstPlayerSubtitleInfoClass))
 #define GST_IS_PLAYER_SUBTITLE_INFO(obj) \
   (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_PLAYER_SUBTITLE_INFO))
 #define GST_IS_PLAYER_SUBTITLE_INFO_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_PLAYER_SUBTITLE_INFO))
 
 /**
- * GstPlayerSubtitleInfo:
+ * GtkGstPlayerSubtitleInfo:
  *
- * #GstPlayerStreamInfo specific to subtitle streams.
+ * #GtkGstPlayerStreamInfo specific to subtitle streams.
  */
-typedef struct _GstPlayerSubtitleInfo GstPlayerSubtitleInfo;
-typedef struct _GstPlayerSubtitleInfoClass GstPlayerSubtitleInfoClass;
+typedef struct _GtkGstPlayerSubtitleInfo GtkGstPlayerSubtitleInfo;
+typedef struct _GtkGstPlayerSubtitleInfoClass GtkGstPlayerSubtitleInfoClass;
 
-GST_PLAYER_API
-GType         gst_player_subtitle_info_get_type (void);
+GTK_GST_PLAYER_API
+GType         gtk_gst_player_subtitle_info_get_type (void);
 
-GST_PLAYER_API
-const gchar * gst_player_subtitle_info_get_language (const GstPlayerSubtitleInfo* info);
+GTK_GST_PLAYER_API
+const gchar * gtk_gst_player_subtitle_info_get_language (const GtkGstPlayerSubtitleInfo* info);
 
 #define GST_TYPE_PLAYER_MEDIA_INFO \
-  (gst_player_media_info_get_type())
-#define GST_PLAYER_MEDIA_INFO(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_PLAYER_MEDIA_INFO,GstPlayerMediaInfo))
-#define GST_PLAYER_MEDIA_INFO_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_PLAYER_MEDIA_INFO,GstPlayerMediaInfoClass))
+  (gtk_gst_player_media_info_get_type())
+#define GTK_GST_PLAYER_MEDIA_INFO(obj) \
+  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_PLAYER_MEDIA_INFO,GtkGstPlayerMediaInfo))
+#define GTK_GST_PLAYER_MEDIA_INFO_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_PLAYER_MEDIA_INFO,GtkGstPlayerMediaInfoClass))
 #define GST_IS_PLAYER_MEDIA_INFO(obj) \
   (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_PLAYER_MEDIA_INFO))
 #define GST_IS_PLAYER_MEDIA_INFO_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_PLAYER_MEDIA_INFO))
 
 /**
- * GstPlayerMediaInfo:
+ * GtkGstPlayerMediaInfo:
  *
  * Structure containing the media information of a URI.
  */
-typedef struct _GstPlayerMediaInfo GstPlayerMediaInfo;
-typedef struct _GstPlayerMediaInfoClass GstPlayerMediaInfoClass;
+typedef struct _GtkGstPlayerMediaInfo GtkGstPlayerMediaInfo;
+typedef struct _GtkGstPlayerMediaInfoClass GtkGstPlayerMediaInfoClass;
 
-GST_PLAYER_API
-GType         gst_player_media_info_get_type (void);
+GTK_GST_PLAYER_API
+GType         gtk_gst_player_media_info_get_type (void);
 
-GST_PLAYER_API
-const gchar * gst_player_media_info_get_uri (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+const gchar * gtk_gst_player_media_info_get_uri (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-gboolean      gst_player_media_info_is_seekable (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+gboolean      gtk_gst_player_media_info_is_seekable (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-gboolean      gst_player_media_info_is_live (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+gboolean      gtk_gst_player_media_info_is_live (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-GstClockTime  gst_player_media_info_get_duration (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+GstClockTime  gtk_gst_player_media_info_get_duration (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-GList*        gst_player_media_info_get_stream_list (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+GList*        gtk_gst_player_media_info_get_stream_list (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-guint         gst_player_media_info_get_number_of_streams (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+guint         gtk_gst_player_media_info_get_number_of_streams (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-GList*        gst_player_media_info_get_video_streams (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+GList*        gtk_gst_player_media_info_get_video_streams (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-guint         gst_player_media_info_get_number_of_video_streams (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+guint         gtk_gst_player_media_info_get_number_of_video_streams (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-GList*        gst_player_media_info_get_audio_streams (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+GList*        gtk_gst_player_media_info_get_audio_streams (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-guint         gst_player_media_info_get_number_of_audio_streams (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+guint         gtk_gst_player_media_info_get_number_of_audio_streams (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-GList*        gst_player_media_info_get_subtitle_streams (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+GList*        gtk_gst_player_media_info_get_subtitle_streams (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-guint         gst_player_media_info_get_number_of_subtitle_streams (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+guint         gtk_gst_player_media_info_get_number_of_subtitle_streams (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-GstTagList*   gst_player_media_info_get_tags (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+GstTagList*   gtk_gst_player_media_info_get_tags (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-const gchar*  gst_player_media_info_get_title (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+const gchar*  gtk_gst_player_media_info_get_title (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-const gchar*  gst_player_media_info_get_container_format (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+const gchar*  gtk_gst_player_media_info_get_container_format (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_API
-GstSample*    gst_player_media_info_get_image_sample (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_API
+GstSample*    gtk_gst_player_media_info_get_image_sample (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_DEPRECATED_FOR(gst_player_media_info_get_video_streams)
-GList*        gst_player_get_video_streams    (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_DEPRECATED_FOR(gtk_gst_player_media_info_get_video_streams)
+GList*        gtk_gst_player_get_video_streams    (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_DEPRECATED_FOR(gst_player_media_info_get_audio_streams)
-GList*        gst_player_get_audio_streams    (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_DEPRECATED_FOR(gtk_gst_player_media_info_get_audio_streams)
+GList*        gtk_gst_player_get_audio_streams    (const GtkGstPlayerMediaInfo *info);
 
-GST_PLAYER_DEPRECATED_FOR(gst_player_media_info_get_subtitle_streams)
-GList*        gst_player_get_subtitle_streams (const GstPlayerMediaInfo *info);
+GTK_GST_PLAYER_DEPRECATED_FOR(gtk_gst_player_media_info_get_subtitle_streams)
+GList*        gtk_gst_player_get_subtitle_streams (const GtkGstPlayerMediaInfo *info);
 
 G_END_DECLS
 
-#endif /* __GST_PLAYER_MEDIA_INFO_H */
+#endif /* __GTK_GST_PLAYER_MEDIA_INFO_H */

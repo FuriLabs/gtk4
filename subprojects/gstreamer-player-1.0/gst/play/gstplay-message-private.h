@@ -19,24 +19,24 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAY_MESSAGE_PRIVATE_H__
-#define __GST_PLAY_MESSAGE_PRIVATE_H__
+#ifndef __GTL_GST_PLAY_MESSAGE_PRIVATE_H__
+#define __GTL_GST_PLAY_MESSAGE_PRIVATE_H__
 
-#define GST_PLAY_MESSAGE_DATA "gst-play-message-data"
-#define GST_PLAY_MESSAGE_DATA_TYPE "play-message-type"
-#define GST_PLAY_MESSAGE_DATA_URI "uri"
-#define GST_PLAY_MESSAGE_DATA_POSITION "position"
-#define GST_PLAY_MESSAGE_DATA_DURATION "duration"
-#define GST_PLAY_MESSAGE_DATA_PLAY_STATE "play-state"
-#define GST_PLAY_MESSAGE_DATA_BUFFERING_PERCENT "bufferring-percent"
-#define GST_PLAY_MESSAGE_DATA_ERROR "error"
-#define GST_PLAY_MESSAGE_DATA_ERROR_DETAILS "error-details"
-#define GST_PLAY_MESSAGE_DATA_WARNING "warning"
-#define GST_PLAY_MESSAGE_DATA_WARNING_DETAILS "warning-details"
-#define GST_PLAY_MESSAGE_DATA_VIDEO_WIDTH "video-width"
-#define GST_PLAY_MESSAGE_DATA_VIDEO_HEIGHT "video-height"
-#define GST_PLAY_MESSAGE_DATA_MEDIA_INFO "media-info"
-#define GST_PLAY_MESSAGE_DATA_VOLUME "volume"
-#define GST_PLAY_MESSAGE_DATA_IS_MUTED "is-muted"
+#define GTL_GST_PLAY_MESSAGE_DATA "gst-play-message-data"
+#define GTL_GST_PLAY_MESSAGE_DATA_TYPE "play-message-type"
+#define GTL_GST_PLAY_MESSAGE_DATA_URI "uri"
+#define GTL_GST_PLAY_MESSAGE_DATA_POSITION "position"
+#define GTL_GST_PLAY_MESSAGE_DATA_DURATION "duration"
+#define GTL_GST_PLAY_MESSAGE_DATA_PLAY_STATE "play-state"
+#define GTL_GST_PLAY_MESSAGE_DATA_BUFFERING_PERCENT "bufferring-percent"
+#define GTL_GST_PLAY_MESSAGE_DATA_ERROR "error"
+#define GTL_GST_PLAY_MESSAGE_DATA_ERROR_DETAILS "error-details"
+#define GTL_GST_PLAY_MESSAGE_DATA_WARNING "warning"
+#define GTL_GST_PLAY_MESSAGE_DATA_WARNING_DETAILS "warning-details"
+#define GTL_GST_PLAY_MESSAGE_DATA_VIDEO_WIDTH "video-width"
+#define GTL_GST_PLAY_MESSAGE_DATA_VIDEO_HEIGHT "video-height"
+#define GTL_GST_PLAY_MESSAGE_DATA_MEDIA_INFO "media-info"
+#define GTL_GST_PLAY_MESSAGE_DATA_VOLUME "volume"
+#define GTL_GST_PLAY_MESSAGE_DATA_IS_MUTED "is-muted"
 
 #endif

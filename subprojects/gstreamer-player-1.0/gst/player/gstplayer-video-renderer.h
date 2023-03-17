@@ -18,31 +18,31 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAYER_VIDEO_RENDERER_H__
-#define __GST_PLAYER_VIDEO_RENDERER_H__
+#ifndef __GTK_GST_PLAYER_VIDEO_RENDERER_H__
+#define __GTK_GST_PLAYER_VIDEO_RENDERER_H__
 
 #include <gst/gst.h>
 #include <gst/player/gstplayer-types.h>
 
 G_BEGIN_DECLS
 
-typedef struct _GstPlayerVideoRenderer GstPlayerVideoRenderer;
-typedef struct _GstPlayerVideoRendererInterface GstPlayerVideoRendererInterface;
+typedef struct _GtkGstPlayerVideoRenderer GtkGstPlayerVideoRenderer;
+typedef struct _GtkGstPlayerVideoRendererInterface GtkGstPlayerVideoRendererInterface;
 
-#define GST_TYPE_PLAYER_VIDEO_RENDERER                (gst_player_video_renderer_get_type ())
-#define GST_PLAYER_VIDEO_RENDERER(obj)                (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PLAYER_VIDEO_RENDERER, GstPlayerVideoRenderer))
+#define GST_TYPE_PLAYER_VIDEO_RENDERER                (gtk_gst_player_video_renderer_get_type ())
+#define GTK_GST_PLAYER_VIDEO_RENDERER(obj)                (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PLAYER_VIDEO_RENDERER, GtkGstPlayerVideoRenderer))
 #define GST_IS_PLAYER_VIDEO_RENDERER(obj)             (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_PLAYER_VIDEO_RENDERER))
-#define GST_PLAYER_VIDEO_RENDERER_GET_INTERFACE(inst) (G_TYPE_INSTANCE_GET_INTERFACE ((inst), GST_TYPE_PLAYER_VIDEO_RENDERER, GstPlayerVideoRendererInterface))
+#define GTK_GST_PLAYER_VIDEO_RENDERER_GET_INTERFACE(inst) (G_TYPE_INSTANCE_GET_INTERFACE ((inst), GST_TYPE_PLAYER_VIDEO_RENDERER, GtkGstPlayerVideoRendererInterface))
 
-struct _GstPlayerVideoRendererInterface {
+struct _GtkGstPlayerVideoRendererInterface {
   GTypeInterface parent_iface;
 
-  GstElement * (*create_video_sink) (GstPlayerVideoRenderer * self, GstPlayer * player);
+  GstElement * (*create_video_sink) (GtkGstPlayerVideoRenderer * self, GtkGstPlayer * player);
 };
 
-GST_PLAYER_API
-GType        gst_player_video_renderer_get_type       (void);
+GTK_GST_PLAYER_API
+GType        gtk_gst_player_video_renderer_get_type       (void);
 
 G_END_DECLS
 
-#endif /* __GST_PLAYER_VIDEO_RENDERER_H__ */
+#endif /* __GTK_GST_PLAYER_VIDEO_RENDERER_H__ */

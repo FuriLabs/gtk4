@@ -18,19 +18,19 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAYER_TYPES_H__
-#define __GST_PLAYER_TYPES_H__
+#ifndef __GTK_GST_PLAYER_TYPES_H__
+#define __GTK_GST_PLAYER_TYPES_H__
 
 #include <gst/gst.h>
 #include <gst/player/player-prelude.h>
 
 G_BEGIN_DECLS
 
-typedef struct _GstPlayer GstPlayer;
-typedef struct _GstPlayerClass GstPlayerClass;
+typedef struct _GtkGstPlayer GtkGstPlayer;
+typedef struct _GtkGstPlayerClass GtkGstPlayerClass;
 
 G_END_DECLS
 
-#endif /* __GST_PLAYER_TYPES_H__ */
+#endif /* __GTK_GST_PLAYER_TYPES_H__ */
 
 

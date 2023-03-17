@@ -19,42 +19,42 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAYER_VISUALIZATION_H__
-#define __GST_PLAYER_VISUALIZATION_H__
+#ifndef __GTK_GST_PLAYER_VISUALIZATION_H__
+#define __GTK_GST_PLAYER_VISUALIZATION_H__
 
 #include <gst/gst.h>
 #include <gst/player/player-prelude.h>
 
 G_BEGIN_DECLS
 
-typedef struct _GstPlayerVisualization GstPlayerVisualization;
+typedef struct _GtkGstPlayerVisualization GtkGstPlayerVisualization;
 /**
- * GstPlayerVisualization:
+ * GtkGstPlayerVisualization:
  * @name: name of the visualization.
  * @description: description of the visualization.
  *
- * A #GstPlayerVisualization descriptor.
+ * A #GtkGstPlayerVisualization descriptor.
  */
-struct _GstPlayerVisualization {
+struct _GtkGstPlayerVisualization {
   gchar *name;
   gchar *description;
 };
 
-GST_PLAYER_API
-GType                     gst_player_visualization_get_type (void);
+GTK_GST_PLAYER_API
+GType                     gtk_gst_player_visualization_get_type (void);
 
-GST_PLAYER_API
-GstPlayerVisualization *  gst_player_visualization_copy  (const GstPlayerVisualization *vis);
+GTK_GST_PLAYER_API
+GtkGstPlayerVisualization *  gtk_gst_player_visualization_copy  (const GtkGstPlayerVisualization *vis);
 
-GST_PLAYER_API
-void                      gst_player_visualization_free  (GstPlayerVisualization *vis);
+GTK_GST_PLAYER_API
+void                      gtk_gst_player_visualization_free  (GtkGstPlayerVisualization *vis);
 
-GST_PLAYER_API
-GstPlayerVisualization ** gst_player_visualizations_get  (void);
+GTK_GST_PLAYER_API
+GtkGstPlayerVisualization ** gtk_gst_player_visualizations_get  (void);
 
-GST_PLAYER_API
-void                      gst_player_visualizations_free (GstPlayerVisualization **viss);
+GTK_GST_PLAYER_API
+void                      gtk_gst_player_visualizations_free (GtkGstPlayerVisualization **viss);
 
 G_END_DECLS
 
-#endif /* __GST_PLAYER_VISUALIZATION_H__ */
+#endif /* __GTK_GST_PLAYER_VISUALIZATION_H__ */

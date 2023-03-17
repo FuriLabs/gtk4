@@ -21,13 +21,13 @@
 
 /**
  * SECTION:gstplayer
- * @title: GstPlayer
+ * @title: GtkGstPlayer
  * @short_description: Player
  * @symbols:
- * - GstPlayer
+ * - GtkGstPlayer
  *
- * Starting from GStreamer 1.20, application developers are strongly advised to migrate to #GstPlay.
- * #GstPlayer will be deprecated in 1.20 and most likely removed by 1.24.
+ * Starting from GStreamer 1.20, application developers are strongly advised to migrate to #GtkGstPlay.
+ * #GtkGstPlayer will be deprecated in 1.20 and most likely removed by 1.24.
  */
 
 /* TODO:
@@ -62,8 +62,8 @@
 
 #include <string.h>
 
-GST_DEBUG_CATEGORY_STATIC (gst_player_debug);
-#define GST_CAT_DEFAULT gst_player_debug
+GST_DEBUG_CATEGORY_STATIC (gtk_gst_player_debug);
+#define GST_CAT_DEFAULT gtk_gst_player_debug
 
 #define DEFAULT_URI NULL
 #define DEFAULT_POSITION GST_CLOCK_TIME_NONE
@@ -76,10 +76,10 @@ GST_DEBUG_CATEGORY_STATIC (gst_player_debug);
 #define DEFAULT_SUBTITLE_VIDEO_OFFSET 0
 
 /**
- * gst_player_error_quark:
+ * gtk_gst_player_error_quark:
  */
 GQuark
-gst_player_error_quark (void)
+gtk_gst_player_error_quark (void)
 {
   return g_quark_from_static_string ("gst-player-error-quark");
 }
@@ -148,40 +148,40 @@ enum
   SIGNAL_LAST
 };
 
-struct _GstPlayer
+struct _GtkGstPlayer
 {
   GstObject parent;
 
-  GstPlay *play;
-  GstPlaySignalAdapter *signal_adapter;
+  GtkGstPlay *play;
+  GtkGstPlaySignalAdapter *signal_adapter;
 
   /* legacy */
-  GstPlayerSignalDispatcher *signal_dispatcher;
-  GstPlayerVideoRenderer *video_renderer;
+  GtkGstPlayerSignalDispatcher *signal_dispatcher;
+  GtkGstPlayerVideoRenderer *video_renderer;
 };
 
-struct _GstPlayerClass
+struct _GtkGstPlayerClass
 {
   GstObjectClass parent_class;
 };
 
-#define parent_class gst_player_parent_class
-G_DEFINE_TYPE (GstPlayer, gst_player, GST_TYPE_OBJECT);
+#define parent_class gtk_gst_player_parent_class
+G_DEFINE_TYPE (GtkGstPlayer, gtk_gst_player, GST_TYPE_OBJECT);
 
 static guint signals[SIGNAL_LAST] = { 0, };
 static GParamSpec *param_specs[PROP_LAST] = { NULL, };
 
-static void gst_player_finalize (GObject * object);
-static void gst_player_set_property (GObject * object, guint prop_id,
+static void gtk_gst_player_finalize (GObject * object);
+static void gtk_gst_player_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec);
-static void gst_player_get_property (GObject * object, guint prop_id,
+static void gtk_gst_player_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec);
-static void gst_player_constructed (GObject * object);
+static void gtk_gst_player_constructed (GObject * object);
 
 static void
-gst_player_init (GstPlayer * self)
+gtk_gst_player_init (GtkGstPlayer * self)
 {
-  self->play = gst_play_new (NULL);
+  self->play = gtk_gst_play_new (NULL);
 }
 
 static void
@@ -202,17 +202,17 @@ config_quark_initialize (void)
 }
 
 static void
-gst_player_class_init (GstPlayerClass * klass)
+gtk_gst_player_class_init (GtkGstPlayerClass * klass)
 {
   GObjectClass *gobject_class = (GObjectClass *) klass;
 
-  GST_DEBUG_CATEGORY_INIT (gst_player_debug, "gst-player", 0, "GstPlayer");
-  gst_player_error_quark ();
+  GST_DEBUG_CATEGORY_INIT (gtk_gst_player_debug, "gtk-gst-player", 0, "GtkGstPlayer");
+  gtk_gst_player_error_quark ();
 
-  gobject_class->set_property = gst_player_set_property;
-  gobject_class->get_property = gst_player_get_property;
-  gobject_class->finalize = gst_player_finalize;
-  gobject_class->constructed = gst_player_constructed;
+  gobject_class->set_property = gtk_gst_player_set_property;
+  gobject_class->get_property = gtk_gst_player_get_property;
+  gobject_class->finalize = gtk_gst_player_finalize;
+  gobject_class->constructed = gtk_gst_player_constructed;
 
   param_specs[PROP_VIDEO_RENDERER] =
       g_param_spec_object ("video-renderer",
@@ -375,9 +375,9 @@ gst_player_class_init (GstPlayerClass * klass)
 }
 
 static void
-gst_player_finalize (GObject * object)
+gtk_gst_player_finalize (GObject * object)
 {
-  GstPlayer *self = GST_PLAYER (object);
+  GtkGstPlayer *self = GST_PLAYER (object);
 
   GST_TRACE_OBJECT (self, "Finalizing");
 
@@ -394,10 +394,10 @@ gst_player_finalize (GObject * object)
 }
 
 static void
-gst_player_set_property (GObject * object, guint prop_id,
+gtk_gst_player_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
-  GstPlayer *self = GST_PLAYER (object);
+  GtkGstPlayer *self = GST_PLAYER (object);
 
   switch (prop_id) {
     case PROP_SIGNAL_DISPATCHER:
@@ -414,26 +414,26 @@ gst_player_set_property (GObject * object, guint prop_id,
 }
 
 static void
-gst_player_get_property (GObject * object, guint prop_id,
+gtk_gst_player_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec)
 {
-  GstPlayer *self = GST_PLAYER (object);
+  GtkGstPlayer *self = GST_PLAYER (object);
 
   switch (prop_id) {
     case PROP_VIDEO_RENDERER:
       g_value_set_object (value, self->video_renderer);
       break;
     case PROP_MEDIA_INFO:
-      g_value_take_object (value, gst_player_get_media_info (self));
+      g_value_take_object (value, gtk_gst_player_get_media_info (self));
       break;
     case PROP_CURRENT_AUDIO_TRACK:
-      g_value_take_object (value, gst_player_get_current_audio_track (self));
+      g_value_take_object (value, gtk_gst_player_get_current_audio_track (self));
       break;
     case PROP_CURRENT_VIDEO_TRACK:
-      g_value_take_object (value, gst_player_get_current_video_track (self));
+      g_value_take_object (value, gtk_gst_player_get_current_video_track (self));
       break;
     case PROP_CURRENT_SUBTITLE_TRACK:
-      g_value_take_object (value, gst_player_get_current_subtitle_track (self));
+      g_value_take_object (value, gtk_gst_player_get_current_subtitle_track (self));
       break;
     default:
       g_object_get_property (G_OBJECT (self->play),
@@ -443,7 +443,7 @@ gst_player_get_property (GObject * object, guint prop_id,
 }
 
 static gpointer
-gst_player_init_once (G_GNUC_UNUSED gpointer user_data)
+gtk_gst_player_init_once (G_GNUC_UNUSED gpointer user_data)
 {
   gst_init (NULL, NULL);
 
@@ -451,125 +451,125 @@ gst_player_init_once (G_GNUC_UNUSED gpointer user_data)
 }
 
 static void
-uri_loaded_cb (GstPlaySignalAdapter * adapter, const gchar * uri,
-    GstPlayer * self)
+uri_loaded_cb (GtkGstPlaySignalAdapter * adapter, const gchar * uri,
+    GtkGstPlayer * self)
 {
   g_signal_emit (self, signals[SIGNAL_URI_LOADED], 0, uri);
 }
 
 static void
-position_updated_cb (GstPlaySignalAdapter * adapter, GstClockTime position,
-    GstPlayer * self)
+position_updated_cb (GtkGstPlaySignalAdapter * adapter, GstClockTime position,
+    GtkGstPlayer * self)
 {
   g_signal_emit (self, signals[SIGNAL_POSITION_UPDATED], 0, position);
 }
 
 static void
-duration_changed_cb (GstPlaySignalAdapter * adapter, GstClockTime duraton,
-    GstPlayer * self)
+duration_changed_cb (GtkGstPlaySignalAdapter * adapter, GstClockTime duraton,
+    GtkGstPlayer * self)
 {
   g_signal_emit (self, signals[SIGNAL_DURATION_CHANGED], 0, duraton);
 }
 
 static void
-state_changed_cb (GstPlaySignalAdapter * adapter, GstPlayState state,
-    GstPlayer * self)
+state_changed_cb (GtkGstPlaySignalAdapter * adapter, GtkGstPlayState state,
+    GtkGstPlayer * self)
 {
-  GstPlayerState s = GST_PLAYER_STATE_BUFFERING;
+  GtkGstPlayerState s = GTK_GST_PLAYER_STATE_BUFFERING;
   switch (state) {
-    case GST_PLAY_STATE_BUFFERING:
-      s = GST_PLAYER_STATE_BUFFERING;
+    case GTL_GST_PLAY_STATE_BUFFERING:
+      s = GTK_GST_PLAYER_STATE_BUFFERING;
       break;
-    case GST_PLAY_STATE_PAUSED:
-      s = GST_PLAYER_STATE_PAUSED;
+    case GTL_GST_PLAY_STATE_PAUSED:
+      s = GTK_GST_PLAYER_STATE_PAUSED;
       break;
-    case GST_PLAY_STATE_PLAYING:
-      s = GST_PLAYER_STATE_PLAYING;
+    case GTL_GST_PLAY_STATE_PLAYING:
+      s = GTK_GST_PLAYER_STATE_PLAYING;
       break;
-    case GST_PLAY_STATE_STOPPED:
-      s = GST_PLAYER_STATE_STOPPED;
+    case GTL_GST_PLAY_STATE_STOPPED:
+      s = GTK_GST_PLAYER_STATE_STOPPED;
       break;
   }
   g_signal_emit (self, signals[SIGNAL_STATE_CHANGED], 0, s);
 }
 
 static void
-buffering_cb (GstPlaySignalAdapter * adapter, gint buffering_percent,
-    GstPlayer * self)
+buffering_cb (GtkGstPlaySignalAdapter * adapter, gint buffering_percent,
+    GtkGstPlayer * self)
 {
   g_signal_emit (self, signals[SIGNAL_BUFFERING], 0, buffering_percent);
 }
 
 static void
-end_of_stream_cb (GstPlaySignalAdapter * adapter, GstPlayer * self)
+end_of_stream_cb (GtkGstPlaySignalAdapter * adapter, GtkGstPlayer * self)
 {
   g_signal_emit (self, signals[SIGNAL_END_OF_STREAM], 0, NULL);
 }
 
 static void
-error_cb (GstPlaySignalAdapter * adapter, GError * error,
-    GstStructure * details, GstPlayer * self)
+error_cb (GtkGstPlaySignalAdapter * adapter, GError * error,
+    GstStructure * details, GtkGstPlayer * self)
 {
   g_signal_emit (self, signals[SIGNAL_ERROR], 0, error);
 }
 
 static void
-dimensions_changed_cb (GstPlaySignalAdapter * adapter, guint width,
-    guint height, GstPlayer * self)
+dimensions_changed_cb (GtkGstPlaySignalAdapter * adapter, guint width,
+    guint height, GtkGstPlayer * self)
 {
   g_signal_emit (self, signals[SIGNAL_VIDEO_DIMENSIONS_CHANGED], 0, width,
       height);
 }
 
 static void
-media_info_cb (GstPlaySignalAdapter * adapter, GstPlayMediaInfo * info,
-    GstPlayer * self)
+media_info_cb (GtkGstPlaySignalAdapter * adapter, GtkGstPlayMediaInfo * info,
+    GtkGstPlayer * self)
 {
-  GstPlayerMediaInfo *i = gst_player_media_info_wrapped (info);
+  GtkGstPlayerMediaInfo *i = gtk_gst_player_media_info_wrapped (info);
   g_signal_emit (self, signals[SIGNAL_MEDIA_INFO_UPDATED], 0, i);
   g_object_unref (i);
 }
 
 static void
-volume_cb (GstPlaySignalAdapter * adapter, gdouble volume, GstPlayer * self)
+volume_cb (GtkGstPlaySignalAdapter * adapter, gdouble volume, GtkGstPlayer * self)
 {
   g_signal_emit (self, signals[SIGNAL_VOLUME_CHANGED], 0, NULL);
 }
 
 
 static void
-mute_cb (GstPlaySignalAdapter * adapter, gboolean muted, GstPlayer * self)
+mute_cb (GtkGstPlaySignalAdapter * adapter, gboolean muted, GtkGstPlayer * self)
 {
   g_signal_emit (self, signals[SIGNAL_MUTE_CHANGED], 0, NULL);
 }
 
 static void
-warning_cb (GstPlaySignalAdapter * adapter, GError * warning,
-    GstStructure * details, GstPlayer * self)
+warning_cb (GtkGstPlaySignalAdapter * adapter, GError * warning,
+    GstStructure * details, GtkGstPlayer * self)
 {
   g_signal_emit (self, signals[SIGNAL_WARNING], 0, warning);
 }
 
 static void
-seek_done_cb (GstPlaySignalAdapter * adapter, GstClockTime time,
-    GstPlayer * self)
+seek_done_cb (GtkGstPlaySignalAdapter * adapter, GstClockTime time,
+    GtkGstPlayer * self)
 {
   g_signal_emit (self, signals[SIGNAL_SEEK_DONE], 0, time);
 }
 
 static void
-gst_player_constructed (GObject * object)
+gtk_gst_player_constructed (GObject * object)
 {
-  GstPlayer *self = GST_PLAYER (object);
-  GstPlayerVideoRenderer *renderer = NULL;
+  GtkGstPlayer *self = GST_PLAYER (object);
+  GtkGstPlayerVideoRenderer *renderer = NULL;
 
   G_OBJECT_CLASS (parent_class)->constructed (object);
 
   if (self->video_renderer != NULL) {
     renderer =
-        gst_player_wrapped_video_renderer_new (self->video_renderer, self);
+        gtk_gst_player_wrapped_video_renderer_new (self->video_renderer, self);
     g_object_set (self->play, "video-renderer",
-        GST_PLAY_VIDEO_RENDERER (renderer), NULL);
+        GTL_GST_PLAY_VIDEO_RENDERER (renderer), NULL);
     g_object_unref (renderer);
   }
 
@@ -579,10 +579,10 @@ gst_player_constructed (GObject * object)
     g_object_get (self->signal_dispatcher, "application-context", &context,
         NULL);
     self->signal_adapter =
-        gst_play_signal_adapter_new_with_main_context (self->play, context);
+        gtk_gst_play_signal_adapter_new_with_main_context (self->play, context);
     g_main_context_unref (context);
   } else {
-    self->signal_adapter = gst_play_signal_adapter_new_sync_emit (self->play);
+    self->signal_adapter = gtk_gst_play_signal_adapter_new_sync_emit (self->play);
   }
 
   g_signal_connect (self->signal_adapter, "uri-loaded",
@@ -613,13 +613,13 @@ gst_player_constructed (GObject * object)
 }
 
 /**
- * gst_player_new:
- * @video_renderer: (transfer full) (allow-none): GstPlayerVideoRenderer to use
- * @signal_dispatcher: (transfer full) (allow-none): GstPlayerSignalDispatcher to use
+ * gtk_gst_player_new:
+ * @video_renderer: (transfer full) (allow-none): GtkGstPlayerVideoRenderer to use
+ * @signal_dispatcher: (transfer full) (allow-none): GtkGstPlayerSignalDispatcher to use
  *
- * Creates a new #GstPlayer instance that uses @signal_dispatcher to dispatch
+ * Creates a new #GtkGstPlayer instance that uses @signal_dispatcher to dispatch
  * signals to some event loop system, or emits signals directly if NULL is
- * passed. See gst_player_g_main_context_signal_dispatcher_new().
+ * passed. See gtk_gst_player_g_main_context_signal_dispatcher_new().
  *
  * Video is going to be rendered by @video_renderer, or if %NULL is provided
  * no special video set up will be done and some default handling will be
@@ -628,16 +628,16 @@ gst_player_constructed (GObject * object)
  * This also initializes GStreamer via `gst_init()` on the first call if this
  * didn't happen before.
  *
- * Returns: (transfer full): a new #GstPlayer instance
+ * Returns: (transfer full): a new #GtkGstPlayer instance
  */
-GstPlayer *
-gst_player_new (GstPlayerVideoRenderer * video_renderer,
-    GstPlayerSignalDispatcher * signal_dispatcher)
+GtkGstPlayer *
+gtk_gst_player_new (GtkGstPlayerVideoRenderer * video_renderer,
+    GtkGstPlayerSignalDispatcher * signal_dispatcher)
 {
   static GOnce once = G_ONCE_INIT;
-  GstPlayer *self;
+  GtkGstPlayer *self;
 
-  g_once (&once, gst_player_init_once, NULL);
+  g_once (&once, gtk_gst_player_init_once, NULL);
 
   self =
       g_object_new (GST_TYPE_PLAYER, "signal-dispatcher", signal_dispatcher,
@@ -654,57 +654,57 @@ gst_player_new (GstPlayerVideoRenderer * video_renderer,
 }
 
 /**
- * gst_player_play:
- * @player: #GstPlayer instance
+ * gtk_gst_player_play:
+ * @player: #GtkGstPlayer instance
  *
  * Request to play the loaded stream.
  */
 void
-gst_player_play (GstPlayer * self)
+gtk_gst_player_play (GtkGstPlayer * self)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
-  gst_play_play (self->play);
+  gtk_gst_play_play (self->play);
 }
 
 /**
- * gst_player_pause:
- * @player: #GstPlayer instance
+ * gtk_gst_player_pause:
+ * @player: #GtkGstPlayer instance
  *
  * Pauses the current stream.
  */
 void
-gst_player_pause (GstPlayer * self)
+gtk_gst_player_pause (GtkGstPlayer * self)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
-  gst_play_pause (self->play);
+  gtk_gst_play_pause (self->play);
 }
 
 /**
- * gst_player_stop:
- * @player: #GstPlayer instance
+ * gtk_gst_player_stop:
+ * @player: #GtkGstPlayer instance
  *
  * Stops playing the current stream and resets to the first position
  * in the stream.
  */
 void
-gst_player_stop (GstPlayer * self)
+gtk_gst_player_stop (GtkGstPlayer * self)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
-  gst_play_stop (self->play);
+  gtk_gst_play_stop (self->play);
 }
 
 /**
- * gst_player_set_rate:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_rate:
+ * @player: #GtkGstPlayer instance
  * @rate: playback rate
  *
  * Playback at specified rate
  */
 void
-gst_player_set_rate (GstPlayer * self, gdouble rate)
+gtk_gst_player_set_rate (GtkGstPlayer * self, gdouble rate)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
   g_return_if_fail (rate != 0.0);
@@ -713,13 +713,13 @@ gst_player_set_rate (GstPlayer * self, gdouble rate)
 }
 
 /**
- * gst_player_get_rate:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_rate:
+ * @player: #GtkGstPlayer instance
  *
  * Returns: current playback rate
  */
 gdouble
-gst_player_get_rate (GstPlayer * self)
+gtk_gst_player_get_rate (GtkGstPlayer * self)
 {
   gdouble val;
 
@@ -731,25 +731,25 @@ gst_player_get_rate (GstPlayer * self)
 }
 
 /**
- * gst_player_seek:
- * @player: #GstPlayer instance
+ * gtk_gst_player_seek:
+ * @player: #GtkGstPlayer instance
  * @position: position to seek in nanoseconds
  *
  * Seeks the currently-playing stream to the absolute @position time
  * in nanoseconds.
  */
 void
-gst_player_seek (GstPlayer * self, GstClockTime position)
+gtk_gst_player_seek (GtkGstPlayer * self, GstClockTime position)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
   g_return_if_fail (GST_CLOCK_TIME_IS_VALID (position));
 
-  gst_play_seek (self->play, position);
+  gtk_gst_play_seek (self->play, position);
 }
 
 /**
- * gst_player_get_uri:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_uri:
+ * @player: #GtkGstPlayer instance
  *
  * Gets the URI of the currently-playing stream.
  *
@@ -757,7 +757,7 @@ gst_player_seek (GstPlayer * self, GstClockTime position)
  * currently-playing stream. g_free() after usage.
  */
 gchar *
-gst_player_get_uri (GstPlayer * self)
+gtk_gst_player_get_uri (GtkGstPlayer * self)
 {
   gchar *val;
 
@@ -769,14 +769,14 @@ gst_player_get_uri (GstPlayer * self)
 }
 
 /**
- * gst_player_set_uri:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_uri:
+ * @player: #GtkGstPlayer instance
  * @uri: (nullable): next URI to play.
  *
  * Sets the next URI to play.
  */
 void
-gst_player_set_uri (GstPlayer * self, const gchar * val)
+gtk_gst_player_set_uri (GtkGstPlayer * self, const gchar * val)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
@@ -784,16 +784,16 @@ gst_player_set_uri (GstPlayer * self, const gchar * val)
 }
 
 /**
- * gst_player_set_subtitle_uri:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_subtitle_uri:
+ * @player: #GtkGstPlayer instance
  * @uri: (nullable): subtitle URI
  *
  * Sets the external subtitle URI. This should be combined with a call to
- * gst_player_set_subtitle_track_enabled(@player, TRUE) so the subtitles are actually
+ * gtk_gst_player_set_subtitle_track_enabled(@player, TRUE) so the subtitles are actually
  * rendered.
  */
 void
-gst_player_set_subtitle_uri (GstPlayer * self, const gchar * suburi)
+gtk_gst_player_set_subtitle_uri (GtkGstPlayer * self, const gchar * suburi)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
@@ -801,8 +801,8 @@ gst_player_set_subtitle_uri (GstPlayer * self, const gchar * suburi)
 }
 
 /**
- * gst_player_get_subtitle_uri:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_subtitle_uri:
+ * @player: #GtkGstPlayer instance
  *
  * current subtitle URI
  *
@@ -810,7 +810,7 @@ gst_player_set_subtitle_uri (GstPlayer * self, const gchar * suburi)
  *   g_free() after usage.
  */
 gchar *
-gst_player_get_subtitle_uri (GstPlayer * self)
+gtk_gst_player_get_subtitle_uri (GtkGstPlayer * self)
 {
   gchar *val = NULL;
 
@@ -822,14 +822,14 @@ gst_player_get_subtitle_uri (GstPlayer * self)
 }
 
 /**
- * gst_player_get_position:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_position:
+ * @player: #GtkGstPlayer instance
  *
  * Returns: the absolute position time, in nanoseconds, of the
  * currently-playing stream.
  */
 GstClockTime
-gst_player_get_position (GstPlayer * self)
+gtk_gst_player_get_position (GtkGstPlayer * self)
 {
   GstClockTime val;
 
@@ -841,8 +841,8 @@ gst_player_get_position (GstPlayer * self)
 }
 
 /**
- * gst_player_get_duration:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_duration:
+ * @player: #GtkGstPlayer instance
  *
  * Retrieves the duration of the media stream that self represents.
  *
@@ -850,7 +850,7 @@ gst_player_get_position (GstPlayer * self)
  * nanoseconds.
  */
 GstClockTime
-gst_player_get_duration (GstPlayer * self)
+gtk_gst_player_get_duration (GtkGstPlayer * self)
 {
   GstClockTime val;
 
@@ -862,15 +862,15 @@ gst_player_get_duration (GstPlayer * self)
 }
 
 /**
- * gst_player_get_volume:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_volume:
+ * @player: #GtkGstPlayer instance
  *
  * Returns the current volume level, as a percentage between 0 and 1.
  *
  * Returns: the volume as percentage between 0 and 1.
  */
 gdouble
-gst_player_get_volume (GstPlayer * self)
+gtk_gst_player_get_volume (GtkGstPlayer * self)
 {
   gdouble val;
 
@@ -882,8 +882,8 @@ gst_player_get_volume (GstPlayer * self)
 }
 
 /**
- * gst_player_set_volume:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_volume:
+ * @player: #GtkGstPlayer instance
  * @val: the new volume level, as a percentage between 0 and 1
  *
  * Sets the volume level of the stream as a percentage between 0 and 1.
@@ -893,7 +893,7 @@ gst_player_get_volume (GstPlayer * self)
  * should usually use a cubic volume. See gst_stream_volume_convert_volume().
  */
 void
-gst_player_set_volume (GstPlayer * self, gdouble val)
+gtk_gst_player_set_volume (GtkGstPlayer * self, gdouble val)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
@@ -901,13 +901,13 @@ gst_player_set_volume (GstPlayer * self, gdouble val)
 }
 
 /**
- * gst_player_get_mute:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_mute:
+ * @player: #GtkGstPlayer instance
  *
  * Returns: %TRUE if the currently-playing stream is muted.
  */
 gboolean
-gst_player_get_mute (GstPlayer * self)
+gtk_gst_player_get_mute (GtkGstPlayer * self)
 {
   gboolean val;
 
@@ -919,14 +919,14 @@ gst_player_get_mute (GstPlayer * self)
 }
 
 /**
- * gst_player_set_mute:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_mute:
+ * @player: #GtkGstPlayer instance
  * @val: Mute state the should be set
  *
  * %TRUE if the currently-playing stream should be muted.
  */
 void
-gst_player_set_mute (GstPlayer * self, gboolean val)
+gtk_gst_player_set_mute (GtkGstPlayer * self, gboolean val)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
@@ -934,15 +934,15 @@ gst_player_set_mute (GstPlayer * self, gboolean val)
 }
 
 /**
- * gst_player_get_pipeline:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_pipeline:
+ * @player: #GtkGstPlayer instance
  *
  * Returns: (transfer full): The internal playbin instance.
  *
  * The caller should free it with g_object_unref()
  */
 GstElement *
-gst_player_get_pipeline (GstPlayer * self)
+gtk_gst_player_get_pipeline (GtkGstPlayer * self)
 {
   GstElement *val;
 
@@ -954,113 +954,113 @@ gst_player_get_pipeline (GstPlayer * self)
 }
 
 /**
- * gst_player_get_media_info:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_media_info:
+ * @player: #GtkGstPlayer instance
  *
- * A Function to get the current media info #GstPlayerMediaInfo instance.
+ * A Function to get the current media info #GtkGstPlayerMediaInfo instance.
  *
  * Returns: (transfer full) (nullable): media info instance.
  *
  * The caller should free it with g_object_unref()
  */
-GstPlayerMediaInfo *
-gst_player_get_media_info (GstPlayer * self)
+GtkGstPlayerMediaInfo *
+gtk_gst_player_get_media_info (GtkGstPlayer * self)
 {
-  GstPlayMediaInfo *info;
-  GstPlayerMediaInfo *ret;
+  GtkGstPlayMediaInfo *info;
+  GtkGstPlayerMediaInfo *ret;
 
   g_return_val_if_fail (GST_IS_PLAYER (self), NULL);
 
-  info = gst_play_get_media_info (self->play);
+  info = gtk_gst_play_get_media_info (self->play);
   if (!info)
     return NULL;
 
-  ret = gst_player_media_info_wrapped (info);
+  ret = gtk_gst_player_media_info_wrapped (info);
   g_object_unref (info);
   return ret;
 }
 
 /**
- * gst_player_get_current_audio_track:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_current_audio_track:
+ * @player: #GtkGstPlayer instance
  *
- * A Function to get current audio #GstPlayerAudioInfo instance.
+ * A Function to get current audio #GtkGstPlayerAudioInfo instance.
  *
  * Returns: (transfer full) (nullable): current audio track.
  *
  * The caller should free it with g_object_unref()
  */
-GstPlayerAudioInfo *
-gst_player_get_current_audio_track (GstPlayer * self)
+GtkGstPlayerAudioInfo *
+gtk_gst_player_get_current_audio_track (GtkGstPlayer * self)
 {
-  GstPlayAudioInfo *info;
-  GstPlayerAudioInfo *ret = NULL;
+  GtkGstPlayAudioInfo *info;
+  GtkGstPlayerAudioInfo *ret = NULL;
 
   g_return_val_if_fail (GST_IS_PLAYER (self), NULL);
 
-  info = gst_play_get_current_audio_track (self->play);
+  info = gtk_gst_play_get_current_audio_track (self->play);
   if (info != NULL) {
-    ret = gst_player_audio_info_wrapped (info);
+    ret = gtk_gst_player_audio_info_wrapped (info);
     g_object_unref (info);
   }
   return ret;
 }
 
 /**
- * gst_player_get_current_video_track:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_current_video_track:
+ * @player: #GtkGstPlayer instance
  *
- * A Function to get current video #GstPlayerVideoInfo instance.
+ * A Function to get current video #GtkGstPlayerVideoInfo instance.
  *
  * Returns: (transfer full) (nullable): current video track.
  *
  * The caller should free it with g_object_unref()
  */
-GstPlayerVideoInfo *
-gst_player_get_current_video_track (GstPlayer * self)
+GtkGstPlayerVideoInfo *
+gtk_gst_player_get_current_video_track (GtkGstPlayer * self)
 {
-  GstPlayVideoInfo *info;
-  GstPlayerVideoInfo *ret = NULL;
+  GtkGstPlayVideoInfo *info;
+  GtkGstPlayerVideoInfo *ret = NULL;
 
   g_return_val_if_fail (GST_IS_PLAYER (self), NULL);
 
-  info = gst_play_get_current_video_track (self->play);
+  info = gtk_gst_play_get_current_video_track (self->play);
   if (info != NULL) {
-    ret = gst_player_video_info_wrapped (info);
+    ret = gtk_gst_player_video_info_wrapped (info);
     g_object_unref (info);
   }
   return ret;
 }
 
 /**
- * gst_player_get_current_subtitle_track:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_current_subtitle_track:
+ * @player: #GtkGstPlayer instance
  *
- * A Function to get current subtitle #GstPlayerSubtitleInfo instance.
+ * A Function to get current subtitle #GtkGstPlayerSubtitleInfo instance.
  *
  * Returns: (transfer full) (nullable): current subtitle track.
  *
  * The caller should free it with g_object_unref()
  */
-GstPlayerSubtitleInfo *
-gst_player_get_current_subtitle_track (GstPlayer * self)
+GtkGstPlayerSubtitleInfo *
+gtk_gst_player_get_current_subtitle_track (GtkGstPlayer * self)
 {
-  GstPlaySubtitleInfo *info;
-  GstPlayerSubtitleInfo *ret = NULL;
+  GtkGstPlaySubtitleInfo *info;
+  GtkGstPlayerSubtitleInfo *ret = NULL;
 
   g_return_val_if_fail (GST_IS_PLAYER (self), NULL);
 
-  info = gst_play_get_current_subtitle_track (self->play);
+  info = gtk_gst_play_get_current_subtitle_track (self->play);
   if (info != NULL) {
-    ret = gst_player_subtitle_info_wrapped (info);
+    ret = gtk_gst_player_subtitle_info_wrapped (info);
     g_object_unref (info);
   }
   return ret;
 }
 
 /**
- * gst_player_set_audio_track:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_audio_track:
+ * @player: #GtkGstPlayer instance
  * @stream_index: stream index
  *
  * Returns: %TRUE or %FALSE
@@ -1068,16 +1068,16 @@ gst_player_get_current_subtitle_track (GstPlayer * self)
  * Sets the audio track @stream_idex.
  */
 gboolean
-gst_player_set_audio_track (GstPlayer * self, gint stream_index)
+gtk_gst_player_set_audio_track (GtkGstPlayer * self, gint stream_index)
 {
   g_return_val_if_fail (GST_IS_PLAYER (self), 0);
 
-  return gst_play_set_audio_track (self->play, stream_index);
+  return gtk_gst_play_set_audio_track (self->play, stream_index);
 }
 
 /**
- * gst_player_set_video_track:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_video_track:
+ * @player: #GtkGstPlayer instance
  * @stream_index: stream index
  *
  * Returns: %TRUE or %FALSE
@@ -1085,16 +1085,16 @@ gst_player_set_audio_track (GstPlayer * self, gint stream_index)
  * Sets the video track @stream_index.
  */
 gboolean
-gst_player_set_video_track (GstPlayer * self, gint stream_index)
+gtk_gst_player_set_video_track (GtkGstPlayer * self, gint stream_index)
 {
   g_return_val_if_fail (GST_IS_PLAYER (self), 0);
 
-  return gst_play_set_video_track (self->play, stream_index);
+  return gtk_gst_play_set_video_track (self->play, stream_index);
 }
 
 /**
- * gst_player_set_subtitle_track:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_subtitle_track:
+ * @player: #GtkGstPlayer instance
  * @stream_index: stream index
  *
  * Returns: %TRUE or %FALSE
@@ -1102,104 +1102,104 @@ gst_player_set_video_track (GstPlayer * self, gint stream_index)
  * Sets the subtitle stack @stream_index.
  */
 gboolean
-gst_player_set_subtitle_track (GstPlayer * self, gint stream_index)
+gtk_gst_player_set_subtitle_track (GtkGstPlayer * self, gint stream_index)
 {
   g_return_val_if_fail (GST_IS_PLAYER (self), 0);
 
-  return gst_play_set_subtitle_track (self->play, stream_index);
+  return gtk_gst_play_set_subtitle_track (self->play, stream_index);
 }
 
 /**
- * gst_player_set_audio_track_enabled:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_audio_track_enabled:
+ * @player: #GtkGstPlayer instance
  * @enabled: TRUE or FALSE
  *
  * Enable or disable the current audio track.
  */
 void
-gst_player_set_audio_track_enabled (GstPlayer * self, gboolean enabled)
+gtk_gst_player_set_audio_track_enabled (GtkGstPlayer * self, gboolean enabled)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
-  gst_play_set_audio_track_enabled (self->play, enabled);
+  gtk_gst_play_set_audio_track_enabled (self->play, enabled);
 }
 
 /**
- * gst_player_set_video_track_enabled:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_video_track_enabled:
+ * @player: #GtkGstPlayer instance
  * @enabled: TRUE or FALSE
  *
  * Enable or disable the current video track.
  */
 void
-gst_player_set_video_track_enabled (GstPlayer * self, gboolean enabled)
+gtk_gst_player_set_video_track_enabled (GtkGstPlayer * self, gboolean enabled)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
-  gst_play_set_video_track_enabled (self->play, enabled);
+  gtk_gst_play_set_video_track_enabled (self->play, enabled);
 }
 
 /**
- * gst_player_set_subtitle_track_enabled:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_subtitle_track_enabled:
+ * @player: #GtkGstPlayer instance
  * @enabled: TRUE or FALSE
  *
  * Enable or disable the current subtitle track.
  */
 void
-gst_player_set_subtitle_track_enabled (GstPlayer * self, gboolean enabled)
+gtk_gst_player_set_subtitle_track_enabled (GtkGstPlayer * self, gboolean enabled)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
-  gst_play_set_subtitle_track_enabled (self->play, enabled);
+  gtk_gst_play_set_subtitle_track_enabled (self->play, enabled);
 }
 
 /**
- * gst_player_set_visualization:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_visualization:
+ * @player: #GtkGstPlayer instance
  * @name: (nullable): visualization element obtained from
- * #gst_player_visualizations_get()
+ * #gtk_gst_player_visualizations_get()
  *
  * Returns: %TRUE if the visualizations was set correctly. Otherwise,
  * %FALSE.
  */
 gboolean
-gst_player_set_visualization (GstPlayer * self, const gchar * name)
+gtk_gst_player_set_visualization (GtkGstPlayer * self, const gchar * name)
 {
   g_return_val_if_fail (GST_IS_PLAYER (self), FALSE);
 
-  return gst_play_set_visualization (self->play, name);
+  return gtk_gst_play_set_visualization (self->play, name);
 }
 
 /**
- * gst_player_get_current_visualization:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_current_visualization:
+ * @player: #GtkGstPlayer instance
  *
  * Returns: (transfer full) (nullable): Name of the currently enabled
  *   visualization.
  *   g_free() after usage.
  */
 gchar *
-gst_player_get_current_visualization (GstPlayer * self)
+gtk_gst_player_get_current_visualization (GtkGstPlayer * self)
 {
   g_return_val_if_fail (GST_IS_PLAYER (self), NULL);
 
-  return gst_play_get_current_visualization (self->play);
+  return gtk_gst_play_get_current_visualization (self->play);
 }
 
 /**
- * gst_player_set_visualization_enabled:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_visualization_enabled:
+ * @player: #GtkGstPlayer instance
  * @enabled: TRUE or FALSE
  *
  * Enable or disable the visualization.
  */
 void
-gst_player_set_visualization_enabled (GstPlayer * self, gboolean enabled)
+gtk_gst_player_set_visualization_enabled (GtkGstPlayer * self, gboolean enabled)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
-  gst_play_set_visualization_enabled (self->play, enabled);
+  gtk_gst_play_set_visualization_enabled (self->play, enabled);
 }
 
 struct CBChannelMap
@@ -1209,15 +1209,15 @@ struct CBChannelMap
 };
 
 static const struct CBChannelMap cb_channel_map[] = {
-  /* GST_PLAYER_COLOR_BALANCE_BRIGHTNESS */ {"BRIGHTNESS", "brightness"},
-  /* GST_PLAYER_COLOR_BALANCE_CONTRAST   */ {"CONTRAST", "contrast"},
-  /* GST_PLAYER_COLOR_BALANCE_SATURATION */ {"SATURATION", "saturation"},
-  /* GST_PLAYER_COLOR_BALANCE_HUE        */ {"HUE", "hue"},
+  /* GTK_GST_PLAYER_COLOR_BALANCE_BRIGHTNESS */ {"BRIGHTNESS", "brightness"},
+  /* GTK_GST_PLAYER_COLOR_BALANCE_CONTRAST   */ {"CONTRAST", "contrast"},
+  /* GTK_GST_PLAYER_COLOR_BALANCE_SATURATION */ {"SATURATION", "saturation"},
+  /* GTK_GST_PLAYER_COLOR_BALANCE_HUE        */ {"HUE", "hue"},
 };
 
 /**
- * gst_player_has_color_balance:
- * @player:#GstPlayer instance
+ * gtk_gst_player_has_color_balance:
+ * @player:#GtkGstPlayer instance
  *
  * Checks whether the @player has color balance support available.
  *
@@ -1225,37 +1225,37 @@ static const struct CBChannelMap cb_channel_map[] = {
  *   %FALSE.
  */
 gboolean
-gst_player_has_color_balance (GstPlayer * self)
+gtk_gst_player_has_color_balance (GtkGstPlayer * self)
 {
   g_return_val_if_fail (GST_IS_PLAYER (self), FALSE);
 
-  return gst_play_has_color_balance (self->play);
+  return gtk_gst_play_has_color_balance (self->play);
 }
 
 /**
- * gst_player_set_color_balance:
- * @player: #GstPlayer instance
- * @type: #GstPlayerColorBalanceType
+ * gtk_gst_player_set_color_balance:
+ * @player: #GtkGstPlayer instance
+ * @type: #GtkGstPlayerColorBalanceType
  * @value: The new value for the @type, ranged [0,1]
  *
  * Sets the current value of the indicated channel @type to the passed
  * value.
  */
 void
-gst_player_set_color_balance (GstPlayer * self, GstPlayerColorBalanceType type,
+gtk_gst_player_set_color_balance (GtkGstPlayer * self, GtkGstPlayerColorBalanceType type,
     gdouble value)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
   g_return_if_fail (value >= 0.0 && value <= 1.0);
 
-  gst_play_set_color_balance (self->play, (GstPlayColorBalanceType) type,
+  gtk_gst_play_set_color_balance (self->play, (GtkGstPlayColorBalanceType) type,
       value);
 }
 
 /**
- * gst_player_get_color_balance:
- * @player: #GstPlayer instance
- * @type: #GstPlayerColorBalanceType
+ * gtk_gst_player_get_color_balance:
+ * @player: #GtkGstPlayer instance
+ * @type: #GtkGstPlayerColorBalanceType
  *
  * Retrieve the current value of the indicated @type.
  *
@@ -1263,17 +1263,17 @@ gst_player_set_color_balance (GstPlayer * self, GstPlayerColorBalanceType type,
  *   error -1 is returned.
  */
 gdouble
-gst_player_get_color_balance (GstPlayer * self, GstPlayerColorBalanceType type)
+gtk_gst_player_get_color_balance (GtkGstPlayer * self, GtkGstPlayerColorBalanceType type)
 {
   g_return_val_if_fail (GST_IS_PLAYER (self), -1);
 
-  return gst_play_get_color_balance (self->play,
-      (GstPlayColorBalanceType) type);
+  return gtk_gst_play_get_color_balance (self->play,
+      (GtkGstPlayColorBalanceType) type);
 }
 
 /**
- * gst_player_get_multiview_mode:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_multiview_mode:
+ * @player: #GtkGstPlayer instance
  *
  * Retrieve the current value of the indicated @type.
  *
@@ -1282,7 +1282,7 @@ gst_player_get_color_balance (GstPlayer * self, GstPlayerColorBalanceType type)
  * Since: 1.10
  */
 GstVideoMultiviewFramePacking
-gst_player_get_multiview_mode (GstPlayer * self)
+gtk_gst_player_get_multiview_mode (GtkGstPlayer * self)
 {
   GstVideoMultiviewFramePacking val = GST_VIDEO_MULTIVIEW_FRAME_PACKING_NONE;
 
@@ -1295,8 +1295,8 @@ gst_player_get_multiview_mode (GstPlayer * self)
 }
 
 /**
- * gst_player_set_multiview_mode:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_multiview_mode:
+ * @player: #GtkGstPlayer instance
  * @mode: The new value for the @type
  *
  * Sets the current value of the indicated mode @type to the passed
@@ -1305,7 +1305,7 @@ gst_player_get_multiview_mode (GstPlayer * self)
  * Since: 1.10
  */
 void
-gst_player_set_multiview_mode (GstPlayer * self,
+gtk_gst_player_set_multiview_mode (GtkGstPlayer * self,
     GstVideoMultiviewFramePacking mode)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
@@ -1314,8 +1314,8 @@ gst_player_set_multiview_mode (GstPlayer * self,
 }
 
 /**
- * gst_player_get_multiview_flags:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_multiview_flags:
+ * @player: #GtkGstPlayer instance
  *
  * Retrieve the current value of the indicated @type.
  *
@@ -1324,7 +1324,7 @@ gst_player_set_multiview_mode (GstPlayer * self,
  * Since: 1.10
  */
 GstVideoMultiviewFlags
-gst_player_get_multiview_flags (GstPlayer * self)
+gtk_gst_player_get_multiview_flags (GtkGstPlayer * self)
 {
   GstVideoMultiviewFlags val = GST_VIDEO_MULTIVIEW_FLAGS_NONE;
 
@@ -1336,8 +1336,8 @@ gst_player_get_multiview_flags (GstPlayer * self)
 }
 
 /**
- * gst_player_set_multiview_flags:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_multiview_flags:
+ * @player: #GtkGstPlayer instance
  * @flags: The new value for the @type
  *
  * Sets the current value of the indicated mode @type to the passed
@@ -1346,7 +1346,7 @@ gst_player_get_multiview_flags (GstPlayer * self)
  * Since: 1.10
  */
 void
-gst_player_set_multiview_flags (GstPlayer * self, GstVideoMultiviewFlags flags)
+gtk_gst_player_set_multiview_flags (GtkGstPlayer * self, GstVideoMultiviewFlags flags)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
@@ -1354,8 +1354,8 @@ gst_player_set_multiview_flags (GstPlayer * self, GstVideoMultiviewFlags flags)
 }
 
 /**
- * gst_player_get_audio_video_offset:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_audio_video_offset:
+ * @player: #GtkGstPlayer instance
  *
  * Retrieve the current value of audio-video-offset property
  *
@@ -1364,7 +1364,7 @@ gst_player_set_multiview_flags (GstPlayer * self, GstVideoMultiviewFlags flags)
  * Since: 1.10
  */
 gint64
-gst_player_get_audio_video_offset (GstPlayer * self)
+gtk_gst_player_get_audio_video_offset (GtkGstPlayer * self)
 {
   gint64 val = 0;
 
@@ -1376,8 +1376,8 @@ gst_player_get_audio_video_offset (GstPlayer * self)
 }
 
 /**
- * gst_player_set_audio_video_offset:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_audio_video_offset:
+ * @player: #GtkGstPlayer instance
  * @offset: #gint64 in nanoseconds
  *
  * Sets audio-video-offset property by value of @offset
@@ -1385,7 +1385,7 @@ gst_player_get_audio_video_offset (GstPlayer * self)
  * Since: 1.10
  */
 void
-gst_player_set_audio_video_offset (GstPlayer * self, gint64 offset)
+gtk_gst_player_set_audio_video_offset (GtkGstPlayer * self, gint64 offset)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
@@ -1393,8 +1393,8 @@ gst_player_set_audio_video_offset (GstPlayer * self, gint64 offset)
 }
 
 /**
- * gst_player_get_subtitle_video_offset:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_subtitle_video_offset:
+ * @player: #GtkGstPlayer instance
  *
  * Retrieve the current value of subtitle-video-offset property
  *
@@ -1403,7 +1403,7 @@ gst_player_set_audio_video_offset (GstPlayer * self, gint64 offset)
  * Since: 1.16
  */
 gint64
-gst_player_get_subtitle_video_offset (GstPlayer * self)
+gtk_gst_player_get_subtitle_video_offset (GtkGstPlayer * self)
 {
   gint64 val = 0;
 
@@ -1415,8 +1415,8 @@ gst_player_get_subtitle_video_offset (GstPlayer * self)
 }
 
 /**
- * gst_player_set_subtitle_video_offset:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_subtitle_video_offset:
+ * @player: #GtkGstPlayer instance
  * @offset: #gint64 in nanoseconds
  *
  * Sets subtitle-video-offset property by value of @offset
@@ -1424,7 +1424,7 @@ gst_player_get_subtitle_video_offset (GstPlayer * self)
  * Since: 1.16
  */
 void
-gst_player_set_subtitle_video_offset (GstPlayer * self, gint64 offset)
+gtk_gst_player_set_subtitle_video_offset (GtkGstPlayer * self, gint64 offset)
 {
   g_return_if_fail (GST_IS_PLAYER (self));
 
@@ -1436,23 +1436,23 @@ gst_player_set_subtitle_video_offset (GstPlayer * self, gint64 offset)
 #define C_FLAGS(v) ((guint) v)
 
 GType
-gst_player_color_balance_type_get_type (void)
+gtk_gst_player_color_balance_type_get_type (void)
 {
   static gsize id = 0;
   static const GEnumValue values[] = {
-    {C_ENUM (GST_PLAYER_COLOR_BALANCE_HUE), "GST_PLAYER_COLOR_BALANCE_HUE",
+    {C_ENUM (GTK_GST_PLAYER_COLOR_BALANCE_HUE), "GTK_GST_PLAYER_COLOR_BALANCE_HUE",
         "hue"},
-    {C_ENUM (GST_PLAYER_COLOR_BALANCE_BRIGHTNESS),
-        "GST_PLAYER_COLOR_BALANCE_BRIGHTNESS", "brightness"},
-    {C_ENUM (GST_PLAYER_COLOR_BALANCE_SATURATION),
-        "GST_PLAYER_COLOR_BALANCE_SATURATION", "saturation"},
-    {C_ENUM (GST_PLAYER_COLOR_BALANCE_CONTRAST),
-        "GST_PLAYER_COLOR_BALANCE_CONTRAST", "contrast"},
+    {C_ENUM (GTK_GST_PLAYER_COLOR_BALANCE_BRIGHTNESS),
+        "GTK_GST_PLAYER_COLOR_BALANCE_BRIGHTNESS", "brightness"},
+    {C_ENUM (GTK_GST_PLAYER_COLOR_BALANCE_SATURATION),
+        "GTK_GST_PLAYER_COLOR_BALANCE_SATURATION", "saturation"},
+    {C_ENUM (GTK_GST_PLAYER_COLOR_BALANCE_CONTRAST),
+        "GTK_GST_PLAYER_COLOR_BALANCE_CONTRAST", "contrast"},
     {0, NULL, NULL}
   };
 
   if (g_once_init_enter (&id)) {
-    GType tmp = g_enum_register_static ("GstPlayerColorBalanceType", values);
+    GType tmp = g_enum_register_static ("GtkGstPlayerColorBalanceType", values);
     g_once_init_leave (&id, tmp);
   }
 
@@ -1460,8 +1460,8 @@ gst_player_color_balance_type_get_type (void)
 }
 
 /**
- * gst_player_color_balance_type_get_name:
- * @type: a #GstPlayerColorBalanceType
+ * gtk_gst_player_color_balance_type_get_name:
+ * @type: a #GtkGstPlayerColorBalanceType
  *
  * Gets a string representing the given color balance type.
  *
@@ -1469,29 +1469,29 @@ gst_player_color_balance_type_get_type (void)
  *   balance type.
  */
 const gchar *
-gst_player_color_balance_type_get_name (GstPlayerColorBalanceType type)
+gtk_gst_player_color_balance_type_get_name (GtkGstPlayerColorBalanceType type)
 {
-  g_return_val_if_fail (type >= GST_PLAYER_COLOR_BALANCE_BRIGHTNESS &&
-      type <= GST_PLAYER_COLOR_BALANCE_HUE, NULL);
+  g_return_val_if_fail (type >= GTK_GST_PLAYER_COLOR_BALANCE_BRIGHTNESS &&
+      type <= GTK_GST_PLAYER_COLOR_BALANCE_HUE, NULL);
 
   return cb_channel_map[type].name;
 }
 
 GType
-gst_player_state_get_type (void)
+gtk_gst_player_state_get_type (void)
 {
   static gsize id = 0;
   static const GEnumValue values[] = {
-    {C_ENUM (GST_PLAYER_STATE_STOPPED), "GST_PLAYER_STATE_STOPPED", "stopped"},
-    {C_ENUM (GST_PLAYER_STATE_BUFFERING), "GST_PLAYER_STATE_BUFFERING",
+    {C_ENUM (GTK_GST_PLAYER_STATE_STOPPED), "GTK_GST_PLAYER_STATE_STOPPED", "stopped"},
+    {C_ENUM (GTK_GST_PLAYER_STATE_BUFFERING), "GTK_GST_PLAYER_STATE_BUFFERING",
         "buffering"},
-    {C_ENUM (GST_PLAYER_STATE_PAUSED), "GST_PLAYER_STATE_PAUSED", "paused"},
-    {C_ENUM (GST_PLAYER_STATE_PLAYING), "GST_PLAYER_STATE_PLAYING", "playing"},
+    {C_ENUM (GTK_GST_PLAYER_STATE_PAUSED), "GTK_GST_PLAYER_STATE_PAUSED", "paused"},
+    {C_ENUM (GTK_GST_PLAYER_STATE_PLAYING), "GTK_GST_PLAYER_STATE_PLAYING", "playing"},
     {0, NULL, NULL}
   };
 
   if (g_once_init_enter (&id)) {
-    GType tmp = g_enum_register_static ("GstPlayerState", values);
+    GType tmp = g_enum_register_static ("GtkGstPlayerState", values);
     g_once_init_leave (&id, tmp);
   }
 
@@ -1499,24 +1499,24 @@ gst_player_state_get_type (void)
 }
 
 /**
- * gst_player_state_get_name:
- * @state: a #GstPlayerState
+ * gtk_gst_player_state_get_name:
+ * @state: a #GtkGstPlayerState
  *
  * Gets a string representing the given state.
  *
  * Returns: (transfer none): a string with the name of the state.
  */
 const gchar *
-gst_player_state_get_name (GstPlayerState state)
+gtk_gst_player_state_get_name (GtkGstPlayerState state)
 {
   switch (state) {
-    case GST_PLAYER_STATE_STOPPED:
+    case GTK_GST_PLAYER_STATE_STOPPED:
       return "stopped";
-    case GST_PLAYER_STATE_BUFFERING:
+    case GTK_GST_PLAYER_STATE_BUFFERING:
       return "buffering";
-    case GST_PLAYER_STATE_PAUSED:
+    case GTK_GST_PLAYER_STATE_PAUSED:
       return "paused";
-    case GST_PLAYER_STATE_PLAYING:
+    case GTK_GST_PLAYER_STATE_PLAYING:
       return "playing";
   }
 
@@ -1525,16 +1525,16 @@ gst_player_state_get_name (GstPlayerState state)
 }
 
 GType
-gst_player_error_get_type (void)
+gtk_gst_player_error_get_type (void)
 {
   static gsize id = 0;
   static const GEnumValue values[] = {
-    {C_ENUM (GST_PLAYER_ERROR_FAILED), "GST_PLAYER_ERROR_FAILED", "failed"},
+    {C_ENUM (GTK_GST_PLAYER_ERROR_FAILED), "GTK_GST_PLAYER_ERROR_FAILED", "failed"},
     {0, NULL, NULL}
   };
 
   if (g_once_init_enter (&id)) {
-    GType tmp = g_enum_register_static ("GstPlayerError", values);
+    GType tmp = g_enum_register_static ("GtkGstPlayerError", values);
     g_once_init_leave (&id, tmp);
   }
 
@@ -1542,18 +1542,18 @@ gst_player_error_get_type (void)
 }
 
 /**
- * gst_player_error_get_name:
- * @error: a #GstPlayerError
+ * gtk_gst_player_error_get_name:
+ * @error: a #GtkGstPlayerError
  *
  * Gets a string representing the given error.
  *
  * Returns: (transfer none): a string with the given error.
  */
 const gchar *
-gst_player_error_get_name (GstPlayerError error)
+gtk_gst_player_error_get_name (GtkGstPlayerError error)
 {
   switch (error) {
-    case GST_PLAYER_ERROR_FAILED:
+    case GTK_GST_PLAYER_ERROR_FAILED:
       return "failed";
   }
 
@@ -1562,13 +1562,13 @@ gst_player_error_get_name (GstPlayerError error)
 }
 
 /**
- * gst_player_set_config:
- * @player: #GstPlayer instance
+ * gtk_gst_player_set_config:
+ * @player: #GtkGstPlayer instance
  * @config: (transfer full): a #GstStructure
  *
  * Set the configuration of the player. If the player is already configured, and
  * the configuration haven't change, this function will return %TRUE. If the
- * player is not in the GST_PLAYER_STATE_STOPPED, this method will return %FALSE
+ * player is not in the GTK_GST_PLAYER_STATE_STOPPED, this method will return %FALSE
  * and active configuration will remain.
  *
  * @config is a #GstStructure that contains the configuration parameters for
@@ -1580,38 +1580,38 @@ gst_player_error_get_name (GstPlayerError error)
  * Since: 1.10
  */
 gboolean
-gst_player_set_config (GstPlayer * self, GstStructure * config)
+gtk_gst_player_set_config (GtkGstPlayer * self, GstStructure * config)
 {
   g_return_val_if_fail (GST_IS_PLAYER (self), FALSE);
   g_return_val_if_fail (config != NULL, FALSE);
 
-  return gst_play_set_config (self->play, config);
+  return gtk_gst_play_set_config (self->play, config);
 }
 
 /**
- * gst_player_get_config:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_config:
+ * @player: #GtkGstPlayer instance
  *
  * Get a copy of the current configuration of the player. This configuration
- * can either be modified and used for the gst_player_set_config() call
+ * can either be modified and used for the gtk_gst_player_set_config() call
  * or it must be freed after usage.
  *
  * Returns: (transfer full): a copy of the current configuration of @player. Use
- * gst_structure_free() after usage or gst_player_set_config().
+ * gst_structure_free() after usage or gtk_gst_player_set_config().
  *
  * Since: 1.10
  */
 GstStructure *
-gst_player_get_config (GstPlayer * self)
+gtk_gst_player_get_config (GtkGstPlayer * self)
 {
   g_return_val_if_fail (GST_IS_PLAYER (self), NULL);
 
-  return gst_play_get_config (self->play);
+  return gtk_gst_play_get_config (self->play);
 }
 
 /**
- * gst_player_config_set_user_agent:
- * @config: a #GstPlayer configuration
+ * gtk_gst_player_config_set_user_agent:
+ * @config: a #GtkGstPlayer configuration
  * @agent: (nullable): the string to use as user agent
  *
  * Set the user agent to pass to the server if @player needs to connect
@@ -1621,7 +1621,7 @@ gst_player_get_config (GstPlayer * self)
  * Since: 1.10
  */
 void
-gst_player_config_set_user_agent (GstStructure * config, const gchar * agent)
+gtk_gst_player_config_set_user_agent (GstStructure * config, const gchar * agent)
 {
   g_return_if_fail (config != NULL);
   g_return_if_fail (agent != NULL);
@@ -1631,18 +1631,18 @@ gst_player_config_set_user_agent (GstStructure * config, const gchar * agent)
 }
 
 /**
- * gst_player_config_get_user_agent:
- * @config: a #GstPlayer configuration
+ * gtk_gst_player_config_get_user_agent:
+ * @config: a #GtkGstPlayer configuration
  *
  * Return the user agent which has been configured using
- * gst_player_config_set_user_agent() if any.
+ * gtk_gst_player_config_set_user_agent() if any.
  *
  * Returns: (transfer full) (nullable): the configured agent, or %NULL
  *
  * Since: 1.10
  */
 gchar *
-gst_player_config_get_user_agent (const GstStructure * config)
+gtk_gst_player_config_get_user_agent (const GstStructure * config)
 {
   gchar *agent = NULL;
 
@@ -1655,8 +1655,8 @@ gst_player_config_get_user_agent (const GstStructure * config)
 }
 
 /**
- * gst_player_config_set_position_update_interval:
- * @config: a #GstPlayer configuration
+ * gtk_gst_player_config_set_position_update_interval:
+ * @config: a #GtkGstPlayer configuration
  * @interval: interval in ms
  *
  * set interval in milliseconds between two position-updated signals.
@@ -1665,7 +1665,7 @@ gst_player_config_get_user_agent (const GstStructure * config)
  * Since: 1.10
  */
 void
-gst_player_config_set_position_update_interval (GstStructure * config,
+gtk_gst_player_config_set_position_update_interval (GstStructure * config,
     guint interval)
 {
   g_return_if_fail (config != NULL);
@@ -1676,15 +1676,15 @@ gst_player_config_set_position_update_interval (GstStructure * config,
 }
 
 /**
- * gst_player_config_get_position_update_interval:
- * @config: a #GstPlayer configuration
+ * gtk_gst_player_config_get_position_update_interval:
+ * @config: a #GtkGstPlayer configuration
  *
  * Returns: current position update interval in milliseconds
  *
  * Since: 1.10
  */
 guint
-gst_player_config_get_position_update_interval (const GstStructure * config)
+gtk_gst_player_config_get_position_update_interval (const GstStructure * config)
 {
   guint interval = DEFAULT_POSITION_UPDATE_INTERVAL_MS;
 
@@ -1697,8 +1697,8 @@ gst_player_config_get_position_update_interval (const GstStructure * config)
 }
 
 /**
- * gst_player_config_set_seek_accurate:
- * @config: a #GstPlayer configuration
+ * gtk_gst_player_config_set_seek_accurate:
+ * @config: a #GtkGstPlayer configuration
  * @accurate: accurate seek or not
  *
  * Enable or disable accurate seeking. When enabled, elements will try harder
@@ -1714,7 +1714,7 @@ gst_player_config_get_position_update_interval (const GstStructure * config)
  * Since: 1.12
  */
 void
-gst_player_config_set_seek_accurate (GstStructure * config, gboolean accurate)
+gtk_gst_player_config_set_seek_accurate (GstStructure * config, gboolean accurate)
 {
   g_return_if_fail (config != NULL);
 
@@ -1723,15 +1723,15 @@ gst_player_config_set_seek_accurate (GstStructure * config, gboolean accurate)
 }
 
 /**
- * gst_player_config_get_seek_accurate:
- * @config: a #GstPlayer configuration
+ * gtk_gst_player_config_get_seek_accurate:
+ * @config: a #GtkGstPlayer configuration
  *
  * Returns: %TRUE if accurate seeking is enabled
  *
  * Since: 1.12
  */
 gboolean
-gst_player_config_get_seek_accurate (const GstStructure * config)
+gtk_gst_player_config_get_seek_accurate (const GstStructure * config)
 {
   gboolean accurate = FALSE;
 
@@ -1744,8 +1744,8 @@ gst_player_config_get_seek_accurate (const GstStructure * config)
 }
 
 /**
- * gst_player_get_video_snapshot:
- * @player: #GstPlayer instance
+ * gtk_gst_player_get_video_snapshot:
+ * @player: #GtkGstPlayer instance
  * @format: output format of the video snapshot
  * @config: (allow-none): Additional configuration
  *
@@ -1754,18 +1754,18 @@ gst_player_config_get_seek_accurate (const GstStructure * config)
  * Currently supported settings are:
  * - width, height of type G_TYPE_INT
  * - pixel-aspect-ratio of type GST_TYPE_FRACTION
- *  Except for GST_PLAYER_THUMBNAIL_RAW_NATIVE format, if no config is set, pixel-aspect-ratio would be 1/1
+ *  Except for GTK_GST_PLAYER_THUMBNAIL_RAW_NATIVE format, if no config is set, pixel-aspect-ratio would be 1/1
  *
  * Returns: (transfer full) (nullable):  Current video snapshot sample or %NULL on failure
  *
  * Since: 1.12
  */
 GstSample *
-gst_player_get_video_snapshot (GstPlayer * self,
-    GstPlayerSnapshotFormat format, const GstStructure * config)
+gtk_gst_player_get_video_snapshot (GtkGstPlayer * self,
+    GtkGstPlayerSnapshotFormat format, const GstStructure * config)
 {
   g_return_val_if_fail (GST_IS_PLAYER (self), NULL);
 
-  return gst_play_get_video_snapshot (self->play,
-      (GstPlaySnapshotFormat) format, config);
+  return gtk_gst_play_get_video_snapshot (self->play,
+      (GtkGstPlaySnapshotFormat) format, config);
 }

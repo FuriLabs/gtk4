@@ -18,33 +18,33 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_H__
-#define __GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_H__
+#ifndef __GTK_GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_H__
+#define __GTK_GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_H__
 
 #include <gst/player/gstplayer-types.h>
 #include <gst/player/gstplayer-signal-dispatcher.h>
 
 G_BEGIN_DECLS
 
-typedef struct _GstPlayerGMainContextSignalDispatcher
-    GstPlayerGMainContextSignalDispatcher;
-typedef struct _GstPlayerGMainContextSignalDispatcherClass
-    GstPlayerGMainContextSignalDispatcherClass;
+typedef struct _GtkGstPlayerGMainContextSignalDispatcher
+    GtkGstPlayerGMainContextSignalDispatcher;
+typedef struct _GtkGstPlayerGMainContextSignalDispatcherClass
+    GtkGstPlayerGMainContextSignalDispatcherClass;
 
-#define GST_TYPE_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER             (gst_player_g_main_context_signal_dispatcher_get_type ())
+#define GST_TYPE_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER             (gtk_gst_player_g_main_context_signal_dispatcher_get_type ())
 #define GST_IS_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER))
 #define GST_IS_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER))
-#define GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER, GstPlayerGMainContextSignalDispatcherClass))
-#define GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER, GstPlayerGMainContextSignalDispatcher))
-#define GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER, GstPlayerGMainContextSignalDispatcherClass))
-#define GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_CAST(obj)        ((GstPlayerGMainContextSignalDispatcher*)(obj))
+#define GTK_GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER, GtkGstPlayerGMainContextSignalDispatcherClass))
+#define GTK_GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER, GtkGstPlayerGMainContextSignalDispatcher))
+#define GTK_GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER, GtkGstPlayerGMainContextSignalDispatcherClass))
+#define GTK_GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_CAST(obj)        ((GtkGstPlayerGMainContextSignalDispatcher*)(obj))
 
-GST_PLAYER_API
-GType gst_player_g_main_context_signal_dispatcher_get_type (void);
+GTK_GST_PLAYER_API
+GType gtk_gst_player_g_main_context_signal_dispatcher_get_type (void);
 
-GST_PLAYER_API
-GstPlayerSignalDispatcher * gst_player_g_main_context_signal_dispatcher_new (GMainContext * application_context);
+GTK_GST_PLAYER_API
+GtkGstPlayerSignalDispatcher * gtk_gst_player_g_main_context_signal_dispatcher_new (GMainContext * application_context);
 
 G_END_DECLS
 
-#endif /* __GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_H__ */
+#endif /* __GTK_GST_PLAYER_G_MAIN_CONTEXT_SIGNAL_DISPATCHER_H__ */

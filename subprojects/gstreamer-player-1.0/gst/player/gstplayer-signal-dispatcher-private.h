@@ -18,17 +18,17 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_PLAYER_SIGNAL_DISPATCHER_PRIVATE_H__
-#define __GST_PLAYER_SIGNAL_DISPATCHER_PRIVATE_H__
+#ifndef __GTK_GST_PLAYER_SIGNAL_DISPATCHER_PRIVATE_H__
+#define __GTK_GST_PLAYER_SIGNAL_DISPATCHER_PRIVATE_H__
 
 #include <gst/player/gstplayer-signal-dispatcher.h>
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL void gst_player_signal_dispatcher_dispatch (GstPlayerSignalDispatcher * self,
-    GstPlayer * player, GstPlayerSignalDispatcherFunc emitter, gpointer data,
+G_GNUC_INTERNAL void gtk_gst_player_signal_dispatcher_dispatch (GtkGstPlayerSignalDispatcher * self,
+    GtkGstPlayer * player, GtkGstPlayerSignalDispatcherFunc emitter, gpointer data,
     GDestroyNotify destroy);
 
 G_END_DECLS
 
-#endif /* __GST_PLAYER_SIGNAL_DISPATCHER_PRIVATE_H__ */
+#endif /* __GTK_GST_PLAYER_SIGNAL_DISPATCHER_PRIVATE_H__ */

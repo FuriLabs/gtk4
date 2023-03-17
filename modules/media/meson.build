@@ -5,6 +5,9 @@ media_backends = []
 extra_c_args = ['-DGTK_COMPILATION']
 extra_c_args += common_cflags
 
+subproject('gstreamer-player-1.0',
+           required: get_option('media-gstreamer'),
+           default_options: 'default_library=static')
 gstplayer_dep = dependency('gstreamer-player-1.0', version: '>= 1.12.3',
                            required: get_option('media-gstreamer'))
 gstgl_dep = dependency('gstreamer-gl-1.0', version: '>= 1.12.3',

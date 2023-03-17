@@ -426,6 +426,9 @@ iso_codes_dep     = dependency('iso-codes', required: false)
 gi_dep            = dependency('gobject-introspection-1.0', version: introspection_req,
                                required: get_option('introspection').enabled() and
                                          get_option('build-tests'))
+subproject('gstreamer-player-1.0',
+           required: get_option('media-gstreamer'),
+           default_options: 'default_library=static')
 gstplayer_dep     = dependency('gstreamer-player-1.0', version: gstreamer_req,
                                required: get_option('media-gstreamer'))
 gstgl_dep         = dependency('gstreamer-gl-1.0', version: gstreamer_req,

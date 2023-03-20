@@ -94,8 +94,8 @@ Provides: gtk4-binver-4.0.0
 Recommends: libgtk-4-bin,
             iso-codes,
             librsvg2-common (>= 2.52.0),
-Suggests: gvfs,
-          libgtk-4-media-gstreamer | libgtk-4-media-ffmpeg,
+            libgtk-4-media-gstreamer,
+Suggests: gvfs
 Breaks: libgtk-4-0 (<< 4.0.0),
 Replaces: libgtk-4-0 (<< 4.0.0),
 Pre-Depends: ${misc:Pre-Depends}

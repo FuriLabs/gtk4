@@ -94,8 +94,8 @@ Provides: @GTK_BINVER_DEP@
 Recommends: @BIN_PKG@,
             iso-codes,
             librsvg2-common (>= 2.52.0),
-Suggests: gvfs,
-          @MEDIA_GSTREAMER_PKG@ | @MEDIA_FFMPEG_PKG@,
+            @MEDIA_GSTREAMER_PKG@,
+Suggests: gvfs
 Breaks: libgtk-4-0 (<< 4.0.0),
 Replaces: libgtk-4-0 (<< 4.0.0),
 Pre-Depends: ${misc:Pre-Depends}

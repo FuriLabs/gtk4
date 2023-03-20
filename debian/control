@@ -2,7 +2,7 @@ Source: gtk4
 Section: libs
 Priority: optional
 Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Simon McVittie <smcv@debian.org>, Jeremy Bicha <jbicha@ubuntu.com>
+Uploaders: Simon McVittie <smcv@debian.org>, 
 Build-Depends: adwaita-icon-theme <!nocheck>,
                at-spi2-core <!nocheck>,
                dbus-daemon <!nocheck>,
@@ -32,7 +32,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libglib2.0-dev (>= 2.72.0),
                libgraphene-1.0-dev (>= 1.10.4~),
                libgstreamer1.0-dev,
-               libgstreamer-plugins-bad1.0-dev,
+               libgstreamer-plugins-base1.0-dev,
                libharfbuzz-dev (>= 2.6.0),
                libjpeg-dev,
                libjson-glib-dev:native,

@@ -1,3 +1,13 @@
+gtk4 (4.10.1+ds-2ubuntu1) UNRELEASED; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - debian/tests:
+      + include the memorytexture test in the flaky set, it has been unreliable
+    - debian/control:
+      + Build-Depend on dh-sequence-translations
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 23 Mar 2023 18:42:43 +0100
+
 gtk4 (4.10.1+ds-2) experimental; urgency=medium
 
   * debian/patches: Add gstreamer-player as subproject.

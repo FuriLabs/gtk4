@@ -1,4 +1,4 @@
-gtk4 (4.10.1+ds-2ubuntu1) UNRELEASED; urgency=medium
+gtk4 (4.10.1+ds-2ubuntu1) lunar; urgency=medium
 
   * Merge with Debian. Remaining changes:
     - debian/tests:
@@ -6,7 +6,7 @@ gtk4 (4.10.1+ds-2ubuntu1) UNRELEASED; urgency=medium
     - debian/control:
       + Build-Depend on dh-sequence-translations
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 23 Mar 2023 18:42:43 +0100
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 23 Mar 2023 19:40:46 +0100
 
 gtk4 (4.10.1+ds-2) experimental; urgency=medium
 

@@ -3,13 +3,12 @@ Section: libs
 Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Simon McVittie <smcv@debian.org>, Jeremy Bicha <jbicha@ubuntu.com>
+Uploaders: Simon McVittie <smcv@debian.org>, 
 Build-Depends: adwaita-icon-theme <!nocheck>,
                at-spi2-core <!nocheck>,
                dbus-daemon <!nocheck>,
                debhelper-compat (= 13),
                dh-exec,
-               dh-sequence-translations,
                fonts-cantarell <!nocheck>,
                fonts-dejavu-core <!nocheck>,
                gnome-pkg-tools,
@@ -34,7 +33,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libglib2.0-dev (>= 2.72.0),
                libgraphene-1.0-dev (>= 1.10.4~),
                libgstreamer1.0-dev,
-               libgstreamer-plugins-bad1.0-dev,
+               libgstreamer-plugins-base1.0-dev,
                libharfbuzz-dev (>= 2.6.0),
                libjpeg-dev,
                libjson-glib-dev:native,
@@ -79,10 +78,8 @@ Build-Depends-Indep: gi-docgen <!nodoc>,
                      pandoc,
 Rules-Requires-Root: no
 Standards-Version: 4.6.2
-XS-Debian-Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4
-XS-Debian-Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git
-Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4/tree/ubuntu/master
-Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git -b ubuntu/master
+Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4
+Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git
 Homepage: https://www.gtk.org/
 
 Package: libgtk-4-1
@@ -98,8 +95,8 @@ Provides: gtk4-binver-4.0.0
 Recommends: libgtk-4-bin,
             iso-codes,
             librsvg2-common (>= 2.52.0),
-Suggests: gvfs,
-          libgtk-4-media-gstreamer | libgtk-4-media-ffmpeg,
+            libgtk-4-media-gstreamer,
+Suggests: gvfs
 Breaks: libgtk-4-0 (<< 4.0.0),
 Replaces: libgtk-4-0 (<< 4.0.0),
 Pre-Depends: ${misc:Pre-Depends}

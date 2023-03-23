@@ -3,3 +3,7 @@ debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
 debian/reftests-Allow-minor-differences-to-be-tolerated.patch
 debian/Disable-inscription-markup.ui-reftest.patch
 debian/Disable-clipboard-test.patch
+debian/subprojects-Add-gst-player-1.0-as-subporject.patch
+debian/gstreamer-player-1.0-Do-not-install-it-if-it-s-a-subproje.patch
+debian/media-Use-gstplayer-from-meson-subproject.patch
+debian/gstreamer-player-Use-GtkName-Prefix-to-avoid-issues-if-ac.patch

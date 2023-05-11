@@ -1837,6 +1837,11 @@ gtk_widget_class_init (GtkWidgetClass *klass)
    * @direction: the direction of the focus move
    *
    * Emitted when the focus is moved.
+   *
+   * The ::move-focus signal is a [keybinding signal](class.SignalAction.html).
+   *
+   * The default bindings for this signal are <kbd>Tab</kbd> to move forward,
+   * and <kbd>Shift</kbd>+<kbd>Tab</kbd> to move backward.
    */
   widget_signals[MOVE_FOCUS] =
     g_signal_new (I_("move-focus"),
@@ -3882,7 +3887,7 @@ gtk_widget_ensure_allocate_on_children (GtkWidget *widget)
 
   if (!priv->alloc_needed_on_child)
     return;
-  
+
   priv->alloc_needed_on_child = FALSE;
 
   for (child = _gtk_widget_get_first_child (widget);
@@ -4063,7 +4068,7 @@ gtk_widget_allocate (GtkWidget    *widget,
     {
       gtk_widget_ensure_allocate_on_children (widget);
     }
-  else 
+  else
     {
       priv->width = adjusted.width;
       priv->height = adjusted.height;
@@ -4107,7 +4112,7 @@ gtk_widget_allocate (GtkWidget    *widget,
       if (size_changed || baseline_changed)
         gtk_widget_queue_draw (widget);
     }
-  
+
   if (transform_changed && priv->parent)
     gtk_widget_queue_draw (priv->parent);
 
@@ -4275,7 +4280,7 @@ gtk_widget_compute_point (GtkWidget              *widget,
  * This function is a convenience wrapper around
  * [method@Gtk.WidgetClass.add_shortcut] and must be called during class
  * initialization. It does not provide for user_data, if you need that,
- * you will have to use [method@GtkWidgetClass.add_shortcut] with a custom
+ * you will have to use [method@Gtk.WidgetClass.add_shortcut] with a custom
  * shortcut.
  */
 void
@@ -5972,6 +5977,9 @@ gtk_widget_reposition_after (GtkWidget *widget,
   prev_parent = priv->parent;
   prev_previous = priv->prev_sibling;
 
+  if (priv->parent == parent && previous_sibling == prev_previous)
+    return;
+
   if (priv->parent != NULL && priv->parent != parent)
     {
       g_warning ("Can't set new parent %s %p on widget %s %p, "
@@ -7637,14 +7645,20 @@ gtk_widget_finalize (GObject *object)
   if (_gtk_widget_get_first_child (widget) != NULL)
     {
       GtkWidget *child;
-      g_warning ("Finalizing %s %p, but it still has children left:",
-                 gtk_widget_get_name (widget), widget);
+      GString *s;
+
+      s = g_string_new (NULL);
+      g_string_append_printf (s, "Finalizing %s %p, but it still has children left:",
+                              gtk_widget_get_name (widget), widget);
       for (child = _gtk_widget_get_first_child (widget);
            child != NULL;
            child = _gtk_widget_get_next_sibling (child))
         {
-          g_warning ("   - %s %p", gtk_widget_get_name (child), child);
+          g_string_append_printf (s, "\n   - %s %p",
+                                  gtk_widget_get_name (child), child);
         }
+      g_warning ("%s", s->str);
+      g_string_free (s, TRUE);
     }
 
   if (g_object_is_floating (object))
@@ -8493,11 +8507,7 @@ create_at_context (GtkWidget *self)
     role = class_priv->accessible_role;
 
   priv->accessible_role = role;
-  priv->at_context = gtk_at_context_create (role, GTK_ACCESSIBLE (self), gdk_display_get_default ());
-  if (priv->at_context != NULL)
-    return g_object_ref (priv->at_context);
-
-  return NULL;
+  return gtk_at_context_create (role, GTK_ACCESSIBLE (self), gdk_display_get_default ());
 }
 
 static GtkATContext *
@@ -10630,7 +10640,11 @@ gtk_widget_set_has_focus (GtkWidget *widget,
 gboolean
 gtk_widget_in_destruction (GtkWidget *widget)
 {
-  GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
+  GtkWidgetPrivate *priv;
+
+  g_return_val_if_fail (GTK_IS_WIDGET (widget), FALSE);
+
+  priv = gtk_widget_get_instance_private (widget);
 
   return priv->in_destruction;
 }
@@ -11378,7 +11392,7 @@ gtk_widget_class_bind_template_callback_full (GtkWidgetClass *widget_class,
  * this class’s template data.
  *
  * Note that this must be called from a composite widget classes class
- * initializer after calling [method@GtkWidgetClass.set_template].
+ * initializer after calling [method@Gtk.WidgetClass.set_template].
  */
 void
 gtk_widget_class_set_template_scope (GtkWidgetClass  *widget_class,

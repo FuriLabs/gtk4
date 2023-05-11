@@ -3837,7 +3837,7 @@ gtk_scrolled_window_unrealize (GtkWidget *widget)
 
   settings = gtk_widget_get_settings (widget);
 
-  g_signal_handlers_disconnect_by_func (settings, gtk_scrolled_window_sync_use_indicators, widget);
+  g_signal_handlers_disconnect_by_func (settings, gtk_scrolled_window_update_use_indicators, widget);
 
   GTK_WIDGET_CLASS (gtk_scrolled_window_parent_class)->unrealize (widget);
 }
@@ -4194,9 +4194,7 @@ gtk_scrolled_window_set_child (GtkScrolledWindow *scrolled_window,
   if (priv->child)
     {
       if (priv->auto_added_viewport)
-        {
-          gtk_viewport_set_child (GTK_VIEWPORT (priv->child), NULL);
-        }
+        gtk_viewport_set_child (GTK_VIEWPORT (priv->child), NULL);
 
       g_object_set (priv->child,
                     "hadjustment", NULL,
@@ -4204,6 +4202,7 @@ gtk_scrolled_window_set_child (GtkScrolledWindow *scrolled_window,
                     NULL);
 
       g_clear_pointer (&priv->child, gtk_widget_unparent);
+      priv->auto_added_viewport = FALSE;
     }
 
   if (child)

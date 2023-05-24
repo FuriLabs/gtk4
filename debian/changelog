@@ -1,3 +1,10 @@
+gtk4 (4.10.3+ds-1ubuntu2) mantic; urgency=medium
+
+  * Cherry-pick patch to fix black rectangles seen with mutter 44.1
+    (LP: #2020674)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 24 May 2023 16:32:14 -0400
+
 gtk4 (4.10.3+ds-1ubuntu1) mantic; urgency=medium
 
   * Merge with Debian. Remaining changes:

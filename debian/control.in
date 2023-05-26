@@ -90,6 +90,7 @@ Package: @SHARED_PKG@
 Architecture: any
 Multi-Arch: same
 Depends: adwaita-icon-theme,
+         cpdb-backend-cups (>= 2.0~b4-0ubuntu2~),
          hicolor-icon-theme,
          shared-mime-info,
          ${misc:Depends},

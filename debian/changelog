@@ -1,8 +1,10 @@
-gtk4 (4.10.4+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.10.4+ds-1) experimental; urgency=medium
 
   * New upstream release
+    - Fix black rectangles seen with mutter 44.1 (LP: ##2020674)
+  * Revert a buildsystem change that affected our installed-tests patch
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 05 Jun 2023 13:06:51 -0400
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 05 Jun 2023 15:04:11 -0400
 
 gtk4 (4.10.3+ds-1) experimental; urgency=medium
 

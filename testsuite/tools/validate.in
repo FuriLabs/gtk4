@@ -4,11 +4,11 @@ GTK_BUILDER_TOOL=${GTK_BUILDER_TOOL:-gtk4-builder-tool}
 TEST_DATA_DIR=${G_TEST_SRCDIR:-.}/validate-data
 TEST_RESULT_DIR=${TEST_RESULT_DIR:-/tmp}/validate
 
+mkdir -p "$TEST_RESULT_DIR"
+
 # https://gitlab.freedesktop.org/mesa/mesa/-/issues/10293
 export LIBGL_ALWAYS_SOFTWARE=true
 export GALLIUM_DRIVER=softpipe
-
-mkdir -p "$TEST_RESULT_DIR"
 
 shopt -s nullglob
 TESTS=( "$TEST_DATA_DIR"/*.ui )

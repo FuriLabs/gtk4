@@ -1,3 +1,14 @@
+gtk4 (4.10.4+ds-1ubuntu1) mantic; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - debian/tests:
+      + include the memorytexture test in the flaky set, it has been unreliable
+    - debian/control:
+      + Build-Depend on dh-sequence-translations
+    - Switch from the CUPS print backend to CPDB
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 05 Jun 2023 15:39:43 -0400
+
 gtk4 (4.10.4+ds-1) experimental; urgency=medium
 
   * New upstream release

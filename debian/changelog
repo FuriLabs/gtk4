@@ -1,3 +1,9 @@
+gtk4 (4.10.4+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 05 Jun 2023 13:06:51 -0400
+
 gtk4 (4.10.3+ds-1) experimental; urgency=medium
 
   * New upstream release

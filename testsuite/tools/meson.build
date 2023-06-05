@@ -3,8 +3,12 @@ if bash.found()
   test_env = environment()
 
   foreach t : ['simplify', 'simplify-3to4', 'validate', 'enumerate', 'settings']
-    test(t,
-      find_program(t, dirs: meson.current_source_dir()),
+    configure_file(output: t,
+      input: '@0@.in'.format(t),
+      copy: true,
+    )
+    test(t, bash,
+      args: t,
       workdir: meson.current_build_dir(),
       protocol: 'tap',
       env: [

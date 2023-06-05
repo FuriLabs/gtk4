@@ -331,16 +331,16 @@ gtk_css_shadow_value_new (ShadowValue *shadows,
 }
 
 GtkCssValue *
-gtk_css_shadow_value_new_filter (void)
+gtk_css_shadow_value_new_filter (const GtkCssValue *other)
 {
   ShadowValue value;
 
   value.inset = FALSE;
-  value.hoffset = _gtk_css_number_value_new (0, GTK_CSS_NUMBER);
-  value.voffset = _gtk_css_number_value_new (0, GTK_CSS_NUMBER);
-  value.radius = _gtk_css_number_value_new (0, GTK_CSS_NUMBER);
-  value.spread = _gtk_css_number_value_new (0, GTK_CSS_NUMBER);
-  value.color = _gtk_css_color_value_new_current_color ();
+  value.hoffset = _gtk_css_number_value_new (0, GTK_CSS_PX);
+  value.voffset = _gtk_css_number_value_new (0, GTK_CSS_PX);
+  value.radius = _gtk_css_number_value_new (0, GTK_CSS_PX);
+  value.spread = _gtk_css_number_value_new (0, GTK_CSS_PX);
+  value.color = gtk_css_value_ref (other->shadows[0].color);
 
   return gtk_css_shadow_value_new (&value, 1, TRUE);
 }

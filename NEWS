@@ -1,3 +1,114 @@
+Overview of Changes in 4.6.9, 23-12-2022
+========================================
+
+* GtkText:
+ - Prevent unexpected notify::direction emissions
+
+* Wayland:
+ - Fix button masks
+
+* X11:
+ - Fix some ordering problems with surface destruction
+
+* Translation updates
+ Georgian
+ Indonesian
+
+
+Overview of Changes in 4.6.8, 24-10-2022
+========================================
+
+* Input:
+ - Fix problems with input method interactions that caused
+   dead keys not to work
+
+* GtkText:
+ - Respect the no-emoji input hint fully
+
+* GtkNotebook:
+ - Fix an infinite loop in accessibility code
+ - Event handling fixes
+
+* GtkFileChooser:
+ - Restore ~ and .functionality
+
+* GtkTreeView:
+ - Event handling fixes
+
+* GtkTreeListModel:
+ - Prevent possible crashes with collapsed nodes
+
+* GtkGridView:
+ - Fix issues with rubberband selection
+
+* GtkEmojiChooser:
+ - Fix navigation with arrow keys when filtered
+
+* GtkPopover:
+ - Fix problems with focus when dismissing popovers
+ - Fix problems with focusing editable labels in popovers
+
+* GtkStackSidebar:
+ - Improve accessible presentation
+
+* Wayland:
+ - Make gtk_launch_uri more robust
+ - Make monitor bounds handling more robust
+ - Prevent shrinking clients due to wrong toplevel bounds
+
+* Flatpak:
+ - Fix file DND with the FileTransfer portal
+
+* Translation updates
+ Brazilian Portuguese
+ Croatian
+ Czech
+ Georgian
+ German
+ Hungarian
+ Icelandic
+ Lithuanian
+ Polish
+ Portuguese
+ Serbian
+ Slovenian
+ Swedish
+ Turkish
+
+
+Overview of Changes in 4.6.7, 17-08-2022
+========================================
+
+* Miscellaneous memory leak fixes
+
+* GtkTreeView:
+ - Fix a problem with DND
+ - Fix a problem with row selection
+
+* GtkTreePopover:
+ - Support scrolling
+
+* GtkGridView:
+ - Fix issues with rubberband selection
+
+* GtkSnapshot:
+ - Make GtkSnapshot work from bindings
+
+* X11:
+ - Fix preferred action for DND
+
+* Windows:
+ - Fix DND
+
+* Translation updates
+ Croatian
+ Georgian
+ Indonesian
+ Russian
+ Serbian
+ Spanish
+
+
 Overview of Changes in 4.6.6, 02-07-2022
 ========================================
 

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}{{ namespace.name }}.{{ constant.name }}{% endblock %}
+
+{% block meta_other %}
+  <meta property="og:title" content="{{ namespace.name }}.{{ constant.name }}"/>
+  <meta property="og:description" content="Reference for {{ namespace.name }}.{{ constant.name }}"/>
+  <meta name="twitter:title" content="{{ namespace.name }}.{{ constant.name }}"/>
+  <meta name="twitter:description" content="Reference for {{ namespace.name }}.{{ constant.name }}"/>
+{% endblock %}
+
+{% block sidebar %}
+<div class="section">
+  <h5>Constant</h5>
+  <div class="links">
+    <a class="current" href="const.{{ constant.name }}.html">{{ constant.name }}</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section id="main" class="content">
+  <header>
+    <h3>Constant</h3>
+    <h1><a href="index.html">{{ namespace.name }}</a><span class="sep"></span>{{ constant.name }}</h1>
+  </header>
+
+  <section>
+    <div class="docblock">
+      <p>
+      {%- if CONFIG.is_unstable(constant.available_since) -%}
+      <span class="emblem available-next" title="This constant will be available in the next stable release">unstable</span>&nbsp;
+      {%- endif %}
+      {%- if constant.deprecated_since -%}
+      <span class="emblem deprecated">deprecated: {{ constant.deprecated_since.version }}</span>&nbsp;
+      {%- endif -%}
+      {%- if constant.available_since -%}
+      <span class="emblem available">since: {{ constant.available_since }}</span>
+      {%- endif -%}
+      </p>
+    </div>
+
+    <div class="declaration toggle-wrapper">
+      <h4 id="declaration" style="display:flex;">
+        Declaration
+        <a href="#declaration" class="anchor"></a>
+        {% if CONFIG.source_location_url and constant.source_location %}
+        <a class="srclink" title="go to source location" href="{{ CONFIG.source_link(constant.source_location) }}">[src]</a>
+        {% endif %}
+      </h4>
+
+      <div class="docblock">
+        <pre><code>{{ constant.c_decl }}</code></pre>
+      </div>
+    </div>
+
+    <div class="description toggle-wrapper">
+      <h4 id="description">
+        Description
+        <a href="#description" class="anchor"></a>
+        {% if CONFIG.source_location_url and constant.docs_location %}
+        <a class="srclink" title="go to source location" href="{{ CONFIG.source_link(constant.docs_location) }}">[src]</a>
+        {% endif %}
+      </h4>
+
+      <div class="docblock">
+        {{ constant.description }}
+      </div>
+
+      <div class="docblock">
+        {% if constant.stability %}
+        <p>Stability: {{ constant.stability }}</p>
+        {% endif %}
+        {% if constant.available_since %}
+        <p>Available since: {{ constant.available_since }}</p>
+        {% endif %}
+        {% if constant.deprecated_since %}
+        {%- if constant.deprecated_since.message -%}
+        <div>
+          <p>Deprecated since: {{ constant.deprecated_since.version }}</p>
+          {{ constant.deprecated_since.message }}
+        </div>
+        {%- else -%}
+        <p>Deprecated since: {{ constant.deprecated_since.version }}. Do not use in newly written code.</p>
+        {%- endif -%}
+        {% endif %}
+      </div>
+
+      {% if constant.attributes %}
+      <div class="docblock">
+        <table>
+        {% for (key, value) in constant.attributes.items() %}
+          <tr><td>{{ key|escape }}</td><td>{{ value|escape }}</td></tr>
+        {% endfor %}
+        </table>
+      </div>
+      {% endif %}
+    </div>
+
+  </section>
+</section>
+{% endblock %}

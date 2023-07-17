@@ -1523,13 +1523,13 @@ gtk_text_class_init (GtkTextClass *class)
                                        NULL);
 
   /* Emoji */
-  gtk_widget_class_add_binding_signal (widget_class,
+  gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_period, GDK_CONTROL_MASK,
-                                       "insert-emoji",
+                                       "misc.insert-emoji",
                                        NULL);
-  gtk_widget_class_add_binding_signal (widget_class,
+  gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_semicolon, GDK_CONTROL_MASK,
-                                       "insert-emoji",
+                                       "misc.insert-emoji",
                                        NULL);
 
   /* Undo/Redo */
@@ -3258,8 +3258,12 @@ gtk_text_focus_changed (GtkEventControllerFocus *controller,
   if (gtk_event_controller_focus_is_focus (controller))
     {
       if (keyboard)
-        g_signal_connect (keyboard, "notify::direction",
-                          G_CALLBACK (direction_changed), self);
+        {
+          /* Work around unexpected notify::direction emissions */
+          gdk_device_get_direction (keyboard);
+          g_signal_connect (keyboard, "notify::direction",
+                            G_CALLBACK (direction_changed), self);
+        }
 
       gtk_text_im_set_focus_in (self);
       gtk_text_reset_blink_time (self);
@@ -3808,8 +3812,6 @@ gtk_text_move_cursor (GtkText         *self,
   GtkTextPrivate *priv = gtk_text_get_instance_private (self);
   int new_pos = priv->current_pos;
 
-  gtk_text_reset_im_context (self);
-
   if (priv->current_pos != priv->selection_bound && !extend_selection)
     {
       /* If we have a current selection and aren't extending it, move to the
@@ -3936,6 +3938,9 @@ gtk_text_move_cursor (GtkText         *self,
     gtk_text_set_selection_bounds (self, new_pos, new_pos);
 
   gtk_text_pend_cursor_blink (self);
+
+  priv->need_im_reset = TRUE;
+  gtk_text_reset_im_context (self);
 }
 
 static void
@@ -3963,8 +3968,6 @@ gtk_text_delete_from_cursor (GtkText       *self,
   int end_pos = priv->current_pos;
   int old_n_bytes = gtk_entry_buffer_get_bytes (get_buffer (self));
 
-  gtk_text_reset_im_context (self);
-
   if (!priv->editable)
     {
       gtk_widget_error_bell (GTK_WIDGET (self));
@@ -3974,6 +3977,8 @@ gtk_text_delete_from_cursor (GtkText       *self,
   if (priv->selection_bound != priv->current_pos)
     {
       gtk_text_delete_selection (self);
+      gtk_text_schedule_im_reset (self);
+      gtk_text_reset_im_context (self);
       return;
     }
 
@@ -4038,6 +4043,11 @@ gtk_text_delete_from_cursor (GtkText       *self,
 
   if (gtk_entry_buffer_get_bytes (get_buffer (self)) == old_n_bytes)
     gtk_widget_error_bell (GTK_WIDGET (self));
+  else
+    {
+      gtk_text_schedule_im_reset (self);
+      gtk_text_reset_im_context (self);
+    }
 
   gtk_text_pend_cursor_blink (self);
 }
@@ -4048,8 +4058,6 @@ gtk_text_backspace (GtkText *self)
   GtkTextPrivate *priv = gtk_text_get_instance_private (self);
   int prev_pos;
 
-  gtk_text_reset_im_context (self);
-
   if (!priv->editable)
     {
       gtk_widget_error_bell (GTK_WIDGET (self));
@@ -4059,6 +4067,8 @@ gtk_text_backspace (GtkText *self)
   if (priv->selection_bound != priv->current_pos)
     {
       gtk_text_delete_selection (self);
+      gtk_text_schedule_im_reset (self);
+      gtk_text_reset_im_context (self);
       return;
     }
 
@@ -4103,6 +4113,9 @@ gtk_text_backspace (GtkText *self)
         {
           gtk_editable_delete_text (GTK_EDITABLE (self), prev_pos, priv->current_pos);
         }
+
+      gtk_text_schedule_im_reset (self);
+      gtk_text_reset_im_context (self);
     }
   else
     {
@@ -4323,9 +4336,11 @@ gtk_text_delete_surrounding_cb (GtkIMContext *context,
   GtkTextPrivate *priv = gtk_text_get_instance_private (self);
 
   if (priv->editable)
-    gtk_editable_delete_text (GTK_EDITABLE (self),
-                              priv->current_pos + offset,
-                              priv->current_pos + offset + n_chars);
+    {
+      gtk_editable_delete_text (GTK_EDITABLE (self),
+                                priv->current_pos + offset,
+                                priv->current_pos + offset + n_chars);
+    }
 
   return TRUE;
 }
@@ -4340,10 +4355,8 @@ gtk_text_enter_text (GtkText    *self,
 {
   GtkTextPrivate *priv = gtk_text_get_instance_private (self);
   int tmp_pos;
-  gboolean old_need_im_reset;
   guint text_length;
 
-  old_need_im_reset = priv->need_im_reset;
   priv->need_im_reset = FALSE;
 
   if (priv->selection_bound != priv->current_pos)
@@ -4361,8 +4374,6 @@ gtk_text_enter_text (GtkText    *self,
   tmp_pos = priv->current_pos;
   gtk_editable_insert_text (GTK_EDITABLE (self), str, strlen (str), &tmp_pos);
   gtk_text_set_selection_bounds (self, tmp_pos, tmp_pos);
-
-  priv->need_im_reset = old_need_im_reset;
 }
 
 /* All changes to priv->current_pos and priv->selection_bound

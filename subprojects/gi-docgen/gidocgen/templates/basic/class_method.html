@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}{{ namespace.name }}.{{ class.class_name }}.{{ class_method.name }}{% endblock %}
+
+{% block meta_other %}
+  <meta priority="og:title" content="{{ namespace.name }}.{{ class.class_name }}.{{ class_method.name }}"/>
+  <meta priority="og:description" content="Reference for {{ namespace.name }}.{{ class.class_name }}.{{ class_method.name }}"/>
+  <meta name="og:title" content="{{ namespace.name }}.{{ class.class_name }}.{{ class_method.name }}"/>
+  <meta name="og:description" content="Reference for {{ namespace.name }}.{{ class.class_name }}.{{ class_method.name }}"/>
+{% endblock %}
+
+{% block sidebar %}
+<div class="section">
+  <h5>Type</h5>
+  <div class="links">
+    <a href="{{ class.link_prefix }}.{{ class.name }}.html">{{ class.name }}</a>
+  </div>
+</div>
+<div class="section">
+  <h5>Class methods</h5>
+  <div class="links">
+  {% for m in class.class_methods %}
+    <a class="method{% if class_method.name == m.name %} current{% endif %}" href="class_method.{{ class.name }}.{{ m.name }}.html">{{ m.name }}</a>
+  {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section id="main" class="content">
+  <header>
+    <h3>Class method</h3>
+    <h1><a href="index.html">{{ namespace.name }}</a><span class="sep"></span><a href="{{ class.link_prefix }}.{{ class.name }}.html">{{ class.class_name }}</a><span class="sep"></span>{{ class_method.name }}</h1>
+  </header>
+
+  <section>
+    <div class="docblock">
+      <p>
+      {%- if CONFIG.is_unstable(class_method.available_since) -%}
+      <span class="emblem available-next" title="This method will be available in the next stable release">unstable</span>&nbsp;
+      {%- endif %}
+      {%- if class_method.deprecated_since -%}
+      <span class="emblem deprecated">deprecated: {{ class_method.deprecated_since.version }}</span>&nbsp;
+      {%- endif -%}
+      {%- if class_method.available_since -%}
+      <span class="emblem available">since: {{ class_method.available_since }}</span>
+      {%- endif -%}
+      </p>
+    </div>
+    <div class="declaration">
+      <h4 id="declaration" style="display:flex;">
+        Declaration
+        <a href="#declaration" class="anchor"></a>
+        {% if CONFIG.source_location_url and class_method.source_location %}
+        <a class="srclink" title="go to source location" href="{{ CONFIG.source_link(class_method.source_location) }}">[src]</a>
+        {% endif %}
+      </h4>
+
+      <div>
+        <pre><code>{{ class_method.c_decl }}</code></pre>
+      </div>
+    </div>
+
+    <div class="description toggle-wrapper">
+      <h4 id="description" style="display:flex;">
+        Description
+        <a href="#description" class="anchor"></a>
+        {% if CONFIG.source_location_url and class_method.docs_location %}
+        <a class="srclink" title="go to source location" href="{{ CONFIG.source_link(class_method.docs_location) }}">[src]</a>
+        {% endif %}
+      </h4>
+
+      <div class="docblock">
+        {{ class_method.description }}
+      </div>
+
+      <div class="docblock">
+        {% if class_method.stability -%}
+        <p>Stability: {{ class_method.stability }}</p>
+        {%- endif %}
+        {% if class_method.available_since -%}
+        <p>Available since: {{ class_method.available_since }}</p>
+        {%- endif %}
+        {% if class_method.deprecated_since -%}
+        <div>
+          {%- if class_method.deprecated_since.message -%}
+          <p>Deprecated since: {{ class_method.deprecated_since.version }}</p>
+          {{ class_method.deprecated_since.message }}
+          {%- else -%}
+          <p>Deprecated since: {{ class_method.deprecated_since.version }}. Do not use in newly written code</p>
+          {%- endif -%}
+        </div>
+        {%- endif %}
+        {% if not class_method.introspectable -%}
+        <p>This method is not directly available to language bindings.</p>
+        {%- endif %}
+      </div>
+
+      {% if class_method.attributes %}
+      <div class="docblock">
+        <table>
+        {% for (key, value) in class_method.attributes.items() %}
+          <tr><td>{{ key|escape }}</td><td>{{ value|escape }}</td></tr>
+        {% endfor %}
+        </table>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if class_method.arguments|length != 0 %}
+    <div class="parameters toggle-wrapper">
+      <h4 id="parameters">
+        Parameters
+        <a href="#parameters" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+        <dl class="arguments">
+          {% for arg in class_method.arguments %}
+          <dt class="arg-name"><code>{{ arg.name }}</code></dt>
+          <dd class="arg-description">
+            <p><em>Type:</em>&nbsp;
+            {%- if arg.is_array -%}An array of&nbsp;{%- endif -%}
+            {%- if arg.is_list -%}A list of&nbsp;{%- endif -%}
+            {%- if arg.link -%}
+            {{ arg.link|safe }}
+            {%- else -%}
+            <code>{{ arg.type_cname }}</code>
+            {%- endif -%}
+            </p>
+            <p>{{ arg.description|safe }}</p>
+            <table>
+            {% if arg.direction != "in" %}<tr><td title="direction: {{ arg.direction}}">{{ arg.direction_note }}</td></tr>{% endif %}
+            {% if arg.direction == "in" and arg.nullable %}<tr><td>The argument can be <code>NULL</code>.</td></tr>{% endif %}
+            {% if arg.direction in ["inout", "out"] and arg.nullable %}<tr><td>The argument can be set to <code>NULL</code> by the class method</td></tr>{% endif %}
+            {% if arg.optional %}<tr><td>The argument can be <code>NULL</code>.</td></tr>{% endif %}
+            {% if arg.is_array and arg.zero_terminated %}<tr><td>The array must be <code>NULL</code>-terminated.</td></tr>{% endif %}
+            {% if arg.is_array and arg.fixed_size > 0 %}<tr><td>The array must have {{ arg.fixed_size }} elements.</td></tr>{% endif %}
+            {% if arg.is_array and arg.len_arg %}<tr><td>The length of the array is specified in the <code>{{ arg.len_arg }}</code> argument.</td></tr>{% endif %}
+            {% if arg.is_pointer %}<tr><td title="transfer: {{ arg.transfer }}">{{ arg.transfer_note }}</td></tr>{% endif %}
+            {% if arg.string_note %}<tr><td>{{ arg.string_note }}</td></tr>{% endif %}
+            </table>
+          </dd>
+          {% endfor %}
+
+          {% if class_method.throws %}
+          <dt class="arg-name"><code>error</code></dt>
+          <dd class="arg-description">
+            <p><em>Type:</em>&nbsp;<a href="javascript:void(0)" data-namespace="GLib" data-link="struct.Error.html" class="external"><code>GError **</code></a></p>
+            <p>The return location for <a href="https://docs.gtk.org/glib/error-reporting.html#rules-for-use-of-gerror">a recoverable error</a>.</p>
+            <table>
+              <tr><td>The argument can be <code>NULL</code>.</td></tr>
+              <tr><td>If the return location is not <code>NULL</code>, then you must initialize it to a <code>NULL</code> <code>GError*</code>.</td></tr>
+              <tr><td>The argument will left initialized to <code>NULL</code> by the class method if there are no errors.</td></tr>
+              <tr><td>In case of error, the argument will be set to a newly allocated <code>GError</code>; the caller will take ownership of the data, and be responsible for freeing it.</td></tr>
+            </table>
+          </dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if class_method.return_value %}
+    <div class="return-value toggle-wrapper">
+      <h4 id="return-value">
+        Return value
+        <a href="#return-value" class="anchor"></a>
+      </h4>
+
+      <div class="docblock">
+        <div class="returns">
+          <div class="arg-description">
+            <p><em>Type:</em>&nsbp;
+            {%- if class_method.return_value.is_array -%}An array of&nbsp;{%- endif -%}
+            {%- if class_method.return_value.is_list -%}A list of&nbsp;{%- endif -%}
+            {%- if class_method.return_value.is_list_model -%}A list model of&nbsp;{%- endif -%}
+            {%- if class_method.return_value.link -%}
+            {{ class_method.return_value.link|safe }}
+            {%- else -%}
+            <code>{{ class_method.return_value.type_cname }}</code>
+            {%- endif -%}
+            </p>
+            <p>{{ class_method.return_value.description|safe }}</p>
+          </div>
+          <div>
+            <table>
+            {% if class_method.return_value.is_array and class_method.return_value.zero_terminated %}<tr><td>The array is <code>NULL</code>-terminated.</td></tr>{% endif %}
+            {% if class_method.return_value.is_array and class_method.return_value.fixed_size > 0 %}<tr><td>The array has {{ class_method.return_value.fixed_size }} elements.</td></tr>{% endif %}
+            {% if class_method.return_value.is_array and class_method.return_value.len_arg %}<tr><td>The length of the array is in the <code>{{ class_method.return_value.len_arg }}</code> argument.</td></tr>{% endif %}
+            {% if class_method.return_value.is_pointer %}<tr><td title="transfer: {{ class_method.return_value.transfer }}">{{ class_method.return_value.transfer_note }}</td></tr>{% endif %}
+            {% if class_method.return_value.is_pointer and class_method.return_value.nullable %}<tr><td>The return value can be <code>NULL</code>.</td></tr>{% endif %}
+            {% if class_method.return_value.string_note %}<tr><td>{{ class_method.return_value.string_note }}</td></tr>{% endif %}
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}

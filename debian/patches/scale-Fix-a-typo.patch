@@ -1,0 +1,31 @@
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Tue, 27 Sep 2022 21:03:56 -0400
+Subject: scale: Fix a typo
+
+We want to update the label size request when
+the adjustment changes, not when anything else
+changes.
+
+This may be the reason for crash reports like
+https://retrace.fedoraproject.org/faf/problems/bthash/?bth=1e5cc1318358d5db298e5d6c2ec47361922cce74
+
+(cherry picked from commit 8b76cc841d67588a4bcafa1f51ef9942ef80d90a)
+
+Ubuntu-Bug: https://bugs.launchpad.net/ubuntu/+source/gjs/+bug/2027986
+---
+ gtk/gtkscale.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gtk/gtkscale.c b/gtk/gtkscale.c
+index d9620e9..65459c8 100644
+--- a/gtk/gtkscale.c
++++ b/gtk/gtkscale.c
+@@ -313,7 +313,7 @@ gtk_scale_notify (GObject    *object,
+ 
+       g_free (values);
+     }
+-  else if (strcmp (pspec->name, "adjustment"))
++  else if (strcmp (pspec->name, "adjustment") == 0)
+     {
+       if (priv->value_widget)
+         update_label_request (scale);

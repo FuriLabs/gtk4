@@ -1,3 +1,9 @@
+gtk4 (4.6.9+ds-0ubuntu0.22.04.1) UNRELEASED; urgency=medium
+
+  * New upstream release (LP: #2028005)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 17 Jul 2023 19:00:14 +0200
+
 gtk4 (4.6.6+ds-0ubuntu1) jammy; urgency=medium
 
   * New upstream release (LP: #1980742)

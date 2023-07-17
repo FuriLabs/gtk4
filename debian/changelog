@@ -1,11 +1,11 @@
-gtk4 (4.6.9+ds-0ubuntu0.22.04.1) UNRELEASED; urgency=medium
+gtk4 (4.6.9+ds-0ubuntu0.22.04.1) jammy; urgency=medium
 
   * New upstream release (LP: #2028005)
   * debian/gbp.conf: Use upstream/4.6.x for upstream branch
   * debian/patches: Refresh git indexes
   * debian/patches: Properly handle gtk scale adjustment property (LP: #2027986)
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 17 Jul 2023 19:05:33 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 17 Jul 2023 19:53:19 +0200
 
 gtk4 (4.6.6+ds-0ubuntu1) jammy; urgency=medium
 

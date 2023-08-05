@@ -22,22 +22,22 @@ This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
  12 files changed, 353 insertions(+), 43 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index 1351771..33b95e5 100644
+index b7717e1..9870c07 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -902,6 +902,7 @@ summary('Documentation', get_option('gtk_doc'), section: 'Build')
+@@ -915,6 +915,7 @@ summary('Documentation', get_option('gtk_doc'), section: 'Build')
  summary('Man pages', get_option('man-pages'), section: 'Build')
  summary('Testsuite', get_option('build-testsuite'), section: 'Build')
  summary('Tests', get_option('build-tests'), section: 'Build')
 +summary('Install tests', get_option('install-tests'), section: 'Build')
- summary('Demos', get_option('demos'), section: 'Build')
+ summary('Demos', get_option('build-demos'), section: 'Build')
  summary('Examples', get_option('build-examples'), section: 'Build')
  
 diff --git a/meson_options.txt b/meson_options.txt
-index 9f608e9..5e16043 100644
+index f4399d3..0ca7936 100644
 --- a/meson_options.txt
 +++ b/meson_options.txt
-@@ -133,3 +133,8 @@ option('build-tests',
+@@ -144,3 +144,8 @@ option('build-tests',
         type: 'boolean',
         value: true,
         description : 'Build tests')
@@ -47,7 +47,7 @@ index 9f608e9..5e16043 100644
 +       value: false,
 +       description : 'Install tests')
 diff --git a/testsuite/a11y/meson.build b/testsuite/a11y/meson.build
-index c43465e..4547b21 100644
+index 2686d6c..e70522d 100644
 --- a/testsuite/a11y/meson.build
 +++ b/testsuite/a11y/meson.build
 @@ -1,3 +1,6 @@
@@ -57,7 +57,7 @@ index c43465e..4547b21 100644
  # Available keys for each test:
  #
  #  - 'name': the test name; used for the test and to determine the base
-@@ -61,11 +64,12 @@ foreach t : tests
+@@ -67,11 +70,12 @@ foreach t : tests
    test_extra_suites = t.get('suites', [])
    test_timeout = 60
  
@@ -73,10 +73,10 @@ index c43465e..4547b21 100644
  
    if test_extra_suites.contains('slow')
 diff --git a/testsuite/css/change/meson.build b/testsuite/css/change/meson.build
-index a75b530..9409f48 100644
+index f78d27e..e0ef9d4 100644
 --- a/testsuite/css/change/meson.build
 +++ b/testsuite/css/change/meson.build
-@@ -7,10 +7,17 @@ changetest_env.set('GIO_USE_VFS', 'local')
+@@ -6,10 +6,17 @@ changetest_env.set('G_TEST_BUILDDIR', meson.current_build_dir())
  changetest_env.set('GSETTINGS_BACKEND', 'memory')
  changetest_env.set('G_ENABLE_DIAGNOSTIC', '0')
  
@@ -96,7 +96,7 @@ index a75b530..9409f48 100644
  )
  
  test('change', test_change,
-@@ -19,3 +26,22 @@ test('change', test_change,
+@@ -18,3 +25,22 @@ test('change', test_change,
    env: changetest_env,
    suite: 'css',
  )
@@ -120,10 +120,10 @@ index a75b530..9409f48 100644
 +
 +endif
 diff --git a/testsuite/css/meson.build b/testsuite/css/meson.build
-index 24084d6..20c0314 100644
+index 746b042..c3ed717 100644
 --- a/testsuite/css/meson.build
 +++ b/testsuite/css/meson.build
-@@ -13,10 +13,14 @@ subdir('nodes')
+@@ -12,10 +12,14 @@ subdir('nodes')
  subdir('style')
  subdir('change')
  
@@ -140,14 +140,14 @@ index 24084d6..20c0314 100644
  )
  
  test('api', test_api,
-@@ -26,11 +30,12 @@ test('api', test_api,
+@@ -25,11 +29,12 @@ test('api', test_api,
    suite: 'css',
  )
  
 -test_data = executable('data',
 -  sources: ['data.c'],
 +test_data = executable('data', 'data.c',
-   c_args: common_cflags,
+   c_args: common_cflags + ['-DGTK_COMPILATION'],
    include_directories: [confinc, ],
    dependencies: libgtk_static_dep,
 +  install: get_option('install-tests'),
@@ -155,21 +155,21 @@ index 24084d6..20c0314 100644
  )
  
  test('data', test_data,
-@@ -40,10 +45,11 @@ test('data', test_data,
+@@ -39,10 +44,11 @@ test('data', test_data,
    suite: 'css',
  )
  
 -transition = executable('transition',
 -  sources: ['transition.c'],
 +transition = executable('transition', 'transition.c',
-   c_args: common_cflags,
+   c_args: common_cflags + ['-DGTK_COMPILATION'],
    dependencies: libgtk_static_dep,
 +  install: get_option('install-tests'),
 +  install_dir: testexecdir,
  )
  
  test('transition', transition,
-@@ -53,6 +59,24 @@ test('transition', transition,
+@@ -52,6 +58,24 @@ test('transition', transition,
       suite: 'css'
  )
  
@@ -195,10 +195,10 @@ index 24084d6..20c0314 100644
  
    adwaita_env = csstest_env
 diff --git a/testsuite/css/nodes/meson.build b/testsuite/css/nodes/meson.build
-index 576b4d8..eb619cf 100644
+index f682cdb..a7cb3e2 100644
 --- a/testsuite/css/nodes/meson.build
 +++ b/testsuite/css/nodes/meson.build
-@@ -7,15 +7,81 @@ nodetest_env.set('GIO_USE_VFS', 'local')
+@@ -6,15 +6,81 @@ nodetest_env.set('G_TEST_BUILDDIR', meson.current_build_dir())
  nodetest_env.set('GSETTINGS_BACKEND', 'memory')
  nodetest_env.set('G_ENABLE_DIAGNOSTIC', '0')
  
@@ -286,7 +286,7 @@ index 576b4d8..eb619cf 100644
 +  install_data(test_data, install_dir: testexecdir)
 +endif
 diff --git a/testsuite/css/parser/meson.build b/testsuite/css/parser/meson.build
-index b419c29..d0fdd0d 100644
+index b05efb7..bfb9936 100644
 --- a/testsuite/css/parser/meson.build
 +++ b/testsuite/css/parser/meson.build
 @@ -1,8 +1,11 @@
@@ -306,7 +306,7 @@ index b419c29..d0fdd0d 100644
  
  test_data = [
    'animation-crash-3.12.css',
-@@ -534,3 +537,15 @@ foreach testname : test_data
+@@ -623,3 +626,15 @@ foreach testname : test_data
           suite: 'css')
    endif
  endforeach
@@ -323,10 +323,10 @@ index b419c29..d0fdd0d 100644
 +
 +endif
 diff --git a/testsuite/css/style/meson.build b/testsuite/css/style/meson.build
-index a6c5e2e..6b2d252 100644
+index 7fc4036..52c962c 100644
 --- a/testsuite/css/style/meson.build
 +++ b/testsuite/css/style/meson.build
-@@ -7,21 +7,73 @@ styletest_env.set('GIO_USE_VFS', 'local')
+@@ -6,21 +6,73 @@ styletest_env.set('G_TEST_BUILDDIR', meson.current_build_dir())
  styletest_env.set('GSETTINGS_BACKEND', 'memory')
  styletest_env.set('G_ENABLE_DIAGNOSTIC', '0')
  
@@ -404,7 +404,7 @@ index a6c5e2e..6b2d252 100644
 +  install_data(test_data, install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index ebaa66f..98b57cb 100644
+index 32a31da..67c08ab 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
 @@ -1,10 +1,13 @@
@@ -427,7 +427,7 @@ index ebaa66f..98b57cb 100644
  
  tests = [
    { 'name': 'array' },
-@@ -31,7 +34,8 @@ foreach t : tests
+@@ -33,7 +36,8 @@ foreach t : tests
      sources: '@0@.c'.format(test_name),
      c_args: common_cflags,
      dependencies: libgtk_dep,
@@ -437,9 +437,9 @@ index ebaa66f..98b57cb 100644
    )
  
    suites = ['gdk'] + t.get('suites', [])
-@@ -58,7 +62,8 @@ foreach t : internal_tests
+@@ -61,7 +65,8 @@ foreach t : internal_tests
    test_exe = executable(t, '@0@.c'.format(t),
-     c_args: common_cflags,
+     c_args: common_cflags + ['-DGTK_COMPILATION'],
      dependencies: libgtk_static_dep,
 -    install: false,
 +    install: get_option('install-tests'),
@@ -447,7 +447,7 @@ index ebaa66f..98b57cb 100644
    )
  
    test(t, test_exe,
-@@ -72,3 +77,28 @@ foreach t : internal_tests
+@@ -75,3 +80,28 @@ foreach t : internal_tests
      suite: 'gdk',
    )
  endforeach
@@ -477,7 +477,7 @@ index ebaa66f..98b57cb 100644
 +  install_subdir('image-data', install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
-index ca8f833..44ad57a 100644
+index 1a57cfa..9b29ba0 100644
 --- a/testsuite/gsk/meson.build
 +++ b/testsuite/gsk/meson.build
 @@ -1,12 +1,22 @@
@@ -505,7 +505,7 @@ index ca8f833..44ad57a 100644
  )
  
  compare_render_tests = [
-@@ -277,9 +287,11 @@ foreach t : tests
+@@ -368,9 +378,11 @@ foreach t : tests
    test_extra_ldflags = t.get(3, [])
  
    test_exe = executable(test_name, test_srcs,
@@ -518,7 +518,7 @@ index ca8f833..44ad57a 100644
    )
  
    test(test_name, test_exe,
-@@ -308,11 +320,12 @@ foreach t : internal_tests
+@@ -399,11 +411,12 @@ foreach t : internal_tests
    test_extra_cargs = t.get(2, [])
    test_extra_ldflags = t.get(3, [])
  
@@ -526,7 +526,7 @@ index ca8f833..44ad57a 100644
 -    sources: test_srcs,
 -    dependencies : libgtk_static_dep,
 +  test_exe = executable(test_name, test_srcs,
-     c_args : test_cargs + test_extra_cargs + common_cflags,
+     c_args : test_cargs + test_extra_cargs + common_cflags + ['-DGTK_COMPILATION'],
      link_args : test_extra_ldflags,
 +    dependencies : libgtk_static_dep,
 +    install: get_option('install-tests'),
@@ -535,7 +535,7 @@ index ca8f833..44ad57a 100644
  
    test(test_name, test_exe,
 diff --git a/testsuite/gtk/meson.build b/testsuite/gtk/meson.build
-index 73dd136..3c107ef 100644
+index 12b025f..f7700bb 100644
 --- a/testsuite/gtk/meson.build
 +++ b/testsuite/gtk/meson.build
 @@ -1,3 +1,6 @@
@@ -545,7 +545,7 @@ index 73dd136..3c107ef 100644
  gtk_tests_export_dynamic_ldflag = []
  
  if cc.get_id() != 'msvc'
-@@ -169,6 +172,8 @@ foreach t : tests
+@@ -167,6 +170,8 @@ foreach t : tests
      c_args: test_cargs + test_extra_cargs,
      link_args: test_extra_ldflags,
      dependencies: libgtk_dep,
@@ -554,8 +554,8 @@ index 73dd136..3c107ef 100644
    )
  
    if test_extra_suites.contains('slow')
-@@ -197,6 +202,8 @@ foreach t : internal_tests
-     c_args: test_cargs + test_extra_cargs,
+@@ -195,6 +200,8 @@ foreach t : internal_tests
+     c_args: test_cargs + test_extra_cargs + ['-DGTK_COMPILATION'],
      link_args: test_extra_ldflags,
      dependencies: libgtk_static_dep,
 +    install: get_option('install-tests'),
@@ -563,7 +563,7 @@ index 73dd136..3c107ef 100644
    )
  
    if test_extra_suites.contains('slow')
-@@ -215,8 +222,10 @@ endforeach
+@@ -213,8 +220,10 @@ endforeach
  # FIXME: if objc autotestkeywords_CPPFLAGS += -DHAVE_OBJC=1 -x objective-c++
  if add_languages('cpp', required: false, native: false)
    test_exe = executable('autotestkeywords',
@@ -575,7 +575,7 @@ index 73dd136..3c107ef 100644
    )
    test('c++ keywords', test_exe,
      args: [ '--tap', '-k' ],
-@@ -224,6 +233,16 @@ if add_languages('cpp', required: false, native: false)
+@@ -222,6 +231,16 @@ if add_languages('cpp', required: false, native: false)
      env: test_env,
      suite: 'gtk',
    )
@@ -592,7 +592,7 @@ index 73dd136..3c107ef 100644
  endif
  
  
-@@ -249,10 +268,13 @@ focus_chain_tests = [
+@@ -247,10 +266,13 @@ focus_chain_tests = [
    #[ 'widget-factory3', 'tab-backward' ],
  ]
  
@@ -607,7 +607,7 @@ index 73dd136..3c107ef 100644
  )
  
  foreach test : focus_chain_tests
-@@ -274,6 +296,30 @@ test('potfiles', make_pot,
+@@ -273,6 +295,30 @@ test('potfiles', make_pot,
       workdir: meson.project_source_root(),
       suite: ['gtk', 'translations' ])
  
@@ -639,7 +639,7 @@ index 73dd136..3c107ef 100644
  
    performance_env = test_env
 diff --git a/testsuite/tools/meson.build b/testsuite/tools/meson.build
-index 986c2d6..582bce6 100644
+index e19a819..54ede78 100644
 --- a/testsuite/tools/meson.build
 +++ b/testsuite/tools/meson.build
 @@ -1,12 +1,23 @@
@@ -650,7 +650,7 @@ index 986c2d6..582bce6 100644
  if bash.found()
    test_env = environment()
  
-   foreach t : ['simplify', 'simplify-3to4', 'validate', 'settings']
+   foreach t : ['simplify', 'simplify-3to4', 'validate', 'enumerate', 'settings']
 -    configure_file(output: t,
 -      input: '@0@.in'.format(t),
 -      copy: true,

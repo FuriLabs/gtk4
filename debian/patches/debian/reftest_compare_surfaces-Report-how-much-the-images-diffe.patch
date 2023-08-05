@@ -10,25 +10,44 @@ Signed-off-by: Simon McVittie <smcv@debian.org>
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/3195
 Applied-upstream: no, upstream want reftests to be a strict pass/fail with identical results required
 ---
- testsuite/gsk/compare-render.c       |  9 ++++++++-
+ testsuite/gsk/compare-render.c       | 28 +++++++++++++++++++++++-----
  testsuite/reftests/gtk-reftest.c     |  9 ++++++++-
  testsuite/reftests/reftest-compare.c | 28 +++++++++++++++++++++++++---
  testsuite/reftests/reftest-compare.h |  5 ++++-
- 4 files changed, 45 insertions(+), 6 deletions(-)
+ 4 files changed, 60 insertions(+), 10 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index 919957e..7145363 100644
+index 7ba25ad..e26b16c 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
-@@ -227,12 +227,19 @@ main (int argc, char **argv)
-   else
-     {
-       GdkTexture *diff_texture;
-+      guint max_diff = 0;
-+      guint pixels_changed = 0;
-+      guint pixels = 0;
+@@ -229,6 +229,9 @@ main (int argc, char **argv)
+   GError *error = NULL;
+   GOptionContext *context;
+   GdkTexture *diff_texture;
++  guint max_diff = 0;
++  guint pixels_changed = 0;
++  guint pixels = 0;
  
-       /* Now compare the two */
+   (g_test_init) (&argc, &argv, NULL);
+ 
+@@ -283,9 +286,12 @@ main (int argc, char **argv)
+     }
+ 
+   /* Now compare the two */
+-  diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
++  diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
++                                           &max_diff, &pixels_changed, &pixels);
+   if (diff_texture)
+     {
++      g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
++               pixels_changed, pixels, max_diff);
+       save_image (diff_texture, node_file, ".diff.png");
+       g_object_unref (diff_texture);
+       success = FALSE;
+@@ -317,10 +323,13 @@ main (int argc, char **argv)
+ 
+       save_image (reference_texture, node_file, "-flipped.ref.png");
+ 
 -      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
 +      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
 +                                               &max_diff, &pixels_changed, &pixels);
@@ -37,12 +56,56 @@ index 919957e..7145363 100644
          {
 +          g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
 +                   pixels_changed, pixels, max_diff);
-+
-           save_image (diff_texture, node_file, ".diff.png");
+           save_image (diff_texture, node_file, "-flipped.diff.png");
+           g_object_unref (diff_texture);
+           success = FALSE;
+@@ -390,10 +399,13 @@ main (int argc, char **argv)
+ 
+       save_image (reference_texture, node_file, "-repeated.ref.png");
+ 
+-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
++      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
++                                               &max_diff, &pixels_changed, &pixels);
+ 
+       if (diff_texture)
+         {
++          g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
++                   pixels_changed, pixels, max_diff);
+           save_image (diff_texture, node_file, "-repeated.diff.png");
+           g_object_unref (diff_texture);
+           success = FALSE;
+@@ -427,10 +439,13 @@ main (int argc, char **argv)
+ 
+       save_image (reference_texture, node_file, "-rotated.ref.png");
+ 
+-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
++      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
++                                               &max_diff, &pixels_changed, &pixels);
+ 
+       if (diff_texture)
+         {
++          g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
++                   pixels_changed, pixels, max_diff);
+           save_image (diff_texture, node_file, "-rotated.diff.png");
+           g_object_unref (diff_texture);
+           success = FALSE;
+@@ -473,10 +488,13 @@ main (int argc, char **argv)
+ 
+       save_image (reference_texture, node_file, "-masked.ref.png");
+ 
+-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
++      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
++                                               &max_diff, &pixels_changed, &pixels);
+ 
+       if (diff_texture)
+         {
++          g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
++                   pixels_changed, pixels, max_diff);
+           save_image (diff_texture, node_file, "-masked.diff.png");
            g_object_unref (diff_texture);
            success = FALSE;
 diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
-index d61d833..fba6aa3 100644
+index 2ba47a4..046751d 100644
 --- a/testsuite/reftests/gtk-reftest.c
 +++ b/testsuite/reftests/gtk-reftest.c
 @@ -341,6 +341,9 @@ test_ui_file (GFile *file)

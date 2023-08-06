@@ -1,6 +1,6 @@
 Archive: GNOME
-Bug-Database: https://gitlab.gnome.org/GNOME/gtk/issues
-Bug-Submit: https://gitlab.gnome.org/GNOME/gtk/issues/new
+Bug-Database: https://gitlab.gnome.org/GNOME/gtk/-/issues
+Bug-Submit: https://gitlab.gnome.org/GNOME/gtk/-/issues/new
 Changelog: https://gitlab.gnome.org/GNOME/gtk/commits/master
 FAQ: https://developer.gnome.org/gtk4/stable/gtk-question-index.html
 Repository-Browse: https://gitlab.gnome.org/GNOME/gtk

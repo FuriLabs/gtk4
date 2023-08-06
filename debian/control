@@ -2,7 +2,7 @@ Source: gtk4
 Section: libs
 Priority: optional
 Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Simon McVittie <smcv@debian.org>, 
+Uploaders: Simon McVittie <smcv@debian.org>, Jeremy Bícha <jbicha@ubuntu.com>, Marco Trevisan (Treviño) <marco@ubuntu.com>
 Build-Depends: adwaita-icon-theme <!nocheck>,
                at-spi2-core <!nocheck>,
                dbus-daemon <!nocheck>,
@@ -43,7 +43,6 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                librsvg2-dev (>= 2.52.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
                libswresample-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
                libswscale-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libsysprof-capture-4-dev (>= 3.40.1) [linux-any],
                libtiff-dev,
                libvulkan-dev [linux-any],
                libwayland-dev (>= 1.21.0) [linux-any],
@@ -70,6 +69,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                weston [linux-any] <!nocheck>,
                xauth <!nocheck>,
                xvfb <!nocheck>,
+Build-Depends-Arch: libsysprof-capture-4-dev (>= 3.40.1) [linux-any],
 Build-Depends-Indep: gi-docgen <!nodoc>,
                      libcairo2-doc <!nodoc>,
                      libglib2.0-doc <!nodoc>,

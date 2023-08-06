@@ -1,3 +1,29 @@
+gtk4 (4.10.5+ds-2) unstable; urgency=medium
+
+  * d/control.in: Only use libsysprof-capture-4-dev for shared library.
+    libsysprof-capture-4-dev is currently a virtual package provided
+    by libsysprof-4-dev, which also includes GTK 4 GUI components
+    and so depends on libgtk-4-dev. If the Architecture: amd64 build
+    happens to finish before the Architecture: all build starts,
+    then the Architecture: all build will fail with an unsatisfiable
+    build-dependency: libsysprof-4-dev Depends on libgtk-4-dev, which
+    Depends on libgtk-4-common (>= ${source:Version}), which hasn't been
+    built yet. The result is that libgtk-4-common can't be built and the
+    builds deadlock.
+    We've been lucky enough to avoid this until now, but version
+    4.10.5+ds-1 was not sufficiently lucky and has become uninstallable
+    and unbuildable.
+    Because the sysprof integration is part of the architecture-specific
+    library, we can break this cycle by only installing libsysprof-4-dev
+    when we are building the architecture-specific library, and excluding
+    it when we are only building architecture-independent documentation
+    and common files.
+  * Remove version constraints unnecessary since Debian 11
+  * Remove maintscripts unnecessary in any released Debian version
+  * d/upstream/metadata: Use preferred Gitlab URLs
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 06 Aug 2023 13:03:36 +0100
+
 gtk4 (4.10.5+ds-1) unstable; urgency=medium
 
   * New upstream release

@@ -1,3 +1,10 @@
+gtk4 (4.10.5+ds-3) unstable; urgency=medium
+
+  * Temporarily disable sysprof integration altogether, to get the package
+    rebuilt
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 07 Aug 2023 09:35:32 +0100
+
 gtk4 (4.10.5+ds-2) unstable; urgency=medium
 
   * d/control.in: Only use libsysprof-capture-4-dev for shared library.

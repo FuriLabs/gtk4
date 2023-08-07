@@ -99,17 +99,7 @@ configure_flags_deb += -Dvulkan=disabled
 configure_flags_deb += -Dwayland-backend=false
 endif
 
-# Only enable sysprof if we are actually going to package the shared library.
-# Otherwise, if the Architecture: amd64 buildd happens to build gtk4
-# before the Architecture: all buildd, the Architecture: all buildd
-# will find that there is an unsatisfiable build-dependency:
-# libsysprof-4-dev => libgtk-4-dev => libgtk-4-common (>= ${source:Version}),
-# which has not been built yet.
-ifeq (linux/$(SHARED_PKG),$(DEB_HOST_ARCH_OS)/$(filter $(SHARED_PKG),$(built_binaries)))
-configure_flags_deb += -Dsysprof=enabled
-else
 configure_flags_deb += -Dsysprof=disabled
-endif
 
 ifeq ($(filter %-doc,$(built_binaries)),)
 configure_flags_deb += -Dgtk_doc=false

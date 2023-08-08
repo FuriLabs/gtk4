@@ -105,6 +105,9 @@
                                             <property name="width-chars">45</property>
                                             <property name="hexpand">1</property>
                                             <property name="halign">3</property>
+                                            <accessibility>
+                                              <property name="label" translatable="1">Search</property>
+                                            </accessibility>
                                             <signal name="search-changed" handler="search_entry_activate_cb" swapped="yes"/>
                                             <signal name="stop-search" handler="search_entry_stop_cb" swapped="yes"/>
                                           </object>
@@ -169,279 +172,13 @@
                                             <style>
                                               <class name="complex"/>
                                             </style>
+                                            <property name="row-factory">
+                                              <object class="GtkSignalListItemFactory">
+                                                <signal name="bind" handler="column_view_row_bind" swapped="no"/>
+                                              </object>
+                                            </property>
                                             <signal name="activate" handler="browse_files_view_row_activated_cb" swapped="no"/>
                                             <signal name="keynav-failed" handler="browse_files_view_keynav_failed_cb"/>
-                                            <child>
-                                              <object class="GtkColumnViewColumn" id="column_view_name_column">
-                                                <property name="title" translatable="yes">Name</property>
-                                                <property name="expand">1</property>
-                                                <property name="resizable">1</property>
-                                                <property name="factory">
-                                                  <object class="GtkBuilderListItemFactory">
-                                                    <property name="bytes"><![CDATA[
-<?xml version="1.0" encoding="UTF-8"?>
-<interface>
-  <template class="GtkListItem">
-    <property name="child">
-      <object class="GtkFileChooserCell">
-        <binding name="position">
-          <lookup name="position">GtkListItem</lookup>
-        </binding>
-        <binding name="item">
-          <lookup name="item">GtkListItem</lookup>
-        </binding>
-        <binding name="selected">
-          <lookup name="selected">GtkListItem</lookup>
-        </binding>
-        <property name="list-item">GtkListItem</property>
-        <child>
-          <object class="GtkBox">
-            <binding name="tooltip-text">
-              <closure type="gchararray" function="column_view_get_tooltip_text">
-                <lookup name="item">GtkListItem</lookup>
-              </closure>
-            </binding>
-            <child>
-              <object class="GtkFileThumbnail">
-                <property name="margin-start">6</property>
-                <property name="margin-end">6</property>
-                <binding name="file-info">
-                  <lookup name="item">GtkListItem</lookup>
-                </binding>
-              </object>
-            </child>
-            <child>
-              <object class="GtkInscription">
-                <property name="hexpand">1</property>
-                <property name="xalign">0</property>
-                <property name="min-chars">10</property>
-                <binding name="text">
-                  <closure type="gchararray" function="column_view_get_file_display_name">
-                    <lookup name="item">GtkListItem</lookup>
-                  </closure>
-                </binding>
-              </object>
-            </child>
-          </object>
-        </child>
-      </object>
-    </property>
-  </template>
-</interface>
-                                                ]]></property>
-                                                  </object>
-                                                </property>
-                                              </object>
-                                            </child>
-
-                                            <child>
-                                              <object class="GtkColumnViewColumn" id="column_view_location_column">
-                                                <property name="title" translatable="yes">Location</property>
-                                                <property name="resizable">1</property>
-                                                <property name="visible">0</property>
-                                                <property name="expand">1</property>
-                                                <property name="factory">
-                                                  <object class="GtkBuilderListItemFactory">
-                                                    <property name="bytes"><![CDATA[
-<?xml version="1.0" encoding="UTF-8"?>
-<interface>
-  <template class="GtkListItem">
-    <property name="child">
-      <object class="GtkFileChooserCell">
-        <binding name="position">
-          <lookup name="position">GtkListItem</lookup>
-        </binding>
-        <binding name="item">
-          <lookup name="item">GtkListItem</lookup>
-        </binding>
-        <binding name="selected">
-          <lookup name="selected">GtkListItem</lookup>
-        </binding>
-        <property name="list-item">GtkListItem</property>
-        <child>
-          <object class="GtkInscription">
-            <property name="hexpand">1</property>
-            <property name="xalign">0</property>
-            <property name="min-chars">10</property>
-            <property name="margin-start">6</property>
-            <property name="margin-end">6</property>
-            <binding name="text">
-              <closure type="gchararray" function="column_view_get_location">
-                <lookup name="item">GtkListItem</lookup>
-              </closure>
-            </binding>
-            <binding name="tooltip-text">
-              <closure type="gchararray" function="column_view_get_tooltip_text">
-                <lookup name="item">GtkListItem</lookup>
-              </closure>
-            </binding>
-          </object>
-        </child>
-      </object>
-    </property>
-  </template>
-</interface>
-                                                ]]></property>
-                                                  </object>
-                                                </property>
-                                              </object>
-                                            </child>
-
-                                            <child>
-                                              <object class="GtkColumnViewColumn" id="column_view_size_column">
-                                                <property name="title" translatable="yes">Size</property>
-                                                <property name="factory">
-                                                  <object class="GtkBuilderListItemFactory">
-                                                    <property name="bytes"><![CDATA[
-<?xml version="1.0" encoding="UTF-8"?>
-<interface>
-  <template class="GtkListItem">
-    <property name="child">
-      <object class="GtkFileChooserCell">
-        <binding name="position">
-          <lookup name="position">GtkListItem</lookup>
-        </binding>
-        <binding name="item">
-          <lookup name="item">GtkListItem</lookup>
-        </binding>
-        <binding name="selected">
-          <lookup name="selected">GtkListItem</lookup>
-        </binding>
-        <property name="list-item">GtkListItem</property>
-        <child>
-          <object class="GtkLabel">
-            <property name="hexpand">1</property>
-            <property name="xalign">0</property>
-            <binding name="label">
-              <closure type="gchararray" function="column_view_get_size">
-                <lookup name="item">GtkListItem</lookup>
-              </closure>
-            </binding>
-            <binding name="tooltip-text">
-              <closure type="gchararray" function="column_view_get_tooltip_text">
-                <lookup name="item">GtkListItem</lookup>
-              </closure>
-            </binding>
-          </object>
-        </child>
-      </object>
-    </property>
-  </template>
-</interface>
-                                                ]]></property>
-                                                  </object>
-                                                </property>
-                                              </object>
-                                            </child>
-
-                                            <child>
-                                              <object class="GtkColumnViewColumn" id="column_view_type_column">
-                                                <property name="title" translatable="yes">Type</property>
-                                                <property name="resizable">1</property>
-                                                <property name="factory">
-                                                  <object class="GtkBuilderListItemFactory">
-                                                    <property name="bytes"><![CDATA[
-<?xml version="1.0" encoding="UTF-8"?>
-<interface>
-  <template class="GtkListItem">
-    <property name="child">
-      <object class="GtkFileChooserCell">
-        <binding name="position">
-          <lookup name="position">GtkListItem</lookup>
-        </binding>
-        <binding name="item">
-          <lookup name="item">GtkListItem</lookup>
-        </binding>
-        <binding name="selected">
-          <lookup name="selected">GtkListItem</lookup>
-        </binding>
-        <property name="list-item">GtkListItem</property>
-        <child>
-          <object class="GtkLabel">
-            <property name="hexpand">1</property>
-            <property name="xalign">0</property>
-            <binding name="label">
-              <closure type="gchararray" function="column_view_get_file_type">
-                <lookup name="item">GtkListItem</lookup>
-              </closure>
-            </binding>
-            <binding name="tooltip-text">
-              <closure type="gchararray" function="column_view_get_tooltip_text">
-                <lookup name="item">GtkListItem</lookup>
-              </closure>
-            </binding>
-          </object>
-        </child>
-      </object>
-    </property>
-  </template>
-</interface>
-                                                ]]></property>
-                                                  </object>
-                                                </property>
-                                              </object>
-                                            </child>
-
-                                            <child>
-                                              <object class="GtkColumnViewColumn" id="column_view_time_column">
-                                                <property name="title" translatable="yes">Modified</property>
-                                                <property name="factory">
-                                                  <object class="GtkBuilderListItemFactory">
-                                                    <property name="bytes"><![CDATA[
-<?xml version="1.0" encoding="UTF-8"?>
-<interface>
-  <template class="GtkListItem">
-    <property name="child">
-      <object class="GtkFileChooserCell" id="file_chooser_cell">
-        <binding name="position">
-          <lookup name="position">GtkListItem</lookup>
-        </binding>
-        <binding name="item">
-          <lookup name="item">GtkListItem</lookup>
-        </binding>
-        <binding name="selected">
-          <lookup name="selected">GtkListItem</lookup>
-        </binding>
-        <property name="list-item">GtkListItem</property>
-        <child>
-          <object class="GtkBox">
-            <property name="spacing">6</property>
-            <binding name="tooltip-text">
-              <closure type="gchararray" function="column_view_get_tooltip_text">
-                <lookup name="item">GtkListItem</lookup>
-              </closure>
-            </binding>
-            <child>
-              <object class="GtkLabel">
-                <binding name="label">
-                  <closure type="gchararray" function="column_view_get_file_date">
-                    <lookup name="item">GtkListItem</lookup>
-                  </closure>
-                </binding>
-              </object>
-            </child>
-            <child>
-              <object class="GtkLabel">
-                <property name="visible" bind-source="file_chooser_cell" bind-property="show-time" bind-flags="sync-create"/>
-                <binding name="label">
-                  <closure type="gchararray" function="column_view_get_file_time">
-                    <lookup name="item">GtkListItem</lookup>
-                  </closure>
-                </binding>
-              </object>
-            </child>
-          </object>
-        </child>
-      </object>
-    </property>
-  </template>
-</interface>
-                                                ]]></property>
-                                                  </object>
-                                                </property>
-                                              </object>
-                                            </child>
-
                                           </object>
                                         </child>
                                       </object>
@@ -549,6 +286,9 @@
                 <child>
                   <object class="GtkDropDown" id="filter_combo">
                     <property name="tooltip-text" translatable="yes">Select which types of files are shown</property>
+                    <accessibility>
+                      <property name="label" translatable="1">Filter</property>
+                    </accessibility>
                     <property name="focus-on-click">0</property>
                     <property name="valign">1</property>
                     <signal name="notify::selected" handler="filter_combo_changed" swapped="no"/>
@@ -708,14 +448,8 @@
   <template class="GtkListItem">
     <property name="child">
       <object class="GtkFileChooserCell">
-        <binding name="position">
-          <lookup name="position">GtkListItem</lookup>
-        </binding>
         <binding name="item">
           <lookup name="item">GtkListItem</lookup>
-        </binding>
-        <binding name="selected">
-          <lookup name="selected">GtkListItem</lookup>
         </binding>
         <property name="list-item">GtkListItem</property>
         <child>

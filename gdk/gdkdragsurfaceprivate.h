@@ -1,7 +1,7 @@
-#ifndef __GDK_DRAG_SURFACE_PRIVATE_H__
-#define __GDK_DRAG_SURFACE_PRIVATE_H__
+#pragma once
 
 #include "gdkdragsurface.h"
+#include "gdkdragsurfacesize.h"
 
 G_BEGIN_DECLS
 
@@ -15,6 +15,8 @@ struct _GdkDragSurfaceInterface
                         int             height);
 };
 
+void gdk_drag_surface_notify_compute_size (GdkDragSurface     *surface,
+                                           GdkDragSurfaceSize *size);
+
 G_END_DECLS
 
-#endif /* __GDK_DRAG_SURFACE_PRIVATE_H__ */

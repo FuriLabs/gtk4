@@ -18,8 +18,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#ifndef _GSK_GL_TEXTURE_PRIVATE_H__
-#define _GSK_GL_TEXTURE_PRIVATE_H__
+#pragma once
 
 #include "gskgltypesprivate.h"
 
@@ -28,6 +27,12 @@ G_BEGIN_DECLS
 struct _GskGLTextureSlice
 {
   cairo_rectangle_int_t rect;
+  struct {
+    float x;
+    float y;
+    float x2;
+    float y2;
+  } area;
   guint texture_id;
 };
 
@@ -65,20 +70,16 @@ struct _GskGLTexture
 
   int width;
   int height;
-  int min_filter;
-  int mag_filter;
-  int format;
 
   /* Set when used by an atlas so we don't drop the texture */
   guint              permanent : 1;
+  /* we called glGenerateMipmap() for this texture */
+  guint              has_mipmap : 1;
 };
 
 GskGLTexture                * gsk_gl_texture_new            (guint                 texture_id,
                                                              int                   width,
                                                              int                   height,
-                                                             int                   format,
-                                                             int                   min_filter,
-                                                             int                   mag_filter,
                                                              gint64                frame_id);
 const GskGLTextureNineSlice * gsk_gl_texture_get_nine_slice (GskGLTexture         *texture,
                                                              const GskRoundedRect *outline,
@@ -88,4 +89,3 @@ void                          gsk_gl_texture_free           (GskGLTexture       
 
 G_END_DECLS
 
-#endif /* _GSK_GL_TEXTURE_PRIVATE_H__ */

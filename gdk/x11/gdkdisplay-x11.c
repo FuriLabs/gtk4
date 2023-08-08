@@ -418,12 +418,18 @@ do_net_wm_state_changes (GdkSurface *surface)
   if (old_state & GDK_TOPLEVEL_STATE_MINIMIZED)
     {
       if (!toplevel->have_hidden)
-        unset |= GDK_TOPLEVEL_STATE_MINIMIZED;
+        {
+          unset |= (GDK_TOPLEVEL_STATE_MINIMIZED |
+                    GDK_TOPLEVEL_STATE_SUSPENDED);
+        }
     }
   else
     {
       if (toplevel->have_hidden)
-        set |= GDK_TOPLEVEL_STATE_MINIMIZED;
+        {
+          set |= (GDK_TOPLEVEL_STATE_MINIMIZED |
+                  GDK_TOPLEVEL_STATE_SUSPENDED);
+        }
     }
 
   /* Update edge constraints and tiling */
@@ -810,9 +816,12 @@ gdk_x11_display_translate_event (GdkEventTranslator *translator,
                * the minimized bit off.
                */
               if (GDK_SURFACE_IS_MAPPED (surface))
-                gdk_synthesize_surface_state (surface,
-                                              0,
-                                              GDK_TOPLEVEL_STATE_MINIMIZED);
+                {
+                  gdk_synthesize_surface_state (surface,
+                                                0,
+                                                GDK_TOPLEVEL_STATE_MINIMIZED |
+                                                GDK_TOPLEVEL_STATE_SUSPENDED);
+                }
             }
 
           if (surface_impl->toplevel &&
@@ -841,9 +850,12 @@ gdk_x11_display_translate_event (GdkEventTranslator *translator,
 	{
 	  /* Unset minimized if it was set */
 	  if (surface->state & GDK_TOPLEVEL_STATE_MINIMIZED)
-	    gdk_synthesize_surface_state (surface,
-				 	  GDK_TOPLEVEL_STATE_MINIMIZED,
-					  0);
+            {
+              gdk_synthesize_surface_state (surface,
+                                            GDK_TOPLEVEL_STATE_MINIMIZED |
+                                            GDK_TOPLEVEL_STATE_SUSPENDED,
+                                            0);
+            }
 
 	  if (toplevel)
 	    gdk_surface_thaw_updates (surface);
@@ -1391,11 +1403,7 @@ gdk_x11_display_init_leader_surface (GdkX11Display *self)
 
   gdk_event_init (display);
 
-  self->leader_gdk_surface =
-      _gdk_x11_display_create_surface (display,
-                                       GDK_SURFACE_DRAG,
-                                       NULL,
-                                       -100, -100, 1, 1);
+  self->leader_gdk_surface = gdk_x11_drag_surface_new (display);
 
   (_gdk_x11_surface_get_toplevel (self->leader_gdk_surface))->is_leader = TRUE;
   self->leader_window = GDK_SURFACE_XID (self->leader_gdk_surface);
@@ -1975,7 +1983,7 @@ gdk_x11_display_finalize (GObject *object)
       if (trap->end_sequence == 0)
         g_warning ("Display finalized with an unpopped error trap");
 
-      g_slice_free (GdkErrorTrap, trap);
+      g_free (trap);
     }
 
   g_free (display_x11->program_class);
@@ -2499,7 +2507,7 @@ delete_outdated_error_traps (GdkX11Display *display_x11)
           tmp_list = tmp_list->next;
           display_x11->error_traps =
             g_slist_delete_link (display_x11->error_traps, free_me);
-          g_slice_free (GdkErrorTrap, trap);
+          g_free (trap);
         }
       else
         {
@@ -2531,7 +2539,7 @@ gdk_x11_display_error_trap_push (GdkDisplay *display)
   /* set up the Xlib callback to tell us about errors */
   _gdk_x11_error_handler_push ();
 
-  trap = g_slice_new0 (GdkErrorTrap);
+  trap = g_new0 (GdkErrorTrap, 1);
 
   trap->start_sequence = XNextRequest (display_x11->xdisplay);
   trap->error_code = Success;
@@ -3032,6 +3040,8 @@ gdk_x11_display_class_init (GdkX11DisplayClass * class)
   object_class->dispose = gdk_x11_display_dispose;
   object_class->finalize = gdk_x11_display_finalize;
 
+  display_class->toplevel_type = GDK_TYPE_X11_TOPLEVEL;
+  display_class->popup_type = GDK_TYPE_X11_POPUP;
   display_class->cairo_context_type = GDK_TYPE_X11_CAIRO_CONTEXT;
 #ifdef GDK_RENDERING_VULKAN
   display_class->vk_context_type = GDK_TYPE_X11_VULKAN_CONTEXT;
@@ -3052,7 +3062,6 @@ G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   display_class->get_startup_notification_id = gdk_x11_display_get_startup_notification_id;
 G_GNUC_END_IGNORE_DEPRECATIONS
   display_class->notify_startup_complete = gdk_x11_display_notify_startup_complete;
-  display_class->create_surface = _gdk_x11_display_create_surface;
   display_class->get_keymap = gdk_x11_display_get_keymap;
 
   display_class->init_gl = gdk_x11_display_init_gl;
@@ -3092,12 +3101,15 @@ G_GNUC_END_IGNORE_DEPRECATIONS
    */
   signals[XEVENT] =
     g_signal_new (g_intern_static_string ("xevent"),
-		  G_OBJECT_CLASS_TYPE (object_class),
+                  G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
-		  G_STRUCT_OFFSET (GdkX11DisplayClass, xevent),
+                  G_STRUCT_OFFSET (GdkX11DisplayClass, xevent),
                   gdk_boolean_handled_accumulator, NULL,
                   _gdk_marshal_BOOLEAN__POINTER,
                   G_TYPE_BOOLEAN, 1, G_TYPE_POINTER);
+  g_signal_set_va_marshaller (signals[XEVENT],
+                              G_OBJECT_CLASS_TYPE (object_class),
+                              _gdk_marshal_BOOLEAN__POINTERv);
 
   _gdk_x11_surfaceing_init ();
 }

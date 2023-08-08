@@ -597,6 +597,12 @@ gtk_flow_box_child_set_child (GtkFlowBoxChild *self,
 {
   GtkFlowBoxChildPrivate *priv = CHILD_PRIV (self);
 
+  g_return_if_fail (GTK_IS_FLOW_BOX_CHILD (self));
+  g_return_if_fail (child == NULL || priv->child == child || gtk_widget_get_parent (child) == NULL);
+
+  if (priv->child == child)
+    return;
+
   g_clear_pointer (&priv->child, gtk_widget_unparent);
 
   priv->child = child;
@@ -1524,7 +1530,8 @@ get_offset_pixels (GtkAlign align,
   case GTK_ALIGN_END:
     offset = pixels;
     break;
-  case GTK_ALIGN_BASELINE:
+  case GTK_ALIGN_BASELINE_FILL:
+  case GTK_ALIGN_BASELINE_CENTER:
   default:
     g_assert_not_reached ();
     break;
@@ -2542,7 +2549,9 @@ gtk_flow_box_snapshot (GtkWidget   *widget,
           GtkWidget *child;
 
           child = g_sequence_get (iter);
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
           gtk_widget_get_allocation (GTK_WIDGET (child), &rect);
+G_GNUC_END_IGNORE_DEPRECATIONS
           if (line_rect.width == 0)
             line_rect = rect;
           else
@@ -3092,6 +3101,32 @@ gtk_flow_box_remove (GtkFlowBox *box,
     g_signal_emit (box, signals[SELECTED_CHILDREN_CHANGED], 0);
 }
 
+/**
+ * gtk_flow_box_remove_all:
+ * @box: a `GtkFlowBox`
+ *
+ * Removes all children from @box.
+ *
+ * This function does nothing if @box is backed by a model.
+ *
+ * Since: 4.12
+ */
+void
+gtk_flow_box_remove_all (GtkFlowBox *box)
+{
+  GtkFlowBoxPrivate *priv = BOX_PRIV (box);
+  GtkWidget *widget = GTK_WIDGET (box);
+  GtkWidget *child;
+
+  g_return_if_fail (GTK_IS_FLOW_BOX (box));
+
+  if (priv->bound_model)
+    return;
+
+  while ((child = gtk_widget_get_first_child (widget)) != NULL)
+    gtk_flow_box_remove (box, child);
+}
+
 /* Keynav {{{2 */
 
 static gboolean
@@ -3318,7 +3353,9 @@ gtk_flow_box_move_cursor (GtkFlowBox      *box,
         {
           child = priv->cursor_child;
           iter = CHILD_PRIV (child)->iter;
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
           gtk_widget_get_allocation (GTK_WIDGET (child), &allocation);
+G_GNUC_END_IGNORE_DEPRECATIONS
           start = vertical ? allocation.x : allocation.y;
 
           if (count < 0)
@@ -3337,7 +3374,9 @@ gtk_flow_box_move_cursor (GtkFlowBox      *box,
                   /* go up an even number of rows */
                   if (i % priv->cur_children_per_line == 0)
                     {
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
                       gtk_widget_get_allocation (GTK_WIDGET (prev), &allocation);
+G_GNUC_END_IGNORE_DEPRECATIONS
                       if ((vertical ? allocation.x : allocation.y) < start - page_size)
                         break;
                     }
@@ -3361,7 +3400,9 @@ gtk_flow_box_move_cursor (GtkFlowBox      *box,
 
                   if (i % priv->cur_children_per_line == 0)
                     {
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
                       gtk_widget_get_allocation (GTK_WIDGET (next), &allocation);
+G_GNUC_END_IGNORE_DEPRECATIONS
                       if ((vertical ? allocation.x : allocation.y) > start + page_size)
                         break;
                     }
@@ -3370,7 +3411,9 @@ gtk_flow_box_move_cursor (GtkFlowBox      *box,
                   i++;
                 }
             }
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
           gtk_widget_get_allocation (GTK_WIDGET (child), &allocation);
+G_GNUC_END_IGNORE_DEPRECATIONS
         }
       break;
 

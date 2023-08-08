@@ -18,12 +18,13 @@
  */
 
 
-#ifndef __GTK_LIST_ITEM_MANAGER_H__
-#define __GTK_LIST_ITEM_MANAGER_H__
+#pragma once
 
 #include "gtk/gtktypes.h"
 #include "gtk/gtkenums.h"
 
+#include "gtk/gtklistitembaseprivate.h"
+#include "gtk/gtklistheaderbaseprivate.h"
 #include "gtk/gtklistitemfactory.h"
 #include "gtk/gtkrbtreeprivate.h"
 #include "gtk/gtkselectionmodel.h"
@@ -43,17 +44,32 @@ typedef struct _GtkListTile GtkListTile;
 typedef struct _GtkListTileAugment GtkListTileAugment;
 typedef struct _GtkListItemTracker GtkListItemTracker;
 
+typedef enum
+{
+  GTK_LIST_TILE_ITEM,
+  GTK_LIST_TILE_HEADER,
+  GTK_LIST_TILE_FOOTER,
+  GTK_LIST_TILE_UNMATCHED_HEADER,
+  GTK_LIST_TILE_UNMATCHED_FOOTER,
+  GTK_LIST_TILE_REMOVED,
+} GtkListTileType;
+
 struct _GtkListTile
 {
+  GtkListTileType type;
   GtkWidget *widget;
   guint n_items;
-  /* area occupied by tile. May be empty if tile has no allcoation */
+  /* area occupied by tile. May be empty if tile has no allocation */
   cairo_rectangle_int_t area;
 };
 
 struct _GtkListTileAugment
 {
   guint n_items;
+
+  guint has_header :1;
+  guint has_footer :1;
+
   /* union of all areas of tile and children */
   cairo_rectangle_int_t area;
 };
@@ -62,10 +78,10 @@ struct _GtkListTileAugment
 GType                   gtk_list_item_manager_get_type          (void) G_GNUC_CONST;
 
 GtkListItemManager *    gtk_list_item_manager_new               (GtkWidget              *widget,
-                                                                 const char             *item_css_name,
-                                                                 GtkAccessibleRole       item_role,
-                                                                 GtkListTile *           (* split_func) (gpointer, GtkListTile *, guint),
-                                                                 gpointer                user_data);
+                                                                 GtkListTile *           (* split_func) (GtkWidget *, GtkListTile *, guint),
+                                                                 GtkListItemBase *       (* create_widget) (GtkWidget *),
+                                                                 void                    (* prepare_section) (GtkWidget *, GtkListTile *, guint),
+                                                                 GtkListHeaderBase *     (* create_header_widget) (GtkWidget *));
 
 void                    gtk_list_item_manager_get_tile_bounds   (GtkListItemManager     *self,
                                                                  GdkRectangle           *out_bounds);
@@ -75,13 +91,22 @@ gpointer                gtk_list_item_manager_get_last          (GtkListItemMana
 gpointer                gtk_list_item_manager_get_nth           (GtkListItemManager     *self,
                                                                  guint                   position,
                                                                  guint                  *offset);
-GtkListTile *           gtk_list_item_manager_get_tile_at       (GtkListItemManager     *self,
-                                                                 int                     x,
-                                                                 int                     y);
 GtkListTile *           gtk_list_item_manager_get_nearest_tile  (GtkListItemManager     *self,
                                                                  int                     x,
                                                                  int                     y);
+void                    gtk_list_item_manager_gc_tiles          (GtkListItemManager     *self);
 
+static inline gboolean
+gtk_list_tile_is_header (GtkListTile *tile)
+{
+  return tile->type == GTK_LIST_TILE_HEADER || tile->type == GTK_LIST_TILE_UNMATCHED_HEADER;
+}
+
+static inline gboolean
+gtk_list_tile_is_footer (GtkListTile *tile)
+{
+  return tile->type == GTK_LIST_TILE_FOOTER || tile->type == GTK_LIST_TILE_UNMATCHED_FOOTER;
+}
 
 guint                   gtk_list_tile_get_position              (GtkListItemManager     *self,
                                                                  GtkListTile            *tile);
@@ -102,22 +127,13 @@ void                    gtk_list_tile_set_area_size             (GtkListItemMana
 GtkListTile *           gtk_list_tile_split                     (GtkListItemManager     *self,
                                                                  GtkListTile            *tile,
                                                                  guint                   n_items);
-GtkListTile *           gtk_list_tile_gc                        (GtkListItemManager     *self,
-                                                                 GtkListTile            *tile);
 
-void                    gtk_list_item_manager_set_factory       (GtkListItemManager     *self,
-                                                                 GtkListItemFactory     *factory);
-GtkListItemFactory *    gtk_list_item_manager_get_factory       (GtkListItemManager     *self);
 void                    gtk_list_item_manager_set_model         (GtkListItemManager     *self,
                                                                  GtkSelectionModel      *model);
 GtkSelectionModel *     gtk_list_item_manager_get_model         (GtkListItemManager     *self);
-
-guint                   gtk_list_item_manager_get_size          (GtkListItemManager     *self);
-void                    gtk_list_item_manager_set_single_click_activate
-                                                                (GtkListItemManager     *self,
-                                                                 gboolean                single_click_activate);
-gboolean                gtk_list_item_manager_get_single_click_activate
-                                                                (GtkListItemManager     *self);
+void                    gtk_list_item_manager_set_has_sections  (GtkListItemManager     *self,
+                                                                 gboolean                has_sections);
+gboolean                gtk_list_item_manager_get_has_sections  (GtkListItemManager     *self);
 
 GtkListItemTracker *    gtk_list_item_tracker_new               (GtkListItemManager     *self);
 void                    gtk_list_item_tracker_free              (GtkListItemManager     *self,
@@ -133,4 +149,3 @@ guint                   gtk_list_item_tracker_get_position      (GtkListItemMana
 
 G_END_DECLS
 
-#endif /* __GTK_LIST_ITEM_MANAGER_H__ */

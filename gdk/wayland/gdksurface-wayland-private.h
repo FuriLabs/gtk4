@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "gdkprivate-wayland.h"
+
 typedef enum _PopupState
 {
   POPUP_STATE_IDLE,
@@ -35,21 +37,26 @@ struct _GdkWaylandSurface
     struct xdg_surface *xdg_surface;
     struct zxdg_surface_v6 *zxdg_surface_v6;
     struct wl_egl_window *egl_window;
+    struct wp_fractional_scale_v1 *fractional_scale;
+    struct wp_viewport *viewport;
   } display_server;
 
   struct wl_event_queue *event_queue;
+  struct wl_callback *frame_callback;
 
   unsigned int initial_configure_received : 1;
   unsigned int has_uncommitted_ack_configure : 1;
   unsigned int mapped : 1;
-  unsigned int awaiting_frame : 1;
   unsigned int awaiting_frame_frozen : 1;
 
   int pending_buffer_offset_x;
   int pending_buffer_offset_y;
 
   gint64 pending_frame_counter;
-  guint32 scale;
+  GdkFractionalScale scale;
+  gboolean buffer_is_fractional;
+  gboolean buffer_scale_dirty;
+  gboolean viewport_dirty;
 
   int shadow_left;
   int shadow_right;
@@ -97,11 +104,10 @@ struct _GdkWaylandSurfaceClass
 
 #define GDK_WAYLAND_SURFACE_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_WAYLAND_SURFACE, GdkWaylandSurfaceClass))
 
-void gdk_wayland_surface_create_wl_surface (GdkSurface *surface);
-void gdk_wayland_surface_update_size       (GdkSurface *surface,
-                                            int32_t     width,
-                                            int32_t     height,
-                                            int         scale);
+void gdk_wayland_surface_update_size       (GdkSurface               *surface,
+                                            int32_t                   width,
+                                            int32_t                   height,
+                                            const GdkFractionalScale *scale);
 void gdk_wayland_surface_create_xdg_surface_resources (GdkSurface *surface);
 void _gdk_wayland_surface_save_size (GdkSurface *surface);
 

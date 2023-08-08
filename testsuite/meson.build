@@ -4,6 +4,7 @@ installed_test_datadir = join_paths(gtk_datadir, 'installed-tests', 'gtk-4.0')
 
 common_env = [
   'GIO_USE_VOLUME_MONITOR=unix',
+  'GIO_USE_VFS=local',
   'GSETTINGS_BACKEND=memory',
   'GTK_CSD=1',
   'G_ENABLE_DIAGNOSTIC=0',
@@ -15,10 +16,15 @@ exclude_unstable = ['flaky', 'failing']
 setups = [
   { 'backend': 'x11', 'if': x11_enabled, },
   { 'backend': 'wayland', 'if': wayland_enabled, 'is_default': true, },
-  { 'name': 'waylandgles', 'backend': 'wayland', 'if': wayland_enabled,
-    'env': ['GDK_DEBUG=gl-gles,default-settings'], },
+  { 'name': 'wayland_gles',
+    'backend': 'wayland', 'if': wayland_enabled,
+    'env': ['GDK_DEBUG=gl-gles,default-settings',
+            'MESA_GLES_VERSION_OVERRIDE=2.0',
+            'GSK_MAX_TEXTURE_SIZE=1024',
+           ], },
   { 'backend': 'win32', 'if': os_win32 },
   { 'backend': 'broadway', 'if': broadway_enabled, },
+  { 'backend': 'win32', 'if': os_win32 },
 ]
 
 foreach setup : setups
@@ -29,6 +35,10 @@ foreach setup : setups
 
     if backend != 'broadway'
       exclude += 'gsk-compare-broadway'
+    endif
+
+    if name == 'wayland_gles'
+      exclude += 'wayland_gles_failing'
     endif
 
     env = common_env + [
@@ -58,7 +68,11 @@ subdir('css')
 subdir('a11y')
 subdir('tools')
 subdir('reftests')
-
 if build_gir
   subdir('introspection')
+
+  if wayland_enabled
+    subdir('headless')
+  endif
 endif
+

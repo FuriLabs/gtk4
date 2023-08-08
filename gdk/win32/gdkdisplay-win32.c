@@ -28,6 +28,7 @@
 #include "gdkdisplay-win32.h"
 #include "gdkdevicemanager-win32.h"
 #include "gdkglcontext-win32.h"
+#include "gdksurface-win32.h"
 #include "gdkwin32display.h"
 #include "gdkwin32screen.h"
 #include "gdkwin32surface.h"
@@ -291,6 +292,7 @@ _gdk_win32_display_init_monitors (GdkWin32Display *win32_display)
       if (!w32_ex_monitor->remove)
         continue;
 
+      w32_ex_monitor->hmonitor = NULL;
       g_list_store_remove (G_LIST_STORE (win32_display->monitors), i);
       gdk_monitor_invalidate (ex_monitor);
     }
@@ -479,7 +481,7 @@ register_display_change_notification (GdkDisplay *display)
 
   wclass.lpszClassName = "GdkDisplayChange";
   wclass.lpfnWndProc = display_change_window_procedure;
-  wclass.hInstance = _gdk_app_hmodule;
+  wclass.hInstance = this_module ();
   wclass.style = CS_OWNDC;
 
   klass = RegisterClass (&wclass);
@@ -488,10 +490,10 @@ register_display_change_notification (GdkDisplay *display)
       display_win32->hwnd = CreateWindow (MAKEINTRESOURCE (klass),
                                           NULL, WS_POPUP,
                                           0, 0, 0, 0, NULL, NULL,
-                                          _gdk_app_hmodule, NULL);
+                                          this_module (), NULL);
       if (!display_win32->hwnd)
         {
-          UnregisterClass (MAKEINTRESOURCE (klass), _gdk_app_hmodule);
+          UnregisterClass (MAKEINTRESOURCE (klass), this_module ());
         }
     }
 }
@@ -645,15 +647,15 @@ gdk_win32_display_dispose (GObject *object)
 {
   GdkWin32Display *display_win32 = GDK_WIN32_DISPLAY (object);
 
+  if (display_win32->dummy_context_wgl.hglrc != NULL)
+    {
+      wglMakeCurrent (NULL, NULL);
+      wglDeleteContext (display_win32->dummy_context_wgl.hglrc);
+      display_win32->dummy_context_wgl.hglrc = NULL;
+    }
+
   if (display_win32->hwnd != NULL)
     {
-      if (display_win32->dummy_context_wgl.hglrc != NULL)
-        {
-          wglMakeCurrent (NULL, NULL);
-          wglDeleteContext (display_win32->dummy_context_wgl.hglrc);
-          display_win32->dummy_context_wgl.hglrc = NULL;
-        }
-
       DestroyWindow (display_win32->hwnd);
       display_win32->hwnd = NULL;
     }
@@ -1128,7 +1130,6 @@ gdk_win32_display_get_monitor_scale_factor (GdkWin32Display *display_win32,
         {
           if (GDK_WIN32_SURFACE (surface)->hdc == NULL)
             GDK_WIN32_SURFACE (surface)->hdc = GetDC (GDK_SURFACE_HWND (surface));
-
           hdc = GDK_WIN32_SURFACE (surface)->hdc;
         }
       else
@@ -1181,11 +1182,7 @@ gdk_win32_display_init_gl (GdkDisplay  *display,
 {
   GdkWin32Display *display_win32 = GDK_WIN32_DISPLAY (display);
   HDC init_gl_hdc = NULL;
-
-  if (display_win32->dummy_context_wgl.hdc == NULL)
-    display_win32->dummy_context_wgl.hdc = GetDC (display_win32->hwnd);
-
-  init_gl_hdc = display_win32->dummy_context_wgl.hdc;
+  GdkGLContext *context;
 
   /*
    * No env vars set, do the regular GL initialization, first WGL and then EGL,
@@ -1199,6 +1196,8 @@ gdk_win32_display_init_gl (GdkDisplay  *display,
    */
   if (gdk_display_get_debug_flags (display) & (GDK_DEBUG_GL_EGL|GDK_DEBUG_GL_GLES))
     {
+      init_gl_hdc = GetDC (display_win32->hwnd);
+
       if (gdk_display_init_egl (display,
                                 EGL_PLATFORM_ANGLE_ANGLE,
                                 init_gl_hdc,
@@ -1215,16 +1214,15 @@ gdk_win32_display_init_gl (GdkDisplay  *display,
     }
 #endif
 
-  if (gdk_win32_display_init_wgl (display, error))
-    {
-      return g_object_new (GDK_TYPE_WIN32_GL_CONTEXT_WGL,
-                           "display", display,
-                           NULL);
-    }
+  context = gdk_win32_display_init_wgl (display, error);
+
+  if (context)
+    return context;
 
 #ifdef HAVE_EGL
   g_clear_error (error);
 
+  init_gl_hdc = GetDC (display_win32->hwnd);
   if (gdk_display_init_egl (display,
                             EGL_PLATFORM_ANGLE_ANGLE,
                             init_gl_hdc,
@@ -1268,6 +1266,8 @@ gdk_win32_display_class_init (GdkWin32DisplayClass *klass)
   object_class->dispose = gdk_win32_display_dispose;
   object_class->finalize = gdk_win32_display_finalize;
 
+  display_class->toplevel_type = GDK_TYPE_WIN32_TOPLEVEL;
+  display_class->popup_type = GDK_TYPE_WIN32_POPUP;
   display_class->cairo_context_type = GDK_TYPE_WIN32_CAIRO_CONTEXT;
 
   display_class->get_name = gdk_win32_display_get_name;
@@ -1281,7 +1281,6 @@ gdk_win32_display_class_init (GdkWin32DisplayClass *klass)
 
   display_class->get_next_serial = gdk_win32_display_get_next_serial;
   display_class->notify_startup_complete = gdk_win32_display_notify_startup_complete;
-  display_class->create_surface = _gdk_win32_display_create_surface;
 
   display_class->get_keymap = _gdk_win32_display_get_keymap;
 

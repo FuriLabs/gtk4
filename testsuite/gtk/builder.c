@@ -30,7 +30,7 @@ G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 #ifdef G_OS_WIN32
 # define _BUILDER_TEST_EXPORT __declspec(dllexport)
 #else
-# define _BUILDER_TEST_EXPORT
+# define _BUILDER_TEST_EXPORT __attribute__((visibility("default")))
 #endif
 
 /* exported for GtkBuilder */
@@ -131,6 +131,7 @@ static int after = 0;
 static int object = 0;
 static int object_after = 0;
 
+_BUILDER_TEST_EXPORT
 void /* exported for GtkBuilder */
 signal_normal (GtkWindow *window, GParamSpec *spec)
 {
@@ -141,6 +142,7 @@ signal_normal (GtkWindow *window, GParamSpec *spec)
   normal++;
 }
 
+_BUILDER_TEST_EXPORT
 void /* exported for GtkBuilder */
 signal_after (GtkWindow *window, GParamSpec *spec)
 {
@@ -151,6 +153,7 @@ signal_after (GtkWindow *window, GParamSpec *spec)
   after++;
 }
 
+_BUILDER_TEST_EXPORT
 void /* exported for GtkBuilder */
 signal_object (GtkButton *button, GParamSpec *spec)
 {
@@ -161,6 +164,7 @@ signal_object (GtkButton *button, GParamSpec *spec)
   object++;
 }
 
+_BUILDER_TEST_EXPORT
 void /* exported for GtkBuilder */
 signal_object_after (GtkButton *button, GParamSpec *spec)
 {
@@ -171,6 +175,7 @@ signal_object_after (GtkButton *button, GParamSpec *spec)
   object_after++;
 }
 
+_BUILDER_TEST_EXPORT
 void /* exported for GtkBuilder */
 signal_first (GtkButton *button, GParamSpec *spec)
 {
@@ -178,6 +183,7 @@ signal_first (GtkButton *button, GParamSpec *spec)
   normal = 10;
 }
 
+_BUILDER_TEST_EXPORT
 void /* exported for GtkBuilder */
 signal_second (GtkButton *button, GParamSpec *spec)
 {
@@ -185,6 +191,7 @@ signal_second (GtkButton *button, GParamSpec *spec)
   normal = 20;
 }
 
+_BUILDER_TEST_EXPORT
 void /* exported for GtkBuilder */
 signal_extra (GtkButton *button, GParamSpec *spec)
 {
@@ -192,6 +199,7 @@ signal_extra (GtkButton *button, GParamSpec *spec)
   normal = 30;
 }
 
+_BUILDER_TEST_EXPORT
 void /* exported for GtkBuilder */
 signal_extra2 (GtkButton *button, GParamSpec *spec)
 {
@@ -1497,9 +1505,11 @@ test_cell_view (void)
   g_object_unref (model);
   path = gtk_tree_path_new_first ();
   gtk_cell_view_set_displayed_row (GTK_CELL_VIEW (cellview), path);
+  gtk_tree_path_free (path);
 
   renderers = gtk_cell_layout_get_cells (GTK_CELL_LAYOUT (cellview));
   g_assert_cmpint (g_list_length (renderers), ==, 1);
+  g_list_free (renderers);
 
   window = gtk_builder_get_object (builder, "window1");
   g_assert_nonnull (window);
@@ -2289,7 +2299,6 @@ test_expose_object (void)
 
   menu = gtk_popover_new ();
   builder = gtk_builder_new ();
-  gtk_builder_expose_object (builder, "builder", G_OBJECT (builder));
   gtk_builder_expose_object (builder, "external_menu", G_OBJECT (menu));
   gtk_builder_add_from_string (builder, buffer, -1, &error);
   g_assert_no_error (error);
@@ -2299,7 +2308,6 @@ test_expose_object (void)
 
   g_assert_true (gtk_menu_button_get_popover (GTK_MENU_BUTTON (obj)) == GTK_POPOVER (menu));
 
-  g_object_unref (menu);
   g_object_unref (builder);
 }
 
@@ -2459,6 +2467,8 @@ my_gtk_grid_class_init (MyGtkGridClass *klass)
   gtk_widget_class_set_template (widget_class, template);
   gtk_widget_class_bind_template_child (widget_class, MyGtkGrid, label);
   gtk_widget_class_bind_template_child_private (widget_class, MyGtkGrid, label);
+
+  g_bytes_unref (template);
 }
 
 static void
@@ -2478,6 +2488,9 @@ test_template (void)
   g_assert_true (my_gtk_grid->label == my_gtk_grid->priv->label);
   g_assert_true (GTK_IS_LABEL (my_gtk_grid->label));
   g_assert_true (GTK_IS_LABEL (my_gtk_grid->priv->label));
+
+  g_object_ref_sink (my_gtk_grid);
+  g_object_unref (my_gtk_grid);
 }
 
 _BUILDER_TEST_EXPORT void
@@ -2746,6 +2759,8 @@ my_gtk_box_class_init (MyGtkBoxClass *klass)
   gtk_widget_class_bind_template_child (widget_class, MyGtkBox, label2);
 
   G_OBJECT_CLASS (klass)->dispose = my_gtk_box_dispose;
+
+  g_bytes_unref (template);
 }
 
 typedef struct
@@ -2834,6 +2849,8 @@ my_gtk_buildable_class_init (MyGtkBuildableClass *klass)
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
   gtk_widget_class_set_template (widget_class, template);
+
+  g_bytes_unref (template);
 }
 
 static const GtkBuildableParser custom_parser = {
@@ -2898,6 +2915,9 @@ test_buildable (void)
   /* Check everything is fine */
   g_assert_true (g_type_from_name ("MyGtkBuildable"));
   g_assert_true (MY_IS_GTK_BUILDABLE (my_gtk_buildable));
+
+  g_object_ref_sink (my_gtk_buildable);
+  g_object_unref (my_gtk_buildable);
 }
 
 int

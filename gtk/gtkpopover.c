@@ -133,6 +133,8 @@
 
 #include "gdk/gdksurfaceprivate.h"
 
+#include <string.h> /* memset */
+
 #define MNEMONICS_DELAY 300 /* ms */
 
 #define TAIL_GAP_WIDTH  24
@@ -483,6 +485,7 @@ create_popup_layout (GtkPopover *popover)
   GdkPopupLayout *layout;
   GtkCssStyle *style;
   GtkBorder shadow_width;
+  gboolean ltr = gtk_widget_get_direction (GTK_WIDGET (popover)) != GTK_TEXT_DIR_RTL;
 
   compute_surface_pointing_to (popover, &rect);
 
@@ -506,7 +509,8 @@ create_popup_layout (GtkPopover *popover)
 
         case GTK_ALIGN_FILL:
         case GTK_ALIGN_CENTER:
-        case GTK_ALIGN_BASELINE:
+        case GTK_ALIGN_BASELINE_FILL:
+        case GTK_ALIGN_BASELINE_CENTER:
         default:
           parent_anchor = GDK_GRAVITY_WEST;
           surface_anchor = GDK_GRAVITY_EAST;
@@ -530,7 +534,8 @@ create_popup_layout (GtkPopover *popover)
 
         case GTK_ALIGN_FILL:
         case GTK_ALIGN_CENTER:
-        case GTK_ALIGN_BASELINE:
+        case GTK_ALIGN_BASELINE_FILL:
+        case GTK_ALIGN_BASELINE_CENTER:
         default:
           parent_anchor = GDK_GRAVITY_EAST;
           surface_anchor = GDK_GRAVITY_WEST;
@@ -543,18 +548,19 @@ create_popup_layout (GtkPopover *popover)
       switch (gtk_widget_get_halign (GTK_WIDGET (popover)))
         {
         case GTK_ALIGN_START:
-          parent_anchor = GDK_GRAVITY_NORTH_WEST;
-          surface_anchor = GDK_GRAVITY_SOUTH_WEST;
+          parent_anchor = ltr ? GDK_GRAVITY_NORTH_WEST : GDK_GRAVITY_NORTH_EAST;
+          surface_anchor = ltr ? GDK_GRAVITY_SOUTH_WEST : GDK_GRAVITY_SOUTH_EAST;
           break;
 
         case GTK_ALIGN_END:
-          parent_anchor = GDK_GRAVITY_NORTH_EAST;
-          surface_anchor = GDK_GRAVITY_SOUTH_EAST;
+          parent_anchor = ltr ? GDK_GRAVITY_NORTH_EAST : GDK_GRAVITY_NORTH_WEST;
+          surface_anchor = ltr ? GDK_GRAVITY_SOUTH_EAST : GDK_GRAVITY_SOUTH_WEST;
           break;
 
         case GTK_ALIGN_FILL:
         case GTK_ALIGN_CENTER:
-        case GTK_ALIGN_BASELINE:
+        case GTK_ALIGN_BASELINE_FILL:
+        case GTK_ALIGN_BASELINE_CENTER:
         default:
           parent_anchor = GDK_GRAVITY_NORTH;
           surface_anchor = GDK_GRAVITY_SOUTH;
@@ -567,18 +573,19 @@ create_popup_layout (GtkPopover *popover)
       switch (gtk_widget_get_halign (GTK_WIDGET (popover)))
         {
         case GTK_ALIGN_START:
-          parent_anchor = GDK_GRAVITY_SOUTH_WEST;
-          surface_anchor = GDK_GRAVITY_NORTH_WEST;
+          parent_anchor = ltr ? GDK_GRAVITY_SOUTH_WEST : GDK_GRAVITY_SOUTH_EAST;
+          surface_anchor = ltr ? GDK_GRAVITY_NORTH_WEST : GDK_GRAVITY_NORTH_EAST;
           break;
 
         case GTK_ALIGN_END:
-          parent_anchor = GDK_GRAVITY_SOUTH_EAST;
-          surface_anchor = GDK_GRAVITY_NORTH_EAST;
+          parent_anchor = ltr ? GDK_GRAVITY_SOUTH_EAST : GDK_GRAVITY_SOUTH_WEST;
+          surface_anchor = ltr ? GDK_GRAVITY_NORTH_EAST : GDK_GRAVITY_NORTH_WEST;
           break;
 
         case GTK_ALIGN_FILL:
         case GTK_ALIGN_CENTER:
-        case GTK_ALIGN_BASELINE:
+        case GTK_ALIGN_BASELINE_FILL:
+        case GTK_ALIGN_BASELINE_CENTER:
         default:
           parent_anchor = GDK_GRAVITY_SOUTH;
           surface_anchor = GDK_GRAVITY_NORTH;
@@ -1014,8 +1021,7 @@ gtk_popover_unrealize (GtkWidget *widget)
   g_signal_handlers_disconnect_by_func (priv->surface, surface_render, widget);
   g_signal_handlers_disconnect_by_func (priv->surface, surface_event, widget);
   gdk_surface_set_widget (priv->surface, NULL);
-  gdk_surface_destroy (priv->surface);
-  g_clear_object (&priv->surface);
+  g_clear_pointer (&priv->surface, gdk_surface_destroy);
 }
 
 static gboolean
@@ -1227,8 +1233,8 @@ gtk_popover_get_gap_coords (GtkPopover *popover,
   GtkCssStyle *style;
   GtkBorder shadow_width;
 
-  popover_width = gtk_widget_get_allocated_width (widget);
-  popover_height = gtk_widget_get_allocated_height (widget);
+  popover_width = gtk_widget_get_width (widget);
+  popover_height = gtk_widget_get_height (widget);
 
   compute_surface_pointing_to (popover, &rect);
 
@@ -1369,15 +1375,17 @@ gtk_popover_update_shape (GtkPopover *popover)
       cairo_t *cr;
       graphene_point_t p;
       double native_x, native_y;
+      int width, height, scale;
 
       gtk_native_get_surface_transform (GTK_NATIVE (popover), &native_x, &native_y);
       gtk_css_boxes_init (&content_css_boxes, priv->contents_widget);
 
-      cairo_surface =
-        gdk_surface_create_similar_surface (priv->surface,
-                                           CAIRO_CONTENT_COLOR_ALPHA,
-                                           gdk_surface_get_width (priv->surface),
-                                           gdk_surface_get_height (priv->surface));
+      width = gdk_surface_get_width (priv->surface);
+      height = gdk_surface_get_height (priv->surface);
+      scale = gdk_surface_get_scale_factor (priv->surface);
+
+      cairo_surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width * scale, height * scale);
+      cairo_surface_set_device_scale (cairo_surface, scale, scale);
 
       cr = cairo_create (cairo_surface);
 
@@ -2009,7 +2017,7 @@ gtk_popover_set_child (GtkPopover *popover,
   GtkPopoverPrivate *priv = gtk_popover_get_instance_private (popover);
 
   g_return_if_fail (GTK_IS_POPOVER (popover));
-  g_return_if_fail (child == NULL || GTK_IS_WIDGET (child));
+  g_return_if_fail (child == NULL || priv->child == child || gtk_widget_get_parent (child) == NULL);
 
   if (priv->child == child)
     return;
@@ -2186,7 +2194,10 @@ gtk_popover_get_pointing_to (GtkPopover   *popover,
       GtkWidget *parent = gtk_widget_get_parent (GTK_WIDGET (popover));
 
       if (!gtk_widget_compute_bounds (parent, parent, &r))
-        return FALSE;
+        {
+          memset (rect, 0, sizeof (GdkRectangle));
+          return FALSE;
+        }
 
       rect->x = floorf (r.origin.x);
       rect->y = floorf (r.origin.y);

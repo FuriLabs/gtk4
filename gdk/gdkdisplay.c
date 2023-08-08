@@ -1,7 +1,7 @@
 /* GDK - The GIMP Drawing Kit
  * gdkdisplay.c
- * 
- * Copyright 2001 Sun Microsystems Inc. 
+ *
+ * Copyright 2001 Sun Microsystems Inc.
  *
  * Erwann Chenede <erwann.chenede@sun.com>
  *
@@ -31,10 +31,12 @@
 #include "gdkclipboardprivate.h"
 #include "gdkdeviceprivate.h"
 #include "gdkdisplaymanagerprivate.h"
-#include "gdkframeclockidleprivate.h"
 #include "gdkeventsprivate.h"
+#include "gdkframeclockidleprivate.h"
 #include "gdkglcontextprivate.h"
 #include "gdkmonitorprivate.h"
+#include "gdkrectangle.h"
+#include "gdkvulkancontext.h"
 
 #ifdef HAVE_EGL
 #include <epoxy/egl.h>
@@ -175,7 +177,7 @@ gdk_display_default_rate_egl_config (GdkDisplay *display,
 
   return distance;
 }
-    
+
 static GdkSeat *
 gdk_display_real_get_default_seat (GdkDisplay *display)
 {
@@ -322,7 +324,7 @@ static void
 free_pointer_info (GdkPointerSurfaceInfo *info)
 {
   g_clear_object (&info->surface_under_pointer);
-  g_slice_free (GdkPointerSurfaceInfo, info);
+  g_free (info);
 }
 
 static void
@@ -382,6 +384,9 @@ gdk_display_dispose (GObject *object)
 #endif
   g_clear_error (&priv->gl_error);
 
+  for (GList *l = display->seats; l; l = l->next)
+    g_object_run_dispose (G_OBJECT (l->data));
+
   G_OBJECT_CLASS (gdk_display_parent_class)->dispose (object);
 }
 
@@ -418,10 +423,10 @@ gdk_display_close (GdkDisplay *display)
   if (!display->closed)
     {
       display->closed = TRUE;
-      
+
       g_signal_emit (display, signals[CLOSED], 0, FALSE);
       g_object_run_dispose (G_OBJECT (display));
-      
+
       g_object_unref (display);
     }
 }
@@ -808,7 +813,7 @@ _gdk_display_end_device_grab (GdkDisplay *display,
       grab->implicit_ungrab = implicit;
       return l->next == NULL;
     }
-  
+
   return FALSE;
 }
 
@@ -834,7 +839,7 @@ _gdk_display_get_pointer_info (GdkDisplay *display,
 
   if (G_UNLIKELY (!info))
     {
-      info = g_slice_new0 (GdkPointerSurfaceInfo);
+      info = g_new0 (GdkPointerSurfaceInfo, 1);
       g_hash_table_insert (display->pointers_info, device, info);
     }
 
@@ -1196,21 +1201,6 @@ _gdk_display_unpause_events (GdkDisplay *display)
   display->event_pause_count--;
 }
 
-GdkSurface *
-gdk_display_create_surface (GdkDisplay     *display,
-                            GdkSurfaceType  surface_type,
-                            GdkSurface     *parent,
-                            int             x,
-                            int             y,
-                            int             width,
-                            int             height)
-{
-  return GDK_DISPLAY_GET_CLASS (display)->create_surface (display,
-                                                          surface_type,
-                                                          parent,
-                                                          x, y, width, height);
-}
-
 /*< private >
  * gdk_display_get_keymap:
  * @display: the `GdkDisplay`
@@ -1225,6 +1215,49 @@ gdk_display_get_keymap (GdkDisplay *display)
   g_return_val_if_fail (GDK_IS_DISPLAY (display), NULL);
 
   return GDK_DISPLAY_GET_CLASS (display)->get_keymap (display);
+}
+
+/*<private>
+ * gdk_display_create_vulkan_context:
+ * @self: a `GdkDisplay`
+ * @error: return location for an error
+ *
+ * Creates a new `GdkVulkanContext` for use with @display.
+ *
+ * The context can not be used to draw to surfaces, it can only be
+ * used for custom rendering or compute.
+ *
+ * If the creation of the `GdkVulkanContext` failed, @error will be set.
+ *
+ * Returns: (transfer full): the newly created `GdkVulkanContext`, or
+ *   %NULL on error
+ */
+GdkVulkanContext *
+gdk_display_create_vulkan_context (GdkDisplay  *self,
+                                   GError     **error)
+{
+  g_return_val_if_fail (GDK_IS_DISPLAY (self), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+  if (gdk_display_get_debug_flags (self) & GDK_DEBUG_VULKAN_DISABLE)
+    {
+      g_set_error_literal (error, GDK_VULKAN_ERROR, GDK_VULKAN_ERROR_NOT_AVAILABLE,
+                           _("Vulkan support disabled via GDK_DEBUG"));
+      return NULL;
+    }
+
+  if (GDK_DISPLAY_GET_CLASS (self)->vk_extension_name == NULL)
+    {
+      g_set_error (error, GDK_VULKAN_ERROR, GDK_VULKAN_ERROR_UNSUPPORTED,
+                   "The %s backend has no Vulkan support.", G_OBJECT_TYPE_NAME (self));
+      return FALSE;
+    }
+
+  return g_initable_new (GDK_DISPLAY_GET_CLASS (self)->vk_context_type,
+                         NULL,
+                         error,
+                         "display", self,
+                         NULL);
 }
 
 static void
@@ -1283,7 +1316,7 @@ gdk_display_init_gl (GdkDisplay *self)
  * Note that even if this function succeeds, creating a `GdkGLContext`
  * may still fail.
  *
- * This function is idempotent. Calling it multiple times will just 
+ * This function is idempotent. Calling it multiple times will just
  * return the same value or error.
  *
  * You never need to call this function, GDK will call it automatically

@@ -17,8 +17,7 @@
  * Authors: Benjamin Otte <otte@gnome.org>
  */
 
-#ifndef __GTK_GRID_VIEW_H__
-#define __GTK_GRID_VIEW_H__
+#pragma once
 
 #if !defined (__GTK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gtk/gtk.h> can be included directly."
@@ -73,14 +72,27 @@ void            gtk_grid_view_set_enable_rubberband             (GtkGridView    
 GDK_AVAILABLE_IN_ALL
 gboolean        gtk_grid_view_get_enable_rubberband             (GtkGridView            *self);
 
+GDK_AVAILABLE_IN_4_12
+void            gtk_grid_view_set_tab_behavior                  (GtkGridView            *self,
+                                                                 GtkListTabBehavior      tab_behavior);
+GDK_AVAILABLE_IN_4_12
+GtkListTabBehavior
+                gtk_grid_view_get_tab_behavior                  (GtkGridView            *self);
+
 GDK_AVAILABLE_IN_ALL
 void            gtk_grid_view_set_single_click_activate         (GtkGridView            *self,
                                                                  gboolean                single_click_activate);
 GDK_AVAILABLE_IN_ALL
 gboolean        gtk_grid_view_get_single_click_activate         (GtkGridView            *self);
 
+GDK_AVAILABLE_IN_4_12
+void            gtk_grid_view_scroll_to                         (GtkGridView            *self,
+                                                                 guint                   pos,
+                                                                 GtkListScrollFlags      flags,
+                                                                 GtkScrollInfo          *scroll);
+
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkGridView, g_object_unref)
 
 G_END_DECLS
 
-#endif  /* __GTK_GRID_VIEW_H__ */

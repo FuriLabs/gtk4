@@ -1226,19 +1226,6 @@ gdk_drag_do_leave (GdkX11Drag *drag_x11)
     }
 }
 
-static GdkSurface *
-create_drag_surface (GdkDisplay *display)
-{
-  GdkSurface *surface;
-
-  surface = _gdk_x11_display_create_surface (display,
-                                             GDK_SURFACE_DRAG,
-                                             NULL,
-                                             0, 0, 100, 100);
-
-  return surface;
-}
-
 static Window
 _gdk_x11_display_get_drag_protocol (GdkDisplay      *display,
                                     Window           xid,
@@ -1754,7 +1741,7 @@ gdk_drag_anim_destroy (GdkDragAnim *anim)
 {
   gdk_surface_hide (anim->drag->drag_surface);
   g_object_unref (anim->drag);
-  g_slice_free (GdkDragAnim, anim);
+  g_free (anim);
 }
 
 static gboolean
@@ -1814,11 +1801,6 @@ gdk_x11_drag_drop_done (GdkDrag  *drag,
 {
   GdkX11Drag *x11_drag = GDK_X11_DRAG (drag);
   GdkDragAnim *anim;
-/*
-  cairo_surface_t *win_surface;
-  cairo_surface_t *surface;
-  cairo_t *cr;
-*/
   guint id;
 
   gdk_x11_drag_release_selection (drag);
@@ -1833,27 +1815,7 @@ gdk_x11_drag_drop_done (GdkDrag  *drag,
       return;
     }
 
-/*
-  win_surface = _gdk_surface_ref_cairo_surface (x11_drag->drag_surface);
-  surface = gdk_surface_create_similar_surface (x11_drag->drag_surface,
-                                               cairo_surface_get_content (win_surface),
-                                               gdk_surface_get_width (x11_drag->drag_surface),
-                                               gdk_surface_get_height (x11_drag->drag_surface));
-  cr = cairo_create (surface);
-  cairo_set_source_surface (cr, win_surface, 0, 0);
-  cairo_paint (cr);
-  cairo_destroy (cr);
-  cairo_surface_destroy (win_surface);
-
-  pattern = cairo_pattern_create_for_surface (surface);
-
-  gdk_surface_set_background_pattern (x11_drag->drag_surface, pattern);
-
-  cairo_pattern_destroy (pattern);
-  cairo_surface_destroy (surface);
-*/
-
-  anim = g_slice_new0 (GdkDragAnim);
+  anim = g_new0 (GdkDragAnim, 1);
   anim->drag = g_object_ref (x11_drag);
   anim->frame_clock = gdk_surface_get_frame_clock (x11_drag->drag_surface);
   anim->start_time = gdk_frame_clock_get_frame_time (anim->frame_clock);
@@ -1924,10 +1886,7 @@ _gdk_x11_surface_drag_begin (GdkSurface         *surface,
 
   display = gdk_surface_get_display (surface);
 
-  ipc_surface = _gdk_x11_display_create_surface (display,
-                                                 GDK_SURFACE_DRAG,
-                                                 NULL,
-                                                 -99, -99, 1, 1);
+  ipc_surface = gdk_x11_drag_surface_new (display);
 
   drag = (GdkDrag *) g_object_new (GDK_TYPE_X11_DRAG,
                                    "surface", ipc_surface,
@@ -1961,7 +1920,7 @@ _gdk_x11_surface_drag_begin (GdkSurface         *surface,
   gdk_surface_set_is_mapped (x11_drag->ipc_surface, TRUE);
   gdk_x11_surface_show (x11_drag->ipc_surface, FALSE);
 
-  x11_drag->drag_surface = create_drag_surface (display);
+  x11_drag->drag_surface = gdk_x11_drag_surface_new (display);
 
   if (!drag_grab (drag))
     {

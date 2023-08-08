@@ -825,7 +825,7 @@ on_bookmark_query_info_complete (GObject      *source,
 out:
   g_clear_object (&info);
   g_clear_error (&error);
-  g_slice_free (BookmarkQueryClosure, clos);
+  g_free (clos);
 }
 
 static gboolean
@@ -1365,7 +1365,7 @@ update_places (GtkPlacesSidebar *sidebar)
       if (_gtk_bookmarks_manager_get_is_builtin (sidebar->bookmarks_manager, root))
         continue;
 
-      clos = g_slice_new (BookmarkQueryClosure);
+      clos = g_new (BookmarkQueryClosure, 1);
       clos->sidebar = sidebar;
       clos->index = index;
       clos->is_native = is_native;
@@ -1674,6 +1674,8 @@ drag_motion_callback (GtkDropTarget    *target,
 
       if (row != NULL)
         {
+          graphene_point_t p;
+
           g_object_get (row, "order-index", &row_index, NULL);
           g_object_get (sidebar->row_placeholder, "order-index", &row_placeholder_index, NULL);
           /* We order the bookmarks sections based on the bookmark index that we
@@ -1687,9 +1689,11 @@ drag_motion_callback (GtkDropTarget    *target,
            * of the row, we need to increase the order-index.
            */
           row_placeholder_index = row_index;
-          gtk_widget_translate_coordinates (GTK_WIDGET (sidebar), GTK_WIDGET (row),
-		                            x, y,
-		                            &x, &y);
+          if (!gtk_widget_compute_point (GTK_WIDGET (sidebar), GTK_WIDGET (row),
+                                         &GRAPHENE_POINT_INIT (x, y), &p))
+            graphene_point_init (&p, x, y);
+          x = p.x;
+          y = p.y;
 
           if (y > sidebar->drag_row_height / 2 && row_index > 0)
             row_placeholder_index++;
@@ -2373,17 +2377,18 @@ _popover_set_pointing_to_widget (GtkPopover *popover,
                                  GtkWidget  *target)
 {
   GtkWidget *parent;
-  double x, y, w, h;
+  graphene_point_t p;
+  double w, h;
 
   parent = gtk_widget_get_parent (GTK_WIDGET (popover));
 
-  if (!gtk_widget_translate_coordinates (target, parent, 0, 0, &x, &y))
+  if (!gtk_widget_compute_point (target, parent, &GRAPHENE_POINT_INIT (0, 0), &p))
     return;
 
-  w = gtk_widget_get_allocated_width (GTK_WIDGET (target));
-  h = gtk_widget_get_allocated_height (GTK_WIDGET (target));
+  w = gtk_widget_get_width (target);
+  h = gtk_widget_get_height (target);
 
-  gtk_popover_set_pointing_to (popover, &(GdkRectangle){x, y, w, h});
+  gtk_popover_set_pointing_to (popover, &(GdkRectangle){p.x, p.y, w, h});
 }
 
 static void
@@ -3473,19 +3478,19 @@ on_row_dragged (GtkGestureDrag *gesture,
   if (gtk_drag_check_threshold_double (GTK_WIDGET (row), 0, 0, x, y))
     {
       double start_x, start_y;
-      double drag_x, drag_y;
+      graphene_point_t p;
       GdkContentProvider *content;
       GdkSurface *surface;
       GdkDevice *device;
-      GtkAllocation allocation;
       GtkWidget *drag_widget;
       GdkDrag *drag;
 
       gtk_gesture_drag_get_start_point (gesture, &start_x, &start_y);
-      gtk_widget_translate_coordinates (GTK_WIDGET (row),
-                                        GTK_WIDGET (sidebar),
-                                        start_x, start_y,
-                                        &drag_x, &drag_y);
+      if (!gtk_widget_compute_point (GTK_WIDGET (row),
+                                     GTK_WIDGET (sidebar),
+                                     &GRAPHENE_POINT_INIT (start_x, start_y),
+                                     &p))
+        graphene_point_init (&p, start_x, start_y);
 
       sidebar->dragging_over = TRUE;
 
@@ -3494,19 +3499,20 @@ on_row_dragged (GtkGestureDrag *gesture,
       surface = gtk_native_get_surface (gtk_widget_get_native (GTK_WIDGET (sidebar)));
       device = gtk_gesture_get_device (GTK_GESTURE (gesture));
 
-      drag = gdk_drag_begin (surface, device, content, GDK_ACTION_MOVE, drag_x, drag_y);
+      drag = gdk_drag_begin (surface, device, content, GDK_ACTION_MOVE, p.x, p.y);
 
       g_object_unref (content);
 
       g_signal_connect (drag, "dnd-finished", G_CALLBACK (dnd_finished_cb), sidebar);
       g_signal_connect (drag, "cancel", G_CALLBACK (dnd_cancel_cb), sidebar);
 
-      gtk_widget_get_allocation (sidebar->drag_row, &allocation);
       gtk_widget_set_visible (sidebar->drag_row, FALSE);
 
       drag_widget = GTK_WIDGET (gtk_sidebar_row_clone (GTK_SIDEBAR_ROW (sidebar->drag_row)));
-      sidebar->drag_row_height = allocation.height;
-      gtk_widget_set_size_request (drag_widget, allocation.width, allocation.height);
+      sidebar->drag_row_height = gtk_widget_get_height (sidebar->drag_row);
+      gtk_widget_set_size_request (drag_widget,
+                                   gtk_widget_get_width (sidebar->drag_row),
+                                   gtk_widget_get_height (sidebar->drag_row));
       gtk_widget_set_opacity (drag_widget, 0.8);
 
       gtk_drag_icon_set_child (GTK_DRAG_ICON (gtk_drag_icon_get_for_drag (drag)), drag_widget);
@@ -4135,8 +4141,10 @@ gtk_places_sidebar_class_init (GtkPlacesSidebarClass *class)
                         NULL, NULL,
                         _gtk_marshal_VOID__OBJECT_FLAGS,
                         G_TYPE_NONE, 2,
-                        G_TYPE_OBJECT,
-                        GTK_TYPE_PLACES_OPEN_FLAGS);
+                        G_TYPE_OBJECT, GTK_TYPE_PLACES_OPEN_FLAGS);
+  g_signal_set_va_marshaller (places_sidebar_signals[OPEN_LOCATION],
+                              G_OBJECT_CLASS_TYPE (gobject_class),
+                              _gtk_marshal_VOID__OBJECT_FLAGSv);
 
   /*
    * GtkPlacesSidebar::show-error-message:
@@ -4157,8 +4165,10 @@ gtk_places_sidebar_class_init (GtkPlacesSidebarClass *class)
                         NULL, NULL,
                         _gtk_marshal_VOID__STRING_STRING,
                         G_TYPE_NONE, 2,
-                        G_TYPE_STRING,
-                        G_TYPE_STRING);
+                        G_TYPE_STRING, G_TYPE_STRING);
+  g_signal_set_va_marshaller (places_sidebar_signals[SHOW_ERROR_MESSAGE],
+                              G_OBJECT_CLASS_TYPE (gobject_class),
+                              _gtk_marshal_VOID__STRING_STRINGv);
 
   /*
    * GtkPlacesSidebar::show-enter-location:
@@ -4210,6 +4220,9 @@ gtk_places_sidebar_class_init (GtkPlacesSidebarClass *class)
                         GDK_TYPE_DRAG_ACTION, 2,
                         G_TYPE_OBJECT,
                         GDK_TYPE_FILE_LIST);
+  g_signal_set_va_marshaller (places_sidebar_signals[DRAG_ACTION_REQUESTED],
+                              G_OBJECT_CLASS_TYPE (gobject_class),
+                              _gtk_marshal_INT__OBJECT_OBJECT_POINTERv);
 
   /*
    * GtkPlacesSidebar::drag-action-ask:
@@ -4231,6 +4244,9 @@ gtk_places_sidebar_class_init (GtkPlacesSidebarClass *class)
                         _gtk_marshal_INT__INT,
                         GDK_TYPE_DRAG_ACTION, 1,
                         GDK_TYPE_DRAG_ACTION);
+  g_signal_set_va_marshaller (places_sidebar_signals[DRAG_ACTION_ASK],
+                              G_OBJECT_CLASS_TYPE (gobject_class),
+                              _gtk_marshal_INT__INTv);
 
   /*
    * GtkPlacesSidebar::drag-perform-drop:
@@ -4257,6 +4273,9 @@ gtk_places_sidebar_class_init (GtkPlacesSidebarClass *class)
                         G_TYPE_OBJECT,
                         GDK_TYPE_FILE_LIST,
                         GDK_TYPE_DRAG_ACTION);
+  g_signal_set_va_marshaller (places_sidebar_signals[DRAG_PERFORM_DROP],
+                              G_OBJECT_CLASS_TYPE (gobject_class),
+                              _gtk_marshal_VOID__OBJECT_POINTER_INTv);
 
   /*
    * GtkPlacesSidebar::show-other-locations-with-flags:

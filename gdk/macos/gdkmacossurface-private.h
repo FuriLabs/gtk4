@@ -17,8 +17,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#ifndef __GDK_MACOS_SURFACE_PRIVATE_H__
-#define __GDK_MACOS_SURFACE_PRIVATE_H__
+#pragma once
 
 #include <AppKit/AppKit.h>
 #include <cairo.h>
@@ -85,14 +84,9 @@ struct _GdkMacosSurfaceClass
   GdkSurfaceClass parent_class;
 };
 
-GdkMacosSurface   *_gdk_macos_surface_new                     (GdkMacosDisplay      *display,
-                                                               GdkSurfaceType        surface_type,
-                                                               GdkSurface           *parent,
-                                                               int                   x,
-                                                               int                   y,
-                                                               int                   width,
-                                                               int                   height);
 NSWindow          *_gdk_macos_surface_get_native              (GdkMacosSurface      *self);
+void               _gdk_macos_surface_set_native              (GdkMacosSurface      *self,
+                                                               GdkMacosWindow       *window);
 CGDirectDisplayID  _gdk_macos_surface_get_screen_id           (GdkMacosSurface      *self);
 const char        *_gdk_macos_surface_get_title               (GdkMacosSurface      *self);
 void               _gdk_macos_surface_set_title               (GdkMacosSurface      *self,
@@ -152,4 +146,3 @@ void               _gdk_macos_surface_swap_buffers            (GdkMacosSurface  
 
 G_END_DECLS
 
-#endif /* __GDK_MACOS_SURFACE_PRIVATE_H__ */

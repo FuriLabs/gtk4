@@ -21,6 +21,7 @@
 #include "visual.h"
 
 #include "fpsoverlay.h"
+#include "a11yoverlay.h"
 #include "updatesoverlay.h"
 #include "layoutoverlay.h"
 #include "focusoverlay.h"
@@ -94,15 +95,14 @@ struct _GtkInspectorVisual
   GtkWidget *baselines_switch;
   GtkWidget *layout_switch;
   GtkWidget *focus_switch;
-
-  GtkWidget *misc_box;
-  GtkWidget *touchscreen_switch;
+  GtkWidget *a11y_switch;
 
   GtkInspectorOverlay *fps_overlay;
   GtkInspectorOverlay *updates_overlay;
   GtkInspectorOverlay *layout_overlay;
   GtkInspectorOverlay *focus_overlay;
   GtkInspectorOverlay *baseline_overlay;
+  GtkInspectorOverlay *a11y_overlay;
 
   GdkDisplay *display;
 };
@@ -276,6 +276,40 @@ fps_activate (GtkSwitch          *sw,
         {
           gtk_inspector_window_remove_overlay (iw, vis->fps_overlay);
           vis->fps_overlay = NULL;
+        }
+    }
+
+  redraw_everything ();
+}
+
+static void
+a11y_activate (GtkSwitch          *sw,
+               GParamSpec         *pspec,
+               GtkInspectorVisual *vis)
+{
+  GtkInspectorWindow *iw;
+  gboolean a11y;
+
+  a11y = gtk_switch_get_active (sw);
+  iw = GTK_INSPECTOR_WINDOW (gtk_widget_get_root (GTK_WIDGET (vis)));
+  if (iw == NULL)
+    return;
+
+  if (a11y)
+    {
+      if (vis->a11y_overlay == NULL)
+        {
+          vis->a11y_overlay = gtk_a11y_overlay_new ();
+          gtk_inspector_window_add_overlay (iw, vis->a11y_overlay);
+          g_object_unref (vis->a11y_overlay);
+        }
+    }
+  else
+    {
+      if (vis->a11y_overlay != NULL)
+        {
+          gtk_inspector_window_remove_overlay (iw, vis->a11y_overlay);
+          vis->a11y_overlay = NULL;
         }
     }
 
@@ -936,29 +970,6 @@ init_slowdown (GtkInspectorVisual *vis)
                     G_CALLBACK (slowdown_entry_activated), vis);
 }
 
-static void
-update_touchscreen (GtkSwitch *sw)
-{
-  GtkDebugFlags flags;
-
-  flags = gtk_get_debug_flags ();
-
-  if (gtk_switch_get_active (sw))
-    flags |= GTK_DEBUG_TOUCHSCREEN;
-  else
-    flags &= ~GTK_DEBUG_TOUCHSCREEN;
-
-  gtk_set_debug_flags (flags);
-}
-
-static void
-init_touchscreen (GtkInspectorVisual *vis)
-{
-  gtk_switch_set_active (GTK_SWITCH (vis->touchscreen_switch), (gtk_get_debug_flags () & GTK_DEBUG_TOUCHSCREEN) != 0);
-  g_signal_connect (vis->touchscreen_switch, "notify::active",
-                    G_CALLBACK (update_touchscreen), NULL);
-}
-
 static gboolean
 keynav_failed (GtkWidget *widget, GtkDirectionType direction, GtkInspectorVisual *vis)
 {
@@ -967,15 +978,9 @@ keynav_failed (GtkWidget *widget, GtkDirectionType direction, GtkInspectorVisual
   if (direction == GTK_DIR_DOWN &&
       widget == vis->visual_box)
     next = vis->debug_box;
-  else if (direction == GTK_DIR_DOWN &&
-      widget == vis->debug_box)
-    next = vis->misc_box;
   else if (direction == GTK_DIR_UP &&
            widget == vis->debug_box)
     next = vis->visual_box;
-  else if (direction == GTK_DIR_UP &&
-           widget == vis->misc_box)
-    next = vis->debug_box;
   else
     next = NULL;
 
@@ -1033,9 +1038,9 @@ row_activated (GtkListBox         *box,
       GtkSwitch *sw = GTK_SWITCH (vis->focus_switch);
       gtk_switch_set_active (sw, !gtk_switch_get_active (sw));
     }
-  else if (gtk_widget_is_ancestor (vis->touchscreen_switch, GTK_WIDGET (row)))
+  else if (gtk_widget_is_ancestor (vis->a11y_switch, GTK_WIDGET (row)))
     {
-      GtkSwitch *sw = GTK_SWITCH (vis->touchscreen_switch);
+      GtkSwitch *sw = GTK_SWITCH (vis->a11y_switch);
       gtk_switch_set_active (sw, !gtk_switch_get_active (sw));
     }
 }
@@ -1070,10 +1075,8 @@ gtk_inspector_visual_constructed (GObject *object)
 
   g_signal_connect (vis->visual_box, "keynav-failed", G_CALLBACK (keynav_failed), vis);
   g_signal_connect (vis->debug_box, "keynav-failed", G_CALLBACK (keynav_failed), vis);
-  g_signal_connect (vis->misc_box, "keynav-failed", G_CALLBACK (keynav_failed), vis);
   g_signal_connect (vis->visual_box, "row-activated", G_CALLBACK (row_activated), vis);
   g_signal_connect (vis->debug_box, "row-activated", G_CALLBACK (row_activated), vis);
-  g_signal_connect (vis->misc_box, "row-activated", G_CALLBACK (row_activated), vis);
 }
 
 static void
@@ -1101,6 +1104,11 @@ gtk_inspector_visual_unroot (GtkWidget *widget)
     {
       gtk_inspector_window_remove_overlay (iw, vis->focus_overlay);
       vis->focus_overlay = NULL;
+    }
+  if (vis->a11y_overlay)
+    {
+      gtk_inspector_window_remove_overlay (iw, vis->a11y_overlay);
+      vis->a11y_overlay = NULL;
     }
 
   GTK_WIDGET_CLASS (gtk_inspector_visual_parent_class)->unroot (widget);
@@ -1142,11 +1150,9 @@ gtk_inspector_visual_class_init (GtkInspectorVisualClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, animation_switch);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, slowdown_adjustment);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, slowdown_entry);
-  gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, touchscreen_switch);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, visual_box);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, debug_box);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, font_button);
-  gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, misc_box);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, font_scale_entry);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, font_scale_adjustment);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, fps_switch);
@@ -1155,6 +1161,7 @@ gtk_inspector_visual_class_init (GtkInspectorVisualClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, baselines_switch);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, layout_switch);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, focus_switch);
+  gtk_widget_class_bind_template_child (widget_class, GtkInspectorVisual, a11y_switch);
 
   gtk_widget_class_bind_template_callback (widget_class, fps_activate);
   gtk_widget_class_bind_template_callback (widget_class, updates_activate);
@@ -1163,6 +1170,7 @@ gtk_inspector_visual_class_init (GtkInspectorVisualClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, baselines_activate);
   gtk_widget_class_bind_template_callback (widget_class, layout_activate);
   gtk_widget_class_bind_template_callback (widget_class, focus_activate);
+  gtk_widget_class_bind_template_callback (widget_class, a11y_activate);
   gtk_widget_class_bind_template_callback (widget_class, inspect_inspector);
 
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
@@ -1185,7 +1193,6 @@ gtk_inspector_visual_set_display  (GtkInspectorVisual *vis,
   init_scale (vis);
   init_animation (vis);
   init_slowdown (vis);
-  init_touchscreen (vis);
   init_gl (vis);
 }
 

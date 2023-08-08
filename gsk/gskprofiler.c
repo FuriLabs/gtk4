@@ -9,7 +9,7 @@ typedef struct {
   char *description;
   gint64 value;
   gint64 n_samples;
-  gboolean can_reset : 1;
+  unsigned int can_reset : 1;
 } NamedCounter;
 
 typedef struct {
@@ -21,9 +21,9 @@ typedef struct {
   gint64 max_value;
   gint64 avg_value;
   gint64 n_samples;
-  gboolean in_flight : 1;
-  gboolean can_reset : 1;
-  gboolean invert : 1;
+  unsigned int in_flight : 1;
+  unsigned int can_reset : 1;
+  unsigned int invert : 1;
 } NamedTimer;
 
 typedef struct {
@@ -53,8 +53,7 @@ named_counter_free (gpointer data)
     return;
 
   g_free (counter->description);
-
-  g_slice_free (NamedCounter, counter);
+  g_free (counter);
 }
 
 static void
@@ -66,8 +65,7 @@ named_timer_free (gpointer data)
     return;
 
   g_free (timer->description);
-
-  g_slice_free (NamedTimer, timer);
+  g_free (timer);
 }
 
 static void
@@ -109,7 +107,7 @@ named_counter_new (GQuark      id,
                    const char *description,
                    gboolean    can_reset)
 {
-  NamedCounter *res = g_slice_new0 (NamedCounter);
+  NamedCounter *res = g_new0 (NamedCounter, 1);
 
   res->id = id;
   res->description = g_strdup (description);
@@ -156,7 +154,7 @@ named_timer_new (GQuark      id,
                  gboolean    invert,
                  gboolean    can_reset)
 {
-  NamedTimer *res = g_slice_new0 (NamedTimer);
+  NamedTimer *res = g_new0 (NamedTimer, 1);
 
   res->id = id;
   res->description = g_strdup (description);

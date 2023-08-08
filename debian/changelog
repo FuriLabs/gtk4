@@ -1,3 +1,63 @@
+gtk4 (4.12.0+ds-1) experimental; urgency=medium
+
+  * New upstream release
+  * Restore sysprof integration
+  * debian/control.in: Bump minimum glib, gobject-introspection, meson
+    & wayland-protocols
+  * debian/libgtk-4-bin.install: Install gtk4-rendernode-tool
+  * debian/libgtk-4-1.symbols.in: Add new symbols
+  * Drop patch marking the clipboard test flaky: applied upstream
+  * Cherry-pick patch to fix undefined references
+  * Add patch to adapt to Debian's tzdata 2023c-8
+  * Add patch to mark headless tests as flaky
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 08 Aug 2023 17:31:01 -0400
+
+gtk4 (4.10.5+ds-3) unstable; urgency=medium
+
+  * Temporarily disable sysprof integration altogether, to get the package
+    rebuilt
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 07 Aug 2023 09:35:32 +0100
+
+gtk4 (4.10.5+ds-2) unstable; urgency=medium
+
+  * d/control.in: Only use libsysprof-capture-4-dev for shared library.
+    libsysprof-capture-4-dev is currently a virtual package provided
+    by libsysprof-4-dev, which also includes GTK 4 GUI components
+    and so depends on libgtk-4-dev. If the Architecture: amd64 build
+    happens to finish before the Architecture: all build starts,
+    then the Architecture: all build will fail with an unsatisfiable
+    build-dependency: libsysprof-4-dev Depends on libgtk-4-dev, which
+    Depends on libgtk-4-common (>= ${source:Version}), which hasn't been
+    built yet. The result is that libgtk-4-common can't be built and the
+    builds deadlock.
+    We've been lucky enough to avoid this until now, but version
+    4.10.5+ds-1 was not sufficiently lucky and has become uninstallable
+    and unbuildable.
+    Because the sysprof integration is part of the architecture-specific
+    library, we can break this cycle by only installing libsysprof-4-dev
+    when we are building the architecture-specific library, and excluding
+    it when we are only building architecture-independent documentation
+    and common files.
+  * Remove version constraints unnecessary since Debian 11
+  * Remove maintscripts unnecessary in any released Debian version
+  * d/upstream/metadata: Use preferred Gitlab URLs
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 06 Aug 2023 13:03:36 +0100
+
+gtk4 (4.10.5+ds-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 05 Aug 2023 09:56:12 -0400
+
+gtk4 (4.10.4+ds-2) unstable; urgency=medium
+
+  * Release to unstable
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 19 Jul 2023 07:53:26 -0400
+
 gtk4 (4.10.4+ds-1ubuntu1) mantic; urgency=medium
 
   * Merge with Debian. Remaining changes:

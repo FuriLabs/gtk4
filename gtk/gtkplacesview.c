@@ -1692,17 +1692,18 @@ _popover_set_pointing_to_widget (GtkPopover *popover,
                                  GtkWidget  *target)
 {
   GtkWidget *parent;
-  double x, y, w, h;
+  graphene_point_t p;
+  double w, h;
 
   parent = gtk_widget_get_parent (GTK_WIDGET (popover));
 
-  if (!gtk_widget_translate_coordinates (target, parent, 0, 0, &x, &y))
+  if (!gtk_widget_compute_point (target, parent, &GRAPHENE_POINT_INIT (0, 0), &p))
     return;
 
-  w = gtk_widget_get_allocated_width (GTK_WIDGET (target));
-  h = gtk_widget_get_allocated_height (GTK_WIDGET (target));
+  w = gtk_widget_get_width (target);
+  h = gtk_widget_get_height (target);
 
-  gtk_popover_set_pointing_to (popover, &(GdkRectangle){x, y, w, h});
+  gtk_popover_set_pointing_to (popover, &(GdkRectangle){p.x, p.y, w, h});
 }
 
 static gboolean
@@ -1715,7 +1716,6 @@ real_popup_menu (GtkWidget *widget,
   GMount *mount;
   GFile *file;
   gboolean is_network;
-  double x_in_view, y_in_view;
 
   view = GTK_PLACES_VIEW (gtk_widget_get_ancestor (GTK_WIDGET (row), GTK_TYPE_PLACES_VIEW));
 
@@ -1753,10 +1753,13 @@ real_popup_menu (GtkWidget *widget,
     _popover_set_pointing_to_widget (GTK_POPOVER (view->popup_menu), GTK_WIDGET (row));
   else
     {
-      gtk_widget_translate_coordinates (widget, GTK_WIDGET (view),
-                                        x, y, &x_in_view, &y_in_view);
+      graphene_point_t p;
+      if (!gtk_widget_compute_point (widget, GTK_WIDGET (view),
+                                     &GRAPHENE_POINT_INIT (x, y),
+                                     &p))
+        graphene_point_init (&p, x, y);
       gtk_popover_set_pointing_to (GTK_POPOVER (view->popup_menu),
-                                   &(GdkRectangle){x_in_view, y_in_view, 0, 0});
+                                   &(GdkRectangle){p.x, p.y, 0, 0});
     }
 
   view->row_for_action = row;
@@ -1930,17 +1933,18 @@ on_address_entry_show_help_pressed (GtkPlacesView        *view,
                                     GtkEntry             *entry)
 {
   GdkRectangle rect;
-  double x, y;
+  graphene_point_t p;
 
   /* Setup the auxiliary popover's rectangle */
   gtk_entry_get_icon_area (GTK_ENTRY (view->address_entry),
                            GTK_ENTRY_ICON_SECONDARY,
                            &rect);
-  gtk_widget_translate_coordinates (view->address_entry, GTK_WIDGET (view),
-                                    rect.x, rect.y, &x, &y);
+  if (!gtk_widget_compute_point (view->address_entry, GTK_WIDGET (view),
+                                 &GRAPHENE_POINT_INIT (rect.x, rect.y), &p))
+    graphene_point_init (&p, rect.x, rect.y);
 
-  rect.x = x;
-  rect.y = y;
+  rect.x = p.x;
+  rect.y = p.y;
   gtk_popover_set_pointing_to (GTK_POPOVER (view->server_adresses_popover), &rect);
   gtk_widget_set_visible (view->server_adresses_popover, TRUE);
 }
@@ -2262,6 +2266,9 @@ gtk_places_view_class_init (GtkPlacesViewClass *klass)
                         G_TYPE_NONE, 2,
                         G_TYPE_STRING,
                         G_TYPE_STRING);
+  g_signal_set_va_marshaller (places_view_signals [SHOW_ERROR_MESSAGE],
+                              G_TYPE_FROM_CLASS (object_class),
+                              _gtk_marshal_VOID__STRING_STRINGv);
 
   properties[PROP_LOADING] =
           g_param_spec_boolean ("loading", NULL, NULL,

@@ -22,8 +22,7 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/. 
  */
 
-#ifndef __GDK_X11_SURFACE__
-#define __GDK_X11_SURFACE__
+#pragma once
 
 #include "gdksurfaceprivate.h"
 #include "gdkx11surface.h"
@@ -36,6 +35,14 @@
 #endif
 
 G_BEGIN_DECLS
+
+GType gdk_x11_toplevel_get_type (void) G_GNUC_CONST;
+GType gdk_x11_popup_get_type (void) G_GNUC_CONST;
+GType gdk_x11_drag_surface_get_type (void) G_GNUC_CONST;
+
+#define GDK_TYPE_X11_TOPLEVEL (gdk_x11_toplevel_get_type ())
+#define GDK_TYPE_X11_POPUP (gdk_x11_popup_get_type ())
+#define GDK_TYPE_X11_DRAG_SURFACE (gdk_x11_drag_surface_get_type ())
 
 typedef struct _GdkToplevelX11 GdkToplevelX11;
 typedef struct _GdkXPositionInfo GdkXPositionInfo;
@@ -192,6 +199,8 @@ struct _GdkToplevelX11
 #endif
 };
 
+GdkSurface     *gdk_x11_drag_surface_new             (GdkDisplay *display);
+
 GdkToplevelX11 *_gdk_x11_surface_get_toplevel        (GdkSurface *window);
 
 GdkCursor      *_gdk_x11_surface_get_cursor          (GdkSurface *window);
@@ -211,4 +220,3 @@ void            gdk_x11_surface_check_monitor        (GdkSurface *surface,
 
 G_END_DECLS
 
-#endif /* __GDK_X11_SURFACE__ */

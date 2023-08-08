@@ -22,8 +22,7 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#ifndef __GTK_WIDGET_PRIVATE_H__
-#define __GTK_WIDGET_PRIVATE_H__
+#pragma once
 
 #include "gtkwidget.h"
 
@@ -154,7 +153,7 @@ struct _GtkWidgetPrivate
   GskTransform *allocated_transform;
   int allocated_width;
   int allocated_height;
-  int allocated_size_baseline;
+  int allocated_baseline;
 
   int width;
   int height;
@@ -316,9 +315,6 @@ gboolean          gtk_widget_focus_move                    (GtkWidget        *wi
                                                             GtkDirectionType  direction);
 void              gtk_widget_set_has_focus                 (GtkWidget        *widget,
                                                             gboolean          has_focus);
-void              gtk_widget_get_surface_allocation         (GtkWidget *widget,
-							     GtkAllocation *allocation);
-
 
 GtkWidget *       gtk_widget_common_ancestor               (GtkWidget *widget_a,
                                                             GtkWidget *widget_b);
@@ -484,4 +480,3 @@ _gtk_widget_is_sensitive (GtkWidget *widget)
 
 G_END_DECLS
 
-#endif /* __GTK_WIDGET_PRIVATE_H__ */

@@ -124,7 +124,9 @@
  *
  * # Accessibility
  *
- * `GtkScrolledWindow` uses the %GTK_ACCESSIBLE_ROLE_GROUP role.
+ * Until GTK 4.10, `GtkScrolledWindow` used the `GTK_ACCESSIBLE_ROLE_GROUP` role.
+ *
+ * Starting from GTK 4.12, `GtkScrolledWindow` uses the `GTK_ACCESSIBLE_ROLE_GENERIC` role.
  */
 
 /* scrolled window policy and size requisition handling:
@@ -587,7 +589,7 @@ gtk_scrolled_window_class_init (GtkScrolledWindowClass *class)
   properties[PROP_HADJUSTMENT] =
       g_param_spec_object ("hadjustment", NULL, NULL,
                            GTK_TYPE_ADJUSTMENT,
-                           GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT);
+                           GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT|G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkScrolleWindow:vadjustment: (attributes org.gtk.Property.get=gtk_scrolled_window_get_vadjustment org.gtk.Property.set=gtk_scrolled_window_set_vadjustment)
@@ -597,7 +599,7 @@ gtk_scrolled_window_class_init (GtkScrolledWindowClass *class)
   properties[PROP_VADJUSTMENT] =
       g_param_spec_object ("vadjustment", NULL, NULL,
                            GTK_TYPE_ADJUSTMENT,
-                           GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT);
+                           GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT|G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkScrolledWindow:hscrollbar-policy:
@@ -781,6 +783,9 @@ gtk_scrolled_window_class_init (GtkScrolledWindowClass *class)
                   G_TYPE_BOOLEAN, 2,
                   GTK_TYPE_SCROLL_TYPE,
                   G_TYPE_BOOLEAN);
+  g_signal_set_va_marshaller (signals[SCROLL_CHILD],
+                              G_TYPE_FROM_CLASS (gobject_class),
+                              _gtk_marshal_BOOLEAN__ENUM_BOOLEANv);
 
   /**
    * GtkScrolledWindow::move-focus-out:
@@ -870,7 +875,7 @@ gtk_scrolled_window_class_init (GtkScrolledWindowClass *class)
   add_tab_bindings (widget_class, GDK_CONTROL_MASK | GDK_SHIFT_MASK, GTK_DIR_TAB_BACKWARD);
 
   gtk_widget_class_set_css_name (widget_class, I_("scrolledwindow"));
-  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_GROUP);
+  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_GENERIC);
 }
 
 static gboolean
@@ -1885,24 +1890,22 @@ gtk_scrolled_window_snapshot_scrollbars_junction (GtkScrolledWindow *scrolled_wi
                                                   GtkSnapshot       *snapshot)
 {
   GtkScrolledWindowPrivate *priv = gtk_scrolled_window_get_instance_private (scrolled_window);
-  GtkAllocation hscr_allocation, vscr_allocation;
+  graphene_rect_t hscr_bounds, vscr_bounds;
   GtkCssStyle *style;
-  GdkRectangle junction_rect;
   GtkCssBoxes boxes;
 
-  gtk_widget_get_allocation (GTK_WIDGET (priv->hscrollbar), &hscr_allocation);
-  gtk_widget_get_allocation (GTK_WIDGET (priv->vscrollbar), &vscr_allocation);
+  if (!gtk_widget_compute_bounds (GTK_WIDGET (priv->hscrollbar), GTK_WIDGET (scrolled_window), &hscr_bounds))
+    return;
 
-  junction_rect.x = vscr_allocation.x;
-  junction_rect.y = hscr_allocation.y;
-  junction_rect.width = vscr_allocation.width;
-  junction_rect.height = hscr_allocation.height;
+  if (!gtk_widget_compute_bounds (GTK_WIDGET (priv->vscrollbar), GTK_WIDGET (scrolled_window), &vscr_bounds))
+    return;
 
   style = gtk_css_node_get_style (priv->junction_node);
 
   gtk_css_boxes_init_border_box (&boxes, style,
-                                 junction_rect.x, junction_rect.y,
-                                 junction_rect.width, junction_rect.height);
+                                 vscr_bounds.origin.x, hscr_bounds.origin.y,
+                                 vscr_bounds.size.width, hscr_bounds.size.height);
+
   gtk_css_style_snapshot_background (&boxes, snapshot);
   gtk_css_style_snapshot_border (&boxes, snapshot);
 }
@@ -4220,6 +4223,14 @@ gtk_scrolled_window_set_child (GtkScrolledWindow *scrolled_window,
   GtkWidget *scrollable_child;
 
   g_return_if_fail (GTK_IS_SCROLLED_WINDOW (scrolled_window));
+  g_return_if_fail (child == NULL ||
+                    priv->child == child ||
+                    (priv->auto_added_viewport && gtk_viewport_get_child (GTK_VIEWPORT (priv->child)) == child) ||
+                    gtk_widget_get_parent (child) == NULL);
+
+  if (priv->child == child ||
+      (priv->auto_added_viewport && gtk_viewport_get_child (GTK_VIEWPORT (priv->child)) == child))
+    return;
 
   if (priv->child)
     {

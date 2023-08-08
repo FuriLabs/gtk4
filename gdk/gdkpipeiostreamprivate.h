@@ -16,18 +16,13 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GDK_PIPE_IO_STREAM_H__
-#define __GDK_PIPE_IO_STREAM_H__
+#pragma once
 
-#include <gdk/gdkversionmacros.h>
-#include <gio/gio.h>
+#include <gdk/gdktypes.h>
 
 G_BEGIN_DECLS
 
-
 GIOStream *             gdk_pipe_io_stream_new                          (void);
-
 
 G_END_DECLS
 
-#endif /* __GDK_PIPE_IO_STREAM_H__ */

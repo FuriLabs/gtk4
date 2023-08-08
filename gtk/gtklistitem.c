@@ -21,6 +21,8 @@
 
 #include "gtklistitemprivate.h"
 
+#include "gtkcolumnviewcell.h"
+#include "gtkaccessible.h"
 
 /**
  * GtkListItem:
@@ -41,16 +43,14 @@
  *    The [property@Gtk.ListItem:item] property is not %NULL.
  */
 
-struct _GtkListItemClass
-{
-  GObjectClass parent_class;
-};
-
 enum
 {
   PROP_0,
+  PROP_ACCESSIBLE_DESCRIPTION,
+  PROP_ACCESSIBLE_LABEL,
   PROP_ACTIVATABLE,
   PROP_CHILD,
+  PROP_FOCUSABLE,
   PROP_ITEM,
   PROP_POSITION,
   PROP_SELECTABLE,
@@ -71,6 +71,9 @@ gtk_list_item_dispose (GObject *object)
   g_assert (self->owner == NULL); /* would hold a reference */
   g_clear_object (&self->child);
 
+  g_clear_pointer (&self->accessible_description, g_free);
+  g_clear_pointer (&self->accessible_label, g_free);
+
   G_OBJECT_CLASS (gtk_list_item_parent_class)->dispose (object);
 }
 
@@ -84,6 +87,14 @@ gtk_list_item_get_property (GObject    *object,
 
   switch (property_id)
     {
+    case PROP_ACCESSIBLE_DESCRIPTION:
+      g_value_set_string (value, self->accessible_description);
+      break;
+
+    case PROP_ACCESSIBLE_LABEL:
+      g_value_set_string (value, self->accessible_label);
+      break;
+
     case PROP_ACTIVATABLE:
       g_value_set_boolean (value, self->activatable);
       break;
@@ -92,14 +103,18 @@ gtk_list_item_get_property (GObject    *object,
       g_value_set_object (value, self->child);
       break;
 
+    case PROP_FOCUSABLE:
+      g_value_set_boolean (value, self->focusable);
+      break;
+
     case PROP_ITEM:
       if (self->owner)
-        g_value_set_object (value, gtk_list_item_widget_get_item (self->owner));
+        g_value_set_object (value, gtk_list_item_base_get_item (GTK_LIST_ITEM_BASE (self->owner)));
       break;
 
     case PROP_POSITION:
       if (self->owner)
-        g_value_set_uint (value, gtk_list_item_widget_get_position (self->owner));
+        g_value_set_uint (value, gtk_list_item_base_get_position (GTK_LIST_ITEM_BASE (self->owner)));
       else
         g_value_set_uint (value, GTK_INVALID_LIST_POSITION);
       break;
@@ -110,7 +125,7 @@ gtk_list_item_get_property (GObject    *object,
 
     case PROP_SELECTED:
       if (self->owner)
-        g_value_set_boolean (value, gtk_list_item_widget_get_selected (self->owner));
+        g_value_set_boolean (value, gtk_list_item_base_get_selected (GTK_LIST_ITEM_BASE (self->owner)));
       else
         g_value_set_boolean (value, FALSE);
       break;
@@ -131,12 +146,24 @@ gtk_list_item_set_property (GObject      *object,
 
   switch (property_id)
     {
+    case PROP_ACCESSIBLE_DESCRIPTION:
+      gtk_list_item_set_accessible_description (self, g_value_get_string (value));
+      break;
+
+    case PROP_ACCESSIBLE_LABEL:
+      gtk_list_item_set_accessible_label (self, g_value_get_string (value));
+      break;
+
     case PROP_ACTIVATABLE:
       gtk_list_item_set_activatable (self, g_value_get_boolean (value));
       break;
 
     case PROP_CHILD:
       gtk_list_item_set_child (self, g_value_get_object (value));
+      break;
+
+    case PROP_FOCUSABLE:
+      gtk_list_item_set_focusable (self, g_value_get_boolean (value));
       break;
 
     case PROP_SELECTABLE:
@@ -159,6 +186,30 @@ gtk_list_item_class_init (GtkListItemClass *klass)
   gobject_class->set_property = gtk_list_item_set_property;
 
   /**
+   * GtkListItem:accessible-description: (attributes org.gtk.Property.get=gtk_list_item_get_accessible_description org.gtk.Property.set=gtk_list_item_set_accessible_description)
+   *
+   * The accessible description to set on the list item.
+   *
+   * Since: 4.12
+   */
+  properties[PROP_ACCESSIBLE_DESCRIPTION] =
+    g_param_spec_string ("accessible-description", NULL, NULL,
+                         NULL,
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * GtkListItem:accessible-label: (attributes org.gtk.Property.get=gtk_list_item_get_accessible_label org.gtk.Property.set=gtk_list_item_set_accessible_label)
+   *
+   * The accessible label to set on the list item.
+   *
+   * Since: 4.12
+   */
+  properties[PROP_ACCESSIBLE_LABEL] =
+    g_param_spec_string ("accessible-label", NULL, NULL,
+                         NULL,
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+  /**
    * GtkListItem:activatable: (attributes org.gtk.Property.get=gtk_list_item_get_activatable org.gtk.Property.set=gtk_list_item_set_activatable)
    *
    * If the item can be activated by the user.
@@ -177,6 +228,18 @@ gtk_list_item_class_init (GtkListItemClass *klass)
     g_param_spec_object ("child", NULL, NULL,
                          GTK_TYPE_WIDGET,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * GtkListItem:focusable: (attributes org.gtk.Property.get=gtk_list_item_get_focusable org.gtk.Property.set=gtk_list_item_set_focusable)
+   *
+   * If the item can be focused with the keyboard.
+   *
+   * Since: 4.12
+   */
+  properties[PROP_FOCUSABLE] =
+    g_param_spec_boolean ("focusable", NULL, NULL,
+                          TRUE,
+                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   /**
    * GtkListItem:item: (attributes org.gtk.Property.get=gtk_list_item_get_item)
@@ -226,6 +289,7 @@ gtk_list_item_init (GtkListItem *self)
 {
   self->selectable = TRUE;
   self->activatable = TRUE;
+  self->focusable = TRUE;
 }
 
 GtkListItem *
@@ -265,10 +329,12 @@ gtk_list_item_get_item (GtkListItem *self)
 {
   g_return_val_if_fail (GTK_IS_LIST_ITEM (self), NULL);
 
-  if (self->owner == NULL)
+  if (self->owner)
+    return gtk_list_item_base_get_item (GTK_LIST_ITEM_BASE (self->owner));
+  else if (GTK_IS_COLUMN_VIEW_CELL (self))
+    return gtk_column_view_cell_get_item (GTK_COLUMN_VIEW_CELL (self));
+  else
     return NULL;
-
-  return gtk_list_item_widget_get_item (self->owner);
 }
 
 /**
@@ -284,6 +350,9 @@ GtkWidget *
 gtk_list_item_get_child (GtkListItem *self)
 {
   g_return_val_if_fail (GTK_IS_LIST_ITEM (self), NULL);
+
+  if (GTK_IS_COLUMN_VIEW_CELL (self))
+    return gtk_column_view_cell_get_child (GTK_COLUMN_VIEW_CELL (self));
 
   return self->child;
 }
@@ -304,13 +373,16 @@ gtk_list_item_set_child (GtkListItem *self,
                          GtkWidget   *child)
 {
   g_return_if_fail (GTK_IS_LIST_ITEM (self));
-  g_return_if_fail (child == NULL || GTK_IS_WIDGET (child));
+  g_return_if_fail (child == NULL || gtk_widget_get_parent (child) == NULL);
+
+  if (GTK_IS_COLUMN_VIEW_CELL (self))
+    {
+      gtk_column_view_cell_set_child (GTK_COLUMN_VIEW_CELL (self), child);
+      return;
+    }
 
   if (self->child == child)
     return;
-
-  if (self->child && self->owner)
-    gtk_list_item_widget_remove_child (self->owner, self->child);
 
   g_clear_object (&self->child);
 
@@ -319,9 +391,15 @@ gtk_list_item_set_child (GtkListItem *self,
       g_object_ref_sink (child);
       self->child = child;
 
-      if (self->owner)
-        gtk_list_item_widget_add_child (self->owner, child);
+      /* Workaround that hopefully achieves good enough backwards
+       * compatibility with people using expanders.
+       */
+      if (!self->focusable_set)
+        gtk_list_item_set_focusable (self, !gtk_widget_get_focusable (child));
     }
+
+  if (self->owner)
+    gtk_list_item_widget_set_child (self->owner, child);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CHILD]);
 }
@@ -341,10 +419,12 @@ gtk_list_item_get_position (GtkListItem *self)
 {
   g_return_val_if_fail (GTK_IS_LIST_ITEM (self), GTK_INVALID_LIST_POSITION);
 
-  if (self->owner == NULL)
+  if (self->owner)
+    return gtk_list_item_base_get_position (GTK_LIST_ITEM_BASE (self->owner));
+  else if (GTK_IS_COLUMN_VIEW_CELL (self))
+    return gtk_column_view_cell_get_position (GTK_COLUMN_VIEW_CELL (self));
+  else
     return GTK_INVALID_LIST_POSITION;
-
-  return gtk_list_item_widget_get_position (self->owner);
 }
 
 /**
@@ -363,10 +443,12 @@ gtk_list_item_get_selected (GtkListItem *self)
 {
   g_return_val_if_fail (GTK_IS_LIST_ITEM (self), FALSE);
 
-  if (self->owner == NULL)
+  if (self->owner)
+    return gtk_list_item_base_get_selected (GTK_LIST_ITEM_BASE (self->owner));
+  else if (GTK_IS_COLUMN_VIEW_CELL (self))
+    return gtk_column_view_cell_get_selected (GTK_COLUMN_VIEW_CELL (self));
+  else
     return FALSE;
-
-  return gtk_list_item_widget_get_selected (self->owner);
 }
 
 /**
@@ -417,6 +499,9 @@ gtk_list_item_set_selectable (GtkListItem *self,
 
   self->selectable = selectable;
 
+  if (self->owner)
+    gtk_list_factory_widget_set_selectable (GTK_LIST_FACTORY_WIDGET (self->owner), selectable);
+
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SELECTABLE]);
 }
 
@@ -464,7 +549,152 @@ gtk_list_item_set_activatable (GtkListItem *self,
   self->activatable = activatable;
 
   if (self->owner)
-    gtk_list_item_widget_set_activatable (self->owner, activatable);
+    gtk_list_factory_widget_set_activatable (GTK_LIST_FACTORY_WIDGET (self->owner), activatable);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ACTIVATABLE]);
+}
+
+/**
+ * gtk_list_item_get_focusable: (attributes org.gtk.Method.get_property=focusable)
+ * @self: a `GtkListItem`
+ *
+ * Checks if a list item has been set to be focusable via
+ * gtk_list_item_set_focusable().
+ *
+ * Returns: %TRUE if the item is focusable
+ *
+ * Since: 4.12
+ */
+gboolean
+gtk_list_item_get_focusable (GtkListItem *self)
+{
+  g_return_val_if_fail (GTK_IS_LIST_ITEM (self), FALSE);
+
+  return self->focusable;
+}
+
+/**
+ * gtk_list_item_set_focusable: (attributes org.gtk.Method.set_property=focusable)
+ * @self: a `GtkListItem`
+ * @focusable: if the item should be focusable
+ *
+ * Sets @self to be focusable.
+ *
+ * If an item is focusable, it can be focused using the keyboard.
+ * This works similar to [method@Gtk.Widget.set_focusable].
+ *
+ * Note that if items are not focusable, the keyboard cannot be used to activate
+ * them and selecting only works if one of the listitem's children is focusable.
+ *
+ * By default, list items are focusable.
+ *
+ * Since: 4.12
+ */
+void
+gtk_list_item_set_focusable (GtkListItem *self,
+                             gboolean     focusable)
+{
+  g_return_if_fail (GTK_IS_LIST_ITEM (self));
+
+  self->focusable_set = TRUE;
+
+  if (self->focusable == focusable)
+    return;
+
+  self->focusable = focusable;
+
+  if (self->owner)
+    gtk_widget_set_focusable (GTK_WIDGET (self->owner), focusable);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_FOCUSABLE]);
+}
+
+/**
+ * gtk_list_item_set_accessible_description:
+ * @self: a `GtkListItem`
+ * @description: the description
+ *
+ * Sets the accessible description for the list item,
+ * which may be used by e.g. screen readers.
+ *
+ * Since: 4.12
+ */
+void
+gtk_list_item_set_accessible_description (GtkListItem *self,
+                                          const char  *description)
+{
+  g_return_if_fail (GTK_IS_LIST_ITEM (self));
+
+  if (!g_set_str (&self->accessible_description, description))
+    return;
+
+  if (self->owner)
+    gtk_accessible_update_property (GTK_ACCESSIBLE (self->owner),
+                                    GTK_ACCESSIBLE_PROPERTY_DESCRIPTION, self->accessible_description,
+                                    -1);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ACCESSIBLE_DESCRIPTION]);
+}
+
+/**
+ * gtk_list_item_get_accessible_description:
+ * @self: a `GtkListItem`
+ *
+ * Gets the accessible description of @self.
+ *
+ * Returns: the accessible description
+ *
+ * Since: 4.12
+ */
+const char *
+gtk_list_item_get_accessible_description (GtkListItem *self)
+{
+  g_return_val_if_fail (GTK_IS_LIST_ITEM (self), NULL);
+
+  return self->accessible_description;
+}
+
+/**
+ * gtk_list_item_set_accessible_label:
+ * @self: a `GtkListItem`
+ * @label: the label
+ *
+ * Sets the accessible label for the list item,
+ * which may be used by e.g. screen readers.
+ *
+ * Since: 4.12
+ */
+void
+gtk_list_item_set_accessible_label (GtkListItem *self,
+                                    const char  *label)
+{
+  g_return_if_fail (GTK_IS_LIST_ITEM (self));
+
+  if (!g_set_str (&self->accessible_label, label))
+    return;
+
+  if (self->owner)
+    gtk_accessible_update_property (GTK_ACCESSIBLE (self->owner),
+                                    GTK_ACCESSIBLE_PROPERTY_LABEL, self->accessible_label,
+                                    -1);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ACCESSIBLE_LABEL]);
+}
+
+/**
+ * gtk_list_item_get_accessible_label:
+ * @self: a `GtkListItem`
+ *
+ * Gets the accessible label of @self.
+ *
+ * Returns: the accessible label
+ *
+ * Since: 4.12
+ */
+const char *
+gtk_list_item_get_accessible_label (GtkListItem *self)
+{
+  g_return_val_if_fail (GTK_IS_LIST_ITEM (self), NULL);
+
+  return self->accessible_label;
 }

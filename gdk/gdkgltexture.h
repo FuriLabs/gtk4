@@ -16,13 +16,13 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GDK_GL_TEXTURE_H__
-#define __GDK_GL_TEXTURE_H__
+#pragma once
 
 #if !defined (__GDK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gdk/gdk.h> can be included directly."
 #endif
 
+#include <gdk/gdktypes.h>
 #include <gdk/gdkglcontext.h>
 #include <gdk/gdktexture.h>
 
@@ -39,7 +39,7 @@ typedef struct _GdkGLTextureClass       GdkGLTextureClass;
 GDK_AVAILABLE_IN_ALL
 GType                   gdk_gl_texture_get_type                (void) G_GNUC_CONST;
 
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_12_FOR(GdkGLTextureBuilder)
 GdkTexture *            gdk_gl_texture_new                     (GdkGLContext    *context,
                                                                 guint            id,
                                                                 int              width,
@@ -54,4 +54,3 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkGLTexture, g_object_unref)
 
 G_END_DECLS
 
-#endif /* __GDK_GL_TEXTURE_H__ */

@@ -18,8 +18,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#ifndef __GSK_GL_GLYPH_LIBRARY_PRIVATE_H__
-#define __GSK_GL_GLYPH_LIBRARY_PRIVATE_H__
+#pragma once
 
 #include <pango/pango.h>
 
@@ -88,7 +87,9 @@ gsk_gl_glyph_library_lookup_or_add (GskGLGlyphLibrary      *self,
     }
   else
     {
-      GskGLGlyphKey *k = g_slice_copy (sizeof *key, key);
+      GskGLGlyphKey *k;
+      k = g_new (GskGLGlyphKey, 1);
+      memcpy (k, key, sizeof (GskGLGlyphKey));
       g_object_ref (k->font);
       gsk_gl_glyph_library_add (self, k, out_value);
       self->front[front_index].key = *key;
@@ -100,4 +101,3 @@ gsk_gl_glyph_library_lookup_or_add (GskGLGlyphLibrary      *self,
 
 G_END_DECLS
 
-#endif /* __GSK_GL_GLYPH_LIBRARY_PRIVATE_H__ */

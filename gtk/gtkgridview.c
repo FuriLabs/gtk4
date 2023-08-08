@@ -25,11 +25,10 @@
 #include "gtklistbaseprivate.h"
 #include "gtklistitemfactory.h"
 #include "gtklistitemmanagerprivate.h"
-#include "gtkmain.h"
-#include "gtkprivate.h"
-#include "gtksingleselection.h"
-#include "gtkwidgetprivate.h"
+#include "gtklistitemwidgetprivate.h"
 #include "gtkmultiselection.h"
+#include "gtktypebuiltins.h"
+#include "gtkwidgetprivate.h"
 
 /* Maximum number of list items created by the gridview.
  * For debugging, you can set this to G_MAXUINT to ensure
@@ -87,8 +86,10 @@ struct _GtkGridView
   GtkListBase parent_instance;
 
   GtkListItemManager *item_manager;
+  GtkListItemFactory *factory;
   guint min_columns;
   guint max_columns;
+  gboolean single_click_activate;
   /* set in size_allocate */
   guint n_columns;
   double column_width;
@@ -102,12 +103,13 @@ struct _GtkGridViewClass
 enum
 {
   PROP_0,
+  PROP_ENABLE_RUBBERBAND,
   PROP_FACTORY,
   PROP_MAX_COLUMNS,
   PROP_MIN_COLUMNS,
   PROP_MODEL,
   PROP_SINGLE_CLICK_ACTIVATE,
-  PROP_ENABLE_RUBBERBAND,
+  PROP_TAB_BEHAVIOR,
 
   N_PROPS
 };
@@ -251,8 +253,67 @@ gtk_grid_view_split (GtkListBase *base,
                                tile,
                                column_end (self, xspacing, col + n_items - 1) - tile->area.x,
                                tile->area.height);
-  
+
   return split;
+}
+
+/* We define the listview as **inert** when the factory isn't used. */
+static gboolean
+gtk_grid_view_is_inert (GtkGridView *self)
+{
+  GtkWidget *widget = GTK_WIDGET (self);
+
+  return !gtk_widget_get_visible (widget) ||
+         gtk_widget_get_root (widget) == NULL;
+}
+
+static void
+gtk_grid_view_update_factories_with (GtkGridView        *self,
+                                     GtkListItemFactory *factory)
+{
+  GtkListTile *tile;
+
+  for (tile = gtk_list_item_manager_get_first (self->item_manager);
+       tile != NULL;
+       tile = gtk_rb_tree_node_get_next (tile))
+    {
+      if (tile->widget)
+        gtk_list_factory_widget_set_factory (GTK_LIST_FACTORY_WIDGET (tile->widget), factory);
+    }
+}
+
+static void
+gtk_grid_view_update_factories (GtkGridView *self)
+{
+  gtk_grid_view_update_factories_with (self,
+                                       gtk_grid_view_is_inert (self) ? NULL : self->factory);
+}
+
+static void
+gtk_grid_view_clear_factories (GtkGridView *self)
+{
+  gtk_grid_view_update_factories_with (self, NULL);
+}
+
+static GtkListItemBase *
+gtk_grid_view_create_list_widget (GtkListBase *base)
+{
+  GtkGridView *self = GTK_GRID_VIEW (base);
+  GtkListItemFactory *factory;
+  GtkWidget *result;
+
+  if (gtk_grid_view_is_inert (self))
+    factory = NULL;
+  else
+    factory = self->factory;
+
+  result = gtk_list_item_widget_new (factory,
+                                     "child",
+                                     GTK_ACCESSIBLE_ROLE_GRID_CELL);
+
+  gtk_list_factory_widget_set_single_click_activate (GTK_LIST_FACTORY_WIDGET (result), self->single_click_activate);
+
+  return GTK_LIST_ITEM_BASE (result);
 }
 
 static gboolean
@@ -617,7 +678,7 @@ gtk_grid_view_measure_list (GtkWidget *widget,
             row_height = MAX (row_height, child_nat);
           measured = TRUE;
         }
-      
+
       i += tile->n_items;
 
       if (i >= n_columns)
@@ -695,8 +756,10 @@ gtk_grid_view_size_allocate (GtkWidget *widget,
   min_row_height = ceil ((double) height / GTK_GRID_VIEW_MAX_VISIBLE_ROWS);
   gtk_list_base_get_border_spacing (GTK_LIST_BASE (self), &xspacing, &yspacing);
 
+  gtk_list_item_manager_gc_tiles (self->item_manager);
+
   /* step 0: exit early if list is empty */
-  tile = gtk_list_tile_gc (self->item_manager, gtk_list_item_manager_get_first (self->item_manager));
+  tile = gtk_list_item_manager_get_first (self->item_manager);
   if (tile == NULL)
     {
       gtk_list_base_allocate (GTK_LIST_BASE (self));
@@ -705,7 +768,7 @@ gtk_grid_view_size_allocate (GtkWidget *widget,
 
   /* step 1: determine width of the list */
   gtk_grid_view_measure_column_size (self, &col_min, &col_nat);
-  self->n_columns = gtk_grid_view_compute_n_columns (self, 
+  self->n_columns = gtk_grid_view_compute_n_columns (self,
                                                      orientation == GTK_ORIENTATION_VERTICAL ? width : height,
                                                      xspacing,
                                                      col_min, col_nat);
@@ -715,9 +778,7 @@ gtk_grid_view_size_allocate (GtkWidget *widget,
   /* step 2: determine height of known rows */
   heights = g_array_new (FALSE, FALSE, sizeof (int));
 
-  for (;
-       tile != NULL;
-       tile = gtk_list_tile_gc (self->item_manager, tile))
+  while (tile != NULL)
     {
       /* if it's a multirow tile, handle it here */
       if (tile->n_items > 1 && tile->n_items >= self->n_columns)
@@ -734,7 +795,7 @@ gtk_grid_view_size_allocate (GtkWidget *widget,
 
       for (i = 0, start = tile;
            i < self->n_columns && tile != NULL;
-           tile = gtk_list_tile_gc (self->item_manager, gtk_rb_tree_node_get_next (tile)))
+           tile = gtk_rb_tree_node_get_next (tile))
         {
           if (tile->widget)
             {
@@ -822,16 +883,16 @@ gtk_grid_view_size_allocate (GtkWidget *widget,
   /* Add a filler tile for empty space in the bottom right */
   if (i > 0)
     {
-      GtkListTile *filler;
-      tile = gtk_list_item_manager_get_last (self->item_manager);
-      filler = gtk_list_tile_split (self->item_manager, tile, tile->n_items);
+      GtkListTile *footer = gtk_list_item_manager_get_last (self->item_manager);
+      g_assert (gtk_list_tile_is_footer (footer));
+      tile = gtk_rb_tree_node_get_previous (footer);
       gtk_list_tile_set_area_position (self->item_manager,
-                                       filler,
+                                       footer,
                                        column_start (self, xspacing, i),
                                        y);
       gtk_list_tile_set_area_size (self->item_manager,
-                                   filler,
-                                   column_end (self, xspacing, self->n_columns - 1) - filler->area.x,
+                                   footer,
+                                   column_end (self, xspacing, self->n_columns - 1) - footer->area.x,
                                    tile->area.height);
     }
 
@@ -840,11 +901,57 @@ gtk_grid_view_size_allocate (GtkWidget *widget,
 }
 
 static void
+gtk_grid_view_root (GtkWidget *widget)
+{
+  GtkGridView *self = GTK_GRID_VIEW (widget);
+
+  GTK_WIDGET_CLASS (gtk_grid_view_parent_class)->root (widget);
+
+  if (!gtk_grid_view_is_inert (self))
+    gtk_grid_view_update_factories (self);
+}
+
+static void
+gtk_grid_view_unroot (GtkWidget *widget)
+{
+  GtkGridView *self = GTK_GRID_VIEW (widget);
+
+  if (!gtk_grid_view_is_inert (self))
+    gtk_grid_view_clear_factories (self);
+
+  GTK_WIDGET_CLASS (gtk_grid_view_parent_class)->unroot (widget);
+}
+
+static void
+gtk_grid_view_show (GtkWidget *widget)
+{
+  GtkGridView *self = GTK_GRID_VIEW (widget);
+
+  GTK_WIDGET_CLASS (gtk_grid_view_parent_class)->show (widget);
+
+  if (!gtk_grid_view_is_inert (self))
+    gtk_grid_view_update_factories (self);
+}
+
+static void
+gtk_grid_view_hide (GtkWidget *widget)
+{
+  GtkGridView *self = GTK_GRID_VIEW (widget);
+
+  if (!gtk_grid_view_is_inert (self))
+    gtk_grid_view_clear_factories (self);
+
+  GTK_WIDGET_CLASS (gtk_grid_view_parent_class)->hide (widget);
+}
+
+static void
 gtk_grid_view_dispose (GObject *object)
 {
   GtkGridView *self = GTK_GRID_VIEW (object);
 
   self->item_manager = NULL;
+
+  g_clear_object (&self->factory);
 
   G_OBJECT_CLASS (gtk_grid_view_parent_class)->dispose (object);
 }
@@ -859,8 +966,12 @@ gtk_grid_view_get_property (GObject    *object,
 
   switch (property_id)
     {
+    case PROP_ENABLE_RUBBERBAND:
+      g_value_set_boolean (value, gtk_list_base_get_enable_rubberband (GTK_LIST_BASE (self)));
+      break;
+
     case PROP_FACTORY:
-      g_value_set_object (value, gtk_list_item_manager_get_factory (self->item_manager));
+      g_value_set_object (value, self->factory);
       break;
 
     case PROP_MAX_COLUMNS:
@@ -876,11 +987,11 @@ gtk_grid_view_get_property (GObject    *object,
       break;
 
     case PROP_SINGLE_CLICK_ACTIVATE:
-      g_value_set_boolean (value, gtk_list_item_manager_get_single_click_activate (self->item_manager));
+      g_value_set_boolean (value, self->single_click_activate);
       break;
 
-    case PROP_ENABLE_RUBBERBAND:
-      g_value_set_boolean (value, gtk_list_base_get_enable_rubberband (GTK_LIST_BASE (self)));
+    case PROP_TAB_BEHAVIOR:
+      g_value_set_enum (value, gtk_list_base_get_tab_behavior (GTK_LIST_BASE (self)));
       break;
 
     default:
@@ -899,6 +1010,10 @@ gtk_grid_view_set_property (GObject      *object,
 
   switch (property_id)
     {
+    case PROP_ENABLE_RUBBERBAND:
+      gtk_grid_view_set_enable_rubberband (self, g_value_get_boolean (value));
+      break;
+
     case PROP_FACTORY:
       gtk_grid_view_set_factory (self, g_value_get_object (value));
       break;
@@ -910,7 +1025,7 @@ gtk_grid_view_set_property (GObject      *object,
     case PROP_MIN_COLUMNS:
       gtk_grid_view_set_min_columns (self, g_value_get_uint (value));
       break;
- 
+
     case PROP_MODEL:
       gtk_grid_view_set_model (self, g_value_get_object (value));
       break;
@@ -919,8 +1034,8 @@ gtk_grid_view_set_property (GObject      *object,
       gtk_grid_view_set_single_click_activate (self, g_value_get_boolean (value));
       break;
 
-    case PROP_ENABLE_RUBBERBAND:
-      gtk_grid_view_set_enable_rubberband (self, g_value_get_boolean (value));
+    case PROP_TAB_BEHAVIOR:
+      gtk_grid_view_set_tab_behavior (self, g_value_get_enum (value));
       break;
 
     default:
@@ -954,9 +1069,8 @@ gtk_grid_view_class_init (GtkGridViewClass *klass)
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
-  list_base_class->list_item_name = "child";
-  list_base_class->list_item_role = GTK_ACCESSIBLE_ROLE_GRID_CELL;
   list_base_class->split = gtk_grid_view_split;
+  list_base_class->create_list_widget = gtk_grid_view_create_list_widget;
   list_base_class->get_allocation = gtk_grid_view_get_allocation;
   list_base_class->get_items_in_rect = gtk_grid_view_get_items_in_rect;
   list_base_class->get_position_from_allocation = gtk_grid_view_get_position_from_allocation;
@@ -965,10 +1079,24 @@ gtk_grid_view_class_init (GtkGridViewClass *klass)
 
   widget_class->measure = gtk_grid_view_measure;
   widget_class->size_allocate = gtk_grid_view_size_allocate;
+  widget_class->root = gtk_grid_view_root;
+  widget_class->unroot = gtk_grid_view_unroot;
+  widget_class->show = gtk_grid_view_show;
+  widget_class->hide = gtk_grid_view_hide;
 
   gobject_class->dispose = gtk_grid_view_dispose;
   gobject_class->get_property = gtk_grid_view_get_property;
   gobject_class->set_property = gtk_grid_view_set_property;
+
+  /**
+   * GtkGridView:enable-rubberband: (attributes org.gtk.Property.get=gtk_grid_view_get_enable_rubberband org.gtk.Property.set=gtk_grid_view_set_enable_rubberband)
+   *
+   * Allow rubberband selection.
+   */
+  properties[PROP_ENABLE_RUBBERBAND] =
+    g_param_spec_boolean ("enable-rubberband", NULL, NULL,
+                          FALSE,
+                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkGridView:factory: (attributes org.gtk.Property.get=gtk_grid_view_get_factory org.gtk.Property.set=gtk_grid_view_set_factory)
@@ -1025,14 +1153,17 @@ gtk_grid_view_class_init (GtkGridViewClass *klass)
                           G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
-   * GtkGridView:enable-rubberband: (attributes org.gtk.Property.get=gtk_grid_view_get_enable_rubberband org.gtk.Property.set=gtk_grid_view_set_enable_rubberband)
+   * GtkGridView:tab-behavior: (attributes org.gtk.Property.get=gtk_grid_view_get_tab_behavior org.gtk.Property.set=gtk_grid_view_set_tab_behavior)
    *
-   * Allow rubberband selection.
+   * Behavior of the <kbd>Tab</kbd> key
+   *
+   * Since: 4.12
    */
-  properties[PROP_ENABLE_RUBBERBAND] =
-    g_param_spec_boolean ("enable-rubberband", NULL, NULL,
-                          FALSE,
-                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+  properties[PROP_TAB_BEHAVIOR] =
+    g_param_spec_enum ("tab-behavior", NULL, NULL,
+                       GTK_TYPE_LIST_TAB_BEHAVIOR,
+                       GTK_LIST_TAB_ALL,
+                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (gobject_class, N_PROPS, properties);
 
@@ -1186,7 +1317,7 @@ gtk_grid_view_get_factory (GtkGridView *self)
 {
   g_return_val_if_fail (GTK_IS_GRID_VIEW (self), NULL);
 
-  return gtk_list_item_manager_get_factory (self->item_manager);
+  return self->factory;
 }
 
 /**
@@ -1203,10 +1334,10 @@ gtk_grid_view_set_factory (GtkGridView        *self,
   g_return_if_fail (GTK_IS_GRID_VIEW (self));
   g_return_if_fail (factory == NULL || GTK_IS_LIST_ITEM_FACTORY (factory));
 
-  if (factory == gtk_list_item_manager_get_factory (self->item_manager))
+  if (!g_set_object (&self->factory, factory))
     return;
 
-  gtk_list_item_manager_set_factory (self->item_manager, factory);
+  gtk_grid_view_update_factories (self);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_FACTORY]);
 }
@@ -1317,12 +1448,23 @@ void
 gtk_grid_view_set_single_click_activate (GtkGridView *self,
                                          gboolean     single_click_activate)
 {
+  GtkListTile *tile;
+
   g_return_if_fail (GTK_IS_GRID_VIEW (self));
 
-  if (single_click_activate == gtk_list_item_manager_get_single_click_activate (self->item_manager))
+  if (single_click_activate == self->single_click_activate)
     return;
 
-  gtk_list_item_manager_set_single_click_activate (self->item_manager, single_click_activate);
+  self->single_click_activate = single_click_activate;
+
+  for (tile = gtk_list_item_manager_get_first (self->item_manager);
+       tile != NULL;
+       tile = gtk_rb_tree_node_get_next (tile))
+    {
+      if (tile->widget)
+        gtk_list_factory_widget_set_single_click_activate (GTK_LIST_FACTORY_WIDGET (tile->widget), single_click_activate);
+    }
+
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SINGLE_CLICK_ACTIVATE]);
 }
@@ -1341,7 +1483,7 @@ gtk_grid_view_get_single_click_activate (GtkGridView *self)
 {
   g_return_val_if_fail (GTK_IS_GRID_VIEW (self), FALSE);
 
-  return gtk_list_item_manager_get_single_click_activate (self->item_manager);
+  return self->single_click_activate;
 }
 
 /**
@@ -1379,4 +1521,72 @@ gtk_grid_view_get_enable_rubberband (GtkGridView *self)
   g_return_val_if_fail (GTK_IS_GRID_VIEW (self), FALSE);
 
   return gtk_list_base_get_enable_rubberband (GTK_LIST_BASE (self));
+}
+
+/**
+ * gtk_grid_view_set_tab_behavior: (attributes org.gtk.Method.set_property=tab-behavior)
+ * @self: a `GtkGridView`
+ * @tab_behavior: The desired tab behavior
+ *
+ * Sets the behavior of the <kbd>Tab</kbd> and <kbd>Shift</kbd>+<kbd>Tab</kbd> keys.
+ *
+ * Since: 4.12
+ */
+void
+gtk_grid_view_set_tab_behavior (GtkGridView        *self,
+                                GtkListTabBehavior  tab_behavior)
+{
+  g_return_if_fail (GTK_IS_GRID_VIEW (self));
+
+  if (tab_behavior == gtk_list_base_get_tab_behavior (GTK_LIST_BASE (self)))
+    return;
+
+  gtk_list_base_set_tab_behavior (GTK_LIST_BASE (self), tab_behavior);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TAB_BEHAVIOR]);
+}
+
+/**
+ * gtk_grid_view_get_tab_behavior: (attributes org.gtk.Method.get_property=tab-behavior)
+ * @self: a `GtkGridView`
+ *
+ * Gets the behavior set for the <kbd>Tab</kbd> key.
+ *
+ * Returns: The behavior of the <kbd>Tab</kbd> key
+ *
+ * Since: 4.12
+ */
+GtkListTabBehavior
+gtk_grid_view_get_tab_behavior (GtkGridView *self)
+{
+  g_return_val_if_fail (GTK_IS_GRID_VIEW (self), FALSE);
+
+  return gtk_list_base_get_tab_behavior (GTK_LIST_BASE (self));
+}
+
+/**
+ * gtk_grid_view_scroll_to:
+ * @self: The gridview to scroll in
+ * @pos: position of the item
+ * @flags: actions to perform
+ * @scroll: (nullable) (transfer full): details of how to perform
+ *   the scroll operation or %NULL to scroll into view
+ *
+ * Scrolls to the item at the given position and performs the actions
+ * specified in @flags.
+ *
+ * This function works no matter if the gridview is shown or focused.
+ * If it isn't, then the changes will take effect once that happens.
+ *
+ * Since: 4.12
+ */
+void
+gtk_grid_view_scroll_to (GtkGridView        *self,
+                         guint               pos,
+                         GtkListScrollFlags  flags,
+                         GtkScrollInfo      *scroll)
+{
+  g_return_if_fail (GTK_IS_GRID_VIEW (self));
+
+  gtk_list_base_scroll_to (GTK_LIST_BASE (self), pos, flags, scroll);
 }

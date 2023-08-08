@@ -17,8 +17,7 @@
  * Authors: Benjamin Otte <otte@gnome.org>
  */
 
-#ifndef __GTK_LIST_VIEW_PRIVATE_H__
-#define __GTK_LIST_VIEW_PRIVATE_H__
+#pragma once
 
 #include <gtk/gtklistview.h>
 #include <gtk/gtklistbaseprivate.h>
@@ -30,7 +29,10 @@ struct _GtkListView
   GtkListBase parent_instance;
 
   GtkListItemManager *item_manager;
+  GtkListItemFactory *factory;
+  GtkListItemFactory *header_factory;
   gboolean show_separators;
+  gboolean single_click_activate;
 };
 
 struct _GtkListViewClass
@@ -40,4 +42,3 @@ struct _GtkListViewClass
 
 G_END_DECLS
 
-#endif  /* __GTK_LIST_VIEW_H__ */

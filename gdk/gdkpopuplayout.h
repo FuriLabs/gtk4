@@ -16,16 +16,13 @@
  *
  */
 
-#ifndef __GDK_POPUP_LAYOUT_H__
-#define __GDK_POPUP_LAYOUT_H__
+#pragma once
 
 #if !defined (__GDK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gdk/gdk.h> can be included directly."
 #endif
 
-#include <gdk/gdkenums.h>
 #include <gdk/gdktypes.h>
-#include <gdk/gdkversionmacros.h>
 
 G_BEGIN_DECLS
 
@@ -150,4 +147,3 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkPopupLayout, gdk_popup_layout_unref)
 
 G_END_DECLS
 
-#endif /* __GDK_POPUP_LAYOUT_H__ */

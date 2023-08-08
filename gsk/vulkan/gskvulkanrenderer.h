@@ -15,8 +15,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GSK_VULKAN_RENDERER_H__
-#define __GSK_VULKAN_RENDERER_H__
+#pragma once
 
 #include <gdk/gdk.h>
 #include <gsk/gskrenderer.h>
@@ -51,6 +50,5 @@ GskRenderer *           gsk_vulkan_renderer_new                 (void);
 
 G_END_DECLS
 
-#endif /* GDK_WINDOWING_VULKAN */
+#endif /* GDK_RENDERING_VULKAN */
 
-#endif /* __GSK_VULKAN_RENDERER_H__ */

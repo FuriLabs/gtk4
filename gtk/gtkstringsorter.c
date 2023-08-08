@@ -168,7 +168,7 @@ gtk_string_sort_keys_free (GtkSortKeys *keys)
   GtkStringSortKeys *self = (GtkStringSortKeys *) keys;
 
   gtk_expression_unref (self->expression);
-  g_slice_free (GtkStringSortKeys, self);
+  g_free (self);
 }
 
 static int
@@ -234,7 +234,7 @@ gtk_string_sort_keys_new (GtkStringSorter *self)
   result = gtk_sort_keys_new (GtkStringSortKeys,
                               &GTK_STRING_SORT_KEYS_CLASS,
                               sizeof (char *),
-                              sizeof (char *));
+                              G_ALIGNOF (char *));
 
   result->expression = gtk_expression_ref (self->expression);
   result->ignore_case = self->ignore_case;

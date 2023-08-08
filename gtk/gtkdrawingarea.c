@@ -25,6 +25,7 @@
 #include "config.h"
 #include "gtkdrawingarea.h"
 #include "gtkmarshalers.h"
+#include "gdk/gdkmarshalers.h"
 #include "gtkprivate.h"
 #include "gtksnapshot.h"
 #include "gtkwidgetprivate.h"
@@ -91,17 +92,14 @@ static guint signals[LAST_SIGNAL] = { 0, };
  *                gpointer        data)
  * {
  *   GdkRGBA color;
- *   GtkStyleContext *context;
- *
- *   context = gtk_widget_get_style_context (GTK_WIDGET (area));
  *
  *   cairo_arc (cr,
  *              width / 2.0, height / 2.0,
  *              MIN (width, height) / 2.0,
  *              0, 2 * G_PI);
  *
- *   gtk_style_context_get_color (context,
- *                                &color);
+ *   gtk_widget_get_color (GTK_WIDGET (area),
+ *                         &color);
  *   gdk_cairo_set_source_rgba (cr, &color);
  *
  *   cairo_fill (cr);
@@ -320,11 +318,11 @@ gtk_drawing_area_class_init (GtkDrawingAreaClass *class)
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (GtkDrawingAreaClass, resize),
                   NULL, NULL,
-                  _gtk_marshal_VOID__INT_INT,
+                  _gdk_marshal_VOID__INT_INT,
                   G_TYPE_NONE, 2, G_TYPE_INT, G_TYPE_INT);
   g_signal_set_va_marshaller (signals[RESIZE],
                               G_TYPE_FROM_CLASS (class),
-                              _gtk_marshal_VOID__INT_INTv);
+                              _gdk_marshal_VOID__INT_INTv);
 }
 
 static void

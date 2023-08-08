@@ -34,7 +34,6 @@
 #include "gtkbinlayout.h"
 #include "gtkwidgetprivate.h"
 
-
 struct _GtkInspectorMiscInfo
 {
   GtkWidget parent;
@@ -62,8 +61,8 @@ struct _GtkInspectorMiscInfo
   GtkWidget *measure_expand_toggle;
   GtkWidget *measure_picture;
   GdkPaintable *measure_graph;
-  GtkWidget *allocated_size_row;
-  GtkWidget *allocated_size;
+  GtkWidget *bounds_row;
+  GtkWidget *bounds;
   GtkWidget *baseline_row;
   GtkWidget *baseline;
   GtkWidget *surface_row;
@@ -79,6 +78,8 @@ struct _GtkInspectorMiscInfo
   GtkWidget *tick_callback;
   GtkWidget *framerate_row;
   GtkWidget *framerate;
+  GtkWidget *scale_row;
+  GtkWidget *scale;
   GtkWidget *framecount_row;
   GtkWidget *framecount;
   GtkWidget *mapped_row;
@@ -141,23 +142,56 @@ state_flags_changed (GtkWidget *w, GtkStateFlags old_flags, GtkInspectorMiscInfo
 }
 
 static void
+update_measure_picture (GtkPicture      *picture,
+                        GtkToggleButton *toggle)
+{
+  GdkPaintable *paintable = gtk_picture_get_paintable (picture);
+
+  if (gtk_toggle_button_get_active (toggle) ||
+      (gdk_paintable_get_intrinsic_width (paintable) <= 200 &&
+       gdk_paintable_get_intrinsic_height (paintable) <= 100))
+    {
+      gtk_picture_set_can_shrink (picture, FALSE);
+      gtk_widget_set_size_request (GTK_WIDGET (picture), -1, -1);
+    }
+  else
+    {
+      gtk_picture_set_can_shrink (picture, TRUE);
+      gtk_widget_set_size_request (GTK_WIDGET (picture),
+                                   -1,
+                                   MIN (100, 200 / gdk_paintable_get_intrinsic_aspect_ratio (paintable)));
+    }
+}
+
+static void
+measure_graph_measure (GtkInspectorMiscInfo *sl)
+{
+  if (gtk_widget_get_visible (sl->measure_row))
+    gtk_inspector_measure_graph_measure (GTK_INSPECTOR_MEASURE_GRAPH (sl->measure_graph), GTK_WIDGET (sl->object));
+
+  update_measure_picture (GTK_PICTURE (sl->measure_picture), GTK_TOGGLE_BUTTON (sl->measure_expand_toggle));
+}
+
+static void
 update_allocation (GtkWidget            *w,
                    GtkInspectorMiscInfo *sl)
 {
-  GtkAllocation alloc;
+  graphene_rect_t bounds;
   char *size_label;
   GEnumClass *class;
   GEnumValue *value;
 
-  gtk_widget_get_allocation (w, &alloc);
-  size_label = g_strdup_printf ("%d × %d +%d +%d",
-                                alloc.width, alloc.height,
-                                alloc.x, alloc.y);
+  if (!gtk_widget_compute_bounds (w, gtk_widget_get_parent (w), &bounds))
+    graphene_rect_init (&bounds, 0, 0, 0, 0);
 
-  gtk_label_set_label (GTK_LABEL (sl->allocated_size), size_label);
+  size_label = g_strdup_printf ("%g × %g +%g +%g",
+                                bounds.size.width, bounds.size.height,
+                                bounds.origin.x, bounds.origin.y);
+
+  gtk_label_set_label (GTK_LABEL (sl->bounds), size_label);
   g_free (size_label);
 
-  size_label = g_strdup_printf ("%d", gtk_widget_get_allocated_baseline (w));
+  size_label = g_strdup_printf ("%d", gtk_widget_get_baseline (w));
   gtk_label_set_label (GTK_LABEL (sl->baseline), size_label);
   g_free (size_label);
 
@@ -166,15 +200,7 @@ update_allocation (GtkWidget            *w,
   gtk_label_set_label (GTK_LABEL (sl->request_mode), value->value_nick);
   g_type_class_unref (class);
 
-  if (gtk_widget_get_visible (sl->measure_row))
-    gtk_inspector_measure_graph_measure (GTK_INSPECTOR_MEASURE_GRAPH (sl->measure_graph), w);
-}
-
-static void
-measure_graph_measure (GtkWidget            *button,
-                       GtkInspectorMiscInfo *sl)
-{
-  gtk_inspector_measure_graph_measure (GTK_INSPECTOR_MEASURE_GRAPH (sl->measure_graph), GTK_WIDGET (sl->object));
+  measure_graph_measure (sl);
 }
 
 static void
@@ -424,6 +450,15 @@ update_info (gpointer data)
       sl->last_frame = frame;
     }
 
+  if (GDK_IS_SURFACE (sl->object))
+    {
+      char buf[64];
+
+      g_snprintf (buf, sizeof (buf), "%g", gdk_surface_get_scale (GDK_SURFACE (sl->object)));
+
+      gtk_label_set_label (GTK_LABEL (sl->scale), buf);
+    }
+
   return G_SOURCE_CONTINUE;
 }
 
@@ -449,28 +484,6 @@ measure_picture_drag_prepare (GtkDragSource *source,
   return gdk_content_provider_new_typed (GDK_TYPE_TEXTURE, texture);
 }
 
-static void
-update_measure_picture (GtkPicture      *picture,
-                        GtkToggleButton *toggle)
-{
-  GdkPaintable *paintable = gtk_picture_get_paintable (picture);
-
-  if (gtk_toggle_button_get_active (toggle) ||
-      (gdk_paintable_get_intrinsic_width (paintable) <= 200 &&
-       gdk_paintable_get_intrinsic_height (paintable) <= 100))
-    {
-      gtk_picture_set_can_shrink (picture, FALSE);
-      gtk_widget_set_size_request (GTK_WIDGET (picture), -1, -1);
-    }
-  else
-    {
-      gtk_picture_set_can_shrink (picture, TRUE);
-      gtk_widget_set_size_request (GTK_WIDGET (picture),
-                                   -1,
-                                   MIN (100, 200 / gdk_paintable_get_intrinsic_aspect_ratio (paintable)));
-    }
-}
-
 void
 gtk_inspector_misc_info_set_object (GtkInspectorMiscInfo *sl,
                                     GObject              *object)
@@ -493,9 +506,11 @@ gtk_inspector_misc_info_set_object (GtkInspectorMiscInfo *sl,
   gtk_widget_set_visible (sl->state_row, GTK_IS_WIDGET (object));
   gtk_widget_set_visible (sl->direction_row, GTK_IS_WIDGET (object));
   gtk_widget_set_visible (sl->request_mode_row, GTK_IS_WIDGET (object));
-  gtk_widget_set_visible (sl->allocated_size_row, GTK_IS_WIDGET (object));
+  gtk_widget_set_visible (sl->bounds_row, GTK_IS_WIDGET (object));
   gtk_widget_set_visible (sl->baseline_row, GTK_IS_WIDGET (object));
-  gtk_widget_set_visible (sl->measure_row, GTK_IS_WIDGET (object));
+  /* Don't autoshow, it may be slow, we have a button for this */
+  if (!GTK_IS_WIDGET (object))
+    gtk_widget_set_visible (sl->measure_row, FALSE);
   gtk_widget_set_visible (sl->measure_info_row, GTK_IS_WIDGET (object));
   gtk_widget_set_visible (sl->mnemonic_label_row, GTK_IS_WIDGET (object));
   gtk_widget_set_visible (sl->tick_callback_row, GTK_IS_WIDGET (object));
@@ -507,6 +522,7 @@ gtk_inspector_misc_info_set_object (GtkInspectorMiscInfo *sl,
   gtk_widget_set_visible (sl->buildable_id_row, GTK_IS_BUILDABLE (object));
   gtk_widget_set_visible (sl->framecount_row, GDK_IS_FRAME_CLOCK (object));
   gtk_widget_set_visible (sl->framerate_row, GDK_IS_FRAME_CLOCK (object));
+  gtk_widget_set_visible (sl->scale_row, GDK_IS_SURFACE (object));
 
   if (GTK_IS_WIDGET (object))
     {
@@ -599,8 +615,8 @@ gtk_inspector_misc_info_class_init (GtkInspectorMiscInfoClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, measure_expand_toggle);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, measure_picture);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, measure_graph);
-  gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, allocated_size_row);
-  gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, allocated_size);
+  gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, bounds_row);
+  gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, bounds);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, baseline_row);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, baseline);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, surface_row);
@@ -618,6 +634,8 @@ gtk_inspector_misc_info_class_init (GtkInspectorMiscInfoClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, framecount);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, framerate_row);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, framerate);
+  gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, scale_row);
+  gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, scale);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, mapped_row);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, mapped);
   gtk_widget_class_bind_template_child (widget_class, GtkInspectorMiscInfo, realized_row);

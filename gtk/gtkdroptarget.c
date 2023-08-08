@@ -29,6 +29,7 @@
 #include "gtkdropprivate.h"
 #include "gtkeventcontrollerprivate.h"
 #include "gtkmarshalers.h"
+#include "gdk/gdkmarshalers.h"
 #include "gtknative.h"
 #include "gtkprivate.h"
 #include "gtktypebuiltins.h"
@@ -506,13 +507,19 @@ gtk_drop_target_handle_crossing (GtkEventController    *controller,
       graphene_point_init (&self->coords, x, y);
       gtk_drop_target_start_drop (self, crossing->drop);
 
-      g_signal_emit (self, signals[ENTER], 0, x, y, &preferred);
-        if (!gdk_drag_action_is_unique (preferred))
-          {
-            g_critical ("Handler for GtkDropTarget::enter on %s %p did not return a unique preferred action",
-                        G_OBJECT_TYPE_NAME (widget), widget);
-            preferred = make_action_unique (preferred);
-          }
+      /* start_drop ends w/ thaw_notify, where handler may reject, so recheck */
+      if (self->drop != NULL)
+        g_signal_emit (self, signals[ENTER], 0, x, y, &preferred);
+      else
+        preferred = 0;
+
+      if (!gdk_drag_action_is_unique (preferred))
+        {
+          g_critical ("Handler for GtkDropTarget::enter on %s %p did not return a unique preferred action",
+                      G_OBJECT_TYPE_NAME (widget), widget);
+          preferred = make_action_unique (preferred);
+        }
+
       if (preferred &&
           gtk_drop_status (self->drop, self->actions, preferred))
         {
@@ -532,6 +539,7 @@ gtk_drop_target_handle_crossing (GtkEventController    *controller,
       g_signal_emit (self, signals[LEAVE], 0);
       if (!self->dropping)
         gtk_drop_target_end_drop (self);
+
       gtk_widget_unset_state_flags (widget, GTK_STATE_FLAG_DROP_ACTIVE);
     }
 }
@@ -754,9 +762,12 @@ gtk_drop_target_class_init (GtkDropTargetClass *class)
                     G_SIGNAL_RUN_LAST,
                     G_STRUCT_OFFSET (GtkDropTargetClass, accept),
                     g_signal_accumulator_first_wins, NULL,
-                    NULL,
+                    _gdk_marshal_BOOLEAN__OBJECT,
                     G_TYPE_BOOLEAN, 1,
                     GDK_TYPE_DROP);
+  g_signal_set_va_marshaller (signals[ACCEPT],
+                              GTK_TYPE_DROP_TARGET,
+                              _gdk_marshal_BOOLEAN__OBJECTv);
 
   /**
    * GtkDropTarget::enter:
@@ -777,9 +788,12 @@ gtk_drop_target_class_init (GtkDropTargetClass *class)
                     G_SIGNAL_RUN_LAST,
                     G_STRUCT_OFFSET (GtkDropTargetClass, enter),
                     g_signal_accumulator_first_wins, NULL,
-                    NULL,
+                    _gtk_marshal_FLAGS__DOUBLE_DOUBLE,
                     GDK_TYPE_DRAG_ACTION, 2,
                     G_TYPE_DOUBLE, G_TYPE_DOUBLE);
+  g_signal_set_va_marshaller (signals[ENTER],
+                              GTK_TYPE_DROP_TARGET,
+                              _gtk_marshal_FLAGS__DOUBLE_DOUBLEv);
 
   /**
    * GtkDropTarget::motion:
@@ -798,9 +812,12 @@ gtk_drop_target_class_init (GtkDropTargetClass *class)
                     G_SIGNAL_RUN_LAST,
                     G_STRUCT_OFFSET (GtkDropTargetClass, motion),
                     g_signal_accumulator_first_wins, NULL,
-                    NULL,
+                    _gtk_marshal_FLAGS__DOUBLE_DOUBLE,
                     GDK_TYPE_DRAG_ACTION, 2,
                     G_TYPE_DOUBLE, G_TYPE_DOUBLE);
+  g_signal_set_va_marshaller (signals[MOTION],
+                              GTK_TYPE_DROP_TARGET,
+                              _gtk_marshal_FLAGS__DOUBLE_DOUBLEv);
 
   /**
    * GtkDropTarget::leave:
@@ -845,9 +862,12 @@ gtk_drop_target_class_init (GtkDropTargetClass *class)
                     G_SIGNAL_RUN_LAST,
                     0,
                     g_signal_accumulator_first_wins, NULL,
-                    NULL,
+                    _gtk_marshal_BOOLEAN__BOXED_DOUBLE_DOUBLE,
                     G_TYPE_BOOLEAN, 3,
                     G_TYPE_VALUE, G_TYPE_DOUBLE, G_TYPE_DOUBLE);
+  g_signal_set_va_marshaller (signals[DROP],
+                              GTK_TYPE_DROP_TARGET,
+                              _gtk_marshal_BOOLEAN__BOXED_DOUBLE_DOUBLEv);
 }
 
 static void

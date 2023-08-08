@@ -17,6 +17,7 @@ expand_content_md_files = [
   'actions.md',
   'input-handling.md',
   'drawing-model.md',
+  'coordinates.md',
   'css-overview.md',
   'css-properties.md',
   'section-accessibility.md',
@@ -31,7 +32,7 @@ gtk_images = []
 
 subdir('images')
 
-if get_option('gtk_doc')
+if get_option('documentation')
   gtk4_toml = configure_file(
     input: 'gtk4.toml.in',
     output: 'gtk4.toml',
@@ -74,6 +75,7 @@ if get_option('man-pages') and rst2man.found()
     [ 'gtk4-encode-symbolic-svg', '1', ],
     [ 'gtk4-launch', '1', ],
     [ 'gtk4-query-settings', '1', ],
+    [ 'gtk4-rendernode-tool', '1' ],
     [ 'gtk4-update-icon-cache', '1', ],
   ]
 

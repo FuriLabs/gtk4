@@ -18,8 +18,7 @@
  */
 
 
-#ifndef __GTK_APPLICATION_PRIVATE_H__
-#define __GTK_APPLICATION_PRIVATE_H__
+#pragma once
 
 #include "gtkapplicationwindow.h"
 #include "gtkwindowprivate.h"
@@ -117,6 +116,7 @@ typedef struct
   GtkApplicationImpl impl;
 
   GDBusConnection *session;
+  GCancellable    *cancellable;
 
   const char      *application_id;
   const char      *unique_name;
@@ -197,4 +197,3 @@ void                    gtk_application_impl_quartz_setup_menu          (GMenuMo
 
 G_END_DECLS
 
-#endif /* __GTK_APPLICATION_PRIVATE_H__ */

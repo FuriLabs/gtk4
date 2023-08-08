@@ -22,8 +22,7 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#ifndef __GTK_H__
-#define __GTK_H__
+#pragma once
 
 #define __GTK_H_INSIDE__
 
@@ -87,7 +86,9 @@
 #include <gtk/gtkcolordialogbutton.h>
 #include <gtk/gtkcolorutils.h>
 #include <gtk/gtkcolumnview.h>
+#include <gtk/gtkcolumnviewcell.h>
 #include <gtk/gtkcolumnviewcolumn.h>
+#include <gtk/gtkcolumnviewrow.h>
 #include <gtk/gtkcolumnviewsorter.h>
 #include <gtk/deprecated/gtkcombobox.h>
 #include <gtk/deprecated/gtkcomboboxtext.h>
@@ -173,6 +174,7 @@
 #include <gtk/gtklistbase.h>
 #include <gtk/gtklinkbutton.h>
 #include <gtk/gtklistbox.h>
+#include <gtk/gtklistheader.h>
 #include <gtk/gtklistitem.h>
 #include <gtk/gtklistitemfactory.h>
 #include <gtk/deprecated/gtkliststore.h>
@@ -198,19 +200,19 @@
 #include <gtk/gtkoverlay.h>
 #include <gtk/gtkoverlaylayout.h>
 #include <gtk/gtkpadcontroller.h>
-#include <gtk/gtkpagesetup.h>
+#include <gtk/print/gtkpagesetup.h>
 #include <gtk/gtkpaned.h>
-#include <gtk/gtkpapersize.h>
+#include <gtk/print/gtkpapersize.h>
 #include <gtk/gtkpasswordentry.h>
 #include <gtk/gtkpasswordentrybuffer.h>
 #include <gtk/gtkpicture.h>
 #include <gtk/gtkpopover.h>
 #include <gtk/gtkpopovermenu.h>
 #include <gtk/gtkpopovermenubar.h>
-#include <gtk/gtkprintcontext.h>
-#include <gtk/gtkprintoperation.h>
-#include <gtk/gtkprintoperationpreview.h>
-#include <gtk/gtkprintsettings.h>
+#include <gtk/print/gtkprintcontext.h>
+#include <gtk/print/gtkprintoperation.h>
+#include <gtk/print/gtkprintoperationpreview.h>
+#include <gtk/print/gtkprintsettings.h>
 #include <gtk/gtkprogressbar.h>
 #include <gtk/gtkrange.h>
 #include <gtk/gtkrecentmanager.h>
@@ -221,9 +223,11 @@
 #include <gtk/gtkscalebutton.h>
 #include <gtk/gtkscrollable.h>
 #include <gtk/gtkscrollbar.h>
+#include <gtk/gtkscrollinfo.h>
 #include <gtk/gtkscrolledwindow.h>
 #include <gtk/gtksearchbar.h>
 #include <gtk/gtksearchentry.h>
+#include <gtk/gtksectionmodel.h>
 #include <gtk/gtkselectionfiltermodel.h>
 #include <gtk/gtkselectionmodel.h>
 #include <gtk/gtkseparator.h>
@@ -300,4 +304,3 @@
 
 #undef __GTK_H_INSIDE__
 
-#endif /* __GTK_H__ */

@@ -363,7 +363,7 @@ gtk_entry_buildable_custom_tag_start (GtkBuildable       *buildable,
     {
       GtkPangoAttributeParserData *parser_data;
 
-      parser_data = g_slice_new0 (GtkPangoAttributeParserData);
+      parser_data = g_new0 (GtkPangoAttributeParserData, 1);
       parser_data->builder = g_object_ref (builder);
       parser_data->object = (GObject *) g_object_ref (buildable);
       *parser = pango_parser;
@@ -395,7 +395,7 @@ gtk_entry_buildable_custom_finished (GtkBuildable *buildable,
 
       g_object_unref (data->object);
       g_object_unref (data->builder);
-      g_slice_free (GtkPangoAttributeParserData, data);
+      g_free (data);
     }
 }
 
@@ -1396,6 +1396,10 @@ gtk_entry_init (GtkEntry *entry)
                              GTK_EVENT_CONTROLLER (catchall));
 
   priv->editing_canceled = FALSE;
+
+  gtk_accessible_update_property (GTK_ACCESSIBLE (entry),
+                                  GTK_ACCESSIBLE_PROPERTY_HAS_POPUP, TRUE,
+                                  -1);
 }
 
 static void
@@ -1441,7 +1445,7 @@ gtk_entry_finalize (GObject *object)
 
       gtk_widget_unparent (icon_info->widget);
 
-      g_slice_free (EntryIconInfo, icon_info);
+      g_free (icon_info);
     }
 
   g_clear_pointer (&priv->progress_widget, gtk_widget_unparent);
@@ -1603,7 +1607,7 @@ construct_icon_info (GtkWidget            *widget,
 
   g_return_val_if_fail (priv->icons[icon_pos] == NULL, NULL);
 
-  icon_info = g_slice_new0 (EntryIconInfo);
+  icon_info = g_new0 (EntryIconInfo, 1);
   priv->icons[icon_pos] = icon_info;
 
   icon_info->widget = gtk_image_new ();
@@ -1705,6 +1709,10 @@ gtk_entry_size_allocate (GtkWidget *widget,
   text_alloc.y = 0;
   text_alloc.width = width;
   text_alloc.height = height;
+
+  if (gtk_widget_get_valign (widget) != GTK_ALIGN_BASELINE_FILL &&
+      gtk_widget_get_valign (widget) != GTK_ALIGN_BASELINE_CENTER)
+    baseline = -1;
 
   for (i = 0; i < MAX_ICONS; i++)
     {
@@ -2829,15 +2837,16 @@ gtk_entry_get_icon_at_pos (GtkEntry *entry,
   for (i = 0; i < MAX_ICONS; i++)
     {
       EntryIconInfo *icon_info = priv->icons[i];
-      double icon_x, icon_y;
+      graphene_point_t p;
 
       if (icon_info == NULL)
         continue;
 
-      gtk_widget_translate_coordinates (GTK_WIDGET (entry), icon_info->widget,
-                                        x, y, &icon_x, &icon_y);
+      if (!gtk_widget_compute_point (GTK_WIDGET (entry), icon_info->widget,
+                                     &GRAPHENE_POINT_INIT (x, y), &p))
+        continue;
 
-      if (gtk_widget_contains (icon_info->widget, icon_x, icon_y))
+      if (gtk_widget_contains (icon_info->widget, p.x, p.y))
         return i;
     }
 

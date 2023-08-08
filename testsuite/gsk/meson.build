@@ -10,10 +10,17 @@ node_parser = executable('node-parser', 'node-parser.c',
 )
 
 compare_render_tests = [
+  'big-checkerboard',
+  'big-checkerboard-scaled-down',
+  'big-checkerboard-scaled-down-nearest',
+  'big-checkerboard-scaled-down2',
   'blend-difference',
+  'blend-modes',
   'blend-invisible-child',
+  'blend-in-rotate',
   'blend-normal',
   'border-bottom-right',
+  'border-one-rounded',
   'borders-rotated',
   'borders-scaled',
   'clip-coordinates-2d',
@@ -21,13 +28,16 @@ compare_render_tests = [
   'clip-in-rounded-clip1',
   'clip-in-rounded-clip2',
   'clip-in-rounded-clip3',
-  'clipped-repeat-3d-ngl',
+  'clipped-repeat',
   'clipped_rounded_clip',
   'clip-nested1',
+  'clip-translate-offscreen',
   'color-blur0',
   'color-matrix-identity',
   'color-matrix-parsing',
+  'crossfade-clip-both-children',
   'cross-fade-in-opacity',
+  'cross-fade-in-rotate',
   'css-background',
   'empty-blend',
   'empty-blur',
@@ -40,8 +50,7 @@ compare_render_tests = [
   'empty-cross-fade',
   'empty-debug',
   'empty-inset-shadow',
-# this test fails for some of the backends
-# 'empty-linear-gradient',
+  'empty-linear-gradient',
   'empty-mask',
   'empty-opacity',
   'empty-outset-shadow',
@@ -56,7 +65,9 @@ compare_render_tests = [
   'invalid-transform',
   'issue-3615',
   'mask',
+  'mask-clipped-inverted-alpha',
   'mask-modes',
+  'mask-modes-with-alpha',
   'nested-rounded-clips',
   'opacity_clip',
   'opacity-overdraw',
@@ -68,9 +79,10 @@ compare_render_tests = [
   'outset_shadow_simple',
   'repeat',
   'repeat-no-repeat',
+  'repeat-empty-child-bounds',
   'repeat-negative-coords',
   'repeat-texture',
-  'rounded-clip-in-clip-3d', # not really 3d, but cairo fails it
+  'repeating-gradient-scaled',
   'scale-textures-negative-ngl',
   'scale-up-down',
   'scaled-cairo',
@@ -82,6 +94,7 @@ compare_render_tests = [
   'texture-url',
   'transform-in-transform',
   'transform-in-transform-in-transform',
+  'z-transform-clipping-bounds-3d',
 ]
 
 # these are too sensitive to differences in the renderers
@@ -90,6 +103,7 @@ informative_render_tests = [
   'big-glyph',
   'empty-text',
   'huge-glyph',
+  'rounded-clip-in-clip-3d', # both cairo and gl fail this one
 ]
 
 renderers = [
@@ -100,8 +114,15 @@ renderers = [
 
 compare_xfails = [
   # Both tests fail because of some font rendering issue
+  'empty-linear-gradient',
   'unaligned-offscreen',
   'upside-down-label-3d', # not really 3d, but cairo fails it
+]
+
+compare_xfails_small_texture = [
+  'big-checkerboard',
+  'big-checkerboard-scaled-down',
+  'big-checkerboard-scaled-down2'
 ]
 
 foreach renderer : renderers
@@ -121,6 +142,10 @@ foreach renderer : renderers
       suites += 'failing'
     endif
 
+    if compare_xfails_small_texture.contains(testname)
+      suites += 'wayland_gles_failing'
+    endif
+
     if ((exclude_term == '' or not testname.contains(exclude_term)) and
         (renderer_name != 'broadway' or broadway_enabled))
       test(renderer_name + ' ' + testname, compare_render,
@@ -136,6 +161,66 @@ foreach renderer : renderers
           'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir())
         ],
         suite: suites,
+      )
+      test(renderer_name + ' ' + testname + ' flipped', compare_render,
+        args: [
+          '--flip',
+          '--output', join_paths(meson.current_build_dir(), 'compare', renderer_name),
+          join_paths(meson.current_source_dir(), 'compare', testname + '.node'),
+          join_paths(meson.current_source_dir(), 'compare', testname + '.png'),
+        ],
+        env: [
+          'GSK_RENDERER=' + renderer_name,
+          'GTK_A11Y=test',
+          'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
+          'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir())
+        ],
+        suite: suites + [ 'gsk-compare-flipped-' + renderer_name ],
+      )
+      test(renderer_name + ' ' + testname + ' repeated', compare_render,
+        args: [
+          '--repeat',
+          '--output', join_paths(meson.current_build_dir(), 'compare', renderer_name),
+          join_paths(meson.current_source_dir(), 'compare', testname + '.node'),
+          join_paths(meson.current_source_dir(), 'compare', testname + '.png'),
+        ],
+        env: [
+          'GSK_RENDERER=' + renderer_name,
+          'GTK_A11Y=test',
+          'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
+          'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir())
+        ],
+        suite: suites + [ 'gsk-compare-repeated-' + renderer_name ],
+      )
+      test(renderer_name + ' ' + testname + ' rotated', compare_render,
+        args: [
+          '--rotate',
+          '--output', join_paths(meson.current_build_dir(), 'compare', renderer_name),
+          join_paths(meson.current_source_dir(), 'compare', testname + '.node'),
+          join_paths(meson.current_source_dir(), 'compare', testname + '.png'),
+        ],
+        env: [
+          'GSK_RENDERER=' + renderer_name,
+          'GTK_A11Y=test',
+          'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
+          'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir())
+        ],
+        suite: suites + [ 'gsk-compare-rotated-' + renderer_name ],
+      )
+      test(renderer_name + ' ' + testname + ' masked', compare_render,
+        args: [
+          '--mask',
+          '--output', join_paths(meson.current_build_dir(), 'compare', renderer_name),
+          join_paths(meson.current_source_dir(), 'compare', testname + '.node'),
+          join_paths(meson.current_source_dir(), 'compare', testname + '.png'),
+        ],
+        env: [
+          'GSK_RENDERER=' + renderer_name,
+          'GTK_A11Y=test',
+          'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
+          'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir())
+        ],
+        suite: suites + [ 'gsk-compare-masked-' + renderer_name ],
       )
     endif
   endforeach
@@ -217,6 +302,10 @@ node_parser_tests = [
   'gradient-fail.errors',
   'mask-modes.node',
   'mask-modes.ref.node',
+  'node-names.node',
+  'node-names-everywhere.errors',
+  'node-names-everywhere.node',
+  'node-names-everywhere.ref.node',
   'radial-gradient.node',
   'radial-gradient.ref.node',
   'repeating-linear-gradient.node',
@@ -238,6 +327,7 @@ node_parser_tests = [
   'texture-fail.node',
   'texture-fail.ref.node',
   'texture-fail.ref.errors',
+  'texture-names.node',
   'texture-scale-filters.node',
   'texture-scale-filters.ref.node',
   'texture-scale-unknown-filter.errors',
@@ -314,7 +404,7 @@ foreach t : internal_tests
   test_exe = executable(test_name,
     sources: test_srcs,
     dependencies : libgtk_static_dep,
-    c_args : test_cargs + test_extra_cargs + common_cflags,
+    c_args : test_cargs + test_extra_cargs + common_cflags + ['-DGTK_COMPILATION'],
     link_args : test_extra_ldflags,
   )
 

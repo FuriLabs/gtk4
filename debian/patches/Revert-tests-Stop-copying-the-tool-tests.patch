@@ -7,6 +7,8 @@ This reverts commit bb3a6214cbeaa3211be007192e536bd473323836.
 This is actually used by the installed tests
 which we also had to revert dropping (in a separate patch)
 ---
+ testsuite/tools/enumerate        | 37 -------------------------------
+ testsuite/tools/enumerate.in     | 37 +++++++++++++++++++++++++++++++
  testsuite/tools/meson.build      |  8 +++++--
  testsuite/tools/settings         | 20 -----------------
  testsuite/tools/settings.in      | 20 +++++++++++++++++
@@ -16,7 +18,9 @@ which we also had to revert dropping (in a separate patch)
  testsuite/tools/simplify.in      | 47 ++++++++++++++++++++++++++++++++++++++++
  testsuite/tools/validate         | 37 -------------------------------
  testsuite/tools/validate.in      | 37 +++++++++++++++++++++++++++++++
- 9 files changed, 157 insertions(+), 153 deletions(-)
+ 11 files changed, 194 insertions(+), 190 deletions(-)
+ delete mode 100755 testsuite/tools/enumerate
+ create mode 100755 testsuite/tools/enumerate.in
  delete mode 100755 testsuite/tools/settings
  create mode 100755 testsuite/tools/settings.in
  delete mode 100755 testsuite/tools/simplify
@@ -26,14 +30,100 @@ which we also had to revert dropping (in a separate patch)
  delete mode 100755 testsuite/tools/validate
  create mode 100755 testsuite/tools/validate.in
 
+diff --git a/testsuite/tools/enumerate b/testsuite/tools/enumerate
+deleted file mode 100755
+index 8abd9d6..0000000
+--- a/testsuite/tools/enumerate
++++ /dev/null
+@@ -1,37 +0,0 @@
+-#! /bin/bash
+-
+-GTK_BUILDER_TOOL=${GTK_BUILDER_TOOL:-gtk4-builder-tool}
+-TEST_DATA_DIR=${G_TEST_SRCDIR:-.}/enumerate-data
+-TEST_RESULT_DIR=${TEST_RESULT_DIR:-/tmp}/enumerate
+-
+-mkdir -p "$TEST_RESULT_DIR"
+-
+-shopt -s nullglob
+-TESTS=( "$TEST_DATA_DIR"/*.ui )
+-
+-echo "1..${#TESTS[*]}"
+-
+-I=1
+-for t in ${TESTS[*]}; do
+-  name=$(basename $t .ui)
+-  expected="$TEST_DATA_DIR/$name.expected"
+-  result="$TEST_RESULT_DIR/$name.out"
+-  diff="$TEST_RESULT_DIR/$name.diff"
+-  ref="$TEST_RESULT_DIR/$name.ref"
+-
+-  cd $TEST_DATA_DIR
+-
+-  $GTK_BUILDER_TOOL enumerate --callbacks $(basename $t) >$result
+-
+-  cd $OLDPWD
+-
+-  if diff -u "$expected" "$result" > "$diff"; then
+-    echo "ok $I $name"
+-    rm "$diff"
+-  else
+-    echo "not ok $I $name"
+-    cp "$expected" "$ref"
+-  fi
+-
+-  I=$((I+1))
+-done
+diff --git a/testsuite/tools/enumerate.in b/testsuite/tools/enumerate.in
+new file mode 100755
+index 0000000..8abd9d6
+--- /dev/null
++++ b/testsuite/tools/enumerate.in
+@@ -0,0 +1,37 @@
++#! /bin/bash
++
++GTK_BUILDER_TOOL=${GTK_BUILDER_TOOL:-gtk4-builder-tool}
++TEST_DATA_DIR=${G_TEST_SRCDIR:-.}/enumerate-data
++TEST_RESULT_DIR=${TEST_RESULT_DIR:-/tmp}/enumerate
++
++mkdir -p "$TEST_RESULT_DIR"
++
++shopt -s nullglob
++TESTS=( "$TEST_DATA_DIR"/*.ui )
++
++echo "1..${#TESTS[*]}"
++
++I=1
++for t in ${TESTS[*]}; do
++  name=$(basename $t .ui)
++  expected="$TEST_DATA_DIR/$name.expected"
++  result="$TEST_RESULT_DIR/$name.out"
++  diff="$TEST_RESULT_DIR/$name.diff"
++  ref="$TEST_RESULT_DIR/$name.ref"
++
++  cd $TEST_DATA_DIR
++
++  $GTK_BUILDER_TOOL enumerate --callbacks $(basename $t) >$result
++
++  cd $OLDPWD
++
++  if diff -u "$expected" "$result" > "$diff"; then
++    echo "ok $I $name"
++    rm "$diff"
++  else
++    echo "not ok $I $name"
++    cp "$expected" "$ref"
++  fi
++
++  I=$((I+1))
++done
 diff --git a/testsuite/tools/meson.build b/testsuite/tools/meson.build
-index 96ac7fd..986c2d6 100644
+index 239e1b0..e19a819 100644
 --- a/testsuite/tools/meson.build
 +++ b/testsuite/tools/meson.build
 @@ -3,8 +3,12 @@ if bash.found()
    test_env = environment()
  
-   foreach t : ['simplify', 'simplify-3to4', 'validate', 'settings']
+   foreach t : ['simplify', 'simplify-3to4', 'validate', 'enumerate', 'settings']
 -    test(t,
 -      find_program(t, dirs: meson.current_source_dir()),
 +    configure_file(output: t,
@@ -311,7 +401,7 @@ index 0000000..12b4cea
 +done
 diff --git a/testsuite/tools/validate b/testsuite/tools/validate
 deleted file mode 100755
-index 42048ef..0000000
+index 414a505..0000000
 --- a/testsuite/tools/validate
 +++ /dev/null
 @@ -1,37 +0,0 @@
@@ -338,7 +428,7 @@ index 42048ef..0000000
 -
 -  cd $TEST_DATA_DIR
 -
--  $GTK_BUILDER_TOOL validate $(basename $t) 2>$result
+-  $GTK_BUILDER_TOOL validate --deprecations $(basename $t) 2>$result
 -
 -  cd $OLDPWD
 -
@@ -354,7 +444,7 @@ index 42048ef..0000000
 -done
 diff --git a/testsuite/tools/validate.in b/testsuite/tools/validate.in
 new file mode 100755
-index 0000000..42048ef
+index 0000000..414a505
 --- /dev/null
 +++ b/testsuite/tools/validate.in
 @@ -0,0 +1,37 @@
@@ -381,7 +471,7 @@ index 0000000..42048ef
 +
 +  cd $TEST_DATA_DIR
 +
-+  $GTK_BUILDER_TOOL validate $(basename $t) 2>$result
++  $GTK_BUILDER_TOOL validate --deprecations $(basename $t) 2>$result
 +
 +  cd $OLDPWD
 +

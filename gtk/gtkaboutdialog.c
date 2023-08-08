@@ -366,6 +366,9 @@ gtk_about_dialog_class_init (GtkAboutDialogClass *klass)
                   _gtk_boolean_handled_accumulator, NULL,
                   _gtk_marshal_BOOLEAN__STRING,
                   G_TYPE_BOOLEAN, 1, G_TYPE_STRING);
+  g_signal_set_va_marshaller (signals[ACTIVATE_LINK],
+                              G_TYPE_FROM_CLASS (object_class),
+                              _gtk_marshal_BOOLEAN__STRINGv);
 
   /**
    * GtkAboutDialog:program-name: (attributes org.gtk.Property.get=gtk_about_dialog_get_program_name org.gtk.Property.set=gtk_about_dialog_set_program_name)
@@ -759,7 +762,7 @@ destroy_credit_section (gpointer data)
   CreditSection *cs = data;
   g_free (cs->heading);
   g_strfreev (cs->people);
-  g_slice_free (CreditSection, data);
+  g_free (data);
 }
 
 static void
@@ -2324,7 +2327,7 @@ gtk_about_dialog_add_credit_section (GtkAboutDialog  *about,
   g_return_if_fail (section_name != NULL);
   g_return_if_fail (people != NULL);
 
-  new_entry = g_slice_new (CreditSection);
+  new_entry = g_new (CreditSection, 1);
   new_entry->heading = g_strdup ((char *)section_name);
   new_entry->people = g_strdupv ((char **)people);
 

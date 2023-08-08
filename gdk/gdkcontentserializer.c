@@ -22,7 +22,7 @@
 #include "gdkcontentserializer.h"
 
 #include "gdkcontentformats.h"
-#include "gdkpixbuf.h"
+#include "deprecated/gdkpixbuf.h"
 #include "filetransferportalprivate.h"
 #include "gdktextureprivate.h"
 #include "gdkrgba.h"
@@ -416,7 +416,7 @@ gdk_content_register_serializer (GType                    type,
   g_return_if_fail (mime_type != NULL);
   g_return_if_fail (serialize != NULL);
 
-  serializer = g_slice_new0 (Serializer);
+  serializer = g_new0 (Serializer, 1);
 
   serializer->mime_type = g_intern_string (mime_type);
   serializer->type = type;
@@ -642,7 +642,9 @@ pixbuf_serializer (GdkContentSerializer *serializer)
   else if (G_VALUE_HOLDS (value, GDK_TYPE_TEXTURE))
     {
       GdkTexture *texture = g_value_get_object (value);
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       pixbuf = gdk_pixbuf_get_from_texture (texture);
+G_GNUC_END_IGNORE_DEPRECATIONS
     }
   else
     {

@@ -18,8 +18,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GTK_GL_AREA_H__
-#define __GTK_GL_AREA_H__
+#pragma once
 
 #if !defined (__GTK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gtk/gtk.h> can be included directly."
@@ -76,11 +75,20 @@ GType gtk_gl_area_get_type (void) G_GNUC_CONST;
 GDK_AVAILABLE_IN_ALL
 GtkWidget *     gtk_gl_area_new                         (void);
 
-GDK_AVAILABLE_IN_ALL
+GDK_AVAILABLE_IN_4_12
+void            gtk_gl_area_set_allowed_apis            (GtkGLArea    *area,
+                                                         GdkGLAPI      apis);
+GDK_AVAILABLE_IN_4_12
+GdkGLAPI        gtk_gl_area_get_allowed_apis            (GtkGLArea    *area);
+GDK_AVAILABLE_IN_4_12
+GdkGLAPI        gtk_gl_area_get_api                     (GtkGLArea    *area);
+
+GDK_DEPRECATED_IN_4_12_FOR(gtk_gl_area_set_allowed_apis)
 void            gtk_gl_area_set_use_es                  (GtkGLArea    *area,
                                                          gboolean      use_es);
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_12_FOR(gtk_gl_area_get_api)
 gboolean        gtk_gl_area_get_use_es                  (GtkGLArea    *area);
+
 GDK_AVAILABLE_IN_ALL
 void            gtk_gl_area_set_required_version        (GtkGLArea    *area,
                                                          int           major,
@@ -126,4 +134,3 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkGLArea, g_object_unref)
 
 G_END_DECLS
 
-#endif /* __GTK_GL_AREA_H__ */

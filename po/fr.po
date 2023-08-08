@@ -22,7 +22,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gtk master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2023-05-05 03:53+0000\n"
+"POT-Creation-Date: 2023-05-12 13:13+0000\n"
 "PO-Revision-Date: 2023-05-12 15:04+0200\n"
 "Last-Translator: Guillaume Bernard <associations@guillaume-bernard.fr>\n"
 "Language-Team: GNOME French Team <gnomefr@traduc.org>\n"
@@ -6049,7 +6049,6 @@ msgid "Services"
 msgstr "Services"
 
 #: gtk/ui/gtkapplication-quartz.ui:25
-#, c-format
 msgid "Hide %s"
 msgstr "Masquer %s"
 
@@ -6062,7 +6061,6 @@ msgid "Show All"
 msgstr "Tout afficher"
 
 #: gtk/ui/gtkapplication-quartz.ui:42
-#, c-format
 msgid "Quit %s"
 msgstr "Quitter %s"
 

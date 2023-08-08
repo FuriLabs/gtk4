@@ -218,6 +218,8 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_drag_set_hotspot@Base 4.0.0
  gdk_drag_surface_get_type@Base 4.0.0
  gdk_drag_surface_present@Base 4.0.0
+ gdk_drag_surface_size_get_type@Base 4.12.0
+ gdk_drag_surface_size_set_size@Base 4.12.0
  gdk_draw_context_begin_frame@Base 4.0.0
  gdk_draw_context_end_frame@Base 4.0.0
  gdk_draw_context_get_display@Base 4.0.0
@@ -314,6 +316,27 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_gl_context_set_use_es@Base 4.0.0
  gdk_gl_error_get_type@Base 4.0.0
  gdk_gl_error_quark@Base 4.0.0
+ gdk_gl_texture_builder_build@Base 4.12.0
+ gdk_gl_texture_builder_get_context@Base 4.12.0
+ gdk_gl_texture_builder_get_format@Base 4.12.0
+ gdk_gl_texture_builder_get_has_mipmap@Base 4.12.0
+ gdk_gl_texture_builder_get_height@Base 4.12.0
+ gdk_gl_texture_builder_get_id@Base 4.12.0
+ gdk_gl_texture_builder_get_sync@Base 4.12.0
+ gdk_gl_texture_builder_get_type@Base 4.12.0
+ gdk_gl_texture_builder_get_update_region@Base 4.12.0
+ gdk_gl_texture_builder_get_update_texture@Base 4.12.0
+ gdk_gl_texture_builder_get_width@Base 4.12.0
+ gdk_gl_texture_builder_new@Base 4.12.0
+ gdk_gl_texture_builder_set_context@Base 4.12.0
+ gdk_gl_texture_builder_set_format@Base 4.12.0
+ gdk_gl_texture_builder_set_has_mipmap@Base 4.12.0
+ gdk_gl_texture_builder_set_height@Base 4.12.0
+ gdk_gl_texture_builder_set_id@Base 4.12.0
+ gdk_gl_texture_builder_set_sync@Base 4.12.0
+ gdk_gl_texture_builder_set_update_region@Base 4.12.0
+ gdk_gl_texture_builder_set_update_texture@Base 4.12.0
+ gdk_gl_texture_builder_set_width@Base 4.12.0
  gdk_gl_texture_get_type@Base 4.0.0
  gdk_gl_texture_new@Base 4.0.0
  gdk_gl_texture_release@Base 4.0.0
@@ -453,6 +476,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_surface_get_frame_clock@Base 4.0.0
  gdk_surface_get_height@Base 4.0.0
  gdk_surface_get_mapped@Base 4.0.0
+ gdk_surface_get_scale@Base 4.12.0
  gdk_surface_get_scale_factor@Base 4.0.0
  gdk_surface_get_type@Base 4.0.0
  gdk_surface_get_width@Base 4.0.0
@@ -570,6 +594,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  (arch=linux-any)gdk_wayland_seat_get_wl_seat@Base 4.0.0
  (arch=linux-any)gdk_wayland_surface_get_type@Base 4.0.0
  (arch=linux-any)gdk_wayland_surface_get_wl_surface@Base 4.0.0
+ (arch=linux-any)gdk_wayland_toplevel_drop_exported_handle@Base 4.12.0
  (arch=linux-any)gdk_wayland_toplevel_export_handle@Base 4.0.0
  (arch=linux-any)gdk_wayland_toplevel_get_type@Base 4.0.0
  (arch=linux-any)gdk_wayland_toplevel_set_application_id@Base 4.0.0
@@ -1186,16 +1211,19 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_border_new@Base 4.0.0
  gtk_border_style_get_type@Base 4.0.0
  gtk_box_append@Base 4.0.0
+ gtk_box_get_baseline_child@Base 4.12.0
  gtk_box_get_baseline_position@Base 4.0.0
  gtk_box_get_homogeneous@Base 4.0.0
  gtk_box_get_spacing@Base 4.0.0
  gtk_box_get_type@Base 4.0.0
  gtk_box_insert_child_after@Base 4.0.0
+ gtk_box_layout_get_baseline_child@Base 4.12.0
  gtk_box_layout_get_baseline_position@Base 4.0.0
  gtk_box_layout_get_homogeneous@Base 4.0.0
  gtk_box_layout_get_spacing@Base 4.0.0
  gtk_box_layout_get_type@Base 4.0.0
  gtk_box_layout_new@Base 4.0.0
+ gtk_box_layout_set_baseline_child@Base 4.12.0
  gtk_box_layout_set_baseline_position@Base 4.0.0
  gtk_box_layout_set_homogeneous@Base 4.0.0
  gtk_box_layout_set_spacing@Base 4.0.0
@@ -1203,6 +1231,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_box_prepend@Base 4.0.0
  gtk_box_remove@Base 4.0.0
  gtk_box_reorder_child_after@Base 4.0.0
+ gtk_box_set_baseline_child@Base 4.12.0
  gtk_box_set_baseline_position@Base 4.0.0
  gtk_box_set_homogeneous@Base 4.0.0
  gtk_box_set_spacing@Base 4.0.0
@@ -1253,6 +1282,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_builder_set_translation_domain@Base 4.0.0
  gtk_builder_value_from_string@Base 4.0.0
  gtk_builder_value_from_string_type@Base 4.0.0
+ gtk_button_get_can_shrink@Base 4.12.0
  gtk_button_get_child@Base 4.0.0
  gtk_button_get_has_frame@Base 4.0.0
  gtk_button_get_icon_name@Base 4.0.0
@@ -1263,6 +1293,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_button_new_from_icon_name@Base 4.0.0
  gtk_button_new_with_label@Base 4.0.0
  gtk_button_new_with_mnemonic@Base 4.0.0
+ gtk_button_set_can_shrink@Base 4.12.0
  gtk_button_set_child@Base 4.0.0
  gtk_button_set_has_frame@Base 4.0.0
  gtk_button_set_icon_name@Base 4.0.0
@@ -1438,17 +1469,20 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_center_box_get_baseline_position@Base 4.0.0
  gtk_center_box_get_center_widget@Base 4.0.0
  gtk_center_box_get_end_widget@Base 4.0.0
+ gtk_center_box_get_shrink_center_last@Base 4.12.0
  gtk_center_box_get_start_widget@Base 4.0.0
  gtk_center_box_get_type@Base 4.0.0
  gtk_center_box_new@Base 4.0.0
  gtk_center_box_set_baseline_position@Base 4.0.0
  gtk_center_box_set_center_widget@Base 4.0.0
  gtk_center_box_set_end_widget@Base 4.0.0
+ gtk_center_box_set_shrink_center_last@Base 4.12.0
  gtk_center_box_set_start_widget@Base 4.0.0
  gtk_center_layout_get_baseline_position@Base 4.0.0
  gtk_center_layout_get_center_widget@Base 4.0.0
  gtk_center_layout_get_end_widget@Base 4.0.0
  gtk_center_layout_get_orientation@Base 4.0.0
+ gtk_center_layout_get_shrink_center_last@Base 4.12.0
  gtk_center_layout_get_start_widget@Base 4.0.0
  gtk_center_layout_get_type@Base 4.0.0
  gtk_center_layout_new@Base 4.0.0
@@ -1456,6 +1490,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_center_layout_set_center_widget@Base 4.0.0
  gtk_center_layout_set_end_widget@Base 4.0.0
  gtk_center_layout_set_orientation@Base 4.0.0
+ gtk_center_layout_set_shrink_center_last@Base 4.12.0
  gtk_center_layout_set_start_widget@Base 4.0.0
  gtk_check_button_get_active@Base 4.0.0
  gtk_check_button_get_child@Base 4.7.2
@@ -1513,6 +1548,14 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_color_picker_portal_new@Base 4.0.0
  gtk_color_picker_shell_new@Base 4.0.0
  gtk_column_view_append_column@Base 4.0.0
+ gtk_column_view_cell_get_child@Base 4.12.0
+ gtk_column_view_cell_get_focusable@Base 4.12.0
+ gtk_column_view_cell_get_item@Base 4.12.0
+ gtk_column_view_cell_get_position@Base 4.12.0
+ gtk_column_view_cell_get_selected@Base 4.12.0
+ gtk_column_view_cell_get_type@Base 4.12.0
+ gtk_column_view_cell_set_child@Base 4.12.0
+ gtk_column_view_cell_set_focusable@Base 4.12.0
  gtk_column_view_column_get_column_view@Base 4.0.0
  gtk_column_view_column_get_expand@Base 4.0.0
  gtk_column_view_column_get_factory@Base 4.0.0
@@ -1536,22 +1579,43 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_column_view_column_set_visible@Base 4.0.0
  gtk_column_view_get_columns@Base 4.0.0
  gtk_column_view_get_enable_rubberband@Base 4.0.0
+ gtk_column_view_get_header_factory@Base 4.12.0
  gtk_column_view_get_model@Base 4.0.0
  gtk_column_view_get_reorderable@Base 4.0.0
+ gtk_column_view_get_row_factory@Base 4.12.0
  gtk_column_view_get_show_column_separators@Base 4.0.0
  gtk_column_view_get_show_row_separators@Base 4.0.0
  gtk_column_view_get_single_click_activate@Base 4.0.0
  gtk_column_view_get_sorter@Base 4.0.0
+ gtk_column_view_get_tab_behavior@Base 4.12.0
  gtk_column_view_get_type@Base 4.0.0
  gtk_column_view_insert_column@Base 4.0.0
  gtk_column_view_new@Base 4.0.0
  gtk_column_view_remove_column@Base 4.0.0
+ gtk_column_view_row_get_accessible_description@Base 4.12.0
+ gtk_column_view_row_get_accessible_label@Base 4.12.0
+ gtk_column_view_row_get_activatable@Base 4.12.0
+ gtk_column_view_row_get_focusable@Base 4.12.0
+ gtk_column_view_row_get_item@Base 4.12.0
+ gtk_column_view_row_get_position@Base 4.12.0
+ gtk_column_view_row_get_selectable@Base 4.12.0
+ gtk_column_view_row_get_selected@Base 4.12.0
+ gtk_column_view_row_get_type@Base 4.12.0
+ gtk_column_view_row_set_accessible_description@Base 4.12.0
+ gtk_column_view_row_set_accessible_label@Base 4.12.0
+ gtk_column_view_row_set_activatable@Base 4.12.0
+ gtk_column_view_row_set_focusable@Base 4.12.0
+ gtk_column_view_row_set_selectable@Base 4.12.0
+ gtk_column_view_scroll_to@Base 4.12.0
  gtk_column_view_set_enable_rubberband@Base 4.0.0
+ gtk_column_view_set_header_factory@Base 4.12.0
  gtk_column_view_set_model@Base 4.0.0
  gtk_column_view_set_reorderable@Base 4.0.0
+ gtk_column_view_set_row_factory@Base 4.12.0
  gtk_column_view_set_show_column_separators@Base 4.0.0
  gtk_column_view_set_show_row_separators@Base 4.0.0
  gtk_column_view_set_single_click_activate@Base 4.0.0
+ gtk_column_view_set_tab_behavior@Base 4.12.0
  gtk_column_view_sort_by_column@Base 4.0.0
  gtk_column_view_sorter_get_n_sort_columns@Base 4.9.2
  gtk_column_view_sorter_get_nth_sort_column@Base 4.9.2
@@ -1654,10 +1718,12 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_css_parser_warning_get_type@Base 4.0.0
  gtk_css_parser_warning_quark@Base 4.0.0
  gtk_css_provider_get_type@Base 4.0.0
+ gtk_css_provider_load_from_bytes@Base 4.12.0
  gtk_css_provider_load_from_data@Base 4.0.0
  gtk_css_provider_load_from_file@Base 4.0.0
  gtk_css_provider_load_from_path@Base 4.0.0
  gtk_css_provider_load_from_resource@Base 4.0.0
+ gtk_css_provider_load_from_string@Base 4.12.0
  gtk_css_provider_load_named@Base 4.0.0
  gtk_css_provider_new@Base 4.0.0
  gtk_css_provider_to_string@Base 4.0.0
@@ -1744,8 +1810,10 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_drop_down_get_enable_search@Base 4.0.0
  gtk_drop_down_get_expression@Base 4.0.0
  gtk_drop_down_get_factory@Base 4.0.0
+ gtk_drop_down_get_header_factory@Base 4.12.0
  gtk_drop_down_get_list_factory@Base 4.0.0
  gtk_drop_down_get_model@Base 4.0.0
+ gtk_drop_down_get_search_match_mode@Base 4.12.0
  gtk_drop_down_get_selected@Base 4.0.0
  gtk_drop_down_get_selected_item@Base 4.0.0
  gtk_drop_down_get_show_arrow@Base 4.6.0
@@ -1755,8 +1823,10 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_drop_down_set_enable_search@Base 4.0.0
  gtk_drop_down_set_expression@Base 4.0.0
  gtk_drop_down_set_factory@Base 4.0.0
+ gtk_drop_down_set_header_factory@Base 4.12.0
  gtk_drop_down_set_list_factory@Base 4.0.0
  gtk_drop_down_set_model@Base 4.0.0
+ gtk_drop_down_set_search_match_mode@Base 4.12.0
  gtk_drop_down_set_selected@Base 4.0.0
  gtk_drop_down_set_show_arrow@Base 4.6.0
  gtk_drop_target_async_get_actions@Base 4.0.0
@@ -2063,6 +2133,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_file_filter_new_from_gvariant@Base 4.0.0
  gtk_file_filter_set_name@Base 4.0.0
  gtk_file_filter_to_gvariant@Base 4.0.0
+ gtk_file_launcher_get_always_ask@Base 4.12.0
  gtk_file_launcher_get_file@Base 4.9.2
  gtk_file_launcher_get_type@Base 4.9.2
  gtk_file_launcher_launch@Base 4.9.2
@@ -2070,6 +2141,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_file_launcher_new@Base 4.9.2
  gtk_file_launcher_open_containing_folder@Base 4.9.2
  gtk_file_launcher_open_containing_folder_finish@Base 4.9.2
+ gtk_file_launcher_set_always_ask@Base 4.12.0
  gtk_file_launcher_set_file@Base 4.9.2
  gtk_filter_change_get_type@Base 4.0.0
  gtk_filter_changed@Base 4.0.0
@@ -2130,6 +2202,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_flow_box_new@Base 4.0.0
  gtk_flow_box_prepend@Base 4.6.0
  gtk_flow_box_remove@Base 4.0.0
+ gtk_flow_box_remove_all@Base 4.12.0
  gtk_flow_box_select_all@Base 4.0.0
  gtk_flow_box_select_child@Base 4.0.0
  gtk_flow_box_selected_foreach@Base 4.0.0
@@ -2296,6 +2369,8 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_get_micro_version@Base 4.0.0
  gtk_get_minor_version@Base 4.0.0
  gtk_gl_area_attach_buffers@Base 4.0.0
+ gtk_gl_area_get_allowed_apis@Base 4.12.0
+ gtk_gl_area_get_api@Base 4.12.0
  gtk_gl_area_get_auto_render@Base 4.0.0
  gtk_gl_area_get_context@Base 4.0.0
  gtk_gl_area_get_error@Base 4.0.0
@@ -2307,6 +2382,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_gl_area_make_current@Base 4.0.0
  gtk_gl_area_new@Base 4.0.0
  gtk_gl_area_queue_render@Base 4.0.0
+ gtk_gl_area_set_allowed_apis@Base 4.12.0
  gtk_gl_area_set_auto_render@Base 4.0.0
  gtk_gl_area_set_error@Base 4.0.0
  gtk_gl_area_set_has_depth_buffer@Base 4.0.0
@@ -2366,14 +2442,17 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_grid_view_get_min_columns@Base 4.0.0
  gtk_grid_view_get_model@Base 4.0.0
  gtk_grid_view_get_single_click_activate@Base 4.0.0
+ gtk_grid_view_get_tab_behavior@Base 4.12.0
  gtk_grid_view_get_type@Base 4.0.0
  gtk_grid_view_new@Base 4.0.0
+ gtk_grid_view_scroll_to@Base 4.12.0
  gtk_grid_view_set_enable_rubberband@Base 4.0.0
  gtk_grid_view_set_factory@Base 4.0.0
  gtk_grid_view_set_max_columns@Base 4.0.0
  gtk_grid_view_set_min_columns@Base 4.0.0
  gtk_grid_view_set_model@Base 4.0.0
  gtk_grid_view_set_single_click_activate@Base 4.0.0
+ gtk_grid_view_set_tab_behavior@Base 4.12.0
  gtk_header_bar_get_decoration_layout@Base 4.0.0
  gtk_header_bar_get_show_title_buttons@Base 4.0.0
  gtk_header_bar_get_title_widget@Base 4.0.0
@@ -2685,6 +2764,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_list_box_new@Base 4.0.0
  gtk_list_box_prepend@Base 4.0.0
  gtk_list_box_remove@Base 4.0.0
+ gtk_list_box_remove_all@Base 4.12.0
  gtk_list_box_row_changed@Base 4.0.0
  gtk_list_box_row_get_activatable@Base 4.0.0
  gtk_list_box_row_get_child@Base 4.0.0
@@ -2711,17 +2791,31 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_list_box_set_sort_func@Base 4.0.0
  gtk_list_box_unselect_all@Base 4.0.0
  gtk_list_box_unselect_row@Base 4.0.0
+ gtk_list_header_get_child@Base 4.12.0
+ gtk_list_header_get_end@Base 4.12.0
+ gtk_list_header_get_item@Base 4.12.0
+ gtk_list_header_get_n_items@Base 4.12.0
+ gtk_list_header_get_start@Base 4.12.0
+ gtk_list_header_get_type@Base 4.12.0
+ gtk_list_header_set_child@Base 4.12.0
  gtk_list_item_factory_get_type@Base 4.0.0
+ gtk_list_item_get_accessible_description@Base 4.12.0
+ gtk_list_item_get_accessible_label@Base 4.12.0
  gtk_list_item_get_activatable@Base 4.0.0
  gtk_list_item_get_child@Base 4.0.0
+ gtk_list_item_get_focusable@Base 4.12.0
  gtk_list_item_get_item@Base 4.0.0
  gtk_list_item_get_position@Base 4.0.0
  gtk_list_item_get_selectable@Base 4.0.0
  gtk_list_item_get_selected@Base 4.0.0
  gtk_list_item_get_type@Base 4.0.0
+ gtk_list_item_set_accessible_description@Base 4.12.0
+ gtk_list_item_set_accessible_label@Base 4.12.0
  gtk_list_item_set_activatable@Base 4.0.0
  gtk_list_item_set_child@Base 4.0.0
+ gtk_list_item_set_focusable@Base 4.12.0
  gtk_list_item_set_selectable@Base 4.0.0
+ gtk_list_scroll_flags_get_type@Base 4.12.0
  gtk_list_store_append@Base 4.0.0
  gtk_list_store_clear@Base 4.0.0
  gtk_list_store_get_type@Base 4.0.0
@@ -2744,18 +2838,24 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_list_store_set_value@Base 4.0.0
  gtk_list_store_set_valuesv@Base 4.0.0
  gtk_list_store_swap@Base 4.0.0
+ gtk_list_tab_behavior_get_type@Base 4.12.0
  gtk_list_view_get_enable_rubberband@Base 4.0.0
  gtk_list_view_get_factory@Base 4.0.0
+ gtk_list_view_get_header_factory@Base 4.12.0
  gtk_list_view_get_model@Base 4.0.0
  gtk_list_view_get_show_separators@Base 4.0.0
  gtk_list_view_get_single_click_activate@Base 4.0.0
+ gtk_list_view_get_tab_behavior@Base 4.12.0
  gtk_list_view_get_type@Base 4.0.0
  gtk_list_view_new@Base 4.0.0
+ gtk_list_view_scroll_to@Base 4.12.0
  gtk_list_view_set_enable_rubberband@Base 4.0.0
  gtk_list_view_set_factory@Base 4.0.0
+ gtk_list_view_set_header_factory@Base 4.12.0
  gtk_list_view_set_model@Base 4.0.0
  gtk_list_view_set_show_separators@Base 4.0.0
  gtk_list_view_set_single_click_activate@Base 4.0.0
+ gtk_list_view_set_tab_behavior@Base 4.12.0
  gtk_lock_button_get_permission@Base 4.0.0
  gtk_lock_button_get_type@Base 4.0.0
  gtk_lock_button_new@Base 4.0.0
@@ -2820,6 +2920,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_media_stream_update@Base 4.0.0
  gtk_menu_button_get_active@Base 4.10.0
  gtk_menu_button_get_always_show_arrow@Base 4.3.2
+ gtk_menu_button_get_can_shrink@Base 4.12.0
  gtk_menu_button_get_child@Base 4.6.0
  gtk_menu_button_get_direction@Base 4.0.0
  gtk_menu_button_get_has_frame@Base 4.0.0
@@ -2835,6 +2936,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_menu_button_popup@Base 4.0.0
  gtk_menu_button_set_active@Base 4.10.0
  gtk_menu_button_set_always_show_arrow@Base 4.3.2
+ gtk_menu_button_set_can_shrink@Base 4.12.0
  gtk_menu_button_set_child@Base 4.6.0
  gtk_menu_button_set_create_popup_func@Base 4.0.0
  gtk_menu_button_set_direction@Base 4.0.0
@@ -3556,6 +3658,14 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_scale_set_format_value_func@Base 4.0.0
  gtk_scale_set_has_origin@Base 4.0.0
  gtk_scale_set_value_pos@Base 4.0.0
+ gtk_scroll_info_get_enable_horizontal@Base 4.12.0
+ gtk_scroll_info_get_enable_vertical@Base 4.12.0
+ gtk_scroll_info_get_type@Base 4.12.0
+ gtk_scroll_info_new@Base 4.12.0
+ gtk_scroll_info_ref@Base 4.12.0
+ gtk_scroll_info_set_enable_horizontal@Base 4.12.0
+ gtk_scroll_info_set_enable_vertical@Base 4.12.0
+ gtk_scroll_info_unref@Base 4.12.0
  gtk_scroll_step_get_type@Base 4.0.0
  gtk_scroll_type_get_type@Base 4.0.0
  gtk_scrollable_get_border@Base 4.0.0
@@ -3625,6 +3735,9 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_search_entry_set_key_capture_widget@Base 4.0.0
  gtk_search_entry_set_placeholder_text@Base 4.9.4
  gtk_search_entry_set_search_delay@Base 4.7.2
+ gtk_section_model_get_section@Base 4.12.0
+ gtk_section_model_get_type@Base 4.12.0
+ gtk_section_model_sections_changed@Base 4.12.0
  gtk_selection_filter_model_get_model@Base 4.0.0
  gtk_selection_filter_model_get_type@Base 4.0.0
  gtk_selection_filter_model_new@Base 4.0.0
@@ -3787,11 +3900,13 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_sort_list_model_get_incremental@Base 4.0.0
  gtk_sort_list_model_get_model@Base 4.0.0
  gtk_sort_list_model_get_pending@Base 4.0.0
+ gtk_sort_list_model_get_section_sorter@Base 4.12.0
  gtk_sort_list_model_get_sorter@Base 4.0.0
  gtk_sort_list_model_get_type@Base 4.0.0
  gtk_sort_list_model_new@Base 4.0.0
  gtk_sort_list_model_set_incremental@Base 4.0.0
  gtk_sort_list_model_set_model@Base 4.0.0
+ gtk_sort_list_model_set_section_sorter@Base 4.12.0
  gtk_sort_list_model_set_sorter@Base 4.0.0
  gtk_sort_type_get_type@Base 4.0.0
  gtk_sorter_change_get_type@Base 4.0.0
@@ -4651,6 +4766,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_viewport_get_scroll_to_focus@Base 4.0.0
  gtk_viewport_get_type@Base 4.0.0
  gtk_viewport_new@Base 4.0.0
+ gtk_viewport_scroll_to@Base 4.12.0
  gtk_viewport_set_child@Base 4.0.0
  gtk_viewport_set_scroll_to_focus@Base 4.0.0
  gtk_volume_button_get_type@Base 4.0.0
@@ -4701,6 +4817,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_widget_get_allocated_width@Base 4.0.0
  gtk_widget_get_allocation@Base 4.0.0
  gtk_widget_get_ancestor@Base 4.0.0
+ gtk_widget_get_baseline@Base 4.12.0
  gtk_widget_get_can_focus@Base 4.0.0
  gtk_widget_get_can_target@Base 4.0.0
  gtk_widget_get_child_visible@Base 4.0.0
@@ -4889,6 +5006,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_window_is_active@Base 4.0.0
  gtk_window_is_fullscreen@Base 4.0.0
  gtk_window_is_maximized@Base 4.0.0
+ gtk_window_is_suspended@Base 4.12.0
  gtk_window_list_toplevels@Base 4.0.0
  gtk_window_maximize@Base 4.0.0
  gtk_window_minimize@Base 4.0.0

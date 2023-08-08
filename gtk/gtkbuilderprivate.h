@@ -16,8 +16,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GTK_BUILDER_PRIVATE_H__
-#define __GTK_BUILDER_PRIVATE_H__
+#pragma once
 
 #include "gtkbuilder.h"
 #include "gtkbuildable.h"
@@ -70,9 +69,9 @@ typedef struct {
   GParamSpec *pspec;
   gpointer value;
   GString *text;
-  gboolean translatable : 1;
-  gboolean bound        : 1;
-  gboolean applied      : 1;
+  unsigned int translatable : 1;
+  unsigned int bound        : 1;
+  unsigned int applied      : 1;
   char *context;
   int line;
   int col;
@@ -265,7 +264,10 @@ void      _gtk_builder_menu_start (ParserData   *parser_data,
                                    GError      **error);
 void      _gtk_builder_menu_end   (ParserData  *parser_data);
 
-GType     _gtk_builder_get_template_type (GtkBuilder *builder);
+GType     gtk_builder_get_template_type (GtkBuilder *builder,
+                                         gboolean *out_allow_parents);
+void      gtk_builder_set_allow_template_parents (GtkBuilder *builder,
+                                                  gboolean    allow_parents);
 
 void     _gtk_builder_prefix_error        (GtkBuilder                *builder,
                                            GtkBuildableParseContext  *context,
@@ -295,4 +297,3 @@ GObject *_gtk_builder_lookup_object       (GtkBuilder                *builder,
 gboolean _gtk_builder_lookup_failed       (GtkBuilder                *builder,
                                            GError                   **error);
 
-#endif /* __GTK_BUILDER_PRIVATE_H__ */

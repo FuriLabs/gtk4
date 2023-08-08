@@ -19,10 +19,13 @@
 
 #include "gtkcoloreditorprivate.h"
 
+#include <glib/gi18n-lib.h>
+
 #include "deprecated/gtkcolorchooserprivate.h"
 #include "gtkcolorplaneprivate.h"
 #include "gtkcolorscaleprivate.h"
 #include "gtkcolorswatchprivate.h"
+#include "gtkcolorchooserwidgetprivate.h"
 #include "gtkcolorutils.h"
 #include "gtkcolorpickerprivate.h"
 #include "gtkgrid.h"
@@ -159,6 +162,24 @@ entry_text_changed (GtkWidget      *entry,
 }
 
 static void
+update_color (GtkColorEditor *editor,
+              const GdkRGBA  *color)
+{
+  char *name;
+  char *text;
+  name = accessible_color_name (color);
+  text = g_strdup_printf (_("Color: %s"), name);
+  gtk_accessible_update_property (GTK_ACCESSIBLE (editor->swatch),
+                                  GTK_ACCESSIBLE_PROPERTY_LABEL, text,
+                                  -1);
+  g_free (name);
+  g_free (text);
+  gtk_color_swatch_set_rgba (GTK_COLOR_SWATCH (editor->swatch), color);
+  gtk_color_scale_set_rgba (GTK_COLOR_SCALE (editor->a_slider), color);
+  entry_set_rgba (editor, color);
+}
+
+static void
 hsv_changed (GtkColorEditor *editor)
 {
   GdkRGBA color;
@@ -172,9 +193,7 @@ hsv_changed (GtkColorEditor *editor)
   gtk_hsv_to_rgb (h, s, v, &color.red, &color.green, &color.blue);
   color.alpha = a;
 
-  gtk_color_swatch_set_rgba (GTK_COLOR_SWATCH (editor->swatch), &color);
-  gtk_color_scale_set_rgba (GTK_COLOR_SCALE (editor->a_slider), &color);
-  entry_set_rgba (editor, &color);
+  update_color (editor, &color);
 
   g_object_notify (G_OBJECT (editor), "rgba");
 }
@@ -273,9 +292,7 @@ get_child_position (GtkOverlay     *overlay,
                     GtkColorEditor *editor)
 {
   GtkRequisition req;
-  GtkAllocation alloc;
-  int s, e;
-  double x, y;
+  graphene_point_t p;
 
   gtk_widget_get_preferred_size (widget, &req, NULL);
 
@@ -286,46 +303,43 @@ get_child_position (GtkOverlay     *overlay,
 
   if (widget == editor->sv_popup)
     {
-      gtk_widget_translate_coordinates (editor->sv_plane,
-                                        gtk_widget_get_parent (editor->grid),
-                                        0, -6,
-                                        &x, &y);
+      if (!gtk_widget_compute_point (editor->sv_plane,
+                                     gtk_widget_get_parent (editor->grid),
+                                     &GRAPHENE_POINT_INIT (0, -6),
+                                     &p))
+        return FALSE;
       if (gtk_widget_get_direction (GTK_WIDGET (overlay)) == GTK_TEXT_DIR_RTL)
-        x = 0;
+        p.x = 0;
       else
-        x = gtk_widget_get_width (GTK_WIDGET (overlay)) - req.width;
+        p.x = gtk_widget_get_width (GTK_WIDGET (overlay)) - req.width;
     }
   else if (widget == editor->h_popup)
     {
-      gtk_widget_get_allocation (editor->h_slider, &alloc);
-      gtk_range_get_slider_range (GTK_RANGE (editor->h_slider), &s, &e);
+      int slider_width;
 
-      if (gtk_widget_get_direction (GTK_WIDGET (overlay)) == GTK_TEXT_DIR_RTL)
-        gtk_widget_translate_coordinates (editor->h_slider,
-                                          gtk_widget_get_parent (editor->grid),
-                                          - req.width - 6, editor->popup_position - req.height / 2,
-                                          &x, &y);
-      else
-        gtk_widget_translate_coordinates (editor->h_slider,
-                                          gtk_widget_get_parent (editor->grid),
-                                          alloc.width + 6, editor->popup_position - req.height / 2,
-                                          &x, &y);
+      slider_width = gtk_widget_get_width (editor->h_slider);
+
+      if (!gtk_widget_compute_point (editor->h_slider,
+                                     gtk_widget_get_parent (editor->grid),
+                                     gtk_widget_get_direction (GTK_WIDGET (overlay)) == GTK_TEXT_DIR_RTL
+                                       ? &GRAPHENE_POINT_INIT (- req.width - 6, editor->popup_position - req.height / 2)
+                                       : &GRAPHENE_POINT_INIT (slider_width + 6, editor->popup_position - req.height / 2),
+                                     &p))
+        return FALSE;
     }
   else if (widget == editor->a_popup)
     {
-      gtk_widget_get_allocation (editor->a_slider, &alloc);
-      gtk_range_get_slider_range (GTK_RANGE (editor->a_slider), &s, &e);
-
-      gtk_widget_translate_coordinates (editor->a_slider,
-                                        gtk_widget_get_parent (editor->grid),
-                                        editor->popup_position - req.width / 2, - req.height - 6,
-                                        &x, &y);
+      if (!gtk_widget_compute_point (editor->a_slider,
+                                     gtk_widget_get_parent (editor->grid),
+                                     &GRAPHENE_POINT_INIT (editor->popup_position - req.width / 2, - req.height - 6),
+                                     &p))
+        return FALSE;
     }
   else
     return FALSE;
 
-  allocation->x = CLAMP (x, 0, gtk_widget_get_width (GTK_WIDGET (overlay)) - req.width);
-  allocation->y = CLAMP (y, 0, gtk_widget_get_height (GTK_WIDGET (overlay)) - req.height);
+  allocation->x = CLAMP (p.x, 0, gtk_widget_get_width (GTK_WIDGET (overlay)) - req.width);
+  allocation->y = CLAMP (p.y, 0, gtk_widget_get_height (GTK_WIDGET (overlay)) - req.height);
 
   return TRUE;
 }
@@ -591,9 +605,7 @@ gtk_color_editor_set_rgba (GtkColorChooser *chooser,
   gtk_adjustment_set_value (editor->v_adj, v);
   gtk_adjustment_set_value (editor->a_adj, color->alpha);
 
-  gtk_color_swatch_set_rgba (GTK_COLOR_SWATCH (editor->swatch), color);
-  gtk_color_scale_set_rgba (GTK_COLOR_SCALE (editor->a_slider), color);
-  entry_set_rgba (editor, color);
+  update_color (editor, color);
 
   g_object_notify (G_OBJECT (editor), "rgba");
 }

@@ -104,9 +104,9 @@ configure_flags_deb += -Dwayland-backend=false
 endif
 
 ifeq ($(filter %-doc,$(built_binaries)),)
-configure_flags_deb += -Dgtk_doc=false
+configure_flags_deb += -Ddocumentation=false
 else
-configure_flags_deb += -Dgtk_doc=true
+configure_flags_deb += -Ddocumentation=true
 endif
 
 ifeq ($(filter %-examples,$(built_binaries)),)

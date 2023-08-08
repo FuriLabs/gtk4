@@ -471,7 +471,7 @@ suggestion_entry_size_allocate (GtkWidget *widget,
                               &(GtkAllocation) { width - arrow_nat, 0, arrow_nat, height },
                               baseline);
 
-  gtk_widget_set_size_request (self->popup, gtk_widget_get_allocated_width (GTK_WIDGET (self)), -1);
+  gtk_widget_set_size_request (self->popup, gtk_widget_get_width (GTK_WIDGET (self)), -1);
   gtk_widget_queue_resize (self->popup);
 
   gtk_popover_present (GTK_POPOVER (self->popup));
@@ -801,7 +801,7 @@ suggestion_entry_key_pressed (GtkEventControllerKey *controller,
             selected = matches - 1;
         }
 
-      gtk_single_selection_set_selected (self->selection, selected);
+      gtk_list_view_scroll_to (GTK_LIST_VIEW (self->list), selected, GTK_LIST_SCROLL_SELECT, NULL);
       return TRUE;
     }
 
@@ -849,7 +849,7 @@ suggestion_entry_init (SuggestionEntry *self)
       GtkCssProvider *provider;
 
       provider = gtk_css_provider_new ();
-      gtk_css_provider_load_from_resource (provider, "/dropdown/suggestionentry.css");
+      gtk_css_provider_load_from_resource (provider, "/listview_selections/suggestionentry.css");
       gtk_style_context_add_provider_for_display (gdk_display_get_default (),
                                                   GTK_STYLE_PROVIDER (provider),
                                                   800);

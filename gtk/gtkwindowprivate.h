@@ -16,8 +16,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GTK_WINDOW_PRIVATE_H__
-#define __GTK_WINDOW_PRIVATE_H__
+#pragma once
 
 #include <gdk/gdk.h>
 
@@ -80,7 +79,8 @@ typedef void (*GtkWindowHandleExported)  (GtkWindow               *window,
 gboolean      gtk_window_export_handle   (GtkWindow               *window,
                                           GtkWindowHandleExported  callback,
                                           gpointer                 user_data);
-void          gtk_window_unexport_handle (GtkWindow               *window);
+void          gtk_window_unexport_handle (GtkWindow               *window,
+                                          const char              *handle);
 
 GtkWidget *      gtk_window_lookup_pointer_focus_widget (GtkWindow        *window,
                                                          GdkDevice        *device,
@@ -126,4 +126,3 @@ void gtk_window_grab_notify (GtkWindow *window,
 
 G_END_DECLS
 
-#endif /* __GTK_WINDOW_PRIVATE_H__ */

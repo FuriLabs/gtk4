@@ -34,7 +34,14 @@
  * empty area, or by dragging the handle.
  *
  * `GtkSwitch` can also handle situations where the underlying state
- * changes with a delay. See [signal@Gtk.Switch::state-set] for details.
+ * changes with a delay. In this case, the slider position indicates
+ * the user's recent change (as indicated by the [property@Gtk.Switch:active]
+ * property), and the color indicates whether the underlying state (represented
+ * by the [property@Gtk.Switch:state] property) has been updated yet.
+ *
+ * ![GtkSwitch with delayed state change](switch-state.png)
+ *
+ * See [signal@Gtk.Switch::state-set] for details.
  *
  * # CSS nodes
  *
@@ -301,13 +308,14 @@ gtk_switch_measure (GtkWidget      *widget,
   GtkSwitch *self = GTK_SWITCH (widget);
   int slider_minimum, slider_natural;
   int on_nat, off_nat;
+  int on_baseline, off_baseline;
 
   gtk_widget_measure (self->slider, orientation, -1,
                       &slider_minimum, &slider_natural,
                       NULL, NULL);
 
-  gtk_widget_measure (self->on_image, orientation, for_size, NULL, &on_nat, NULL, NULL);
-  gtk_widget_measure (self->off_image, orientation, for_size, NULL, &off_nat, NULL, NULL);
+  gtk_widget_measure (self->on_image, orientation, for_size, NULL, &on_nat, NULL, &on_baseline);
+  gtk_widget_measure (self->off_image, orientation, for_size, NULL, &off_nat, NULL, &off_baseline);
 
   if (orientation == GTK_ORIENTATION_HORIZONTAL)
     {
@@ -318,8 +326,12 @@ gtk_switch_measure (GtkWidget      *widget,
   else
     {
       int text_height = MAX (on_nat, off_nat);
+
       *minimum = MAX (slider_minimum, text_height);
       *natural = MAX (slider_natural, text_height);
+
+      *minimum_baseline = MAX (on_baseline, off_baseline) + MAX ((slider_minimum - text_height) / 2, 0);
+      *natural_baseline = MAX (on_baseline, off_baseline) + MAX ((slider_natural - text_height) / 2, 0);
     }
 }
 

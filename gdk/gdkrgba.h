@@ -22,15 +22,13 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#ifndef __GDK_RGBA_H__
-#define __GDK_RGBA_H__
+#pragma once
 
 #if !defined (__GDK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gdk/gdk.h> can be included directly."
 #endif
 
 #include <gdk/gdktypes.h>
-#include <gdk/gdkversionmacros.h>
 
 G_BEGIN_DECLS
 
@@ -73,4 +71,3 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkRGBA, gdk_rgba_free)
 
 G_END_DECLS
 
-#endif /* __GDK_RGBA_H__ */

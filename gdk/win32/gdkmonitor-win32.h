@@ -15,8 +15,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GDK_WIN32_MONITOR_PRIVATE_H__
-#define __GDK_WIN32_MONITOR_PRIVATE_H__
+#pragma once
 
 #include <windows.h>
 #include <glib.h>
@@ -36,6 +35,9 @@ struct _GdkWin32Monitor
   /* Device instance path (used to match GdkWin32Monitor to monitor device) */
   char *instance_path;
 
+  /* MOnitor handle (used to fullscreen windows on monitors) */
+  HMONITOR hmonitor;
+
   /* TRUE if monitor is made up by us
    * (this happens when system has logical monitors, but no physical ones).
    */
@@ -54,4 +56,3 @@ struct _GdkWin32MonitorClass {
 
 int        _gdk_win32_monitor_compare  (GdkWin32Monitor *a, GdkWin32Monitor *b);
 
-#endif

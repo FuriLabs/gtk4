@@ -37,6 +37,22 @@
 
 G_DEFINE_INTERFACE (GdkDragSurface, gdk_drag_surface, GDK_TYPE_SURFACE)
 
+enum
+{
+  COMPUTE_SIZE,
+
+  N_SIGNALS
+};
+
+static guint signals[N_SIGNALS] = { 0 };
+
+void
+gdk_drag_surface_notify_compute_size (GdkDragSurface     *surface,
+                                      GdkDragSurfaceSize *size)
+{
+  g_signal_emit (surface, signals[COMPUTE_SIZE], 0, size);
+}
+
 static gboolean
 gdk_drag_surface_default_present (GdkDragSurface *drag_surface,
                                   int          width,
@@ -49,6 +65,37 @@ static void
 gdk_drag_surface_default_init (GdkDragSurfaceInterface *iface)
 {
   iface->present = gdk_drag_surface_default_present;
+
+  /**
+   * GdkDragSurface::compute-size:
+   * @surface: a `GdkDragSurface`
+   * @size: (type Gdk.DragSurfaceSize): the size of the drag surface
+   *
+   * Emitted when the size for the surface needs to be computed, when it is
+   * present.
+   *
+   * This signal will normally be emitted during the native surface layout
+   * cycle when the surface size needs to be recomputed.
+   *
+   * It is the responsibility of the drag surface user to handle this signal
+   * and compute the desired size of the surface, storing the computed size
+   * in the [struct@Gdk.DragSurfaceSize] object that is passed to the signal
+   * handler, using [method@Gdk.DragSurfaceSize.set_size].
+   *
+   * Failing to set a size so will result in an arbitrary size being used as
+   * a result.
+   *
+   * Since: 4.12
+   */
+  signals[COMPUTE_SIZE] =
+    g_signal_new (I_("compute-size"),
+                  GDK_TYPE_DRAG_SURFACE,
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_NONE, 1,
+                  GDK_TYPE_DRAG_SURFACE_SIZE);
 }
 
 /**
@@ -63,8 +110,8 @@ gdk_drag_surface_default_init (GdkDragSurfaceInterface *iface)
  */
 gboolean
 gdk_drag_surface_present (GdkDragSurface *drag_surface,
-                          int          width,
-                          int          height)
+                          int             width,
+                          int             height)
 {
   g_return_val_if_fail (GDK_IS_DRAG_SURFACE (drag_surface), FALSE);
   g_return_val_if_fail (width > 0, FALSE);

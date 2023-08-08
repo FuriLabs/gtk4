@@ -16,15 +16,13 @@
  *
  */
 
-#ifndef __GDK_TOPLEVEL_SIZE_H__
-#define __GDK_TOPLEVEL_SIZE_H__
+#pragma once
 
 #if !defined(__GDK_H_INSIDE__) && !defined(GTK_COMPILATION)
 #error "Only <gdk/gdk.h> can be included directly."
 #endif
 
 #include <gdk/gdktypes.h>
-#include <gdk/gdkversionmacros.h>
 
 G_BEGIN_DECLS
 
@@ -58,4 +56,3 @@ void                    gdk_toplevel_size_set_shadow_width (GdkToplevelSize    *
 
 G_END_DECLS
 
-#endif /* __GDK_TOPLEVEL_SIZE_H__ */

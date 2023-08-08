@@ -18,8 +18,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GDK_VULKAN_CONTEXT_PRIVATE__
-#define __GDK_VULKAN_CONTEXT_PRIVATE__
+#pragma once
 
 #include "gdkvulkancontext.h"
 
@@ -70,9 +69,18 @@ gdk_vulkan_handle_result (VkResult    res,
 
 #define GDK_VK_CHECK(func, ...) gdk_vulkan_handle_result (func (__VA_ARGS__), G_STRINGIFY (func))
 
-gboolean        gdk_display_ref_vulkan                          (GdkDisplay      *display,
-                                                                 GError         **error);
-void            gdk_display_unref_vulkan                        (GdkDisplay      *display);
+gboolean                gdk_display_ref_vulkan                          (GdkDisplay            *display,
+                                                                         GError               **error);
+void                    gdk_display_unref_vulkan                        (GdkDisplay            *display);
+
+VkShaderModule          gdk_display_get_vk_shader_module                (GdkDisplay            *display,
+                                                                         const char            *resource_name);
+
+VkPipelineCache         gdk_vulkan_context_get_pipeline_cache           (GdkVulkanContext      *self);
+void                    gdk_vulkan_context_pipeline_cache_updated       (GdkVulkanContext      *self);
+
+GdkMemoryFormat         gdk_vulkan_context_get_offscreen_format         (GdkVulkanContext      *context,
+                                                                         GdkMemoryDepth         depth);
 
 #else /* !GDK_RENDERING_VULKAN */
 
@@ -92,4 +100,3 @@ gdk_display_ref_vulkan (GdkDisplay  *display,
 
 G_END_DECLS
 
-#endif /* __GDK__VULKAN_CONTEXT_PRIVATE__ */

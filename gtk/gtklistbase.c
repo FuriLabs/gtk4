@@ -34,6 +34,7 @@
 #include "gtkmultiselection.h"
 #include "gtkorientable.h"
 #include "gtkscrollable.h"
+#include "gtkscrollinfoprivate.h"
 #include "gtksingleselection.h"
 #include "gtksnapshot.h"
 #include "gtktypebuiltins.h"
@@ -68,6 +69,7 @@ struct _GtkListBasePrivate
   GtkOrientation orientation;
   GtkAdjustment *adjustment[2];
   GtkScrollablePolicy scroll_policy[2];
+  GtkListTabBehavior tab_behavior;
 
   GtkListItemTracker *anchor;
   double anchor_align_along;
@@ -368,7 +370,7 @@ gtk_list_base_get_allocation (GtkListBase  *self,
  * selections, both when clicking rows with the mouse or when using
  * the keyboard.
  **/
-void
+static void
 gtk_list_base_select_item (GtkListBase *self,
                            guint        pos,
                            gboolean     modify,
@@ -446,6 +448,76 @@ gtk_list_base_select_item (GtkListBase *self,
                                       0, 0);
 }
 
+/*
+ * gtk_list_base_grab_focus_on_item:
+ * @self: a `GtkListBase`
+ * @pos: position of the item to focus
+ * @select: %TRUE to select the item
+ * @modify: if selecting, %TRUE to modify the selected
+ *   state, %FALSE to always select
+ * @extend: if selecting, %TRUE to extend the selection,
+ *   %FALSE to only operate on this item
+ *
+ * Tries to grab focus on the given item. If there is no item
+ * at this position or grabbing focus failed, %FALSE will be
+ * returned.
+ *
+ * Returns: %TRUE if focusing the item succeeded
+ **/
+static gboolean
+gtk_list_base_grab_focus_on_item (GtkListBase *self,
+                                  guint        pos,
+                                  gboolean     select,
+                                  gboolean     modify,
+                                  gboolean     extend)
+{
+  GtkListBasePrivate *priv = gtk_list_base_get_instance_private (self);
+  GtkListTile *tile;
+  gboolean success;
+
+  tile = gtk_list_item_manager_get_nth (priv->item_manager, pos, NULL);
+  if (tile == NULL)
+    return FALSE;
+
+  if (!tile->widget)
+    {
+      GtkListItemTracker *tracker = gtk_list_item_tracker_new (priv->item_manager);
+
+      /* We need a tracker here to create the widget.
+       * That needs to have happened or we can't grab it.
+       * And we can't use a different tracker, because they manage important rows,
+       * so we create a temporary one. */
+      gtk_list_item_tracker_set_position (priv->item_manager, tracker, pos, 0, 0);
+
+      tile = gtk_list_item_manager_get_nth (priv->item_manager, pos, NULL);
+      g_assert (tile->widget);
+
+      success = gtk_widget_grab_focus (tile->widget);
+
+      gtk_list_item_tracker_free (priv->item_manager, tracker);
+    }
+  else
+    {
+      success = gtk_widget_grab_focus (tile->widget);
+    }
+
+  if (!success)
+    return FALSE;
+
+  if (select)
+    {
+      tile = gtk_list_item_manager_get_nth (priv->item_manager, pos, NULL);
+
+      /* We do this convoluted calling into the widget because that way
+       * GtkListItem::selectable gets respected, which is what one would expect.
+       */
+      g_assert (tile->widget);
+      gtk_widget_activate_action (tile->widget, "listitem.select", "(bb)", modify, extend);
+    }
+
+  return TRUE;
+}
+
 guint
 gtk_list_base_get_n_items (GtkListBase *self)
 {
@@ -457,7 +529,7 @@ gtk_list_base_get_n_items (GtkListBase *self)
   return g_list_model_get_n_items (G_LIST_MODEL (priv->model));
 }
 
-guint
+static guint
 gtk_list_base_get_focus_position (GtkListBase *self)
 {
   GtkListBasePrivate *priv = gtk_list_base_get_instance_private (self);
@@ -497,21 +569,42 @@ gtk_list_base_focus (GtkWidget        *widget,
        * while keeping the selection intact.
        */
       old = GTK_INVALID_LIST_POSITION;
+      if (priv->tab_behavior == GTK_LIST_TAB_ALL)
+        {
+          if (direction == GTK_DIR_TAB_FORWARD)
+            pos = 0;
+          else if (direction == GTK_DIR_TAB_BACKWARD)
+            pos = n_items - 1;
+        }
     }
   else
     {
       switch (direction)
         {
         case GTK_DIR_TAB_FORWARD:
-          pos++;
-          if (pos >= n_items)
-            return FALSE;
+          if (priv->tab_behavior == GTK_LIST_TAB_ALL)
+            {
+              pos++;
+              if (pos >= n_items)
+                return FALSE;
+            }
+          else
+            {
+              return FALSE;
+            }
           break;
 
         case GTK_DIR_TAB_BACKWARD:
-          if (pos == 0)
-            return FALSE;
-          pos--;
+          if (priv->tab_behavior == GTK_LIST_TAB_ALL)
+            {
+              if (pos == 0)
+                return FALSE;
+              pos--;
+            }
+          else
+            {
+              return FALSE;
+            }
           break;
 
         case GTK_DIR_UP:
@@ -726,23 +819,19 @@ gtk_list_base_set_property (GObject      *object,
 }
 
 static void
-gtk_list_base_compute_scroll_align (GtkListBase   *self,
-                                    GtkOrientation orientation,
-                                    int            cell_start,
-                                    int            cell_end,
+gtk_list_base_compute_scroll_align (int            cell_start,
+                                    int            cell_size,
+                                    int            visible_start,
+                                    int            visible_size,
                                     double         current_align,
                                     GtkPackType    current_side,
                                     double        *new_align,
                                     GtkPackType   *new_side)
 {
-  int visible_start, visible_size, visible_end;
-  int cell_size;
+  int cell_end, visible_end;
 
-  gtk_list_base_get_adjustment_values (GTK_LIST_BASE (self),
-                                       orientation,
-                                       &visible_start, NULL, &visible_size);
   visible_end = visible_start + visible_size;
-  cell_size = cell_end - cell_start;
+  cell_end = cell_start + cell_size;
 
   if (cell_size <= visible_size)
     {
@@ -786,26 +875,38 @@ gtk_list_base_compute_scroll_align (GtkListBase   *self,
 }
 
 static void
-gtk_list_base_scroll_to_item (GtkListBase *self,
-                              guint        pos)
+gtk_list_base_scroll_to_item (GtkListBase   *self,
+                              guint          pos,
+                              GtkScrollInfo *scroll)
 {
   GtkListBasePrivate *priv = gtk_list_base_get_instance_private (self);
   double align_along, align_across;
   GtkPackType side_along, side_across;
-  GdkRectangle area;
+  GdkRectangle area, viewport;
+  int x, y;
 
   if (!gtk_list_base_get_allocation (GTK_LIST_BASE (self), pos, &area))
-    return;
+    {
+      g_clear_pointer (&scroll, gtk_scroll_info_unref);
+      return;
+    }
 
-  gtk_list_base_compute_scroll_align (self,
-                                      gtk_list_base_get_orientation (GTK_LIST_BASE (self)),
-                                      area.y, area.y + area.height,
+  gtk_list_base_get_adjustment_values (GTK_LIST_BASE (self),
+                                       gtk_list_base_get_orientation (GTK_LIST_BASE (self)),
+                                       &viewport.y, NULL, &viewport.height);
+  gtk_list_base_get_adjustment_values (GTK_LIST_BASE (self),
+                                       gtk_list_base_get_opposite_orientation (GTK_LIST_BASE (self)),
+                                       &viewport.x, NULL, &viewport.width);
+
+  gtk_scroll_info_compute_scroll (scroll, &area, &viewport, &x, &y);
+
+  gtk_list_base_compute_scroll_align (area.y, area.height,
+                                      y, viewport.height,
                                       priv->anchor_align_along, priv->anchor_side_along,
                                       &align_along, &side_along);
 
-  gtk_list_base_compute_scroll_align (self,
-                                      gtk_list_base_get_opposite_orientation (GTK_LIST_BASE (self)),
-                                      area.x, area.x + area.width,
+  gtk_list_base_compute_scroll_align (area.x, area.width,
+                                      x, viewport.width,
                                       priv->anchor_align_across, priv->anchor_side_across,
                                       &align_across, &side_across);
 
@@ -813,6 +914,8 @@ gtk_list_base_scroll_to_item (GtkListBase *self,
                             pos,
                             align_across, side_across,
                             align_along, side_along);
+
+  g_clear_pointer (&scroll, gtk_scroll_info_unref);
 }
 
 static void
@@ -828,7 +931,7 @@ gtk_list_base_scroll_to_item_action (GtkWidget  *widget,
 
   g_variant_get (parameter, "u", &pos);
 
-  gtk_list_base_scroll_to_item (self, pos);
+  gtk_list_base_scroll_to_item (self, pos, NULL);
 }
 
 static void
@@ -841,14 +944,14 @@ gtk_list_base_set_focus_child (GtkWidget *widget,
 
   GTK_WIDGET_CLASS (gtk_list_base_parent_class)->set_focus_child (widget, child);
 
-  if (!GTK_IS_LIST_ITEM_WIDGET (child))
+  if (!GTK_IS_LIST_ITEM_BASE (child))
     return;
 
-  pos = gtk_list_item_widget_get_position (GTK_LIST_ITEM_WIDGET (child));
+  pos = gtk_list_item_base_get_position (GTK_LIST_ITEM_BASE (child));
 
   if (pos != gtk_list_item_tracker_get_position (priv->item_manager, priv->focus))
     {
-      gtk_list_base_scroll_to_item (self, pos);
+      gtk_list_base_scroll_to_item (self, pos, NULL);
       gtk_list_item_tracker_set_position (priv->item_manager,
                                           priv->focus,
                                           pos,
@@ -1036,15 +1139,16 @@ gtk_list_base_move_cursor (GtkWidget *widget,
   GtkListBase *self = GTK_LIST_BASE (widget);
   int amount;
   guint orientation;
-  guint pos;
+  guint old_pos, new_pos;
   gboolean select, modify, extend;
 
   g_variant_get (args, "(ubbbi)", &orientation, &select, &modify, &extend, &amount);
 
-  pos = gtk_list_base_get_focus_position (self);
-  pos = gtk_list_base_move_focus (self, pos, orientation, amount);
+  old_pos = gtk_list_base_get_focus_position (self);
+  new_pos = gtk_list_base_move_focus (self, old_pos, orientation, amount);
 
-  gtk_list_base_grab_focus_on_item (GTK_LIST_BASE (self), pos, select, modify, extend);
+  if (old_pos != new_pos)
+    gtk_list_base_grab_focus_on_item (GTK_LIST_BASE (self), new_pos, select, modify, extend);
 
   return TRUE;
 }
@@ -1858,11 +1962,31 @@ gtk_list_base_drag_leave (GtkDropControllerMotion *motion,
 }
 
 static GtkListTile *
-gtk_list_base_split_func (gpointer     data,
+gtk_list_base_split_func (GtkWidget   *widget,
                           GtkListTile *tile,
                           guint        n_items)
 {
-  return GTK_LIST_BASE_GET_CLASS (data)->split (data, tile, n_items);
+  return GTK_LIST_BASE_GET_CLASS (widget)->split (GTK_LIST_BASE (widget), tile, n_items);
+}
+
+static GtkListItemBase *
+gtk_list_base_create_list_widget_func (GtkWidget *widget)
+{
+  return GTK_LIST_BASE_GET_CLASS (widget)->create_list_widget (GTK_LIST_BASE (widget));
+}
+
+static void
+gtk_list_base_prepare_section_func (GtkWidget   *widget,
+                                    GtkListTile *tile,
+                                    guint        pos)
+{
+  GTK_LIST_BASE_GET_CLASS (widget)->prepare_section (GTK_LIST_BASE (widget), tile, pos);
+}
+
+static GtkListHeaderBase *
+gtk_list_base_create_header_widget_func (GtkWidget *widget)
+{
+  return GTK_LIST_BASE_GET_CLASS (widget)->create_header_widget (GTK_LIST_BASE (widget));
 }
 
 static void
@@ -1873,10 +1997,10 @@ gtk_list_base_init_real (GtkListBase      *self,
   GtkEventController *controller;
 
   priv->item_manager = gtk_list_item_manager_new (GTK_WIDGET (self),
-                                                  g_class->list_item_name,
-                                                  g_class->list_item_role,
                                                   gtk_list_base_split_func,
-                                                  self);
+                                                  gtk_list_base_create_list_widget_func,
+                                                  gtk_list_base_prepare_section_func,
+                                                  gtk_list_base_create_header_widget_func);
   priv->anchor = gtk_list_item_tracker_new (priv->item_manager);
   priv->anchor_side_along = GTK_PACK_START;
   priv->anchor_side_across = GTK_PACK_START;
@@ -1888,6 +2012,7 @@ gtk_list_base_init_real (GtkListBase      *self,
   priv->adjustment[GTK_ORIENTATION_VERTICAL] = gtk_adjustment_new (0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   g_object_ref_sink (priv->adjustment[GTK_ORIENTATION_VERTICAL]);
 
+  priv->tab_behavior = GTK_LIST_TAB_ALL;
   priv->orientation = GTK_ORIENTATION_VERTICAL;
 
   gtk_widget_set_overflow (GTK_WIDGET (self), GTK_OVERFLOW_HIDDEN);
@@ -2135,7 +2260,7 @@ gtk_list_base_set_anchor (GtkListBase *self,
  * in front of it.
  *
  * Addditionally, there will be @above_below widgets allocated both
- * before and after the sencter widgets, so the total number of
+ * before and after the center widgets, so the total number of
  * widgets kept alive is 2 * above_below + center + 1.
  **/
 void
@@ -2154,68 +2279,6 @@ gtk_list_base_set_anchor_max_widgets (GtkListBase *self,
                             priv->anchor_side_across,
                             priv->anchor_align_along,
                             priv->anchor_side_along);
-}
-
-/*
- * gtk_list_base_grab_focus_on_item:
- * @self: a `GtkListBase`
- * @pos: position of the item to focus
- * @select: %TRUE to select the item
- * @modify: if selecting, %TRUE to modify the selected
- *   state, %FALSE to always select
- * @extend: if selecting, %TRUE to extend the selection,
- *   %FALSE to only operate on this item
- *
- * Tries to grab focus on the given item. If there is no item
- * at this position or grabbing focus failed, %FALSE will be
- * returned.
- *
- * Returns: %TRUE if focusing the item succeeded
- **/
-gboolean
-gtk_list_base_grab_focus_on_item (GtkListBase *self,
-                                  guint        pos,
-                                  gboolean     select,
-                                  gboolean     modify,
-                                  gboolean     extend)
-{
-  GtkListBasePrivate *priv = gtk_list_base_get_instance_private (self);
-  GtkListTile *tile;
-  gboolean success;
-
-  tile = gtk_list_item_manager_get_nth (priv->item_manager, pos, NULL);
-  if (tile == NULL)
-    return FALSE;
-
-  if (!tile->widget)
-    {
-      GtkListItemTracker *tracker = gtk_list_item_tracker_new (priv->item_manager);
-
-      /* We need a tracker here to create the widget.
-       * That needs to have happened or we can't grab it.
-       * And we can't use a different tracker, because they manage important rows,
-       * so we create a temporary one. */
-      gtk_list_item_tracker_set_position (priv->item_manager, tracker, pos, 0, 0);
-
-      tile = gtk_list_item_manager_get_nth (priv->item_manager, pos, NULL);
-      g_assert (tile->widget);
-
-      success = gtk_widget_grab_focus (tile->widget);
-
-      gtk_list_item_tracker_free (priv->item_manager, tracker);
-    }
-  else
-    {
-      success = gtk_widget_grab_focus (tile->widget);
-    }
-
-  if (!success)
-    return FALSE;
-
-  if (select)
-    gtk_list_base_select_item (self, pos, modify, extend);
-
-  return TRUE;
 }
 
 GtkSelectionModel *
@@ -2250,3 +2313,60 @@ gtk_list_base_set_model (GtkListBase       *self,
 
   return TRUE;
 }
+
+void
+gtk_list_base_set_tab_behavior (GtkListBase        *self,
+                                GtkListTabBehavior  behavior)
+{
+  GtkListBasePrivate *priv = gtk_list_base_get_instance_private (self);
+
+  priv->tab_behavior = behavior;
+}
+
+GtkListTabBehavior
+gtk_list_base_get_tab_behavior (GtkListBase *self)
+{
+  GtkListBasePrivate *priv = gtk_list_base_get_instance_private (self);
+
+  return priv->tab_behavior;
+}
+
+void
+gtk_list_base_scroll_to (GtkListBase        *self,
+                         guint               pos,
+                         GtkListScrollFlags  flags,
+                         GtkScrollInfo      *scroll)
+{
+  GtkListBasePrivate *priv = gtk_list_base_get_instance_private (self);
+
+  if (flags & GTK_LIST_SCROLL_FOCUS)
+    {
+      GtkListItemTracker *old_focus;
+
+      /* We need a tracker here to keep the focus widget around,
+       * because we need to update the focus tracker before grabbing
+       * focus, because otherwise gtk_list_base_set_focus_child() will
+       * scroll to the item, and we want to avoid that.
+       */
+      old_focus = gtk_list_item_tracker_new (priv->item_manager);
+      gtk_list_item_tracker_set_position (priv->item_manager, old_focus, gtk_list_base_get_focus_position (self), 0, 0);
+
+      gtk_list_item_tracker_set_position (priv->item_manager, priv->focus, pos, 0, 0);
+
+      /* XXX: Is this the proper check? */
+      if (gtk_widget_get_state_flags (GTK_WIDGET (self)) & GTK_STATE_FLAG_FOCUS_WITHIN)
+        {
+          GtkListTile *tile = gtk_list_item_manager_get_nth (priv->item_manager, pos, NULL);
+
+          gtk_widget_grab_focus (tile->widget);
+        }
+
+      gtk_list_item_tracker_free (priv->item_manager, old_focus);
+    }
+
+  if (flags & GTK_LIST_SCROLL_SELECT)
+    gtk_list_base_select_item (self, pos, FALSE, FALSE);
+
+  gtk_list_base_scroll_to_item (self, pos, scroll);
+}
+

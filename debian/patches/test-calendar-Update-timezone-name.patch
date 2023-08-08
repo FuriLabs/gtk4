@@ -1,0 +1,25 @@
+From: =?utf-8?q?Jeremy_B=C3=ADcha?= <jeremy.bicha@canonical.com>
+Date: Tue, 8 Aug 2023 09:47:14 -0400
+Subject: test-calendar: Update timezone name
+
+Debian no longer provides the MET timezone
+but instead provides geographical region and city name
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/6258
+---
+ testsuite/gtk/calendar.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/testsuite/gtk/calendar.c b/testsuite/gtk/calendar.c
+index 4e76c71..809260d 100644
+--- a/testsuite/gtk/calendar.c
++++ b/testsuite/gtk/calendar.c
+@@ -10,7 +10,7 @@ test_calendar_set_day (void)
+ 
+   cal = gtk_calendar_new ();
+ 
+-  tz = g_time_zone_new_identifier ("MET");
++  tz = g_time_zone_new_identifier ("Europe/Brussels");
+   g_assert_nonnull (tz);
+   dt = g_date_time_new (tz, 1970, 3, 1, 0, 0, 0);
+   g_assert_nonnull (dt);

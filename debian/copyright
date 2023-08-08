@@ -9,7 +9,6 @@ Files-Excluded:
  docs/reference/gsk/gsk4
  docs/reference/gtk/gtk4
  gtk/theme/Default/Default-*.css
- subprojects/gi-docgen
 
 Files: *
 Copyright:

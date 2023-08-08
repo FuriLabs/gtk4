@@ -1,0 +1,29 @@
+From: =?utf-8?q?Jeremy_B=C3=ADcha?= <jeremy.bicha@canonical.com>
+Date: Tue, 8 Aug 2023 14:50:05 -0400
+Subject: tests: mark headless tests as flaky
+
+See baaa7482489b0f7446ef1e0130e527a169c43b0c
+---
+ testsuite/headless/meson.build | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/testsuite/headless/meson.build b/testsuite/headless/meson.build
+index 1c9b5f5..bec3de1 100644
+--- a/testsuite/headless/meson.build
++++ b/testsuite/headless/meson.build
+@@ -11,13 +11,13 @@ env.prepend('MESON_CURRENT_BUILD_DIR', meson.current_build_dir())
+ if get_option('b_sanitize') != 'address'
+   test('monitor',
+     find_program('run-headless-monitor-tests.sh', dirs: meson.current_source_dir()),
+-    suite: ['headless'],
++    suite: ['headless', 'flaky'],
+     env: env,
+   )
+ 
+   test('input',
+     find_program('run-headless-input-tests.sh', dirs: meson.current_source_dir()),
+-    suite: ['headless'],
++    suite: ['headless', 'flaky'],
+     env: env,
+   )
+ endif

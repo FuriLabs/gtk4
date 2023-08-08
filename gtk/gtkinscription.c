@@ -43,7 +43,7 @@
  * space as well as it can.
  *
  * Users of this widget should take care to plan behaviour for the common case
- * where the text doesn't fit exactly in the allocated space, .
+ * where the text doesn't fit exactly in the allocated space.
  *
  * Since: 4.8
  */
@@ -245,11 +245,11 @@ update_pango_alignment (GtkInscription *self)
   ltr = _gtk_widget_get_direction (GTK_WIDGET (self)) != GTK_TEXT_DIR_RTL;
 
   if (self->xalign < 0.33)
-      align = ltr ? PANGO_ALIGN_LEFT : PANGO_ALIGN_RIGHT;
+    align = ltr ? PANGO_ALIGN_LEFT : PANGO_ALIGN_RIGHT;
   else if (self->xalign < 0.67)
-      align = PANGO_ALIGN_CENTER;
+    align = PANGO_ALIGN_CENTER;
   else
-      align = ltr ? PANGO_ALIGN_RIGHT : PANGO_ALIGN_LEFT;
+    align = ltr ? PANGO_ALIGN_RIGHT : PANGO_ALIGN_LEFT;
 
   pango_layout_set_alignment (self->layout, align);
 }
@@ -432,7 +432,7 @@ gtk_inscription_get_layout_location (GtkInscription *self,
   else
     x = floor ((xalign * (widget_width - logical.width)) - logical.x);
 
-  baseline = gtk_widget_get_allocated_baseline (widget);
+  baseline = gtk_widget_get_baseline (widget);
   if (baseline != -1)
     {
       int layout_baseline = pango_layout_get_baseline (self->layout) / PANGO_SCALE;
@@ -796,11 +796,6 @@ gtk_inscription_set_text (GtkInscription *self,
 
   g_free (self->text);
   self->text = g_strdup (text);
-
-  gtk_accessible_update_property (GTK_ACCESSIBLE (self),
-                                 GTK_ACCESSIBLE_PROPERTY_LABEL, self->text,
-                                 -1);
-
 
   pango_layout_set_text (self->layout,
                          self->text ? self->text : "",

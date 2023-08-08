@@ -31,7 +31,12 @@ gtk_tools = [
                          'gtk-builder-tool-screenshot.c',
                          'gtk-builder-tool-preview.c',
                          'fake-scope.c'], [libgtk_dep] ],
-  ['gtk4-update-icon-cache', ['updateiconcache.c'] + extra_update_icon_cache_objs, [ libgtk_static_dep ] ],
+  ['gtk4-rendernode-tool', ['gtk-rendernode-tool.c',
+                        'gtk-rendernode-tool-info.c',
+                        'gtk-rendernode-tool-render.c',
+                        'gtk-rendernode-tool-show.c',
+                        'gtk-rendernode-tool-utils.c'], [libgtk_dep] ],
+  ['gtk4-update-icon-cache', ['updateiconcache.c', '../gtk/gtkiconcachevalidator.c' ] + extra_update_icon_cache_objs, [ libgtk_dep ] ],
   ['gtk4-encode-symbolic-svg', ['encodesymbolic.c'], [ libgtk_static_dep ] ],
 ]
 
@@ -47,7 +52,7 @@ foreach tool: gtk_tools
   exe = executable(tool_name,
     sources: tool_srcs,
     include_directories: [confinc],
-    c_args: common_cflags,
+    c_args: common_cflags + [ '-DBUILD_TOOLS' ],
     dependencies: tool_deps,
     install: true,
   )

@@ -21,26 +21,24 @@
 
 #include "gtkcolumnviewprivate.h"
 
+#include "gtkadjustment.h"
 #include "gtkboxlayout.h"
 #include "gtkbuildable.h"
-#include "gtkcolumnlistitemfactoryprivate.h"
 #include "gtkcolumnviewcolumnprivate.h"
-#include "gtkcolumnviewlayoutprivate.h"
 #include "gtkcolumnviewsorterprivate.h"
 #include "gtkcssnodeprivate.h"
-#include "gtkdropcontrollermotion.h"
-#include "gtklistviewprivate.h"
-#include "gtkmain.h"
-#include "gtkprivate.h"
-#include "gtkscrollable.h"
-#include "gtkwidgetprivate.h"
-#include "gtksizerequest.h"
-#include "gtkadjustment.h"
-#include "gtkgesturedrag.h"
-#include "gtkeventcontrollermotion.h"
 #include "gtkdragsourceprivate.h"
+#include "gtkdropcontrollermotion.h"
 #include "gtkeventcontrollerkey.h"
+#include "gtkeventcontrollermotion.h"
 #include "gtkgestureclick.h"
+#include "gtkgesturedrag.h"
+#include "gtklistviewprivate.h"
+#include "gtkscrollable.h"
+#include "gtkscrollinfoprivate.h"
+#include "gtksizerequest.h"
+#include "gtktypebuiltins.h"
+#include "gtkwidgetprivate.h"
 
 /**
  * GtkColumnView:
@@ -116,50 +114,17 @@
  * some parameters for item creation.
  */
 
-#define GTK_TYPE_COLUMN_LIST_VIEW (gtk_column_list_view_get_type ())
-G_DECLARE_FINAL_TYPE (GtkColumnListView, gtk_column_list_view, GTK, COLUMN_LIST_VIEW, GtkListView)
-
-struct _GtkColumnListView
-{
-  GtkListView parent_instance;
-};
-
-struct _GtkColumnListViewClass
-{
-  GtkListViewClass parent_class;
-};
-
-G_DEFINE_TYPE (GtkColumnListView, gtk_column_list_view, GTK_TYPE_LIST_VIEW)
-
-static void
-gtk_column_list_view_init (GtkColumnListView *view)
-{
-}
-
-static void
-gtk_column_list_view_class_init (GtkColumnListViewClass *klass)
-{
-  GtkListBaseClass *list_base_class = GTK_LIST_BASE_CLASS (klass);
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
-
-  list_base_class->list_item_name = "row";
-  list_base_class->list_item_role = GTK_ACCESSIBLE_ROLE_ROW;
-
-  gtk_widget_class_set_css_name (widget_class, I_("listview"));
-  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_LIST);
-}
-
-
 struct _GtkColumnView
 {
   GtkWidget parent_instance;
 
   GListStore *columns;
 
+  GtkColumnViewColumn *focus_column;
+
   GtkWidget *header;
 
   GtkListView *listview;
-  GtkColumnListItemFactory *factory;
 
   GtkSorter *sorter;
 
@@ -187,21 +152,87 @@ struct _GtkColumnViewClass
   GtkWidgetClass parent_class;
 };
 
+
+#define GTK_TYPE_COLUMN_LIST_VIEW (gtk_column_list_view_get_type ())
+G_DECLARE_FINAL_TYPE (GtkColumnListView, gtk_column_list_view, GTK, COLUMN_LIST_VIEW, GtkListView)
+
+struct _GtkColumnListView
+{
+  GtkListView parent_instance;
+};
+
+struct _GtkColumnListViewClass
+{
+  GtkListViewClass parent_class;
+};
+
+G_DEFINE_TYPE (GtkColumnListView, gtk_column_list_view, GTK_TYPE_LIST_VIEW)
+
+static void
+gtk_column_list_view_init (GtkColumnListView *view)
+{
+}
+
+static GtkListItemBase *
+gtk_column_list_view_create_list_widget (GtkListBase *base)
+{
+  GtkColumnView *self = GTK_COLUMN_VIEW (gtk_widget_get_parent (GTK_WIDGET (base)));
+  GtkWidget *result;
+  guint i;
+
+  result = gtk_column_view_row_widget_new (gtk_list_view_get_factory (self->listview), FALSE);
+
+  gtk_list_factory_widget_set_single_click_activate (GTK_LIST_FACTORY_WIDGET (result), GTK_LIST_VIEW (base)->single_click_activate);
+
+  for (i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->columns)); i++)
+    {
+      GtkColumnViewColumn *column = g_list_model_get_item (G_LIST_MODEL (self->columns), i);
+
+      if (gtk_column_view_column_get_visible (column))
+        {
+          GtkWidget *cell;
+
+          cell = gtk_column_view_cell_widget_new (column, gtk_column_view_is_inert (self));
+          gtk_column_view_row_widget_add_child (GTK_COLUMN_VIEW_ROW_WIDGET (result), cell);
+        }
+
+      g_object_unref (column);
+    }
+
+  return GTK_LIST_ITEM_BASE (result);
+}
+
+static void
+gtk_column_list_view_class_init (GtkColumnListViewClass *klass)
+{
+  GtkListBaseClass *list_base_class = GTK_LIST_BASE_CLASS (klass);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+
+  list_base_class->create_list_widget = gtk_column_list_view_create_list_widget;
+
+  gtk_widget_class_set_css_name (widget_class, I_("listview"));
+  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_LIST);
+}
+
+
 enum
 {
   PROP_0,
   PROP_COLUMNS,
+  PROP_ENABLE_RUBBERBAND,
   PROP_HADJUSTMENT,
+  PROP_HEADER_FACTORY,
   PROP_HSCROLL_POLICY,
   PROP_MODEL,
+  PROP_REORDERABLE,
+  PROP_ROW_FACTORY,
   PROP_SHOW_ROW_SEPARATORS,
   PROP_SHOW_COLUMN_SEPARATORS,
+  PROP_SINGLE_CLICK_ACTIVATE,
   PROP_SORTER,
+  PROP_TAB_BEHAVIOR,
   PROP_VADJUSTMENT,
   PROP_VSCROLL_POLICY,
-  PROP_SINGLE_CLICK_ACTIVATE,
-  PROP_REORDERABLE,
-  PROP_ENABLE_RUBBERBAND,
 
   N_PROPS
 };
@@ -268,6 +299,32 @@ G_DEFINE_TYPE_WITH_CODE (GtkColumnView, gtk_column_view, GTK_TYPE_WIDGET,
 
 static GParamSpec *properties[N_PROPS] = { NULL, };
 static guint signals[LAST_SIGNAL] = { 0 };
+
+gboolean
+gtk_column_view_is_inert (GtkColumnView *self)
+{
+  GtkWidget *widget = GTK_WIDGET (self);
+
+  return !gtk_widget_get_visible (widget) ||
+         gtk_widget_get_root (widget) == NULL;
+}
+
+static void
+gtk_column_view_update_cell_factories (GtkColumnView *self,
+                                       gboolean       inert)
+{
+  guint i, n;
+
+  n = g_list_model_get_n_items (G_LIST_MODEL (self->columns));
+
+  for (i = 0; i < n; i++)
+    {
+      GtkColumnViewColumn *column = g_list_model_get_item (G_LIST_MODEL (self->columns), i);
+
+      gtk_column_view_column_update_factory (column, inert);
+      g_object_unref (column);
+    }
+}
 
 static void
 gtk_column_view_measure (GtkWidget      *widget,
@@ -448,6 +505,50 @@ gtk_column_view_allocate (GtkWidget *widget,
 }
 
 static void
+gtk_column_view_root (GtkWidget *widget)
+{
+  GtkColumnView *self = GTK_COLUMN_VIEW (widget);
+
+  GTK_WIDGET_CLASS (gtk_column_view_parent_class)->root (widget);
+
+  if (!gtk_column_view_is_inert (self))
+    gtk_column_view_update_cell_factories (self, FALSE);
+}
+
+static void
+gtk_column_view_unroot (GtkWidget *widget)
+{
+  GtkColumnView *self = GTK_COLUMN_VIEW (widget);
+
+  if (!gtk_column_view_is_inert (self))
+    gtk_column_view_update_cell_factories (self, TRUE);
+
+  GTK_WIDGET_CLASS (gtk_column_view_parent_class)->unroot (widget);
+}
+
+static void
+gtk_column_view_show (GtkWidget *widget)
+{
+  GtkColumnView *self = GTK_COLUMN_VIEW (widget);
+
+  GTK_WIDGET_CLASS (gtk_column_view_parent_class)->show (widget);
+
+  if (!gtk_column_view_is_inert (self))
+    gtk_column_view_update_cell_factories (self, FALSE);
+}
+
+static void
+gtk_column_view_hide (GtkWidget *widget)
+{
+  GtkColumnView *self = GTK_COLUMN_VIEW (widget);
+
+  if (!gtk_column_view_is_inert (self))
+    gtk_column_view_update_cell_factories (self, TRUE);
+
+  GTK_WIDGET_CLASS (gtk_column_view_parent_class)->hide (widget);
+}
+
+static void
 gtk_column_view_activate_cb (GtkListView   *listview,
                              guint          pos,
                              GtkColumnView *self)
@@ -486,10 +587,11 @@ gtk_column_view_dispose (GObject *object)
       g_object_unref (column);
     }
 
+  g_assert (self->focus_column == NULL);
+
   g_clear_pointer (&self->header, gtk_widget_unparent);
 
   g_clear_pointer ((GtkWidget **) &self->listview, gtk_widget_unparent);
-  g_clear_object (&self->factory);
 
   g_clear_object (&self->sorter);
   clear_adjustment (self);
@@ -521,8 +623,16 @@ gtk_column_view_get_property (GObject    *object,
       g_value_set_object (value, self->columns);
       break;
 
+    case PROP_ENABLE_RUBBERBAND:
+      g_value_set_boolean (value, gtk_column_view_get_enable_rubberband (self));
+      break;
+
     case PROP_HADJUSTMENT:
       g_value_set_object (value, self->hadjustment);
+      break;
+
+    case PROP_HEADER_FACTORY:
+      g_value_set_object (value, gtk_column_view_get_header_factory (self));
       break;
 
     case PROP_HSCROLL_POLICY:
@@ -531,6 +641,14 @@ gtk_column_view_get_property (GObject    *object,
 
     case PROP_MODEL:
       g_value_set_object (value, gtk_list_view_get_model (self->listview));
+      break;
+
+    case PROP_REORDERABLE:
+      g_value_set_boolean (value, gtk_column_view_get_reorderable (self));
+      break;
+
+    case PROP_ROW_FACTORY:
+      g_value_set_object (value, gtk_column_view_get_row_factory (self));
       break;
 
     case PROP_SHOW_ROW_SEPARATORS:
@@ -557,12 +675,8 @@ gtk_column_view_get_property (GObject    *object,
       g_value_set_boolean (value, gtk_column_view_get_single_click_activate (self));
       break;
 
-    case PROP_REORDERABLE:
-      g_value_set_boolean (value, gtk_column_view_get_reorderable (self));
-      break;
-
-    case PROP_ENABLE_RUBBERBAND:
-      g_value_set_boolean (value, gtk_column_view_get_enable_rubberband (self));
+    case PROP_TAB_BEHAVIOR:
+      g_value_set_enum (value, gtk_list_view_get_tab_behavior (self->listview));
       break;
 
     default:
@@ -582,6 +696,10 @@ gtk_column_view_set_property (GObject      *object,
 
   switch (property_id)
     {
+    case PROP_ENABLE_RUBBERBAND:
+      gtk_column_view_set_enable_rubberband (self, g_value_get_boolean (value));
+      break;
+
     case PROP_HADJUSTMENT:
       adjustment = g_value_get_object (value);
       if (adjustment == NULL)
@@ -600,6 +718,10 @@ gtk_column_view_set_property (GObject      *object,
         }
       break;
 
+    case PROP_HEADER_FACTORY:
+      gtk_column_view_set_header_factory (self, g_value_get_object (value));
+      break;
+
     case PROP_HSCROLL_POLICY:
       if (gtk_scrollable_get_hscroll_policy (GTK_SCROLLABLE (self->listview)) != g_value_get_enum (value))
         {
@@ -610,6 +732,14 @@ gtk_column_view_set_property (GObject      *object,
 
     case PROP_MODEL:
       gtk_column_view_set_model (self, g_value_get_object (value));
+      break;
+
+    case PROP_REORDERABLE:
+      gtk_column_view_set_reorderable (self, g_value_get_boolean (value));
+      break;
+
+    case PROP_ROW_FACTORY:
+      gtk_column_view_set_row_factory (self, g_value_get_object (value));
       break;
 
     case PROP_SHOW_ROW_SEPARATORS:
@@ -640,12 +770,8 @@ gtk_column_view_set_property (GObject      *object,
       gtk_column_view_set_single_click_activate (self, g_value_get_boolean (value));
       break;
 
-    case PROP_REORDERABLE:
-      gtk_column_view_set_reorderable (self, g_value_get_boolean (value));
-      break;
-
-    case PROP_ENABLE_RUBBERBAND:
-      gtk_column_view_set_enable_rubberband (self, g_value_get_boolean (value));
+    case PROP_TAB_BEHAVIOR:
+      gtk_column_view_set_tab_behavior (self, g_value_get_enum (value));
       break;
 
     default:
@@ -665,6 +791,10 @@ gtk_column_view_class_init (GtkColumnViewClass *klass)
   widget_class->grab_focus = gtk_widget_grab_focus_child;
   widget_class->measure = gtk_column_view_measure;
   widget_class->size_allocate = gtk_column_view_allocate;
+  widget_class->root = gtk_column_view_root;
+  widget_class->unroot = gtk_column_view_unroot;
+  widget_class->show = gtk_column_view_show;
+  widget_class->hide = gtk_column_view_hide;
 
   gobject_class->dispose = gtk_column_view_dispose;
   gobject_class->finalize = gtk_column_view_finalize;
@@ -697,6 +827,16 @@ gtk_column_view_class_init (GtkColumnViewClass *klass)
                          G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   /**
+   * GtkColumnView:enable-rubberband: (attributes org.gtk.Property.get=gtk_column_view_get_enable_rubberband org.gtk.Property.set=gtk_column_view_set_enable_rubberband)
+   *
+   * Allow rubberband selection.
+   */
+  properties[PROP_ENABLE_RUBBERBAND] =
+    g_param_spec_boolean ("enable-rubberband", NULL, NULL,
+                          FALSE,
+                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
    * GtkColumnView:model: (attributes org.gtk.Property.get=gtk_column_view_get_model org.gtk.Property.set=gtk_column_view_set_model)
    *
    * Model for the items displayed.
@@ -704,6 +844,28 @@ gtk_column_view_class_init (GtkColumnViewClass *klass)
   properties[PROP_MODEL] =
     g_param_spec_object ("model", NULL, NULL,
                          GTK_TYPE_SELECTION_MODEL,
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * GtkColumnView:reorderable: (attributes org.gtk.Property.get=gtk_column_view_get_reorderable org.gtk.Property.set=gtk_column_view_set_reorderable)
+   *
+   * Whether columns are reorderable.
+   */
+  properties[PROP_REORDERABLE] =
+    g_param_spec_boolean ("reorderable", NULL, NULL,
+                          TRUE,
+                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * GtkColumnView:row-factory: (attributes org.gtk.Property.get=gtk_column_view_get_row_factory org.gtk.Property.set=gtk_column_view_set_row_factory)
+   *
+   * The factory used for configuring rows.
+   *
+   * Since: 4.12
+   */
+  properties[PROP_ROW_FACTORY] =
+    g_param_spec_object ("row-factory", NULL, NULL,
+                         GTK_TYPE_LIST_ITEM_FACTORY,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   /**
@@ -747,24 +909,29 @@ gtk_column_view_class_init (GtkColumnViewClass *klass)
                           G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
-   * GtkColumnView:reorderable: (attributes org.gtk.Property.get=gtk_column_view_get_reorderable org.gtk.Property.set=gtk_column_view_set_reorderable)
+   * GtkColumnView:tab-behavior: (attributes org.gtk.Property.get=gtk_column_view_get_tab_behavior org.gtk.Property.set=gtk_column_view_set_tab_behavior)
    *
-   * Whether columns are reorderable.
+   * Behavior of the <kbd>Tab</kbd> key
+   *
+   * Since: 4.12
    */
-  properties[PROP_REORDERABLE] =
-    g_param_spec_boolean ("reorderable", NULL, NULL,
-                          TRUE,
-                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+  properties[PROP_TAB_BEHAVIOR] =
+    g_param_spec_enum ("tab-behavior", NULL, NULL,
+                       GTK_TYPE_LIST_TAB_BEHAVIOR,
+                       GTK_LIST_TAB_ALL,
+                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
-   * GtkColumnView:enable-rubberband: (attributes org.gtk.Property.get=gtk_column_view_get_enable_rubberband org.gtk.Property.set=gtk_column_view_set_enable_rubberband)
+   * GtkColumnView:header-factory: (attributes org.gtk.Property.get=gtk_column_view_get_header_factory org.gtk.Property.set=gtk_column_view_set_header_factory)
    *
-   * Allow rubberband selection.
+   * Factory for creating header widgets.
+   *
+   * Since: 4.12
    */
-  properties[PROP_ENABLE_RUBBERBAND] =
-    g_param_spec_boolean ("enable-rubberband", NULL, NULL,
-                          FALSE,
-                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+  properties[PROP_HEADER_FACTORY] =
+    g_param_spec_object ("header-factory", NULL, NULL,
+                         GTK_TYPE_LIST_ITEM_FACTORY,
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (gobject_class, N_PROPS, properties);
 
@@ -852,16 +1019,19 @@ update_autoscroll (GtkColumnView *self,
 {
   double width;
   double delta;
-  double vx, vy;
+  graphene_point_t v;
 
   /* x is in header coordinates */
-  gtk_widget_translate_coordinates (self->header, GTK_WIDGET (self), x, 0, &vx, &vy);
+  if (!gtk_widget_compute_point (self->header, GTK_WIDGET (self),
+                                 &GRAPHENE_POINT_INIT (x, 0),
+                                 &v))
+    graphene_point_init (&v, 0, 0);
   width = gtk_widget_get_width (GTK_WIDGET (self));
 
-  if (vx < SCROLL_EDGE_SIZE)
-    delta = - (SCROLL_EDGE_SIZE - vx)/3.0;
-  else if (width - vx < SCROLL_EDGE_SIZE)
-    delta = (SCROLL_EDGE_SIZE - (width - vx))/3.0;
+  if (v.x < SCROLL_EDGE_SIZE)
+    delta = - (SCROLL_EDGE_SIZE - v.x)/3.0;
+  else if (width - v.x < SCROLL_EDGE_SIZE)
+    delta = (SCROLL_EDGE_SIZE - (width - v.x))/3.0;
   else
     delta = 0;
 
@@ -910,7 +1080,7 @@ gtk_column_view_in_header (GtkColumnView       *self,
   GtkWidget *header;
   graphene_rect_t rect;
 
-header = gtk_column_view_column_get_header (column);
+  header = gtk_column_view_column_get_header (column);
 
   if (!gtk_widget_compute_bounds (header, self->header, &rect))
     return FALSE;
@@ -1098,7 +1268,7 @@ update_column_reorder (GtkColumnView *self,
   int size;
 
   column = g_list_model_get_item (G_LIST_MODEL (self->columns), self->drag_pos);
-  width = gtk_widget_get_allocated_width (GTK_WIDGET (self->header));
+  width = gtk_widget_get_width (GTK_WIDGET (self->header));
   gtk_column_view_column_get_allocation (column, NULL, &size);
 
   self->drag_x = CLAMP (x - self->drag_offset, 0, width - size);
@@ -1252,10 +1422,12 @@ gtk_column_view_drag_motion (GtkDropControllerMotion *motion,
 {
   GtkWidget *widget = gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (motion));
   GtkColumnView *self = GTK_COLUMN_VIEW (widget);
-  double hx, hy;
+  graphene_point_t h;
 
-  gtk_widget_translate_coordinates (widget, self->header, x, 0, &hx, &hy);
-  update_autoscroll (GTK_COLUMN_VIEW (widget), hx);
+  if (!gtk_widget_compute_point (widget, self->header,
+                                 &GRAPHENE_POINT_INIT (x, 0), &h))
+    graphene_point_init (&h, 0, 0);
+  update_autoscroll (GTK_COLUMN_VIEW (widget), h.x);
 }
 
 static void
@@ -1274,9 +1446,8 @@ gtk_column_view_init (GtkColumnView *self)
 
   self->columns = g_list_store_new (GTK_TYPE_COLUMN_VIEW_COLUMN);
 
-  self->header = gtk_list_item_widget_new (NULL, "header", GTK_ACCESSIBLE_ROLE_ROW);
+  self->header = gtk_column_view_row_widget_new (NULL, TRUE);
   gtk_widget_set_can_focus (self->header, FALSE);
-  gtk_widget_set_layout_manager (self->header, gtk_column_view_layout_new (self));
   gtk_widget_set_parent (self->header, GTK_WIDGET (self));
 
   controller = GTK_EVENT_CONTROLLER (gtk_gesture_click_new ());
@@ -1306,9 +1477,7 @@ gtk_column_view_init (GtkColumnView *self)
   gtk_widget_add_controller (GTK_WIDGET (self), controller);
 
   self->sorter = GTK_SORTER (gtk_column_view_sorter_new ());
-  self->factory = gtk_column_list_item_factory_new (self);
   self->listview = GTK_LIST_VIEW (g_object_new (GTK_TYPE_COLUMN_LIST_VIEW, NULL));
-  gtk_list_view_set_factory (self->listview, GTK_LIST_ITEM_FACTORY (self->factory));
   gtk_widget_set_hexpand (GTK_WIDGET (self->listview), TRUE);
   gtk_widget_set_vexpand (GTK_WIDGET (self->listview), TRUE);
   g_signal_connect (self->listview, "activate", G_CALLBACK (gtk_column_view_activate_cb), self);
@@ -1542,6 +1711,20 @@ gtk_column_view_remove_column (GtkColumnView       *self,
   gtk_column_view_sorter_remove_column (GTK_COLUMN_VIEW_SORTER (self->sorter), column);
   gtk_column_view_column_set_column_view (column, NULL);
   g_list_store_remove (self->columns, i);
+
+  if (self->focus_column == column)
+    {
+      GtkColumnViewColumn *item;
+
+      if (i < g_list_model_get_n_items (G_LIST_MODEL (self->columns)))
+        item = g_list_model_get_item (G_LIST_MODEL (self->columns), i);
+      else if (i > 0)
+        item = g_list_model_get_item (G_LIST_MODEL (self->columns), i - 1);
+      else
+        item = NULL;
+
+      gtk_column_view_set_focus_column (self, item, TRUE);
+    }
 }
 
 /**
@@ -1598,6 +1781,47 @@ gtk_column_view_insert_column (GtkColumnView       *self,
   g_object_unref (column);
 }
 
+static void
+gtk_column_view_scroll_to_column (GtkColumnView       *self,
+                                  GtkColumnViewColumn *column,
+                                  GtkScrollInfo       *scroll_info)
+{
+  int col_x, col_width, new_value;
+
+  gtk_column_view_column_get_header_allocation (column, &col_x, &col_width);
+
+  new_value = gtk_scroll_info_compute_for_orientation (scroll_info,
+                                                       GTK_ORIENTATION_HORIZONTAL,
+                                                       col_x,
+                                                       col_width,
+                                                       gtk_adjustment_get_value (self->hadjustment),
+                                                       gtk_adjustment_get_page_size (self->hadjustment));
+
+  gtk_adjustment_set_value (self->hadjustment, new_value);
+}
+
+void
+gtk_column_view_set_focus_column (GtkColumnView       *self,
+                                  GtkColumnViewColumn *column,
+                                  gboolean             scroll)
+{
+  g_assert (column == NULL || gtk_column_view_column_get_column_view (column) == self);
+
+  if (self->focus_column == column)
+    return;
+
+  self->focus_column = column;
+
+  if (column && scroll)
+    gtk_column_view_scroll_to_column (self, column, NULL);
+}
+
+GtkColumnViewColumn *
+gtk_column_view_get_focus_column (GtkColumnView *self)
+{
+  return self->focus_column;
+}
+
 void
 gtk_column_view_measure_across (GtkColumnView *self,
                                 int           *minimum,
@@ -1626,10 +1850,10 @@ gtk_column_view_measure_across (GtkColumnView *self,
   *natural = nat;
 }
 
-GtkListItemWidget *
+GtkColumnViewRowWidget *
 gtk_column_view_get_header_widget (GtkColumnView *self)
 {
-  return GTK_LIST_ITEM_WIDGET (self->header);
+  return GTK_COLUMN_VIEW_ROW_WIDGET (self->header);
 }
 
 GtkListView *
@@ -1820,3 +2044,179 @@ gtk_column_view_get_enable_rubberband (GtkColumnView *self)
 
   return gtk_list_view_get_enable_rubberband (self->listview);
 }
+
+/**
+ * gtk_column_view_set_row_factory: (attributes org.gtk.Method.set_property=row-factory)
+ * @self: a `GtkColumnView`
+ * @factory: (nullable): The row factory
+ *
+ * Sets the factory used for configuring rows. The factory must be for configuring
+ * [class@Gtk.ColumnViewRow] objects.
+ *
+ * If this factory is not set - which is the default - then the defaults will be used.
+ *
+ * This factory is not used to set the widgets displayed in the individual cells. For
+ * that see [method@GtkColumnViewColumn.set_factory] and [class@GtkColumnViewCell].
+ *
+ * Since: 4.12
+ */
+void
+gtk_column_view_set_row_factory (GtkColumnView      *self,
+                                 GtkListItemFactory *factory)
+{
+  g_return_if_fail (GTK_IS_COLUMN_VIEW (self));
+
+  if (factory == gtk_list_view_get_factory (self->listview))
+    return;
+
+  gtk_list_view_set_factory (self->listview, factory);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ROW_FACTORY]);
+}
+
+/**
+ * gtk_column_view_get_row_factory: (attributes org.gtk.Method.get_property=row-factory)
+ * @self: a `GtkColumnView`
+ *
+ * Gets the factory set via [method@Gtk.ColumnView.set_row_factory].
+ *
+ * Returns: (nullable) (transfer none): The factory
+ *
+ * Since: 4.12
+ */
+GtkListItemFactory *
+gtk_column_view_get_row_factory (GtkColumnView *self)
+{
+  g_return_val_if_fail (GTK_IS_COLUMN_VIEW (self), FALSE);
+
+  return gtk_list_view_get_factory (self->listview);
+}
+
+/**
+ * gtk_column_view_set_tab_behavior: (attributes org.gtk.Method.set_property=tab-behavior)
+ * @self: a `GtkColumnView`
+ * @tab_behavior: The desired tab behavior
+ *
+ * Sets the behavior of the <kbd>Tab</kbd> and <kbd>Shift</kbd>+<kbd>Tab</kbd> keys.
+ *
+ * Since: 4.12
+ */
+void
+gtk_column_view_set_tab_behavior (GtkColumnView      *self,
+                                  GtkListTabBehavior  tab_behavior)
+{
+  g_return_if_fail (GTK_IS_COLUMN_VIEW (self));
+
+  if (tab_behavior == gtk_list_view_get_tab_behavior (self->listview))
+    return;
+
+  gtk_list_view_set_tab_behavior (self->listview, tab_behavior);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TAB_BEHAVIOR]);
+}
+
+/**
+ * gtk_column_view_get_tab_behavior: (attributes org.gtk.Method.get_property=tab-behavior)
+ * @self: a `GtkColumnView`
+ *
+ * Gets the behavior set for the <kbd>Tab</kbd> key.
+ *
+ * Returns: The behavior of the <kbd>Tab</kbd> key
+ *
+ * Since: 4.12
+ */
+GtkListTabBehavior
+gtk_column_view_get_tab_behavior (GtkColumnView *self)
+{
+  g_return_val_if_fail (GTK_IS_COLUMN_VIEW (self), FALSE);
+
+  return gtk_list_view_get_tab_behavior (self->listview);
+}
+
+/**
+ * gtk_column_view_get_header_factory: (attributes org.gtk.Method.get_property=header-factory)
+ * @self: a `GtkColumnView`
+ *
+ * Gets the factory that's currently used to populate section headers.
+ *
+ * Returns: (nullable) (transfer none): The factory in use
+ *
+ * Since: 4.12
+ */
+GtkListItemFactory *
+gtk_column_view_get_header_factory (GtkColumnView *self)
+{
+  g_return_val_if_fail (GTK_IS_COLUMN_VIEW (self), NULL);
+
+  return gtk_list_view_get_header_factory (self->listview);
+}
+
+/**
+ * gtk_column_view_set_header_factory: (attributes org.gtk.Method.set_property=header-factory)
+ * @self: a `GtkColumnView`
+ * @factory: (nullable) (transfer none): the factory to use
+ *
+ * Sets the `GtkListItemFactory` to use for populating the
+ * [class@Gtk.ListHeader] objects used in section headers.
+ *
+ * If this factory is set to %NULL, the list will not show
+ * section headers.
+ *
+ * Since: 4.12
+ */
+void
+gtk_column_view_set_header_factory (GtkColumnView      *self,
+                                    GtkListItemFactory *factory)
+{
+  g_return_if_fail (GTK_IS_COLUMN_VIEW (self));
+  g_return_if_fail (factory == NULL || GTK_IS_LIST_ITEM_FACTORY (factory));
+
+  if (factory == gtk_list_view_get_header_factory (self->listview))
+    return;
+
+  gtk_list_view_set_header_factory (self->listview, factory);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_HEADER_FACTORY]);
+}
+
+/**
+ * gtk_column_view_scroll_to:
+ * @self: The columnview to scroll in
+ * @pos: position of the item
+ * @column: (nullable) (transfer none): The column to scroll to
+ *   or %NULL to not scroll columns.
+ * @flags: actions to perform
+ * @scroll: (nullable) (transfer full): details of how to perform
+ *   the scroll operation or %NULL to scroll into view
+ *
+ * Scroll to the row at the given position - or cell if a column is
+ * given - and performs the actions specified in @flags.
+ *
+ * This function works no matter if the listview is shown or focused.
+ * If it isn't, then the changes will take effect once that happens.
+ *
+ * Since: 4.12
+ */
+void
+gtk_column_view_scroll_to (GtkColumnView       *self,
+                           guint                pos,
+                           GtkColumnViewColumn *column,
+                           GtkListScrollFlags   flags,
+                           GtkScrollInfo       *scroll)
+{
+  g_return_if_fail (GTK_IS_COLUMN_VIEW (self));
+  g_return_if_fail (column == NULL || GTK_IS_COLUMN_VIEW_COLUMN (column));
+  if (column)
+    {
+      g_return_if_fail (gtk_column_view_column_get_column_view (column) == self);
+    }
+
+  if (column && (flags & GTK_LIST_SCROLL_FOCUS))
+    gtk_column_view_set_focus_column (self, column, FALSE);
+
+  gtk_list_view_scroll_to (self->listview, pos, flags, scroll);
+
+  if (column)
+    gtk_column_view_scroll_to_column (self, column, scroll);
+}
+

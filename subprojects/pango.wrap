@@ -2,7 +2,8 @@
 directory = pango
 url = https://gitlab.gnome.org/GNOME/pango.git
 push-url = ssh://git@ssh.gitlab.gnome.org:GNOME/pango.git
-revision = 1.50.12
+# needs to be main, because we build the nightly docs from the subproject
+revision = main
 depth = 1
 
 [provide]

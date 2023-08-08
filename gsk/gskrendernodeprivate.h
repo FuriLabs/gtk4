@@ -1,8 +1,9 @@
-#ifndef __GSK_RENDER_NODE_PRIVATE_H__
-#define __GSK_RENDER_NODE_PRIVATE_H__
+#pragma once
 
 #include "gskrendernode.h"
 #include <cairo.h>
+
+#include "gdk/gdkmemoryformatprivate.h"
 
 G_BEGIN_DECLS
 
@@ -28,7 +29,7 @@ struct _GskRenderNode
 
   graphene_rect_t bounds;
 
-  guint prefers_high_depth : 1;
+  guint preferred_depth : 2;
   guint offscreen_for_opacity : 1;
 };
 
@@ -48,43 +49,11 @@ struct _GskRenderNodeClass
                                    cairo_region_t *region);
 };
 
-/*< private >
- * GskRenderNodeTypeInfo:
- * @node_type: the render node type in the `GskRenderNodeType` enumeration
- * @instance_size: the size of the render node instance
- * @instance_init: (nullable): the instance initialization function
- * @finalize: (nullable): the instance finalization function; must chain up to the
- *   implementation of the parent class
- * @draw: the function called by gsk_render_node_draw()
- * @can_diff: (nullable): the function called by gsk_render_node_can_diff(); if
- *   unset, gsk_render_node_can_diff_true() will be used
- * @diff: (nullable): the function called by gsk_render_node_diff(); if unset,
- *   gsk_render_node_diff_impossible() will be used
- *
- * A struction that contains the type information for a `GskRenderNode` subclass,
- * to be used by gsk_render_node_type_register_static().
- */
-typedef struct
-{
-  GskRenderNodeType node_type;
-
-  gsize instance_size;
-
-  void            (* instance_init) (GskRenderNode        *node);
-  void            (* finalize)      (GskRenderNode        *node);
-  void            (* draw)          (GskRenderNode        *node,
-                                     cairo_t              *cr);
-  gboolean        (* can_diff)      (const GskRenderNode  *node1,
-                                     const GskRenderNode  *node2);
-  void            (* diff)          (GskRenderNode        *node1,
-                                     GskRenderNode        *node2,
-                                     cairo_region_t       *region);
-} GskRenderNodeTypeInfo;
-
 void            gsk_render_node_init_types              (void);
 
 GType           gsk_render_node_type_register_static    (const char                  *node_name,
-                                                         const GskRenderNodeTypeInfo *node_info);
+                                                         gsize                        instance_size,
+                                                         GClassInitFunc               class_init);
 
 gpointer        gsk_render_node_alloc                   (GskRenderNodeType            node_type);
 
@@ -106,19 +75,18 @@ bool            gsk_border_node_get_uniform_color       (const GskRenderNode    
 void            gsk_text_node_serialize_glyphs          (GskRenderNode               *self,
                                                          GString                     *str);
 
-GskRenderNode ** gsk_container_node_get_children        (const GskRenderNode *node,
-                                                         guint               *n_children);
+GskRenderNode ** gsk_container_node_get_children        (const GskRenderNode         *node,
+                                                         guint                       *n_children);
 
-void             gsk_transform_node_get_translate       (const GskRenderNode *node,
-                                                         float               *dx,
-                                                         float               *dy);
-gboolean       gsk_render_node_prefers_high_depth       (const GskRenderNode *node);
+void            gsk_transform_node_get_translate        (const GskRenderNode         *node,
+                                                         float                       *dx,
+                                                         float                       *dy);
+GdkMemoryDepth  gsk_render_node_get_preferred_depth     (const GskRenderNode         *node);
 
-gboolean       gsk_container_node_is_disjoint           (const GskRenderNode *node);
+gboolean        gsk_container_node_is_disjoint          (const GskRenderNode         *node);
 
-gboolean       gsk_render_node_use_offscreen_for_opacity (const GskRenderNode *node);
+gboolean        gsk_render_node_use_offscreen_for_opacity (const GskRenderNode       *node);
 
 
 G_END_DECLS
 
-#endif /* __GSK_RENDER_NODE_PRIVATE_H__ */

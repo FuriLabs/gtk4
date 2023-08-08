@@ -2,18 +2,28 @@
 
 GSK render nodes can be serialized and deserialized using APIs such as `gsk_render_node_serialize()` and `gsk_render_node_deserialize()`. The intended use for this is development - primarily the development of GTK - by allowing things such as creating testsuites and benchmarks, exchanging nodes in bug reports. GTK includes the `gtk4-node-editor` application for creating such test files.
 
-The format is a text format that follows the [CSS syntax rules](https://drafts.csswg.org/css-syntax-3/). In particular, this means that every array of bytes will produce a render node when parsed, as there is a defined error recovery method. For more details on error handling, please refer to the documentation of the aprsing APIs.
+The format is a text format that follows the [CSS syntax rules](https://drafts.csswg.org/css-syntax-3/). In particular, this means that every array of bytes will produce a render node when parsed, as there is a defined error recovery method. For more details on error handling, please refer to the documentation of the parsing APIs.
 
 The grammar of a node text representation using [the CSS value definition syntax](https://drafts.csswg.org/css-values-3/#value-defs) looks like this:
 **document**: `<node>\*`
-**node**: container { <document> } | `<node-name> { <property>* }`
+**node**: container [ "name" ] { <document> } | `<node-type> [ "name" ] { <property>* }` | "name"
 **property**: `<property-name>: <node> | <value> ;`
 
-Each node has its own `<node-name>` and supports a custom set of properties, each with their own `<property-name>` and syntax. The following paragraphs document each of the nodes and their properties.
+Each node has its own `<node-type>` and supports a custom set of properties, each with their own `<property-name>` and syntax. The following paragraphs document each of the nodes and their properties.
 
 When serializing and the value of a property equals the default value, this value will not be serialized. Serialization aims to produce an output as small as possible.
 
 To embed newlines in strings, use \A. To break a long string into multiple lines, escape the newline with a \.
+
+# Names
+
+### Nodes
+
+Nodes can be given a name by adding a string after the `<node-type>` in their definition. That same node can then be used further down in the document by specifying just the name identifying the node.
+
+### Textures
+
+Just like nodes, textures can be referenced by name. When defining a named texture, the name has to be placed in front of the URL.
 
 # Nodes
 
@@ -183,7 +193,7 @@ Creates a node like `gsk_linear_gradient_node_new()` with the given properties.
 | property | syntax           | default                | printed     |
 | -------- | ---------------- | ---------------------- | ----------- |
 | source   | `<node>`         | color { }              | always      |
-| mode     | `<blend-mode>`   | alpha                  | non-default |
+| mode     | `<mask-mode>`    | alpha                  | non-default |
 | mask     | `<node>`         | color { }              | always      |
 
 Creates a node like `gsk_mask_node_new()` with the given properties.

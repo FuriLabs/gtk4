@@ -148,7 +148,9 @@
  *
  * # Accessibility
  *
- * `GtkWindow` uses the %GTK_ACCESSIBLE_ROLE_WINDOW role.
+ * Until GTK 4.10, `GtkWindow` used the `GTK_ACCESSIBLE_ROLE_WINDOW` role.
+ *
+ * Since GTK 4.12, `GtkWindow` uses the `GTK_ACCESSIBLE_ROLE_APPLICATION` role.
  *
  * # Actions
  *
@@ -236,6 +238,7 @@ typedef struct
   guint    client_decorated          : 1; /* Decorations drawn client-side */
   guint    use_client_shadow         : 1; /* Decorations use client-side shadows */
   guint    maximized                 : 1;
+  guint    suspended                 : 1;
   guint    fullscreen                : 1;
   guint    tiled                     : 1;
 
@@ -298,6 +301,7 @@ enum {
 
   /* Readonly properties */
   PROP_IS_ACTIVE,
+  PROP_SUSPENDED,
 
   /* Writeonly properties */
   PROP_STARTUP_ID,
@@ -972,6 +976,20 @@ gtk_window_class_init (GtkWindowClass *klass)
                             GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT|G_PARAM_EXPLICIT_NOTIFY);
 
   /**
+   * GtkWindow:suspended: (attributes org.gtk.Property.get=gtk_window_is_suspended)
+   *
+   * Whether the window is suspended.
+   *
+   * See [method@Gtk.Window.is_suspended] for details about what suspended means.
+   *
+   * Since: 4.12
+   */
+  window_props[PROP_SUSPENDED] =
+      g_param_spec_boolean ("suspended", NULL, NULL,
+                            FALSE,
+                            GTK_PARAM_READABLE|G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
    * GtkWindow:application: (attributes org.gtk.Property.get=gtk_window_get_application org.gtk.Property.set=gtk_window_set_application)
    *
    * The `GtkApplication` associated with the window.
@@ -1131,6 +1149,9 @@ gtk_window_class_init (GtkWindowClass *klass)
                   _gtk_marshal_BOOLEAN__BOOLEAN,
                   G_TYPE_BOOLEAN,
                   1, G_TYPE_BOOLEAN);
+  g_signal_set_va_marshaller (window_signals[ENABLE_DEBUGGING],
+                              G_TYPE_FROM_CLASS (gobject_class),
+                              _gtk_marshal_BOOLEAN__BOOLEANv);
 
   /**
    * GtkWindow::close-request:
@@ -1146,9 +1167,13 @@ gtk_window_class_init (GtkWindowClass *klass)
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (GtkWindowClass, close_request),
                   _gtk_boolean_handled_accumulator, NULL,
-                  NULL,
+                  _gtk_marshal_BOOLEAN__VOID,
                   G_TYPE_BOOLEAN,
                   0);
+  g_signal_set_va_marshaller (window_signals[CLOSE_REQUEST],
+                              GTK_TYPE_WINDOW,
+                              _gtk_marshal_BOOLEAN__VOIDv);
+
 
   /*
    * Key bindings
@@ -1215,7 +1240,7 @@ gtk_window_class_init (GtkWindowClass *klass)
 
   gtk_widget_class_set_css_name (widget_class, I_("window"));
 
-  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_WINDOW);
+  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_APPLICATION);
 }
 
 /**
@@ -1270,6 +1295,29 @@ gtk_window_is_fullscreen (GtkWindow *window)
   g_return_val_if_fail (GTK_IS_WINDOW (window), FALSE);
 
   return priv->fullscreen;
+}
+
+/**
+ * gtk_window_is_suspended: (attributes org.gtk.Property.get=suspended)
+ * @window: a `GtkWindow`
+ *
+ * Retrieves the current suspended state of @window.
+ *
+ * A window being suspended means it's currently not visible to the user, for
+ * example by being on a inactive workspace, minimized, obstructed.
+ *
+ * Returns: whether the window is suspended.
+ *
+ * Since: 4.12
+ */
+gboolean
+gtk_window_is_suspended (GtkWindow *window)
+{
+  GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
+
+  g_return_val_if_fail (GTK_IS_WINDOW (window), FALSE);
+
+  return priv->suspended;
 }
 
 void
@@ -1901,6 +1949,9 @@ gtk_window_get_property (GObject      *object,
       break;
     case PROP_FULLSCREENED:
       g_value_set_boolean (value, gtk_window_is_fullscreen (window));
+      break;
+    case PROP_SUSPENDED:
+      g_value_set_boolean (value, gtk_window_is_suspended (window));
       break;
     case PROP_FOCUS_WIDGET:
       g_value_set_object (value, gtk_window_get_focus (window));
@@ -3213,7 +3264,7 @@ static void
 free_icon_info (GtkWindowIconInfo *info)
 {
   g_free (info->icon_name);
-  g_slice_free (GtkWindowIconInfo, info);
+  g_free (info);
 }
 
 
@@ -3226,7 +3277,7 @@ ensure_icon_info (GtkWindow *window)
 
   if (info == NULL)
     {
-      info = g_slice_new0 (GtkWindowIconInfo);
+      info = g_new0 (GtkWindowIconInfo, 1);
       g_object_set_qdata_full (G_OBJECT (window),
                               quark_gtk_window_icon_info,
                               info,
@@ -3838,6 +3889,9 @@ gtk_window_show (GtkWidget *widget)
 {
   GtkWindow *window = GTK_WINDOW (widget);
   GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
+
+  if (!g_list_store_find (toplevel_list, window, NULL))
+    g_warning ("A window is shown after it has been destroyed. This will leave the window in an inconsistent state.");
 
   _gtk_widget_set_visible_flag (widget, TRUE);
 
@@ -4459,8 +4513,7 @@ gtk_window_unrealize (GtkWidget *widget)
   GTK_WIDGET_CLASS (gtk_window_parent_class)->unrealize (widget);
 
   gdk_surface_set_widget (surface, NULL);
-  gdk_surface_destroy (surface);
-  g_clear_object (&priv->surface);
+  g_clear_pointer (&priv->surface, gdk_surface_destroy);
 }
 
 static void
@@ -4474,6 +4527,11 @@ update_window_style_classes (GtkWindow *window)
 
   if (!priv->edge_constraints)
     {
+      gtk_widget_remove_css_class (widget, "tiled-top");
+      gtk_widget_remove_css_class (widget, "tiled-right");
+      gtk_widget_remove_css_class (widget, "tiled-bottom");
+      gtk_widget_remove_css_class (widget, "tiled-left");
+
       if (priv->tiled)
         gtk_widget_add_css_class (widget, "tiled");
       else
@@ -4481,6 +4539,8 @@ update_window_style_classes (GtkWindow *window)
     }
   else
     {
+      gtk_widget_remove_css_class (widget, "tiled");
+
       if (edge_constraints & GDK_TOPLEVEL_STATE_TOP_TILED)
         gtk_widget_add_css_class (widget, "tiled-top");
       else
@@ -4659,6 +4719,13 @@ surface_state_changed (GtkWidget *widget)
       priv->maximized = (new_surface_state & GDK_TOPLEVEL_STATE_MAXIMIZED) ? TRUE : FALSE;
 
       g_object_notify_by_pspec (G_OBJECT (widget), window_props[PROP_MAXIMIZED]);
+    }
+
+  if (changed_mask & GDK_TOPLEVEL_STATE_SUSPENDED)
+    {
+      priv->suspended = (new_surface_state & GDK_TOPLEVEL_STATE_SUSPENDED) ? TRUE : FALSE;
+
+      g_object_notify_by_pspec (G_OBJECT (widget), window_props[PROP_SUSPENDED]);
     }
 
   update_edge_constraints (window, new_surface_state);
@@ -6292,6 +6359,17 @@ prefix_handle (GdkDisplay *display,
     return NULL;
 }
 
+static const char *
+unprefix_handle (const char *handle)
+{
+  if (g_str_has_prefix (handle, "wayland:"))
+    return handle + strlen ("wayland:");
+  else if (g_str_has_prefix (handle, "x11:"))
+    return handle + strlen ("x1!:");
+  else
+    return handle;
+}
+
 static void
 export_handle_done (GObject      *source,
                     GAsyncResult *result,
@@ -6337,11 +6415,12 @@ gtk_window_export_handle (GtkWindow               *window,
 }
 
 void
-gtk_window_unexport_handle (GtkWindow *window)
+gtk_window_unexport_handle (GtkWindow  *window,
+                            const char *handle)
 {
   GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
 
-  gdk_toplevel_unexport_handle (GDK_TOPLEVEL (priv->surface));
+  gdk_toplevel_unexport_handle (GDK_TOPLEVEL (priv->surface), unprefix_handle (handle));
 }
 
 static GtkPointerFocus *
@@ -6645,7 +6724,10 @@ gtk_window_set_child (GtkWindow *window,
   GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
 
   g_return_if_fail (GTK_IS_WINDOW (window));
-  g_return_if_fail (child == NULL || GTK_IS_WIDGET (child));
+  g_return_if_fail (child == NULL || priv->child == child || gtk_widget_get_parent (child) == NULL);
+
+  if (priv->child == child)
+    return;
 
   g_clear_pointer (&priv->child, gtk_widget_unparent);
 

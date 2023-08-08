@@ -22,8 +22,7 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#ifndef __GTK_PRIVATE_H__
-#define __GTK_PRIVATE_H__
+#pragma once
 
 #include <glib-object.h>
 #include <gdk/gdk.h>
@@ -126,8 +125,6 @@ guint gtk_get_portal_interface_version (GDBusConnection *connection,
 void _gtk_load_dll_with_libgtk3_manifest (const char *dllname);
 #endif
 
-gboolean        gtk_simulate_touchscreen (void);
-
 void            gtk_set_display_debug_flags        (GdkDisplay    *display,
                                                     GtkDebugFlags  flags);
 GtkDebugFlags   gtk_get_display_debug_flags        (GdkDisplay    *display);
@@ -176,4 +173,3 @@ void gtk_synthesize_crossing_events (GtkRoot         *toplevel,
 
 G_END_DECLS
 
-#endif /* __GTK_PRIVATE_H__ */

@@ -29,6 +29,7 @@
 #include "gtkdropprivate.h"
 #include "gtkeventcontrollerprivate.h"
 #include "gtkmarshalers.h"
+#include "gdk/gdkmarshalers.h"
 #include "gtknative.h"
 #include "gtktypebuiltins.h"
 #include "gtkprivate.h"
@@ -149,13 +150,13 @@ make_action_unique (GdkDragAction actions)
 
   if (actions & GDK_ACTION_MOVE)
     return GDK_ACTION_MOVE;
-  
+
   if (actions & GDK_ACTION_LINK)
     return GDK_ACTION_LINK;
 
   return 0;
 }
-  
+
 static GdkDragAction
 gtk_drop_target_async_drag_enter (GtkDropTargetAsync *self,
                                   GdkDrop            *drop,
@@ -165,7 +166,7 @@ gtk_drop_target_async_drag_enter (GtkDropTargetAsync *self,
   return make_action_unique (self->actions & gdk_drop_get_actions (drop));
 }
 
-static GdkDragAction         
+static GdkDragAction
 gtk_drop_target_async_drag_motion (GtkDropTargetAsync *self,
                                    GdkDrop            *drop,
                                    double              x,
@@ -430,9 +431,12 @@ gtk_drop_target_async_class_init (GtkDropTargetAsyncClass *class)
                     G_SIGNAL_RUN_LAST,
                     G_STRUCT_OFFSET (GtkDropTargetAsyncClass, accept),
                     g_signal_accumulator_first_wins, NULL,
-                    NULL,
+                    _gdk_marshal_BOOLEAN__OBJECT,
                     G_TYPE_BOOLEAN, 1,
                     GDK_TYPE_DROP);
+   g_signal_set_va_marshaller (signals[ACCEPT],
+                               GTK_TYPE_DROP_TARGET_ASYNC,
+                               _gdk_marshal_BOOLEAN__OBJECTv);
 
   /**
    * GtkDropTargetAsync::drag-enter:
@@ -453,9 +457,12 @@ gtk_drop_target_async_class_init (GtkDropTargetAsyncClass *class)
                     G_SIGNAL_RUN_LAST,
                     G_STRUCT_OFFSET (GtkDropTargetAsyncClass, drag_enter),
                     g_signal_accumulator_first_wins, NULL,
-                    NULL,
+                    _gtk_marshal_FLAGS__OBJECT_DOUBLE_DOUBLE,
                     GDK_TYPE_DRAG_ACTION, 3,
                     GDK_TYPE_DROP, G_TYPE_DOUBLE, G_TYPE_DOUBLE);
+   g_signal_set_va_marshaller (signals[DRAG_ENTER],
+                               GTK_TYPE_DROP_TARGET_ASYNC,
+                               _gtk_marshal_FLAGS__OBJECT_DOUBLE_DOUBLEv);
 
   /**
    * GtkDropTargetAsync::drag-motion:
@@ -474,9 +481,12 @@ gtk_drop_target_async_class_init (GtkDropTargetAsyncClass *class)
                     G_SIGNAL_RUN_LAST,
                     G_STRUCT_OFFSET (GtkDropTargetAsyncClass, drag_motion),
                     g_signal_accumulator_first_wins, NULL,
-                    NULL,
+                    _gtk_marshal_FLAGS__OBJECT_DOUBLE_DOUBLE,
                     GDK_TYPE_DRAG_ACTION, 3,
                     GDK_TYPE_DROP, G_TYPE_DOUBLE, G_TYPE_DOUBLE);
+   g_signal_set_va_marshaller (signals[DRAG_MOTION],
+                               GTK_TYPE_DROP_TARGET_ASYNC,
+                               _gtk_marshal_FLAGS__OBJECT_DOUBLE_DOUBLEv);
 
   /**
    * GtkDropTargetAsync::drag-leave:
@@ -528,9 +538,12 @@ gtk_drop_target_async_class_init (GtkDropTargetAsyncClass *class)
                     G_SIGNAL_RUN_LAST,
                     0,
                     g_signal_accumulator_first_wins, NULL,
-                    NULL,
+                    _gtk_marshal_BOOLEAN__OBJECT_DOUBLE_DOUBLE,
                     G_TYPE_BOOLEAN, 3,
                     GDK_TYPE_DROP, G_TYPE_DOUBLE, G_TYPE_DOUBLE);
+   g_signal_set_va_marshaller (signals[DROP],
+                               GTK_TYPE_DROP_TARGET_ASYNC,
+                               _gtk_marshal_BOOLEAN__OBJECT_DOUBLE_DOUBLEv);
 }
 
 static void
@@ -604,7 +617,7 @@ GdkContentFormats *
 gtk_drop_target_async_get_formats (GtkDropTargetAsync *self)
 {
   g_return_val_if_fail (GTK_IS_DROP_TARGET_ASYNC (self), NULL);
-  
+
   return self->formats;
 }
 
@@ -620,7 +633,7 @@ gtk_drop_target_async_set_actions (GtkDropTargetAsync *self,
                                    GdkDragAction       actions)
 {
   g_return_if_fail (GTK_IS_DROP_TARGET_ASYNC (self));
-  
+
   if (self->actions == actions)
     return;
 

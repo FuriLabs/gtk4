@@ -14,7 +14,7 @@
    GIO modules
    Memcheck:Leak
    match-leak-kinds: definite
-   fun:malloc
+   fun:calloc
    ...
    fun:_g_io_module_get_default
 }
@@ -23,9 +23,9 @@
    GTK media extension gio modules
    Memcheck:Leak
    match-leak-kinds: definite
-   fun:malloc
+   fun:calloc
    ...
-   fun:gio_module_new
+   fun:g_io_module_new
    ...
    fun:gtk_media_file_extension_init
 }
@@ -292,6 +292,30 @@
   fun:malloc
   ...
   fun:g_intern_string
+}
+{
+  xdg-mime init
+  Memcheck:Leak
+  match-leak-kinds: definite
+  fun:malloc
+  ...
+  fun:xdg_mime_init*
+}
+{
+  xdg-mime init
+  Memcheck:Leak
+  match-leak-kinds: definite
+  fun:calloc
+  ...
+  fun:xdg_mime_init*
+}
+{
+  glib init
+  Memcheck:Leak
+  match-leak-kinds: definite
+  fun:malloc
+  ...
+  fun:glib_init_ctor
 }
 
 # Threads

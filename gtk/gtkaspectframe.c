@@ -38,6 +38,13 @@
  * # CSS nodes
  *
  * `GtkAspectFrame` uses a CSS node with name `frame`.
+ *
+ * # Accessibility
+ *
+ * Until GTK 4.10, `GtkAspectFrame` used the `GTK_ACCESSIBLE_ROLE_GROUP` role.
+ *
+ * Starting from GTK 4.12, `GtkAspectFrame` uses the `GTK_ACCESSIBLE_ROLE_GENERIC` role.
+
  */
 
 #include "config.h"
@@ -187,7 +194,7 @@ gtk_aspect_frame_class_init (GtkAspectFrameClass *class)
                                                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
   gtk_widget_class_set_css_name (GTK_WIDGET_CLASS (class), I_("aspectframe"));
-  gtk_widget_class_set_accessible_role (GTK_WIDGET_CLASS (class), GTK_ACCESSIBLE_ROLE_GROUP);
+  gtk_widget_class_set_accessible_role (GTK_WIDGET_CLASS (class), GTK_ACCESSIBLE_ROLE_GENERIC);
 }
 
 static void
@@ -640,7 +647,7 @@ gtk_aspect_frame_set_child (GtkAspectFrame  *self,
                             GtkWidget       *child)
 {
   g_return_if_fail (GTK_IS_ASPECT_FRAME (self));
-  g_return_if_fail (child == NULL || GTK_IS_WIDGET (child));
+  g_return_if_fail (child == NULL || self->child == child || gtk_widget_get_parent (child) == NULL);
 
   if (self->child == child)
     return;

@@ -527,7 +527,7 @@ parse_requires (ParserData   *data,
   version_minor = g_ascii_strtoll (split[1], NULL, 10);
   g_strfreev (split);
 
-  req_info = g_slice_new0 (RequiresInfo);
+  req_info = g_new0 (RequiresInfo, 1);
   req_info->library = g_strdup (library);
   req_info->major = version_major;
   req_info->minor = version_minor;
@@ -659,7 +659,7 @@ parse_object (GtkBuildableParseContext  *context,
         }
     }
 
-  object_info = g_slice_new0 (ObjectInfo);
+  object_info = g_new0 (ObjectInfo, 1);
   object_info->tag_type = TAG_OBJECT;
   object_info->type = object_type;
   object_info->oclass = g_type_class_ref (object_type);
@@ -697,11 +697,11 @@ parse_template (GtkBuildableParseContext  *context,
   const char *parent_class = NULL;
   int line;
   gpointer line_ptr;
-  gboolean has_duplicate;
+  gboolean has_duplicate, allow_parents;
   GType template_type;
   GType parsed_type;
 
-  template_type = _gtk_builder_get_template_type (data->builder);
+  template_type = gtk_builder_get_template_type (data->builder, &allow_parents);
 
   if (!g_markup_collect_attributes (element_name, names, values, error,
                                     G_MARKUP_COLLECT_STRING, "class", &object_class,
@@ -729,7 +729,8 @@ parse_template (GtkBuildableParseContext  *context,
     }
 
   parsed_type = g_type_from_name (object_class);
-  if (template_type != parsed_type)
+  if (template_type != parsed_type &&
+      (!allow_parents || !g_type_is_a (template_type, parsed_type)))
     {
       g_set_error (error,
                    GTK_BUILDER_ERROR,
@@ -766,12 +767,13 @@ parse_template (GtkBuildableParseContext  *context,
 
   ++data->cur_object_level;
 
-  object_info = g_slice_new0 (ObjectInfo);
+  object_info = g_new0 (ObjectInfo, 1);
   object_info->tag_type = TAG_TEMPLATE;
-  object_info->type = parsed_type;
-  object_info->oclass = g_type_class_ref (parsed_type);
-  object_info->id = g_strdup (object_class);
   object_info->object = gtk_builder_get_object (data->builder, object_class);
+  object_info->type = template_type;
+  object_info->oclass = g_type_class_ref (template_type);
+  object_info->id = g_strdup (object_class);
+  g_assert (object_info->object);
   state_push (data, object_info);
 
   has_duplicate = g_hash_table_lookup_extended (data->object_ids, object_class, NULL, &line_ptr);
@@ -802,7 +804,7 @@ free_object_info (ObjectInfo *info)
     g_ptr_array_free (info->properties, TRUE);
   g_free (info->constructor);
   g_free (info->id);
-  g_slice_free (ObjectInfo, info);
+  g_free (info);
 }
 
 static void
@@ -836,7 +838,7 @@ parse_child (ParserData  *data,
       return;
     }
 
-  child_info = g_slice_new0 (ChildInfo);
+  child_info = g_new0 (ChildInfo, 1);
   child_info->tag_type = TAG_CHILD;
   child_info->type = g_strdup (type);
   child_info->internal_child = g_strdup (internal_child);
@@ -851,7 +853,7 @@ free_child_info (ChildInfo *info)
 {
   g_free (info->type);
   g_free (info->internal_child);
-  g_slice_free (ChildInfo, info);
+  g_free (info);
 }
 
 static void
@@ -924,7 +926,7 @@ parse_property (ParserData   *data,
     {
       BindingInfo *binfo;
 
-      binfo = g_slice_new0 (BindingInfo);
+      binfo = g_new0 (BindingInfo, 1);
       binfo->tag_type = TAG_BINDING;
       binfo->target = NULL;
       binfo->target_pspec = pspec;
@@ -944,7 +946,7 @@ parse_property (ParserData   *data,
       return;
     }
 
-  info = g_slice_new0 (PropertyInfo);
+  info = g_new0 (PropertyInfo, 1);
   info->tag_type = TAG_PROPERTY;
   info->pspec = pspec;
   info->text = g_string_new ("");
@@ -1022,7 +1024,7 @@ parse_binding (ParserData   *data,
     }
 
 
-  info = g_slice_new0 (BindingExpressionInfo);
+  info = g_new0 (BindingExpressionInfo, 1);
   info->tag_type = TAG_BINDING_EXPRESSION;
   info->target = NULL;
   info->target_pspec = pspec;
@@ -1044,7 +1046,7 @@ free_property_info (PropertyInfo *info)
     }
   g_string_free (info->text, TRUE);
   g_free (info->context);
-  g_slice_free (PropertyInfo, info);
+  g_free (info);
 }
 
 static void
@@ -1075,7 +1077,7 @@ free_expression_info (ExpressionInfo *info)
       g_assert_not_reached ();
       break;
     }
-  g_slice_free (ExpressionInfo, info);
+  g_free (info);
 }
 
 static gboolean
@@ -1161,7 +1163,7 @@ parse_constant_expression (ParserData   *data,
         }
     }
 
-  info = g_slice_new0 (ExpressionInfo);
+  info = g_new0 (ExpressionInfo, 1);
   info->tag_type = TAG_EXPRESSION;
   info->expression_type = EXPRESSION_CONSTANT;
   info->constant.type = type;
@@ -1221,7 +1223,7 @@ parse_closure_expression (ParserData   *data,
         swapped = FALSE;
     }
 
-  info = g_slice_new0 (ExpressionInfo);
+  info = g_new0 (ExpressionInfo, 1);
   info->tag_type = TAG_EXPRESSION;
   info->expression_type = EXPRESSION_CLOSURE;
   info->closure.type = type;
@@ -1277,7 +1279,7 @@ parse_lookup_expression (ParserData   *data,
         }
     }
 
-  info = g_slice_new0 (ExpressionInfo);
+  info = g_new0 (ExpressionInfo, 1);
   info->tag_type = TAG_EXPRESSION;
   info->expression_type = EXPRESSION_PROPERTY;
   info->property.this_type = type;
@@ -1513,7 +1515,7 @@ parse_signal (ParserData   *data,
         swapped = FALSE;
     }
 
-  info = g_slice_new0 (SignalInfo);
+  info = g_new0 (SignalInfo, 1);
   info->id = id;
   info->detail = detail;
   info->handler = g_strdup (handler);
@@ -1535,7 +1537,7 @@ _free_signal_info (SignalInfo *info,
   g_free (info->handler);
   g_free (info->connect_object_name);
   g_free (info->object_name);
-  g_slice_free (SignalInfo, info);
+  g_free (info);
 }
 
 void
@@ -1544,7 +1546,7 @@ _free_binding_info (BindingInfo *info,
 {
   g_free (info->source);
   g_free (info->source_property);
-  g_slice_free (BindingInfo, info);
+  g_free (info);
 }
 
 void
@@ -1553,7 +1555,7 @@ free_binding_expression_info (BindingExpressionInfo *info)
   if (info->expr)
     free_expression_info (info->expr);
   g_free (info->object_name);
-  g_slice_free (BindingExpressionInfo, info);
+  g_free (info);
 }
 
 static void
@@ -1561,7 +1563,7 @@ free_requires_info (RequiresInfo *info,
                     gpointer      user_data)
 {
   g_free (info->library);
-  g_slice_free (RequiresInfo, info);
+  g_free (info);
 }
 
 static void
@@ -1604,7 +1606,7 @@ create_subparser (GObject       *object,
 {
   SubParser *subparser;
 
-  subparser = g_slice_new0 (SubParser);
+  subparser = g_new0 (SubParser, 1);
   subparser->object = object;
   subparser->child = child;
   subparser->tagname = g_strdup (element_name);
@@ -1620,7 +1622,7 @@ static void
 free_subparser (SubParser *subparser)
 {
   g_free (subparser->tagname);
-  g_slice_free (SubParser, subparser);
+  g_free (subparser);
 }
 
 static gboolean
@@ -1675,7 +1677,7 @@ subparser_end (GtkBuildableParseContext  *context,
                                 data->subparser->child,
                                 element_name,
                                 data->subparser->data);
-  g_free (data->subparser->parser);
+  g_clear_pointer (&data->subparser->parser, g_free);
 
   if (_gtk_builder_lookup_failed (data->builder, error))
     return;
@@ -2141,7 +2143,7 @@ text (GtkBuildableParseContext  *context,
         text_len--;
       if (expr_info->property.expression == NULL && text_len > 0)
         {
-          ExpressionInfo *constant = g_slice_new0 (ExpressionInfo);
+          ExpressionInfo *constant = g_new0 (ExpressionInfo, 1);
           constant->tag_type = TAG_EXPRESSION;
           constant->expression_type = EXPRESSION_CONSTANT;
           constant->constant.type = G_TYPE_INVALID;

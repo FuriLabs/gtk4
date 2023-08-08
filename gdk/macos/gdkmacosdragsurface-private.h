@@ -17,8 +17,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#ifndef __GDK_MACOS_DRAG_SURFACE_PRIVATE_H__
-#define __GDK_MACOS_DRAG_SURFACE_PRIVATE_H__
+#pragma once
 
 #include "gdkmacossurface-private.h"
 
@@ -32,13 +31,7 @@ typedef struct _GdkMacosDragSurfaceClass GdkMacosDragSurfaceClass;
 #define GDK_IS_MACOS_DRAG_SURFACE(object) (G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_MACOS_DRAG_SURFACE))
 
 GType            _gdk_macos_drag_surface_get_type (void);
-GdkMacosSurface *_gdk_macos_drag_surface_new      (GdkMacosDisplay *display,
-                                                   GdkFrameClock   *frame_clock,
-                                                   int              x,
-                                                   int              y,
-                                                   int              width,
-                                                   int              height);
+GdkMacosSurface *_gdk_macos_drag_surface_new      (GdkMacosDisplay *display);
 
 G_END_DECLS
 
-#endif /* __GDK_MACOS_DRAG_SURFACE_PRIVATE_H__ */

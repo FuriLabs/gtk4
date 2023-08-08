@@ -18,8 +18,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GDK_WIN32_GL_CONTEXT__
-#define __GDK_WIN32_GL_CONTEXT__
+#pragma once
 
 #ifndef DONT_INCLUDE_LIBEPOXY
 #include <epoxy/gl.h>
@@ -65,10 +64,10 @@ struct _GdkWin32GLContextClass
 
 typedef struct _GdkWin32GLContextWGL      GdkWin32GLContextWGL;
 
-gboolean  gdk_win32_display_init_wgl                (GdkDisplay *display,
-                                                     GError    **error);
-void      gdk_win32_gl_context_wgl_bind_surface     (GdkWin32GLContextWGL *ctx,
-                                                     GdkWin32Surface      *win32_surface);
+GdkGLContext *  gdk_win32_display_init_wgl              (GdkDisplay             *display,
+                                                         GError                **error);
+void            gdk_win32_gl_context_wgl_bind_surface   (GdkWin32GLContextWGL   *ctx,
+                                                         GdkWin32Surface        *win32_surface);
 
 GType     gdk_win32_gl_context_wgl_get_type         (void) G_GNUC_CONST;
 
@@ -97,4 +96,3 @@ void      gdk_win32_private_wglDeleteContext     (HGLRC hglrc);
 
 G_END_DECLS
 
-#endif /* __GDK_WIN32_GL_CONTEXT__ */

@@ -2024,6 +2024,7 @@ gtk_text_view_init (GtkTextView *text_view)
 
   gtk_accessible_update_property (GTK_ACCESSIBLE (widget),
                                   GTK_ACCESSIBLE_PROPERTY_MULTI_LINE, TRUE,
+                                  GTK_ACCESSIBLE_PROPERTY_HAS_POPUP, TRUE,
                                   -1);
 }
 
@@ -2738,7 +2739,7 @@ free_pending_scroll (GtkTextPendingScroll *scroll)
     gtk_text_buffer_delete_mark (gtk_text_mark_get_buffer (scroll->mark),
                                  scroll->mark);
   g_object_unref (scroll->mark);
-  g_slice_free (GtkTextPendingScroll, scroll);
+  g_free (scroll);
 }
 
 static void
@@ -2764,7 +2765,7 @@ gtk_text_view_queue_scroll (GtkTextView   *text_view,
 
   DV(g_print(G_STRLOC"\n"));
 
-  scroll = g_slice_new (GtkTextPendingScroll);
+  scroll = g_new (GtkTextPendingScroll, 1);
 
   scroll->within_margin = within_margin;
   scroll->use_align = use_align;
@@ -5248,12 +5249,9 @@ gtk_text_view_show_magnifier (GtkTextView *text_view,
 {
   cairo_rectangle_int_t rect;
   GtkTextViewPrivate *priv;
-  GtkAllocation allocation;
   GtkRequisition req;
 
 #define N_LINES 1
-
-  gtk_widget_get_allocation (GTK_WIDGET (text_view), &allocation);
 
   priv = text_view->priv;
   _gtk_text_view_ensure_magnifier (text_view);
@@ -5273,11 +5271,10 @@ gtk_text_view_show_magnifier (GtkTextView *text_view,
   _gtk_magnifier_set_coords (GTK_MAGNIFIER (priv->magnifier),
                              rect.x, rect.y + rect.height / 2);
 
-  rect.x = CLAMP (rect.x, 0, allocation.width);
+  rect.x = CLAMP (rect.x, 0, gtk_widget_get_width (GTK_WIDGET (text_view)));
   rect.y += rect.height / 4;
   rect.height -= rect.height / 4;
-  gtk_popover_set_pointing_to (GTK_POPOVER (priv->magnifier_popover),
-                               &rect);
+  gtk_popover_set_pointing_to (GTK_POPOVER (priv->magnifier_popover), &rect);
 
   gtk_popover_popup (GTK_POPOVER (priv->magnifier_popover));
 
@@ -5601,8 +5598,7 @@ gtk_text_view_click_gesture_pressed (GtkGestureClick *gesture,
   gtk_text_view_reset_blink_time (text_view);
 
   device = gdk_event_get_device ((GdkEvent *) event);
-  is_touchscreen = gtk_simulate_touchscreen () ||
-                   gdk_device_get_source (device) == GDK_SOURCE_TOUCHSCREEN;
+  is_touchscreen = gdk_device_get_source (device) == GDK_SOURCE_TOUCHSCREEN;
 
   if (n_press == 1)
     {
@@ -5656,7 +5652,7 @@ gtk_text_view_click_gesture_pressed (GtkGestureClick *gesture,
               gtk_text_iter_get_line (&ins))
             {
               gtk_event_controller_reset (GTK_EVENT_CONTROLLER (gesture));
-              n_press = 1;
+              return;
             }
         }
 
@@ -6481,7 +6477,10 @@ gtk_text_view_move_cursor (GtkTextView     *text_view,
         count *= -1;
 
       if (count < 0)
-        gtk_text_iter_backward_visible_word_starts (&newplace, -count);
+        {
+          if (!gtk_text_iter_backward_visible_word_starts (&newplace, -count))
+            gtk_text_iter_set_line_offset (&newplace, 0);
+        }
       else if (count > 0)
 	{
 	  if (!gtk_text_iter_forward_visible_word_ends (&newplace, count))
@@ -6885,16 +6884,13 @@ gtk_text_view_delete_from_cursor (GtkTextView   *text_view,
 
   priv = text_view->priv;
 
-  if (type == GTK_DELETE_CHARS)
+  /* If a selection exists, we operate on it first */
+  if (gtk_text_buffer_delete_selection (get_buffer (text_view), TRUE,
+                                        priv->editable))
     {
-      /* Char delete deletes the selection, if one exists */
-      if (gtk_text_buffer_delete_selection (get_buffer (text_view), TRUE,
-                                            priv->editable))
-        {
-          priv->need_im_reset = TRUE;
-          gtk_text_view_reset_im_context (text_view);
-          return;
-        }
+      priv->need_im_reset = TRUE;
+      gtk_text_view_reset_im_context (text_view);
+      return;
     }
 
   gtk_text_buffer_get_iter_at_mark (get_buffer (text_view), &insert,
@@ -6913,7 +6909,10 @@ gtk_text_view_delete_from_cursor (GtkTextView   *text_view,
       if (count > 0)
         gtk_text_iter_forward_word_ends (&end, count);
       else if (count < 0)
-        gtk_text_iter_backward_word_starts (&start, 0 - count);
+        {
+          if (!gtk_text_iter_backward_word_starts (&start, 0 - count))
+            gtk_text_iter_set_line_offset (&start, 0);
+        }
       break;
 
     case GTK_DELETE_WORDS:
@@ -7432,7 +7431,7 @@ selection_data_free (SelectionData *data)
 
   g_object_unref (data->buffer);
 
-  g_slice_free (SelectionData, data);
+  g_free (data);
 }
 
 static gboolean
@@ -7487,8 +7486,7 @@ gtk_text_view_drag_gesture_update (GtkGestureDrag *gesture,
 
   device = gdk_event_get_device (event);
 
-  is_touchscreen = gtk_simulate_touchscreen () ||
-                   gdk_device_get_source (device) == GDK_SOURCE_TOUCHSCREEN;
+  is_touchscreen = gdk_device_get_source (device) == GDK_SOURCE_TOUCHSCREEN;
 
   get_iter_from_gesture (text_view, text_view->priv->drag_gesture,
                          &cursor, NULL, NULL);
@@ -7629,8 +7627,7 @@ gtk_text_view_drag_gesture_end (GtkGestureDrag *gesture,
 
   event = gtk_gesture_get_last_event (GTK_GESTURE (gesture), sequence);
   device = gdk_event_get_device (event);
-  is_touchscreen = gtk_simulate_touchscreen () ||
-    gdk_device_get_source (device) == GDK_SOURCE_TOUCHSCREEN;
+  is_touchscreen = gdk_device_get_source (device) == GDK_SOURCE_TOUCHSCREEN;
 
   if ((is_touchscreen || clicked_in_selection) &&
       !gtk_drag_check_threshold_double (GTK_WIDGET (text_view), 0, 0, offset_x, offset_y))
@@ -7664,7 +7661,7 @@ gtk_text_view_start_selection_drag (GtkTextView          *text_view,
   SelectionData *data;
 
   priv = text_view->priv;
-  data = g_slice_new0 (SelectionData);
+  data = g_new0 (SelectionData, 1);
   data->granularity = granularity;
 
   buffer = get_buffer (text_view);
@@ -9087,6 +9084,10 @@ gtk_text_view_do_popup (GtkTextView *text_view,
       gtk_popover_set_has_arrow (GTK_POPOVER (priv->popup_menu), FALSE);
       gtk_widget_set_halign (priv->popup_menu, GTK_ALIGN_START);
 
+      gtk_accessible_update_property (GTK_ACCESSIBLE (priv->popup_menu),
+                                      GTK_ACCESSIBLE_PROPERTY_LABEL, _("Context menu"),
+                                      -1);
+
       g_object_unref (model);
     }
 
@@ -9108,18 +9109,20 @@ gtk_text_view_do_popup (GtkTextView *text_view,
           GdkSurface *surface;
           double px, py;
           double nx, ny;
+          graphene_point_t p;
 
           native = gtk_widget_get_native (GTK_WIDGET (text_view));
           surface = gtk_native_get_surface (native);
           gdk_surface_get_device_position (surface, device, &px, &py, NULL);
           gtk_native_get_surface_transform (native, &nx, &ny);
 
-          gtk_widget_translate_coordinates (GTK_WIDGET (gtk_widget_get_native (GTK_WIDGET (text_view))),
-                                           GTK_WIDGET (text_view),
-                                           px - nx, py - ny,
-                                           &px, &py);
-          rect.x = px;
-          rect.y = py;
+          if (!gtk_widget_compute_point (GTK_WIDGET (gtk_widget_get_native (GTK_WIDGET (text_view))),
+                                         GTK_WIDGET (text_view),
+                                         &GRAPHENE_POINT_INIT (px - nx, py - ny),
+                                         &p))
+            graphene_point_init (&p, px - nx, px - nx);
+          rect.x = p.x;
+          rect.y = p.y;
         }
 
       gtk_popover_set_pointing_to (GTK_POPOVER (priv->popup_menu), &rect);
@@ -9426,7 +9429,7 @@ text_window_new (GtkWidget *widget)
   GtkTextWindow *win;
   GtkCssNode *widget_node;
 
-  win = g_slice_new (GtkTextWindow);
+  win = g_new (GtkTextWindow, 1);
 
   win->type = GTK_TEXT_WINDOW_TEXT;
   win->widget = widget;
@@ -9452,7 +9455,7 @@ text_window_free (GtkTextWindow *win)
 {
   gtk_css_node_set_parent (win->css_node, NULL);
 
-  g_slice_free (GtkTextWindow, win);
+  g_free (win);
 }
 
 static void
@@ -9611,7 +9614,7 @@ anchored_child_new (GtkWidget          *child,
 {
   AnchoredChild *vc;
 
-  vc = g_slice_new0 (AnchoredChild);
+  vc = g_new0 (AnchoredChild, 1);
   vc->link.data = vc;
   vc->widget = g_object_ref (child);
   vc->anchor = g_object_ref (anchor);
@@ -9638,7 +9641,7 @@ anchored_child_free (AnchoredChild *child)
   g_object_unref (child->anchor);
   g_object_unref (child->widget);
 
-  g_slice_free (AnchoredChild, child);
+  g_free (child);
 }
 
 static void

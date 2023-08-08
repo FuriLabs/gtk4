@@ -374,7 +374,7 @@ gtk_spin_button_class_init (GtkSpinButtonClass *class)
   spinbutton_props[PROP_ADJUSTMENT] =
     g_param_spec_object ("adjustment", NULL, NULL,
                          GTK_TYPE_ADJUSTMENT,
-                         GTK_PARAM_READWRITE);
+                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSpinButton:climb-rate: (attributes org.gtk.Property.get=gtk_spin_button_get_climb_rate org.gtk.Property.set=gtk_spin_button_set_climb_rate)
@@ -479,6 +479,9 @@ gtk_spin_button_class_init (GtkSpinButtonClass *class)
                   _gtk_marshal_INT__POINTER,
                   G_TYPE_INT, 1,
                   G_TYPE_POINTER);
+  g_signal_set_va_marshaller (spinbutton_signals[INPUT],
+                              G_TYPE_FROM_CLASS (gobject_class),
+                              _gtk_marshal_INT__POINTERv);
 
   /**
    * GtkSpinButton::output:
@@ -516,6 +519,9 @@ gtk_spin_button_class_init (GtkSpinButtonClass *class)
                   _gtk_boolean_handled_accumulator, NULL,
                   _gtk_marshal_BOOLEAN__VOID,
                   G_TYPE_BOOLEAN, 0);
+  g_signal_set_va_marshaller (spinbutton_signals[OUTPUT],
+                              G_TYPE_FROM_CLASS (gobject_class),
+                              _gtk_marshal_BOOLEAN__VOIDv);
 
   /**
    * GtkSpinButton::value-changed:
@@ -1058,8 +1064,7 @@ gtk_spin_button_init (GtkSpinButton *spin_button)
   g_signal_connect (gesture, "released", G_CALLBACK (button_released_cb), spin_button);
   g_signal_connect (gesture, "cancel", G_CALLBACK (button_cancel_cb), spin_button);
   gtk_widget_add_controller (GTK_WIDGET (spin_button->up_button), GTK_EVENT_CONTROLLER (gesture));
-  gtk_gesture_group (gtk_button_get_gesture (GTK_BUTTON (spin_button->up_button)),
-		     gesture);
+  gtk_gesture_group (gtk_button_get_gesture (GTK_BUTTON (spin_button->up_button)), gesture);
 
   gtk_spin_button_set_adjustment (spin_button, NULL);
 
@@ -1075,7 +1080,7 @@ gtk_spin_button_init (GtkSpinButton *spin_button)
                              GTK_EVENT_CONTROLLER (gesture));
 
   controller = gtk_event_controller_scroll_new (GTK_EVENT_CONTROLLER_SCROLL_VERTICAL |
-				                GTK_EVENT_CONTROLLER_SCROLL_DISCRETE);
+                                                GTK_EVENT_CONTROLLER_SCROLL_DISCRETE);
   g_signal_connect (controller, "scroll",
                     G_CALLBACK (scroll_controller_scroll), spin_button);
   gtk_widget_add_controller (GTK_WIDGET (spin_button), controller);
@@ -1214,11 +1219,13 @@ gtk_spin_button_set_orientation (GtkSpinButton  *spin,
     {
       /* Current orientation of the box is vertical! */
       gtk_widget_insert_after (spin->up_button, GTK_WIDGET (spin), spin->down_button);
+      gtk_box_layout_set_baseline_child (layout_manager, 0);
     }
   else
     {
       /* Current orientation of the box is horizontal! */
       gtk_widget_insert_before (spin->up_button, GTK_WIDGET (spin), spin->entry);
+      gtk_box_layout_set_baseline_child (layout_manager, 1);
     }
 
   g_object_notify (G_OBJECT (spin), "orientation");
@@ -1860,6 +1867,8 @@ gtk_spin_button_set_adjustment (GtkSpinButton *spin_button,
 
   if (!adjustment)
     adjustment = gtk_adjustment_new (0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  else if (spin_button->adjustment == adjustment)
+    return;
 
   gtk_spin_button_configure (spin_button,
                              adjustment,

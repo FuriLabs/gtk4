@@ -31,7 +31,7 @@ described by a set of *attributes*.
 Roles define the taxonomy and semantics of a UI control to any assistive
 technology application; for instance, a button will have a role of
 `GTK_ACCESSIBLE_ROLE_BUTTON`; an entry will have a role of
-`GTK_ACCESSIBLE_ROLE_TEXTBOX`; a toggle button will have a role of
+`GTK_ACCESSIBLE_ROLE_TEXTBOX`; a check button will have a role of
 `GTK_ACCESSIBLE_ROLE_CHECKBOX`; etc.
 
 Each role is part of the widget's instance, and **cannot** be changed over
@@ -46,6 +46,7 @@ Each role name is part of the #GtkAccessibleRole enumeration.
 
 | Role name | Description | Related GTK widget |
 |-----------|-------------|--------------------|
+| `APPLICATION` | An application window | [class@Gtk.Window] |
 | `BUTTON` | A control that performs an action when pressed | [class@Gtk.Button], [class@Gtk.LinkButton], [class@Gtk.Expander] |
 | `CHECKBOX` | A control that has three possible value: `true`, `false`, or `undefined` | [class@Gtk.CheckButton] |
 | `COMBOBOX` | A control that can be expanded to show a list of possible values to select | [class@Gtk.ComboBox] |
@@ -78,7 +79,6 @@ Each role name is part of the #GtkAccessibleRole enumeration.
 | `TAB_PANEL` | A page in a notebook or stack | [class@Gtk.Stack] |
 | `TEXT_BOX` | A type of input that allows free-form text as its value. | [class@Gtk.Entry], [class@Gtk.PasswordEntry], [class@Gtk.TextView] |
 | `TREE_GRID` | A treeview-like columned list | [class@Gtk.ColumnView] |
-| `WINDOW` | An application window | [class@Gtk.Window] |
 | `...` | … |
 
 See the [WAI-ARIA](https://www.w3.org/WAI/PF/aria/appendices#quickref) list
@@ -128,6 +128,7 @@ Each state name is part of the `GtkAccessibleState` enumeration.
 | %GTK_ACCESSIBLE_STATE_INVALID | “aria-invalid” | `GtkAccessibleInvalidState` | Set when a widget is showing an error |
 | %GTK_ACCESSIBLE_STATE_PRESSED | “aria-pressed” | `GtkAccessibleTristate` | Indicates the current state of a [class@Gtk.ToggleButton] |
 | %GTK_ACCESSIBLE_STATE_SELECTED | “aria-selected” | boolean or undefined | Set when a widget is selected |
+| %GTK_ACCESSIBLE_STATE_VISITED | N/A | boolean or undefined | Set when a link-like widget is visited |
 
 #### List of accessible properties
 
@@ -203,19 +204,27 @@ you should ensure that:
    readable and localised action performed when pressed; for instance "Copy",
    "Paste", "Add layer", or "Remove"
 
-GTK will try to fill in some information by using ancillary UI control
-properties, for instance the accessible label will be taken from the label or
-placeholder text used by the UI control, or from its tooltip, if the
-`GTK_ACCESSIBLE_PROPERTY_LABEL` property or the `GTK_ACCESSIBLE_RELATION_LABELLED_BY`
-relation are unset. Nevertheless, it is good practice and project hygiene
-to explicitly specify the accessible properties, just like it's good practice
-to specify tooltips and style classes.
+GTK will try to fill in some information by using ancillary UI control properties,
+for instance the accessible name will be taken from the label used by the UI control,
+or from its tooltip, if the `GTK_ACCESSIBLE_PROPERTY_LABEL` property or the
+`GTK_ACCESSIBLE_RELATION_LABELLED_BY` relation are unset. Similary for the accessible
+description. Nevertheless, it is good practice and project hygiene to explicitly specify
+the accessible properties, just like it's good practice to specify tooltips and style classes.
 
 Application developers using GTK **should** ensure that their UI controls
-are accessible as part of the development process. When using `GtkBuilder`
-templates and UI definition files, GTK provides a validation tool that
-verifies that each UI element has a valid role and properties; this tool can
-be used as part of the application's test suite to avoid regressions.
+are accessible as part of the development process. The GTK Inspector shows
+the accessible attributes of each widget, and also provides an overlay that
+can highlight accessibility issues.
+
+It is possible to set accessible attributes in UI files as well:
+```xml
+<object class="GtkButton" id="button1">
+  <accessibility>
+    <property name="label">Download</property>
+    <relation name="labelled-by">label1</relation>
+  /accessibility>
+</object>
+```
 
 ## Implementations
 
@@ -257,6 +266,13 @@ interactions expected for a button. An accessible role of a button will not
 turn automatically any widget into a `GtkButton`; but if your widget behaves
 like a button, using the %GTK_ACCESSIBLE_ROLE_BUTTON will allow any
 assistive technology to handle it like they would a `GtkButton`.
+
+For widgets that act as containers of other widgets, you should use
+%GTK_ACCESSIBLE_ROLE_GROUP if the grouping of the children is semantic
+in nature; for instance, the children of a [class@Gtk.HeaderBar] are
+grouped together on the header of a window. For generic containers that
+only impose a layout on their children, you should use
+%GTK_ACCESSIBLE_ROLE_GENERIC instead.
 
 ### Attributes can both hide and enhance
 
@@ -366,3 +382,6 @@ To allow changing the value via accessible technologies, you can export
 actions.  Since the accessibility interfaces only support actions
 without parameters, you should provide actions such as `increase-value`
 and `decrease-value`.
+
+Since GTK 4.10, the best way to suppose changing the value is by implementing
+the [iface@Gtk.AccessibleRange] interface.

@@ -52,6 +52,7 @@ typedef struct {
 
   const char *method_name;
 
+  char *exported_handle;
   GtkWindow *exported_window;
   PortalErrorHandler error_handler;
 } FilechooserPortalData;
@@ -79,7 +80,11 @@ filechooser_portal_data_clear (FilechooserPortalData *data)
 
   if (data->exported_window)
     {
-      gtk_window_unexport_handle (data->exported_window);
+      if (data->exported_handle)
+        {
+          gtk_window_unexport_handle (data->exported_window, data->exported_handle);
+          g_clear_pointer (&data->exported_handle, g_free);
+        }
       g_clear_object (&data->exported_window);
     }
 
@@ -164,12 +169,17 @@ response_cb (GDBusConnection  *connection,
       g_object_unref (filters);
       gtk_file_chooser_set_filter (GTK_FILE_CHOOSER (self), filter_to_select);
       g_object_unref (filter_to_select);
+
+      g_variant_unref (current_filter);
     }
 
   g_slist_free_full (self->custom_files, g_object_unref);
   self->custom_files = NULL;
   for (i = 0; uris[i]; i++)
     self->custom_files = g_slist_prepend (self->custom_files, g_file_new_for_uri (uris[i]));
+
+  g_free (uris);
+  g_variant_unref (response_data);
 
   switch (portal_response)
     {
@@ -455,6 +465,7 @@ window_handle_exported (GtkWindow  *window,
       gtk_grab_add (GTK_WIDGET (data->grab_widget));
     }
 
+  data->exported_handle = g_strdup (handle_str);
   show_portal_file_chooser (self, handle_str);
 }
 

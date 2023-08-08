@@ -1,5 +1,5 @@
 /* GDK - The GIMP Drawing Kit
- * Copyright (C) 2005 Red Hat, Inc. 
+ * Copyright (C) 2005 Red Hat, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,16 +15,14 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GDK_CAIRO_H__
-#define __GDK_CAIRO_H__
+#pragma once
 
 #if !defined (__GDK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gdk/gdk.h> can be included directly."
 #endif
 
-#include <gdk/gdkversionmacros.h>
-#include <gdk/gdkrgba.h>
-#include <gdk/gdkpixbuf.h>
+#include <gdk/gdktypes.h>
+#include <gdk/deprecated/gdkpixbuf.h>
 #include <pango/pangocairo.h>
 
 G_BEGIN_DECLS
@@ -63,4 +61,3 @@ void       gdk_cairo_draw_from_gl (cairo_t              *cr,
 
 G_END_DECLS
 
-#endif /* __GDK_CAIRO_H__ */

@@ -55,6 +55,7 @@ proto_sources = [
   ['gtk-shell', 'private', ],
   ['primary-selection', 'unstable', 'v1', ],
   ['pointer-gestures', 'unstable', 'v1', ],
+  ['viewporter', 'stable', ],
   ['xdg-shell', 'unstable', 'v6', ],
   ['xdg-shell', 'stable', ],
   ['xdg-foreign', 'unstable', 'v1', ],
@@ -65,6 +66,7 @@ proto_sources = [
   ['xdg-output', 'unstable', 'v1', ],
   ['idle-inhibit', 'unstable', 'v1', ],
   ['xdg-activation', 'staging', 'v1', ],
+  ['fractional-scale', 'staging', 'v1', ],
 ]
 
 gdk_wayland_gen_headers = []

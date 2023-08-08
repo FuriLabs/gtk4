@@ -19,8 +19,7 @@
  *
  */
 
-#ifndef __GTK_CENTER_BOX_H__
-#define __GTK_CENTER_BOX_H__
+#pragma once
 
 #if !defined (__GTK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gtk/gtk.h> can be included directly."
@@ -68,6 +67,11 @@ void                gtk_center_box_set_baseline_position (GtkCenterBox        *s
 GDK_AVAILABLE_IN_ALL
 GtkBaselinePosition gtk_center_box_get_baseline_position (GtkCenterBox        *self);
 
+GDK_AVAILABLE_IN_4_12
+void        gtk_center_box_set_shrink_center_last (GtkCenterBox *self,
+                                                   gboolean      shrink_center_last);
+GDK_AVAILABLE_IN_4_12
+gboolean    gtk_center_box_get_shrink_center_last (GtkCenterBox *self);
+
 G_END_DECLS
 
-#endif

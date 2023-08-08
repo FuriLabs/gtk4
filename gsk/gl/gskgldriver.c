@@ -43,6 +43,8 @@
 #include <gdk/gdkprofilerprivate.h>
 #include <gdk/gdktextureprivate.h>
 
+#include <gdk/gdkmemoryformatprivate.h>
+
 G_DEFINE_TYPE (GskGLDriver, gsk_gl_driver, G_TYPE_OBJECT)
 
 static guint
@@ -59,8 +61,7 @@ texture_key_hash (gconstpointer v)
 
   return GPOINTER_TO_SIZE (k->pointer) ^
     ((scale_x << 8) |
-     (scale_y << 6) |
-     (k->filter << 1) |
+     (scale_y << 4) |
      k->pointer_is_child);
 }
 
@@ -74,7 +75,6 @@ texture_key_equal (gconstpointer v1,
   return k1->pointer == k2->pointer &&
          k1->scale_x == k2->scale_x &&
          k1->scale_y == k2->scale_y &&
-         k1->filter == k2->filter &&
          k1->pointer_is_child == k2->pointer_is_child &&
          (!k1->pointer_is_child || memcmp (&k1->parent_rect, &k2->parent_rect, sizeof k1->parent_rect) == 0);
 }
@@ -264,22 +264,19 @@ gsk_gl_driver_dispose (GObject *object)
       g_clear_object (&self->command_queue);
     }
 
-  if (self->autorelease_framebuffers->len > 0)
+  if (self->autorelease_framebuffers != NULL &&
+      self->autorelease_framebuffers->len > 0)
     {
       glDeleteFramebuffers (self->autorelease_framebuffers->len,
                             (GLuint *)(gpointer)self->autorelease_framebuffers->data);
       self->autorelease_framebuffers->len = 0;
     }
 
-  g_clear_pointer (&self->texture_pool, g_array_unref);
-
-  g_assert (!self->textures || g_hash_table_size (self->textures) == 0);
-  g_assert (!self->texture_id_to_key || g_hash_table_size (self->texture_id_to_key) == 0);
-  g_assert (!self->key_to_texture_id|| g_hash_table_size (self->key_to_texture_id) == 0);
-
   g_clear_object (&self->glyphs_library);
   g_clear_object (&self->icons_library);
   g_clear_object (&self->shadows_library);
+
+  g_clear_pointer (&self->texture_pool, g_array_unref);
 
   g_clear_pointer (&self->autorelease_framebuffers, g_array_unref);
   g_clear_pointer (&self->key_to_texture_id, g_hash_table_unref);
@@ -474,6 +471,19 @@ gsk_gl_driver_new (GskGLCommandQueue  *command_queue,
   return g_steal_pointer (&self);
 }
 
+static void
+free_driver (GskGLDriver *driver)
+{
+  g_object_run_dispose (G_OBJECT (driver));
+  g_object_unref (driver);
+}
+
+static void
+display_closed (GdkDisplay *display)
+{
+  g_object_set_data (G_OBJECT (display), "GSK_GL_DRIVER", NULL);
+}
+
 /**
  * gsk_gl_driver_for_display:
  * @display: A #GdkDisplay that is known to support GL
@@ -519,7 +529,8 @@ gsk_gl_driver_for_display (GdkDisplay  *display,
   g_object_set_data_full (G_OBJECT (display),
                           "GSK_GL_DRIVER",
                           g_object_ref (driver),
-                          g_object_unref);
+                          (GDestroyNotify) free_driver);
+  g_signal_connect (display, "closed", G_CALLBACK (display_closed), NULL);
 
 failure:
   g_clear_object (&command_queue);
@@ -619,7 +630,7 @@ gsk_gl_driver_after_frame (GskGLDriver *self)
 
       gsk_gl_driver_autorelease_framebuffer (self, render_target->framebuffer_id);
       gsk_gl_driver_autorelease_texture (self, render_target->texture_id);
-      g_slice_free (GskGLRenderTarget, render_target);
+      g_free (render_target);
 
       self->render_targets->len--;
     }
@@ -675,25 +686,28 @@ gsk_gl_driver_cache_texture (GskGLDriver         *self,
                              const GskTextureKey *key,
                              guint                texture_id)
 {
-  GskTextureKey *k;
-
   g_assert (GSK_IS_GL_DRIVER (self));
   g_assert (key != NULL);
   g_assert (texture_id > 0);
   g_assert (g_hash_table_contains (self->textures, GUINT_TO_POINTER (texture_id)));
 
-  k = g_memdup (key, sizeof *key);
+  if (!g_hash_table_contains (self->key_to_texture_id, key))
+    {
+      GskTextureKey *k;
 
-  g_hash_table_insert (self->key_to_texture_id, k, GUINT_TO_POINTER (texture_id));
-  g_hash_table_insert (self->texture_id_to_key, GUINT_TO_POINTER (texture_id), k);
+      k = g_memdup (key, sizeof *key);
+
+      g_assert (!g_hash_table_contains (self->texture_id_to_key, GUINT_TO_POINTER (texture_id)));
+      g_hash_table_insert (self->key_to_texture_id, k, GUINT_TO_POINTER (texture_id));
+      g_hash_table_insert (self->texture_id_to_key, GUINT_TO_POINTER (texture_id), k);
+    }
 }
 
 /**
  * gsk_gl_driver_load_texture:
  * @self: a `GdkTexture`
  * @texture: a `GdkTexture`
- * @min_filter: GL_NEAREST or GL_LINEAR
- * @mag_filter: GL_NEAREST or GL_LINEAR
+ * @ensure_mipmap: Mipmaps for this texture must exist for downscaling
  *
  * Loads a `GdkTexture` by uploading the contents to the GPU when
  * necessary. If @texture is a `GdkGLTexture`, it can be used without
@@ -714,8 +728,7 @@ gsk_gl_driver_cache_texture (GskGLDriver         *self,
 guint
 gsk_gl_driver_load_texture (GskGLDriver *self,
                             GdkTexture  *texture,
-                            int          min_filter,
-                            int          mag_filter)
+                            gboolean     ensure_mipmap)
 {
   GdkGLContext *context;
   GdkMemoryTexture *downloaded_texture;
@@ -723,7 +736,6 @@ gsk_gl_driver_load_texture (GskGLDriver *self,
   guint texture_id;
   int height;
   int width;
-  int format;
 
   g_return_val_if_fail (GSK_IS_GL_DRIVER (self), 0);
   g_return_val_if_fail (GDK_IS_TEXTURE (texture), 0);
@@ -731,48 +743,60 @@ gsk_gl_driver_load_texture (GskGLDriver *self,
 
   context = self->command_queue->context;
 
-  format = GL_RGBA8;
+  texture_id = 0;
+  downloaded_texture = NULL;
 
-  if (GDK_IS_GL_TEXTURE (texture) && min_filter == GL_LINEAR && mag_filter == GL_LINEAR)
+  t = gdk_texture_get_render_data (texture, self);
+  if (t && t->texture_id)
+    {
+      if (ensure_mipmap && !t->has_mipmap)
+        {
+          glBindTexture (GL_TEXTURE_2D, t->texture_id);
+          glGenerateMipmap (GL_TEXTURE_2D);
+          t->has_mipmap = TRUE;
+        }
+
+      return t->texture_id;
+    }
+
+  if (GDK_IS_GL_TEXTURE (texture))
     {
       GdkGLTexture *gl_texture = (GdkGLTexture *) texture;
       GdkGLContext *texture_context = gdk_gl_texture_get_context (gl_texture);
 
-      if (gdk_gl_context_is_shared (context, texture_context))
+      if (gdk_gl_context_is_shared (context, texture_context) &&
+          (!ensure_mipmap || gdk_gl_texture_has_mipmap (gl_texture)) &&
+          gdk_memory_format_alpha (gdk_texture_get_format (texture)) != GDK_MEMORY_ALPHA_STRAIGHT)
         {
           /* A GL texture from the same GL context is a simple task... */
           return gdk_gl_texture_get_id (gl_texture);
         }
-      else
-        {
-          downloaded_texture = gdk_memory_texture_from_texture (texture, gdk_texture_get_format (texture));
-        }
     }
-  else
+
+  if (texture_id == 0)
     {
-      if ((t = gdk_texture_get_render_data (texture, self)))
-        {
-          if (t->min_filter == min_filter && t->mag_filter == mag_filter && t->texture_id)
-            return t->texture_id;
-        }
-
       downloaded_texture = gdk_memory_texture_from_texture (texture, gdk_texture_get_format (texture));
-    }
 
-  /* The download_texture() call may have switched the GL context. Make sure
-   * the right context is at work again. */
-  gdk_gl_context_make_current (context);
+      /* The download_texture() call may have switched the GL context. Make sure
+       * the right context is at work again.
+       */
+      gdk_gl_context_make_current (context);
+
+      texture_id = gsk_gl_command_queue_upload_texture (self->command_queue, GDK_TEXTURE (downloaded_texture));
+    }
 
   width = gdk_texture_get_width (texture);
   height = gdk_texture_get_height (texture);
-  texture_id = gsk_gl_command_queue_upload_texture (self->command_queue,
-                                                    GDK_TEXTURE (downloaded_texture),
-                                                    min_filter,
-                                                    mag_filter);
 
   t = gsk_gl_texture_new (texture_id,
-                           width, height, format, min_filter, mag_filter,
-                           self->current_frame_id);
+                          width, height,
+                          self->current_frame_id);
+  if (ensure_mipmap)
+    {
+      glBindTexture (GL_TEXTURE_2D, t->texture_id);
+      glGenerateMipmap (GL_TEXTURE_2D);
+      t->has_mipmap = TRUE;
+    }
 
   g_hash_table_insert (self->textures, GUINT_TO_POINTER (texture_id), t);
 
@@ -784,7 +808,7 @@ gsk_gl_driver_load_texture (GskGLDriver *self,
 
   g_clear_object (&downloaded_texture);
 
-  return texture_id;
+  return t->texture_id;
 }
 
 /**
@@ -793,8 +817,6 @@ gsk_gl_driver_load_texture (GskGLDriver *self,
  * @width: the width of the texture
  * @height: the height of the texture
  * @format: format for the texture
- * @min_filter: GL_NEAREST or GL_LINEAR
- * @mag_filter: GL_NEAREST or GL_FILTER
  *
  * Creates a new texture immediately that can be used by the caller
  * to upload data, map to a framebuffer, or other uses which may
@@ -812,9 +834,7 @@ GskGLTexture *
 gsk_gl_driver_create_texture (GskGLDriver *self,
                               float        width,
                               float        height,
-                              int          format,
-                              int          min_filter,
-                              int          mag_filter)
+                              int          format)
 {
   GskGLTexture *texture;
   guint texture_id;
@@ -822,14 +842,11 @@ gsk_gl_driver_create_texture (GskGLDriver *self,
   g_return_val_if_fail (GSK_IS_GL_DRIVER (self), NULL);
 
   texture_id = gsk_gl_command_queue_create_texture (self->command_queue,
-                                                     width, height,
-                                                     format,
-                                                     min_filter, mag_filter);
+                                                    width, height,
+                                                    format);
   texture = gsk_gl_texture_new (texture_id,
-                                 width, height,
-                                 format,
-                                 min_filter, mag_filter,
-                                 self->current_frame_id);
+                                width, height,
+                                self->current_frame_id);
   g_hash_table_insert (self->textures,
                        GUINT_TO_POINTER (texture->texture_id),
                        texture);
@@ -875,8 +892,6 @@ gsk_gl_driver_release_texture (GskGLDriver  *self,
  * @width: the width for the render target
  * @height: the height for the render target
  * @format: the format to use
- * @min_filter: the min filter to use for the texture
- * @mag_filter: the mag filter to use for the texture
  * @out_render_target: (out): a location for the render target
  *
  * Creates a new render target which contains a framebuffer and a texture
@@ -897,8 +912,6 @@ gsk_gl_driver_create_render_target (GskGLDriver        *self,
                                     int                 width,
                                     int                 height,
                                     int                 format,
-                                    int                 min_filter,
-                                    int                 mag_filter,
                                     GskGLRenderTarget **out_render_target)
 {
   guint framebuffer_id;
@@ -916,9 +929,7 @@ gsk_gl_driver_create_render_target (GskGLDriver        *self,
           GskGLRenderTarget *render_target = g_ptr_array_index (self->render_targets, i-1);
 
           if (render_target->width == width &&
-              render_target->height == height &&
-              render_target->min_filter == min_filter &&
-              render_target->mag_filter == mag_filter)
+              render_target->height == height)
             {
               *out_render_target = g_ptr_array_steal_index_fast (self->render_targets, i-1);
               return TRUE;
@@ -930,14 +941,11 @@ gsk_gl_driver_create_render_target (GskGLDriver        *self,
   if (gsk_gl_command_queue_create_render_target (self->command_queue,
                                                   width, height,
                                                   format,
-                                                  min_filter, mag_filter,
                                                   &framebuffer_id, &texture_id))
     {
       GskGLRenderTarget *render_target;
 
-      render_target = g_slice_new0 (GskGLRenderTarget);
-      render_target->min_filter = min_filter;
-      render_target->mag_filter = mag_filter;
+      render_target = g_new0 (GskGLRenderTarget, 1);
       render_target->format = format;
       render_target->width = width;
       render_target->height = height;
@@ -998,16 +1006,13 @@ gsk_gl_driver_release_render_target (GskGLDriver       *self,
       texture = gsk_gl_texture_new (render_target->texture_id,
                                      render_target->width,
                                      render_target->height,
-                                     render_target->format,
-                                     render_target->min_filter,
-                                     render_target->mag_filter,
                                      self->current_frame_id);
       g_hash_table_insert (self->textures,
                            GUINT_TO_POINTER (texture_id),
                            g_steal_pointer (&texture));
 
       gsk_gl_driver_autorelease_framebuffer (self, render_target->framebuffer_id);
-      g_slice_free (GskGLRenderTarget, render_target);
+      g_free (render_target);
 
     }
 
@@ -1131,20 +1136,28 @@ gsk_gl_driver_lookup_shader (GskGLDriver  *self,
   return program;
 }
 
-#ifdef G_ENABLE_DEBUG
-static void
-write_atlas_to_png (GskGLDriver       *driver,
-                    GskGLTextureAtlas *atlas,
-                    const char        *filename)
+#if 0
+void
+gsk_gl_driver_save_texture_to_png (GskGLDriver       *driver,
+                                   int                texture_id,
+                                   int                width,
+                                   int                height,
+                                   const char        *filename)
 {
+  GdkGLTextureBuilder *builder;
   GdkTexture *texture;
 
-  texture = gdk_gl_texture_new (gsk_gl_driver_get_context (driver),
-                                atlas->texture_id,
-                                atlas->width, atlas->height,
-                                NULL, NULL);
+  builder = gdk_gl_texture_builder_new ();
+  gdk_gl_texture_builder_set_context (builder, gsk_gl_driver_get_context (driver));
+  gdk_gl_texture_builder_set_id (builder, texture_id);
+  gdk_gl_texture_builder_set_width (builder, width);
+  gdk_gl_texture_builder_set_height (builder, height);
+
+  texture = gdk_gl_texture_builder_build (builder, NULL, NULL);
   gdk_texture_save_to_png (texture, filename);
+
   g_object_unref (texture);
+  g_object_unref (builder);
 }
 
 void
@@ -1173,7 +1186,7 @@ gsk_gl_driver_save_atlases_to_png (GskGLDriver *self,
                                         G_DIR_SEPARATOR_S,
                                         (int)self->current_frame_id,
                                         atlas->texture_id);
-      write_atlas_to_png (self, atlas, filename);
+      gsk_gl_driver_save_texture_to_png (self, atlas->texture_id, atlas->width, atlas->height, filename);
       g_free (filename);
     }
 
@@ -1194,14 +1207,11 @@ gsk_gl_driver_create_command_queue (GskGLDriver *self,
 void
 gsk_gl_driver_add_texture_slices (GskGLDriver        *self,
                                   GdkTexture         *texture,
-                                  int                 min_filter,
-                                  int                 mag_filter,
-                                  guint               min_cols,
-                                  guint               min_rows,
+                                  gboolean            ensure_mipmap,
                                   GskGLTextureSlice **out_slices,
                                   guint              *out_n_slices)
 {
-  int max_texture_size;
+  int max_slice_size;
   GskGLTextureSlice *slices;
   GskGLTexture *t;
   guint n_slices;
@@ -1211,25 +1221,32 @@ gsk_gl_driver_add_texture_slices (GskGLDriver        *self,
   int tex_height;
   int x = 0, y = 0;
   GdkMemoryTexture *memtex;
+  int extra_pixels;
+  GdkMemoryTexture *memtex1 = NULL;
+  GdkMemoryTexture *memtex2 = NULL;
+  GdkMemoryTexture *memtex3 = NULL;
+  GdkMemoryTexture *memtex4 = NULL;
 
   g_assert (GSK_IS_GL_DRIVER (self));
   g_assert (GDK_IS_TEXTURE (texture));
   g_assert (out_slices != NULL);
   g_assert (out_n_slices != NULL);
 
-  /* XXX: Too much? */
-  max_texture_size = self->command_queue->max_texture_size / 4;
+  max_slice_size = self->command_queue->max_texture_size / 2;
   tex_width = texture->width;
   tex_height = texture->height;
 
-  cols = MAX ((texture->width / max_texture_size) + 1, min_cols);
-  rows = MAX ((texture->height / max_texture_size) + 1, min_rows);
+  cols = (texture->width / max_slice_size) + 1;
+  rows = (texture->height / max_slice_size) + 1;
 
   n_slices = cols * rows;
 
-  if ((t = gdk_texture_get_render_data (texture, self)))
+  t = gdk_texture_get_render_data (texture, self);
+
+  if (t)
     {
-      if (t->n_slices == n_slices)
+      if (t->n_slices == n_slices &&
+          (t->has_mipmap || !ensure_mipmap))
         {
           *out_slices = t->slices;
           *out_n_slices = t->n_slices;
@@ -1243,46 +1260,282 @@ gsk_gl_driver_add_texture_slices (GskGLDriver        *self,
   memtex = gdk_memory_texture_from_texture (texture,
                                             gdk_texture_get_format (texture));
 
+  if (ensure_mipmap)
+    {
+      guchar *data1, *data2, *data3, *data4;
+      guchar *top_row, *bot_row, *left_row, *right_row;
+      GdkTexture *tmp;
+      int w;
+      GBytes *bytes;
+
+      /* We need some extra pixels around our tiles, in order for
+       * GL to properly determine the right level of detail to use.
+       * This number should probably depend on the scale, but for
+       * now we just hardcode it.
+       *
+       * We create some auxiliary textures to hold the extra pixels:
+       *
+       *    +---------------------+
+       *    | memtex1             |
+       *    *---+-------------+---+
+       *    |   |             |   |
+       * memtex2|   memtex    |memtex3
+       *    |   |             |   |
+       *    *---+-------------+---+
+       *    | memtex4         |   |
+       *    +---------------------+
+       */
+
+      extra_pixels = 15;
+
+      top_row = g_malloc (4 * tex_width);
+      tmp = gdk_memory_texture_new_subtexture (memtex, 0, 0, tex_width, 1);
+      gdk_texture_download (tmp, top_row, 4 * tex_width);
+      g_object_unref (tmp);
+
+      bot_row = g_malloc (4 * tex_width);
+      tmp = gdk_memory_texture_new_subtexture (memtex, 0, tex_height - 1, tex_width, 1);
+      gdk_texture_download (tmp, bot_row, 4 * tex_width);
+      g_object_unref (tmp);
+
+      left_row = g_malloc (4 * tex_height);
+      tmp = gdk_memory_texture_new_subtexture (memtex, 0, 0, 1, tex_height);
+      gdk_texture_download (tmp, left_row, 4);
+      g_object_unref (tmp);
+
+      right_row = g_malloc (4 * tex_height);
+      tmp = gdk_memory_texture_new_subtexture (memtex, tex_width - 1, 0, 1, tex_height);
+      gdk_texture_download (tmp, right_row, 4);
+      g_object_unref (tmp);
+
+      w = tex_width + 2 * extra_pixels;
+
+      data1 = g_malloc (4 * w * extra_pixels);
+      data2 = g_malloc (4 * extra_pixels * tex_height);
+      data3 = g_malloc (4 * extra_pixels * tex_height);
+      data4 = g_malloc (4 * w * extra_pixels);
+
+      for (int i = 0; i < w; i++)
+        {
+          int ii = CLAMP (i, extra_pixels, (tex_width - 1) + extra_pixels) - extra_pixels;
+
+          for (int j = 0; j < extra_pixels; j++)
+            {
+              data1[(j * w + i) * 4]     = top_row[ii * 4];
+              data1[(j * w + i) * 4 + 1] = top_row[ii * 4 + 1];
+              data1[(j * w + i) * 4 + 2] = top_row[ii * 4 + 2];
+              data1[(j * w + i) * 4 + 3] = top_row[ii * 4 + 3];
+
+              data4[(j * w + i) * 4]     = bot_row[ii * 4];
+              data4[(j * w + i) * 4 + 1] = bot_row[ii * 4 + 1];
+              data4[(j * w + i) * 4 + 2] = bot_row[ii * 4 + 2];
+              data4[(j * w + i) * 4 + 3] = bot_row[ii * 4 + 3];
+            }
+        }
+
+      for (int i = 0; i < extra_pixels; i++)
+        {
+          for (int j = 0; j < tex_height; j++)
+            {
+              data2[(j * extra_pixels + i) * 4]     = left_row[j * 4];
+              data2[(j * extra_pixels + i) * 4 + 1] = left_row[j * 4 + 1];
+              data2[(j * extra_pixels + i) * 4 + 2] = left_row[j * 4 + 2];
+              data2[(j * extra_pixels + i) * 4 + 3] = left_row[j * 4 + 3];
+
+              data3[(j * extra_pixels + i) * 4]     = right_row[j * 4];
+              data3[(j * extra_pixels + i) * 4 + 1] = right_row[j * 4 + 1];
+              data3[(j * extra_pixels + i) * 4 + 2] = right_row[j * 4 + 2];
+              data3[(j * extra_pixels + i) * 4 + 3] = right_row[j * 4 + 3];
+            }
+        }
+
+      g_free (top_row);
+      g_free (bot_row);
+      g_free (left_row);
+      g_free (right_row);
+
+      bytes = g_bytes_new_take (data1, 4 * w * extra_pixels);
+      memtex1 = GDK_MEMORY_TEXTURE (gdk_memory_texture_new (w, extra_pixels, GDK_MEMORY_DEFAULT, bytes, 4 * w));
+      g_bytes_unref (bytes);
+
+      bytes = g_bytes_new_take (data2, 4 * extra_pixels * tex_height);
+      memtex2 = GDK_MEMORY_TEXTURE (gdk_memory_texture_new (extra_pixels, tex_height, GDK_MEMORY_DEFAULT, bytes, 4 * extra_pixels));
+      g_bytes_unref (bytes);
+
+      bytes = g_bytes_new_take (data3, 4 * extra_pixels * tex_height);
+      memtex3 = GDK_MEMORY_TEXTURE (gdk_memory_texture_new (extra_pixels, tex_height, GDK_MEMORY_DEFAULT, bytes, 4 * extra_pixels));
+      g_bytes_unref (bytes);
+
+      bytes = g_bytes_new_take (data4, 4 * w * extra_pixels);
+      memtex4 = GDK_MEMORY_TEXTURE (gdk_memory_texture_new (w, extra_pixels, GDK_MEMORY_DEFAULT, bytes, 4 * w));
+      g_bytes_unref (bytes);
+    }
+  else
+    extra_pixels = 0;
+
+  x = 0;
   for (guint col = 0; col < cols; col++)
     {
       int slice_width = col + 1 < cols ? tex_width / cols : tex_width - x;
 
+      y = 0;
       for (guint row = 0; row < rows; row++)
         {
           int slice_height = row + 1 < rows ? tex_height / rows : tex_height - y;
           int slice_index = (col * rows) + row;
-          GdkTexture *subtex;
           guint texture_id;
 
-          subtex = gdk_memory_texture_new_subtexture (memtex,
-                                                      x, y,
-                                                      slice_width, slice_height);
-          texture_id = gsk_gl_command_queue_upload_texture (self->command_queue,
-                                                            subtex,
-                                                            min_filter, mag_filter);
-          g_object_unref (subtex);
+          if (ensure_mipmap)
+            {
+              GskGLTextureChunk chunks[5];
+              unsigned int n_chunks = 0;
+
+              if (row == 0)
+                {
+                  chunks[n_chunks].texture = gdk_memory_texture_new_subtexture (memtex1,
+                                                                                x, 0,
+                                                                                slice_width + 2 * extra_pixels, extra_pixels);
+                  chunks[n_chunks].x = 0;
+                  chunks[n_chunks].y = 0;
+                  n_chunks++;
+                }
+
+              if (row == rows - 1)
+                {
+                  chunks[n_chunks].texture = gdk_memory_texture_new_subtexture (memtex4,
+                                                                                x, 0,
+                                                                                slice_width + 2 * extra_pixels, extra_pixels);
+                  chunks[n_chunks].x = 0;
+                  chunks[n_chunks].y = slice_height + extra_pixels;
+                  n_chunks++;
+                }
+
+              if (col == 0)
+                {
+                  int yy = y - extra_pixels;
+                  int hh = slice_height + 2 * extra_pixels;
+                  int y0 = 0;
+
+                  if (row == 0)
+                    {
+                      yy = 0;
+                      y0 = extra_pixels;
+                      hh -= extra_pixels;
+                    }
+                  if (row == rows - 1)
+                    {
+                      hh -= extra_pixels;
+                    }
+
+                  chunks[n_chunks].texture = gdk_memory_texture_new_subtexture (memtex2,
+                                                                                0, yy, extra_pixels, hh);
+                  chunks[n_chunks].x = 0;
+                  chunks[n_chunks].y = y0;
+                  n_chunks++;
+                }
+
+              if (col == cols - 1)
+                {
+                  int yy = y - extra_pixels;
+                  int hh = slice_height + 2 * extra_pixels;
+                  int y0 = 0;
+
+                  if (row == 0)
+                    {
+                      yy = 0;
+                      y0 = extra_pixels;
+                      hh -= extra_pixels;
+                    }
+                  if (row == rows - 1)
+                    {
+                      hh -= extra_pixels;
+                    }
+
+                  chunks[n_chunks].texture = gdk_memory_texture_new_subtexture (memtex3,
+                                                                                0, yy, extra_pixels, hh);
+                  chunks[n_chunks].x = slice_width + extra_pixels;
+                  chunks[n_chunks].y = y0;
+                  n_chunks++;
+                }
+
+              {
+                int xx = x - extra_pixels;
+                int yy = y - extra_pixels;
+                int ww = slice_width + 2 * extra_pixels;
+                int hh = slice_height + 2 * extra_pixels;
+                int x0 = 0;
+                int y0 = 0;
+                if (col == 0)
+                  {
+                    xx = 0;
+                    ww -= extra_pixels;
+                    x0 = extra_pixels;
+                  }
+                if (col == cols - 1)
+                  {
+                    ww -= extra_pixels;
+                  }
+                if (row == 0)
+                  {
+                    yy = 0;
+                    hh -= extra_pixels;
+                    y0 = extra_pixels;
+                  }
+                if (row == rows - 1)
+                  {
+                    hh -= extra_pixels;
+                  }
+
+                chunks[n_chunks].texture = gdk_memory_texture_new_subtexture (memtex, xx, yy, ww, hh);
+                chunks[n_chunks].x = x0;
+                chunks[n_chunks].y = y0;
+                n_chunks++;
+              }
+
+              texture_id = gsk_gl_command_queue_upload_texture_chunks (self->command_queue, n_chunks, chunks);
+
+              glBindTexture (GL_TEXTURE_2D, texture_id);
+              glGenerateMipmap (GL_TEXTURE_2D);
+
+              for (unsigned int i = 0; i < n_chunks; i++)
+                g_object_unref (chunks[i].texture);
+            }
+          else
+            {
+              GdkTexture *subtex;
+
+              subtex = gdk_memory_texture_new_subtexture (memtex, x, y, slice_width, slice_height);
+              texture_id = gsk_gl_command_queue_upload_texture (self->command_queue, subtex);
+              g_object_unref (subtex);
+            }
 
           slices[slice_index].rect.x = x;
           slices[slice_index].rect.y = y;
           slices[slice_index].rect.width = slice_width;
           slices[slice_index].rect.height = slice_height;
           slices[slice_index].texture_id = texture_id;
+          slices[slice_index].area.x = extra_pixels / (float) (slice_width + 2 * extra_pixels);
+          slices[slice_index].area.y = extra_pixels / (float) (slice_height + 2 * extra_pixels);
+          slices[slice_index].area.x2 = (extra_pixels + slice_width) / (float) (slice_width + 2 * extra_pixels);
+          slices[slice_index].area.y2 = (extra_pixels + slice_height) / (float) (slice_height + 2 * extra_pixels);
 
           y += slice_height;
         }
 
-      y = 0;
       x += slice_width;
     }
 
   g_object_unref (memtex);
+  g_clear_object (&memtex1);
+  g_clear_object (&memtex2);
+  g_clear_object (&memtex3);
+  g_clear_object (&memtex4);
 
   /* Allocate one Texture for the entire thing. */
   t = gsk_gl_texture_new (0,
                           tex_width, tex_height,
-                          GL_RGBA8,
-                          GL_NEAREST, GL_NEAREST,
                           self->current_frame_id);
+  t->has_mipmap = ensure_mipmap;
 
   /* Use gsk_gl_texture_free() as destroy notify here since we are
    * not inserting this GskGLTexture into self->textures!
@@ -1328,6 +1581,7 @@ typedef struct _GskGLTextureState
 {
   GdkGLContext *context;
   GLuint        texture_id;
+  GLsync        sync;
 } GskGLTextureState;
 
 static void
@@ -1340,8 +1594,10 @@ create_texture_from_texture_destroy (gpointer data)
 
   gdk_gl_context_make_current (state->context);
   glDeleteTextures (1, &state->texture_id);
+  if (state->sync)
+    glDeleteSync (state->sync);
   g_clear_object (&state->context);
-  g_slice_free (GskGLTextureState, state);
+  g_free (state);
 }
 
 GdkTexture *
@@ -1349,8 +1605,9 @@ gsk_gl_driver_create_gdk_texture (GskGLDriver *self,
                                   guint        texture_id)
 {
   GskGLTextureState *state;
+  GdkGLTextureBuilder *builder;
   GskGLTexture *texture;
-  int width, height;
+  GdkTexture *result;
 
   g_return_val_if_fail (GSK_IS_GL_DRIVER (self), NULL);
   g_return_val_if_fail (self->command_queue != NULL, NULL);
@@ -1362,22 +1619,28 @@ gsk_gl_driver_create_gdk_texture (GskGLDriver *self,
   if (!(texture = g_hash_table_lookup (self->textures, GUINT_TO_POINTER (texture_id))))
     g_return_val_if_reached (NULL);
 
-  state = g_slice_new0 (GskGLTextureState);
+  state = g_new0 (GskGLTextureState, 1);
   state->texture_id = texture_id;
   state->context = g_object_ref (self->command_queue->context);
+  if (gdk_gl_context_has_sync (self->command_queue->context))
+    state->sync = glFenceSync (GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
   g_hash_table_steal (self->textures, GUINT_TO_POINTER (texture_id));
 
-  width = texture->width;
-  height = texture->height;
+  builder = gdk_gl_texture_builder_new ();
+  gdk_gl_texture_builder_set_context (builder, self->command_queue->context);
+  gdk_gl_texture_builder_set_id (builder, texture_id);
+  gdk_gl_texture_builder_set_width (builder, texture->width);
+  gdk_gl_texture_builder_set_height (builder, texture->height);
+  gdk_gl_texture_builder_set_sync (builder, state->sync);
+
+  result = gdk_gl_texture_builder_build (builder,
+                                         create_texture_from_texture_destroy,
+                                         state);
 
   texture->texture_id = 0;
   gsk_gl_texture_free (texture);
+  g_object_unref (builder);
 
-  return gdk_gl_texture_new (self->command_queue->context,
-                             texture_id,
-                             width,
-                             height,
-                             create_texture_from_texture_destroy,
-                             state);
+  return result;
 }

@@ -19,8 +19,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GDK_WAYLAND_DISPLAY__
-#define __GDK_WAYLAND_DISPLAY__
+#pragma once
 
 #include "config.h"
 
@@ -38,6 +37,8 @@
 #include <gdk/wayland/idle-inhibit-unstable-v1-client-protocol.h>
 #include <gdk/wayland/primary-selection-unstable-v1-client-protocol.h>
 #include <gdk/wayland/xdg-activation-v1-client-protocol.h>
+#include <gdk/wayland/fractional-scale-v1-client-protocol.h>
+#include <gdk/wayland/viewporter-client-protocol.h>
 
 #include <glib.h>
 #include <gdk/gdkkeys.h>
@@ -97,7 +98,6 @@ struct _GdkWaylandDisplay
   struct xdg_wm_base *xdg_wm_base;
   struct zxdg_shell_v6 *zxdg_shell_v6;
   struct gtk_shell1 *gtk_shell;
-  struct wl_input_device *input_device;
   struct wl_data_device_manager *data_device_manager;
   struct wl_subcompositor *subcompositor;
   struct zwp_pointer_gestures_v1 *pointer_gestures;
@@ -112,6 +112,8 @@ struct _GdkWaylandDisplay
   struct zxdg_output_manager_v1 *xdg_output_manager;
   struct zwp_idle_inhibit_manager_v1 *idle_inhibit_manager;
   struct xdg_activation_v1 *xdg_activation;
+  struct wp_fractional_scale_manager_v1 *fractional_scale;
+  struct wp_viewporter *viewporter;
 
   GList *async_roundtrips;
 
@@ -134,14 +136,6 @@ struct _GdkWaylandDisplay
 
   GSource *event_source;
 
-  int compositor_version;
-  int seat_version;
-  int data_device_manager_version;
-  int gtk_shell_version;
-  int xdg_output_manager_version;
-  int pointer_gestures_version;
-  int xdg_activation_version;
-
   uint32_t server_decoration_mode;
 
   struct xkb_context *xkb_context;
@@ -163,4 +157,3 @@ void gdk_wayland_display_dispatch_queue (GdkDisplay            *display,
 
 G_END_DECLS
 
-#endif  /* __GDK_WAYLAND_DISPLAY__ */

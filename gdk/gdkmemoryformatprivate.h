@@ -17,10 +17,11 @@
  * Authors: Benjamin Otte <otte@gnome.org>
  */
 
-#ifndef __GDK_MEMORY_CONVERT_PRIVATE_H__
-#define __GDK_MEMORY_CONVERT_PRIVATE_H__
+#pragma once
 
 #include "gdkenums.h"
+
+#include <epoxy/gl.h>
 
 G_BEGIN_DECLS
 
@@ -30,15 +31,28 @@ typedef enum {
   GDK_MEMORY_ALPHA_OPAQUE
 } GdkMemoryAlpha;
 
+typedef enum {
+  GDK_MEMORY_U8,
+  GDK_MEMORY_U16,
+  GDK_MEMORY_FLOAT16,
+  GDK_MEMORY_FLOAT32
+} GdkMemoryDepth;
+
 gsize                   gdk_memory_format_alignment         (GdkMemoryFormat             format) G_GNUC_CONST;
 GdkMemoryAlpha          gdk_memory_format_alpha             (GdkMemoryFormat             format) G_GNUC_CONST;
 gsize                   gdk_memory_format_bytes_per_pixel   (GdkMemoryFormat             format) G_GNUC_CONST;
-gboolean                gdk_memory_format_prefers_high_depth(GdkMemoryFormat             format) G_GNUC_CONST;
+GdkMemoryDepth          gdk_memory_format_get_depth         (GdkMemoryFormat             format) G_GNUC_CONST;
+GdkMemoryDepth          gdk_memory_depth_merge              (GdkMemoryDepth              depth1,
+                                                             GdkMemoryDepth              depth2) G_GNUC_CONST;
+GdkMemoryFormat         gdk_memory_depth_get_alpha_format   (GdkMemoryDepth              depth) G_GNUC_CONST;
 gboolean                gdk_memory_format_gl_format         (GdkMemoryFormat             format,
                                                              gboolean                    gles,
+                                                             guint                       gl_major,
+                                                             guint                       gl_minor,
                                                              guint                      *out_internal_format,
                                                              guint                      *out_format,
-                                                             guint                      *out_type);
+                                                             guint                      *out_type,
+                                                             GLint                     (*out_gizzle)[4]);
 
 void                    gdk_memory_convert                  (guchar                     *dest_data,
                                                              gsize                       dest_stride,
@@ -52,4 +66,3 @@ void                    gdk_memory_convert                  (guchar             
 
 G_END_DECLS
 
-#endif /* __GDK_MEMORY_CONVERT_PRIVATE_H__ */

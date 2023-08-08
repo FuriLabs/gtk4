@@ -1436,7 +1436,7 @@ register_clipboard_notification ()
 
   wclass.lpszClassName = "GdkClipboardNotification";
   wclass.lpfnWndProc = _clipboard_window_procedure;
-  wclass.hInstance = _gdk_dll_hinstance;
+  wclass.hInstance = this_module ();
   wclass.cbWndExtra = sizeof (GdkWin32ClipboardThread *);
 
   klass = RegisterClass (&wclass);
@@ -1446,7 +1446,7 @@ register_clipboard_notification ()
   clipboard_thread_data->clipboard_window = CreateWindow (MAKEINTRESOURCE (klass),
                                                 NULL, WS_POPUP,
                                                 0, 0, 0, 0, NULL, NULL,
-                                                _gdk_dll_hinstance, NULL);
+                                                this_module (), NULL);
 
   if (clipboard_thread_data->clipboard_window == NULL)
     goto failed;
@@ -1471,7 +1471,7 @@ register_clipboard_notification ()
 
 failed:
   g_critical ("Failed to install clipboard viewer");
-  UnregisterClass (MAKEINTRESOURCE (klass), _gdk_dll_hinstance);
+  UnregisterClass (MAKEINTRESOURCE (klass), this_module ());
   return FALSE;
 }
 
@@ -2546,13 +2546,11 @@ transmute_cf_shell_id_list_to_text_uri_list (const guchar    *data,
       ILFree (file_id_full);
     }
 
-  *set_data = (guchar *) result->str;
   if (set_data_length)
     *set_data_length = result->len;
+  *set_data = (guchar *) g_string_free (result, FALSE);
   if (set_data_destroy)
     *set_data_destroy = g_free;
-
-  g_string_free (result, FALSE);
 }
 
 void

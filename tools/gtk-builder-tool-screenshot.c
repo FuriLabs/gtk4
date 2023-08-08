@@ -1,6 +1,6 @@
 /*  Copyright 2015 Red Hat, Inc.
  *
- * GTK+ is free software; you can redistribute it and/or modify it
+ * GTK is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation; either version 2 of the
  * License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with GTK+; see the file COPYING.  If not,
+ * License along with GTK; see the file COPYING.  If not,
  * see <http://www.gnu.org/licenses/>.
  *
  * Author: Matthias Clasen
@@ -23,7 +23,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <glib/gi18n.h>
+#include <glib/gi18n-lib.h>
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
@@ -233,15 +233,15 @@ screenshot_file (const char *filename,
   if (object == NULL)
     {
       if (id)
-        g_printerr ("No object with ID '%s' found\n", id);
+        g_printerr (_("No object with ID '%s' found\n"), id);
       else
-        g_printerr ("No object found\n");
+        g_printerr (_("No object found\n"));
       exit (1);
     }
 
   if (!GTK_IS_WIDGET (object))
     {
-      g_printerr ("Objects of type %s can't be screenshot\n", G_OBJECT_TYPE_NAME (object));
+      g_printerr (_("Objects of type %s can't be screenshot\n"), G_OBJECT_TYPE_NAME (object));
       exit (1);
     }
 
@@ -295,7 +295,7 @@ screenshot_file (const char *filename,
 
   if (texture == NULL)
     {
-      g_printerr ("Failed to take a screenshot\n");
+      g_printerr (_("Failed to take a screenshot\n"));
       exit (1);
     }
 
@@ -306,8 +306,8 @@ screenshot_file (const char *filename,
 
   if (g_file_test (save_to, G_FILE_TEST_EXISTS) && !force)
     {
-      g_printerr ("File %s exists.\n"
-                  "Use --force to overwrite.\n", save_to);
+      g_printerr (_("File %s exists.\n"
+                    "Use --force to overwrite.\n"), save_to);
       exit (1);
     }
 
@@ -328,11 +328,12 @@ screenshot_file (const char *filename,
                            g_bytes_get_size (bytes),
                            &error))
     {
-      g_print ("Output written to %s.\n", save_to);
+      if (save_file == NULL)
+        g_print (_("Output written to %s.\n"), save_to);
     }
   else
     {
-      g_printerr ("Failed to save %s: %s\n", save_to, error->message);
+      g_printerr (_("Failed to save %s: %s\n"), save_to, error->message);
       exit (1);
     }
 
@@ -359,22 +360,22 @@ do_screenshot (int          *argc,
     { "css", 0, 0, G_OPTION_ARG_FILENAME, &css, N_("Use style from CSS file"), N_("FILE") },
     { "node", 0, 0, G_OPTION_ARG_NONE, &as_node, N_("Save as node file instead of png"), NULL },
     { "force", 0, 0, G_OPTION_ARG_NONE, &force, N_("Overwrite existing file"), NULL },
-    { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, N_("FILE") },
+    { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, N_("FILE…") },
     { NULL, }
   };
   GError *error = NULL;
 
   if (gdk_display_get_default () == NULL)
     {
-      g_printerr ("Could not initialize windowing system\n");
+      g_printerr (_("Could not initialize windowing system\n"));
       exit (1);
     }
 
-  g_set_prgname ("gtk4-builder-tool screenshot");
+  g_set_prgname ("gtk4-builder-tool render");
   context = g_option_context_new (NULL);
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
   g_option_context_add_main_entries (context, entries, NULL);
-  g_option_context_set_summary (context, _("Take a screenshot of the file."));
+  g_option_context_set_summary (context, _("Render a .ui file to an image."));
 
   if (!g_option_context_parse (context, argc, (char ***)argv, &error))
     {
@@ -387,13 +388,13 @@ do_screenshot (int          *argc,
 
   if (filenames == NULL)
     {
-      g_printerr ("No .ui file specified\n");
+      g_printerr (_("No .ui file specified\n"));
       exit (1);
     }
 
   if (g_strv_length (filenames) > 2)
     {
-      g_printerr ("Can only screenshot a single .ui file and a single output file\n");
+      g_printerr (_("Can only render a single .ui file to a single output file\n"));
       exit (1);
     }
 

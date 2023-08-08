@@ -1,5 +1,6 @@
 /* GDK - The GIMP Drawing Kit
  * Copyright (C) 1995-1997 Peter Mattis, Spencer Kimball and Josh MacDonald
+ * Copyright (C) 2023 the GTK team
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -15,15 +16,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Modified by the GTK+ Team and others 1997-1999.  See the AUTHORS
- * file for a list of people on the GTK+ Team.  See the ChangeLog
- * files for a list of changes.  These files are distributed with
- * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
- */
-
-#ifndef __GDK_SURFACE_WIN32_H__
-#define __GDK_SURFACE_WIN32_H__
+#pragma once
 
 #include "gdk/win32/gdkprivate-win32.h"
 #include "gdk/win32/gdkwin32cursor.h"
@@ -39,6 +32,14 @@
 #endif
 
 G_BEGIN_DECLS
+
+GType gdk_win32_toplevel_get_type (void) G_GNUC_CONST;
+GType gdk_win32_popup_get_type (void) G_GNUC_CONST;
+GType gdk_win32_drag_surface_get_type (void) G_GNUC_CONST;
+
+#define GDK_TYPE_WIN32_TOPLEVEL (gdk_win32_toplevel_get_type ())
+#define GDK_TYPE_WIN32_POPUP (gdk_win32_popup_get_type ())
+#define GDK_TYPE_WIN32_DRAG_SURFACE (gdk_win32_drag_surface_get_type ())
 
 typedef enum
 {
@@ -129,6 +130,12 @@ struct _GdkW32DragMoveResizeContext
    */
   int                start_root_x;
   int                start_root_y;
+
+  /* Last processed cursor position. Values are divided by the window
+   * scale.
+   */
+  int                current_root_x;
+  int                current_root_y;
 
   /* Initial window rectangle (position and size).
    * The window is resized/moved relative to this (see start_root_*).
@@ -276,23 +283,7 @@ struct _GdkWin32Surface
    */
   guint maximizing : 1;
 
-  /* GDK does not keep window contents around, it just draws new
-   * stuff over the window where changes occurred.
-   * cache_surface retains old window contents, because
-   * UpdateLayeredWindow() doesn't do partial redraws.
-   */
-  cairo_surface_t *cache_surface;
-
-  /* Unlike window-backed surfaces, DIB-backed surface
-   * does not provide a way to query its size,
-   * so we have to remember it ourselves.
-   */
-  int              dib_width;
-  int              dib_height;
-
-  HDC              hdc;
-  int              hdc_count;
-  HBITMAP          saved_dc_bitmap; /* Original bitmap for dc */
+  HDC hdc;
 
   GdkW32DragMoveResizeContext drag_move_resize_context;
 
@@ -365,6 +356,8 @@ void gdk_win32_surface_move_resize (GdkSurface *window,
                                     int         width,
                                     int         height);
 
+GdkSurface *gdk_win32_drag_surface_new       (GdkDisplay *display);
+
 RECT
 gdk_win32_surface_handle_queued_move_resize (GdkDrawContext *draw_context);
 
@@ -376,4 +369,3 @@ EGLSurface gdk_win32_surface_get_egl_surface (GdkSurface *surface,
 
 G_END_DECLS
 
-#endif /* __GDK_SURFACE_WIN32_H__ */

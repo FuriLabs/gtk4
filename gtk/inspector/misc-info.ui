@@ -245,8 +245,7 @@
                             <property name="label" translatable="yes">Show</property>
                             <property name="halign">end</property>
                             <property name="valign">baseline</property>
-                            <signal name="clicked" handler="update_measure_picture" swapped="yes" after="1" object="measure_picture"/>
-                            <signal name="clicked" handler="measure_graph_measure" after="1"/>
+                            <signal name="clicked" handler="measure_graph_measure" after="1" swapped="yes"/>
                           </object>
                         </child>
                         <child>
@@ -287,14 +286,14 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkListBoxRow" id="allocated_size_row">
+                  <object class="GtkListBoxRow" id="bounds_row">
                     <property name="activatable">0</property>
                     <child>
                       <object class="GtkBox">
                         <property name="spacing">40</property>
                         <child>
                           <object class="GtkLabel">
-                            <property name="label" translatable="yes">Allocation</property>
+                            <property name="label" translatable="yes">Bounds</property>
                             <property name="halign">start</property>
                             <property name="valign">baseline</property>
                             <property name="xalign">0</property>
@@ -302,7 +301,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="allocated_size">
+                          <object class="GtkLabel" id="bounds">
                             <property name="halign">end</property>
                             <property name="valign">baseline</property>
                           </object>
@@ -509,6 +508,31 @@
                         </child>
                         <child>
                           <object class="GtkLabel" id="framerate">
+                            <property name="halign">end</property>
+                            <property name="valign">baseline</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkListBoxRow" id="scale_row">
+                    <property name="activatable">0</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="spacing">40</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label" translatable="yes">Scale</property>
+                            <property name="halign">start</property>
+                            <property name="valign">baseline</property>
+                            <property name="xalign">0</property>
+                            <property name="hexpand">1</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="scale">
                             <property name="halign">end</property>
                             <property name="valign">baseline</property>
                           </object>

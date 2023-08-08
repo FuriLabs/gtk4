@@ -31,7 +31,7 @@
 #include "gtksnapshot.h"
 #include "gtktypebuiltins.h"
 #include "gtkwidgetprivate.h"
-#include "gdkpixbufutilsprivate.h"
+#include "gdktextureutilsprivate.h"
 
 #include <math.h>
 #include <string.h>
@@ -181,7 +181,7 @@ gtk_image_class_init (GtkImageClass *class)
   /**
    * GtkImage:file: (attributes org.gtk.Property.set=gtk_image_set_from_file)
    *
-   * The `GFile to display.
+   * The `GFile` to display.
    */
   image_props[PROP_FILE] =
       g_param_spec_string ("file", NULL, NULL,
@@ -475,6 +475,9 @@ gtk_image_new_from_resource (const char *resource_path)
  * want that, you should use [ctor@Gtk.Image.new_from_icon_name].
  *
  * Returns: a new `GtkImage`
+ *
+ * Deprecated: 4.12: Use [ctor@Gtk.Image.new_from_paintable] and
+ *   [ctor@Gdk.Texture.new_for_pixbuf] instead
  */
 GtkWidget*
 gtk_image_new_from_pixbuf (GdkPixbuf *pixbuf)
@@ -483,7 +486,9 @@ gtk_image_new_from_pixbuf (GdkPixbuf *pixbuf)
 
   image = g_object_new (GTK_TYPE_IMAGE, NULL);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   gtk_image_set_from_pixbuf (image, pixbuf);
+G_GNUC_END_IGNORE_DEPRECATIONS
 
   return GTK_WIDGET (image);
 }
@@ -711,6 +716,8 @@ gtk_image_set_from_resource (GtkImage   *image,
  * Note: This is a helper for [method@Gtk.Image.set_from_paintable],
  * and you can't get back the exact pixbuf once this is called,
  * only a paintable.
+ *
+ * Deprecated: 4.12: Use [method@Gtk.Image.set_from_paintable] instead
  */
 void
 gtk_image_set_from_pixbuf (GtkImage  *image,
@@ -755,6 +762,7 @@ gtk_image_set_from_icon_name  (GtkImage    *image,
     _gtk_icon_helper_set_icon_name (image->icon_helper, icon_name);
 
   g_object_notify_by_pspec (G_OBJECT (image), image_props[PROP_ICON_NAME]);
+  g_object_notify_by_pspec (G_OBJECT (image), image_props[PROP_STORAGE_TYPE]);
 
   g_object_thaw_notify (G_OBJECT (image));
 }
@@ -788,6 +796,7 @@ gtk_image_set_from_gicon  (GtkImage       *image,
     }
 
   g_object_notify_by_pspec (G_OBJECT (image), image_props[PROP_GICON]);
+  g_object_notify_by_pspec (G_OBJECT (image), image_props[PROP_STORAGE_TYPE]);
 
   g_object_thaw_notify (G_OBJECT (image));
 }
@@ -850,6 +859,7 @@ gtk_image_set_from_paintable (GtkImage     *image,
     }
 
   g_object_notify_by_pspec (G_OBJECT (image), image_props[PROP_PAINTABLE]);
+  g_object_notify_by_pspec (G_OBJECT (image), image_props[PROP_STORAGE_TYPE]);
 
   g_object_thaw_notify (G_OBJECT (image));
 }
@@ -1014,7 +1024,7 @@ gtk_image_snapshot (GtkWidget   *widget,
 
       x = (width - ceil (w)) / 2;
 
-      baseline = gtk_widget_get_allocated_baseline (widget);
+      baseline = gtk_widget_get_baseline (widget);
       if (baseline == -1)
         y = floor(height - ceil (h)) / 2;
       else
@@ -1071,6 +1081,8 @@ gtk_image_set_from_definition (GtkImage           *image,
 
       gtk_image_notify_for_storage_type (image, gtk_image_definition_get_storage_type (def));
     }
+
+  g_object_notify_by_pspec (G_OBJECT (image), image_props[PROP_STORAGE_TYPE]);
 
   g_object_thaw_notify (G_OBJECT (image));
 }
@@ -1168,10 +1180,8 @@ gtk_image_measure (GtkWidget      *widget,
   if (orientation == GTK_ORIENTATION_VERTICAL)
     {
       baseline_align = gtk_image_get_baseline_align (GTK_IMAGE (widget));
-      if (minimum_baseline)
-        *minimum_baseline = *minimum * baseline_align;
-      if (natural_baseline)
-        *natural_baseline = *natural * baseline_align;
+      *minimum_baseline = *minimum * baseline_align;
+      *natural_baseline = *natural * baseline_align;
     }
 }
 

@@ -46,6 +46,12 @@ G_DEFINE_TYPE (GtkApplicationImplDBus, gtk_application_impl_dbus, GTK_TYPE_APPLI
 #define GNOME_SCREENSAVER_DBUS_OBJECT_PATH      "/org/gnome/ScreenSaver"
 #define GNOME_SCREENSAVER_DBUS_INTERFACE        "org.gnome.ScreenSaver"
 
+static void client_proxy_signal (GDBusProxy  *proxy,
+                                 const gchar *sender_name,
+                                 const gchar *signal_name,
+                                 GVariant    *parameters,
+                                 gpointer     user_data);
+
 static void
 unregister_client (GtkApplicationImplDBus *dbus)
 {
@@ -67,6 +73,7 @@ unregister_client (GtkApplicationImplDBus *dbus)
       g_error_free (error);
     }
 
+  g_signal_handlers_disconnect_by_func (dbus->client_proxy, client_proxy_signal, dbus);
   g_clear_object (&dbus->client_proxy);
 
   g_free (dbus->client_path);
@@ -268,8 +275,10 @@ ss_get_active_cb (GObject      *source,
   ret = g_dbus_proxy_call_finish (proxy, result, &error);
   if (ret == NULL)
     {
-      g_warning ("Getting screensaver status failed: %s", error->message);
-      g_error_free (error);
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        g_warning ("Getting screensaver status failed: %s",
+                   error ? error->message : "");
+      g_clear_error (&error);
       return;
     }
 
@@ -290,8 +299,10 @@ create_monitor_cb (GObject      *source,
   ret = g_dbus_proxy_call_finish (proxy, result, &error);
   if (ret == NULL)
     {
-      g_warning ("Creating a portal monitor failed: %s", error->message);
-      g_error_free (error);
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        g_warning ("Creating a portal monitor failed: %s",
+                   error ? error->message : "");
+      g_clear_error (&error);
       return;
     }
 
@@ -324,6 +335,8 @@ gtk_application_impl_dbus_startup (GtkApplicationImpl *impl,
 
   if (gdk_should_use_portal ())
     goto out;
+
+  dbus->cancellable = g_cancellable_new ();
 
   g_debug ("Connecting to session manager");
 
@@ -391,7 +404,7 @@ gtk_application_impl_dbus_startup (GtkApplicationImpl *impl,
                          NULL,
                          G_DBUS_CALL_FLAGS_NONE,
                          G_MAXINT,
-                         NULL,
+                         dbus->cancellable,
                          ss_get_active_cb,
                          dbus);
     }
@@ -538,7 +551,7 @@ gtk_application_impl_dbus_startup (GtkApplicationImpl *impl,
                              g_variant_new ("(sa{sv})", "", &opt_builder),
                              G_DBUS_CALL_FLAGS_NONE,
                              G_MAXINT,
-                             NULL,
+                             dbus->cancellable,
                              create_monitor_cb, dbus);
           g_free (token);
         }
@@ -548,6 +561,8 @@ gtk_application_impl_dbus_startup (GtkApplicationImpl *impl,
 static void
 gtk_application_impl_dbus_shutdown (GtkApplicationImpl *impl)
 {
+  GtkApplicationImplDBus *dbus = (GtkApplicationImplDBus *) impl;
+  g_cancellable_cancel (dbus->cancellable);
 }
 
 GQuark gtk_application_impl_dbus_export_id_quark (void);
@@ -888,7 +903,10 @@ gtk_application_impl_dbus_finalize (GObject *object)
   g_free (dbus->app_menu_path);
   g_free (dbus->menubar_path);
   g_clear_object (&dbus->sm_proxy);
+  if (dbus->ss_proxy)
+    g_signal_handlers_disconnect_by_func (dbus->ss_proxy, screensaver_signal_session, dbus->impl.application);
   g_clear_object (&dbus->ss_proxy);
+  g_clear_object (&dbus->cancellable);
 
   G_OBJECT_CLASS (gtk_application_impl_dbus_parent_class)->finalize (object);
 }

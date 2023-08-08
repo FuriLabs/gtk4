@@ -1,4 +1,4 @@
-FROM fedora:37
+FROM fedora:38
 
 RUN dnf -y install \
     adwaita-icon-theme \
@@ -32,7 +32,7 @@ RUN dnf -y install \
     glib2-static \
     glibc-devel \
     glibc-headers \
-    gnome-desktop-testing \
+    glslc \
     gnupg2 \
     gobject-introspection-devel \
     graphene-devel \
@@ -73,10 +73,14 @@ RUN dnf -y install \
     mesa-dri-drivers \
     mesa-libEGL-devel \
     mesa-libGLES-devel \
+    meson \
+    mutter \
     ninja-build \
     pango-devel \
     pcre-devel \
     pcre-static \
+    pipewire \
+    pipewire-gstreamer \
     python3 \
     python3-docutils \
     python3-gobject \
@@ -84,6 +88,7 @@ RUN dnf -y install \
     python3-markdown \
     python3-packaging \
     python3-pip \
+    python3-pydbus \
     python3-pygments \
     python3-typogrify \
     python3-wheel \
@@ -95,6 +100,7 @@ RUN dnf -y install \
     weston \
     weston-libs \
     which \
+    wireplumber \
     xorg-x11-server-Xvfb \
  && dnf clean all
 

@@ -106,9 +106,10 @@
  *     ╰── <child>
  * ```
  *
- * `GtkExpander` has three CSS nodes, the main node with the name expander-widget,
- * a subnode with name title and node below it with name expander. The arrow of an
- * expander that is showing its child gets the :checked pseudoclass added to it.
+ * `GtkExpander` has a main node `expander-widget`, and subnode `box` containing
+ * the title and child widget. The box subnode `title` contains node `expander`,
+ * i.e. the expand/collapse arrow; then the label widget if any. The arrow of an
+ * expander that is showing its child gets the `:checked` pseudoclass set on it.
  *
  * # Accessibility
  *
@@ -361,7 +362,7 @@ gtk_expander_class_init (GtkExpanderClass *klass)
                                    PROP_LABEL_WIDGET,
                                    g_param_spec_object ("label-widget", NULL, NULL,
                                                         GTK_TYPE_WIDGET,
-                                                        GTK_PARAM_READWRITE));
+                                                        GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
   /**
    * GtkExpander:resize-toplevel: (attributes org.gtk.Property.get=gtk_expander_get_resize_toplevel org.gtk.Property.set=gtk_expander_set_resize_toplevel)
@@ -384,7 +385,7 @@ gtk_expander_class_init (GtkExpanderClass *klass)
                                    PROP_CHILD,
                                    g_param_spec_object ("child", NULL, NULL,
                                                         GTK_TYPE_WIDGET,
-                                                        GTK_PARAM_READWRITE));
+                                                        GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
   /**
    * GtkExpander::activate:
@@ -1091,8 +1092,7 @@ gtk_expander_set_label_widget (GtkExpander *expander,
   GtkWidget *widget;
 
   g_return_if_fail (GTK_IS_EXPANDER (expander));
-  g_return_if_fail (label_widget == NULL || GTK_IS_WIDGET (label_widget));
-  g_return_if_fail (label_widget == NULL || gtk_widget_get_parent (label_widget) == NULL);
+  g_return_if_fail (label_widget == NULL || expander->label_widget == label_widget || gtk_widget_get_parent (label_widget) == NULL);
 
   if (expander->label_widget == label_widget)
     return;
@@ -1185,7 +1185,7 @@ gtk_expander_set_child (GtkExpander *expander,
                         GtkWidget   *child)
 {
   g_return_if_fail (GTK_IS_EXPANDER (expander));
-  g_return_if_fail (child == NULL || GTK_IS_WIDGET (child));
+  g_return_if_fail (child == NULL || expander->child == child || gtk_widget_get_parent (child) == NULL);
 
   if (expander->child == child)
     return;

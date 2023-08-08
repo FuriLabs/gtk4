@@ -22,14 +22,12 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#ifndef __GDK_SURFACE_H__
-#define __GDK_SURFACE_H__
+#pragma once
 
 #if !defined (__GDK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gdk/gdk.h> can be included directly."
 #endif
 
-#include <gdk/gdkversionmacros.h>
 #include <gdk/gdktypes.h>
 #include <gdk/gdkevents.h>
 #include <gdk/gdkframeclock.h>
@@ -98,6 +96,9 @@ gboolean gdk_surface_translate_coordinates (GdkSurface *from,
 GDK_AVAILABLE_IN_ALL
 int           gdk_surface_get_scale_factor  (GdkSurface     *surface);
 
+GDK_AVAILABLE_IN_4_12
+double        gdk_surface_get_scale         (GdkSurface     *surface);
+
 GDK_AVAILABLE_IN_ALL
 gboolean      gdk_surface_get_device_position (GdkSurface      *surface,
                                                GdkDevice       *device,
@@ -105,7 +106,7 @@ gboolean      gdk_surface_get_device_position (GdkSurface      *surface,
                                                double          *y,
                                                GdkModifierType *mask);
 
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_12
 cairo_surface_t *
               gdk_surface_create_similar_surface (GdkSurface *surface,
                                                   cairo_content_t  content,
@@ -142,4 +143,3 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (GdkSurface, g_object_unref)
 
 G_END_DECLS
 
-#endif /* __GDK_SURFACE_H__ */

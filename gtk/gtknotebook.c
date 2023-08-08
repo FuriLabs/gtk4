@@ -46,6 +46,7 @@
 #include "gtkorientable.h"
 #include "gtksizerequest.h"
 #include "gtkprivate.h"
+#include "gtkselectionmodel.h"
 #include "gtkstack.h"
 #include "gtktypebuiltins.h"
 #include "gtkwidgetprivate.h"
@@ -1172,7 +1173,7 @@ gtk_notebook_class_init (GtkNotebookClass *class)
    *
    * A selection model with the pages.
    */
-  properties[PROP_PAGES] = 
+  properties[PROP_PAGES] =
       g_param_spec_object ("pages", NULL, NULL,
                            G_TYPE_LIST_MODEL,
                            GTK_PARAM_READABLE);
@@ -1358,7 +1359,7 @@ gtk_notebook_class_init (GtkNotebookClass *class)
   /**
    * GtkNotebook|menu.popup:
    *
-   * Opens the context menu. 
+   * Opens the context menu.
    */
   gtk_widget_class_install_action (widget_class, "menu.popup", NULL, gtk_notebook_popup_menu);
 
@@ -1486,9 +1487,6 @@ gtk_notebook_init (GtkNotebook *notebook)
                                                    (GtkGizmoGrabFocusFunc)gtk_widget_grab_focus_self);
   gtk_widget_set_hexpand (notebook->tabs_widget, TRUE);
   gtk_box_append (GTK_BOX (notebook->header_widget), notebook->tabs_widget);
-  gtk_accessible_update_property (GTK_ACCESSIBLE (notebook->tabs_widget),
-                                  GTK_ACCESSIBLE_PROPERTY_LABEL, _("Tab list"),
-                                  -1);
 
   notebook->stack_widget = gtk_stack_new ();
   gtk_widget_set_hexpand (notebook->stack_widget, TRUE);
@@ -1827,7 +1825,7 @@ gtk_notebook_reorder_tab (GtkNotebook      *notebook,
     page_num = reorder_tab (notebook, child->next, notebook->focus_tab);
   else
     page_num = reorder_tab (notebook, child, notebook->focus_tab);
-  
+
   gtk_notebook_child_reordered (notebook, notebook->focus_tab->data);
   for (element = notebook->children, i = 0; element; element = element->next, i++)
     {
@@ -4045,6 +4043,9 @@ gtk_notebook_insert_notebook_page (GtkNotebook *notebook,
   if (page->tab_label)
     {
       gtk_widget_set_parent (page->tab_label, page->tab_widget);
+      gtk_accessible_update_relation (GTK_ACCESSIBLE (page->tab_widget),
+                                      GTK_ACCESSIBLE_RELATION_LABELLED_BY, page->tab_label, NULL,
+                                      -1);
       g_object_set_data (G_OBJECT (page->tab_label), "notebook", notebook);
     }
 
@@ -4902,7 +4903,6 @@ gtk_notebook_calculate_shown_tabs (GtkNotebook          *notebook,
   else /* !show_arrows */
     {
       GtkOrientation tab_expand_orientation;
-      int c = 0;
       *n = 0;
 
       if (notebook->tab_pos == GTK_POS_TOP || notebook->tab_pos == GTK_POS_BOTTOM)
@@ -4926,8 +4926,6 @@ gtk_notebook_calculate_shown_tabs (GtkNotebook          *notebook,
           if (!NOTEBOOK_IS_TAB_LABEL_PARENT (notebook, page) ||
               !gtk_widget_get_visible (page->child))
             continue;
-
-          c++;
 
           if (page->expand ||
               (gtk_widget_compute_expand (page->tab_label, tab_expand_orientation)))
@@ -7134,7 +7132,7 @@ gtk_notebook_get_page (GtkNotebook *notebook,
   list = gtk_notebook_find_child (notebook, child);
   if (list != NULL)
     page = list->data;
-  
+
   return page;
 }
 
@@ -7200,8 +7198,51 @@ gtk_notebook_pages_list_model_init (GListModelInterface *iface)
   iface->get_n_items = gtk_notebook_pages_get_n_items;
   iface->get_item = gtk_notebook_pages_get_item;
 }
+
+static gboolean
+gtk_notebook_pages_is_selected (GtkSelectionModel *model,
+                                guint              position)
+{
+  GtkNotebookPages *pages = GTK_NOTEBOOK_PAGES (model);
+  GtkNotebookPage *page;
+
+  page = g_list_nth_data (pages->notebook->children, position);
+  if (page == NULL)
+    return FALSE;
+
+  return page == pages->notebook->cur_page;
+}
+
+static gboolean
+gtk_notebook_pages_select_item (GtkSelectionModel *model,
+                                guint              position,
+                                gboolean           exclusive)
+{
+  GtkNotebookPages *pages = GTK_NOTEBOOK_PAGES (model);
+  GtkNotebookPage *page;
+
+  page = g_list_nth_data (pages->notebook->children, position);
+  if (page == NULL)
+    return FALSE;
+
+  if (page == pages->notebook->cur_page)
+    return FALSE;
+
+  gtk_notebook_switch_page (pages->notebook, page);
+
+  return TRUE;
+}
+
+static void
+gtk_notebook_pages_selection_model_init (GtkSelectionModelInterface *iface)
+{
+  iface->is_selected = gtk_notebook_pages_is_selected;
+  iface->select_item = gtk_notebook_pages_select_item;
+}
+
 G_DEFINE_TYPE_WITH_CODE (GtkNotebookPages, gtk_notebook_pages, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (G_TYPE_LIST_MODEL, gtk_notebook_pages_list_model_init))
+                         G_IMPLEMENT_INTERFACE (G_TYPE_LIST_MODEL, gtk_notebook_pages_list_model_init)
+                         G_IMPLEMENT_INTERFACE (GTK_TYPE_SELECTION_MODEL, gtk_notebook_pages_selection_model_init))
 
 static void
 gtk_notebook_pages_init (GtkNotebookPages *pages)

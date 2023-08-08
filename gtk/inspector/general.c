@@ -60,6 +60,7 @@
 #include "wayland/gdkwayland.h"
 #include <epoxy/egl.h>
 #include <xkbcommon/xkbcommon.h>
+#include "wayland/gdkdisplay-wayland.h"
 #endif
 
 #ifdef GDK_WINDOWING_BROADWAY
@@ -209,14 +210,14 @@ add_check_row (GtkInspectorGeneral *gen,
 
   label = gtk_label_new (name);
   gtk_widget_set_halign (label, GTK_ALIGN_START);
-  gtk_widget_set_valign (label, GTK_ALIGN_BASELINE);
+  gtk_widget_set_valign (label, GTK_ALIGN_BASELINE_FILL);
   gtk_label_set_xalign (GTK_LABEL (label), 0.0);
   gtk_widget_set_hexpand (label, TRUE);
   gtk_box_append (GTK_BOX (box), label);
 
   check = gtk_image_new_from_icon_name ("object-select-symbolic");
   gtk_widget_set_halign (check, GTK_ALIGN_END);
-  gtk_widget_set_valign (check, GTK_ALIGN_BASELINE);
+  gtk_widget_set_valign (check, GTK_ALIGN_BASELINE_FILL);
   gtk_widget_set_opacity (check, value ? 1.0 : 0.0);
   gtk_box_append (GTK_BOX (box), check);
 
@@ -246,7 +247,7 @@ add_label_row (GtkInspectorGeneral *gen,
 
   label = gtk_label_new (name);
   gtk_widget_set_halign (label, GTK_ALIGN_START);
-  gtk_widget_set_valign (label, GTK_ALIGN_BASELINE);
+  gtk_widget_set_valign (label, GTK_ALIGN_BASELINE_FILL);
   gtk_label_set_xalign (GTK_LABEL (label), 0.0);
   gtk_widget_set_hexpand (label, TRUE);
   gtk_box_append (GTK_BOX (box), label);
@@ -254,7 +255,7 @@ add_label_row (GtkInspectorGeneral *gen,
   label = gtk_label_new (value);
   gtk_label_set_selectable (GTK_LABEL (label), TRUE);
   gtk_widget_set_halign (label, GTK_ALIGN_END);
-  gtk_widget_set_valign (label, GTK_ALIGN_BASELINE);
+  gtk_widget_set_valign (label, GTK_ALIGN_BASELINE_FILL);
   gtk_label_set_xalign (GTK_LABEL (label), 1.0);
   gtk_label_set_ellipsize (GTK_LABEL (label), PANGO_ELLIPSIZE_END);
   gtk_label_set_width_chars (GTK_LABEL (label), 25);
@@ -586,6 +587,62 @@ translate_subpixel_layout (GdkSubpixelLayout subpixel)
     }
 }
 
+#ifdef GDK_WINDOWING_WAYLAND
+static void
+append_wayland_protocol_row (GtkInspectorGeneral *gen,
+                             struct wl_proxy     *proxy)
+{
+  const char *id;
+  unsigned int version;
+  char buf[64];
+  GtkListBox *list;
+
+  if (proxy == NULL)
+    return;
+
+  list = GTK_LIST_BOX (gen->display_box);
+
+  id = wl_proxy_get_class (proxy);
+  version = wl_proxy_get_version (proxy);
+
+  g_snprintf (buf, sizeof (buf), "%u", version);
+
+  add_label_row (gen, list, id, buf, 10);
+}
+
+static void
+add_wayland_protocols (GdkDisplay          *display,
+                       GtkInspectorGeneral *gen)
+{
+  if (GDK_IS_WAYLAND_DISPLAY (display))
+    {
+      GdkWaylandDisplay *d = (GdkWaylandDisplay *) display;
+
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->compositor);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->shm);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->xdg_wm_base);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->zxdg_shell_v6);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->gtk_shell);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->data_device_manager);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->subcompositor);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->pointer_gestures);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->primary_selection_manager);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->tablet_manager);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->xdg_exporter);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->xdg_exporter_v2);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->xdg_importer);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->xdg_importer_v2);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->keyboard_shortcuts_inhibit);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->server_decoration_manager);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->xdg_output_manager);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->idle_inhibit_manager);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->xdg_activation);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->fractional_scale);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->viewporter);
+    }
+}
+#endif
+
 static void
 populate_display (GdkDisplay *display, GtkInspectorGeneral *gen)
 {
@@ -621,6 +678,10 @@ populate_display (GdkDisplay *display, GtkInspectorGeneral *gen)
                           gdk_display_is_rgba (display));
   gtk_widget_set_visible (gen->display_composited,
                           gdk_display_is_composited (display));
+
+#ifdef GDK_WINDOWING_WAYLAND
+  add_wayland_protocols (display, gen);
+#endif
 }
 
 static void

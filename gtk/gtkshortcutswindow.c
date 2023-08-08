@@ -87,6 +87,11 @@
  * and "Terminal Shortcuts".
  *
  * The .ui file for this example can be found [here](https://gitlab.gnome.org/GNOME/gtk/tree/main/demos/gtk-demo/shortcuts-builder.ui).
+ *
+ * ## CSS nodes
+ *
+ * `GtkShortcutsWindow` has a single CSS node with the name `window` and style
+ * class `.shortcuts`.
  */
 
 struct _GtkShortcutsWindow
@@ -816,6 +821,8 @@ gtk_shortcuts_window_class_init (GtkShortcutsWindowClass *klass)
 
   g_type_ensure (GTK_TYPE_SHORTCUTS_GROUP);
   g_type_ensure (GTK_TYPE_SHORTCUTS_SHORTCUT);
+
+  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_GENERIC);
 }
 
 static void
@@ -826,6 +833,7 @@ gtk_shortcuts_window_init (GtkShortcutsWindow *self)
   GtkWidget *scroller;
   GtkWidget *label;
   GtkWidget *empty;
+  GtkWidget *image;
   PangoAttrList *attributes;
 
   gtk_window_set_resizable (GTK_WINDOW (self), FALSE);
@@ -842,6 +850,11 @@ gtk_shortcuts_window_init (GtkShortcutsWindow *self)
   search_button = g_object_new (GTK_TYPE_TOGGLE_BUTTON,
                                 "icon-name", "edit-find-symbolic",
                                 NULL);
+
+  gtk_accessible_update_property (GTK_ACCESSIBLE (search_button),
+                                  GTK_ACCESSIBLE_PROPERTY_LABEL, _("Search Shortcuts"),
+                                  -1);
+
   gtk_header_bar_pack_start (GTK_HEADER_BAR (self->header_bar), search_button);
 
   self->main_box = g_object_new (GTK_TYPE_BOX,
@@ -909,6 +922,15 @@ gtk_shortcuts_window_init (GtkShortcutsWindow *self)
                 "placeholder-text", _("Search Shortcuts"),
                 "width-chars", 40,
                 NULL);
+
+  gtk_accessible_update_property (GTK_ACCESSIBLE (self->search_entry),
+                                  GTK_ACCESSIBLE_PROPERTY_LABEL, _("Search Shortcuts"),
+                                  -1);
+
+  gtk_accessible_update_relation (GTK_ACCESSIBLE (self->search_bar),
+                                  GTK_ACCESSIBLE_RELATION_LABELLED_BY, self->search_entry, NULL,
+                                  -1);
+
   g_signal_connect_object (self->search_entry,
                            "search-changed",
                            G_CALLBACK (gtk_shortcuts_window__entry__changed),
@@ -955,12 +977,11 @@ gtk_shortcuts_window_init (GtkShortcutsWindow *self)
                         "valign", GTK_ALIGN_CENTER,
                         NULL);
   gtk_widget_add_css_class (empty, "dim-label");
-  gtk_grid_attach (GTK_GRID (empty),
-                   g_object_new (GTK_TYPE_IMAGE,
-                                 "icon-name", "edit-find-symbolic",
-                                 "pixel-size", 72,
-                                 NULL),
-                   0, 0, 1, 1);
+  image = g_object_new (GTK_TYPE_IMAGE,
+                        "icon-name", "edit-find-symbolic",
+                        "pixel-size", 72,
+                        NULL);
+  gtk_grid_attach (GTK_GRID (empty), image, 0, 0, 1, 1);
   attributes = pango_attr_list_new ();
   pango_attr_list_insert (attributes, pango_attr_weight_new (PANGO_WEIGHT_BOLD));
   pango_attr_list_insert (attributes, pango_attr_scale_new (1.44));
@@ -970,6 +991,11 @@ gtk_shortcuts_window_init (GtkShortcutsWindow *self)
                         NULL);
   pango_attr_list_unref (attributes);
   gtk_grid_attach (GTK_GRID (empty), label, 0, 1, 1, 1);
+
+  gtk_accessible_update_relation (GTK_ACCESSIBLE (image),
+                                  GTK_ACCESSIBLE_RELATION_LABELLED_BY, label, NULL,
+                                  -1);
+
   label = g_object_new (GTK_TYPE_LABEL,
                         "label", _("Try a different search"),
                         NULL);
@@ -980,4 +1006,5 @@ gtk_shortcuts_window_init (GtkShortcutsWindow *self)
   g_signal_connect_object (self->stack, "notify::visible-child",
                            G_CALLBACK (update_title_stack), self, G_CONNECT_SWAPPED);
 
+  gtk_widget_add_css_class (GTK_WIDGET (self), "shortcuts");
 }

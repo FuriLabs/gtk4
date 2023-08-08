@@ -1,9 +1,8 @@
-#ifndef __GSK_VULKAN_GLYPH_CACHE_PRIVATE_H__
-#define __GSK_VULKAN_GLYPH_CACHE_PRIVATE_H__
+#pragma once
 
 #include <pango/pango.h>
-#include "gskvulkanrendererprivate.h"
 #include "gskvulkanimageprivate.h"
+#include "gskvulkanprivate.h"
 
 G_BEGIN_DECLS
 
@@ -11,15 +10,31 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(GskVulkanGlyphCache, gsk_vulkan_glyph_cache, GSK, VULKAN_GLYPH_CACHE, GObject)
 
-GskVulkanGlyphCache  *gsk_vulkan_glyph_cache_new            (GskRenderer         *renderer,
-                                                             GdkVulkanContext    *vulkan);
+typedef struct
+{
+  guint texture_index;
 
-GskVulkanImage *     gsk_vulkan_glyph_cache_get_glyph_image (GskVulkanGlyphCache *cache,
-                                                             GskVulkanUploader   *uploader,
-                                                             guint                index);
+  float tx;
+  float ty;
+  float tw;
+  float th;
+
+  int draw_x;
+  int draw_y;
+  int draw_width;
+  int draw_height;
+
+  GskVulkanImage *atlas_image;
+  int atlas_x;
+  int atlas_y;
+
+  guint64 timestamp;
+} GskVulkanCachedGlyph;
+
+GskVulkanGlyphCache  *gsk_vulkan_glyph_cache_new            (GdkVulkanContext    *vulkan);
 
 GskVulkanCachedGlyph *gsk_vulkan_glyph_cache_lookup         (GskVulkanGlyphCache *cache,
-                                                             gboolean             create,
+                                                             GskVulkanRender     *render,
                                                              PangoFont           *font,
                                                              PangoGlyph           glyph,
                                                              int                  x,
@@ -29,4 +44,3 @@ GskVulkanCachedGlyph *gsk_vulkan_glyph_cache_lookup         (GskVulkanGlyphCache
 
 void                  gsk_vulkan_glyph_cache_begin_frame    (GskVulkanGlyphCache *cache);
 
-#endif /* __GSK_VULKAN_GLYPH_CACHE_PRIVATE_H__ */

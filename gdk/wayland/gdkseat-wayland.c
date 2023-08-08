@@ -523,7 +523,6 @@ flush_discrete_scroll_event (GdkWaylandSeat     *seat,
                              gint                value120_x,
                              gint                value120_y)
 {
-  GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (seat->display);
   GdkEvent *event = NULL;
   GdkDevice *source;
   GdkScrollDirection direction;
@@ -539,7 +538,7 @@ flush_discrete_scroll_event (GdkWaylandSeat     *seat,
 
   source = get_scroll_device (seat, seat->pointer_info.frame.source);
 
-  if (display_wayland->seat_version >= WL_POINTER_AXIS_VALUE120_SINCE_VERSION)
+  if (wl_seat_get_version (seat->wl_seat) >= WL_POINTER_AXIS_VALUE120_SINCE_VERSION)
     {
       event = gdk_scroll_event_new_value120 (seat->pointer_info.focus,
                                              source,
@@ -668,7 +667,6 @@ pointer_handle_enter (void              *data,
 {
   GdkWaylandSeat *seat = data;
   GdkEvent *event;
-  GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (seat->display);
 
   if (!surface)
     return;
@@ -702,7 +700,7 @@ pointer_handle_enter (void              *data,
                   "enter, seat %p surface %p",
                   seat, seat->pointer_info.focus);
 
-  if (display_wayland->seat_version < WL_POINTER_HAS_FRAME)
+  if (wl_seat_get_version (seat->wl_seat) < WL_POINTER_HAS_FRAME)
     gdk_wayland_seat_flush_frame_event (seat);
 }
 
@@ -714,7 +712,6 @@ pointer_handle_leave (void              *data,
 {
   GdkWaylandSeat *seat = data;
   GdkEvent *event;
-  GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (seat->display);
   GdkDeviceGrabInfo *grab;
 
   if (!seat->pointer_info.focus)
@@ -758,7 +755,7 @@ pointer_handle_leave (void              *data,
   if (seat->cursor)
     gdk_wayland_seat_stop_cursor_animation (seat, &seat->pointer_info);
 
-  if (display_wayland->seat_version < WL_POINTER_HAS_FRAME)
+  if (wl_seat_get_version (seat->wl_seat) < WL_POINTER_HAS_FRAME)
     gdk_wayland_seat_flush_frame_event (seat);
 }
 
@@ -770,7 +767,6 @@ pointer_handle_motion (void              *data,
                        wl_fixed_t         sy)
 {
   GdkWaylandSeat *seat = data;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
   GdkEvent *event;
 
   if (!seat->pointer_info.focus)
@@ -798,7 +794,7 @@ pointer_handle_motion (void              *data,
                  x, y, seat, gdk_event_get_modifier_state (event));
     }
 
-  if (display->seat_version < WL_POINTER_HAS_FRAME)
+  if (wl_seat_get_version (seat->wl_seat) < WL_POINTER_HAS_FRAME)
     gdk_wayland_seat_flush_frame_event (seat);
 }
 
@@ -811,7 +807,6 @@ pointer_handle_button (void              *data,
                        uint32_t           state)
 {
   GdkWaylandSeat *seat = data;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
   GdkEvent *event;
   uint32_t modifier;
   int gdk_button;
@@ -878,7 +873,7 @@ pointer_handle_button (void              *data,
                   seat,
                   gdk_event_get_modifier_state (event));
 
-  if (display->seat_version < WL_POINTER_HAS_FRAME)
+  if (wl_seat_get_version (seat->wl_seat) < WL_POINTER_HAS_FRAME)
     gdk_wayland_seat_flush_frame_event (seat);
 }
 
@@ -909,7 +904,6 @@ pointer_handle_axis (void              *data,
 {
   GdkWaylandSeat *seat = data;
   GdkWaylandPointerFrameData *pointer_frame = &seat->pointer_info.frame;
-  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
 
   if (!seat->pointer_info.focus)
     return;
@@ -934,7 +928,7 @@ pointer_handle_axis (void              *data,
                   get_axis_name (axis), wl_fixed_to_double (value),
                   seat);
 
-  if (display->seat_version < WL_POINTER_HAS_FRAME)
+  if (wl_seat_get_version (seat->wl_seat) < WL_POINTER_HAS_FRAME)
     gdk_wayland_seat_flush_frame_event (seat);
 }
 
@@ -2149,10 +2143,13 @@ _gdk_wayland_seat_remove_tablet_pad (GdkWaylandSeat          *seat,
 {
   seat->tablet_pads = g_list_remove (seat->tablet_pads, pad);
 
-  gdk_seat_device_removed (GDK_SEAT (seat), pad->device);
-  _gdk_device_set_associated_device (pad->device, NULL);
+  if (pad->device)
+    {
+      gdk_seat_device_removed (GDK_SEAT (seat), pad->device);
+      _gdk_device_set_associated_device (pad->device, NULL);
+      g_object_unref (pad->device);
+    }
 
-  g_object_unref (pad->device);
   g_free (pad);
 }
 
@@ -2372,7 +2369,7 @@ seat_handle_capabilities (void                    *data,
           zwp_pointer_gesture_pinch_v1_add_listener (seat->wp_pointer_gesture_pinch,
                                                      &gesture_pinch_listener, seat);
 
-          if (display_wayland->pointer_gestures_version >= ZWP_POINTER_GESTURES_V1_GET_HOLD_GESTURE_SINCE_VERSION)
+          if (zwp_pointer_gestures_v1_get_version (display_wayland->pointer_gestures) >= ZWP_POINTER_GESTURES_V1_GET_HOLD_GESTURE_SINCE_VERSION)
             {
               seat->wp_pointer_gesture_hold =
                   zwp_pointer_gestures_v1_get_hold_gesture (display_wayland->pointer_gestures,
@@ -3067,9 +3064,9 @@ tablet_tool_handle_button (void                      *data,
   tablet->pointer_info.press_serial = serial;
 
   if (button == BTN_STYLUS)
-    n_button = GDK_BUTTON_SECONDARY;
-  else if (button == BTN_STYLUS2)
     n_button = GDK_BUTTON_MIDDLE;
+  else if (button == BTN_STYLUS2)
+    n_button = GDK_BUTTON_SECONDARY;
   else if (button == BTN_STYLUS3)
     n_button = 8; /* Back */
   else
@@ -3541,21 +3538,10 @@ static void
 tablet_pad_handle_done (void                     *data,
                         struct zwp_tablet_pad_v2 *wp_tablet_pad)
 {
-  GdkWaylandTabletPadData *pad = data;
+  G_GNUC_UNUSED GdkWaylandTabletPadData *pad = data;
 
   GDK_SEAT_DEBUG (pad->seat, EVENTS,
                   "tablet pad handle done, pad = %p", wp_tablet_pad);
-
-  pad->device =
-    g_object_new (GDK_TYPE_WAYLAND_DEVICE_PAD,
-                  "name", "Pad device",
-                  "source", GDK_SOURCE_TABLET_PAD,
-                  "display", gdk_seat_get_display (pad->seat),
-                  "seat", pad->seat,
-                  NULL);
-
-  _gdk_device_set_associated_device (pad->device, GDK_WAYLAND_SEAT (pad->seat)->logical_keyboard);
-  gdk_seat_device_added (GDK_SEAT (pad->seat), pad->device);
 }
 
 static void
@@ -3612,9 +3598,44 @@ tablet_pad_handle_enter (void                     *data,
                   "tablet pad handle enter, pad = %p, tablet = %p surface = %p",
                   wp_tablet_pad, wp_tablet, surface);
 
+  if (pad->device && pad->current_tablet != tablet)
+    {
+      gdk_seat_device_removed (GDK_SEAT (pad->seat), pad->device);
+      _gdk_device_set_associated_device (pad->device, NULL);
+      g_clear_object (&pad->device);
+    }
+
   /* Relate pad and tablet */
   tablet->pads = g_list_prepend (tablet->pads, pad);
   pad->current_tablet = tablet;
+
+  if (!pad->device)
+    {
+      gchar *name, *vid, *pid;
+
+      name = g_strdup_printf ("%s Pad %d",
+                              tablet->name,
+                              g_list_index (tablet->pads, pad) + 1);
+      vid = g_strdup_printf ("%.4x", tablet->vid);
+      pid = g_strdup_printf ("%.4x", tablet->pid);
+
+      pad->device =
+        g_object_new (GDK_TYPE_WAYLAND_DEVICE_PAD,
+                      "name", name,
+                      "vendor-id", vid,
+                      "product-id", pid,
+                      "source", GDK_SOURCE_TABLET_PAD,
+                      "display", gdk_seat_get_display (pad->seat),
+                      "seat", pad->seat,
+                      NULL);
+
+      _gdk_device_set_associated_device (pad->device, GDK_WAYLAND_SEAT (pad->seat)->logical_keyboard);
+      gdk_seat_device_added (GDK_SEAT (pad->seat), pad->device);
+
+      g_free (name);
+      g_free (vid);
+      g_free (pid);
+    }
 }
 
 static void
@@ -3630,10 +3651,7 @@ tablet_pad_handle_leave (void                     *data,
                   wp_tablet_pad, surface);
 
   if (pad->current_tablet)
-    {
-      pad->current_tablet->pads = g_list_remove (pad->current_tablet->pads, pad);
-      pad->current_tablet = NULL;
-    }
+    pad->current_tablet->pads = g_list_remove (pad->current_tablet->pads, pad);
 }
 
 static void
@@ -3771,7 +3789,7 @@ pointer_surface_update_scale (GdkDevice *device)
   guint32 scale;
   GSList *l;
 
-  if (display_wayland->compositor_version < WL_SURFACE_HAS_BUFFER_SCALE)
+  if (wl_surface_get_version (pointer->pointer_surface) < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
     {
       /* We can't set the scale on this surface */
       return;
@@ -3879,6 +3897,23 @@ gdk_wayland_pointer_data_finalize (GdkWaylandPointerData *pointer)
   g_clear_object (&pointer->cursor);
   wl_surface_destroy (pointer->pointer_surface);
   g_slist_free (pointer->pointer_surface_outputs);
+}
+
+static void
+gdk_wayland_seat_dispose (GObject *object)
+{
+  GdkWaylandSeat *seat = GDK_WAYLAND_SEAT (object);
+
+  g_clear_pointer (&seat->wl_seat, wl_seat_destroy);
+  g_clear_pointer (&seat->wl_pointer, wl_pointer_destroy);
+  g_clear_pointer (&seat->wl_keyboard, wl_keyboard_destroy);
+  g_clear_pointer (&seat->wl_touch, wl_touch_destroy);
+  g_clear_pointer (&seat->wp_pointer_gesture_swipe, zwp_pointer_gesture_swipe_v1_destroy);
+  g_clear_pointer (&seat->wp_pointer_gesture_pinch, zwp_pointer_gesture_pinch_v1_destroy);
+  g_clear_pointer (&seat->wp_pointer_gesture_hold, zwp_pointer_gesture_hold_v1_destroy);
+  g_clear_pointer (&seat->wp_tablet_seat, zwp_tablet_seat_v2_destroy);
+
+  G_OBJECT_CLASS (gdk_wayland_seat_parent_class)->dispose (object);
 }
 
 static void
@@ -4195,6 +4230,7 @@ gdk_wayland_seat_class_init (GdkWaylandSeatClass *klass)
   GdkSeatClass *seat_class = GDK_SEAT_CLASS (klass);
 
   object_class->finalize = gdk_wayland_seat_finalize;
+  object_class->dispose = gdk_wayland_seat_dispose;
 
   seat_class->get_capabilities = gdk_wayland_seat_get_capabilities;
   seat_class->grab = gdk_wayland_seat_grab;

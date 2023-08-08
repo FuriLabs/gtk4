@@ -22,8 +22,7 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#ifndef __GTK_WIDGET_H__
-#define __GTK_WIDGET_H__
+#pragma once
 
 #if !defined (__GTK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gtk/gtk.h> can be included directly."
@@ -470,14 +469,14 @@ void                  gtk_widget_set_child_visible      (GtkWidget    *widget,
 GDK_AVAILABLE_IN_ALL
 gboolean              gtk_widget_get_child_visible      (GtkWidget    *widget);
 
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_12_FOR(gtk_widget_get_width)
 int                   gtk_widget_get_allocated_width    (GtkWidget     *widget);
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_12_FOR(gtk_widget_get_height)
 int                   gtk_widget_get_allocated_height   (GtkWidget     *widget);
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_12_FOR(gtk_widget_get_baseline)
 int                   gtk_widget_get_allocated_baseline (GtkWidget     *widget);
 
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_12_FOR(gtk_widget_compute_bounds)
 void                  gtk_widget_get_allocation         (GtkWidget     *widget,
                                                          GtkAllocation *allocation);
 GDK_AVAILABLE_IN_ALL
@@ -498,6 +497,8 @@ GDK_AVAILABLE_IN_ALL
 int                   gtk_widget_get_width              (GtkWidget     *widget);
 GDK_AVAILABLE_IN_ALL
 int                   gtk_widget_get_height             (GtkWidget     *widget);
+GDK_AVAILABLE_IN_4_12
+int                   gtk_widget_get_baseline           (GtkWidget     *widget);
 GDK_AVAILABLE_IN_ALL
 int                   gtk_widget_get_size               (GtkWidget     *widget,
                                                          GtkOrientation orientation);
@@ -607,7 +608,7 @@ GDK_AVAILABLE_IN_ALL
 gboolean     gtk_widget_is_ancestor     (GtkWidget      *widget,
                                          GtkWidget      *ancestor);
 
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_12_FOR(gtk_widget_compute_point)
 gboolean     gtk_widget_translate_coordinates (GtkWidget  *src_widget,
                                                GtkWidget  *dest_widget,
                                                double      src_x,
@@ -984,4 +985,3 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkRequisition, gtk_requisition_free)
 
 G_END_DECLS
 
-#endif /* __GTK_WIDGET_H__ */

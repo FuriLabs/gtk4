@@ -79,9 +79,9 @@
  * The `GtkText` widget is a single-line text entry widget.
  *
  * `GtkText` is the common implementation of single-line text editing
- * that is shared between `GtkEntry`, `GtkPasswordEntry`, `GtkSpinButton`
- * and other widgets. In all of these, `GtkText` is used as the delegate
- * for the [iface@Gtk.Editable] implementation.
+ * that is shared between [class@Gtk.Entry], [class@Gtk.PasswordEntry],
+ * [class@Gtk.SpinButton], and other widgets. In all of these, `GtkText` is
+ * used as the delegate for the [iface@Gtk.Editable] implementation.
  *
  * A fairly large set of key bindings are supported by default. If the
  * entered text is longer than the allocation of the widget, the widget
@@ -95,10 +95,10 @@
  * [method@Gtk.Text.set_invisible_char].
  *
  * If you are looking to add icons or progress display in an entry, look
- * at `GtkEntry`. There other alternatives for more specialized use cases,
- * such as `GtkSearchEntry`.
+ * at [class@Gtk.Entry]. There other alternatives for more specialized use
+ * cases, such as [class@Gtk.SearchEntry].
  *
- * If you need multi-line editable text, look at `GtkTextView`.
+ * If you need multi-line editable text, look at [class@Gtk.TextView].
  *
  * # CSS nodes
  *
@@ -112,25 +112,25 @@
  * ╰── [window.popup]
  * ```
  *
- * `GtkText` has a main node with the name text. Depending on the properties
- * of the widget, the .read-only style class may appear.
+ * `GtkText` has a main node with the name `text`. Depending on the properties
+ * of the widget, the `.read-only` style class may appear.
  *
- * When the entry has a selection, it adds a subnode with the name selection.
+ * When the entry has a selection, it adds a subnode with the name `selection`.
  *
  * When the entry is in overwrite mode, it adds a subnode with the name
- * block-cursor that determines how the block cursor is drawn.
+ * `block-cursor` that determines how the block cursor is drawn.
  *
- * The CSS node for a context menu is added as a subnode below text as well.
+ * The CSS node for a context menu is added as a subnode with the name `popup`.
  *
- * The undershoot nodes are used to draw the underflow indication when content
- * is scrolled out of view. These nodes get the .left and .right style classes
+ * The `undershoot` nodes are used to draw the underflow indication when content
+ * is scrolled out of view. These nodes get the `.left` or `.right` style class
  * added depending on where the indication is drawn.
  *
  * When touch is used and touch selection handles are shown, they are using
- * CSS nodes with name cursor-handle. They get the .top or .bottom style class
- * depending on where they are shown in relation to the selection. If there is
- * just a single handle for the text cursor, it gets the style class
- * .insertion-cursor.
+ * CSS nodes with name `cursor-handle`. They get the `.top` or `.bottom` style
+ * class depending on where they are shown in relation to the selection. If
+ * there is just a single handle for the text cursor, it gets the style class
+ * `.insertion-cursor`.
  *
  * # Accessibility
  *
@@ -1038,6 +1038,9 @@ gtk_text_class_init (GtkTextClass *class)
                   GTK_TYPE_MOVEMENT_STEP,
                   G_TYPE_INT,
                   G_TYPE_BOOLEAN);
+  g_signal_set_va_marshaller (signals[MOVE_CURSOR],
+                              G_OBJECT_CLASS_TYPE (gobject_class),
+                              _gtk_marshal_VOID__ENUM_INT_BOOLEANv);
 
   /**
    * GtkText::insert-at-cursor:
@@ -1089,6 +1092,9 @@ gtk_text_class_init (GtkTextClass *class)
                   G_TYPE_NONE, 2,
                   GTK_TYPE_DELETE_TYPE,
                   G_TYPE_INT);
+  g_signal_set_va_marshaller (signals[DELETE_FROM_CURSOR],
+                              G_OBJECT_CLASS_TYPE (gobject_class),
+                              _gtk_marshal_VOID__ENUM_INTv);
 
   /**
    * GtkText::backspace:
@@ -2706,6 +2712,10 @@ gtk_text_do_popup (GtkText *self,
       gtk_popover_set_has_arrow (GTK_POPOVER (priv->popup_menu), FALSE);
       gtk_widget_set_halign (priv->popup_menu, GTK_ALIGN_START);
 
+      gtk_accessible_update_property (GTK_ACCESSIBLE (priv->popup_menu),
+                                      GTK_ACCESSIBLE_PROPERTY_LABEL, _("Context menu"),
+                                      -1);
+
       g_object_unref (model);
     }
 
@@ -2787,8 +2797,7 @@ gtk_text_click_gesture_pressed (GtkGestureClick *gesture,
       have_selection = sel_start != sel_end;
 
       source = gdk_event_get_device (event);
-      is_touchscreen = gtk_simulate_touchscreen () ||
-                       gdk_device_get_source (source) == GDK_SOURCE_TOUCHSCREEN;
+      is_touchscreen = gdk_device_get_source (source) == GDK_SOURCE_TOUCHSCREEN;
 
       priv->text_handles_enabled = is_touchscreen;
 
@@ -3151,8 +3160,7 @@ gtk_text_drag_gesture_update (GtkGestureDrag *gesture,
       gtk_text_set_positions (self, pos, bound);
 
       /* Update touch handles' position */
-      if (gtk_simulate_touchscreen () ||
-          input_source == GDK_SOURCE_TOUCHSCREEN)
+      if (input_source == GDK_SOURCE_TOUCHSCREEN)
         {
           priv->text_handles_enabled = TRUE;
           gtk_text_update_handles (self);
@@ -3591,7 +3599,7 @@ gtk_text_password_hint_free (GtkTextPasswordHint *password_hint)
   if (password_hint->source_id)
     g_source_remove (password_hint->source_id);
 
-  g_slice_free (GtkTextPasswordHint, password_hint);
+  g_free (password_hint);
 }
 
 
@@ -3660,7 +3668,7 @@ buffer_inserted_text (GtkEntryBuffer *buffer,
                                                                     quark_password_hint);
           if (!password_hint)
             {
-              password_hint = g_slice_new0 (GtkTextPasswordHint);
+              password_hint = g_new0 (GtkTextPasswordHint, 1);
               g_object_set_qdata_full (G_OBJECT (self), quark_password_hint, password_hint,
                                        (GDestroyNotify)gtk_text_password_hint_free);
             }
@@ -6234,7 +6242,7 @@ gtk_text_selection_bubble_popup_show (gpointer user_data)
   const int text_width = gtk_widget_get_width (GTK_WIDGET (self));
   const int text_height = gtk_widget_get_height (GTK_WIDGET (self));
   cairo_rectangle_int_t rect;
-  GtkAllocation allocation;
+  graphene_point_t p;
   gboolean has_selection;
   int start_x, end_x;
   GtkWidget *box;
@@ -6279,13 +6287,15 @@ gtk_text_selection_bubble_popup_show (gpointer user_data)
 
   g_object_unref (model);
 
-  gtk_widget_get_allocation (GTK_WIDGET (self), &allocation);
+  if (!gtk_widget_compute_point (GTK_WIDGET (self), gtk_widget_get_parent (GTK_WIDGET (self)),
+                                 &GRAPHENE_POINT_INIT (0, 0), &p))
+    graphene_point_init (&p, 0, 0);
 
   gtk_text_get_cursor_locations (self, &start_x, NULL);
 
   start_x -= priv->scroll_offset;
   start_x = CLAMP (start_x, 0, text_width);
-  rect.y = - allocation.y;
+  rect.y = - p.y;
   rect.height = text_height;
 
   if (has_selection)
@@ -6293,12 +6303,12 @@ gtk_text_selection_bubble_popup_show (gpointer user_data)
       end_x = gtk_text_get_selection_bound_location (self) - priv->scroll_offset;
       end_x = CLAMP (end_x, 0, text_width);
 
-      rect.x = - allocation.x + MIN (start_x, end_x);
+      rect.x = - p.x + MIN (start_x, end_x);
       rect.width = ABS (end_x - start_x);
     }
   else
     {
-      rect.x = - allocation.x + start_x;
+      rect.x = - p.x + start_x;
       rect.width = 0;
     }
 

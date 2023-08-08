@@ -70,7 +70,7 @@ set_color (CanvasItem *item,
   css = g_strdup_printf ("#%s { background: %s; }", name, str);
 
   provider = gtk_css_provider_new ();
-  gtk_css_provider_load_from_data (provider, css, -1);
+  gtk_css_provider_load_from_string (provider, css);
   gtk_style_context_add_provider_for_display (gtk_widget_get_display (item->label), GTK_STYLE_PROVIDER (provider), 700);
   item->provider = GTK_STYLE_PROVIDER (provider);
 
@@ -109,15 +109,21 @@ static void
 apply_transform (CanvasItem *item)
 {
   GskTransform *transform;
+  graphene_rect_t bounds;
   double x, y;
 
-  x = gtk_widget_get_allocated_width (item->label) / 2.0;
-  y = gtk_widget_get_allocated_height (item->label) / 2.0;
-  item->r = sqrt (x*x + y*y);
+  /* Add css padding and margin */
+  if (!gtk_widget_compute_bounds (item->label, item->label, &bounds))
+    return;
+
+  x = bounds.size.width / 2.;
+  y = bounds.size.height / 2.;
+
+  item->r = sqrt (x * x + y * y);
 
   transform = gsk_transform_translate (NULL, &(graphene_point_t) { item->r, item->r });
   transform = gsk_transform_rotate (transform, item->angle + item->delta);
-  transform = gsk_transform_translate (transform, &(graphene_point_t) { -x, -y });
+  transform = gsk_transform_translate (transform, &GRAPHENE_POINT_INIT (-x, -y));
 
   gtk_fixed_set_child_transform (GTK_FIXED (item->fixed), item->label, transform);
   gsk_transform_unref (transform);
@@ -156,27 +162,39 @@ click_done (GtkGesture *gesture)
     gtk_widget_insert_after (item, canvas, last_child);
 }
 
+/* GtkSettings treats `GTK_THEME=foo:dark` as theme name `foo`, variant `dark`,
+ * and our embedded CSS files let `foo-dark` work as an alias for `foo:dark`. */
+static gboolean
+has_dark_suffix (const char *theme)
+{
+  return g_str_has_suffix (theme, ":dark") ||
+         g_str_has_suffix (theme, "-dark");
+}
+
+/* So we can make a good guess whether the current theme is dark by checking for
+ * either: it is suffixed `[:-]dark`, or Settings:…prefer-dark-theme is TRUE. */
 static gboolean
 theme_is_dark (void)
 {
+  const char *env_theme;
   GtkSettings *settings;
   char *theme;
   gboolean prefer_dark;
   gboolean dark;
 
+  /* Like GtkSettings, 1st see if theme is overridden by environment variable */
+  env_theme = g_getenv ("GTK_THEME");
+  if (env_theme != NULL)
+    return has_dark_suffix (env_theme);
+
+  /* If not, test Settings:…theme-name in the same way OR :…prefer-dark-theme */
   settings = gtk_settings_get_default ();
   g_object_get (settings,
                 "gtk-theme-name", &theme,
                 "gtk-application-prefer-dark-theme", &prefer_dark,
                 NULL);
-
-  if ((strcmp (theme, "Adwaita") == 0 && prefer_dark) || strcmp (theme, "HighContrastInverse") == 0)
-    dark = TRUE;
-  else
-    dark = FALSE;
-
+  dark = prefer_dark || has_dark_suffix (theme);
   g_free (theme);
-
   return dark;
 }
 
@@ -324,7 +342,7 @@ canvas_item_start_editing (CanvasItem *item)
   GtkWidget *canvas = gtk_widget_get_parent (GTK_WIDGET (item));
   GtkWidget *entry;
   GtkWidget *scale;
-  double x, y;
+  graphene_point_t p;
 
   if (item->editor)
     return;
@@ -350,8 +368,9 @@ canvas_item_start_editing (CanvasItem *item)
 
   gtk_box_append (GTK_BOX (item->editor), scale);
 
-  gtk_widget_translate_coordinates (GTK_WIDGET (item), canvas, 0, 0, &x, &y);
-  gtk_fixed_put (GTK_FIXED (canvas), item->editor, x, y + 2 * item->r);
+  if (!gtk_widget_compute_point (GTK_WIDGET (item), canvas, &GRAPHENE_POINT_INIT (0, 0), &p))
+    graphene_point_init (&p, 0, 0);
+  gtk_fixed_put (GTK_FIXED (canvas), item->editor, p.x, p.y + 2 * item->r);
   gtk_widget_grab_focus (entry);
 
 }
@@ -368,6 +387,7 @@ prepare (GtkDragSource *source,
   GtkWidget *canvas;
   GtkWidget *item;
   Hotspot *hotspot;
+  graphene_point_t p;
 
   canvas = gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (source));
   item = gtk_widget_pick (canvas, x, y, GTK_PICK_DEFAULT);
@@ -379,7 +399,10 @@ prepare (GtkDragSource *source,
   g_object_set_data (G_OBJECT (canvas), "dragged-item", item);
 
   hotspot = g_new (Hotspot, 1);
-  gtk_widget_translate_coordinates (canvas, item, x, y, &hotspot->x, &hotspot->y);
+  if (!gtk_widget_compute_point (canvas, item, &GRAPHENE_POINT_INIT (x, y), &p))
+    graphene_point_init (&p, x, y);
+  hotspot->x = p.x;
+  hotspot->y = p.y;
   g_object_set_data_full (G_OBJECT (canvas), "hotspot", hotspot, g_free);
 
   return gdk_content_provider_new_typed (GTK_TYPE_WIDGET, item);
@@ -737,9 +760,7 @@ do_dnd (GtkWidget *do_widget)
       GtkCssProvider *provider;
       GString *css;
 
-G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-      button = gtk_color_button_new ();
-G_GNUC_END_IGNORE_DEPRECATIONS
+      button = gtk_color_dialog_button_new (gtk_color_dialog_new ());
       g_object_unref (g_object_ref_sink (button));
 
       provider = gtk_css_provider_new ();
@@ -754,7 +775,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
         g_string_append_printf (css, ".canvasitem.%s { background: %s; }\n", colors[i], colors[i]);
 
       provider = gtk_css_provider_new ();
-      gtk_css_provider_load_from_data (provider, css->str, css->len);
+      gtk_css_provider_load_from_string (provider, css->str);
       gtk_style_context_add_provider_for_display (gdk_display_get_default (),
                                                   GTK_STYLE_PROVIDER (provider),
                                                   800);

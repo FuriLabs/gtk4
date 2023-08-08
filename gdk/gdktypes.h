@@ -22,8 +22,7 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#ifndef __GDK_TYPES_H__
-#define __GDK_TYPES_H__
+#pragma once
 
 #if !defined (__GDK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gdk/gdk.h> can be included directly."
@@ -43,6 +42,8 @@
  * (or GTK). One such setting is what windowing API backend is in use.
  */
 #include <gdk/gdkconfig.h>
+#include <gdk/gdkenums.h>
+#include <gdk/version/gdkversionmacros.h>
 
 G_BEGIN_DECLS
 
@@ -162,4 +163,3 @@ struct _GdkKeymapKey
 
 G_END_DECLS
 
-#endif /* __GDK_TYPES_H__ */

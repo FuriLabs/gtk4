@@ -12,11 +12,11 @@ static const GdkDebugKey gsk_debug_keys[] = {
   { "surface", GSK_DEBUG_SURFACE, "Information about surfaces" },
   { "fallback", GSK_DEBUG_FALLBACK, "Information about fallbacks" },
   { "glyphcache", GSK_DEBUG_GLYPH_CACHE, "Information about glyph caching" },
+  { "verbose", GSK_DEBUG_VERBOSE, "Print verbose output while rendering" },
   { "geometry", GSK_DEBUG_GEOMETRY, "Show borders (when using cairo)" },
   { "full-redraw", GSK_DEBUG_FULL_REDRAW, "Force full redraws" },
   { "sync", GSK_DEBUG_SYNC, "Sync after each frame" },
-  { "vulkan-staging-image", GSK_DEBUG_VULKAN_STAGING_IMAGE, "Use a staging image for Vulkan texture upload" },
-  { "vulkan-staging-buffer", GSK_DEBUG_VULKAN_STAGING_BUFFER, "Use a staging buffer for Vulkan texture upload" }
+  { "staging", GSK_DEBUG_STAGING, "Use a staging image for texture upload (Vulkan only)" },
 };
 
 static guint gsk_debug_flags;

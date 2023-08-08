@@ -19,7 +19,7 @@
  * Modified by the GTK+ Team and others 1997-2000.  See the AUTHORS
  * file for a list of people on the GTK+ Team.  See the ChangeLog
  * files for a list of changes.  These files are distributed with
- * GTK+ at ftp://ftp.gtk.org/pub/gtk/. 
+ * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
 #include "config.h"
@@ -207,7 +207,7 @@ gtk_drag_source_set_property (GObject      *object,
                               GParamSpec   *pspec)
 {
   GtkDragSource *source = GTK_DRAG_SOURCE (object);
-  
+
   switch (prop_id)
     {
     case PROP_CONTENT:
@@ -378,9 +378,12 @@ gtk_drag_source_class_init (GtkDragSourceClass *class)
                     G_SIGNAL_RUN_LAST,
                     G_STRUCT_OFFSET (GtkDragSourceClass, prepare),
                     g_signal_accumulator_first_wins, NULL,
-                    NULL,
+                    _gtk_marshal_OBJECT__DOUBLE_DOUBLE,
                     GDK_TYPE_CONTENT_PROVIDER, 2,
                     G_TYPE_DOUBLE, G_TYPE_DOUBLE);
+  g_signal_set_va_marshaller (signals[PREPARE],
+                              GTK_TYPE_DRAG_SOURCE,
+                              _gtk_marshal_OBJECT__DOUBLE_DOUBLEv);
 
   /**
    * GtkDragSource::drag-begin:
@@ -421,10 +424,13 @@ gtk_drag_source_class_init (GtkDragSourceClass *class)
                     G_SIGNAL_RUN_LAST,
                     0,
                     NULL, NULL,
-                    NULL,
+                    _gtk_marshal_VOID__OBJECT_BOOLEAN,
                     G_TYPE_NONE, 2,
                     GDK_TYPE_DRAG,
                     G_TYPE_BOOLEAN);
+  g_signal_set_va_marshaller (signals[DRAG_END],
+                              GTK_TYPE_DRAG_SOURCE,
+                              _gtk_marshal_VOID__OBJECT_BOOLEANv);
 
   /**
    * GtkDragSource::drag-cancel:
@@ -450,6 +456,9 @@ gtk_drag_source_class_init (GtkDragSourceClass *class)
                     G_TYPE_BOOLEAN, 2,
                     GDK_TYPE_DRAG,
                     GDK_TYPE_DRAG_CANCEL_REASON);
+  g_signal_set_va_marshaller (signals[DRAG_CANCEL],
+                              G_TYPE_FROM_CLASS (class),
+                              _gtk_marshal_BOOLEAN__OBJECT_ENUMv);
 }
 
 static GdkContentProvider *
@@ -564,7 +573,7 @@ gtk_drag_source_drag_begin (GtkDragSource *source)
   GtkWidget *widget;
   GdkDevice *device, *pointer;
   GdkSeat *seat;
-  double x, y;
+  graphene_point_t p;
   GtkNative *native;
   GdkSurface *surface;
   double px, py;
@@ -583,11 +592,15 @@ gtk_drag_source_drag_begin (GtkDragSource *source)
   native = gtk_widget_get_native (widget);
   surface = gtk_native_get_surface (native);
 
-  gtk_widget_translate_coordinates (widget, GTK_WIDGET (native), source->start_x, source->start_y, &x, &y);
+  if (!gtk_widget_compute_point (widget, GTK_WIDGET (native),
+                                 &GRAPHENE_POINT_INIT (source->start_x, source->start_y),
+                                 &p))
+    return;
+
   gdk_surface_get_device_position (surface, pointer, &px, &py, NULL);
 
-  dx = round (px - x);
-  dy = round (py - y);
+  dx = round (px - p.x);
+  dy = round (py - p.y);
 
   g_signal_emit (source, signals[PREPARE], 0, source->start_x, source->start_y, &content);
   if (!content)

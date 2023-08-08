@@ -662,7 +662,7 @@ gtk_label_buildable_custom_tag_start (GtkBuildable       *buildable,
     {
       GtkPangoAttributeParserData *parser_data;
 
-      parser_data = g_slice_new0 (GtkPangoAttributeParserData);
+      parser_data = g_new0 (GtkPangoAttributeParserData, 1);
       parser_data->builder = g_object_ref (builder);
       parser_data->object = (GObject *) g_object_ref (buildable);
       *parser = pango_parser;
@@ -694,7 +694,7 @@ gtk_label_buildable_custom_finished (GtkBuildable *buildable,
 
       g_object_unref (data->object);
       g_object_unref (data->builder);
-      g_slice_free (GtkPangoAttributeParserData, data);
+      g_free (data);
     }
 }
 
@@ -1313,8 +1313,8 @@ gtk_label_measure (GtkWidget      *widget,
 
 static void
 get_layout_location (GtkLabel  *self,
-                     int       *xp,
-                     int       *yp)
+                     float     *xp,
+                     float     *yp)
 {
   GtkWidget *widget = GTK_WIDGET (self);
   const int widget_width = gtk_widget_get_width (widget);
@@ -1322,7 +1322,7 @@ get_layout_location (GtkLabel  *self,
   PangoRectangle logical;
   float xalign;
   int baseline;
-  int x, y;
+  float x, y;
 
   g_assert (xp);
   g_assert (yp);
@@ -1334,8 +1334,10 @@ get_layout_location (GtkLabel  *self,
 
   pango_layout_get_pixel_extents (self->layout, NULL, &logical);
   x = floor ((xalign * (widget_width - logical.width)) - logical.x);
+  if (x < 0)
+    x = 0.f;
 
-  baseline = gtk_widget_get_allocated_baseline (widget);
+  baseline = gtk_widget_get_baseline (widget);
   if (baseline != -1)
     {
       int layout_baseline = pango_layout_get_baseline (self->layout) / PANGO_SCALE;
@@ -1382,7 +1384,7 @@ gtk_label_snapshot (GtkWidget   *widget,
   GtkLabel *self = GTK_LABEL (widget);
   GtkLabelSelectionInfo *info;
   GtkCssStyle *style;
-  int lx, ly;
+  float lx, ly;
   int width, height;
   GtkCssBoxes boxes;
 
@@ -1705,7 +1707,7 @@ get_layout_index (GtkLabel *self,
   const char *cluster;
   const char *cluster_end;
   gboolean inside;
-  int lx, ly;
+  float lx, ly;
 
   *index = 0;
 
@@ -2258,6 +2260,9 @@ gtk_label_class_init (GtkLabelClass *class)
                   GTK_TYPE_MOVEMENT_STEP,
                   G_TYPE_INT,
                   G_TYPE_BOOLEAN);
+  g_signal_set_va_marshaller (signals[MOVE_CURSOR],
+                              G_OBJECT_CLASS_TYPE (gobject_class),
+                              _gtk_marshal_VOID__ENUM_INT_BOOLEANv);
 
    /**
    * GtkLabel::copy-clipboard:
@@ -2278,48 +2283,51 @@ gtk_label_class_init (GtkLabelClass *class)
                   NULL,
                   G_TYPE_NONE, 0);
 
-    /**
-     * GtkLabel::activate-current-link:
-     * @self: The label on which the signal was emitted
-     *
-     * Gets emitted when the user activates a link in the label.
-     *
-     * The ::activate-current-link is a [keybinding signal](class.SignalAction.html).
-     *
-     * Applications may also emit the signal with g_signal_emit_by_name()
-     * if they need to control activation of URIs programmatically.
-     *
-     * The default bindings for this signal are all forms of the <kbd>Enter</kbd> key.
-     */
-    signals[ACTIVATE_CURRENT_LINK] =
-      g_signal_new_class_handler (I_("activate-current-link"),
-                                  G_TYPE_FROM_CLASS (gobject_class),
-                                  G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
-                                  G_CALLBACK (gtk_label_activate_current_link),
-                                  NULL, NULL,
-                                  NULL,
-                                  G_TYPE_NONE, 0);
+  /**
+   * GtkLabel::activate-current-link:
+   * @self: The label on which the signal was emitted
+   *
+   * Gets emitted when the user activates a link in the label.
+   *
+   * The ::activate-current-link is a [keybinding signal](class.SignalAction.html).
+   *
+   * Applications may also emit the signal with g_signal_emit_by_name()
+   * if they need to control activation of URIs programmatically.
+   *
+   * The default bindings for this signal are all forms of the <kbd>Enter</kbd> key.
+   */
+  signals[ACTIVATE_CURRENT_LINK] =
+    g_signal_new_class_handler (I_("activate-current-link"),
+                                G_TYPE_FROM_CLASS (gobject_class),
+                                G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
+                                G_CALLBACK (gtk_label_activate_current_link),
+                                NULL, NULL,
+                                NULL,
+                                G_TYPE_NONE, 0);
 
-    /**
-     * GtkLabel::activate-link:
-     * @self: The label on which the signal was emitted
-     * @uri: the URI that is activated
-     *
-     * Gets emitted to activate a URI.
-     *
-     * Applications may connect to it to override the default behaviour,
-     * which is to call [method@Gtk.FileLauncher.launch].
-     *
-     * Returns: %TRUE if the link has been activated
-     */
-    signals[ACTIVATE_LINK] =
-      g_signal_new (I_("activate-link"),
-                    G_TYPE_FROM_CLASS (gobject_class),
-                    G_SIGNAL_RUN_LAST,
-                    G_STRUCT_OFFSET (GtkLabelClass, activate_link),
-                    _gtk_boolean_handled_accumulator, NULL,
-                    _gtk_marshal_BOOLEAN__STRING,
-                    G_TYPE_BOOLEAN, 1, G_TYPE_STRING);
+  /**
+   * GtkLabel::activate-link:
+   * @self: The label on which the signal was emitted
+   * @uri: the URI that is activated
+   *
+   * Gets emitted to activate a URI.
+   *
+   * Applications may connect to it to override the default behaviour,
+   * which is to call [method@Gtk.FileLauncher.launch].
+   *
+   * Returns: %TRUE if the link has been activated
+   */
+  signals[ACTIVATE_LINK] =
+    g_signal_new (I_("activate-link"),
+                  G_TYPE_FROM_CLASS (gobject_class),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (GtkLabelClass, activate_link),
+                  _gtk_boolean_handled_accumulator, NULL,
+                  _gtk_marshal_BOOLEAN__STRING,
+                  G_TYPE_BOOLEAN, 1, G_TYPE_STRING);
+  g_signal_set_va_marshaller (signals[ACTIVATE_LINK],
+                              G_TYPE_FROM_CLASS (gobject_class),
+                              _gtk_marshal_BOOLEAN__STRINGv);
 
   /**
    * GtkLabel:label: (attributes org.gtk.Property.get=gtk_label_get_label org.gtk.Property.set=gtk_label_set_label)
@@ -2493,7 +2501,7 @@ gtk_label_class_init (GtkLabelClass *class)
   label_props[PROP_MNEMONIC_WIDGET] =
       g_param_spec_object ("mnemonic-widget", NULL, NULL,
                            GTK_TYPE_WIDGET,
-                           GTK_PARAM_READWRITE);
+                           GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkLabel:ellipsize: (attributes org.gtk.Property.get=gtk_label_get_ellipsize org.gtk.Property.set=gtk_label_set_ellipsize)
@@ -2984,9 +2992,10 @@ gtk_label_set_mnemonic_widget (GtkLabel  *self,
                                GtkWidget *widget)
 {
   g_return_if_fail (GTK_IS_LABEL (self));
+  g_return_if_fail (widget == NULL || GTK_IS_WIDGET (widget));
 
-  if (widget)
-    g_return_if_fail (GTK_IS_WIDGET (widget));
+  if (self->mnemonic_widget == widget)
+    return;
 
   if (self->mnemonic_widget)
     {
@@ -3059,10 +3068,6 @@ gtk_label_set_text_internal (GtkLabel *self,
 
   g_free (self->text);
   self->text = str;
-
-  gtk_accessible_update_property (GTK_ACCESSIBLE (self),
-                                  GTK_ACCESSIBLE_PROPERTY_LABEL, self->text,
-                                  -1);
 
   gtk_label_select_region_index (self, 0, 0);
 }
@@ -4944,6 +4949,10 @@ gtk_label_set_selectable (GtkLabel *self,
       gtk_label_ensure_select_info (self);
       self->select_info->selectable = TRUE;
       gtk_label_update_cursor (self);
+
+      gtk_accessible_update_property (GTK_ACCESSIBLE (self),
+                                      GTK_ACCESSIBLE_PROPERTY_HAS_POPUP, TRUE,
+                                      -1);
     }
   else
     {
@@ -4955,7 +4964,10 @@ gtk_label_set_selectable (GtkLabel *self,
           self->select_info->selectable = FALSE;
           gtk_label_clear_select_info (self);
         }
+
+      gtk_accessible_reset_property (GTK_ACCESSIBLE (self), GTK_ACCESSIBLE_PROPERTY_HAS_POPUP);
     }
+
   if (setting != old_setting)
     {
       g_object_freeze_notify (G_OBJECT (self));
@@ -5237,17 +5249,17 @@ gtk_label_get_layout_offsets (GtkLabel *self,
                               int      *x,
                               int      *y)
 {
-  int local_x, local_y;
+  float local_x, local_y;
   g_return_if_fail (GTK_IS_LABEL (self));
 
   gtk_label_ensure_layout (self);
   get_layout_location (self, &local_x, &local_y);
 
   if (x)
-    *x = local_x;
+    *x = (int) local_x;
 
   if (y)
-    *y = local_y;
+    *y = (int) local_y;
 }
 
 /**
@@ -5737,6 +5749,10 @@ gtk_label_do_popup (GtkLabel *self,
       gtk_popover_set_has_arrow (GTK_POPOVER (self->popup_menu), FALSE);
       gtk_widget_set_halign (self->popup_menu, GTK_ALIGN_START);
 
+      gtk_accessible_update_property (GTK_ACCESSIBLE (self->popup_menu),
+                                      GTK_ACCESSIBLE_PROPERTY_LABEL, _("Context menu"),
+                                      -1);
+
       g_object_unref (model);
     }
 
@@ -5776,10 +5792,10 @@ gtk_label_get_current_uri (GtkLabel *self)
   if (!self->select_info)
     return NULL;
 
-  if (self->select_info->link_clicked)
-    link = self->select_info->active_link;
-  else
+  if (!self->select_info->link_clicked && self->select_info->selectable)
     link = gtk_label_get_focus_link (self, NULL);
+  else
+    link = self->select_info->active_link;
 
   if (link)
     return link->uri;

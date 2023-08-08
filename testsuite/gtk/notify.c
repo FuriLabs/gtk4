@@ -86,11 +86,16 @@ check_property (GObject *instance, GParamSpec *pspec)
         first = 1;
       else
         first = 0;
-  
+
       for (i = first; i < class->n_values; i++)
         {
+          /* skip duplicates */
+          if (i > 0 && class->values[i].value == class->values[i - 1].value)
+            continue;
+
           current_count = data.count + 1;
           g_object_set (instance, pspec->name, class->values[i].value, NULL);
+
           assert_notifies (instance, pspec->name, data.count, current_count);
 
           if (current_count == 10) /* just test a few */
@@ -161,7 +166,7 @@ check_property (GObject *instance, GParamSpec *pspec)
       assert_notifies (instance, pspec->name, data.count, 1);
 
       g_signal_handler_disconnect (instance, id);
-    } 
+    }
   else if (pspec->value_type == G_TYPE_INT)
     {
       GParamSpecInt *p = G_PARAM_SPEC_INT (pspec);
@@ -266,6 +271,26 @@ check_property (GObject *instance, GParamSpec *pspec)
 
       g_signal_handler_disconnect (instance, id);
     }
+  else if (pspec->value_type == G_TYPE_STRV)
+    {
+      NotifyData data;
+      gulong id;
+      const char *value[] = { "bla", "bla", NULL };
+
+      data.name = pspec->name;
+      data.count = 0;
+      id = g_signal_connect (instance, "notify", G_CALLBACK (count_notify), &data);
+
+      g_object_set (instance, pspec->name, value, NULL);
+      assert_notifies (instance, pspec->name, data.count, 1);
+
+      value[1] = "foo";
+
+      g_object_set (instance, pspec->name, value, NULL);
+      assert_notifies (instance, pspec->name, data.count, 2);
+
+      g_signal_handler_disconnect (instance, id);
+    }
   else if (pspec->value_type == G_TYPE_DOUBLE)
     {
       GParamSpecDouble *p = G_PARAM_SPEC_DOUBLE (pspec);
@@ -283,7 +308,7 @@ check_property (GObject *instance, GParamSpec *pspec)
 
       /* don't check redundant notifications */
       g_object_get (instance, pspec->name, &value, NULL);
-      
+
       if (p->maximum > 100 || p->minimum < -100)
         delta = M_PI;
       else
@@ -323,7 +348,7 @@ check_property (GObject *instance, GParamSpec *pspec)
 
       /* don't check redundant notifications */
       g_object_get (instance, pspec->name, &value, NULL);
-      
+
       new_value = p->minimum;
       for (i = 0; i < 10; i++)
         {
@@ -339,6 +364,86 @@ check_property (GObject *instance, GParamSpec *pspec)
           g_object_set (instance, pspec->name, new_value, NULL);
           assert_notifies (instance, pspec->name, data.count, current_count);
         }
+
+      g_signal_handler_disconnect (instance, id);
+    }
+  else if (pspec->value_type == G_TYPE_LIST_MODEL)
+    {
+      NotifyData data;
+      gulong id;
+      GListStore *value;
+
+      data.name = pspec->name;
+      data.count = 0;
+      id = g_signal_connect (instance, "notify", G_CALLBACK (count_notify), &data);
+
+      value = g_list_store_new (GTK_TYPE_WIDGET);
+
+      g_object_set (instance, pspec->name, value, NULL);
+      assert_notifies (instance, pspec->name, data.count, 1);
+
+      g_object_set (instance, pspec->name, value, NULL);
+      assert_notifies (instance, pspec->name, data.count, 1);
+
+      g_object_set (instance, pspec->name, NULL, NULL);
+      assert_notifies (instance, pspec->name, data.count, 2);
+
+      g_object_set (instance, pspec->name, value, NULL);
+      assert_notifies (instance, pspec->name, data.count, 3);
+
+      g_object_unref (value);
+
+      g_signal_handler_disconnect (instance, id);
+    }
+  else if (pspec->value_type == GTK_TYPE_ADJUSTMENT)
+    {
+      NotifyData data;
+      gulong id;
+      GtkAdjustment *value;
+
+      data.name = pspec->name;
+      data.count = 0;
+      id = g_signal_connect (instance, "notify", G_CALLBACK (count_notify), &data);
+
+      value = gtk_adjustment_new (100, 0, 200, 1, 1, 10);
+      g_object_ref_sink (value);
+
+      g_object_set (instance, pspec->name, value, NULL);
+      assert_notifies (instance, pspec->name, data.count, 1);
+
+      g_object_set (instance, pspec->name, value, NULL);
+      assert_notifies (instance, pspec->name, data.count, 1);
+
+      g_object_set (instance, pspec->name, NULL, NULL);
+      assert_notifies (instance, pspec->name, data.count, 2);
+
+      g_object_unref (value);
+
+      g_signal_handler_disconnect (instance, id);
+    }
+  else if (pspec->value_type == GTK_TYPE_WIDGET)
+    {
+      NotifyData data;
+      gulong id;
+      GtkWidget *value;
+
+      data.name = pspec->name;
+      data.count = 0;
+      id = g_signal_connect (instance, "notify", G_CALLBACK (count_notify), &data);
+
+      value = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+      g_object_ref_sink (value);
+
+      g_object_set (instance, pspec->name, value, NULL);
+      assert_notifies (instance, pspec->name, data.count, 1);
+
+      g_object_set (instance, pspec->name, value, NULL);
+      assert_notifies (instance, pspec->name, data.count, 1);
+
+      g_object_set (instance, pspec->name, NULL, NULL);
+      assert_notifies (instance, pspec->name, data.count, 2);
+
+      g_object_unref (value);
 
       g_signal_handler_disconnect (instance, id);
     }
@@ -376,11 +481,6 @@ test_type (gconstpointer data)
   if (g_str_equal (g_type_name (type), "GdkPixbufSimpleAnim"))
     return;
 
-  /* Deprecated, not getting fixed */
-  if (g_str_equal (g_type_name (type), "GtkColorSelection") ||
-      g_str_equal (g_type_name (type), "GtkNumerableIcon"))
-    return;
-
   /* These can't be freely constructed/destroyed */
   if (g_type_is_a (type, GTK_TYPE_APPLICATION) ||
       g_type_is_a (type, GDK_TYPE_PIXBUF_LOADER) ||
@@ -396,34 +496,27 @@ test_type (gconstpointer data)
       g_str_equal (g_type_name (type), "GdkX11GLContext"))
     return;
 
-  /* This throws a critical when the connection is dropped */
-  if (g_type_is_a (type, GTK_TYPE_APP_CHOOSER_DIALOG))
-    return;
-
   /* These leak their GDBusConnections */
   if (g_type_is_a (type, GTK_TYPE_FILE_CHOOSER_DIALOG) ||
       g_type_is_a (type, GTK_TYPE_FILE_CHOOSER_WIDGET) ||
       g_type_is_a (type, GTK_TYPE_FILE_CHOOSER_NATIVE))
     return;
 
-  if (g_str_equal (g_type_name (type), "GtkPlacesSidebar"))
-    return;
-
   if (g_type_is_a (type, GTK_TYPE_STACK_PAGE))
-    return;
-
-  /* These rely on a d-bus session bus */
-  if (g_type_is_a (type, GTK_TYPE_MOUNT_OPERATION))
-    return;
-
-  /* Needs a special surface */
-  if (g_type_is_a (type, GTK_TYPE_DRAG_ICON))
     return;
 
   /* these assert in constructed */
  if (g_type_is_a (type, GTK_TYPE_ALTERNATIVE_TRIGGER) ||
      g_type_is_a (type, GTK_TYPE_SIGNAL_ACTION) ||
      g_type_is_a (type, GTK_TYPE_NAMED_ACTION))
+    return;
+
+  /* needs a surface */
+  if (g_type_is_a (type, GTK_TYPE_DRAG_ICON))
+    return;
+
+  /* Needs debugging */
+  if (g_type_is_a (type, GTK_TYPE_SHORTCUTS_WINDOW))
     return;
 
   klass = g_type_class_ref (type);
@@ -503,7 +596,7 @@ test_type (gconstpointer data)
       GParamSpec *pspec = pspecs[i];
 
       if ((pspec->flags & G_PARAM_READABLE) == 0)
-	continue;
+        continue;
 
       if ((pspec->flags & G_PARAM_WRITABLE) == 0)
         continue;
@@ -512,8 +605,8 @@ test_type (gconstpointer data)
         continue;
 
       /* non-GTK */
-      if (g_str_equal (g_type_name (pspec->owner_type), "GdkPixbufSimpleAnim") || 
-          g_str_equal (g_type_name (pspec->owner_type), "GMountOperation")) 
+      if (g_str_equal (g_type_name (pspec->owner_type), "GdkPixbufSimpleAnim") ||
+          g_str_equal (g_type_name (pspec->owner_type), "GMountOperation"))
         continue;
 
       /* set properties are best skipped */
@@ -525,6 +618,7 @@ test_type (gconstpointer data)
       if (g_type_is_a (pspec->owner_type, GTK_TYPE_WIDGET) &&
           (g_str_equal (pspec->name, "has-focus") ||
            g_str_equal (pspec->name, "has-default") ||
+           g_str_equal (pspec->name, "focus-widget") ||
            g_str_equal (pspec->name, "is-focus") ||
            g_str_equal (pspec->name, "hexpand") ||
            g_str_equal (pspec->name, "vexpand") ||
@@ -547,32 +641,25 @@ test_type (gconstpointer data)
         continue;
 
       if (g_type_is_a (pspec->owner_type, GTK_TYPE_COLOR_CHOOSER) &&
-	  g_str_equal (pspec->name, "show-editor"))
+          g_str_equal (pspec->name, "show-editor"))
         continue;
 
       if (g_type_is_a (pspec->owner_type, GTK_TYPE_NOTEBOOK) &&
-	  g_str_equal (pspec->name, "page"))
+          g_str_equal (pspec->name, "page"))
         continue;
 
       /* Too many special cases involving -set properties */
-      if (g_str_equal (g_type_name (pspec->owner_type), "GtkCellRendererText") ||
-          g_str_equal (g_type_name (pspec->owner_type), "GtkTextTag"))
+      if (pspec->owner_type == GTK_TYPE_CELL_RENDERER_TEXT ||
+          pspec->owner_type == GTK_TYPE_TEXT_TAG)
         continue;
 
       /* Most things assume a model is set */
-      if (g_str_equal (g_type_name (pspec->owner_type), "GtkComboBox"))
+      if (pspec->owner_type == GTK_TYPE_COMBO_BOX)
         continue;
 
       /* Can only be set on unmapped windows */
       if (pspec->owner_type == GTK_TYPE_WINDOW &&
           g_str_equal (pspec->name, "type-hint"))
-        continue;
-
-      /* Special restrictions on allowed values */
-      if (pspec->owner_type == GTK_TYPE_COMBO_BOX &&
-          (g_str_equal (pspec->name, "id-column") ||
-           g_str_equal (pspec->name, "active-id") ||
-           g_str_equal (pspec->name, "entry-text-column")))
         continue;
 
       if (pspec->owner_type == GTK_TYPE_ENTRY_COMPLETION &&
@@ -593,7 +680,8 @@ test_type (gconstpointer data)
         continue;
 
       if (pspec->owner_type == GTK_TYPE_STACK &&
-          g_str_equal (pspec->name, "visible-child-name"))
+          (g_str_equal (pspec->name, "visible-child-name") ||
+           g_str_equal (pspec->name, "visible-child")))
         continue;
 
       if (pspec->owner_type == GTK_TYPE_STACK_PAGE && /* Can't change position without a stack */
@@ -623,51 +711,66 @@ test_type (gconstpointer data)
 
       /* This one has a special-purpose default value */
       if (g_type_is_a (type, GTK_TYPE_DIALOG) &&
-	  g_str_equal (pspec->name, "use-header-bar"))
-	continue;
+          g_str_equal (pspec->name, "use-header-bar"))
+        continue;
 
       if (g_type_is_a (type, GTK_TYPE_ASSISTANT) &&
-	  g_str_equal (pspec->name, "use-header-bar"))
-	continue;
+          g_str_equal (pspec->name, "use-header-bar"))
+        continue;
 
       if (g_type_is_a (type, GTK_TYPE_SHORTCUTS_SHORTCUT) &&
-	  g_str_equal (pspec->name, "accelerator"))
-	continue;
+          g_str_equal (pspec->name, "accelerator"))
+        continue;
 
       if (g_type_is_a (type, GTK_TYPE_SHORTCUT_LABEL) &&
-	  g_str_equal (pspec->name, "accelerator"))
-	continue;
+          g_str_equal (pspec->name, "accelerator"))
+        continue;
 
       if (g_type_is_a (type, GTK_TYPE_FONT_CHOOSER) &&
-	  g_str_equal (pspec->name, "font"))
-	continue;
+          g_str_equal (pspec->name, "font"))
+        continue;
 
       /* these depend on the min-content- properties in a way that breaks our test */
       if (g_type_is_a (type, GTK_TYPE_SCROLLED_WINDOW) &&
-	  (g_str_equal (pspec->name, "max-content-width") ||
-	   g_str_equal (pspec->name, "max-content-height")))
-	continue;
+          (g_str_equal (pspec->name, "max-content-width") ||
+           g_str_equal (pspec->name, "max-content-height")))
+        continue;
 
       /* expanding only works if rows are expandable */
       if (g_type_is_a (type, GTK_TYPE_TREE_LIST_ROW) &&
-	  g_str_equal (pspec->name, "expanded"))
-	continue;
+          g_str_equal (pspec->name, "expanded"))
+        continue;
 
-       /* can't select items without an underlying, populated model */
-       if (g_type_is_a (type, GTK_TYPE_SINGLE_SELECTION) &&
-           (g_str_equal (pspec->name, "selected") ||
-            g_str_equal (pspec->name, "selected-item")))
-         continue;
+      /* can't select items without an underlying, populated model */
+      if (g_type_is_a (type, GTK_TYPE_SINGLE_SELECTION) &&
+          (g_str_equal (pspec->name, "selected") ||
+           g_str_equal (pspec->name, "selected-item")))
+        continue;
 
-       /* can't select items without an underlying, populated model */
-       if (g_type_is_a (type, GTK_TYPE_DROP_DOWN) &&
-           g_str_equal (pspec->name, "selected"))
-         continue;
+      /* can't select items without an underlying, populated model */
+      if (g_type_is_a (type, GTK_TYPE_DROP_DOWN) &&
+          g_str_equal (pspec->name, "selected"))
+        continue;
 
        /* can't set position without a notebook */
-       if (g_type_is_a (type, GTK_TYPE_NOTEBOOK_PAGE) &&
-           g_str_equal (pspec->name, "position"))
-         continue;
+      if (g_type_is_a (type, GTK_TYPE_NOTEBOOK_PAGE) &&
+          g_str_equal (pspec->name, "position"))
+        continue;
+
+      if (pspec->owner_type == GTK_TYPE_TREE_VIEW_COLUMN &&
+          g_str_equal (pspec->name, "widget"))
+        continue;
+
+      /* Interface does not do explicit notify, so we can't fix it */
+      if (pspec->owner_type == GTK_TYPE_SCROLLABLE &&
+          (g_str_equal (pspec->name, "hadjustment") ||
+           g_str_equal (pspec->name, "vadjustment")))
+        continue;
+
+      /* deprecated, not getting fixed */
+      if (pspec->owner_type == GTK_TYPE_CELL_RENDERER_SPIN &&
+          g_str_equal (pspec->name, "adjustment"))
+        continue;
 
       if (g_test_verbose ())
         g_print ("Property %s.%s\n", g_type_name (pspec->owner_type), pspec->name);

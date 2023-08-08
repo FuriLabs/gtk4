@@ -22,6 +22,7 @@
 #include "gtknoselection.h"
 
 #include "gtkbitset.h"
+#include "gtksectionmodelprivate.h"
 #include "gtkselectionmodel.h"
 
 /**
@@ -32,6 +33,8 @@
  *
  * This model is meant to be used as a simple wrapper around a `GListModel`
  * when a `GtkSelectionModel` is required.
+ *
+ * `GtkNoSelection` passes through sections from the underlying model.
  */
 struct _GtkNoSelection
 {
@@ -92,6 +95,23 @@ gtk_no_selection_list_model_init (GListModelInterface *iface)
   iface->get_item = gtk_no_selection_get_item;
 }
 
+static void
+gtk_no_selection_get_section (GtkSectionModel *model,
+                              guint            position,
+                              guint           *out_start,
+                              guint           *out_end)
+{
+  GtkNoSelection *self = GTK_NO_SELECTION (model);
+
+  gtk_list_model_get_section (self->model, position, out_start, out_end);
+}
+
+static void
+gtk_no_selection_section_model_init (GtkSectionModelInterface *iface)
+{
+  iface->get_section = gtk_no_selection_get_section;
+}
+
 static gboolean
 gtk_no_selection_is_selected (GtkSelectionModel *model,
                               guint              position)
@@ -117,6 +137,8 @@ gtk_no_selection_selection_model_init (GtkSelectionModelInterface *iface)
 G_DEFINE_TYPE_EXTENDED (GtkNoSelection, gtk_no_selection, G_TYPE_OBJECT, 0,
                         G_IMPLEMENT_INTERFACE (G_TYPE_LIST_MODEL,
                                                gtk_no_selection_list_model_init)
+                        G_IMPLEMENT_INTERFACE (GTK_TYPE_SECTION_MODEL,
+                                               gtk_no_selection_section_model_init)
                         G_IMPLEMENT_INTERFACE (GTK_TYPE_SELECTION_MODEL,
                                                gtk_no_selection_selection_model_init))
 
@@ -133,13 +155,27 @@ gtk_no_selection_items_changed_cb (GListModel     *model,
 }
 
 static void
+gtk_no_selection_sections_changed_cb (GtkSectionModel *model,
+                                      unsigned int     position,
+                                      unsigned int     n_items,
+                                      gpointer         user_data)
+{
+  GtkNoSelection *self = GTK_NO_SELECTION (user_data);
+
+  gtk_section_model_sections_changed (GTK_SECTION_MODEL (self), position, n_items);
+}
+
+static void
 gtk_no_selection_clear_model (GtkNoSelection *self)
 {
   if (self->model == NULL)
     return;
 
-  g_signal_handlers_disconnect_by_func (self->model, 
+  g_signal_handlers_disconnect_by_func (self->model,
                                         gtk_no_selection_items_changed_cb,
+                                        self);
+  g_signal_handlers_disconnect_by_func (self->model,
+                                        gtk_no_selection_sections_changed_cb,
                                         self);
   g_clear_object (&self->model);
 }
@@ -233,7 +269,7 @@ gtk_no_selection_class_init (GtkNoSelectionClass *klass)
   properties[PROP_MODEL] =
     g_param_spec_object ("model", NULL, NULL,
                        G_TYPE_LIST_MODEL,
-                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNoSelection:n-items:
@@ -325,6 +361,9 @@ gtk_no_selection_set_model (GtkNoSelection *self,
       self->model = g_object_ref (model);
       g_signal_connect (self->model, "items-changed",
                         G_CALLBACK (gtk_no_selection_items_changed_cb), self);
+      if (GTK_IS_SECTION_MODEL (self->model))
+        g_signal_connect (self->model, "sections-changed",
+                          G_CALLBACK (gtk_no_selection_sections_changed_cb), self);
       n_items_after = g_list_model_get_n_items (self->model);
     }
   else

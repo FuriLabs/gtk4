@@ -144,7 +144,7 @@ collect_states (GtkAtSpiContext    *self,
   set_atspi_state (&states, ATSPI_STATE_VISIBLE);
   set_atspi_state (&states, ATSPI_STATE_SHOWING);
 
-  if (ctx->accessible_role == GTK_ACCESSIBLE_ROLE_WINDOW)
+  if (ctx->accessible_role == GTK_ACCESSIBLE_ROLE_APPLICATION)
     {
       if (gtk_accessible_get_platform_state (accessible, GTK_ACCESSIBLE_PLATFORM_STATE_ACTIVE))
         set_atspi_state (&states, ATSPI_STATE_ACTIVE);
@@ -280,6 +280,16 @@ collect_states (GtkAtSpiContext    *self,
           set_atspi_state (&states, ATSPI_STATE_SELECTABLE);
           if (gtk_boolean_accessible_value_get (value))
             set_atspi_state (&states, ATSPI_STATE_SELECTED);
+        }
+    }
+
+  if (gtk_at_context_has_accessible_state (ctx, GTK_ACCESSIBLE_STATE_VISITED))
+    {
+      value = gtk_at_context_get_accessible_state (ctx, GTK_ACCESSIBLE_STATE_VISITED);
+      if (value->value_class->type == GTK_ACCESSIBLE_VALUE_TYPE_BOOLEAN)
+        {
+          if (gtk_boolean_accessible_value_get (value))
+            set_atspi_state (&states, ATSPI_STATE_VISITED);
         }
     }
 
@@ -1050,6 +1060,15 @@ gtk_at_spi_context_state_change (GtkATContext                *ctx,
         emit_state_changed (self, "selectable", FALSE);
     }
 
+  if (changed_states & GTK_ACCESSIBLE_STATE_CHANGE_VISITED)
+    {
+      value = gtk_accessible_attribute_set_get_value (states, GTK_ACCESSIBLE_STATE_VISITED);
+      if (value->value_class->type == GTK_ACCESSIBLE_VALUE_TYPE_BOOLEAN)
+        {
+          emit_state_changed (self, "visited",gtk_boolean_accessible_value_get (value));
+        }
+    }
+
   if (changed_properties & GTK_ACCESSIBLE_PROPERTY_CHANGE_READ_ONLY)
     {
       gboolean readonly;
@@ -1151,7 +1170,7 @@ gtk_at_spi_context_platform_change (GtkATContext                *ctx,
       /* Orca tracks the window:activate and window:deactivate events on top
        * levels to decide whether to track other AT-SPI events
        */
-      if (gtk_accessible_get_accessible_role (accessible) == GTK_ACCESSIBLE_ROLE_WINDOW)
+      if (gtk_accessible_get_accessible_role (accessible) == GTK_ACCESSIBLE_ROLE_APPLICATION)
         {
           if (state)
             emit_window_event (self, "activate");

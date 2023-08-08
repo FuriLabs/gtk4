@@ -18,8 +18,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#ifndef __GSK_GL_ATTACHMENT_STATE_PRIVATE_H__
-#define __GSK_GL_ATTACHMENT_STATE_PRIVATE_H__
+#pragma once
 
 #include "gskgltypesprivate.h"
 
@@ -29,11 +28,37 @@ typedef struct _GskGLAttachmentState GskGLAttachmentState;
 typedef struct _GskGLBindFramebuffer GskGLBindFramebuffer;
 typedef struct _GskGLBindTexture     GskGLBindTexture;
 
+#define GSK_GL_N_FILTERS 3
+
+static inline guint
+filter_index (GLint filter)
+{
+  switch (filter)
+  {
+    case GL_LINEAR:
+      return 0;
+    case GL_NEAREST:
+      return 1;
+    case GL_LINEAR_MIPMAP_LINEAR:
+      return 2;
+    default:
+      g_assert_not_reached ();
+  }
+}
+
+static inline guint
+sampler_index (GLint min_filter,
+               GLint mag_filter)
+{
+  return filter_index (min_filter) * GSK_GL_N_FILTERS + filter_index (mag_filter);
+}
+
 struct _GskGLBindTexture
 {
   guint changed : 1;
   guint initial : 1;
-  GLenum target : 30;
+  GLenum target : 26;
+  guint sampler : 4;
   GLenum texture;
   guint id;
 };
@@ -48,11 +73,13 @@ struct _GskGLBindFramebuffer
 
 G_STATIC_ASSERT (sizeof (GskGLBindFramebuffer) == 4);
 
+/* Increase if shaders add more textures */
+#define GSK_GL_MAX_TEXTURES_PER_PROGRAM 4
+
 struct _GskGLAttachmentState
 {
   GskGLBindFramebuffer fbo;
-  /* Increase if shaders add more textures */
-  GskGLBindTexture textures[4];
+  GskGLBindTexture textures[GSK_GL_MAX_TEXTURES_PER_PROGRAM];
   guint n_changed;
 };
 
@@ -62,10 +89,11 @@ void                  gsk_gl_attachment_state_unref            (GskGLAttachmentS
 void                  gsk_gl_attachment_state_bind_texture     (GskGLAttachmentState *self,
                                                                 GLenum                 target,
                                                                 GLenum                 texture,
-                                                                guint                  id);
+                                                                guint                  id,
+                                                                GLint                  min_filter,
+                                                                GLint                  mag_filter);
 void                  gsk_gl_attachment_state_bind_framebuffer (GskGLAttachmentState *self,
                                                                 guint                  id);
 
 G_END_DECLS
 
-#endif /* __GSK_GL_ATTACHMENT_STATE_PRIVATE_H__ */

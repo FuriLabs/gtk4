@@ -17,8 +17,7 @@
  * Authors: Benjamin Otte <otte@gnome.org>
  */
 
-#ifndef __GTK_LIST_VIEW_H__
-#define __GTK_LIST_VIEW_H__
+#pragma once
 
 #if !defined (__GTK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gtk/gtk.h> can be included directly."
@@ -58,6 +57,13 @@ GDK_AVAILABLE_IN_ALL
 GtkListItemFactory *
                 gtk_list_view_get_factory                       (GtkListView            *self);
 
+GDK_AVAILABLE_IN_4_12
+void            gtk_list_view_set_header_factory                (GtkListView            *self,
+                                                                 GtkListItemFactory     *factory);
+GDK_AVAILABLE_IN_4_12
+GtkListItemFactory *
+                gtk_list_view_get_header_factory                (GtkListView            *self);
+
 GDK_AVAILABLE_IN_ALL
 void            gtk_list_view_set_show_separators               (GtkListView            *self,
                                                                  gboolean                show_separators);
@@ -76,8 +82,20 @@ void            gtk_list_view_set_enable_rubberband             (GtkListView    
 GDK_AVAILABLE_IN_ALL
 gboolean        gtk_list_view_get_enable_rubberband             (GtkListView            *self);
 
+GDK_AVAILABLE_IN_4_12
+void            gtk_list_view_set_tab_behavior                  (GtkListView            *self,
+                                                                 GtkListTabBehavior      tab_behavior);
+GDK_AVAILABLE_IN_4_12
+GtkListTabBehavior
+                gtk_list_view_get_tab_behavior                  (GtkListView            *self);
+
+GDK_AVAILABLE_IN_4_12
+void            gtk_list_view_scroll_to                         (GtkListView            *self,
+                                                                 guint                   pos,
+                                                                 GtkListScrollFlags      flags,
+                                                                 GtkScrollInfo          *scroll);
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkListView, g_object_unref)
 
 G_END_DECLS
 
-#endif  /* __GTK_LIST_VIEW_H__ */

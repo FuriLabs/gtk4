@@ -369,7 +369,8 @@ gtk_search_entry_size_allocate (GtkWidget *widget,
   text_alloc.width = width;
   text_alloc.height = height;
 
-  if (gtk_widget_get_valign (widget) != GTK_ALIGN_BASELINE)
+  if (gtk_widget_get_valign (widget) != GTK_ALIGN_BASELINE_FILL &&
+      gtk_widget_get_valign (widget) != GTK_ALIGN_BASELINE_CENTER)
     baseline = -1;
 
   gtk_widget_measure (entry->search_icon,
@@ -770,6 +771,10 @@ gtk_search_entry_init (GtkSearchEntry *entry)
                              GTK_EVENT_CONTROLLER (catchall));
 
   gtk_widget_add_css_class (GTK_WIDGET (entry), I_("search"));
+
+  gtk_accessible_update_property (GTK_ACCESSIBLE (entry),
+                                  GTK_ACCESSIBLE_PROPERTY_HAS_POPUP, TRUE,
+                                  -1);
 }
 
 /**

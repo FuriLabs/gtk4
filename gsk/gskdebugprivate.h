@@ -1,5 +1,4 @@
-#ifndef __GSK_DEBUG_PRIVATE_H__
-#define __GSK_DEBUG_PRIVATE_H__
+#pragma once
 
 #include <glib.h>
 #include "gdk/gdkdebugprivate.h"
@@ -15,12 +14,12 @@ typedef enum {
   GSK_DEBUG_VULKAN                = 1 <<  5,
   GSK_DEBUG_FALLBACK              = 1 <<  6,
   GSK_DEBUG_GLYPH_CACHE           = 1 <<  7,
+  GSK_DEBUG_VERBOSE               = 1 <<  8,
   /* flags below may affect behavior */
   GSK_DEBUG_GEOMETRY              = 1 <<  9,
   GSK_DEBUG_FULL_REDRAW           = 1 << 10,
   GSK_DEBUG_SYNC                  = 1 << 11,
-  GSK_DEBUG_VULKAN_STAGING_IMAGE  = 1 << 12,
-  GSK_DEBUG_VULKAN_STAGING_BUFFER = 1 << 13
+  GSK_DEBUG_STAGING               = 1 << 12
 } GskDebugFlags;
 
 #define GSK_DEBUG_ANY ((1 << 13) - 1)
@@ -59,4 +58,3 @@ gboolean gsk_check_debug_flags (GskDebugFlags flags);
 
 G_END_DECLS
 
-#endif /* __GSK_DEBUG_PRIVATE_H__ */

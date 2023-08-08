@@ -18,6 +18,9 @@ which we also had to revert dropping (in a separate patch)
  testsuite/tools/simplify.in      | 47 ++++++++++++++++++++++++++++++++++++++++
  testsuite/tools/validate         | 37 -------------------------------
  testsuite/tools/validate.in      | 37 +++++++++++++++++++++++++++++++
+ 11 files changed, 194 insertions(+), 190 deletions(-)
+ delete mode 100755 testsuite/tools/enumerate
+ create mode 100755 testsuite/tools/enumerate.in
  delete mode 100755 testsuite/tools/settings
  create mode 100755 testsuite/tools/settings.in
  delete mode 100755 testsuite/tools/simplify
@@ -114,7 +117,7 @@ index 0000000..8abd9d6
 +  I=$((I+1))
 +done
 diff --git a/testsuite/tools/meson.build b/testsuite/tools/meson.build
-index 96ac7fd..986c2d6 100644
+index 239e1b0..e19a819 100644
 --- a/testsuite/tools/meson.build
 +++ b/testsuite/tools/meson.build
 @@ -3,8 +3,12 @@ if bash.found()
@@ -163,6 +166,7 @@ new file mode 100755
 index 0000000..3c5ce69
 --- /dev/null
 +++ b/testsuite/tools/settings.in
+@@ -0,0 +1,20 @@
 +#! /bin/bash
 +
 +GTK_QUERY_SETTINGS=${GTK_QUERY_SETTINGS:-gtk4-query-settings}
@@ -397,7 +401,7 @@ index 0000000..12b4cea
 +done
 diff --git a/testsuite/tools/validate b/testsuite/tools/validate
 deleted file mode 100755
-index 42048ef..0000000
+index 414a505..0000000
 --- a/testsuite/tools/validate
 +++ /dev/null
 @@ -1,37 +0,0 @@
@@ -440,7 +444,7 @@ index 42048ef..0000000
 -done
 diff --git a/testsuite/tools/validate.in b/testsuite/tools/validate.in
 new file mode 100755
-index 0000000..42048ef
+index 0000000..414a505
 --- /dev/null
 +++ b/testsuite/tools/validate.in
 @@ -0,0 +1,37 @@

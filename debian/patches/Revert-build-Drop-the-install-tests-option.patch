@@ -22,10 +22,10 @@ This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
  12 files changed, 353 insertions(+), 43 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index b7717e1..9870c07 100644
+index 2e6cb1e..0a4b1ef 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -915,6 +915,7 @@ summary('Documentation', get_option('gtk_doc'), section: 'Build')
+@@ -924,6 +924,7 @@ summary('Documentation', get_option('documentation'), section: 'Build')
  summary('Man pages', get_option('man-pages'), section: 'Build')
  summary('Testsuite', get_option('build-testsuite'), section: 'Build')
  summary('Tests', get_option('build-tests'), section: 'Build')
@@ -34,10 +34,10 @@ index b7717e1..9870c07 100644
  summary('Examples', get_option('build-examples'), section: 'Build')
  
 diff --git a/meson_options.txt b/meson_options.txt
-index f4399d3..0ca7936 100644
+index 4b794e7..a3e0f5e 100644
 --- a/meson_options.txt
 +++ b/meson_options.txt
-@@ -144,3 +144,8 @@ option('build-tests',
+@@ -158,3 +158,8 @@ option('build-tests',
         type: 'boolean',
         value: true,
         description : 'Build tests')
@@ -404,7 +404,7 @@ index 7fc4036..52c962c 100644
 +  install_data(test_data, install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index 32a31da..67c08ab 100644
+index 2cc27d5..92dc6ab 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
 @@ -1,10 +1,13 @@
@@ -477,7 +477,7 @@ index 32a31da..67c08ab 100644
 +  install_subdir('image-data', install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
-index 1a57cfa..9b29ba0 100644
+index e48e9a3..8ba45b8 100644
 --- a/testsuite/gsk/meson.build
 +++ b/testsuite/gsk/meson.build
 @@ -1,12 +1,22 @@
@@ -505,7 +505,7 @@ index 1a57cfa..9b29ba0 100644
  )
  
  compare_render_tests = [
-@@ -368,9 +378,11 @@ foreach t : tests
+@@ -370,9 +380,11 @@ foreach t : tests
    test_extra_ldflags = t.get(3, [])
  
    test_exe = executable(test_name, test_srcs,
@@ -518,7 +518,7 @@ index 1a57cfa..9b29ba0 100644
    )
  
    test(test_name, test_exe,
-@@ -399,11 +411,12 @@ foreach t : internal_tests
+@@ -401,11 +413,12 @@ foreach t : internal_tests
    test_extra_cargs = t.get(2, [])
    test_extra_ldflags = t.get(3, [])
  

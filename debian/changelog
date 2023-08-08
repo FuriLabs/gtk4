@@ -1,4 +1,4 @@
-gtk4 (4.12.0+ds-1ubuntu1) UNRELEASED; urgency=medium
+gtk4 (4.12.0+ds-1ubuntu1) mantic; urgency=medium
 
   * Merge with Debian. Remaining changes:
     - debian/tests:
@@ -6,8 +6,9 @@ gtk4 (4.12.0+ds-1ubuntu1) UNRELEASED; urgency=medium
     - debian/control:
       + Build-Depend on dh-sequence-translations
     - Switch from the CUPS print backend to CPDB
+  * Add patch to fix building cpdb support
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 08 Aug 2023 17:37:34 -0400
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 08 Aug 2023 18:16:27 -0400
 
 gtk4 (4.12.0+ds-1) experimental; urgency=medium
 

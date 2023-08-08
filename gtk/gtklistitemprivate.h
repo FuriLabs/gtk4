@@ -17,12 +17,13 @@
  * Authors: Benjamin Otte <otte@gnome.org>
  */
 
-#ifndef __GTK_LIST_ITEM_PRIVATE_H__
-#define __GTK_LIST_ITEM_PRIVATE_H__
+#pragma once
 
 #include "gtklistitem.h"
 
 #include "gtklistitemwidgetprivate.h"
+#include "gtkcolumnviewcellwidgetprivate.h"
+#include "gtkversion.h"
 
 G_BEGIN_DECLS
 
@@ -34,8 +35,20 @@ struct _GtkListItem
 
   GtkWidget *child;
 
+  char *accessible_label;
+  char *accessible_description;
+
   guint activatable : 1;
   guint selectable : 1;
+  guint focusable : 1;
+#if !GTK_CHECK_VERSION (5, 0, 0)
+  guint focusable_set : 1;
+#endif
+};
+
+struct _GtkListItemClass
+{
+  GObjectClass parent_class;
 };
 
 GtkListItem *   gtk_list_item_new                               (void);
@@ -48,4 +61,3 @@ void            gtk_list_item_do_notify                         (GtkListItem *li
 
 G_END_DECLS
 
-#endif  /* __GTK_LIST_ITEM_PRIVATE_H__ */

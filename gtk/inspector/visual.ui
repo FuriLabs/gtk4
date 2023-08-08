@@ -382,7 +382,7 @@
                             <property name="spacing">40</property>
                             <child>
                               <object class="GtkLabel" id="fps_label">
-                                <property name="label" translatable="yes">Show fps overlay</property>
+                                <property name="label" translatable="yes">Show Framerate</property>
                                 <property name="halign">start</property>
                                 <property name="valign">baseline</property>
                                 <property name="xalign">0.0</property>
@@ -625,34 +625,25 @@
                         </child>
                       </object>
                     </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkListBox" id="misc_box">
-                    <property name="selection-mode">none</property>
-                    <property name="halign">center</property>
-                    <style>
-                      <class name="rich-list"/>
-                      <class name="boxed-list"/>
-                    </style>
                     <child>
                       <object class="GtkListBoxRow">
                         <child>
                           <object class="GtkBox">
                             <property name="spacing">40</property>
                             <child>
-                              <object class="GtkLabel" id="touchscreen_label">
-                                <property name="label" translatable="yes">Simulate Touchscreen</property>
+                              <object class="GtkLabel" id="a11y_label">
+                                <property name="label" translatable="yes">Show Accessibility warnings</property>
                                 <property name="halign">start</property>
                                 <property name="valign">baseline</property>
                                 <property name="xalign">0.0</property>
                               </object>
                             </child>
                             <child>
-                              <object class="GtkSwitch" id="touchscreen_switch">
+                              <object class="GtkSwitch" id="a11y_switch">
                                 <property name="halign">end</property>
                                 <property name="valign">center</property>
                                 <property name="hexpand">1</property>
+                                <signal name="notify::active" handler="a11y_activate"/>
                               </object>
                             </child>
                           </object>
@@ -706,7 +697,6 @@
       <widget name="baselines_label"/>
       <widget name="layout_label_box"/>
       <widget name="focus_label"/>
-      <widget name="touchscreen_label"/>
     </widgets>
   </object>
   <object class="GtkSizeGroup">
@@ -728,7 +718,6 @@
     <widgets>
       <widget name="visual_box"/>
       <widget name="debug_box"/>
-      <widget name="misc_box"/>
       <widget name="inspector_box"/>
     </widgets>
   </object>

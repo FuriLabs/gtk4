@@ -81,7 +81,7 @@ gtk_numeric_sort_keys_free (GtkSortKeys *keys)
   GtkNumericSortKeys *self = (GtkNumericSortKeys *) keys;
 
   gtk_expression_unref (self->expression);
-  g_slice_free (GtkNumericSortKeys, self);
+  g_free (self);
 }
 
 #define COMPARE_FUNC(type, name, _a, _b) \
@@ -334,8 +334,8 @@ G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 
 static GtkOrdering
 gtk_numeric_sorter_compare (GtkSorter *sorter,
-                           gpointer   item1,
-                           gpointer   item2)
+                            gpointer   item1,
+                            gpointer   item2)
 {
   GtkNumericSorter *self = GTK_NUMERIC_SORTER (sorter);
   GValue value1 = G_VALUE_INIT;

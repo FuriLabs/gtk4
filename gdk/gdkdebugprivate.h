@@ -15,8 +15,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GDK_DEBUG_PRIVATE_H__
-#define __GDK_DEBUG_PRIVATE_H__
+#pragma once
 
 #include <glib.h>
 
@@ -42,6 +41,7 @@ typedef enum {
   GDK_DEBUG_PORTALS         = 1 << 12,
   GDK_DEBUG_NO_PORTALS      = 1 << 13,
   GDK_DEBUG_GL_DISABLE      = 1 << 14,
+  GDK_DEBUG_GL_FRACTIONAL   = 1 << 15,
   GDK_DEBUG_GL_LEGACY       = 1 << 16,
   GDK_DEBUG_GL_GLES         = 1 << 17,
   GDK_DEBUG_GL_DEBUG        = 1 << 18,
@@ -52,6 +52,7 @@ typedef enum {
   GDK_DEBUG_VULKAN_VALIDATE = 1 << 23,
   GDK_DEBUG_DEFAULT_SETTINGS= 1 << 24,
   GDK_DEBUG_HIGH_DEPTH      = 1 << 25,
+  GDK_DEBUG_NO_VSYNC        = 1 << 26,
 } GdkDebugFlags;
 
 extern guint _gdk_debug_flags;
@@ -99,4 +100,3 @@ guint gdk_parse_debug_var (const char        *variable,
                            const GdkDebugKey *keys,
                            guint              nkeys);
 
-#endif  /* __GDK_DEBUG_PRIVATE_H__ */

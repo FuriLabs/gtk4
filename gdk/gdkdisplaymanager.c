@@ -369,7 +369,7 @@ gdk_display_manager_list_displays (GdkDisplayManager *manager)
 /**
  * gdk_display_manager_open_display:
  * @manager: a `GdkDisplayManager`
- * @name: the name of the display to open
+ * @name: (nullable): the name of the display to open
  *
  * Opens a display.
  *
@@ -437,7 +437,7 @@ gdk_display_manager_open_display (GdkDisplayManager *manager,
             }
         }
 
-      if (!found && !display)
+      if (!found && !any && !display)
         g_warning ("No such backend: %s", backend);
     }
 

@@ -258,7 +258,7 @@ Instead of implementing GtkWidget.destroy, you can implement GObject.dispose.
 GTK 4 removes `gtk_container_add()` and `gtk_container_remove()`. While there
 is not always a replacement for `gtk_container_remove()` in GTK 3, you can
 replace many uses of `gtk_container_add()` with equivalent container-specific
-APIs such as `gtk_box_pack_start()` or `gtk_grid_attach()`, and thereby reduce
+APIs such as `gtk_grid_attach()`, and thereby reduce
 the amount of work you have to do at the time of the switch.
 
 ### Review your use of icon resources
@@ -402,9 +402,9 @@ is open, use the [property@Gtk.Window:modal] property of the dialog.
 
 ### Adapt to coordinate API changes
 
-A number of coordinate APIs in GTK 3 had `double` variants:
+A number of coordinate APIs in GTK 3 had variants taking `int` arguments:
 `gdk_device_get_surface_at_position()`, `gdk_surface_get_device_position()`.
-These have been changed to use doubles, and the `double` variants
+These have been changed to use `double` arguments, and the `int` variants
 have been removed. Update your code accordingly.
 
 Any APIs that deal with global (or root) coordinates have been
@@ -875,10 +875,10 @@ reference.
 ### Adapt to coordinate API changes
 
 A number of APIs that are accepting or returning coordinates have
-been changed from ints to doubles: `gtk_widget_translate_coordinates()`,
+been changed from `int`s to `double`s: `gtk_widget_translate_coordinates()`,
 `gtk_fixed_put()`, `gtk_fixed_move()`. This change is mostly transparent,
 except for cases where out parameters are involved: you need to
-pass double* now, instead of int*.
+pass `double*` now, instead of `int*`.
 
 ### Adapt to GtkStyleContext API changes
 

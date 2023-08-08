@@ -39,6 +39,7 @@ demos = files([
   'iconscroll.c',
   'iconview.c',
   'iconview_edit.c',
+  'image_scaling.c',
   'images.c',
   'infobar.c',
   'layoutmanager.c',
@@ -47,7 +48,6 @@ demos = files([
   'listbox.c',
   'listbox_controls.c',
   'mask.c',
-  'menu.c',
   'flowbox.c',
   'list_store.c',
   'listview_applauncher.c',
@@ -55,8 +55,9 @@ demos = files([
   'listview_colors.c',
   'listview_filebrowser.c',
   'listview_minesweeper.c',
-  'dropdown.c',
+  'listview_selections.c',
   'listview_settings.c',
+  'listview_settings2.c',
   'listview_ucd.c',
   'listview_weather.c',
   'listview_words.c',
@@ -131,6 +132,7 @@ extra_demo_sources = files([
   'demo4widget.c',
   'pixbufpaintable.c',
   'script-names.c',
+  'settings-key.c',
   'unicode-names.c',
   'suggestionentry.c',
   'language-names.c',
@@ -148,25 +150,13 @@ if librsvg_dep.found()
   gtkdemo_deps += [ librsvg_dep ]
 endif
 
-gtkdemo_args = [ '-DGDK_DISABLE_DEPRECATED', '-DGTK_DISABLE_DEPRECATED', ]
-
 demos_h = custom_target('gtk4 demo header',
   output: 'demos.h',
   input: demos,
   command: [ find_program('geninclude.py'), '@OUTPUT@', '@INPUT@' ],
 )
 
-objcopy_supports_add_symbol = false
-objcopy = find_program('objcopy', required : false)
-if objcopy.found()
-  objcopy_supports_add_symbol = run_command(objcopy, '--help', check: false).stdout().contains('--add-symbol')
-endif
-
-ld = find_program('ld', required : false)
-
-if not meson.is_cross_build() and build_machine.cpu_family() != 'arm' and build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and ld.found()
-  glib_compile_resources = find_program('glib-compile-resources')
-
+if can_use_objcopy_for_resources
   # Create the resource blob
   gtkdemo_gresource = custom_target('gtkdemo.gresource',
       input : 'demo.gresource.xml',
@@ -214,6 +204,7 @@ if not meson.is_cross_build() and build_machine.cpu_family() != 'arm' and build_
     output : 'gtkdemo_resources2.o',
     command : [objcopy,
                  '--strip-all',
+                 '--set-section-alignment', '.data=8',
                  '--add-symbol','_g_binary_gtkdemo_resource_data=.data:0',
                  '@INPUT@',
                  '@OUTPUT@'])
@@ -233,8 +224,7 @@ endif
 demo_cflags = []
 foreach flag: common_cflags
   if flag not in ['-Werror=missing-prototypes', '-Wmissing-prototypes',
-                  '-Werror=missing-declarations', '-Wmissing-declarations',
-                  '-fvisibility=hidden']
+                  '-Werror=missing-declarations', '-Wmissing-declarations']
     demo_cflags += flag
   endif
 endforeach
@@ -243,7 +233,7 @@ gtkdemo_deps += [ demo_conf_h ]
 
 executable('gtk4-demo',
   sources: [demos, demos_h, extra_demo_sources, gtkdemo_resources],
-  c_args: gtkdemo_args + demo_cflags,
+  c_args: demo_cflags,
   dependencies: gtkdemo_deps,
   include_directories: confinc,
   win_subsystem: 'windows',
@@ -253,7 +243,7 @@ executable('gtk4-demo',
 
 executable('gtk4-demo-application',
   sources: ['application.c', gtkdemo_resources],
-  c_args: gtkdemo_args + common_cflags,
+  c_args: common_cflags,
   dependencies: gtkdemo_deps,
   include_directories: confinc,
   win_subsystem: 'windows',

@@ -52,7 +52,7 @@ gsk_gl_texture_atlas_free (GskGLTextureAtlas *atlas)
     }
 
   g_clear_pointer (&atlas->nodes, g_free);
-  g_slice_free (GskGLTextureAtlas, atlas);
+  g_free (atlas);
 }
 
 static gboolean
@@ -88,7 +88,7 @@ gsk_gl_texture_library_real_compact (GskGLTextureLibrary *self,
       GskGLTextureAtlasEntry *entry;
       GHashTableIter iter;
       guint dropped = 0;
-      guint atlased = 0;
+      G_GNUC_UNUSED guint atlased = 0;
 
       g_hash_table_iter_init (&iter, self->hash_table);
       while (g_hash_table_iter_next (&iter, NULL, (gpointer *)&entry))
@@ -204,6 +204,7 @@ gsk_gl_texture_library_dispose (GObject *object)
 
   g_clear_pointer (&self->atlases, g_ptr_array_unref);
   g_clear_object (&self->driver);
+  g_clear_pointer (&self->hash_table, g_hash_table_unref);
 
   G_OBJECT_CLASS (gsk_gl_texture_library_parent_class)->dispose (object);
 }
@@ -320,7 +321,7 @@ gsk_gl_texture_library_pack_one (GskGLTextureLibrary *self,
       height = MIN (height, self->driver->command_queue->max_texture_size);
     }
 
-  texture = gsk_gl_driver_create_texture (self->driver, width, height, GL_RGBA8, GL_LINEAR, GL_LINEAR);
+  texture = gsk_gl_driver_create_texture (self->driver, width, height, GL_RGBA8);
   texture->permanent = TRUE;
 
   return texture;
@@ -388,7 +389,7 @@ gsk_gl_texture_library_pack (GskGLTextureLibrary *self,
   g_assert (out_packed_x != NULL);
   g_assert (out_packed_y != NULL);
 
-  entry = g_slice_alloc0 (valuelen);
+  entry = g_malloc0 (valuelen);
   entry->n_pixels = width * height;
   entry->accessed = TRUE;
   entry->used = TRUE;
@@ -542,7 +543,7 @@ gsk_gl_texture_library_acquire_atlas (GskGLTextureLibrary *self)
   g_return_val_if_fail (self->atlas_width > 0, NULL);
   g_return_val_if_fail (self->atlas_height > 0, NULL);
 
-  atlas = g_slice_new0 (GskGLTextureAtlas);
+  atlas = g_new0 (GskGLTextureAtlas, 1);
   atlas->width = self->atlas_width;
   atlas->height = self->atlas_height;
   /* TODO: We might want to change the strategy about the amount of
@@ -552,9 +553,7 @@ gsk_gl_texture_library_acquire_atlas (GskGLTextureLibrary *self)
   atlas->texture_id = gsk_gl_command_queue_create_texture (self->driver->command_queue,
                                                            atlas->width,
                                                            atlas->height,
-                                                           GL_RGBA8,
-                                                           GL_LINEAR,
-                                                           GL_LINEAR);
+                                                           GL_RGBA8);
 
   gdk_gl_context_label_object_printf (gdk_gl_context_get_current (),
                                       GL_TEXTURE, atlas->texture_id,

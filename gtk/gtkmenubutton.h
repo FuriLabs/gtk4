@@ -18,8 +18,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GTK_MENU_BUTTON_H__
-#define __GTK_MENU_BUTTON_H__
+#pragma once
 
 #if !defined (__GTK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gtk/gtk.h> can be included directly."
@@ -128,13 +127,19 @@ GDK_AVAILABLE_IN_4_6
 GtkWidget *   gtk_menu_button_get_child   (GtkMenuButton *menu_button);
 
 GDK_AVAILABLE_IN_4_10
-void       gtk_menu_button_set_active (GtkMenuButton *menu_button,
+void          gtk_menu_button_set_active (GtkMenuButton *menu_button,
                                        gboolean       active);
 GDK_AVAILABLE_IN_4_10
-gboolean   gtk_menu_button_get_active (GtkMenuButton *menu_button);
+gboolean      gtk_menu_button_get_active (GtkMenuButton *menu_button);
+
+GDK_AVAILABLE_IN_4_12
+void          gtk_menu_button_set_can_shrink  (GtkMenuButton *menu_button,
+                                               gboolean       can_shrink);
+GDK_AVAILABLE_IN_4_12
+gboolean      gtk_menu_button_get_can_shrink  (GtkMenuButton *menu_button);
+
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkMenuButton, g_object_unref)
 
 G_END_DECLS
 
-#endif /* __GTK_MENU_BUTTON_H__ */

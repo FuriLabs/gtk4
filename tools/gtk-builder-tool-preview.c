@@ -1,6 +1,6 @@
 /*  Copyright 2015 Red Hat, Inc.
  *
- * GTK+ is free software; you can redistribute it and/or modify it
+ * GTK is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation; either version 2 of the
  * License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with GTK+; see the file COPYING.  If not,
+ * License along with GTK; see the file COPYING.  If not,
  * see <http://www.gnu.org/licenses/>.
  *
  * Author: Matthias Clasen
@@ -23,7 +23,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <glib/gi18n.h>
+#include <glib/gi18n-lib.h>
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
@@ -125,15 +125,15 @@ preview_file (const char *filename,
   if (object == NULL)
     {
       if (id)
-        g_printerr ("No object with ID '%s' found\n", id);
+        g_printerr (_("No object with ID '%s' found\n"), id);
       else
-        g_printerr ("No previewable object found\n");
+        g_printerr (_("No previewable object found\n"));
       exit (1);
     }
 
   if (!GTK_IS_WIDGET (object))
     {
-      g_printerr ("Objects of type %s can't be previewed\n", G_OBJECT_TYPE_NAME (object));
+      g_printerr (_("Objects of type %s can't be previewed\n"), G_OBJECT_TYPE_NAME (object));
       exit (1);
     }
 
@@ -184,7 +184,7 @@ do_preview (int          *argc,
 
   if (gdk_display_get_default () == NULL)
     {
-      g_printerr ("Could not initialize windowing system\n");
+      g_printerr (_("Could not initialize windowing system\n"));
       exit (1);
     }
 
@@ -205,13 +205,13 @@ do_preview (int          *argc,
 
   if (filenames == NULL)
     {
-      g_printerr ("No .ui file specified\n");
+      g_printerr (_("No .ui file specified\n"));
       exit (1);
     }
 
   if (g_strv_length (filenames) > 1)
     {
-      g_printerr ("Can only preview a single .ui file\n");
+      g_printerr (_("Can only preview a single .ui file\n"));
       exit (1);
     }
 

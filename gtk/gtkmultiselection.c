@@ -22,6 +22,7 @@
 #include "gtkmultiselection.h"
 
 #include "gtkbitset.h"
+#include "gtksectionmodelprivate.h"
 #include "gtkselectionmodel.h"
 
 /**
@@ -92,6 +93,23 @@ gtk_multi_selection_list_model_init (GListModelInterface *iface)
   iface->get_item_type = gtk_multi_selection_get_item_type;
   iface->get_n_items = gtk_multi_selection_get_n_items;
   iface->get_item = gtk_multi_selection_get_item;
+}
+
+static void
+gtk_multi_selection_get_section (GtkSectionModel *model,
+                                 guint            position,
+                                 guint           *out_start,
+                                 guint           *out_end)
+{
+  GtkMultiSelection *self = GTK_MULTI_SELECTION (model);
+
+  gtk_list_model_get_section (self->model, position, out_start, out_end);
+}
+
+static void
+gtk_multi_selection_section_model_init (GtkSectionModelInterface *iface)
+{
+  iface->get_section = gtk_multi_selection_get_section;
 }
 
 static gboolean
@@ -205,6 +223,8 @@ gtk_multi_selection_selection_model_init (GtkSelectionModelInterface *iface)
 G_DEFINE_TYPE_EXTENDED (GtkMultiSelection, gtk_multi_selection, G_TYPE_OBJECT, 0,
                         G_IMPLEMENT_INTERFACE (G_TYPE_LIST_MODEL,
                                                gtk_multi_selection_list_model_init)
+                        G_IMPLEMENT_INTERFACE (GTK_TYPE_SECTION_MODEL,
+                                               gtk_multi_selection_section_model_init)
                         G_IMPLEMENT_INTERFACE (GTK_TYPE_SELECTION_MODEL,
                                                gtk_multi_selection_selection_model_init))
 
@@ -272,6 +292,17 @@ gtk_multi_selection_items_changed_cb (GListModel        *model,
 }
 
 static void
+gtk_multi_selection_sections_changed_cb (GtkSectionModel *model,
+                                         unsigned int     position,
+                                         unsigned int     n_items,
+                                         gpointer         user_data)
+{
+  GtkMultiSelection *self = GTK_MULTI_SELECTION (user_data);
+
+  gtk_section_model_sections_changed (GTK_SECTION_MODEL (self), position, n_items);
+}
+
+static void
 gtk_multi_selection_clear_model (GtkMultiSelection *self)
 {
   if (self->model == NULL)
@@ -279,6 +310,9 @@ gtk_multi_selection_clear_model (GtkMultiSelection *self)
 
   g_signal_handlers_disconnect_by_func (self->model,
                                         gtk_multi_selection_items_changed_cb,
+                                        self);
+  g_signal_handlers_disconnect_by_func (self->model,
+                                        gtk_multi_selection_sections_changed_cb,
                                         self);
   g_clear_object (&self->model);
 }
@@ -470,6 +504,9 @@ gtk_multi_selection_set_model (GtkMultiSelection *self,
                         "items-changed",
                         G_CALLBACK (gtk_multi_selection_items_changed_cb),
                         self);
+      if (GTK_IS_SECTION_MODEL (self->model))
+        g_signal_connect (self->model, "sections-changed",
+                          G_CALLBACK (gtk_multi_selection_sections_changed_cb), self);
       gtk_multi_selection_items_changed_cb (self->model,
                                             0,
                                             n_items_before,

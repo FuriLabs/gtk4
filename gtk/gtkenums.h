@@ -22,14 +22,14 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#ifndef __GTK_ENUMS_H__
-#define __GTK_ENUMS_H__
+#pragma once
 
 #if !defined (__GTK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gtk/gtk.h> can be included directly."
 #endif
 
 #include <glib-object.h>
+#include <gdk/version/gdkversionmacros.h>
 
 
 G_BEGIN_DECLS
@@ -42,7 +42,9 @@ G_BEGIN_DECLS
  * @GTK_ALIGN_END: snap to right or bottom side, leaving space on left or top
  * @GTK_ALIGN_CENTER: center natural width of widget inside the allocation
  * @GTK_ALIGN_BASELINE: align the widget according to the baseline.
- *   See [class@Gtk.Widget].
+ *   See [class@Gtk.Widget]. Deprecated: 4.12: Use `GTK_ALIGN_BASELINE_FILL` instead
+ * @GTK_ALIGN_BASELINE_FILL: a different name for `GTK_ALIGN_BASELINE`. Since 4.12
+ * @GTK_ALIGN_BASELINE_CENTER: stretch to fill all space, but align the baseline. Since 4.12
  *
  * Controls how a widget deals with extra space in a single dimension.
  *
@@ -53,12 +55,13 @@ G_BEGIN_DECLS
  * could be scaled and stretched, it could be centered, or it could be
  * positioned to one side of the space.
  *
- * Note that in horizontal context %GTK_ALIGN_START and %GTK_ALIGN_END
+ * Note that in horizontal context `GTK_ALIGN_START` and `GTK_ALIGN_END`
  * are interpreted relative to text direction.
  *
- * %GTK_ALIGN_BASELINE support is optional for containers and widgets, and
- * it is only supported for vertical alignment.  When it's not supported by
- * a child or a container it is treated as %GTK_ALIGN_FILL.
+ * Baseline support is optional for containers and widgets, and is only available
+ * for vertical alignment. `GTK_ALIGN_BASELINE_CENTER and `GTK_ALIGN_BASELINE_FILL`
+ * are treated similar to `GTK_ALIGN_CENTER` and `GTK_ALIGN_FILL`, except that it
+ * positions the widget to line up the baselines, where that is supported.
  */
 typedef enum
 {
@@ -66,7 +69,9 @@ typedef enum
   GTK_ALIGN_START,
   GTK_ALIGN_END,
   GTK_ALIGN_CENTER,
-  GTK_ALIGN_BASELINE
+  GTK_ALIGN_BASELINE_FILL GDK_AVAILABLE_ENUMERATOR_IN_4_12,
+  GTK_ALIGN_BASELINE GDK_DEPRECATED_ENUMERATOR_IN_4_12_FOR(GTK_ALIGN_BASELINE_FILL) = GTK_ALIGN_CENTER + 1,
+  GTK_ALIGN_BASELINE_CENTER GDK_AVAILABLE_ENUMERATOR_IN_4_12,
 } GtkAlign;
 
 /**
@@ -264,6 +269,49 @@ typedef enum
   GTK_JUSTIFY_CENTER,
   GTK_JUSTIFY_FILL
 } GtkJustification;
+
+/**
+ * GtkListTabBehavior:
+ * @GTK_LIST_TAB_ALL: Cycle through all focusable items of the list
+ * @GTK_LIST_TAB_ITEM: Cycle through a single list element, then move
+ *   focus out of the list. Moving focus between items needs to be
+ *   done with the arrow keys.
+ * @GTK_LIST_TAB_CELL: Cycle only through a single cell, then
+ *   move focus out of the list. Moving focus between cells needs to
+ *   be done with the arrow keys. This is only relevant for
+ *   cell-based widgets like #GtkColumnView, otherwise it behaves
+ *   like `GTK_LIST_TAB_ITEM`.
+ *
+ * Used to configure the focus behavior in the `GTK_DIR_TAB_FORWARD`
+ * and `GTK_DIR_TAB_BACKWARD` direction, like the <kbd>Tab</kbd> key
+ * in a [class@Gtk.ListView].
+ *
+ * Since: 4.12
+ */
+typedef enum
+{
+  GTK_LIST_TAB_ALL,
+  GTK_LIST_TAB_ITEM,
+  GTK_LIST_TAB_CELL
+} GtkListTabBehavior;
+
+/**
+ * GtkListScrollFlags:
+ * @GTK_LIST_SCROLL_NONE: Don't do anything extra
+ * @GTK_LIST_SCROLL_FOCUS: Focus the target item
+ * @GTK_LIST_SCROLL_SELECT: Select the target item and
+ *   unselect all other items.
+ *
+ * List of actions to perform when scrolling to items in
+ * a list widget.
+ *
+ * Since: 4.12
+ */
+typedef enum {
+  GTK_LIST_SCROLL_NONE      = 0,
+  GTK_LIST_SCROLL_FOCUS     = 1 << 0,
+  GTK_LIST_SCROLL_SELECT    = 1 << 1
+} GtkListScrollFlags;
 
 /**
  * GtkMessageType:
@@ -1224,16 +1272,18 @@ typedef enum {
  * @GTK_ACCESSIBLE_ROLE_COMMAND: Abstract role.
  * @GTK_ACCESSIBLE_ROLE_COMPOSITE: Abstract role.
  * @GTK_ACCESSIBLE_ROLE_DIALOG: A dialog is a window that is designed to interrupt
- *    the current processing of an application in order to prompt the user to enter
- *    information or require a response.
- * @GTK_ACCESSIBLE_ROLE_DOCUMENT: Unused
+ *   the current processing of an application in order to prompt the user to enter
+ *   information or require a response.
+ * @GTK_ACCESSIBLE_ROLE_DOCUMENT: Content that assistive technology users may want to
+ *   browse in a reading mode.
  * @GTK_ACCESSIBLE_ROLE_FEED: Unused
  * @GTK_ACCESSIBLE_ROLE_FORM: Unused
- * @GTK_ACCESSIBLE_ROLE_GENERIC: Unused
+ * @GTK_ACCESSIBLE_ROLE_GENERIC: A nameless container that has no semantic meaning
+ *   of its own. This is the role that GTK uses by default for widgets.
  * @GTK_ACCESSIBLE_ROLE_GRID: A grid of items.
  * @GTK_ACCESSIBLE_ROLE_GRID_CELL: An item in a grid or tree grid.
- * @GTK_ACCESSIBLE_ROLE_GROUP: An element that groups multiple widgets. GTK uses
- *   this role for various containers, like [class@Box], [class@Viewport], and [class@HeaderBar].
+ * @GTK_ACCESSIBLE_ROLE_GROUP: An element that groups multiple related widgets. GTK uses
+ *   this role for various containers, like [class@Gtk.HeaderBar] or [class@Gtk.Notebook].
  * @GTK_ACCESSIBLE_ROLE_HEADING: Unused
  * @GTK_ACCESSIBLE_ROLE_IMG: An image.
  * @GTK_ACCESSIBLE_ROLE_INPUT: Abstract role.
@@ -1256,13 +1306,15 @@ typedef enum {
  * @GTK_ACCESSIBLE_ROLE_MENU_ITEM_RADIO: A radio item in a menu.
  * @GTK_ACCESSIBLE_ROLE_NAVIGATION: Unused
  * @GTK_ACCESSIBLE_ROLE_NONE: An element that is not represented to accessibility technologies.
+ *   This role is synonymous to @GTK_ACCESSIBLE_ROLE_PRESENTATION.
  * @GTK_ACCESSIBLE_ROLE_NOTE: Unused
  * @GTK_ACCESSIBLE_ROLE_OPTION: Unused
  * @GTK_ACCESSIBLE_ROLE_PRESENTATION: An element that is not represented to accessibility technologies.
+ *   This role is synonymous to @GTK_ACCESSIBLE_ROLE_NONE.
  * @GTK_ACCESSIBLE_ROLE_PROGRESS_BAR: An element that displays the progress
- *    status for tasks that take a long time.
+ *   status for tasks that take a long time.
  * @GTK_ACCESSIBLE_ROLE_RADIO: A checkable input in a group of radio roles,
- *    only one of which can be checked at a time.
+ *   only one of which can be checked at a time.
  * @GTK_ACCESSIBLE_ROLE_RADIO_GROUP: Unused
  * @GTK_ACCESSIBLE_ROLE_RANGE: Abstract role.
  * @GTK_ACCESSIBLE_ROLE_REGION: Unused
@@ -1270,30 +1322,30 @@ typedef enum {
  * @GTK_ACCESSIBLE_ROLE_ROW_GROUP: Unused
  * @GTK_ACCESSIBLE_ROLE_ROW_HEADER: Unused
  * @GTK_ACCESSIBLE_ROLE_SCROLLBAR: A graphical object that controls the scrolling
- *    of content within a viewing area, regardless of whether the content is fully
- *    displayed within the viewing area.
+ *   of content within a viewing area, regardless of whether the content is fully
+ *   displayed within the viewing area.
  * @GTK_ACCESSIBLE_ROLE_SEARCH: Unused
  * @GTK_ACCESSIBLE_ROLE_SEARCH_BOX: A type of textbox intended for specifying
- *    search criteria.
+ *   search criteria.
  * @GTK_ACCESSIBLE_ROLE_SECTION: Abstract role.
  * @GTK_ACCESSIBLE_ROLE_SECTION_HEAD: Abstract role.
  * @GTK_ACCESSIBLE_ROLE_SELECT: Abstract role.
  * @GTK_ACCESSIBLE_ROLE_SEPARATOR: A divider that separates and distinguishes
- *    sections of content or groups of menuitems.
+ *   sections of content or groups of menuitems.
  * @GTK_ACCESSIBLE_ROLE_SLIDER: A user input where the user selects a value
- *    from within a given range.
+ *   from within a given range.
  * @GTK_ACCESSIBLE_ROLE_SPIN_BUTTON: A form of range that expects the user to
- *    select from among discrete choices.
+ *   select from among discrete choices.
  * @GTK_ACCESSIBLE_ROLE_STATUS: Unused
  * @GTK_ACCESSIBLE_ROLE_STRUCTURE: Abstract role.
  * @GTK_ACCESSIBLE_ROLE_SWITCH: A type of checkbox that represents on/off values,
- *    as opposed to checked/unchecked values.
+ *   as opposed to checked/unchecked values.
  * @GTK_ACCESSIBLE_ROLE_TAB: An item in a list of tab used for switching pages.
  * @GTK_ACCESSIBLE_ROLE_TABLE: Unused
  * @GTK_ACCESSIBLE_ROLE_TAB_LIST: A list of tabs for switching pages.
  * @GTK_ACCESSIBLE_ROLE_TAB_PANEL: A page in a notebook or stack.
  * @GTK_ACCESSIBLE_ROLE_TEXT_BOX: A type of input that allows free-form text
- *    as its value.
+ *   as its value.
  * @GTK_ACCESSIBLE_ROLE_TIME: Unused
  * @GTK_ACCESSIBLE_ROLE_TIMER: Unused
  * @GTK_ACCESSIBLE_ROLE_TOOLBAR: Unused
@@ -1301,12 +1353,15 @@ typedef enum {
  * @GTK_ACCESSIBLE_ROLE_TREE: Unused
  * @GTK_ACCESSIBLE_ROLE_TREE_GRID: A treeview-like, columned list.
  * @GTK_ACCESSIBLE_ROLE_TREE_ITEM: Unused
- * @GTK_ACCESSIBLE_ROLE_WIDGET: An interactive component of a graphical user
- *    interface. This is the role that GTK uses by default for widgets.
- * @GTK_ACCESSIBLE_ROLE_WINDOW: An application window.
+ * @GTK_ACCESSIBLE_ROLE_WIDGET: Abstract role for interactive components of a
+ *   graphical user interface
+ * @GTK_ACCESSIBLE_ROLE_WINDOW: Abstract role for windows.
  * @GTK_ACCESSIBLE_ROLE_TOGGLE_BUTTON: A type of push button
- *    which stays pressed until depressed by a second activation.
- *    Since: 4.10
+ *   which stays pressed until depressed by a second activation.
+ *   Since: 4.10
+ * @GTK_ACCESSIBLE_ROLE_APPLICATION: A toplevel element of a graphical user interface.
+ *   This is the role that GTK uses by default for windows.
+ *   Since: 4.12
  *
  * The accessible role for a [iface@Accessible] implementation.
  *
@@ -1392,7 +1447,8 @@ typedef enum {
   GTK_ACCESSIBLE_ROLE_TREE_ITEM,
   GTK_ACCESSIBLE_ROLE_WIDGET,
   GTK_ACCESSIBLE_ROLE_WINDOW,
-  GTK_ACCESSIBLE_ROLE_TOGGLE_BUTTON
+  GTK_ACCESSIBLE_ROLE_TOGGLE_BUTTON GDK_AVAILABLE_ENUMERATOR_IN_4_10,
+  GTK_ACCESSIBLE_ROLE_APPLICATION GDK_AVAILABLE_ENUMERATOR_IN_4_12
 } GtkAccessibleRole;
 
 /**
@@ -1418,6 +1474,9 @@ typedef enum {
  *   enumeration
  * @GTK_ACCESSIBLE_STATE_SELECTED: A “selected” state; set when a widget
  *   is selected. Value type: boolean or undefined
+ * @GTK_ACCESSIBLE_STATE_VISITED: Indicates that a widget with the
+ *   GTK_ACCESSIBLE_ROLE_LINK has been visited. Value type: boolean.
+ *   Since: 4.12
  *
  * The possible accessible states of a [iface@Accessible].
  */
@@ -1429,7 +1488,8 @@ typedef enum {
   GTK_ACCESSIBLE_STATE_HIDDEN,
   GTK_ACCESSIBLE_STATE_INVALID,
   GTK_ACCESSIBLE_STATE_PRESSED,
-  GTK_ACCESSIBLE_STATE_SELECTED
+  GTK_ACCESSIBLE_STATE_SELECTED,
+  GTK_ACCESSIBLE_STATE_VISITED GDK_AVAILABLE_ENUMERATOR_IN_4_12
 } GtkAccessibleState;
 
 /**
@@ -1670,4 +1730,3 @@ typedef enum { /*< prefix=GTK_ACCESSIBLE_SORT >*/
 
 G_END_DECLS
 
-#endif /* __GTK_ENUMS_H__ */

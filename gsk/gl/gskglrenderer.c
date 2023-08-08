@@ -282,21 +282,21 @@ gsk_gl_renderer_render (GskRenderer          *renderer,
   GskGLRenderJob *job;
   GdkSurface *surface;
   gboolean clear_framebuffer;
-  float scale_factor;
+  float scale;
 
   g_assert (GSK_IS_GL_RENDERER (renderer));
   g_assert (root != NULL);
 
   surface = gdk_draw_context_get_surface (GDK_DRAW_CONTEXT (self->context));
-  scale_factor = gdk_surface_get_scale_factor (surface);
+  scale = gdk_gl_context_get_scale (self->context);
 
   viewport.origin.x = 0;
   viewport.origin.y = 0;
-  viewport.size.width = gdk_surface_get_width (surface) * scale_factor;
-  viewport.size.height = gdk_surface_get_height (surface) * scale_factor;
+  viewport.size.width = gdk_surface_get_width (surface) * scale;
+  viewport.size.height = gdk_surface_get_height (surface) * scale;
 
   gdk_draw_context_begin_frame_full (GDK_DRAW_CONTEXT (self->context),
-                                     gsk_render_node_prefers_high_depth (root),
+                                     gsk_render_node_get_preferred_depth (root),
                                      update_area);
 
   gdk_gl_context_make_current (self->context);
@@ -306,7 +306,7 @@ gsk_gl_renderer_render (GskRenderer          *renderer,
   clear_framebuffer = update_area_requires_clear (surface, render_region);
 
   gsk_gl_driver_begin_frame (self->driver, self->command_queue);
-  job = gsk_gl_render_job_new (self->driver, &viewport, scale_factor, render_region, 0, clear_framebuffer);
+  job = gsk_gl_render_job_new (self->driver, &viewport, scale, render_region, 0, clear_framebuffer);
 #ifdef G_ENABLE_DEBUG
   if (GSK_RENDERER_DEBUG_CHECK (GSK_RENDERER (self), FALLBACK))
     gsk_gl_render_job_set_debug_fallback (job, TRUE);
@@ -356,7 +356,8 @@ gsk_gl_renderer_render_texture (GskRenderer           *renderer,
           for (x = 0; x < width; x += max_size)
             {
               texture = gsk_gl_renderer_render_texture (renderer, root,
-                                                        &GRAPHENE_RECT_INIT (x, y,
+                                                        &GRAPHENE_RECT_INIT (viewport->origin.x + x,
+                                                                             viewport->origin.y + y,
                                                                              MIN (max_size, viewport->size.width - x),
                                                                              MIN (max_size, viewport->size.height - y)));
               gdk_texture_download (texture,
@@ -372,8 +373,8 @@ gsk_gl_renderer_render_texture (GskRenderer           *renderer,
       return texture;
     }
 
-  if (gsk_render_node_prefers_high_depth (root) &&
-      gdk_gl_context_check_version (self->context, 3, 0, 3, 0))
+  if (gsk_render_node_get_preferred_depth (root) != GDK_MEMORY_U8 &&
+      gdk_gl_context_check_version (self->context, "3.0", "3.0"))
     format = GL_RGBA32F;
   else 
     format = GL_RGBA8;
@@ -383,7 +384,6 @@ gsk_gl_renderer_render_texture (GskRenderer           *renderer,
   if (gsk_gl_driver_create_render_target (self->driver,
                                           width, height,
                                           format,
-                                          GL_NEAREST, GL_NEAREST,
                                           &render_target))
     {
       gsk_gl_driver_begin_frame (self->driver, self->command_queue);

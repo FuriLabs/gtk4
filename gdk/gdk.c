@@ -24,7 +24,7 @@
 
 #include "config.h"
 
-#include "gdkversionmacros.h"
+#include "version/gdkversionmacros.h"
 
 #include "gdkresources.h"
 
@@ -121,6 +121,7 @@ static const GdkDebugKey gdk_debug_keys[] = {
   { "portals",         GDK_DEBUG_PORTALS, "Force use of portals", TRUE },
   { "no-portals",      GDK_DEBUG_NO_PORTALS, "Disable use of portals", TRUE },
   { "gl-disable",      GDK_DEBUG_GL_DISABLE, "Disable OpenGL support", TRUE },
+  { "gl-fractional",   GDK_DEBUG_GL_FRACTIONAL, "Enable fractional scaling for OpenGL (experimental)", TRUE },
   { "gl-debug",        GDK_DEBUG_GL_DEBUG, "Insert debugging information in OpenGL", TRUE },
   { "gl-legacy",       GDK_DEBUG_GL_LEGACY, "Use a legacy OpenGL context", TRUE },
   { "gl-gles",         GDK_DEBUG_GL_GLES, "Only allow OpenGL GLES API", TRUE },
@@ -131,6 +132,7 @@ static const GdkDebugKey gdk_debug_keys[] = {
   { "vulkan-validate", GDK_DEBUG_VULKAN_VALIDATE, "Load the Vulkan validation layer", TRUE },
   { "default-settings",GDK_DEBUG_DEFAULT_SETTINGS, "Force default values for xsettings", TRUE },
   { "high-depth",      GDK_DEBUG_HIGH_DEPTH, "Use high bit depth rendering if possible", TRUE },
+  { "no-vsync",        GDK_DEBUG_NO_VSYNC, "Repaint instantly (uses 100% CPU with animations)", TRUE },
 };
 
 

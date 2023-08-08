@@ -17,25 +17,30 @@
  * Authors: Benjamin Otte <otte@gnome.org>
  */
 
-#ifndef __GTK_COLUMN_VIEW_PRIVATE_H__
-#define __GTK_COLUMN_VIEW_PRIVATE_H__
+#pragma once
 
 #include "gtk/gtkcolumnview.h"
 #include "gtk/gtklistview.h"
 #include "gtk/gtksizerequest.h"
 
 #include "gtk/gtkcolumnviewsorterprivate.h"
-#include "gtk/gtklistitemwidgetprivate.h"
+#include "gtk/gtkcolumnviewrowwidgetprivate.h"
 
-GtkListItemWidget *     gtk_column_view_get_header_widget       (GtkColumnView          *self);
+gboolean                gtk_column_view_is_inert                (GtkColumnView          *self);
+
+GtkColumnViewRowWidget *gtk_column_view_get_header_widget       (GtkColumnView          *self);
 GtkListView *           gtk_column_view_get_list_view           (GtkColumnView          *self);
 
 void                    gtk_column_view_measure_across          (GtkColumnView          *self,
                                                                  int                    *minimum,
                                                                  int                    *natural);
 
-void                    gtk_column_view_distribute_width        (GtkColumnView    *self,
-                                                                 int               width,
-                                                                 GtkRequestedSize *sizes);
+void                    gtk_column_view_distribute_width        (GtkColumnView          *self,
+                                                                 int                     width,
+                                                                 GtkRequestedSize       *sizes);
 
-#endif  /* __GTK_COLUMN_VIEW_PRIVATE_H__ */
+void                    gtk_column_view_set_focus_column        (GtkColumnView          *self,
+                                                                 GtkColumnViewColumn    *focus_column,
+                                                                 gboolean                scroll);
+GtkColumnViewColumn *   gtk_column_view_get_focus_column        (GtkColumnView          *self);
+

@@ -112,7 +112,7 @@ gdk_content_formats_new_take (GType *      gtypes,
                               const char **mime_types,
                               gsize        n_mime_types)
 {
-  GdkContentFormats *result = g_slice_new0 (GdkContentFormats);
+  GdkContentFormats *result = g_new0 (GdkContentFormats, 1);
   result->ref_count = 1;
 
   result->gtypes = gtypes;
@@ -287,7 +287,7 @@ gdk_content_formats_unref (GdkContentFormats *formats)
 
   g_free (formats->gtypes);
   g_free (formats->mime_types);
-  g_slice_free (GdkContentFormats, formats);
+  g_free (formats);
 }
 
 /**
@@ -611,7 +611,7 @@ gdk_content_formats_builder_new (void)
 {
   GdkContentFormatsBuilder *builder;
 
-  builder = g_slice_new0 (GdkContentFormatsBuilder);
+  builder = g_new0 (GdkContentFormatsBuilder, 1);
   builder->ref_count = 1;
 
   return builder;
@@ -645,6 +645,9 @@ gdk_content_formats_builder_clear (GdkContentFormatsBuilder *builder)
 {
   g_clear_pointer (&builder->gtypes, g_slist_free);
   g_clear_pointer (&builder->mime_types, g_slist_free);
+
+  builder->n_gtypes = 0;
+  builder->n_mime_types = 0;
 }
 
 /**
@@ -665,7 +668,7 @@ gdk_content_formats_builder_unref (GdkContentFormatsBuilder *builder)
     return;
 
   gdk_content_formats_builder_clear (builder);
-  g_slice_free (GdkContentFormatsBuilder, builder);
+  g_free (builder);
 }
 
 /**

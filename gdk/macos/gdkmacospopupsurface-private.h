@@ -17,8 +17,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#ifndef __GDK_MACOS_POPUP_SURFACE_PRIVATE_H__
-#define __GDK_MACOS_POPUP_SURFACE_PRIVATE_H__
+#pragma once
 
 #include "gdkmacossurface-private.h"
 
@@ -34,15 +33,10 @@ typedef struct _GdkMacosPopupSurfaceClass GdkMacosPopupSurfaceClass;
 GType            _gdk_macos_popup_surface_get_type           (void);
 GdkMacosSurface *_gdk_macos_popup_surface_new                (GdkMacosDisplay      *display,
                                                               GdkSurface           *parent,
-                                                              GdkFrameClock        *frame_clock,
-                                                              int                   x,
-                                                              int                   y,
-                                                              int                   width,
-                                                              int                   height);
+                                                              GdkFrameClock        *frame_clock);
 void             _gdk_macos_popup_surface_attach_to_parent   (GdkMacosPopupSurface *self);
 void             _gdk_macos_popup_surface_detach_from_parent (GdkMacosPopupSurface *self);
 void             _gdk_macos_popup_surface_reposition         (GdkMacosPopupSurface *self);
 
 G_END_DECLS
 
-#endif /* __GDK_MACOS_POPUP_SURFACE_PRIVATE_H__ */

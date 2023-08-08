@@ -52,7 +52,9 @@
  *
  * # Accessibility
  *
- * `GtkCenterBox` uses the %GTK_ACCESSIBLE_ROLE_GROUP role.
+ * Until GTK 4.10, `GtkCenterBox` used the `GTK_ACCESSIBLE_ROLE_GROUP` role.
+ *
+ * Starting from GTK 4.12, `GtkCenterBox` uses the `GTK_ACCESSIBLE_ROLE_GENERIC` role.
  */
 
 #include "config.h"
@@ -86,6 +88,7 @@ enum {
   PROP_CENTER_WIDGET,
   PROP_END_WIDGET,
   PROP_BASELINE_POSITION,
+  PROP_SHRINK_CENTER_LAST,
 
   /* orientable */
   PROP_ORIENTATION,
@@ -155,17 +158,21 @@ gtk_center_box_set_property (GObject      *object,
       }
       break;
 
-   case PROP_START_WIDGET:
-     gtk_center_box_set_start_widget (self, GTK_WIDGET (g_value_get_object (value)));
-     break;
+    case PROP_START_WIDGET:
+      gtk_center_box_set_start_widget (self, GTK_WIDGET (g_value_get_object (value)));
+      break;
 
-   case PROP_CENTER_WIDGET:
-     gtk_center_box_set_center_widget (self, GTK_WIDGET (g_value_get_object (value)));
-     break;
+    case PROP_CENTER_WIDGET:
+      gtk_center_box_set_center_widget (self, GTK_WIDGET (g_value_get_object (value)));
+      break;
 
-   case PROP_END_WIDGET:
-     gtk_center_box_set_end_widget (self, GTK_WIDGET (g_value_get_object (value)));
-     break;
+    case PROP_END_WIDGET:
+      gtk_center_box_set_end_widget (self, GTK_WIDGET (g_value_get_object (value)));
+      break;
+
+    case PROP_SHRINK_CENTER_LAST:
+      gtk_center_box_set_shrink_center_last (self, g_value_get_boolean (value));
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -202,6 +209,10 @@ gtk_center_box_get_property (GObject    *object,
 
     case PROP_END_WIDGET:
       g_value_set_object (value, self->end_widget);
+      break;
+
+    case PROP_SHRINK_CENTER_LAST:
+      g_value_set_boolean (value, gtk_center_layout_get_shrink_center_last (GTK_CENTER_LAYOUT (layout)));
       break;
 
     default:
@@ -289,11 +300,30 @@ gtk_center_box_class_init (GtkCenterBoxClass *klass)
                            GTK_TYPE_WIDGET,
                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
+  /**
+   * GtkCenterBox:shrink-center-last: (attributes org.gtk.Property.get=gtk_center_box_get_shrink_center_last org.gtk.Property.set=gtk_center_box_set_shrink_center_last)
+   *
+   * Whether to shrink the center widget after other children.
+   *
+   * By default, when there's no space to give all three children their
+   * natural widths, the start and end widgets start shrinking and the
+   * center child keeps natural width until they reach minimum width.
+   *
+   * If set to `FALSE`, start and end widgets keep natural width and the
+   * center widget starts shrinking instead.
+   *
+   * Since: 4.12
+   */
+  props[PROP_SHRINK_CENTER_LAST] =
+      g_param_spec_boolean ("shrink-center-last", NULL, NULL,
+                            TRUE,
+                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+
   g_object_class_install_properties (object_class, LAST_PROP, props);
 
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_CENTER_LAYOUT);
   gtk_widget_class_set_css_name (widget_class, I_("box"));
-  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_GROUP);
+  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_GENERIC);
 }
 
 static void
@@ -332,6 +362,12 @@ gtk_center_box_set_start_widget (GtkCenterBox *self,
 {
   GtkLayoutManager *layout_manager;
 
+  g_return_if_fail (GTK_IS_CENTER_BOX (self));
+  g_return_if_fail (child == NULL || self->start_widget == child || gtk_widget_get_parent (child) == NULL);
+
+  if (self->start_widget == child)
+    return;
+
   if (self->start_widget)
     gtk_widget_unparent (self->start_widget);
 
@@ -360,6 +396,12 @@ gtk_center_box_set_center_widget (GtkCenterBox *self,
 {
   GtkLayoutManager *layout_manager;
 
+  g_return_if_fail (GTK_IS_CENTER_BOX (self));
+  g_return_if_fail (child == NULL || self->center_widget == child || gtk_widget_get_parent (child) == NULL);
+
+  if (self->center_widget == child)
+    return;
+
   if (self->center_widget)
     gtk_widget_unparent (self->center_widget);
 
@@ -387,6 +429,12 @@ gtk_center_box_set_end_widget (GtkCenterBox *self,
                                GtkWidget    *child)
 {
   GtkLayoutManager *layout_manager;
+
+  g_return_if_fail (GTK_IS_CENTER_BOX (self));
+  g_return_if_fail (child == NULL || self->end_widget == child || gtk_widget_get_parent (child) == NULL);
+
+  if (self->end_widget == child)
+    return;
 
   if (self->end_widget)
     gtk_widget_unparent (self->end_widget);
@@ -495,3 +543,61 @@ gtk_center_box_get_baseline_position (GtkCenterBox *self)
   return gtk_center_layout_get_baseline_position (GTK_CENTER_LAYOUT (layout));
 }
 
+/**
+ * gtk_center_box_set_shrink_center_last: (attributes org.gtk.Method.set_property=shrink-center-last)
+ * @self: a `GtkCenterBox`
+ * @shrink_center_last: whether to shrink the center widget after others
+ *
+ * Sets whether to shrink the center widget after other children.
+ *
+ * By default, when there's no space to give all three children their
+ * natural widths, the start and end widgets start shrinking and the
+ * center child keeps natural width until they reach minimum width.
+ *
+ * If set to `FALSE`, start and end widgets keep natural width and the
+ * center widget starts shrinking instead.
+ *
+ * Since: 4.12
+ */
+void
+gtk_center_box_set_shrink_center_last (GtkCenterBox *self,
+                                       gboolean      shrink_center_last)
+{
+  GtkLayoutManager *layout;
+  gboolean current_shrink_center_last;
+
+  g_return_if_fail (GTK_IS_CENTER_BOX (self));
+
+  shrink_center_last = !!shrink_center_last;
+
+  layout = gtk_widget_get_layout_manager (GTK_WIDGET (self));
+  current_shrink_center_last = gtk_center_layout_get_shrink_center_last (GTK_CENTER_LAYOUT (layout));
+  if (current_shrink_center_last != shrink_center_last)
+    {
+      gtk_center_layout_set_shrink_center_last (GTK_CENTER_LAYOUT (layout), shrink_center_last);
+      g_object_notify_by_pspec (G_OBJECT (self), props[PROP_SHRINK_CENTER_LAST]);
+      gtk_widget_queue_allocate (GTK_WIDGET (self));
+    }
+}
+
+/**
+ * gtk_center_box_get_shrink_center_last: (attributes org.gtk.Method.get_property=shrink-center-last)
+ * @self: a `GtkCenterBox`
+ *
+ * Gets whether @self shrinks the center widget after other children.
+ *
+ * Returns: whether to shrink the center widget after others
+ *
+ * Since: 4.12
+ */
+gboolean
+gtk_center_box_get_shrink_center_last (GtkCenterBox *self)
+{
+  GtkLayoutManager *layout;
+
+  g_return_val_if_fail (GTK_IS_CENTER_BOX (self), FALSE);
+
+  layout = gtk_widget_get_layout_manager (GTK_WIDGET (self));
+
+  return gtk_center_layout_get_shrink_center_last (GTK_CENTER_LAYOUT (layout));
+}

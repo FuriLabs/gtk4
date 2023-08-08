@@ -233,6 +233,9 @@ gtk_css_provider_class_init (GtkCssProviderClass *klass)
                   NULL, NULL,
                   _gtk_marshal_VOID__BOXED_BOXED,
                   G_TYPE_NONE, 2, GTK_TYPE_CSS_SECTION, G_TYPE_ERROR);
+  g_signal_set_va_marshaller (css_provider_signals[PARSING_ERROR],
+                              G_TYPE_FROM_CLASS (object_class),
+                              _gtk_marshal_VOID__BOXED_BOXEDv);
 
   object_class->finalize = gtk_css_provider_finalize;
 
@@ -318,7 +321,7 @@ gtk_css_scanner_destroy (GtkCssScanner *scanner)
   g_object_unref (scanner->provider);
   gtk_css_parser_unref (scanner->parser);
 
-  g_slice_free (GtkCssScanner, scanner);
+  g_free (scanner);
 }
 
 static void
@@ -356,7 +359,7 @@ gtk_css_scanner_new (GtkCssProvider *provider,
 {
   GtkCssScanner *scanner;
 
-  scanner = g_slice_new0 (GtkCssScanner);
+  scanner = g_new0 (GtkCssScanner, 1);
 
   g_object_ref (provider);
   scanner->provider = provider;
@@ -1092,6 +1095,9 @@ gtk_css_provider_load_internal (GtkCssProvider *self,
  * Loads @data into @css_provider.
  *
  * This clears any previously loaded information.
+ *
+ * Deprecated: 4.12: Use [method@Gtk.CssProvider.load_from_string]
+ *   or [method@Gtk.CssProvider.load_from_bytes] instead
  */
 void
 gtk_css_provider_load_from_data (GtkCssProvider  *css_provider,
@@ -1108,11 +1114,59 @@ gtk_css_provider_load_from_data (GtkCssProvider  *css_provider,
 
   bytes = g_bytes_new_static (data, length);
 
+  gtk_css_provider_load_from_bytes (css_provider, bytes);
+
+  g_bytes_unref (bytes);
+}
+
+/**
+ * gtk_css_provider_load_from_string:
+ * @css_provider: a `GtkCssProvider`
+ * @string: the CSS to load
+ *
+ * Loads @string into @css_provider.
+ *
+ * This clears any previously loaded information.
+ *
+ * Since: 4.12
+ */
+void
+gtk_css_provider_load_from_string (GtkCssProvider *css_provider,
+                                   const char     *string)
+{
+  GBytes *bytes;
+
+  g_return_if_fail (GTK_IS_CSS_PROVIDER (css_provider));
+  g_return_if_fail (string != NULL);
+
+  bytes = g_bytes_new_static (string, strlen (string));
+
+  gtk_css_provider_load_from_bytes (css_provider, bytes);
+
+  g_bytes_unref (bytes);
+}
+
+/**
+ * gtk_css_provider_load_from_bytes:
+ * @css_provider: a `GtkCssProvider`
+ * @data: `GBytes` containing the data to load
+ *
+ * Loads @data into @css_provider.
+ *
+ * This clears any previously loaded information.
+ *
+ * Since: 4.12
+ */
+void
+gtk_css_provider_load_from_bytes (GtkCssProvider *css_provider,
+                                  GBytes         *data)
+{
+  g_return_if_fail (GTK_IS_CSS_PROVIDER (css_provider));
+  g_return_if_fail (data != NULL);
+
   gtk_css_provider_reset (css_provider);
 
-  g_bytes_ref (bytes);
-  gtk_css_provider_load_internal (css_provider, NULL, NULL, bytes);
-  g_bytes_unref (bytes);
+  gtk_css_provider_load_internal (css_provider, NULL, NULL, g_bytes_ref (data));
 
   gtk_style_provider_changed (GTK_STYLE_PROVIDER (css_provider));
 }

@@ -15,8 +15,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GTK_CSS_PROVIDER_H__
-#define __GTK_CSS_PROVIDER_H__
+#pragma once
 
 #include <gio/gio.h>
 #include <gtk/css/gtkcss.h>
@@ -46,10 +45,18 @@ GtkCssProvider * gtk_css_provider_new (void);
 GDK_AVAILABLE_IN_ALL
 char *           gtk_css_provider_to_string      (GtkCssProvider  *provider);
 
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_12_FOR(gtk_css_provider_load_from_string)
 void             gtk_css_provider_load_from_data (GtkCssProvider  *css_provider,
                                                   const char      *data,
                                                   gssize           length);
+GDK_AVAILABLE_IN_4_12
+void             gtk_css_provider_load_from_string (GtkCssProvider *css_provider,
+                                                    const char     *string);
+
+GDK_AVAILABLE_IN_4_12
+void             gtk_css_provider_load_from_bytes  (GtkCssProvider *css_provider,
+                                                    GBytes         *data);
+
 GDK_AVAILABLE_IN_ALL
 void             gtk_css_provider_load_from_file (GtkCssProvider  *css_provider,
                                                   GFile           *file);
@@ -70,4 +77,3 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkCssProvider, g_object_unref)
 
 G_END_DECLS
 
-#endif /* __GTK_CSS_PROVIDER_H__ */

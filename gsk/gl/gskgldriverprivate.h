@@ -18,8 +18,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#ifndef __GSK_GL_DRIVER_PRIVATE_H__
-#define __GSK_GL_DRIVER_PRIVATE_H__
+#pragma once
 
 #include <gdk/gdkgltextureprivate.h>
 
@@ -61,7 +60,6 @@ typedef struct {
   gconstpointer   pointer;
   float           scale_x;
   float           scale_y;
-  int             filter;
   int             pointer_is_child;
   graphene_rect_t parent_rect; /* Valid when pointer_is_child */
 } GskTextureKey;
@@ -86,8 +84,6 @@ struct _GskGLRenderTarget
 {
   guint framebuffer_id;
   guint texture_id;
-  int min_filter;
-  int mag_filter;
   int format;
   int width;
   int height;
@@ -144,8 +140,6 @@ gboolean            gsk_gl_driver_create_render_target   (GskGLDriver         *s
                                                           int                  width,
                                                           int                  height,
                                                           int                  format,
-                                                          int                  min_filter,
-                                                          int                  mag_filter,
                                                           GskGLRenderTarget  **render_target);
 guint               gsk_gl_driver_release_render_target  (GskGLDriver         *self,
                                                           GskGLRenderTarget   *render_target,
@@ -161,14 +155,11 @@ void                gsk_gl_driver_cache_texture          (GskGLDriver         *s
                                                           guint                texture_id);
 guint               gsk_gl_driver_load_texture           (GskGLDriver         *self,
                                                           GdkTexture          *texture,
-                                                          int                  min_filter,
-                                                          int                  mag_filter);
+                                                          gboolean             ensure_mipmap);
 GskGLTexture      * gsk_gl_driver_create_texture         (GskGLDriver         *self,
                                                           float                width,
                                                           float                height,
-                                                          int                  format,
-                                                          int                  min_filter,
-                                                          int                  mag_filter);
+                                                          int                  format);
 void                gsk_gl_driver_release_texture        (GskGLDriver         *self,
                                                           GskGLTexture        *texture);
 void                gsk_gl_driver_release_texture_by_id  (GskGLDriver         *self,
@@ -177,19 +168,21 @@ GskGLTexture      * gsk_gl_driver_mark_texture_permanent (GskGLDriver         *s
                                                           guint                texture_id);
 void                gsk_gl_driver_add_texture_slices     (GskGLDriver         *self,
                                                           GdkTexture          *texture,
-                                                          int                  min_filter,
-                                                          int                  mag_filter,
-                                                          guint                min_cols,
-                                                          guint                min_rows,
+                                                          gboolean             ensure_mipmap,
                                                           GskGLTextureSlice  **out_slices,
                                                           guint               *out_n_slices);
 GskGLProgram      * gsk_gl_driver_lookup_shader          (GskGLDriver         *self,
                                                           GskGLShader         *shader,
                                                           GError             **error);
 
-#ifdef G_ENABLE_DEBUG
+#if 0
+void                gsk_gl_driver_save_texture_to_png    (GskGLDriver         *self,
+                                                          int                  texture_id,
+                                                          int                  width,
+                                                          int                  height,
+                                                          const char          *filename);
 void                gsk_gl_driver_save_atlases_to_png    (GskGLDriver         *self,
-                                                          const char          *directory);
+                                                          const char          *filename);
 #endif
 
 static inline GskGLTexture *
@@ -232,28 +225,24 @@ gsk_gl_driver_lookup_texture (GskGLDriver         *self,
 static inline void
 gsk_gl_driver_slice_texture (GskGLDriver        *self,
                              GdkTexture         *texture,
-                             int                 min_filter,
-                             int                 mag_filter,
-                             guint               min_cols,
-                             guint               min_rows,
+                             gboolean            ensure_mipmap,
                              GskGLTextureSlice **out_slices,
                              guint              *out_n_slices)
 {
   GskGLTexture *t;
 
-  if ((t = gdk_texture_get_render_data (texture, self)))
+  t = gdk_texture_get_render_data (texture, self);
+
+  if (t && t->slices &&
+      (t->has_mipmap || !ensure_mipmap))
     {
-      if (min_cols == 0 && min_rows == 0)
-        {
-          *out_slices = t->slices;
-          *out_n_slices = t->n_slices;
-          return;
-        }
+      *out_slices = t->slices;
+      *out_n_slices = t->n_slices;
+      return;
     }
 
-  gsk_gl_driver_add_texture_slices (self, texture, min_filter, mag_filter, min_cols, min_rows, out_slices, out_n_slices);
+  gsk_gl_driver_add_texture_slices (self, texture, ensure_mipmap, out_slices, out_n_slices);
 }
 
 G_END_DECLS
 
-#endif /* __GSK_GL_DRIVER_PRIVATE_H__ */

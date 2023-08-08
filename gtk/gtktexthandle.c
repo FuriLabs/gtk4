@@ -25,6 +25,7 @@
 #include "gtkgesturedrag.h"
 #include "gtkgizmoprivate.h"
 #include "gtkmarshalers.h"
+#include "gdk/gdkmarshalers.h"
 #include "gtknativeprivate.h"
 #include "gtkprivatetypebuiltins.h"
 #include "gtkrendericonprivate.h"
@@ -280,8 +281,7 @@ gtk_text_handle_unrealize (GtkWidget *widget)
   g_signal_handlers_disconnect_by_func (handle->surface, surface_mapped_changed, widget);
 
   gdk_surface_set_widget (handle->surface, NULL);
-  gdk_surface_destroy (handle->surface);
-  g_clear_object (&handle->surface);
+  g_clear_pointer (&handle->surface, gdk_surface_destroy);
 }
 
 static void
@@ -363,24 +363,29 @@ gtk_text_handle_class_init (GtkTextHandleClass *klass)
 
   signals[HANDLE_DRAGGED] =
     g_signal_new (I_("handle-dragged"),
-		  G_OBJECT_CLASS_TYPE (object_class),
-		  G_SIGNAL_RUN_LAST, 0,
-		  NULL, NULL,
-		  _gtk_marshal_VOID__INT_INT,
-		  G_TYPE_NONE, 2,
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST, 0,
+                  NULL, NULL,
+                  _gdk_marshal_VOID__INT_INT,
+                  G_TYPE_NONE, 2,
                   G_TYPE_INT, G_TYPE_INT);
+  g_signal_set_va_marshaller (signals[HANDLE_DRAGGED],
+                              G_OBJECT_CLASS_TYPE (object_class),
+                              _gdk_marshal_VOID__INT_INTv);
+
   signals[DRAG_STARTED] =
     g_signal_new (I_("drag-started"),
-		  G_OBJECT_CLASS_TYPE (object_class),
-		  G_SIGNAL_RUN_LAST, 0,
-		  NULL, NULL,
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST, 0,
+                  NULL, NULL,
                   NULL,
                   G_TYPE_NONE, 0, G_TYPE_NONE);
+
   signals[DRAG_FINISHED] =
     g_signal_new (I_("drag-finished"),
-		  G_OBJECT_CLASS_TYPE (object_class),
-		  G_SIGNAL_RUN_LAST, 0,
-		  NULL, NULL,
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST, 0,
+                  NULL, NULL,
                   NULL,
                   G_TYPE_NONE, 0, G_TYPE_NONE);
 
@@ -425,7 +430,7 @@ handle_drag_begin (GtkGestureDrag *gesture,
                    GtkTextHandle  *handle)
 {
   GtkBorder input_extents;
-  double widget_x, widget_y;
+  graphene_point_t p;
 
   x -= handle->pointing_to.x;
   y -= handle->pointing_to.y;
@@ -434,12 +439,14 @@ handle_drag_begin (GtkGestureDrag *gesture,
    * are relative to the parent widget.
    */
   handle_get_input_extents (handle, &input_extents);
-  gtk_widget_translate_coordinates (handle->controller_widget,
-                                    gtk_widget_get_parent (GTK_WIDGET (handle)),
-                                    x, y, &widget_x, &widget_y);
+  if (!gtk_widget_compute_point (handle->controller_widget,
+                                 gtk_widget_get_parent (GTK_WIDGET (handle)),
+                                 &GRAPHENE_POINT_INIT (x, y),
+                                 &p))
+    graphene_point_init (&p, x, y);
 
-  if (widget_x < input_extents.left || widget_x >= input_extents.right ||
-      widget_y < input_extents.top || widget_y >= input_extents.bottom)
+  if (p.x < input_extents.left || p.x >= input_extents.right ||
+      p.y < input_extents.top || p.y >= input_extents.bottom)
     {
       gtk_gesture_set_state (GTK_GESTURE (gesture), GTK_EVENT_SEQUENCE_DENIED);
       return;

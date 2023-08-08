@@ -17,8 +17,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#ifndef __GDK_MACOS_TOPLEVEL_SURFACE_PRIVATE_H__
-#define __GDK_MACOS_TOPLEVEL_SURFACE_PRIVATE_H__
+#pragma once
 
 #include "gdkmacossurface-private.h"
 
@@ -46,16 +45,8 @@ struct _GdkMacosToplevelSurfaceClass
 };
 
 GType            _gdk_macos_toplevel_surface_get_type           (void);
-GdkMacosSurface *_gdk_macos_toplevel_surface_new                (GdkMacosDisplay *display,
-                                                                 GdkSurface      *parent,
-                                                                 GdkFrameClock   *frame_clock,
-                                                                 int              x,
-                                                                 int              y,
-                                                                 int              width,
-                                                                 int              height);
 void             _gdk_macos_toplevel_surface_attach_to_parent   (GdkMacosToplevelSurface *self);
 void             _gdk_macos_toplevel_surface_detach_from_parent (GdkMacosToplevelSurface *self);
 
 G_END_DECLS
 
-#endif /* __GDK_MACOS_TOPLEVEL_SURFACE_PRIVATE_H__ */

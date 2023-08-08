@@ -24,9 +24,9 @@ stages:
 variables:
   COMMON_MESON_FLAGS: "-Dwerror=true -Dcairo:werror=false -Dgi-docgen:werror=false -Dgraphene:werror=false -Dlibepoxy:werror=false -Dlibsass:werror=false -Dpango:werror=false -Dsassc:werror=false -Dgdk-pixbuf:werror=false -Dglib:werror=false -Dlibcloudproviders:werror=false -Dlibpng:werror=false -Dlibtiff:werror=false -Dsysprof:werror=false -Dwayland-protocols:werror=false -Dharfbuzz:werror=false -Dfreetype2:werror=false -Dfontconfig:werror=false -Dfribidi:werror=false -Dlibffi:werror=false -Dlibjpeg-turbo:werror=false -Dmutest:werror=false -Dpixman:werror=false -Dproxy-libintl:werror=false"
   BACKEND_FLAGS: "-Dx11-backend=true -Dwayland-backend=true -Dbroadway-backend=true"
-  FEATURE_FLAGS: "-Dvulkan=enabled -Dcloudproviders=enabled -Ddemos=false -Dbuild-examples=false -Dbuild-tests=false -Dbuild-testsuite=true"
+  FEATURE_FLAGS: "-Dvulkan=enabled -Dcloudproviders=enabled -Dbuild-testsuite=true -Dintrospection=enabled"
   MESON_TEST_TIMEOUT_MULTIPLIER: 3
-  FEDORA_IMAGE: "registry.gitlab.gnome.org/gnome/gtk/fedora:v41"
+  FEDORA_IMAGE: "registry.gitlab.gnome.org/gnome/gtk/fedora:v48"
 
 workflow:
   rules:
@@ -57,11 +57,9 @@ style-check-diff:
     reports:
       junit:
         - "${CI_PROJECT_DIR}/_build/report-x11.xml"
-        - "${CI_PROJECT_DIR}/_build/report-x11_unstable.xml"
         - "${CI_PROJECT_DIR}/_build/report-wayland.xml"
-        - "${CI_PROJECT_DIR}/_build/report-wayland_unstable.xml"
+        - "${CI_PROJECT_DIR}/_build/report-wayland_gles.xml"
         - "${CI_PROJECT_DIR}/_build/report-broadway.xml"
-        - "${CI_PROJECT_DIR}/_build/report-broadway_unstable.xml"
     name: "gtk-${CI_COMMIT_REF_NAME}"
     paths:
       - "${CI_PROJECT_DIR}/_build/meson-logs"
@@ -72,6 +70,7 @@ style-check-diff:
       - "${CI_PROJECT_DIR}/_build/testsuite/tools/output/*/*"
       - "${CI_PROJECT_DIR}/_build/testsuite/gsk/compare/*/*/*.png"
       - "${CI_PROJECT_DIR}/_build/testsuite/css/output/*/*.syscap"
+      - "${CI_PROJECT_DIR}/_build/testsuite/headless/*/*.log"
       - "${CI_PROJECT_DIR}/_build_hello/meson-logs"
   cache:
     key: "$CI_JOB_NAME"
@@ -87,7 +86,27 @@ fedora-x86_64:
   script:
     - .gitlab-ci/show-info-linux.sh
     - export PATH="$HOME/.local/bin:$PATH"
-    - pip3 install --user meson~=0.64
+    - meson subprojects download
+    - meson subprojects update --reset
+    - meson setup
+            ${COMMON_MESON_FLAGS}
+            ${EXTRA_MESON_FLAGS}
+            ${BACKEND_FLAGS}
+            ${FEATURE_FLAGS}
+            _build
+    - meson compile -C _build
+    - .gitlab-ci/run-tests.sh _build wayland
+    - .gitlab-ci/run-tests.sh _build wayland_gles
+
+release-build:
+  extends: .build-fedora-default
+  stage: build
+  needs: []
+  variables:
+    EXTRA_MESON_FLAGS: "--buildtype=release"
+  script:
+    - .gitlab-ci/show-info-linux.sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - meson subprojects download
     - meson subprojects update --reset
     - mkdir _install
@@ -103,11 +122,8 @@ fedora-x86_64:
     - PKG_CONFIG_PATH=${CI_PROJECT_DIR}/_install/lib64/pkgconfig:${CI_PROJECT_DIR}/_install/share/pkgconfig meson setup _build_hello examples/hello
     - LD_LIBRARY_PATH=${CI_PROJECT_DIR}/_install/lib64 meson compile -C _build_hello
     - .gitlab-ci/run-tests.sh _build x11
-    - .gitlab-ci/run-tests.sh _build wayland
-    - .gitlab-ci/run-tests.sh _build waylandgles
-    - .gitlab-ci/run-tests.sh _build broadway
 
-release-build:
+fedora-clang:
   extends: .build-fedora-default
   stage: build
   needs: []
@@ -116,7 +132,7 @@ release-build:
   script:
     - .gitlab-ci/show-info-linux.sh
     - export PATH="$HOME/.local/bin:$PATH"
-    - pip3 install --user meson~=0.64
+    - export CC=clang
     - meson subprojects download
     - meson subprojects update --reset
     - meson setup
@@ -126,7 +142,6 @@ release-build:
             ${FEATURE_FLAGS}
             _build
     - meson compile -C _build
-    - .gitlab-ci/run-tests.sh _build x11
 
 fedora-mingw64:
   extends: .build-fedora-default
@@ -147,23 +162,11 @@ fedora-mingw64:
   script:
     - .gitlab-ci/show-info-linux.sh
     - export PATH="$HOME/.local/bin:$PATH"
-    - pip3 install --user meson~=0.64
+    - pip3 install --user meson~=1.0
     - meson subprojects download
     - meson subprojects update --reset
-      # Test that mingw64-meson still fails. If it has stopped failing, the CI
-      # will fail and now you should remove the hack that follows this.
-    - FAILED=false
-    - mingw64-meson --version || FAILED=true
-    - test $FAILED = false && echo "mingw64-meson works now, remove the hack" && exit 1
-      # HACK: Running mingw64-meson directly fails on the CI with:
-      #  /usr/bin/mingw64-meson: line 92: fg: no job control
-      # Because rpm is not evaluating %__meson and it gets interpreted as a job
-      # specifier. So we fix that and run it ourselves.
-    - rpm --eval "%{mingw64_meson}" > mingw64-meson.sh
-    - sed -i -e 's/%__meson/meson/' mingw64-meson.sh
-    - chmod +x mingw64-meson.sh
-    - ./mingw64-meson.sh -Dintrospection=disabled -Dgraphene:introspection=disabled _build
-    - ninja -C _build
+    - meson -Dintrospection=disabled -Dgraphene:introspection=disabled _build
+    - meson compile -C _build
 
 .mingw-defaults:
   stage: build
@@ -205,7 +208,7 @@ macos:
   needs: []
   before_script:
     - bash .gitlab-ci/show-info-osx.sh
-    - pip3 install --user meson~=0.64
+    - pip3 install --user meson~=1.0
     - pip3 install --user ninja
     - export PATH=/Users/gitlabrunner/Library/Python/3.7/bin:$PATH
     - export MESON_FORCE_BACKTRACE=1
@@ -219,7 +222,7 @@ macos:
             -Dcpp_std=c++11
             -Dpixman:tests=disabled
             -Dlibjpeg-turbo:simd=disabled
-            -Ddemos=false
+            -Dbuild-demos=false
             -Dbuild-tests=false
             -Dbuild-examples=false
             -Dbuild-testsuite=false
@@ -363,10 +366,11 @@ static-scan:
     EXTRA_MESON_FLAGS: "--buildtype=debug"
   script:
     - export PATH="$HOME/.local/bin:$PATH"
-    - pip3 install --user meson~=0.64
     - meson setup
             ${COMMON_MESON_FLAGS}
             ${EXTRA_MESON_FLAGS}
+            ${BACKEND_FLAGS}
+            ${FEATURE_FLAGS}
             _scan_build
     - ninja -C _scan_build scan-build
   artifacts:
@@ -381,18 +385,27 @@ asan-build:
   tags: [ asan ]
   stage: analysis
   needs: []
-  when: manual
   variables:
   script:
     - export PATH="$HOME/.local/bin:$PATH"
-    - pip3 install --user meson~=0.64
-    - CC=clang meson setup --buildtype=debugoptimized -Db_sanitize=address -Db_lundef=false -Dintrospection=disabled -Df16c=disabled _build
+    - CC=clang meson setup
+            --buildtype=debugoptimized
+            -Db_sanitize=address
+            -Db_lundef=false
+            -Dbuild-demos=false
+            -Dbuild-tests=false
+            -Dbuild-examples=false
+            -Dintrospection=disabled
+            -Df16c=disabled
+            _build
     - ninja -C _build
     - .gitlab-ci/run-tests.sh _build wayland
+    - .gitlab-ci/run-tests.sh _build wayland_gles
+    - .gitlab-ci/run-tests.sh _build x11
   artifacts:
+    when: always
     paths:
-      - _build/meson-logs
-  allow_failure: true
+      - "${CI_PROJECT_DIR}/_build/meson-logs"
 
 reference:
   image: $FEDORA_IMAGE
@@ -400,16 +413,16 @@ reference:
   needs: []
   script:
     - export PATH="$HOME/.local/bin:$PATH"
-    - pip3 install --user meson~=0.64
     - meson setup
             ${COMMON_MESON_FLAGS}
             --buildtype=release
             --force-fallback-for=gdk-pixbuf,pango
             -Dintrospection=enabled
+            -Ddocumentation=true
             -Dgtk_doc=true
             -Dgdk-pixbuf:gtk_doc=true
             -Dpango:gtk_doc=true
-            -Ddemos=false
+            -Dbuild-demos=false
             -Dbuild-examples=false
             -Dbuild-tests=false
             -Dbuild-testsuite=false

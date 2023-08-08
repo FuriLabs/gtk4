@@ -22,14 +22,12 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#ifndef __GDK_CURSOR_H__
-#define __GDK_CURSOR_H__
+#pragma once
 
 #if !defined (__GDK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gdk/gdk.h> can be included directly."
 #endif
 
-#include <gdk/gdkversionmacros.h>
 #include <gdk/gdktypes.h>
 
 G_BEGIN_DECLS
@@ -68,4 +66,3 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkCursor, g_object_unref)
 
 G_END_DECLS
 
-#endif /* __GDK_CURSOR_H__ */

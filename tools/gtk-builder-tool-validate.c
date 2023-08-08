@@ -1,6 +1,6 @@
 /*  Copyright 2015 Red Hat, Inc.
  *
- * GTK+ is free software; you can redistribute it and/or modify it
+ * GTK is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation; either version 2 of the
  * License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with GTK+; see the file COPYING.  If not,
+ * License along with GTK; see the file COPYING.  If not,
  * see <http://www.gnu.org/licenses/>.
  *
  * Author: Matthias Clasen
@@ -23,7 +23,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <glib/gi18n.h>
+#include <glib/gi18n-lib.h>
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
@@ -42,7 +42,7 @@ make_fake_type (const char *type_name,
   parent_type = g_type_from_name (parent_name);
   if (parent_type == G_TYPE_INVALID)
     {
-      g_printerr ("Failed to lookup template parent type %s\n", parent_name);
+      g_printerr (_("Failed to lookup template parent type %s\n"), parent_name);
       exit (1);
     }
 
@@ -120,7 +120,7 @@ fake_scope_check_deprecations (FakeScope  *self,
       if (is_deprecated (name))
         {
           if (s->len == 0)
-            g_string_append (s, "Deprecated types:\n");
+            g_string_append (s, _("Deprecated types:\n"));
           g_string_append_printf (s, "%s", name);
           g_string_append (s, "\n");
         }
@@ -164,7 +164,7 @@ validate_template (const char *filename,
   object = g_object_new (template_type, NULL);
   if (!object)
     {
-      g_printerr ("Failed to create an instance of the template type %s\n", type_name);
+      g_printerr (_("Failed to create an instance of the template type %s\n"), type_name);
       return FALSE;
     }
 
@@ -263,6 +263,12 @@ do_validate (int *argc, const char ***argv)
   };
   int i;
 
+  if (gdk_display_get_default () == NULL)
+    {
+      g_printerr (_("Could not initialize windowing system\n"));
+      exit (1);
+    }
+
   g_set_prgname ("gtk4-builder-tool validate");
   context = g_option_context_new (NULL);
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -273,6 +279,12 @@ do_validate (int *argc, const char ***argv)
     {
       g_printerr ("%s\n", error->message);
       g_error_free (error);
+      exit (1);
+    }
+
+  if (!filenames)
+    {
+      g_printerr (_("No .ui file specified\n"));
       exit (1);
     }
 

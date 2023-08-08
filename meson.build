@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.10.5',
+        version: '4.12.0',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -7,17 +7,18 @@ project('gtk', 'c',
           # https://github.com/mesonbuild/meson/issues/2289
           'c_std=gnu99',
         ],
-        meson_version : '>= 0.60.0',
+        meson_version : '>= 0.63.0',
         license: 'LGPL-2.1-or-later')
 
-glib_req           = '>= 2.72.0'
-introspection_req  = '>= 1.72.0' # keep this in sync with glib
+# keep these numbers in sync with wrap files where there exist
+glib_req           = '>= 2.76.0'
+introspection_req  = '>= 1.76.0' # keep this in sync with glib
 pango_req          = '>= 1.50.0' # keep this in sync with .gitlab-ci/test-msys.sh
 harfbuzz_req       = '>= 2.6.0'
 fribidi_req        = '>= 1.0.6'
 cairo_req          = '>= 1.14.0'
 gdk_pixbuf_req     = '>= 2.30.0'
-wayland_proto_req  = '>= 1.25'
+wayland_proto_req  = '>= 1.31'
 wayland_req        = '>= 1.21.0'
 graphene_req       = '>= 1.10.0'
 epoxy_req          = '>= 1.4'
@@ -297,6 +298,7 @@ elif cc.get_id() == 'gcc' or cc.get_id() == 'clang'
     'address',
     'array-bounds',
     'empty-body',
+    'enum-int-mismatch',
     'implicit',
     'implicit-fallthrough',   # For non-gcc
     'implicit-fallthrough=5', # For GCC, only recognize the attribute and no comments
@@ -337,21 +339,16 @@ else
   test_cflags = []
 endif
 
-common_cflags = cc.get_supported_arguments(test_cflags)
-
 # Symbol visibility
 if get_option('default_library') != 'static'
   if os_win32
     cdata.set('DLL_EXPORT', true)
-    cdata.set('_GDK_EXTERN', '__declspec(dllexport) extern')
-    if cc.get_id() != 'msvc'
-      common_cflags += ['-fvisibility=hidden']
-    endif
   else
-    cdata.set('_GDK_EXTERN', '__attribute__((visibility("default"))) extern')
-    common_cflags += ['-fvisibility=hidden']
+    test_cflags += ['-fvisibility=hidden']
   endif
 endif
+
+common_cflags = cc.get_supported_arguments(test_cflags)
 
 common_ldflags = cc.get_supported_link_arguments([
   '-Wl,-Bsymbolic',
@@ -370,13 +367,6 @@ glib_dep       = dependency('glib-2.0', version: glib_req)
 gobject_dep    = dependency('gobject-2.0', version: glib_req)
 if os_win32
   giowin32_dep = dependency('gio-windows-2.0', version: glib_req, required: win32_enabled)
-  if giowin32_dep.version().version_compare('<2.75.0')
-    if cc.get_id() == 'msvc' and get_option('default_library') != 'static'
-      # Override _GLIB_EXTERN on Visual Studio for media modules for glib <= 2.74.x, so that we
-      # avoid error C2375 (redefinition; different linkage) when building the g_io_module_*() bits
-      cdata.set('MODULES_OVERRIDE_GLIB_EXTERN', true)
-    endif
-  endif
 endif
 if os_unix
   giounix_dep  = dependency('gio-unix-2.0', version: glib_req, required: false)
@@ -386,7 +376,8 @@ cairo_dep      = dependency('cairo', version: cairo_req,
                             default_options: ['zlib=enabled', 'tests=disabled'])
 cairogobj_dep  = dependency('cairo-gobject', version: cairo_req)
 pango_dep      = dependency('pango', version: pango_req)
-fribidi_dep    = dependency('fribidi', version: fribidi_req)
+fribidi_dep    = dependency('fribidi', version: fribidi_req,
+                            default_options: ['docs=false'])
 harfbuzz_dep   = dependency('harfbuzz', version: harfbuzz_req,
                             default_options: ['coretext=enabled'])
 
@@ -494,6 +485,10 @@ if wayland_enabled
     'xkbcommon @0@'.format(xkbcommon_req),
     'wayland-egl',
   ]
+
+  if wlprotocolsdep.version().version_compare('>=1.32')
+    cdata.set('HAVE_TOPLEVEL_STATE_SUSPENDED', 1)
+  endif
 endif
 
 x11_pkgs = []
@@ -610,6 +605,7 @@ endif
 # to use a custom path for the Vulkan SDK. Bugs that are found with it should
 # be reported upstream and fixed.
 vulkan_dep = dependency('vulkan', required: get_option('vulkan'))
+glslc = find_program('glslc', required: get_option('vulkan'))
 if vulkan_dep.found()
   have_vulkan = true
   vulkan_pkg_found = vulkan_dep.type_name() == 'pkgconfig'
@@ -733,6 +729,11 @@ int main () {
   endif
 endif
 
+if os_unix
+  cpdb_dep = dependency('cpdb-frontend', version : '>=2.0', required: get_option('print-cpdb'))
+  cups_dep = dependency('cups', version : '>=2.0', required: get_option('print-cups'))
+endif
+
 # Introspection
 gir = find_program('g-ir-scanner', required : get_option('introspection'))
 
@@ -741,20 +742,42 @@ if not gir.found() and get_option('introspection').enabled()
 endif
 
 build_gir = gir.found() and (get_option('introspection').enabled() or
-                             (get_option('introspection').allowed() and get_option('gtk_doc')))
+                             (get_option('introspection').allowed() and get_option('documentation')))
+
+# Resource building
+glib_compile_resources = find_program('glib-compile-resources')
+
+objcopy_supports_add_symbol = false
+objcopy_supports_section_alignment = false
+objcopy = find_program('objcopy', required : false)
+if objcopy.found()
+  objcopy_supports_add_symbol = run_command(objcopy, '--help', check: false).stdout().contains('--add-symbol')
+  objcopy_supports_section_alignment = run_command(objcopy, '--help', check: false).stdout().contains('--set-section-alignment')
+endif
+
+ld_is_bfd = false
+ld = find_program('ld', required : false)
+if ld.found()
+  ld_is_bfd = run_command(ld, '--version', check: false).stdout().contains('GNU ld')
+endif
+
+if not meson.is_cross_build() and build_machine.cpu_family() == 'x86_64' and build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and objcopy_supports_section_alignment and ld.found() and ld_is_bfd
+  can_use_objcopy_for_resources = true
+else
+  can_use_objcopy_for_resources = false
+endif
 
 project_build_root = meson.current_build_dir()
 
+gen_visibility_macros = find_program('build-aux/meson/gen-visibility-macros.py')
+
+subdir('gdk/version')
 subdir('gtk/css')
 subdir('gdk')
 subdir('gsk')
 subdir('gtk')
-if os_unix
-  cpdb_dep = dependency('cpdb-frontend', version : '>=2.0', required: get_option('print-cpdb'))
-  cups_dep = dependency('cups', version : '>=2.0', required: get_option('print-cups'))
-endif
 subdir('modules')
-if get_option('demos')
+if get_option('build-demos')
   subdir('demos')
 endif
 subdir('tools')
@@ -861,14 +884,14 @@ if not meson.is_cross_build()
   gnome.post_install(
     glib_compile_schemas: true,
     gio_querymodules: gio_module_dirs,
-    gtk_update_icon_cache: get_option('demos'),
+    gtk_update_icon_cache: get_option('build-demos'),
   )
 else
   message('Not executing post-install steps automatically when cross compiling')
 endif
 
 if not meson.is_subproject()
-    meson.add_dist_script('build-aux/meson/dist-data.py')
+  meson.add_dist_script('build-aux/meson/dist-data.py')
 endif
 
 if host_machine.system() != 'windows'
@@ -881,9 +904,9 @@ endif
 
 #### Summary ####
 
-summary('Display backends', display_backends)
-summary('Print backends', print_backends)
-summary('Media backends', media_backends)
+summary('Display backends', display_backends, section: 'Components')
+summary('Print backends', print_backends, section: 'Components')
+summary('Media backends', media_backends, section: 'Components')
 
 summary('Vulkan support', vulkan_dep.found(), section: 'Features')
 summary('Cloud support', cloudproviders_dep.found(), section: 'Features')
@@ -894,18 +917,16 @@ summary('Tracker support', tracker3_dep.found(), section: 'Features')
 summary('Compiler', cc.get_id(), section: 'Toolchain')
 summary('Linker', cc.get_linker_id(), section: 'Toolchain')
 
-# Build
 summary('Debugging', get_option('debug'), section: 'Build')
 summary('Optimization', get_option('optimization'), section: 'Build')
 summary('Introspection', build_gir, section: 'Build')
-summary('Documentation', get_option('gtk_doc'), section: 'Build')
+summary('Documentation', get_option('documentation'), section: 'Build')
 summary('Man pages', get_option('man-pages'), section: 'Build')
 summary('Testsuite', get_option('build-testsuite'), section: 'Build')
 summary('Tests', get_option('build-tests'), section: 'Build')
-summary('Demos', get_option('demos'), section: 'Build')
+summary('Demos', get_option('build-demos'), section: 'Build')
 summary('Examples', get_option('build-examples'), section: 'Build')
 
-# Directories
 summary('prefix', gtk_prefix, section: 'Directories')
 summary('includedir', gtk_includedir, section: 'Directories')
 summary('libdir', gtk_libdir, section: 'Directories')

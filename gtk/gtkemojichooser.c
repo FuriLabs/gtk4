@@ -260,14 +260,18 @@ scroll_to_section (EmojiSection *section)
 {
   GtkEmojiChooser *chooser;
   GtkAdjustment *adj;
-  GtkAllocation alloc = { 0, 0, 0, 0 };
+  graphene_rect_t bounds = GRAPHENE_RECT_INIT (0, 0, 0, 0);
 
   chooser = GTK_EMOJI_CHOOSER (gtk_widget_get_ancestor (section->box, GTK_TYPE_EMOJI_CHOOSER));
 
   adj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (chooser->scrolled_window));
   if (section->heading)
-    gtk_widget_get_allocation (section->heading, &alloc);
-  gtk_adjustment_animate_to_value (adj, alloc.y - BOX_SPACE);
+    {
+      if (!gtk_widget_compute_bounds (section->heading, gtk_widget_get_parent (section->heading), &bounds))
+        graphene_rect_init (&bounds, 0, 0, 0, 0);
+    }
+
+  gtk_adjustment_animate_to_value (adj, bounds.origin.y - BOX_SPACE);
 }
 
 static void
@@ -275,26 +279,29 @@ scroll_to_child (GtkWidget *child)
 {
   GtkEmojiChooser *chooser;
   GtkAdjustment *adj;
-  GtkAllocation alloc;
-  double pos;
+  graphene_point_t p;
   double value;
   double page_size;
+  graphene_rect_t bounds = GRAPHENE_RECT_INIT (0, 0, 0, 0);
 
   chooser = GTK_EMOJI_CHOOSER (gtk_widget_get_ancestor (child, GTK_TYPE_EMOJI_CHOOSER));
 
   adj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (chooser->scrolled_window));
 
-  gtk_widget_get_allocation (child, &alloc);
+  if (!gtk_widget_compute_bounds (child, gtk_widget_get_parent (child), &bounds))
+    graphene_rect_init (&bounds, 0, 0, 0, 0);
 
   value = gtk_adjustment_get_value (adj);
   page_size = gtk_adjustment_get_page_size (adj);
 
-  gtk_widget_translate_coordinates (child, gtk_widget_get_parent (chooser->recent.box), 0, 0, NULL, &pos);
+  if (!gtk_widget_compute_point (child, gtk_widget_get_parent (chooser->recent.box),
+                                 &GRAPHENE_POINT_INIT (0, 0), &p))
+    return;
 
-  if (pos < value)
-    gtk_adjustment_animate_to_value (adj, pos);
-  else if (pos + alloc.height >= value + page_size)
-    gtk_adjustment_animate_to_value (adj, value + ((pos + alloc.height) - (value + page_size)));
+  if (p.y < value)
+    gtk_adjustment_animate_to_value (adj, p.y);
+  else if (p.y + bounds.size.height >= value + page_size)
+    gtk_adjustment_animate_to_value (adj, value + ((p.y + bounds.size.height) - (value + page_size)));
 }
 
 static void
@@ -556,12 +563,11 @@ add_emoji (GtkWidget    *box,
   int i;
   PangoLayout *layout;
   PangoRectangle rect;
+  gunichar code = 0;
 
   codes = g_variant_get_child_value (item, 0);
   for (i = 0; i < g_variant_n_children (codes); i++)
     {
-      gunichar code;
-
       g_variant_get_child (codes, i, "u", &code);
       if (code == 0)
         code = modifier;
@@ -569,7 +575,10 @@ add_emoji (GtkWidget    *box,
         p += g_unichar_to_utf8 (code, p);
     }
   g_variant_unref (codes);
-  p += g_unichar_to_utf8 (0xFE0F, p); /* U+FE0F is the Emoji variation selector */
+
+  if (code != 0xFE0F && code != 0xFE0E)
+    p += g_unichar_to_utf8 (0xFE0F, p); /* Append a variation selector, if there isn't one already */
+
   p[0] = 0;
 
   label = gtk_label_new (text);
@@ -792,17 +801,21 @@ adj_value_changed (GtkAdjustment *adj,
   for (i = 0; i < G_N_ELEMENTS (sections); ++i)
     {
       EmojiSection const *section = sections[i];
-      GtkAllocation alloc;
+      GtkWidget *child;
+      graphene_rect_t bounds = GRAPHENE_RECT_INIT (0, 0, 0, 0);
 
       if (!gtk_widget_get_visible (section->box))
         continue;
 
       if (section->heading)
-        gtk_widget_get_allocation (section->heading, &alloc);
+        child = section->heading;
       else
-        gtk_widget_get_allocation (section->box, &alloc);
+        child = section->box;
 
-      if (value < alloc.y - BOX_SPACE)
+      if (!gtk_widget_compute_bounds (child, gtk_widget_get_parent (child), &bounds))
+        graphene_rect_init (&bounds, 0, 0, 0, 0);
+
+      if (value < bounds.origin.y - BOX_SPACE)
         break;
 
       select_section = section;
@@ -1139,10 +1152,10 @@ keynav_failed (GtkWidget        *box,
   GtkWidget *focus;
   GtkWidget *child;
   GtkWidget *sibling;
-  GtkAllocation alloc;
   int i;
   int column;
   int child_x;
+  graphene_rect_t bounds = GRAPHENE_RECT_INIT (0, 0, 0, 0);
 
   focus = gtk_root_get_focus (gtk_widget_get_root (box));
   if (focus == NULL)
@@ -1159,14 +1172,15 @@ keynav_failed (GtkWidget        *box,
       if (!gtk_widget_get_child_visible (sibling))
         continue;
 
-      gtk_widget_get_allocation (sibling, &alloc);
+      if (!gtk_widget_compute_bounds (sibling, box, &bounds))
+        graphene_rect_init (&bounds, 0, 0, 0, 0);
 
-      if (alloc.x < child_x)
+      if (bounds.origin.x < child_x)
         column = 0;
       else
         column++;
 
-      child_x = alloc.x;
+      child_x = (int) bounds.origin.x;
 
       if (sibling == child)
         break;
@@ -1190,14 +1204,15 @@ keynav_failed (GtkWidget        *box,
               if (!gtk_widget_get_child_visible (sibling))
                 continue;
 
-              gtk_widget_get_allocation (sibling, &alloc);
+              if (!gtk_widget_compute_bounds (sibling, next->box, &bounds))
+                graphene_rect_init (&bounds, 0, 0, 0, 0);
 
-              if (alloc.x < child_x)
+              if (bounds.origin.x < child_x)
                 i = 0;
               else
                 i++;
 
-              child_x = alloc.x;
+              child_x = (int) bounds.origin.x;
 
               if (i == column)
                 {
@@ -1226,14 +1241,15 @@ keynav_failed (GtkWidget        *box,
               if (!gtk_widget_get_child_visible (sibling))
                 continue;
 
-              gtk_widget_get_allocation (sibling, &alloc);
+              if (!gtk_widget_compute_bounds (sibling, next->box, &bounds))
+                graphene_rect_init (&bounds, 0, 0, 0, 0);
 
-              if (alloc.x < child_x)
+              if (bounds.origin.x < child_x)
                 i = 0;
               else
                 i++;
 
-              child_x = alloc.x;
+              child_x = (int) bounds.origin.x;
 
               if (i == column)
                 child = sibling;

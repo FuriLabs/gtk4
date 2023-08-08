@@ -30,8 +30,6 @@
 #include "gdkprivate-win32.h"
 #include "gdkwin32misc.h"
 
-extern HINSTANCE	 _gdk_dll_hinstance;
-
 G_DEFINE_TYPE (GdkWin32VulkanContext, gdk_win32_vulkan_context, GDK_TYPE_VULKAN_CONTEXT)
 
 static VkResult
@@ -47,7 +45,7 @@ gdk_win32_vulkan_context_create_surface (GdkVulkanContext *context,
   info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
   info.pNext = NULL;
   info.flags = 0;
-  info.hinstance = _gdk_dll_hinstance;
+  info.hinstance = this_module ();
   info.hwnd = GDK_SURFACE_HWND (window);
 
   /* This is necessary so that Vulkan sees the Window.
@@ -68,12 +66,12 @@ gdk_win32_vulkan_context_create_surface (GdkVulkanContext *context,
 
 static void
 gdk_win32_vulkan_context_begin_frame (GdkDrawContext *draw_context,
-                                      gboolean        prefers_high_depth,
+                                      GdkMemoryDepth  depth,
                                       cairo_region_t *update_area)
 {
   gdk_win32_surface_handle_queued_move_resize (draw_context);
 
-  GDK_DRAW_CONTEXT_CLASS (gdk_win32_vulkan_context_parent_class)->begin_frame (draw_context, prefers_high_depth, update_area);
+  GDK_DRAW_CONTEXT_CLASS (gdk_win32_vulkan_context_parent_class)->begin_frame (draw_context, depth, update_area);
 }
 
 static void

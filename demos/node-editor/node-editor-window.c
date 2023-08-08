@@ -64,6 +64,7 @@ struct _NodeEditorWindow
   GListStore *renderers;
   GskRenderNode *node;
 
+  GFile *file;
   GFileMonitor *file_monitor;
 
   GArray *errors;
@@ -544,12 +545,14 @@ node_editor_window_load (NodeEditorWindow *self,
 {
   GError *error = NULL;
 
+  g_clear_object (&self->file);
   g_clear_object (&self->file_monitor);
 
   if (!load_file_contents (self, file))
     return FALSE;
 
-  self->file_monitor = g_file_monitor_file (file, G_FILE_MONITOR_NONE, NULL, &error);
+  self->file = g_object_ref (file);
+  self->file_monitor = g_file_monitor_file (self->file, G_FILE_MONITOR_NONE, NULL, &error);
 
   if (error)
     {
@@ -586,13 +589,21 @@ static void
 show_open_filechooser (NodeEditorWindow *self)
 {
   GtkFileDialog *dialog;
-  GFile *cwd;
 
   dialog = gtk_file_dialog_new ();
   gtk_file_dialog_set_title (dialog, "Open node file");
-  cwd = g_file_new_for_path (".");
-  gtk_file_dialog_set_initial_folder (dialog, cwd);
-  g_object_unref (cwd);
+  if (self->file)
+    {
+      gtk_file_dialog_set_initial_file (dialog, self->file);
+    }
+  else
+    {
+      GFile *cwd;
+      cwd = g_file_new_for_path (".");
+      gtk_file_dialog_set_initial_folder (dialog, cwd);
+      g_object_unref (cwd);
+    }
+
   gtk_file_dialog_open (dialog, GTK_WINDOW (self),
                         NULL, open_response_cb, self);
   g_object_unref (dialog);
@@ -650,14 +661,21 @@ save_cb (GtkWidget        *button,
          NodeEditorWindow *self)
 {
   GtkFileDialog *dialog;
-  GFile *cwd;
 
   dialog = gtk_file_dialog_new ();
   gtk_file_dialog_set_title (dialog, "Save node");
-  cwd = g_file_new_for_path (".");
-  gtk_file_dialog_set_initial_folder (dialog, cwd);
-  gtk_file_dialog_set_initial_name (dialog, "demo.node");
-  g_object_unref (cwd);
+  if (self->file)
+    {
+      gtk_file_dialog_set_initial_file (dialog, self->file);
+    }
+  else
+    {
+      GFile *cwd = g_file_new_for_path (".");
+      gtk_file_dialog_set_initial_folder (dialog, cwd);
+      gtk_file_dialog_set_initial_name (dialog, "demo.node");
+      g_object_unref (cwd);
+    }
+
   gtk_file_dialog_save (dialog,
                         GTK_WINDOW (gtk_widget_get_root (GTK_WIDGET (button))),
                         NULL,
@@ -1034,6 +1052,19 @@ testcase_save_clicked_cb (GtkWidget        *button,
     }
 
   text = get_current_text (self->text_buffer);
+  {
+    GBytes *bytes;
+    GskRenderNode *node;
+    gsize size;
+
+    bytes = g_bytes_new_take (text, strlen (text) + 1);
+    node = gsk_render_node_deserialize (bytes, NULL, NULL);
+    g_bytes_unref (bytes);
+    bytes = gsk_render_node_serialize (node);
+    gsk_render_node_unref (node);
+    text = g_bytes_unref_to_data (bytes, &size);
+  }
+
   if (!g_file_set_contents (node_file, text, -1, &error))
     {
       gtk_label_set_label (GTK_LABEL (self->testcase_error_label), error->message);
@@ -1078,6 +1109,8 @@ node_editor_window_finalize (GObject *object)
 
   g_clear_pointer (&self->node, gsk_render_node_unref);
   g_clear_object (&self->renderers);
+  g_clear_object (&self->file_monitor);
+  g_clear_object (&self->file);
 
   G_OBJECT_CLASS (node_editor_window_parent_class)->finalize (object);
 }
@@ -1157,11 +1190,362 @@ node_editor_window_unrealize (GtkWidget *widget)
   GTK_WIDGET_CLASS (node_editor_window_parent_class)->unrealize (widget);
 }
 
+typedef struct
+{
+  NodeEditorWindow *self;
+  GtkTextIter start, end;
+} Selection;
+
+static void
+color_cb (GObject *source,
+          GAsyncResult *result,
+          gpointer data)
+{
+  GtkColorDialog *dialog = GTK_COLOR_DIALOG (source);
+  Selection *selection = data;
+  NodeEditorWindow *self = selection->self;
+  GdkRGBA *color;
+  char *text;
+  GError *error = NULL;
+  GtkTextBuffer *buffer;
+
+  color = gtk_color_dialog_choose_rgba_finish (dialog, result, &error);
+  if (!color)
+    {
+      g_print ("%s\n", error->message);
+      g_error_free (error);
+      g_free (selection);
+      return;
+    }
+
+  buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (self->text_view));
+
+  text = gdk_rgba_to_string (color);
+  gtk_text_buffer_delete (buffer, &selection->start, &selection->end);
+  gtk_text_buffer_insert (buffer, &selection->start, text, -1);
+
+  g_free (text);
+  gdk_rgba_free (color);
+  g_free (selection);
+}
+
+static void
+font_cb (GObject *source,
+          GAsyncResult *result,
+          gpointer data)
+{
+  GtkFontDialog *dialog = GTK_FONT_DIALOG (source);
+  Selection *selection = data;
+  NodeEditorWindow *self = selection->self;
+  GError *error = NULL;
+  PangoFontDescription *desc;
+  GtkTextBuffer *buffer;
+  char *text;
+
+  desc = gtk_font_dialog_choose_font_finish (dialog, result, &error);
+  if (!desc)
+    {
+      g_print ("%s\n", error->message);
+      g_error_free (error);
+      g_free (selection);
+      return;
+    }
+
+  buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (self->text_view));
+
+  text = pango_font_description_to_string (desc);
+  gtk_text_buffer_delete (buffer, &selection->start, &selection->end);
+  gtk_text_buffer_insert (buffer, &selection->start, text, -1);
+
+  g_free (text);
+  pango_font_description_free (desc);
+  g_free (selection);
+}
+
+static void
+file_cb (GObject *source,
+          GAsyncResult *result,
+          gpointer data)
+{
+  GtkFileDialog *dialog = GTK_FILE_DIALOG (source);
+  Selection *selection = data;
+  NodeEditorWindow *self = selection->self;
+  GError *error = NULL;
+  GFile *file;
+  GtkTextBuffer *buffer;
+  char *text;
+
+  file = gtk_file_dialog_open_finish (dialog, result, &error);
+  if (!file)
+    {
+      g_print ("%s\n", error->message);
+      g_error_free (error);
+      g_free (selection);
+      return;
+    }
+
+  buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (self->text_view));
+
+  text = g_file_get_uri (file);
+  gtk_text_buffer_delete (buffer, &selection->start, &selection->end);
+  gtk_text_buffer_insert (buffer, &selection->start, text, -1);
+
+  g_free (text);
+  g_object_unref (file);
+  g_free (selection);
+}
+
+static void
+key_pressed (GtkEventControllerKey *controller,
+             unsigned int keyval,
+             unsigned int keycode,
+             GdkModifierType state,
+             gpointer data)
+{
+  GtkWidget *dd = gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (controller));
+  Selection *selection = data;
+  NodeEditorWindow *self = selection->self;
+  unsigned int selected;
+  GtkStringList *strings;
+  GtkTextBuffer *buffer;
+  const char *text;
+
+  if (keyval != GDK_KEY_Escape)
+    return;
+
+  strings = GTK_STRING_LIST (gtk_drop_down_get_model (GTK_DROP_DOWN (dd)));
+  selected = gtk_drop_down_get_selected (GTK_DROP_DOWN (dd));
+  text = gtk_string_list_get_string (strings, selected);
+
+  gtk_text_view_remove (GTK_TEXT_VIEW (self->text_view), dd);
+
+  buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (self->text_view));
+  gtk_text_iter_backward_search (&selection->start, "mode:", 0, NULL, &selection->start, NULL);
+  gtk_text_iter_forward_search (&selection->start, ";", 0, &selection->end, NULL, NULL);
+  gtk_text_buffer_delete (buffer, &selection->start, &selection->end);
+  gtk_text_buffer_insert (buffer, &selection->start, " ", -1);
+  gtk_text_buffer_insert (buffer, &selection->start, text, -1);
+}
+
+static void
+node_editor_window_edit (NodeEditorWindow *self,
+                         GtkTextIter      *iter)
+{
+  GtkTextIter start, end;
+  GtkTextBuffer *buffer;
+  Selection *selection;
+
+  buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (self->text_view));
+
+  gtk_text_iter_set_line_offset (iter, 0);
+
+  if (gtk_text_iter_forward_search (iter, ";", 0, &end, NULL, NULL) &&
+      gtk_text_iter_forward_search (iter, "color:", 0, NULL, &start, &end))
+    {
+      GtkColorDialog *dialog;
+      GdkRGBA color;
+      char *text;
+
+      while (g_unichar_isspace (gtk_text_iter_get_char (&start)))
+        gtk_text_iter_forward_char (&start);
+
+      gtk_text_buffer_select_range (buffer, &start, &end);
+      text = gtk_text_buffer_get_text (buffer, &start, &end, TRUE);
+      gdk_rgba_parse (&color, text);
+      g_free (text);
+
+      selection = g_new0 (Selection, 1);
+      selection->self = self;
+      selection->start = start;
+      selection->end = end;
+
+      dialog = gtk_color_dialog_new ();
+      gtk_color_dialog_choose_rgba (dialog, GTK_WINDOW (self), &color, NULL, color_cb, selection);
+    }
+  else if (gtk_text_iter_forward_search (iter, ";", 0, &end, NULL, NULL) &&
+           gtk_text_iter_forward_search (iter, "font:", 0, NULL, &start, &end))
+    {
+      GtkFontDialog *dialog;
+      PangoFontDescription *desc;
+      char *text;
+
+      while (g_unichar_isspace (gtk_text_iter_get_char (&start)))
+        gtk_text_iter_forward_char (&start);
+
+      /* Skip the quotes */
+      gtk_text_iter_forward_char (&start);
+      gtk_text_iter_backward_char (&end);
+
+      gtk_text_buffer_select_range (buffer, &start, &end);
+
+      text = gtk_text_buffer_get_text (buffer, &start, &end, TRUE);
+      desc = pango_font_description_from_string (text);
+      g_free (text);
+
+      selection = g_new0 (Selection, 1);
+      selection->self = self;
+      selection->start = start;
+      selection->end = end;
+
+      dialog = gtk_font_dialog_new ();
+      gtk_font_dialog_choose_font (dialog, GTK_WINDOW (self), desc, NULL, font_cb, selection);
+      pango_font_description_free (desc);
+    }
+  else if (gtk_text_iter_forward_search (iter, ";", 0, &end, NULL, NULL) &&
+           gtk_text_iter_forward_search (iter, "mode:", 0, NULL, &start, &end))
+    {
+      /* Assume we have a blend node, for now */
+      GEnumClass *class;
+      GtkStringList *strings;
+      GtkWidget *dd;
+      GtkTextChildAnchor *anchor;
+      unsigned int selected = 0;
+      GtkEventController *key_controller;
+      gboolean is_blend_mode = FALSE;
+      char *text;
+
+      while (g_unichar_isspace (gtk_text_iter_get_char (&start)))
+        gtk_text_iter_forward_char (&start);
+
+      text = gtk_text_buffer_get_text (buffer, &start, &end, TRUE);
+
+      strings = gtk_string_list_new (NULL);
+      class = g_type_class_ref (GSK_TYPE_BLEND_MODE);
+      for (unsigned int i = 0; i < class->n_values; i++)
+        {
+          if (strcmp (class->values[i].value_nick, text) == 0)
+            is_blend_mode = TRUE;
+        }
+      g_type_class_unref (class);
+
+      if (is_blend_mode)
+        class = g_type_class_ref (GSK_TYPE_BLEND_MODE);
+      else
+        class = g_type_class_ref (GSK_TYPE_MASK_MODE);
+
+       for (unsigned int i = 0; i < class->n_values; i++)
+         {
+           if (i == 0 && is_blend_mode)
+             gtk_string_list_append (strings, "normal");
+           else
+             gtk_string_list_append (strings, class->values[i].value_nick);
+
+           if (strcmp (class->values[i].value_nick, text) == 0)
+             selected = i;
+         }
+      g_type_class_unref (class);
+
+      gtk_text_buffer_delete (buffer, &start, &end);
+
+      anchor = gtk_text_buffer_create_child_anchor (buffer, &start);
+      dd = gtk_drop_down_new (G_LIST_MODEL (strings), NULL);
+      gtk_drop_down_set_selected (GTK_DROP_DOWN (dd), selected);
+      gtk_text_view_add_child_at_anchor (GTK_TEXT_VIEW (self->text_view), dd, anchor);
+
+      selection = g_new0 (Selection, 1);
+      selection->self = self;
+      selection->start = start;
+      selection->end = end;
+
+      key_controller = gtk_event_controller_key_new ();
+      g_signal_connect (key_controller, "key-pressed", G_CALLBACK (key_pressed), selection);
+      gtk_widget_add_controller (dd, key_controller);
+    }
+  else if (gtk_text_iter_forward_search (iter, ";", 0, &end, NULL, NULL) &&
+           gtk_text_iter_forward_search (iter, "texture:", 0, NULL, &start, &end))
+    {
+      GtkFileDialog *dialog;
+      GtkTextIter skip;
+      char *text;
+      GFile *file;
+
+      while (g_unichar_isspace (gtk_text_iter_get_char (&start)))
+        gtk_text_iter_forward_char (&start);
+
+      skip = start;
+      gtk_text_iter_forward_chars (&skip, strlen ("url(\""));
+      text = gtk_text_iter_get_text (&start, &skip);
+      if (strcmp (text, "url(\"") != 0)
+        {
+          g_free (text);
+          return;
+        }
+      g_free (text);
+      start = skip;
+
+      skip = end;
+      gtk_text_iter_backward_chars (&skip, strlen ("\")"));
+      text = gtk_text_iter_get_text (&skip, &end);
+      if (strcmp (text, "\")") != 0)
+        {
+          g_free (text);
+          return;
+        }
+      g_free (text);
+      end = skip;
+
+      gtk_text_buffer_select_range (buffer, &start, &end);
+
+      text = gtk_text_buffer_get_text (buffer, &start, &end, TRUE);
+      file = g_file_new_for_uri (text);
+      g_free (text);
+
+      selection = g_new0 (Selection, 1);
+      selection->self = self;
+      selection->start = start;
+      selection->end = end;
+
+      dialog = gtk_file_dialog_new ();
+      gtk_file_dialog_set_initial_file (dialog, file);
+      gtk_file_dialog_open (dialog, GTK_WINDOW (self), NULL, file_cb, selection);
+      g_object_unref (file);
+    }
+}
+
+static void
+click_gesture_pressed (GtkGestureClick  *gesture,
+                       int               n_press,
+                       double            x,
+                       double            y,
+                       NodeEditorWindow *self)
+{
+  GtkTextIter iter;
+  int bx, by, trailing;
+  GdkModifierType state;
+
+  state = gtk_event_controller_get_current_event_state (GTK_EVENT_CONTROLLER (gesture));
+  if ((state & GDK_CONTROL_MASK) == 0)
+    return;
+
+  gtk_text_view_window_to_buffer_coords (GTK_TEXT_VIEW (self->text_view), GTK_TEXT_WINDOW_TEXT, x, y, &bx, &by);
+  gtk_text_view_get_iter_at_position (GTK_TEXT_VIEW (self->text_view), &iter, &trailing, bx, by);
+
+  node_editor_window_edit (self, &iter);
+}
+
+static void
+edit_action_cb (GtkWidget  *widget,
+                const char *action_name,
+                GVariant   *parameter)
+{
+  NodeEditorWindow *self = NODE_EDITOR_WINDOW (widget);
+  GtkTextBuffer *buffer;
+  GtkTextIter start, end;
+
+  buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (self->text_view));
+  gtk_text_buffer_get_selection_bounds (buffer, &start, &end);
+
+  node_editor_window_edit (self, &start);
+}
+
 static void
 node_editor_window_class_init (NodeEditorWindowClass *class)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (class);
+  GtkShortcutTrigger *trigger;
+  GtkShortcutAction *action;
+  GtkShortcut *shortcut;
 
   object_class->dispose = node_editor_window_dispose;
   object_class->finalize = node_editor_window_finalize;
@@ -1192,6 +1576,14 @@ node_editor_window_class_init (NodeEditorWindowClass *class)
   gtk_widget_class_bind_template_callback (widget_class, dark_mode_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_picture_drag_prepare_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_picture_drop_cb);
+  gtk_widget_class_bind_template_callback (widget_class, click_gesture_pressed);
+
+  gtk_widget_class_install_action (widget_class, "smart-edit", NULL, edit_action_cb);
+
+  trigger = gtk_keyval_trigger_new (GDK_KEY_e, GDK_CONTROL_MASK);
+  action = gtk_named_action_new ("smart-edit");
+  shortcut = gtk_shortcut_new (trigger, action);
+  gtk_widget_class_add_shortcut (widget_class, shortcut);
 }
 
 static GtkWidget *

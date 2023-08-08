@@ -1,5 +1,4 @@
-#ifndef __GDK_TOPLEVEL_PRIVATE_H__
-#define __GDK_TOPLEVEL_PRIVATE_H__
+#pragma once
 
 #include "gdktoplevel.h"
 #include "gdktoplevelsizeprivate.h"
@@ -50,7 +49,8 @@ struct _GdkToplevelInterface
                                             GAsyncResult         *result,
                                             GError              **error);
 
-  void          (* unexport_handle)        (GdkToplevel          *toplevel);
+  void          (* unexport_handle)        (GdkToplevel          *toplevel,
+                                            const char           *handle);
 };
 
 typedef enum
@@ -83,8 +83,8 @@ char *gdk_toplevel_export_handle_finish (GdkToplevel          *toplevel,
                                          GAsyncResult         *result,
                                          GError              **error);
 
-void  gdk_toplevel_unexport_handle      (GdkToplevel          *toplevel);
+void  gdk_toplevel_unexport_handle      (GdkToplevel          *toplevel,
+                                         const char           *handle);
 
 G_END_DECLS
 
-#endif /* __GDK_TOPLEVEL_PRIVATE_H__ */

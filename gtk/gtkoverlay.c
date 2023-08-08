@@ -114,7 +114,8 @@ effective_align (GtkAlign         align,
       return direction == GTK_TEXT_DIR_RTL ? GTK_ALIGN_START : GTK_ALIGN_END;
     case GTK_ALIGN_FILL:
     case GTK_ALIGN_CENTER:
-    case GTK_ALIGN_BASELINE:
+    case GTK_ALIGN_BASELINE_FILL:
+    case GTK_ALIGN_BASELINE_CENTER:
     default:
       return align;
     }
@@ -154,7 +155,8 @@ gtk_overlay_get_child_position (GtkOverlay    *overlay,
     case GTK_ALIGN_END:
       alloc->x += width - alloc->width;
       break;
-    case GTK_ALIGN_BASELINE:
+    case GTK_ALIGN_BASELINE_FILL:
+    case GTK_ALIGN_BASELINE_CENTER:
     default:
       g_assert_not_reached ();
       break;
@@ -177,7 +179,8 @@ gtk_overlay_get_child_position (GtkOverlay    *overlay,
     case GTK_ALIGN_END:
       alloc->y += height - alloc->height;
       break;
-    case GTK_ALIGN_BASELINE:
+    case GTK_ALIGN_BASELINE_FILL:
+    case GTK_ALIGN_BASELINE_CENTER:
     default:
       g_assert_not_reached ();
       break;
@@ -575,7 +578,10 @@ gtk_overlay_set_child (GtkOverlay *overlay,
                        GtkWidget  *child)
 {
   g_return_if_fail (GTK_IS_OVERLAY (overlay));
-  g_return_if_fail (child == NULL || GTK_IS_WIDGET (child));
+  g_return_if_fail (child == NULL || overlay->child == child || gtk_widget_get_parent (child) == NULL);
+
+  if (overlay->child == child)
+    return;
 
   g_clear_pointer (&overlay->child, gtk_widget_unparent);
 

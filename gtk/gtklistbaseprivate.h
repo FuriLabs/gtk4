@@ -17,8 +17,7 @@
  * Authors: Benjamin Otte <otte@gnome.org>
  */
 
-#ifndef __GTK_LIST_BASE_PRIVATE_H__
-#define __GTK_LIST_BASE_PRIVATE_H__
+#pragma once
 
 #include "gtklistbase.h"
 
@@ -34,12 +33,14 @@ struct _GtkListBaseClass
 {
   GtkWidgetClass parent_class;
 
-  const char *         list_item_name;
-  GtkAccessibleRole    list_item_role;
-
   GtkListTile *        (* split)                                (GtkListBase            *self,
                                                                  GtkListTile            *tile,
                                                                  guint                   n_items);
+  GtkListItemBase *    (* create_list_widget)                   (GtkListBase            *self);
+  void                 (* prepare_section)                      (GtkListBase            *self,
+                                                                 GtkListTile            *tile,
+                                                                 guint                   position);
+  GtkListHeaderBase *  (* create_header_widget)                 (GtkListBase            *self);
 
   gboolean             (* get_allocation)                       (GtkListBase            *self,
                                                                  guint                   pos,
@@ -61,7 +62,6 @@ struct _GtkListBaseClass
 
 GtkOrientation         gtk_list_base_get_orientation            (GtkListBase            *self);
 #define gtk_list_base_get_opposite_orientation(self) OPPOSITE_ORIENTATION(gtk_list_base_get_orientation(self))
-guint                  gtk_list_base_get_focus_position         (GtkListBase            *self);
 void                   gtk_list_base_get_border_spacing         (GtkListBase            *self,
                                                                  int                    *xspacing,
                                                                  int                    *yspacing);
@@ -83,20 +83,18 @@ void                   gtk_list_base_set_anchor                 (GtkListBase    
 void                   gtk_list_base_set_anchor_max_widgets     (GtkListBase            *self,
                                                                  guint                   n_center,
                                                                  guint                   n_above_below);
-void                   gtk_list_base_select_item                (GtkListBase            *self,
-                                                                 guint                   pos,
-                                                                 gboolean                modify,
-                                                                 gboolean                extend);
-gboolean               gtk_list_base_grab_focus_on_item         (GtkListBase            *self,
-                                                                 guint                   pos,
-                                                                 gboolean                select,
-                                                                 gboolean                modify,
-                                                                 gboolean                extend);
 
 void                   gtk_list_base_set_enable_rubberband      (GtkListBase            *self,
                                                                  gboolean                enable);
 gboolean               gtk_list_base_get_enable_rubberband      (GtkListBase            *self);
+void                   gtk_list_base_set_tab_behavior           (GtkListBase            *self,
+                                                                 GtkListTabBehavior      behavior);
+GtkListTabBehavior     gtk_list_base_get_tab_behavior           (GtkListBase            *self);
+
 
 void                   gtk_list_base_allocate                   (GtkListBase            *self);
 
-#endif /* __GTK_LIST_BASE_PRIVATE_H__ */
+void                   gtk_list_base_scroll_to                  (GtkListBase            *self,
+                                                                 guint                   pos,
+                                                                 GtkListScrollFlags      flags,
+                                                                 GtkScrollInfo          *scroll);

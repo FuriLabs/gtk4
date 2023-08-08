@@ -44,6 +44,7 @@ gsk_gl_attachment_state_new (void)
       self->textures[i].id = 0;
       self->textures[i].changed = FALSE;
       self->textures[i].initial = TRUE;
+      self->textures[i].sampler = sampler_index (GL_LINEAR, GL_LINEAR);
     }
 
   return self;
@@ -65,24 +66,32 @@ void
 gsk_gl_attachment_state_bind_texture (GskGLAttachmentState *self,
                                       GLenum                target,
                                       GLenum                texture,
-                                      guint                 id)
+                                      guint                 id,
+                                      GLint                 min_filter,
+                                      GLint                 mag_filter)
 {
   GskGLBindTexture *attach;
+  unsigned int sampler;
 
   g_assert (self != NULL);
   g_assert (target == GL_TEXTURE_1D ||
             target == GL_TEXTURE_2D ||
             target == GL_TEXTURE_3D);
   g_assert (texture >= GL_TEXTURE0 && texture <= GL_TEXTURE16);
+  g_assert (texture - GL_TEXTURE0 < G_N_ELEMENTS (self->textures));
 
   attach = &self->textures[texture - GL_TEXTURE0];
 
-  if (attach->target != target || attach->texture != texture || attach->id != id)
+  sampler = sampler_index (min_filter, mag_filter);
+
+  if (attach->target != target || attach->texture != texture || attach->id != id ||
+      attach->sampler != sampler)
     {
       attach->target = target;
       attach->texture = texture;
       attach->id = id;
       attach->initial = FALSE;
+      attach->sampler = sampler;
 
       if (attach->changed == FALSE)
         {

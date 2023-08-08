@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Benjamin Otte
+ * Copyright © 2023 Benjamin Otte
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,33 +17,33 @@
  * Authors: Benjamin Otte <otte@gnome.org>
  */
 
-#ifndef __GTK_COLUMN_VIEW_CELL_PRIVATE_H__
-#define __GTK_COLUMN_VIEW_CELL_PRIVATE_H__
+#pragma once
 
-#include "gtkcolumnviewcolumn.h"
+#include "gtkcolumnviewcell.h"
+
+#include "gtkcolumnviewcellwidgetprivate.h"
+#include "gtklistitemprivate.h"
 
 G_BEGIN_DECLS
 
-#define GTK_TYPE_COLUMN_VIEW_CELL         (gtk_column_view_cell_get_type ())
-#define GTK_COLUMN_VIEW_CELL(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), GTK_TYPE_COLUMN_VIEW_CELL, GtkColumnViewCell))
-#define GTK_COLUMN_VIEW_CELL_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST ((k), GTK_TYPE_COLUMN_VIEW_CELL, GtkColumnViewCellClass))
-#define GTK_IS_COLUMN_VIEW_CELL(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), GTK_TYPE_COLUMN_VIEW_CELL))
-#define GTK_IS_COLUMN_VIEW_CELL_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), GTK_TYPE_COLUMN_VIEW_CELL))
-#define GTK_COLUMN_VIEW_CELL_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), GTK_TYPE_COLUMN_VIEW_CELL, GtkColumnViewCellClass))
+struct _GtkColumnViewCell
+{
+  GtkListItem parent_instance;
 
-typedef struct _GtkColumnViewCell GtkColumnViewCell;
-typedef struct _GtkColumnViewCellClass GtkColumnViewCellClass;
+  GtkColumnViewCellWidget *cell; /* has a reference */
 
-GType                   gtk_column_view_cell_get_type           (void) G_GNUC_CONST;
+  GtkWidget *child;
 
-GtkWidget *             gtk_column_view_cell_new                (GtkColumnViewColumn    *column);
+  guint focusable : 1;
+};
 
-void                    gtk_column_view_cell_remove             (GtkColumnViewCell      *self);
+GtkColumnViewCell *     gtk_column_view_cell_new                        (void);
 
-GtkColumnViewCell *     gtk_column_view_cell_get_next           (GtkColumnViewCell      *self);
-GtkColumnViewCell *     gtk_column_view_cell_get_prev           (GtkColumnViewCell      *self);
-GtkColumnViewColumn *   gtk_column_view_cell_get_column         (GtkColumnViewCell      *self);
+void                    gtk_column_view_cell_do_notify                  (GtkColumnViewCell *column_view_cell,
+                                                                         gboolean notify_item,
+                                                                         gboolean notify_position,
+                                                                         gboolean notify_selected);
+
 
 G_END_DECLS
 
-#endif  /* __GTK_COLUMN_VIEW_CELL_PRIVATE_H__ */

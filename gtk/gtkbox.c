@@ -56,7 +56,9 @@
  *
  * # Accessibility
  *
- * `GtkBox` uses the %GTK_ACCESSIBLE_ROLE_GROUP role.
+ * Until GTK 4.10, `GtkBox` used the `GTK_ACCESSIBLE_ROLE_GROUP` role.
+ *
+ * Starting from GTK 4.12, `GtkBox` uses the `GTK_ACCESSIBLE_ROLE_GENERIC` role.
  */
 
 #include "config.h"
@@ -74,6 +76,7 @@ enum {
   PROP_0,
   PROP_SPACING,
   PROP_HOMOGENEOUS,
+  PROP_BASELINE_CHILD,
   PROP_BASELINE_POSITION,
 
   /* orientable */
@@ -125,6 +128,9 @@ gtk_box_set_property (GObject      *object,
     case PROP_SPACING:
       gtk_box_set_spacing (box, g_value_get_int (value));
       break;
+    case PROP_BASELINE_CHILD:
+      gtk_box_set_baseline_child (box, g_value_get_int (value));
+      break;
     case PROP_BASELINE_POSITION:
       gtk_box_set_baseline_position (box, g_value_get_enum (value));
       break;
@@ -153,6 +159,9 @@ gtk_box_get_property (GObject    *object,
       break;
     case PROP_SPACING:
       g_value_set_int (value, gtk_box_layout_get_spacing (box_layout));
+      break;
+    case PROP_BASELINE_CHILD:
+      g_value_set_int (value, gtk_box_layout_get_baseline_child (box_layout));
       break;
     case PROP_BASELINE_POSITION:
       g_value_set_enum (value, gtk_box_layout_get_baseline_position (box_layout));
@@ -271,6 +280,18 @@ gtk_box_class_init (GtkBoxClass *class)
                           GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
 
   /**
+   * GtkBox:baseline-child: (attributes org.gtk.Property.get=gtk_box_get_baseline_child org.gtk.Property.set=gtk_box_set_baseline_child)
+   *
+   * The child that determines the baseline, in vertical orientation.
+   *
+   * Since: 4.12
+   */
+  props[PROP_BASELINE_CHILD] =
+    g_param_spec_int ("baseline-child", NULL, NULL,
+                      -1, G_MAXINT, -1,
+                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
    * GtkBox:baseline-position: (attributes org.gtk.Property.get=gtk_box_get_baseline_position org.gtk.Property.set=gtk_box_set_baseline_position)
    *
    * The position of the baseline aligned widgets if extra space is available.
@@ -285,8 +306,9 @@ gtk_box_class_init (GtkBoxClass *class)
 
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BOX_LAYOUT);
   gtk_widget_class_set_css_name (widget_class, I_("box"));
-  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_GROUP);
+  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_GENERIC);
 }
+
 static void
 gtk_box_init (GtkBox *box)
 {
@@ -423,6 +445,57 @@ gtk_box_get_spacing (GtkBox *box)
   box_layout = gtk_widget_get_layout_manager (GTK_WIDGET (box));
 
   return gtk_box_layout_get_spacing (GTK_BOX_LAYOUT (box_layout));
+}
+
+/**
+ * gtk_box_set_baseline_child: (attributes org.gtk.Method.set_property=baseline-child)
+ * @box: a `GtkBox`
+ * @child: a child, or -1
+ *
+ * Sets the baseline child of a box.
+ *
+ * This affects only vertical boxes.
+ *
+ * Since: 4.12
+ */
+void
+gtk_box_set_baseline_child (GtkBox *box,
+                            int     child)
+{
+  GtkBoxLayout *box_layout;
+
+  g_return_if_fail (GTK_IS_BOX (box));
+  g_return_if_fail (child >= -1);
+
+  box_layout = GTK_BOX_LAYOUT (gtk_widget_get_layout_manager (GTK_WIDGET (box)));
+  if (child == gtk_box_layout_get_baseline_child (box_layout))
+    return;
+
+  gtk_box_layout_set_baseline_child  (box_layout, child);
+  g_object_notify_by_pspec (G_OBJECT (box), props[PROP_BASELINE_CHILD]);
+  gtk_widget_queue_resize (GTK_WIDGET (box));
+}
+
+/**
+ * gtk_box_get_baseline_child: (attributes org.gtk.Method.get_property=baseline-child)
+ * @box: a `GtkBox`
+ *
+ * Gets the value set by gtk_box_set_baseline_child().
+ *
+ * Returns: the baseline child
+ *
+ * Since: 4.12
+ */
+int
+gtk_box_get_baseline_child (GtkBox *box)
+{
+  GtkLayoutManager *box_layout;
+
+  g_return_val_if_fail (GTK_IS_BOX (box), -1);
+
+  box_layout = gtk_widget_get_layout_manager (GTK_WIDGET (box));
+
+  return gtk_box_layout_get_baseline_child (GTK_BOX_LAYOUT (box_layout));
 }
 
 /**

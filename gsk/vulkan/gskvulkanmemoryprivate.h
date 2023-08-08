@@ -1,5 +1,4 @@
-#ifndef __GSK_VULKAN_MEMORY_PRIVATE_H__
-#define __GSK_VULKAN_MEMORY_PRIVATE_H__
+#pragma once
 
 #include <gdk/gdk.h>
 
@@ -15,9 +14,10 @@ void                    gsk_vulkan_memory_free                          (GskVulk
 
 VkDeviceMemory          gsk_vulkan_memory_get_device_memory             (GskVulkanMemory        *self);
 
+gboolean                gsk_vulkan_memory_can_map                       (GskVulkanMemory        *self,
+                                                                         gboolean                fast);
 guchar *                gsk_vulkan_memory_map                           (GskVulkanMemory        *self);
 void                    gsk_vulkan_memory_unmap                         (GskVulkanMemory        *self);
 
 G_END_DECLS
 
-#endif /* __GSK_VULKAN_MEMORY_PRIVATE_H__ */

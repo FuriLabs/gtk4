@@ -22,8 +22,7 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#ifndef __GTK_BOX_H__
-#define __GTK_BOX_H__
+#pragma once
 
 
 #if !defined (__GTK_H_INSIDE__) && !defined (GTK_COMPILATION)
@@ -87,6 +86,12 @@ void        gtk_box_set_baseline_position (GtkBox             *box,
 GDK_AVAILABLE_IN_ALL
 GtkBaselinePosition gtk_box_get_baseline_position (GtkBox         *box);
 
+GDK_AVAILABLE_IN_4_12
+void        gtk_box_set_baseline_child (GtkBox         *box,
+                                        int             child);
+GDK_AVAILABLE_IN_4_12
+int         gtk_box_get_baseline_child (GtkBox         *box);
+
 GDK_AVAILABLE_IN_ALL
 void        gtk_box_append             (GtkBox         *box,
                                         GtkWidget      *child);
@@ -111,4 +116,3 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkBox, g_object_unref)
 
 G_END_DECLS
 
-#endif /* __GTK_BOX_H__ */

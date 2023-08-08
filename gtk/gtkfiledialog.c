@@ -268,7 +268,7 @@ gtk_file_dialog_class_init (GtkFileDialogClass *class)
   /**
    * GtkFileDialog:initial-file: (attributes org.gtk.Property.get=gtk_file_dialog_get_initial_file org.gtk.Property.set=gtk_file_dialog_set_initial_file)
    *
-   * The inital file, that is, the file that is initially selected
+   * The initial file, that is, the file that is initially selected
    * in the file chooser dialog
    *
    * This is a utility property that sets both [property@Gtk.FileDialog:initial-folder] and
@@ -284,7 +284,7 @@ gtk_file_dialog_class_init (GtkFileDialogClass *class)
   /**
    * GtkFileDialog:initial-folder: (attributes org.gtk.Property.get=gtk_file_dialog_get_initial_folder org.gtk.Property.set=gtk_file_dialog_set_initial_folder)
    *
-   * The inital folder, that is, the directory that is initially
+   * The initial folder, that is, the directory that is initially
    * opened in the file chooser dialog
    *
    * Since: 4.10
@@ -297,7 +297,7 @@ gtk_file_dialog_class_init (GtkFileDialogClass *class)
   /**
    * GtkFileDialog:initial-name: (attributes org.gtk.Property.get=gtk_file_dialog_get_initial_name org.gtk.Property.set=gtk_file_dialog_set_initial_name)
    *
-   * The inital name, that is, the filename that is initially
+   * The initial name, that is, the filename that is initially
    * selected in the file chooser dialog.
    *
    * Since: 4.10
@@ -479,7 +479,7 @@ gtk_file_dialog_get_filters (GtkFileDialog *self)
 /**
  * gtk_file_dialog_set_filters:
  * @self: a `GtkFileDialog`
- * @filters: a `GListModel` of `GtkFileFilters`
+ * @filters: (nullable): a `GListModel` of `GtkFileFilters`
  *
  * Sets the filters that will be offered to the user
  * in the file chooser dialog.
@@ -491,7 +491,7 @@ gtk_file_dialog_set_filters (GtkFileDialog *self,
                              GListModel    *filters)
 {
   g_return_if_fail (GTK_IS_FILE_DIALOG (self));
-  g_return_if_fail (G_IS_LIST_MODEL (filters));
+  g_return_if_fail (filters == NULL || G_IS_LIST_MODEL (filters));
 
   if (!g_set_object (&self->filters, filters))
     return;
@@ -703,7 +703,7 @@ gtk_file_dialog_set_initial_file (GtkFileDialog *self,
       if (folder == NULL)
         goto invalid_file;
 
-      if (g_set_object (&self->initial_folder, NULL))
+      if (g_set_object (&self->initial_folder, folder))
         g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_INITIAL_FOLDER]);
 
       info = g_file_query_info (file, G_FILE_ATTRIBUTE_STANDARD_EDIT_NAME, 0, NULL, NULL);
@@ -783,6 +783,8 @@ G_GNUC_END_IGNORE_DEPRECATIONS
     g_task_return_new_error (task, GTK_DIALOG_ERROR, GTK_DIALOG_ERROR_DISMISSED, "Dismissed by user");
   else
     g_task_return_new_error (task, GTK_DIALOG_ERROR, GTK_DIALOG_ERROR_FAILED, "Unknown failure (%d)", response);
+
+  gtk_native_dialog_destroy (GTK_NATIVE_DIALOG (g_task_get_task_data (task)));
 
   g_object_unref (task);
 }
@@ -885,11 +887,11 @@ finish_file_op (GtkFileDialog  *self,
   files = g_task_propagate_pointer (task, error);
   if (files)
     {
-      GFile *file;
+      GFile *file = NULL;
 
-      g_assert (g_list_model_get_n_items (files) == 1);
+      if (g_list_model_get_n_items (files) > 0)
+        file = g_list_model_get_item (files, 0);
 
-      file = g_list_model_get_item (files, 0);
       g_object_unref (files);
 
       return file;
@@ -943,7 +945,7 @@ gtk_file_dialog_open (GtkFileDialog       *self,
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_check_cancellable (task, FALSE);
   g_task_set_source_tag (task, gtk_file_dialog_open);
-  g_task_set_task_data (task, chooser, (GDestroyNotify) gtk_native_dialog_destroy);
+  g_task_set_task_data (task, chooser, g_object_unref);
 
   if (cancellable)
     g_signal_connect (cancellable, "cancelled", G_CALLBACK (cancelled_cb), task);
@@ -975,9 +977,6 @@ gtk_file_dialog_open_finish (GtkFileDialog   *self,
   g_return_val_if_fail (GTK_IS_FILE_DIALOG (self), NULL);
   g_return_val_if_fail (g_task_is_valid (result, self), NULL);
   g_return_val_if_fail (g_task_get_source_tag (G_TASK (result)) == gtk_file_dialog_open, NULL);
-
-  /* Destroy the dialog window not to be bound to GTask lifecycle */
-  g_task_set_task_data (G_TASK (result), NULL, NULL);
 
   return finish_file_op (self, G_TASK (result), error);
 }
@@ -1020,7 +1019,7 @@ gtk_file_dialog_select_folder (GtkFileDialog       *self,
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_check_cancellable (task, FALSE);
   g_task_set_source_tag (task, gtk_file_dialog_select_folder);
-  g_task_set_task_data (task, chooser, (GDestroyNotify) gtk_native_dialog_destroy);
+  g_task_set_task_data (task, chooser, g_object_unref);
 
   if (cancellable)
     g_signal_connect (cancellable, "cancelled", G_CALLBACK (cancelled_cb), task);
@@ -1052,9 +1051,6 @@ gtk_file_dialog_select_folder_finish (GtkFileDialog  *self,
   g_return_val_if_fail (GTK_IS_FILE_DIALOG (self), NULL);
   g_return_val_if_fail (g_task_is_valid (result, self), NULL);
   g_return_val_if_fail (g_task_get_source_tag (G_TASK (result)) == gtk_file_dialog_select_folder, NULL);
-
-  /* Destroy the dialog window not to be bound to GTask lifecycle */
-  g_task_set_task_data (G_TASK (result), NULL, NULL);
 
   return finish_file_op (self, G_TASK (result), error);
 }
@@ -1093,7 +1089,7 @@ gtk_file_dialog_save (GtkFileDialog       *self,
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_check_cancellable (task, FALSE);
   g_task_set_source_tag (task, gtk_file_dialog_save);
-  g_task_set_task_data (task, chooser, (GDestroyNotify) gtk_native_dialog_destroy);
+  g_task_set_task_data (task, chooser, g_object_unref);
 
   if (cancellable)
     g_signal_connect (cancellable, "cancelled", G_CALLBACK (cancelled_cb), task);
@@ -1125,9 +1121,6 @@ gtk_file_dialog_save_finish (GtkFileDialog   *self,
   g_return_val_if_fail (GTK_IS_FILE_DIALOG (self), NULL);
   g_return_val_if_fail (g_task_is_valid (result, self), NULL);
   g_return_val_if_fail (g_task_get_source_tag (G_TASK (result)) == gtk_file_dialog_save, NULL);
-
-  /* Destroy the dialog window not to be bound to GTask lifecycle */
-  g_task_set_task_data (G_TASK (result), NULL, NULL);
 
   return finish_file_op (self, G_TASK (result), error);
 }
@@ -1169,7 +1162,7 @@ gtk_file_dialog_open_multiple (GtkFileDialog       *self,
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_check_cancellable (task, FALSE);
   g_task_set_source_tag (task, gtk_file_dialog_open_multiple);
-  g_task_set_task_data (task, chooser, (GDestroyNotify) gtk_native_dialog_destroy);
+  g_task_set_task_data (task, chooser, g_object_unref);
 
   if (cancellable)
     g_signal_connect (cancellable, "cancelled", G_CALLBACK (cancelled_cb), task);
@@ -1202,9 +1195,6 @@ gtk_file_dialog_open_multiple_finish (GtkFileDialog   *self,
   g_return_val_if_fail (GTK_IS_FILE_DIALOG (self), NULL);
   g_return_val_if_fail (g_task_is_valid (result, self), NULL);
   g_return_val_if_fail (g_task_get_source_tag (G_TASK (result)) == gtk_file_dialog_open_multiple, NULL);
-
-  /* Destroy the dialog window not to be bound to GTask lifecycle */
-  g_task_set_task_data (G_TASK (result), NULL, NULL);
 
   return finish_multiple_files_op (self, G_TASK (result), error);
 }
@@ -1246,7 +1236,7 @@ gtk_file_dialog_select_multiple_folders (GtkFileDialog       *self,
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_check_cancellable (task, FALSE);
   g_task_set_source_tag (task, gtk_file_dialog_select_multiple_folders);
-  g_task_set_task_data (task, chooser, (GDestroyNotify) gtk_native_dialog_destroy);
+  g_task_set_task_data (task, chooser, g_object_unref);
 
   if (cancellable)
     g_signal_connect (cancellable, "cancelled", G_CALLBACK (cancelled_cb), task);
@@ -1279,9 +1269,6 @@ gtk_file_dialog_select_multiple_folders_finish (GtkFileDialog   *self,
   g_return_val_if_fail (GTK_IS_FILE_DIALOG (self), NULL);
   g_return_val_if_fail (g_task_is_valid (result, self), NULL);
   g_return_val_if_fail (g_task_get_source_tag (G_TASK (result)) == gtk_file_dialog_select_multiple_folders, NULL);
-
-  /* Destroy the dialog window not to be bound to GTask lifecycle */
-  g_task_set_task_data (G_TASK (result), NULL, NULL);
 
   return finish_multiple_files_op (self, G_TASK (result), error);
 }

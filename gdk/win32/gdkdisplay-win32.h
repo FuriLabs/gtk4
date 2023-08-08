@@ -19,12 +19,13 @@
 
 #include "gdkdisplayprivate.h"
 
-#ifndef __GDK_DISPLAY__WIN32_H__
-#define __GDK_DISPLAY__WIN32_H__
+#pragma once
 
 #include "gdkwin32screen.h"
 #include "gdkwin32cursor.h"
  
+#include "gdkglversionprivate.h"
+
 #ifdef HAVE_EGL
 # include <epoxy/egl.h>
 #endif
@@ -107,6 +108,7 @@ typedef enum {
 
 typedef struct
 {
+  HWND hwnd;
   HDC hdc;
   HGLRC hglrc;
 } GdkWin32GLDummyContextWGL;
@@ -125,7 +127,6 @@ struct _GdkWin32Display
 
   /* WGL/OpenGL Items */
   GdkWin32GLDummyContextWGL dummy_context_wgl;
-  guint gl_version;
 
   GListModel *monitors;
 
@@ -133,7 +134,6 @@ struct _GdkWin32Display
   guint hasWglEXTSwapControl : 1;
   guint hasWglOMLSyncControl : 1;
   guint hasWglARBPixelFormat : 1;
-  guint hasWglARBmultisample : 1;
 
 #ifdef HAVE_EGL
   guint hasEglKHRCreateContext : 1;
@@ -196,4 +196,3 @@ struct _GdkWin32MessageFilter
   guint ref_count;
 };
 
-#endif /* __GDK_DISPLAY__WIN32_H__ */

@@ -1,6 +1,6 @@
 /*  Copyright 2015 Red Hat, Inc.
  *
- * GTK+ is free software; you can redistribute it and/or modify it
+ * GTK is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation; either version 2 of the
  * License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with GTK+; see the file COPYING.  If not,
+ * License along with GTK; see the file COPYING.  If not,
  * see <http://www.gnu.org/licenses/>.
  *
  * Author: Matthias Clasen
@@ -23,7 +23,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <glib/gi18n.h>
+#include <glib/gi18n-lib.h>
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
@@ -34,7 +34,7 @@ static void G_GNUC_NORETURN
 usage (void)
 {
   g_print (_("Usage:\n"
-             "  gtk-builder-tool [COMMAND] [OPTION…] FILE\n"
+             "  gtk4-builder-tool [COMMAND] [OPTION…] FILE\n"
              "\n"
              "Perform various tasks on GtkBuilder .ui files.\n"
              "\n"
@@ -43,21 +43,10 @@ usage (void)
              "  simplify     Simplify the file\n"
              "  enumerate    List all named objects\n"
              "  preview      Preview the file\n"
+             "  render       Take a screenshot of the file\n"
              "  screenshot   Take a screenshot of the file\n"
              "\n"));
   exit (1);
-}
-
-/* A simplified version of g_log_writer_default_would_drop(), to avoid
- * bumping up the required version of GLib to 2.68
- */
-static gboolean
-would_drop (GLogLevelFlags  level,
-            const char     *domain)
-{
-  return (level & (G_LOG_LEVEL_ERROR |
-                   G_LOG_LEVEL_CRITICAL |
-                   G_LOG_LEVEL_WARNING)) == 0;
 }
 
 static GLogWriterOutput
@@ -78,7 +67,7 @@ log_writer_func (GLogLevelFlags   level,
         message = fields[i].value;
     }
 
-  if (message != NULL && !would_drop (level, domain))
+  if (message != NULL && !g_log_writer_default_would_drop (level, domain))
     {
       const char *prefix;
       switch (level & G_LOG_LEVEL_MASK)
@@ -130,7 +119,8 @@ main (int argc, const char *argv[])
     do_enumerate (&argc, &argv);
   else if (strcmp (argv[0], "preview") == 0)
     do_preview (&argc, &argv);
-  else if (strcmp (argv[0], "screenshot") == 0)
+  else if (strcmp (argv[0], "render") == 0 ||
+           strcmp (argv[0], "screenshot") == 0)
     do_screenshot (&argc, &argv);
   else
     usage ();

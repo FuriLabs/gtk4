@@ -108,9 +108,11 @@ enum {
 
 typedef struct {
   GtkWindow *parent;
+  char *parent_handle;
   GFile *file;
   char *uri;
   gboolean open_folder;
+  gboolean always_ask;
   GDBusConnection *connection;
   GCancellable *cancellable;
   GTask *task;
@@ -128,8 +130,9 @@ open_uri_data_free (OpenUriData *data)
   g_clear_object (&data->connection);
   if (data->cancel_handler)
     g_signal_handler_disconnect (data->cancellable, data->cancel_handler);
-  if (data->parent)
-    gtk_window_unexport_handle (data->parent);
+  if (data->parent && data->parent_handle)
+    gtk_window_unexport_handle (data->parent, data->parent_handle);
+  g_free (data->parent_handle);
   g_clear_object (&data->parent);
   g_clear_object (&data->file);
   g_free (data->uri);
@@ -273,6 +276,7 @@ open_uri (OpenUriData         *data,
 {
   GFile *file = data->file;
   gboolean open_folder = data->open_folder;
+  gboolean always_ask = data->always_ask;
   GTask *task;
   GVariant *opts = NULL;
   int i;
@@ -316,6 +320,9 @@ open_uri (OpenUriData         *data,
 
   if (activation_token)
     g_variant_builder_add (&opt_builder, "{sv}", "activation_token", g_variant_new_string (activation_token));
+
+  if (always_ask && !open_folder)
+    g_variant_builder_add (&opt_builder, "{sv}", "ask", g_variant_new_boolean (always_ask));
 
   opts = g_variant_builder_end (&opt_builder);
 
@@ -426,6 +433,8 @@ window_handle_exported (GtkWindow  *window,
   GAppLaunchContext *context;
   char *activation_token = NULL;
 
+  data->parent_handle = g_strdup (handle);
+
   if (window)
     display = gtk_widget_get_display (GTK_WIDGET (window));
   else
@@ -449,6 +458,7 @@ window_handle_exported (GtkWindow  *window,
 void
 gtk_openuri_portal_open_async (GFile               *file,
                                gboolean             open_folder,
+                               gboolean             always_ask,
                                GtkWindow           *parent,
                                GCancellable        *cancellable,
                                GAsyncReadyCallback  callback,
@@ -468,6 +478,7 @@ gtk_openuri_portal_open_async (GFile               *file,
   data->parent = parent ? g_object_ref (parent) : NULL;
   data->file = g_object_ref (file);
   data->open_folder = open_folder;
+  data->always_ask = always_ask;
   data->cancellable = cancellable ? g_object_ref (cancellable) : NULL;
   data->task = g_task_new (parent, cancellable, callback, user_data);
   g_task_set_check_cancellable (data->task, FALSE);

@@ -1,8 +1,9 @@
 #include "config.h"
 
 #include "gskvulkanbufferprivate.h"
+
 #include "gskvulkanmemoryprivate.h"
-#include "gskvulkanpipelineprivate.h"
+#include "gskvulkanprivate.h"
 
 struct _GskVulkanBuffer
 {
@@ -23,7 +24,7 @@ gsk_vulkan_buffer_new_internal (GdkVulkanContext  *context,
   VkMemoryRequirements requirements;
   GskVulkanBuffer *self;
 
-  self = g_slice_new0 (GskVulkanBuffer);
+  self = g_new0 (GskVulkanBuffer, 1);
 
   self->vulkan = g_object_ref (context);
   self->size = size;
@@ -46,7 +47,7 @@ gsk_vulkan_buffer_new_internal (GdkVulkanContext  *context,
   self->memory = gsk_vulkan_memory_new (context,
                                         requirements.memoryTypeBits,
                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                        size);
+                                        requirements.size);
 
   GSK_VK_CHECK (vkBindBufferMemory, gdk_vulkan_context_get_device (context),
                                     self->vk_buffer,
@@ -65,18 +66,23 @@ gsk_vulkan_buffer_new (GdkVulkanContext  *context,
 }
 
 GskVulkanBuffer *
-gsk_vulkan_buffer_new_staging (GdkVulkanContext  *context,
+gsk_vulkan_buffer_new_storage (GdkVulkanContext  *context,
                                gsize              size)
 {
-  return gsk_vulkan_buffer_new_internal (context, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+  return gsk_vulkan_buffer_new_internal (context, size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 }
 
 GskVulkanBuffer *
-gsk_vulkan_buffer_new_download (GdkVulkanContext  *context,
-                                gsize              size)
+gsk_vulkan_buffer_new_map (GdkVulkanContext  *context,
+                           gsize              size,
+                           GskVulkanMapMode   mode)
 {
-  return gsk_vulkan_buffer_new_internal (context, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+  return gsk_vulkan_buffer_new_internal (context,
+                                         size,
+                                         (mode & GSK_VULKAN_READ ? VK_BUFFER_USAGE_TRANSFER_DST_BIT : 0) |
+                                         (mode & GSK_VULKAN_WRITE ? VK_BUFFER_USAGE_TRANSFER_SRC_BIT : 0));
 }
+
 void
 gsk_vulkan_buffer_free (GskVulkanBuffer *self)
 {
@@ -88,13 +94,19 @@ gsk_vulkan_buffer_free (GskVulkanBuffer *self)
 
   g_object_unref (self->vulkan);
 
-  g_slice_free (GskVulkanBuffer, self);
+  g_free (self);
 }
 
 VkBuffer
 gsk_vulkan_buffer_get_buffer (GskVulkanBuffer *self)
 {
   return self->vk_buffer;
+}
+
+gsize
+gsk_vulkan_buffer_get_size (GskVulkanBuffer *self)
+{
+  return self->size;
 }
 
 guchar *

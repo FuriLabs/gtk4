@@ -3,8 +3,7 @@
 reftest_cflags = []
 foreach flag: common_cflags
   if flag not in ['-Werror=missing-prototypes', '-Wmissing-prototypes',
-                  '-Werror=missing-declarations', '-Wmissing-declarations',
-                  '-fvisibility=hidden']
+                  '-Werror=missing-declarations', '-Wmissing-declarations']
     reftest_cflags += flag
   endif
 endforeach
@@ -365,12 +364,18 @@ testdata = [
   'image-load-from-file.css',
   'image-load-from-file.ref.ui',
   'image-load-from-file.ui',
+  'inscription-markup.ref.ui',
+  'inscription-markup.ui',
   'inscription-overflow.ref.ui',
   'inscription-overflow.ui',
   'inscription-overflow-multiline.ref.ui',
   'inscription-overflow-multiline.ui',
   'inscription-overflow-yalign.ref.ui',
   'inscription-overflow-yalign.ui',
+  'inscription-xalign.ref.ui',
+  'inscription-xalign.ui',
+  'inscription-xalign-rtl.ref.ui',
+  'inscription-xalign-rtl.ui',
   'label-attribute-preference.css',
   'label-attribute-preference.ref.ui',
   'label-attribute-preference.ui',
@@ -592,12 +597,6 @@ xfails = [
   # makes assumptions about text positioning that are not
   # valid with subpixel positioning
   'border-image-url.ui',
-  'inscription-markup.ref.ui',
-  'inscription-markup.ui',
-  'inscription-xalign.ref.ui',
-  'inscription-xalign.ui',
-  'inscription-xalign-rtl.ref.ui',
-  'inscription-xalign-rtl.ui',
   'label-background.ui',
   'label-wrap-justify.ui',
 ]
@@ -622,7 +621,6 @@ reftest_env = environment()
 reftest_env.set('GTK_A11Y', 'test')
 reftest_env.set('G_TEST_SRCDIR', meson.current_source_dir())
 reftest_env.set('G_TEST_BUILDDIR', meson.current_build_dir())
-reftest_env.set('GIO_USE_VFS', 'local')
 reftest_env.set('GSETTINGS_BACKEND', 'memory')
 reftest_env.set('G_ENABLE_DIAGNOSTIC', '0')
 reftest_env.set('REFTEST_MODULE_DIR', meson.current_build_dir())

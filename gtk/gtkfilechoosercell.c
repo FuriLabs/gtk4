@@ -23,26 +23,21 @@
 
 #include "gtkprivate.h"
 #include "gtkbinlayout.h"
+#include "gtkcolumnviewcell.h"
 #include "gtkdragsource.h"
 #include "gtkgestureclick.h"
 #include "gtkgesturelongpress.h"
 #include "gtkicontheme.h"
-#include "gtklistitem.h"
 #include "gtkselectionmodel.h"
 #include "gtkfilechooserutils.h"
 #include "gtkfilechooserwidgetprivate.h"
-#include "gtklistitem.h"
 
 struct _GtkFileChooserCell
 {
   GtkWidget parent_instance;
 
   GFileInfo *item;
-  gboolean selected;
-  guint position;
-  GtkListItem *list_item;
-
-  gboolean show_time;
+  GtkColumnViewCell *list_item;
 };
 
 struct _GtkFileChooserCellClass
@@ -55,9 +50,7 @@ G_DEFINE_TYPE (GtkFileChooserCell, gtk_file_chooser_cell, GTK_TYPE_WIDGET)
 enum
 {
   PROP_POSITION = 1,
-  PROP_SELECTED,
   PROP_ITEM,
-  PROP_SHOW_TIME,
   PROP_LIST_ITEM,
 };
 
@@ -69,20 +62,20 @@ popup_menu (GtkFileChooserCell *self,
             double              y)
 {
   GtkWidget *widget = GTK_WIDGET (self);
-  GtkSelectionModel *model;
   GtkWidget *impl;
-  double xx, yy;
+  graphene_point_t p;
+
+  gtk_widget_activate_action (GTK_WIDGET (self), "listitem.select", "(bb)", FALSE, FALSE);
 
   impl = gtk_widget_get_ancestor (widget, GTK_TYPE_FILE_CHOOSER_WIDGET);
 
-  model = gtk_file_chooser_widget_get_selection_model (GTK_FILE_CHOOSER_WIDGET (impl));
-  gtk_selection_model_select_item (model, self->position, TRUE);
+  if (!gtk_widget_compute_point (widget, GTK_WIDGET (impl),
+                                 &GRAPHENE_POINT_INIT (x, y), &p))
+    return;
 
-  gtk_widget_translate_coordinates (widget, GTK_WIDGET (impl),
-                                    x, y, &xx, &yy);
-
-  gtk_widget_activate_action (widget, "item.popup-file-list-menu",
-                              "(udd)", self->position, xx, yy);
+  if (self->list_item)
+    gtk_widget_activate_action (widget, "item.popup-file-list-menu",
+                                "(udd)", gtk_column_view_cell_get_position (self->list_item), p.x, p.y);
 }
 
 static void
@@ -128,10 +121,9 @@ drag_prepare_cb (GtkDragSource *source,
   impl = GTK_FILE_CHOOSER_WIDGET (gtk_widget_get_ancestor (GTK_WIDGET (self),
                                                            GTK_TYPE_FILE_CHOOSER_WIDGET));
 
-  if (!self->selected)
+  if (self->list_item && !gtk_column_view_cell_get_selected (self->list_item))
     {
-      gtk_selection_model_select_item (gtk_file_chooser_widget_get_selection_model (impl),
-                                       self->position, TRUE);
+      gtk_widget_activate_action (GTK_WIDGET (self), "listitem.select", "(bb)", FALSE, FALSE);
     }
 
   selection = gtk_file_chooser_widget_get_selected_files (impl);
@@ -156,18 +148,6 @@ drag_prepare_cb (GtkDragSource *source,
 }
 
 static void
-gtk_file_chooser_cell_realize (GtkWidget *widget)
-{
-  GtkFileChooserCell *self = GTK_FILE_CHOOSER_CELL (widget);
-  GtkFileChooserWidget *impl;
-
-  impl = GTK_FILE_CHOOSER_WIDGET (gtk_widget_get_ancestor (GTK_WIDGET (self),
-                                                           GTK_TYPE_FILE_CHOOSER_WIDGET));
-
-  g_object_bind_property (impl, "show-time", self, "show-time", G_BINDING_SYNC_CREATE);
-}
-
-static void
 gtk_file_chooser_cell_init (GtkFileChooserCell *self)
 {
   GtkGesture *gesture;
@@ -185,8 +165,6 @@ gtk_file_chooser_cell_init (GtkFileChooserCell *self)
   drag_source = gtk_drag_source_new ();
   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (drag_source));
   g_signal_connect (drag_source, "prepare", G_CALLBACK (drag_prepare_cb), self);
-
-  g_signal_connect (self, "realize", G_CALLBACK (gtk_file_chooser_cell_realize), NULL);
 }
 
 static void
@@ -210,13 +188,6 @@ get_selectable (GtkFileChooserCell *self)
 }
 
 static void
-update_list_item (GtkFileChooserCell *self)
-{
-  if (self->list_item)
-    gtk_list_item_set_selectable (self->list_item, get_selectable (self));
-}
-
-static void
 gtk_file_chooser_cell_set_property (GObject      *object,
                                     guint         prop_id,
                                     const GValue *value,
@@ -226,14 +197,6 @@ gtk_file_chooser_cell_set_property (GObject      *object,
 
   switch (prop_id)
     {
-    case PROP_POSITION:
-      self->position = g_value_get_uint (value);
-      break;
-
-    case PROP_SELECTED:
-      self->selected = g_value_get_boolean (value);
-      break;
-
     case PROP_ITEM:
       self->item = g_value_get_object (value);
 
@@ -242,17 +205,10 @@ gtk_file_chooser_cell_set_property (GObject      *object,
       else
         gtk_widget_add_css_class (GTK_WIDGET (self), "dim-label");
 
-      update_list_item (self);
-      break;
-
-    case PROP_SHOW_TIME:
-      self->show_time = g_value_get_boolean (value);
       break;
 
     case PROP_LIST_ITEM:
       self->list_item = g_value_get_object (value);
-
-      update_list_item (self);
       break;
 
     default:
@@ -271,20 +227,8 @@ gtk_file_chooser_cell_get_property (GObject    *object,
 
   switch (prop_id)
     {
-    case PROP_POSITION:
-      g_value_set_uint (value, self->position);
-      break;
-
-    case PROP_SELECTED:
-      g_value_set_boolean (value, self->selected);
-      break;
-
     case PROP_ITEM:
       g_value_set_object (value, self->item);
-      break;
-
-    case PROP_SHOW_TIME:
-      g_value_set_boolean (value, self->show_time);
       break;
 
     default:
@@ -304,25 +248,10 @@ gtk_file_chooser_cell_class_init (GtkFileChooserCellClass *klass)
   object_class->set_property = gtk_file_chooser_cell_set_property;
   object_class->get_property = gtk_file_chooser_cell_get_property;
 
-  g_object_class_install_property (object_class, PROP_POSITION,
-                                   g_param_spec_uint ("position", NULL, NULL,
-                                                      0, G_MAXUINT, 0,
-                                                      GTK_PARAM_READWRITE));
-
-  g_object_class_install_property (object_class, PROP_SELECTED,
-                                   g_param_spec_boolean ("selected", NULL, NULL,
-                                                         FALSE,
-                                                         GTK_PARAM_READWRITE));
-
   g_object_class_install_property (object_class, PROP_ITEM,
                                    g_param_spec_object ("item", NULL, NULL,
                                                         G_TYPE_FILE_INFO,
                                                         GTK_PARAM_READWRITE));
-
-  g_object_class_install_property (object_class, PROP_SHOW_TIME,
-                                   g_param_spec_boolean ("show-time", NULL, NULL,
-                                                         FALSE,
-                                                         GTK_PARAM_READWRITE));
 
   g_object_class_install_property (object_class, PROP_LIST_ITEM,
                                    g_param_spec_object ("list-item", NULL, NULL,

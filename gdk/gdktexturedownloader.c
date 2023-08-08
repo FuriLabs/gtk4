@@ -76,7 +76,7 @@ gdk_texture_downloader_new (GdkTexture *texture)
 
   g_return_val_if_fail (GDK_IS_TEXTURE (texture), NULL);
 
-  self = g_slice_new (GdkTextureDownloader);
+  self = g_new (GdkTextureDownloader, 1);
   gdk_texture_downloader_init (self, texture);
 
   return self;
@@ -121,7 +121,7 @@ gdk_texture_downloader_free (GdkTextureDownloader *self)
   g_return_if_fail (self != NULL);
 
   gdk_texture_downloader_finish (self);
-  g_slice_free (GdkTextureDownloader, self);
+  g_free (self);
 }
 
 /**
@@ -225,17 +225,17 @@ gdk_texture_downloader_download_into (const GdkTextureDownloader *self,
 /**
  * gdk_texture_downloader_download_bytes:
  * @self: the downloader
- * @out_stride: (out): The stride of the resulting data in bytes.
+ * @out_stride: (out): The stride of the resulting data in bytes
  *
  * Downloads the given texture pixels into a `GBytes`. The rowstride will
  * be stored in the stride value.
  *
  * This function will abort if it tries to download a large texture and
- * fails to allocate memory. If you think that may happen, you should
- * handle memory allocation yourself and use
- * gdk_texture_downloader_download_into() once allocation succeeded.
+ * fails to allocate memory. If you think that may happen, you should handle
+ * memory allocation yourself and use [method@Gdk.TextureDownloader.download_into]
+ * once allocation succeeded.
  *
- * Returns: The downloaded pixels.
+ * Returns: The downloaded pixels
  *
  * Since: 4.10
  **/

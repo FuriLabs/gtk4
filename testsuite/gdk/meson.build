@@ -9,7 +9,7 @@ clipboard_client = executable('clipboard-client',
 tests = [
   { 'name': 'array' },
   { 'name': 'cairo' },
-  { 'name': 'clipboard', 'parallel': false, },
+  { 'name': 'clipboard', 'parallel': false, 'suites': 'flaky' },
   { 'name': 'contentformats' },
   { 'name': 'contentserializer' },
   { 'name': 'cursor' },
@@ -23,6 +23,8 @@ tests = [
   { 'name': 'rgba' },
   { 'name': 'seat' },
   { 'name': 'texture-threads' },
+  { 'name': 'toplevellayout' },
+  { 'name': 'popuplayout' },
 ]
 
 foreach t : tests
@@ -52,11 +54,12 @@ endforeach
 internal_tests = [
   'image',
   'texture',
+  'gltexture',
 ]
 
 foreach t : internal_tests
   test_exe = executable(t, '@0@.c'.format(t),
-    c_args: common_cflags,
+    c_args: common_cflags + ['-DGTK_COMPILATION'],
     dependencies: libgtk_static_dep,
     install: false,
   )

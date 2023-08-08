@@ -15,15 +15,12 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __GTK_CONTENT_FORMATS_H__
-#define __GTK_CONTENT_FORMATS_H__
+#pragma once
 
 #if !defined (__GDK_H_INSIDE__) && !defined (GTK_COMPILATION)
 #error "Only <gdk/gdk.h> can be included directly."
 #endif
 
-
-#include <gdk/gdkversionmacros.h>
 #include <gdk/gdktypes.h>
 
 G_BEGIN_DECLS
@@ -132,4 +129,3 @@ GdkFileList *   gdk_file_list_new_from_array (GFile **files,
 
 G_END_DECLS
 
-#endif /* __GTK_CONTENT_FORMATS_H__ */

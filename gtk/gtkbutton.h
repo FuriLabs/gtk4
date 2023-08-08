@@ -22,8 +22,7 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#ifndef __GTK_BUTTON_H__
-#define __GTK_BUTTON_H__
+#pragma once
 
 
 #if !defined (__GTK_H_INSIDE__) && !defined (GTK_COMPILATION)
@@ -94,7 +93,7 @@ GDK_AVAILABLE_IN_ALL
 void                  gtk_button_set_label          (GtkButton      *button,
 						     const char     *label);
 GDK_AVAILABLE_IN_ALL
-const char *         gtk_button_get_label          (GtkButton      *button);
+const char *          gtk_button_get_label          (GtkButton      *button);
 GDK_AVAILABLE_IN_ALL
 void                  gtk_button_set_use_underline  (GtkButton      *button,
 						     gboolean        use_underline);
@@ -113,8 +112,13 @@ void                  gtk_button_set_child          (GtkButton      *button,
 GDK_AVAILABLE_IN_ALL
 GtkWidget *           gtk_button_get_child          (GtkButton      *button);
 
+GDK_AVAILABLE_IN_4_12
+void                  gtk_button_set_can_shrink     (GtkButton      *button,
+                                                     gboolean        can_shrink);
+GDK_AVAILABLE_IN_4_12
+gboolean              gtk_button_get_can_shrink     (GtkButton      *button);
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkButton, g_object_unref)
 
 G_END_DECLS
 
-#endif /* __GTK_BUTTON_H__ */

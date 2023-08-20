@@ -7,6 +7,7 @@ fontchooser-Drop-a-few-errant-translations.patch
 gtkcssanimatedstyle-Fix-return-of-new_advance.patch
 Update-Turkish-translation-2.patch
 gdk-x11-Reset-all-scroll-valuators-on-enter.patch
+placessidebar-Make-all-rows-ellipsize.patch
 testsuite-Use-separate-setups-for-unstable-tests-instead-.patch
 testsuite-Don-t-create-.test-files-for-flaky-or-failing-t.patch
 node-editor-Save-test-data-relative-to-current-working-di.patch

@@ -1,3 +1,14 @@
+gtk4 (4.8.3+ds-2+deb12u1) UNRELEASED; urgency=medium
+
+  * d/p/placessidebar-Make-all-rows-ellipsize.patch:
+    Add patch from upstream gtk-4-8 branch to fix truncation in places
+    sidebar with large text accessibility setting (Closes: #1043261)
+  * d/patches: Mark patch for #1029972 as also applied for 4.8.4
+  * d/watch: Only watch for versions 4.8.x for bookworm
+  * d/gbp.conf, d/control.in: Switch packaging branch to debian/bookworm
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 20 Aug 2023 18:16:13 +0100
+
 gtk4 (4.8.3+ds-2) unstable; urgency=medium
 
   [ Jeremy Bicha ]

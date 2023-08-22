@@ -4,10 +4,19 @@ gtk4 (4.12.0+ds-3) UNRELEASED; urgency=medium
     Replace patch for #1050076 with the version accepted upstream.
     This accepts slight numerical differences on all platforms, not
     just i386.
+  * d/rules: Accept minor rendering differences for some tests on mips*.
+    Presumably these render a bit differently with softpipe.
+    (Closes: #1050077)
+  * d/p/debian/reftests-Allow-minor-differences-to-be-tolerated.patch:
+    Update patch so that when gsk-compare tests are run repeatedly, we
+    apply the same error-tolerance each time, not just the first time
+  * d/changelog: Reorder to make the history of unstable linear.
+    This should avoid the bug tracking system thinking that regressions
+    found in 4.12.x also affect 4.10.x.
   * Merge packaging from unstable
     - No further changes, except in the changelog
 
- -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 19:28:27 +0100
+ -- Simon McVittie <smcv@debian.org>  Wed, 23 Aug 2023 12:52:01 +0100
 
 gtk4 (4.12.0+ds-2) experimental; urgency=medium
 

@@ -22,7 +22,7 @@ This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
  12 files changed, 353 insertions(+), 43 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index 1351771..33b95e5 100644
+index 948dc01..da59df5 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -902,6 +902,7 @@ summary('Documentation', get_option('gtk_doc'), section: 'Build')
@@ -286,7 +286,7 @@ index 576b4d8..eb619cf 100644
 +  install_data(test_data, install_dir: testexecdir)
 +endif
 diff --git a/testsuite/css/parser/meson.build b/testsuite/css/parser/meson.build
-index b419c29..d0fdd0d 100644
+index 4c13342..2b5547d 100644
 --- a/testsuite/css/parser/meson.build
 +++ b/testsuite/css/parser/meson.build
 @@ -1,8 +1,11 @@
@@ -306,7 +306,7 @@ index b419c29..d0fdd0d 100644
  
  test_data = [
    'animation-crash-3.12.css',
-@@ -534,3 +537,15 @@ foreach testname : test_data
+@@ -536,3 +539,15 @@ foreach testname : test_data
           suite: 'css')
    endif
  endforeach
@@ -477,7 +477,7 @@ index ebaa66f..98b57cb 100644
 +  install_subdir('image-data', install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
-index ca8f833..44ad57a 100644
+index 3fe5295..2e1208e 100644
 --- a/testsuite/gsk/meson.build
 +++ b/testsuite/gsk/meson.build
 @@ -1,12 +1,22 @@
@@ -505,7 +505,7 @@ index ca8f833..44ad57a 100644
  )
  
  compare_render_tests = [
-@@ -277,9 +287,11 @@ foreach t : tests
+@@ -280,9 +290,11 @@ foreach t : tests
    test_extra_ldflags = t.get(3, [])
  
    test_exe = executable(test_name, test_srcs,
@@ -518,7 +518,7 @@ index ca8f833..44ad57a 100644
    )
  
    test(test_name, test_exe,
-@@ -308,11 +320,12 @@ foreach t : internal_tests
+@@ -311,11 +323,12 @@ foreach t : internal_tests
    test_extra_cargs = t.get(2, [])
    test_extra_ldflags = t.get(3, [])
  
@@ -535,7 +535,7 @@ index ca8f833..44ad57a 100644
  
    test(test_name, test_exe,
 diff --git a/testsuite/gtk/meson.build b/testsuite/gtk/meson.build
-index 73dd136..3c107ef 100644
+index a581156..50cab1e 100644
 --- a/testsuite/gtk/meson.build
 +++ b/testsuite/gtk/meson.build
 @@ -1,3 +1,6 @@
@@ -607,7 +607,7 @@ index 73dd136..3c107ef 100644
  )
  
  foreach test : focus_chain_tests
-@@ -274,6 +296,30 @@ test('potfiles', make_pot,
+@@ -275,6 +297,30 @@ test('potfiles', make_pot,
       workdir: meson.project_source_root(),
       suite: ['gtk', 'translations' ])
  

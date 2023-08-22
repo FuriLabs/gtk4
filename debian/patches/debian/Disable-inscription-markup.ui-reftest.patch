@@ -12,7 +12,7 @@ Forwarded: not-needed, workaround
  1 file changed, 2 insertions(+)
 
 diff --git a/testsuite/reftests/meson.build b/testsuite/reftests/meson.build
-index 1cc8a43..47d0864 100644
+index fc76528..2c6887c 100644
 --- a/testsuite/reftests/meson.build
 +++ b/testsuite/reftests/meson.build
 @@ -616,6 +616,8 @@ flaky = [

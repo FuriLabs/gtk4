@@ -1,42 +1,38 @@
 From: Simon McVittie <smcv@debian.org>
 Date: Tue, 22 Aug 2023 10:49:36 +0100
-Subject: tests: Accept slightly different numeric results on i386
+Subject: tests: Accept slightly different numeric results
 
-When using the legacy i387 FPU, 80-bit extended precision can result in
-slightly different answers for a floating-point computation that ought
-to be exact, depending on whether it was done in registers or saved
-and loaded to/from memory. Apparently in 1987 this seemed like a good
-idea.
+FLT_EPSILON is the distance between 1.0 and the next distinct floating
+point number, and doesn't necessarily have anything to do with the
+precision we can expect from a series of floating-point calculations.
+Experimentally, 1e-6 is achievable, even on platforms with unusual
+floating point implementations like i387.
 
 Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/6051
 Bug-Debian: https://bugs.debian.org/1050076
+Signed-off-by: Simon McVittie <smcv@debian.org>
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/6320
+Appled-upstream: 4.13.0, commit:0f125aad90742582c3467640abb291ce4feea7dd
 ---
- testsuite/gtk/colorutils.c | 22 ++++++++++++++++------
- 1 file changed, 16 insertions(+), 6 deletions(-)
+ testsuite/gtk/colorutils.c | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
 
 diff --git a/testsuite/gtk/colorutils.c b/testsuite/gtk/colorutils.c
-index b4d42e2..8260674 100644
+index b4d42e2..8f0acfb 100644
 --- a/testsuite/gtk/colorutils.c
 +++ b/testsuite/gtk/colorutils.c
-@@ -30,6 +30,16 @@ struct {
+@@ -30,6 +30,10 @@ struct {
    { 1, 0, 1, 5.0 / 6.0, 1, 1 },
  };
  
-+/* When using the legacy i387 FPU, 80-bit extended precision can result in
-+ * slightly different answers for a floating-point computation that ought
-+ * to be exact, depending on whether it was done in registers or saved
-+ * and loaded to/from memory. */
-+#ifdef __i386__
++/* Close enough for float precision to match, even with some
++ * rounding errors */
 +#define EPSILON 1e-6
-+#else
-+#define EPSILON FLT_EPSILON
-+#endif
 +
  static void
  test_roundtrips (void)
  {
-@@ -40,13 +50,13 @@ test_roundtrips (void)
+@@ -40,13 +44,13 @@ test_roundtrips (void)
  
        g_print ("color %u\n", i);
        gtk_hsv_to_rgb (tests[i].h, tests[i].s, tests[i].v, &r, &g, &b);

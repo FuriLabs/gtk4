@@ -1,4 +1,4 @@
-tests-Accept-slightly-different-numeric-results-on-i386.patch
+tests-Accept-slightly-different-numeric-results.patch
 Revert-tests-Stop-copying-the-tool-tests.patch
 Revert-build-Drop-the-install-tests-option.patch
 print-Revert-Start-sorting-apart-includes-change-for-gtkp.patch

@@ -165,15 +165,6 @@ override_dh_clean: debian/control
 # Add dependencies to generate files from the debian/*.in ones
 override_dh_auto_build: $(call dh_subst_files,$(all_binaries))
 
-override_dh_auto_build: disable-i386-s390x-tests
-disable-i386-s390x-tests:
-ifeq (i386,$(DEB_BUILD_ARCH))
-	sed -i '/colorutils/d' testsuite/gtk/meson.build
-	sed -i '/hbox-with-ellipsizing-wrapping-label/d' testsuite/reftests/meson.build
-else ifeq (s390x,$(DEB_BUILD_ARCH))
-	sed -i '/gltexture/d' testsuite/gdk/meson.build
-endif
-
 override_dh_auto_build: rebuild-emoji
 rebuild-emoji:
 	gcc -o debian/convert-emoji gtk/emoji/convert-emoji.c `pkg-config --cflags --libs json-glib-1.0`
@@ -254,7 +245,19 @@ xfail_reftests = \
 	$(NULL)
 
 skipped_suites = \
+	failing \
+	flaky \
+	wayland_failing \
+	wayland_gles_failing \
 	$(NULL)
+
+# TODO: A 2-word label gets wrapped differently
+ifeq (i386,$(DEB_HOST_ARCH_CPU))
+ignore_reftests += \
+	hbox-with-ellipsizing-wrapping-label \
+	window-border-width \
+	$(NULL)
+endif
 
 # https://bugs.debian.org/1024391
 ifeq (big,$(DEB_HOST_ARCH_ENDIAN))

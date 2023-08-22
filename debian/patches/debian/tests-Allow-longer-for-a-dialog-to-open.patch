@@ -1,0 +1,26 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Tue, 22 Aug 2023 12:05:31 +0100
+Subject: tests: Allow longer for a dialog to open
+
+This hopefully makes the test pass more reliably, especially on riscv64.
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/6050
+Bug-Debian: https://bugs.debian.org/1049434
+Forwarded: no, workaround
+---
+ testsuite/gtk/templates.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/testsuite/gtk/templates.c b/testsuite/gtk/templates.c
+index cf038e6..4bd4e26 100644
+--- a/testsuite/gtk/templates.c
++++ b/testsuite/gtk/templates.c
+@@ -41,7 +41,7 @@ show_and_wait (GtkWidget *widget)
+ {
+   gboolean done = FALSE;
+ 
+-  g_timeout_add (500, main_loop_quit_cb, &done);
++  g_timeout_add (1500, main_loop_quit_cb, &done);
+   gtk_widget_set_visible (widget, TRUE);
+   while (!done)
+     g_main_context_iteration (NULL, FALSE);

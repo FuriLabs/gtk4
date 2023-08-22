@@ -1,3 +1,4 @@
+tests-Accept-slightly-different-numeric-results-on-i386.patch
 Revert-tests-Stop-copying-the-tool-tests.patch
 Revert-build-Drop-the-install-tests-option.patch
 print-Revert-Start-sorting-apart-includes-change-for-gtkp.patch
@@ -10,5 +11,6 @@ debian/subprojects-Add-gst-player-1.0-as-subporject.patch
 debian/gstreamer-player-1.0-Do-not-install-it-if-it-s-a-subproje.patch
 debian/media-Use-gstplayer-from-meson-subproject.patch
 debian/gstreamer-player-Use-GtkName-Prefix-to-avoid-issues-if-ac.patch
+debian/tests-Mark-gltexture-as-expected-to-fail-on-big-endian-ma.patch
+debian/tests-Allow-longer-for-a-dialog-to-open.patch
 print-Update-printerprivate-header-location-for-cpdb-back.patch
-disable-checkerboard-reftests.patch

@@ -1,3 +1,11 @@
+gtk4 (4.12.0+ds-1ubuntu3) UNRELEASED; urgency=medium
+
+  * d/rules:
+    - Disable build-time failing tests on i386 and s390x without lingering, as
+      we don't really care about desktop in those architectures.
+
+ -- Nathan Pratta Teodosio <nathan.teodosio@canonical.com>  Tue, 22 Aug 2023 15:21:40 +0200
+
 gtk4 (4.12.0+ds-1ubuntu2) mantic; urgency=medium
 
   * d/p/disable-checkerboard-reftests.patch:

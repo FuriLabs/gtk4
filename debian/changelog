@@ -1,3 +1,17 @@
+gtk4 (4.10.5+ds-4) unstable; urgency=medium
+
+  [ Jeremy Bícha ]
+  * Restore sysprof integration
+
+  [ Simon McVittie ]
+  * d/p/debian/tests-Allow-longer-for-a-dialog-to-open.patch:
+    Add patch to work around a test failure on riscv64 by extending an
+    arbitrary timeout. Other architectures are occasionally affected by this.
+    Thanks to Aurelien Jarno (Closes: #1049434)
+  * d/control.in, d/gbp.conf: Use debian/trixie and upstream/4.10.x branches
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 12:11:51 +0100
+
 gtk4 (4.10.5+ds-3) unstable; urgency=medium
 
   * Temporarily disable sysprof integration altogether, to get the package

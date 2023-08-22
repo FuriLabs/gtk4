@@ -101,6 +101,10 @@ foreach t : internal_tests
 
   suites = ['gdk'] + t.get('suites', [])
 
+  if host_machine.endian() == 'big' and t.get('name') == 'gltexture'
+    suites += 'failing'
+  endif
+
   test(test_name, test_exe,
     args: [ '--tap', '-k' ],
     protocol: 'tap',

@@ -1,3 +1,15 @@
+gtk4 (4.10.5+ds-5) unstable; urgency=medium
+
+  * d/rules: Ignore two reftests that fail on i386 only.
+    In these tests, the reference rendering of "Hello world" is as one line,
+    but on i386 (possibly due to different rounding) it is word-wrapped onto
+    two lines.
+    I previously thought this was a regression between 4.10 and 4.12, but
+    it seems that instead, it was triggered by some other component being
+    upgraded, possibly fontconfig 2.14.2 or pango 1.51.0.
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 17:20:14 +0100
+
 gtk4 (4.10.5+ds-4) unstable; urgency=medium
 
   [ Jeremy Bícha ]

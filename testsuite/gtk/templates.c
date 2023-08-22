@@ -39,7 +39,7 @@ show_and_wait (GtkWidget *widget)
 {
   gboolean done = FALSE;
 
-  g_timeout_add_once (500, main_loop_quit_cb, &done);
+  g_timeout_add_once (1500, main_loop_quit_cb, &done);
   gtk_widget_set_visible (widget, TRUE);
   while (!done)
     g_main_context_iteration (NULL, FALSE);

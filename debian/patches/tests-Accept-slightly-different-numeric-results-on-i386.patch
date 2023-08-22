@@ -1,0 +1,58 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Tue, 22 Aug 2023 10:49:36 +0100
+Subject: tests: Accept slightly different numeric results on i386
+
+When using the legacy i387 FPU, 80-bit extended precision can result in
+slightly different answers for a floating-point computation that ought
+to be exact, depending on whether it was done in registers or saved
+and loaded to/from memory. Apparently in 1987 this seemed like a good
+idea.
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/6051
+Bug-Debian: https://bugs.debian.org/1050076
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/6320
+---
+ testsuite/gtk/colorutils.c | 22 ++++++++++++++++------
+ 1 file changed, 16 insertions(+), 6 deletions(-)
+
+diff --git a/testsuite/gtk/colorutils.c b/testsuite/gtk/colorutils.c
+index b4d42e2..8260674 100644
+--- a/testsuite/gtk/colorutils.c
++++ b/testsuite/gtk/colorutils.c
+@@ -30,6 +30,16 @@ struct {
+   { 1, 0, 1, 5.0 / 6.0, 1, 1 },
+ };
+ 
++/* When using the legacy i387 FPU, 80-bit extended precision can result in
++ * slightly different answers for a floating-point computation that ought
++ * to be exact, depending on whether it was done in registers or saved
++ * and loaded to/from memory. */
++#ifdef __i386__
++#define EPSILON 1e-6
++#else
++#define EPSILON FLT_EPSILON
++#endif
++
+ static void
+ test_roundtrips (void)
+ {
+@@ -40,13 +50,13 @@ test_roundtrips (void)
+ 
+       g_print ("color %u\n", i);
+       gtk_hsv_to_rgb (tests[i].h, tests[i].s, tests[i].v, &r, &g, &b);
+-      g_assert_cmpfloat_with_epsilon (r, tests[i].r, FLT_EPSILON);
+-      g_assert_cmpfloat_with_epsilon (g, tests[i].g, FLT_EPSILON);
+-      g_assert_cmpfloat_with_epsilon (b, tests[i].b, FLT_EPSILON);
++      g_assert_cmpfloat_with_epsilon (r, tests[i].r, EPSILON);
++      g_assert_cmpfloat_with_epsilon (g, tests[i].g, EPSILON);
++      g_assert_cmpfloat_with_epsilon (b, tests[i].b, EPSILON);
+       gtk_rgb_to_hsv (tests[i].r, tests[i].g, tests[i].b, &h, &s, &v);
+-      g_assert_cmpfloat_with_epsilon (h, tests[i].h, FLT_EPSILON);
+-      g_assert_cmpfloat_with_epsilon (s, tests[i].s, FLT_EPSILON);
+-      g_assert_cmpfloat_with_epsilon (v, tests[i].v, FLT_EPSILON);
++      g_assert_cmpfloat_with_epsilon (h, tests[i].h, EPSILON);
++      g_assert_cmpfloat_with_epsilon (s, tests[i].s, EPSILON);
++      g_assert_cmpfloat_with_epsilon (v, tests[i].v, EPSILON);
+     }
+ }
+ 

@@ -1,9 +1,13 @@
 gtk4 (4.12.0+ds-3) UNRELEASED; urgency=medium
 
+  * d/p/tests-Accept-slightly-different-numeric-results.patch:
+    Replace patch for #1050076 with the version accepted upstream.
+    This accepts slight numerical differences on all platforms, not
+    just i386.
   * Merge packaging from unstable
     - No further changes, except in the changelog
 
- -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 19:23:55 +0100
+ -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 19:28:27 +0100
 
 gtk4 (4.10.5+ds-5) unstable; urgency=medium
 

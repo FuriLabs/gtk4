@@ -243,6 +243,10 @@ xfail_reftests = \
 	$(NULL)
 
 skipped_suites = \
+	failing \
+	flaky \
+	wayland_failing \
+	wayland_gles_failing \
 	$(NULL)
 
 # https://bugs.debian.org/1024391

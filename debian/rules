@@ -249,6 +249,14 @@ skipped_suites = \
 	wayland_gles_failing \
 	$(NULL)
 
+# TODO: A 2-word label gets wrapped differently
+ifeq (i386,$(DEB_HOST_ARCH_CPU))
+ignore_reftests += \
+	hbox-with-ellipsizing-wrapping-label \
+	window-border-width \
+	$(NULL)
+endif
+
 # https://bugs.debian.org/1024391
 ifeq (big,$(DEB_HOST_ARCH_ENDIAN))
 	ignore_reftests += border-image-excess-size

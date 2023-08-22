@@ -1,4 +1,4 @@
-gtk4 (4.12.0+ds-1ubuntu2) UNRELEASED; urgency=medium
+gtk4 (4.12.0+ds-1ubuntu2) mantic; urgency=medium
 
   * d/p/disable-checkerboard-reftests.patch:
     - Disable flaky build-time checkerboard tests (LP: #2032638).

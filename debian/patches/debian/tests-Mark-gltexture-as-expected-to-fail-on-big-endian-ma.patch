@@ -1,0 +1,35 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Tue, 22 Aug 2023 11:57:36 +0100
+Subject: tests: Mark gltexture as expected to fail on big-endian machines
+
+Forwarded: not-needed, workaround
+---
+ testsuite/gdk/meson.build | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
+index 92dc6ab..842e1ab 100644
+--- a/testsuite/gdk/meson.build
++++ b/testsuite/gdk/meson.build
+@@ -69,6 +69,12 @@ foreach t : internal_tests
+     install_dir: testexecdir,
+   )
+ 
++  suites = ['gdk']
++
++  if host_machine.endian() == 'big' and t == 'gltexture'
++    suites += 'failing'
++  endif
++
+   test(t, test_exe,
+     args: [ '--tap', '-k' ],
+     protocol: 'tap',
+@@ -77,7 +83,7 @@ foreach t : internal_tests
+       'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
+       'DBUS_SESSION_BUS_ADDRESS=',
+     ],
+-    suite: 'gdk',
++    suite: suites,
+   )
+ endforeach
+ 

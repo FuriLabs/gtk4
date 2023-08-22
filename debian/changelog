@@ -1,4 +1,4 @@
-gtk4 (4.12.0+ds-2) UNRELEASED; urgency=medium
+gtk4 (4.12.0+ds-2) experimental; urgency=medium
 
   * d/rules: Skip build-time tests that are known to fail or be unreliable.
     Upstream flagged these as failing and skips them in their CI, so there's
@@ -16,8 +16,10 @@ gtk4 (4.12.0+ds-2) UNRELEASED; urgency=medium
   * Add patch to work around a test failure on riscv64.
     Other architectures are occasionally affected by this.
     Thanks to Aurelien Jarno (Closes: #1049434)
+  * Merge packaging from unstable
+    - No further changes, except in the changelog
 
- -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 15:05:42 +0100
+ -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 15:19:11 +0100
 
 gtk4 (4.10.5+ds-4) unstable; urgency=medium
 

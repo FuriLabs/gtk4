@@ -9,18 +9,6 @@ gtk4 (4.12.0+ds-3) UNRELEASED; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 19:28:27 +0100
 
-gtk4 (4.10.5+ds-5) unstable; urgency=medium
-
-  * d/rules: Ignore two reftests that fail on i386 only.
-    In these tests, the reference rendering of "Hello world" is as one line,
-    but on i386 (possibly due to different rounding) it is word-wrapped onto
-    two lines.
-    I previously thought this was a regression between 4.10 and 4.12, but
-    it seems that instead, it was triggered by some other component being
-    upgraded, possibly fontconfig 2.14.2 or pango 1.51.0.
-
- -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 17:20:14 +0100
-
 gtk4 (4.12.0+ds-2) experimental; urgency=medium
 
   * d/rules: Skip build-time tests that are known to fail or be unreliable.
@@ -44,20 +32,6 @@ gtk4 (4.12.0+ds-2) experimental; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 15:19:11 +0100
 
-gtk4 (4.10.5+ds-4) unstable; urgency=medium
-
-  [ Jeremy Bícha ]
-  * Restore sysprof integration
-
-  [ Simon McVittie ]
-  * d/p/debian/tests-Allow-longer-for-a-dialog-to-open.patch:
-    Add patch to work around a test failure on riscv64 by extending an
-    arbitrary timeout. Other architectures are occasionally affected by this.
-    Thanks to Aurelien Jarno (Closes: #1049434)
-  * d/control.in, d/gbp.conf: Use debian/trixie and upstream/4.10.x branches
-
- -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 12:11:51 +0100
-
 gtk4 (4.12.0+ds-1) experimental; urgency=medium
 
   * New upstream release
@@ -72,6 +46,32 @@ gtk4 (4.12.0+ds-1) experimental; urgency=medium
   * Add patch to mark headless tests as flaky
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 08 Aug 2023 17:31:01 -0400
+
+gtk4 (4.10.5+ds-5) unstable; urgency=medium
+
+  * d/rules: Ignore two reftests that fail on i386 only.
+    In these tests, the reference rendering of "Hello world" is as one line,
+    but on i386 (possibly due to different rounding) it is word-wrapped onto
+    two lines.
+    I previously thought this was a regression between 4.10 and 4.12, but
+    it seems that instead, it was triggered by some other component being
+    upgraded, possibly fontconfig 2.14.2 or pango 1.51.0.
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 17:20:14 +0100
+
+gtk4 (4.10.5+ds-4) unstable; urgency=medium
+
+  [ Jeremy Bícha ]
+  * Restore sysprof integration
+
+  [ Simon McVittie ]
+  * d/p/debian/tests-Allow-longer-for-a-dialog-to-open.patch:
+    Add patch to work around a test failure on riscv64 by extending an
+    arbitrary timeout. Other architectures are occasionally affected by this.
+    Thanks to Aurelien Jarno (Closes: #1049434)
+  * d/control.in, d/gbp.conf: Use debian/trixie and upstream/4.10.x branches
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 12:11:51 +0100
 
 gtk4 (4.10.5+ds-3) unstable; urgency=medium
 

@@ -1,4 +1,4 @@
-gtk4 (4.12.0+ds-3) UNRELEASED; urgency=medium
+gtk4 (4.12.0+ds-3) experimental; urgency=medium
 
   * d/p/tests-Accept-slightly-different-numeric-results.patch:
     Replace patch for #1050076 with the version accepted upstream.
@@ -16,7 +16,7 @@ gtk4 (4.12.0+ds-3) UNRELEASED; urgency=medium
   * Merge packaging from unstable
     - No further changes, except in the changelog
 
- -- Simon McVittie <smcv@debian.org>  Wed, 23 Aug 2023 12:52:01 +0100
+ -- Simon McVittie <smcv@debian.org>  Wed, 23 Aug 2023 16:43:03 +0100
 
 gtk4 (4.12.0+ds-2) experimental; urgency=medium
 

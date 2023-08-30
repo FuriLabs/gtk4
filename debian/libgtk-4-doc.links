@@ -12,5 +12,3 @@ usr/share/doc/libglib2.0-doc/glib usr/share/doc/${env:DEV_PKG}/glib
 usr/share/doc/libglib2.0-doc/glib usr/share/doc/${env:DOC_PKG}/glib
 usr/share/doc/libglib2.0-doc/gobject usr/share/doc/${env:DEV_PKG}/gobject
 usr/share/doc/libglib2.0-doc/gobject usr/share/doc/${env:DOC_PKG}/gobject
-usr/share/doc/libpango1.0-doc/pango usr/share/doc/${env:DEV_PKG}/pango
-usr/share/doc/libpango1.0-doc/pango usr/share/doc/${env:DOC_PKG}/pango

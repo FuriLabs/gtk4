@@ -1,3 +1,48 @@
+gtk4 (4.12.1+ds-2) unstable; urgency=medium
+
+  * Release to unstable
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 27 Aug 2023 19:33:26 -0400
+
+gtk4 (4.12.1+ds-1) experimental; urgency=medium
+
+  * New upstream release
+  * Drop 3 patches applied in new release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 26 Aug 2023 10:54:25 -0400
+
+gtk4 (4.12.0+ds-4) experimental; urgency=medium
+
+  * d/rules: Completely ignore border-one-rounded gsk reftest on mips*.
+    The actual rendering in the "flipped" mode only differs from the
+    reference rendering by one pixel, but that one pixel has a completely
+    different value. (Really closes: #1050077)
+  * d/clean: Remove generated file po/gtk40.pot (Closes: #1044991)
+  * d/libgtk-4-doc.links: Stop including symlinks for pango documentation
+    (Closes: #1040470)
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 24 Aug 2023 11:48:45 +0100
+
+gtk4 (4.12.0+ds-3) experimental; urgency=medium
+
+  * d/p/tests-Accept-slightly-different-numeric-results.patch:
+    Replace patch for #1050076 with the version accepted upstream.
+    This accepts slight numerical differences on all platforms, not
+    just i386.
+  * d/rules: Accept minor rendering differences for some tests on mips*.
+    Presumably these render a bit differently with softpipe.
+    (Closes: #1050077)
+  * d/p/debian/reftests-Allow-minor-differences-to-be-tolerated.patch:
+    Update patch so that when gsk-compare tests are run repeatedly, we
+    apply the same error-tolerance each time, not just the first time
+  * d/changelog: Reorder to make the history of unstable linear.
+    This should avoid the bug tracking system thinking that regressions
+    found in 4.12.x also affect 4.10.x.
+  * Merge packaging from unstable
+    - No further changes, except in the changelog
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 23 Aug 2023 16:43:03 +0100
+
 gtk4 (4.12.0+ds-2ubuntu1) mantic; urgency=medium
 
   * Merge with Debian. Remaining changes:
@@ -60,20 +105,6 @@ gtk4 (4.12.0+ds-1ubuntu1) mantic; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 08 Aug 2023 18:16:27 -0400
 
-gtk4 (4.10.5+ds-4) unstable; urgency=medium
-
-  [ Jeremy Bícha ]
-  * Restore sysprof integration
-
-  [ Simon McVittie ]
-  * d/p/debian/tests-Allow-longer-for-a-dialog-to-open.patch:
-    Add patch to work around a test failure on riscv64 by extending an
-    arbitrary timeout. Other architectures are occasionally affected by this.
-    Thanks to Aurelien Jarno (Closes: #1049434)
-  * d/control.in, d/gbp.conf: Use debian/trixie and upstream/4.10.x branches
-
- -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 12:11:51 +0100
-
 gtk4 (4.12.0+ds-1) experimental; urgency=medium
 
   * New upstream release
@@ -88,6 +119,32 @@ gtk4 (4.12.0+ds-1) experimental; urgency=medium
   * Add patch to mark headless tests as flaky
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 08 Aug 2023 17:31:01 -0400
+
+gtk4 (4.10.5+ds-5) unstable; urgency=medium
+
+  * d/rules: Ignore two reftests that fail on i386 only.
+    In these tests, the reference rendering of "Hello world" is as one line,
+    but on i386 (possibly due to different rounding) it is word-wrapped onto
+    two lines.
+    I previously thought this was a regression between 4.10 and 4.12, but
+    it seems that instead, it was triggered by some other component being
+    upgraded, possibly fontconfig 2.14.2 or pango 1.51.0.
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 17:20:14 +0100
+
+gtk4 (4.10.5+ds-4) unstable; urgency=medium
+
+  [ Jeremy Bícha ]
+  * Restore sysprof integration
+
+  [ Simon McVittie ]
+  * d/p/debian/tests-Allow-longer-for-a-dialog-to-open.patch:
+    Add patch to work around a test failure on riscv64 by extending an
+    arbitrary timeout. Other architectures are occasionally affected by this.
+    Thanks to Aurelien Jarno (Closes: #1049434)
+  * d/control.in, d/gbp.conf: Use debian/trixie and upstream/4.10.x branches
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 22 Aug 2023 12:11:51 +0100
 
 gtk4 (4.10.5+ds-3) unstable; urgency=medium
 

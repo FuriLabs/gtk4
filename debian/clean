@@ -2,3 +2,4 @@ debian/convert-emoji
 debian/tests-failed
 gtk/gtkdbusgenerated.c
 gtk/gtkdbusgenerated.h
+po/gtk40.pot

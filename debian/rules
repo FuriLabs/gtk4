@@ -251,12 +251,19 @@ skipped_suites = \
 	wayland_gles_failing \
 	$(NULL)
 
-# TODO: A 2-word label gets wrapped differently
+# https://bugs.debian.org/1050312
 ifeq (i386,$(DEB_HOST_ARCH_CPU))
 ignore_reftests += \
 	hbox-with-ellipsizing-wrapping-label \
 	window-border-width \
 	$(NULL)
+endif
+
+# https://bugs.debian.org/1050077
+ifneq ($(filter mips%,$(DEB_HOST_ARCH_CPU)),)
+fuzzy_gsk_compare += opacity-overdraw
+ignore_gsk_compare += border-one-rounded
+fuzzy_reftests += opacity
 endif
 
 # https://bugs.debian.org/1024391

@@ -10,4 +10,3 @@ debian/media-Use-gstplayer-from-meson-subproject.patch
 debian/gstreamer-player-Use-GtkName-Prefix-to-avoid-issues-if-ac.patch
 debian/tests-Mark-gltexture-as-expected-to-fail-on-big-endian-ma.patch
 debian/tests-Allow-longer-for-a-dialog-to-open.patch
-print-Update-printerprivate-header-location-for-cpdb-back.patch

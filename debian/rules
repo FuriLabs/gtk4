@@ -258,7 +258,7 @@ ignore_reftests += \
 endif
 
 # https://bugs.debian.org/1050077
-ifneq ($(filter mips%,$(DEB_HOST_ARCH_CPU)),)
+ifneq ($(filter mips% riscv64,$(DEB_HOST_ARCH_CPU)),)
 fuzzy_gsk_compare += opacity-overdraw
 ignore_gsk_compare += border-one-rounded
 fuzzy_reftests += opacity

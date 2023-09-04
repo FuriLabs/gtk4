@@ -18,22 +18,29 @@ if __name__ == '__main__':
                 'gl', 'x11',
             ),
         ):
-            diff = (outputs / (node.stem + '.diff.png'))
+            for tail in ('', '-flipped', '-repeated', '-rotated', '-masked'):
+                diff = (outputs / (node.stem + tail + '.diff.png'))
 
-            if diff.exists():
-                ref = Path('testsuite', 'gsk', 'compare', node.stem + '.png')
-                out = (outputs / (node.stem + '.out.png'))
+                if diff.exists():
+                    if tail:
+                        ref = outputs / (node.stem + tail + '.ref.png')
+                    else:
+                        ref = Path(
+                            'testsuite', 'gsk', 'compare', node.stem + '.png',
+                        )
 
-                for path in (ref, out, diff):
-                    if path.exists():
-                        print('begin-base64 644 %s' % path)
-                        sys.stdout.flush()
-                        with open(path, 'rb') as reader:
-                            base64.encode(reader, sys.stdout.buffer)
-                        print('====')
-                        print('')
+                    out = (outputs / (node.stem + tail + '.out.png'))
 
-                print('')
+                    for path in (ref, out, diff):
+                        if path.exists():
+                            print('begin-base64 644 %s' % path)
+                            sys.stdout.flush()
+                            with open(path, 'rb') as reader:
+                                base64.encode(reader, sys.stdout.buffer)
+                            print('====')
+                            print('')
+
+                    print('')
 
     for ui in Path('testsuite', 'reftests').glob('*.ui'):
         for outputs in (

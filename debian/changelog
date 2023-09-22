@@ -1,8 +1,10 @@
-gtk4 (4.12.2+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.12.2+ds-1) unstable; urgency=medium
 
   * New upstream release
+  * Build-Depend on fonts-noto-core instead of fonts-dejavu-core
+    & ttf-bitstream-vera
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 22 Sep 2023 08:01:27 -0400
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 22 Sep 2023 10:27:13 -0400
 
 gtk4 (4.12.1+ds-3) unstable; urgency=medium
 

@@ -245,6 +245,13 @@ gsk_linear_gradient_node_draw (GskRenderNode *node,
   if (gsk_render_node_get_node_type (node) == GSK_REPEATING_LINEAR_GRADIENT_NODE)
     cairo_pattern_set_extend (pattern, CAIRO_EXTEND_REPEAT);
 
+  if (self->stops[0].offset > 0.0)
+    cairo_pattern_add_color_stop_rgba (pattern,
+                                       0.0,
+                                       self->stops[0].color.red,
+                                       self->stops[0].color.green,
+                                       self->stops[0].color.blue,
+                                       self->stops[0].color.alpha);
   for (i = 0; i < self->n_stops; i++)
     {
       cairo_pattern_add_color_stop_rgba (pattern,
@@ -254,6 +261,13 @@ gsk_linear_gradient_node_draw (GskRenderNode *node,
                                          self->stops[i].color.blue,
                                          self->stops[i].color.alpha);
     }
+  if (self->stops[self->n_stops-1].offset < 1.0)
+    cairo_pattern_add_color_stop_rgba (pattern,
+                                       1.0,
+                                       self->stops[self->n_stops-1].color.red,
+                                       self->stops[self->n_stops-1].color.green,
+                                       self->stops[self->n_stops-1].color.blue,
+                                       self->stops[self->n_stops-1].color.alpha);
 
   cairo_set_source (cr, pattern);
   cairo_pattern_destroy (pattern);
@@ -559,13 +573,29 @@ gsk_radial_gradient_node_draw (GskRenderNode *node,
   else
     cairo_pattern_set_extend (pattern, CAIRO_EXTEND_PAD);
 
-  for (i = 0; i < self->n_stops; i++)
+  if (self->stops[0].offset > 0.0)
     cairo_pattern_add_color_stop_rgba (pattern,
-                                       self->stops[i].offset,
-                                       self->stops[i].color.red,
-                                       self->stops[i].color.green,
-                                       self->stops[i].color.blue,
-                                       self->stops[i].color.alpha);
+                                       0.0,
+                                       self->stops[0].color.red,
+                                       self->stops[0].color.green,
+                                       self->stops[0].color.blue,
+                                       self->stops[0].color.alpha);
+  for (i = 0; i < self->n_stops; i++)
+    {
+      cairo_pattern_add_color_stop_rgba (pattern,
+                                         self->stops[i].offset,
+                                         self->stops[i].color.red,
+                                         self->stops[i].color.green,
+                                         self->stops[i].color.blue,
+                                         self->stops[i].color.alpha);
+    }
+  if (self->stops[self->n_stops-1].offset < 1.0)
+    cairo_pattern_add_color_stop_rgba (pattern,
+                                       1.0,
+                                       self->stops[self->n_stops-1].color.red,
+                                       self->stops[self->n_stops-1].color.green,
+                                       self->stops[self->n_stops-1].color.blue,
+                                       self->stops[self->n_stops-1].color.alpha);
 
   gsk_cairo_rectangle (cr, &node->bounds);
   cairo_translate (cr, self->center.x, self->center.y);
@@ -4402,17 +4432,7 @@ gsk_shadow_node_draw (GskRenderNode *node,
                       cairo_t       *cr)
 {
   GskShadowNode *self = (GskShadowNode *) node;
-  cairo_pattern_t *pattern;
   gsize i;
-
-  cairo_save (cr);
-  /* clip so the push_group() creates a small surface */
-  gsk_cairo_rectangle (cr, &self->child->bounds);
-  cairo_clip (cr);
-  cairo_push_group (cr);
-  gsk_render_node_draw (self->child, cr);
-  pattern = cairo_pop_group (cr);
-  cairo_restore (cr);
 
   cairo_save (cr);
   /* clip so the blur area stays small */
@@ -4422,27 +4442,31 @@ gsk_shadow_node_draw (GskRenderNode *node,
   for (i = 0; i < self->n_shadows; i++)
     {
       GskShadow *shadow = &self->shadows[i];
+      cairo_pattern_t *pattern;
 
       /* We don't need to draw invisible shadows */
       if (gdk_rgba_is_clear (&shadow->color))
         continue;
 
       cairo_save (cr);
-      gdk_cairo_set_source_rgba (cr, &shadow->color);
       cr = gsk_cairo_blur_start_drawing (cr, shadow->radius, GSK_BLUR_X | GSK_BLUR_Y);
 
+      cairo_save (cr);
       cairo_translate (cr, shadow->dx, shadow->dy);
+      cairo_push_group (cr);
+      gsk_render_node_draw (self->child, cr);
+      pattern = cairo_pop_group (cr);
+      gdk_cairo_set_source_rgba (cr, &shadow->color);
       cairo_mask (cr, pattern);
+      cairo_restore (cr);
 
       cr = gsk_cairo_blur_finish_drawing (cr, shadow->radius, &shadow->color, GSK_BLUR_X | GSK_BLUR_Y);
       cairo_restore (cr);
     }
 
-  cairo_set_source (cr, pattern);
-  cairo_paint (cr);
-  cairo_restore (cr);
+  gsk_render_node_draw (self->child, cr);
 
-  cairo_pattern_destroy (pattern);
+  cairo_restore (cr);
 }
 
 static void
@@ -4563,7 +4587,7 @@ gsk_shadow_node_new (GskRenderNode   *child,
 
   self = gsk_render_node_alloc (GSK_SHADOW_NODE);
   node = (GskRenderNode *) self;
-  node->offscreen_for_opacity = child->offscreen_for_opacity;
+  node->offscreen_for_opacity = TRUE;
 
   self->child = gsk_render_node_ref (child);
   self->n_shadows = n_shadows;

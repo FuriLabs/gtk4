@@ -1,3 +1,32 @@
+gtk4 (4.12.2+ds-1) unstable; urgency=medium
+
+  * New upstream release
+  * Build-Depend on fonts-noto-core instead of fonts-dejavu-core
+    & ttf-bitstream-vera
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 22 Sep 2023 10:27:13 -0400
+
+gtk4 (4.12.1+ds-3) unstable; urgency=medium
+
+  [ Amin Bandali ]
+  * d/gbp.conf: Change packaging branch to debian/latest
+
+  [ Jeremy Bícha ]
+  * Ignore the same reftest failures for riscv64 as for mips64el.
+    mips64el uses softpipe on the buildds because we force it to (because
+    llvmpipe is broken there), but riscv64 uses softpipe even when not
+    forced to, because llvmpipe doesn't exist on riscv64 yet.
+    (Closes: #1051168)
+
+  [ Simon McVittie ]
+  * d/log-reftests.py: Log uuencoded variant GSK reftest renderings too.
+    The variant GSK reftest renderings (flipped, repeated, etc.) might fail
+    differently, in which case we will want to look at their outputs.
+  * d/rules: Always allow the differences that occur when using softpipe.
+    In principle we could be using softpipe on any architecture, if forced.
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 04 Sep 2023 15:28:30 +0100
+
 gtk4 (4.12.1+ds-2ubuntu1) mantic; urgency=medium
 
   * Merge with Debian. Remaining changes:

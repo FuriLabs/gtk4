@@ -259,12 +259,13 @@ ignore_reftests += \
 	$(NULL)
 endif
 
+# These succeed with llvmpipe, but fail with softpipe
+# https://gitlab.gnome.org/GNOME/gtk/-/issues/6085
 # https://bugs.debian.org/1050077
-ifneq ($(filter mips%,$(DEB_HOST_ARCH_CPU)),)
+# https://bugs.debian.org/1051168
 fuzzy_gsk_compare += opacity-overdraw
 ignore_gsk_compare += border-one-rounded
 fuzzy_reftests += opacity
-endif
 
 # https://bugs.debian.org/1024391
 ifeq (big,$(DEB_HOST_ARCH_ENDIAN))

@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gtk+.master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2023-09-09 15:06+0000\n"
+"POT-Creation-Date: 2023-09-11 08:50+0000\n"
 "PO-Revision-Date: 2023-09-11 10:49+0200\n"
 "Last-Translator: Daniel Mustieles <daniel.mustieles@gmail.com>\n"
 "Language-Team: Spanish - Spain <gnome-es-list@gnome.org>\n"
@@ -2173,7 +2173,7 @@ msgstr "Márgenes del papel"
 
 #: gtk/gtkentry.c:3673
 msgid "Insert Emoji"
-msgstr "Insertar emoticono"
+msgstr "Insertar emoji"
 
 #: gtk/gtkfilechooserdialog.c:557
 msgid "_Name"
@@ -3633,7 +3633,7 @@ msgstr "Barra lateral"
 
 #: gtk/gtktext.c:6159 gtk/gtktextview.c:9044
 msgid "Insert _Emoji"
-msgstr "Insertar _emoticono"
+msgstr "Insertar _emoji"
 
 #: gtk/gtktextview.c:9026
 msgid "_Undo"

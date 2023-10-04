@@ -1,3 +1,9 @@
+gtk4 (4.12.3+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Amin Bandali <bandali@ubuntu.com>  Wed, 04 Oct 2023 16:11:12 -0400
+
 gtk4 (4.12.2+ds-1) unstable; urgency=medium
 
   * New upstream release

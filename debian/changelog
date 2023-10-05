@@ -1,3 +1,28 @@
+gtk4 (4.12.3+ds-1) unstable; urgency=medium
+
+  * New upstream release
+    - GtkWindow:
+      + Don't assume titlebars are GtkHeaderBar
+        (https://gitlab.gnome.org/GNOME/gtk/-/issues/6116)
+    - GtkTreeView:
+      + Fix a crash in gtk_tree_view_is_blank_at_pos
+        (https://gitlab.gnome.org/GNOME/gtk/-/issues/6114)
+    - printing:
+      + Fix some issues with the portal implementation
+        (https://gitlab.gnome.org/GNOME/gtk/-/commit/03679fe6bf5ae391bd7cb21ad0492f530c86cd5e)
+    - GSK:
+      + Some optimizations in the GL renderer
+        (https://gitlab.gnome.org/GNOME/gtk/-/commit/3698cadcd21e2a52c30766d311043093ea557b3f,
+         https://gitlab.gnome.org/GNOME/gtk/-/commit/d4d0883a924f94fdc89fad50bce9ecad3128e0f3,
+         https://gitlab.gnome.org/GNOME/gtk/-/commit/0030c572d47f551847be0aed8054d4df34afffda)
+      + Fix memory leaks in the Broadway renderer
+        (https://gitlab.gnome.org/GNOME/gtk/-/issues/6120)
+    - demos:
+      + Fix a crash in gtk4-demo
+        (https://gitlab.gnome.org/GNOME/gtk/-/issues/6113)
+
+ -- Amin Bandali <bandali@ubuntu.com>  Wed, 04 Oct 2023 16:11:12 -0400
+
 gtk4 (4.12.2+ds-1ubuntu1) mantic; urgency=medium
 
   * Merge with Debian. Remaining changes:

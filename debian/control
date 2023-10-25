@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Simon McVittie <smcv@debian.org>, Amin Bandali <bandali@ubuntu.com>, Jeremy Bícha <jbicha@ubuntu.com>, Marco Trevisan (Treviño) <marco@ubuntu.com>
+Uploaders: Simon McVittie <smcv@debian.org>, Amin Bandali <bandali@ubuntu.com>, Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>, Jeremy Bícha <jbicha@ubuntu.com>
 Build-Depends: adwaita-icon-theme <!nocheck>,
                at-spi2-core <!nocheck>,
                dbus-daemon <!nocheck>,
@@ -79,8 +79,10 @@ Build-Depends-Indep: gi-docgen <!nodoc>,
                      pandoc,
 Rules-Requires-Root: no
 Standards-Version: 4.6.2
-Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4
-Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git
+XS-Debian-Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4
+XS-Debian-Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git
+Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4/tree/ubuntu/master
+Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git -b ubuntu/master
 Homepage: https://www.gtk.org/
 
 Package: libgtk-4-1

@@ -1,4 +1,4 @@
-gtk4 (4.12.3+ds-1ubuntu1) mantic; urgency=medium
+gtk4 (4.12.3+ds-1ubuntu0.1) mantic; urgency=medium
 
   * Merge with Debian (LP: #2038557). Remaining changes:
     - debian/tests:

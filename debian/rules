@@ -147,8 +147,6 @@ configure_flags_udeb = \
 	dh $@ --with gir --buildsystem=meson $(dh_options)
 
 override_dh_clean: debian/control
-	# gross kludge to force control generation with the %.in target
-	touch debian/control.in
 	rm -f $(call dh_subst_files,$(all_binaries))
 	rm -rf debian/build debian/install
 	# Rebuild the CSS from source. Note that gtk.css is hand-written,

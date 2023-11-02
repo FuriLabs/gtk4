@@ -1,3 +1,16 @@
+gtk4 (4.12.3+ds-2) unstable; urgency=medium
+
+  * d/rules: Stop generating d/control.in from d/control.
+    The variable substitutions obscured more than they really helped.
+  * d/rules: Substitute GTK_BINVER_DEP as a substvar rather than using sed
+  * lbgtk-4-dev: Add Provides for included GIR XML files.
+    Representing these by systematic names gir1.2-*-dev, and perhaps
+    eventually separating them into their own binary package, will help
+    to enable cross-compilation with GObject-Introspection removed by
+    a build profile. (Helps: #1030223)
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 02 Nov 2023 14:47:44 +0000
+
 gtk4 (4.12.3+ds-1) unstable; urgency=medium
 
   * New upstream release

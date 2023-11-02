@@ -1,7 +1,5 @@
 #!/usr/bin/make -f
 
-DISABLE_UPDATE_UPLOADERS = 1
-include /usr/share/gnome-pkg-tools/1/rules/uploaders.mk
 include /usr/share/dpkg/default.mk
 include /usr/share/dpkg/pkg-info.mk
 
@@ -64,7 +62,6 @@ debian/%: debian/%.in
 		-e "s#@MEDIA_FFMPEG_PKG@#$(MEDIA_FFMPEG_PKG)#g" \
 		-e "s#@EXAMPLES_PKG@#$(EXAMPLES_PKG)#g" \
 		-e "s#@TESTS_PKG@#$(TESTS_PKG)#g" \
-		-e "s#@GNOME_TEAM@#$(UPLOADERS)#g" \
 		-e "s#@LIBDIR@#$(LIBDIR)#g" \
 		-e "s#@MODULES_BASE_PATH@#$(MODULES_BASE_PATH)#g" \
 		-e "s#@DEB_VERSION_UPSTREAM@#$(DEB_VERSION_UPSTREAM)#g" \

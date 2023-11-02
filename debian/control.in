@@ -89,7 +89,7 @@ Depends: adwaita-icon-theme,
          ${misc:Depends},
          ${shlibs:Depends},
          @COMMON_PKG@ (>= ${source:Version})
-Provides: @GTK_BINVER_DEP@
+Provides: ${gtk:Provides}
 Recommends: @BIN_PKG@,
             iso-codes,
             librsvg2-common (>= 2.52.0),
@@ -113,7 +113,7 @@ Section: debian-installer
 Architecture: any
 Depends: ${misc:Depends},
          ${shlibs:Depends}
-Provides: @GTK_BINVER_DEP@
+Provides: ${gtk:Provides}
 Description: GTK graphical user interface library - minimal runtime
  This is a udeb, or a microdeb, for the debian-installer.
  .

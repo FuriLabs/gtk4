@@ -199,11 +199,7 @@ Depends: gir1.2-gtk-4.0 (= ${binary:Version}),
          libgtk-4-1 (= ${binary:Version})
 Suggests: libgtk-4-doc,
           gtk-4-examples
-Provides: gir1.2-gdk-4.0-dev (= ${binary:Version}),
-          gir1.2-gdkwayland-4.0-dev (= ${binary:Version}) [linux-any],
-          gir1.2-gdkx11-4.0-dev (= ${binary:Version}),
-          gir1.2-gsk-4.0-dev (= ${binary:Version}),
-          gir1.2-gtk-4.0-dev (= ${binary:Version})
+Provides: ${gir:Provides}
 Description: development files for the GTK library
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable

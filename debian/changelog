@@ -1,3 +1,15 @@
+gtk4 (4.12.3+ds-3) unstable; urgency=medium
+
+  * d/control: Build-depend on relevant gir1.2-*-dev virtual packages.
+    This will help with eventually converting some or all of them into real
+    packages, to allow GIR XML to be omitted when cross-compiling or
+    bootstrapping.
+  * d/control: Add ${gir:Depends} to -dev package.
+    This will add dependencies on gir1.2-pango-1.0-dev and so on.
+  * d/control: Use ${gir:Provides} to generate virtual package names
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 17 Nov 2023 11:06:27 +0000
+
 gtk4 (4.12.3+ds-2) unstable; urgency=medium
 
   * d/rules: Stop generating d/control.in from d/control.

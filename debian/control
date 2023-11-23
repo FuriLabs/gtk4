@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Simon McVittie <smcv@debian.org>, Amin Bandali <bandali@ubuntu.com>, Jeremy Bícha <jbicha@ubuntu.com>, Marco Trevisan (Treviño) <marco@ubuntu.com>
+Uploaders: Simon McVittie <smcv@debian.org>, Amin Bandali <bandali@ubuntu.com>, Jeremy Bícha <jbicha@ubuntu.com>
 Build-Depends: adwaita-icon-theme <!nocheck>,
                at-spi2-core <!nocheck>,
                dbus-daemon <!nocheck>,
@@ -12,7 +12,13 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                dh-sequence-translations,
                fonts-cantarell <!nocheck>,
                fonts-noto-core <!nocheck>,
-               gnome-pkg-tools,
+               gir1.2-cairo-1.0-dev,
+               gir1.2-gio-2.0-dev,
+               gir1.2-gdkpixbuf-2.0-dev,
+               gir1.2-graphene-1.0-dev,
+               gir1.2-pango-1.0-dev,
+               gir1.2-pangocairo-1.0-dev,
+               gir1.2-xlib-2.0-dev,
                gobject-introspection (>= 1.76.0),
                gsettings-desktop-schemas <!nocheck>,
                iso-codes <!nocheck>,
@@ -92,7 +98,7 @@ Depends: adwaita-icon-theme,
          ${misc:Depends},
          ${shlibs:Depends},
          libgtk-4-common (>= ${source:Version})
-Provides: gtk4-binver-4.0.0
+Provides: ${gtk:Provides}
 Recommends: libgtk-4-bin,
             cpdb-backend-cups (>= 2.0~b4-0ubuntu2~),
             iso-codes,
@@ -117,7 +123,7 @@ Section: debian-installer
 Architecture: any
 Depends: ${misc:Depends},
          ${shlibs:Depends}
-Provides: gtk4-binver-4.0.0
+Provides: ${gtk:Provides}
 Description: GTK graphical user interface library - minimal runtime
  This is a udeb, or a microdeb, for the debian-installer.
  .
@@ -190,12 +196,14 @@ Depends: gir1.2-gtk-4.0 (= ${binary:Version}),
          libvulkan-dev [linux-any],
          pkg-config,
          wayland-protocols (>= 1.32) [linux-any],
+         ${gir:Depends},
          ${misc:Depends},
          ${shlibs:Depends},
          libgtk-4-common,
          libgtk-4-1 (= ${binary:Version})
 Suggests: libgtk-4-doc,
           gtk-4-examples
+Provides: ${gir:Provides}
 Description: development files for the GTK library
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable

@@ -1,3 +1,28 @@
+gtk4 (4.12.3+ds-3) unstable; urgency=medium
+
+  * d/control: Build-depend on relevant gir1.2-*-dev virtual packages.
+    This will help with eventually converting some or all of them into real
+    packages, to allow GIR XML to be omitted when cross-compiling or
+    bootstrapping.
+  * d/control: Add ${gir:Depends} to -dev package.
+    This will add dependencies on gir1.2-pango-1.0-dev and so on.
+  * d/control: Use ${gir:Provides} to generate virtual package names
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 17 Nov 2023 11:06:27 +0000
+
+gtk4 (4.12.3+ds-2) unstable; urgency=medium
+
+  * d/rules: Stop generating d/control.in from d/control.
+    The variable substitutions obscured more than they really helped.
+  * d/rules: Substitute GTK_BINVER_DEP as a substvar rather than using sed
+  * lbgtk-4-dev: Add Provides for included GIR XML files.
+    Representing these by systematic names gir1.2-*-dev, and perhaps
+    eventually separating them into their own binary package, will help
+    to enable cross-compilation with GObject-Introspection removed by
+    a build profile. (Helps: #1030223)
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 02 Nov 2023 14:47:44 +0000
+
 gtk4 (4.12.3+ds-1ubuntu1) mantic; urgency=medium
 
   * Merge with Debian (LP: #2038557). Remaining changes:

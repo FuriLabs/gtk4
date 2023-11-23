@@ -1,3 +1,14 @@
+gtk4 (4.12.3+ds-3ubuntu1) noble; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - debian/tests:
+      + include the memorytexture test in the flaky set, it has been unreliable
+    - debian/control:
+      + Build-Depend on dh-sequence-translations
+    - Switch from the CUPS print backend to CPDB
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 23 Nov 2023 09:04:37 -0500
+
 gtk4 (4.12.3+ds-3) unstable; urgency=medium
 
   * d/control: Build-depend on relevant gir1.2-*-dev virtual packages.

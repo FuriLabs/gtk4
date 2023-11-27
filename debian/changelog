@@ -1,3 +1,9 @@
+gtk4 (4.12.4+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 27 Nov 2023 10:26:33 -0500
+
 gtk4 (4.12.3+ds-3) unstable; urgency=medium
 
   * d/control: Build-depend on relevant gir1.2-*-dev virtual packages.

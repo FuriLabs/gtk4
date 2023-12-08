@@ -1,3 +1,4 @@
+gsk-Always-use-RGBA-on-big-endian-architectures.patch
 Revert-tests-Stop-copying-the-tool-tests.patch
 Revert-build-Drop-the-install-tests-option.patch
 tests-mark-headless-tests-as-flaky.patch

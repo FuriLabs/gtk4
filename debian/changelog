@@ -1,3 +1,24 @@
+gtk4 (4.12.4+ds-3) unstable; urgency=medium
+
+  * d/control: Remove pandoc build-dependency.
+    It isn't needed any more, and pandoc is currently uninstallable in
+    unstable (#1057309, #1053686).
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 09 Dec 2023 01:33:26 +0000
+
+gtk4 (4.12.4+ds-2) unstable; urgency=medium
+
+  [ Jeremy Bícha ]
+  * Reinstate Build-Depends on dh-sequence-gnome.
+    This is used by Ubuntu to pull in dh_translations.
+
+  [ Simon McVittie ]
+  * d/p/gsk-Always-use-RGBA-on-big-endian-architectures.patch:
+    Add proposed patch to fix test failure on big-endian CPUs
+    (Closes: #1057782)
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 08 Dec 2023 17:36:22 +0000
+
 gtk4 (4.12.4+ds-1ubuntu1) noble; urgency=medium
 
   * Merge with Debian. Remaining changes:

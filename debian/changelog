@@ -1,3 +1,11 @@
+gtk4 (4.12.4+ds-3) unstable; urgency=medium
+
+  * d/control: Remove pandoc build-dependency.
+    It isn't needed any more, and pandoc is currently uninstallable in
+    unstable (#1057309, #1053686).
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 09 Dec 2023 01:33:26 +0000
+
 gtk4 (4.12.4+ds-2) unstable; urgency=medium
 
   [ Jeremy Bícha ]

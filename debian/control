@@ -80,7 +80,6 @@ Build-Depends-Indep: gi-docgen <!nodoc>,
                      libcairo2-doc <!nodoc>,
                      libglib2.0-doc <!nodoc>,
                      libpango1.0-doc <!nodoc>,
-                     pandoc,
 Rules-Requires-Root: no
 Standards-Version: 4.6.2
 Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4

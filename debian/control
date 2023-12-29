@@ -21,11 +21,11 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                gobject-introspection (>= 1.76.0),
                gsettings-desktop-schemas <!nocheck>,
                iso-codes <!nocheck>,
-               libavcodec-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libavdevice-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libavfilter-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libavformat-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libavutil-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
+               libavcodec-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
+               libavdevice-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
+               libavfilter-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
+               libavformat-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
+               libavutil-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
                libcairo2-dev,
                libcolord-dev,
                libcloudproviders-dev (>= 0.3.1),
@@ -46,10 +46,10 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libpango1.0-dev (>= 1.50.0),
                libpng-dev,
                libpolkit-gobject-1-dev [linux-any],
-               librsvg2-common [amd64 arm64 armel armhf i386 loong64 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32] <!nocheck>,
-               librsvg2-dev (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
-               libswresample-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libswscale-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
+               librsvg2-common [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32] <!nocheck>,
+               librsvg2-dev (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
+               libswresample-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
+               libswscale-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
                libsysprof-capture-4-dev (>= 3.40.1) [linux-any],
                libtiff-dev,
                libvulkan-dev [linux-any],
@@ -244,7 +244,7 @@ Description: GStreamer media backend for the GTK graphical user interface librar
 Package: libgtk-4-media-ffmpeg
 Build-Profiles: <pkg.gtk4.ffmpeg>
 Section: x11
-Architecture: amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x
+Architecture: amd64 arm64 armel armhf i386 mips64el ppc64el s390x
 Multi-Arch: foreign
 Depends: ${misc:Depends},
          ${shlibs:Depends},
@@ -266,7 +266,7 @@ Depends: ${misc:Depends},
          ${shlibs:Depends},
          libgtk-4-1 (= ${binary:Version})
 Recommends: fonts-cantarell,
-            librsvg2-common (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
+            librsvg2-common (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
 Description: example files for GTK 4
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable
@@ -281,7 +281,7 @@ Build-Profiles: <!noinsttest>
 Section: x11
 Architecture: any
 Depends: iso-codes,
-         librsvg2-common (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
+         librsvg2-common (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
          ${misc:Depends},
          ${shlibs:Depends},
          libgtk-4-1 (= ${binary:Version}),

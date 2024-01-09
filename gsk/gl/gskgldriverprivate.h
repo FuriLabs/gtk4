@@ -117,6 +117,8 @@ struct _GskGLDriver
 #define GSK_GL_DEFINE_PROGRAM(name, resource, uniforms) \
   GskGLProgram *name ## _no_clip; \
   GskGLProgram *name ## _rect_clip; \
+  GskGLProgram *name ## _circle_clip; \
+  GskGLProgram *name ## _symmetric_clip; \
   GskGLProgram *name;
 #define GSK_GL_DEFINE_PROGRAM_NO_CLIP(name, resource, uniforms) \
   GskGLProgram *name;

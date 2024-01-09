@@ -1062,8 +1062,8 @@ gsk_gl_command_queue_execute (GskGLCommandQueue    *self,
   gsk_profiler_timer_begin (self->profiler, self->metrics.cpu_time);
 #endif
 
-  glEnable (GL_DEPTH_TEST);
-  glDepthFunc (GL_LEQUAL);
+  glDisable (GL_DEPTH_TEST);
+  glDepthMask (false);
 
   /* Pre-multiplied alpha */
   glEnable (GL_BLEND);

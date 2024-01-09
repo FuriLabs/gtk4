@@ -171,7 +171,7 @@ static inline gint
 get_source_priority (GdkFrameClockIdle *self)
 {
   if (gdk_frame_clock_get_requested (GDK_FRAME_CLOCK (self)) & GDK_FRAME_CLOCK_PHASE_FLUSH_EVENTS)
-    return GDK_PRIORITY_EVENTS + 1;
+    return GDK_PRIORITY_EVENTS;
   else
     return GDK_PRIORITY_REDRAW;
 }

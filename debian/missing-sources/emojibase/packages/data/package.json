@@ -1,6 +1,6 @@
 {
   "name": "emojibase-data",
-  "version": "7.0.1",
+  "version": "15.3.0",
   "description": "Evergreen emoji datasets.",
   "keywords": [
     "emoji",
@@ -24,7 +24,7 @@
     "emojibase": "*"
   },
   "devDependencies": {
-    "emojibase-regex": "^6.0.1"
+    "emojibase-regex": "workspace:*"
   },
   "funding": {
     "type": "ko-fi",

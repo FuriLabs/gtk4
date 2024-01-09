@@ -173,6 +173,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_display_get_clipboard@Base 4.0.0
  gdk_display_get_default@Base 4.0.0
  gdk_display_get_default_seat@Base 4.0.0
+ gdk_display_get_dmabuf_formats@Base 4.13.5
  gdk_display_get_monitor_at_surface@Base 4.0.0
  gdk_display_get_monitors@Base 4.0.0
  gdk_display_get_name@Base 4.0.0
@@ -199,6 +200,43 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_display_supports_input_shapes@Base 4.0.0
  gdk_display_sync@Base 4.0.0
  gdk_display_translate_key@Base 4.0.0
+ gdk_dmabuf_downloader_get_type@Base 4.13.5
+ gdk_dmabuf_error_get_type@Base 4.13.5
+ gdk_dmabuf_error_quark@Base 4.13.5
+ gdk_dmabuf_formats_contains@Base 4.13.5
+ gdk_dmabuf_formats_get_format@Base 4.13.5
+ gdk_dmabuf_formats_get_n_formats@Base 4.13.5
+ gdk_dmabuf_formats_get_type@Base 4.13.5
+ gdk_dmabuf_formats_ref@Base 4.13.5
+ gdk_dmabuf_formats_unref@Base 4.13.5
+ gdk_dmabuf_texture_builder_build@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_display@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_fd@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_fourcc@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_height@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_modifier@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_n_planes@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_offset@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_premultiplied@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_stride@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_type@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_update_region@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_update_texture@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_width@Base 4.13.5
+ gdk_dmabuf_texture_builder_new@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_display@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_fd@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_fourcc@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_height@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_modifier@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_n_planes@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_offset@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_premultiplied@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_stride@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_update_region@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_update_texture@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_width@Base 4.13.5
+ gdk_dmabuf_texture_get_type@Base 4.13.5
  gdk_dnd_event_get_drop@Base 4.0.0
  gdk_dnd_event_get_type@Base 4.0.0
  gdk_drag_action_get_type@Base 4.0.0
@@ -600,6 +638,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  (arch=linux-any)gdk_wayland_toplevel_set_application_id@Base 4.0.0
  (arch=linux-any)gdk_wayland_toplevel_set_transient_for_exported@Base 4.0.0
  (arch=linux-any)gdk_wayland_toplevel_unexport_handle@Base 4.0.0
+ gdk_wayland_vulkan_context_get_type@Base 4.13.5
  gdk_x11_app_launch_context_get_type@Base 4.0.0
  gdk_x11_cairo_context_get_type@Base 4.0.0
  gdk_x11_device_get_id@Base 4.0.0
@@ -668,6 +707,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_x11_surface_set_urgency_hint@Base 4.0.0
  gdk_x11_surface_set_user_time@Base 4.0.0
  gdk_x11_surface_set_utf8_property@Base 4.0.0
+ gdk_x11_vulkan_context_get_type@Base 4.13.5
  gsk_blend_mode_get_type@Base 4.0.0
  gsk_blend_node_get_blend_mode@Base 4.0.0
  gsk_blend_node_get_bottom_child@Base 4.0.0
@@ -724,6 +764,12 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_debug_node_get_message@Base 4.0.0
  gsk_debug_node_get_type@Base 4.0.0
  gsk_debug_node_new@Base 4.0.0
+ gsk_fill_node_get_child@Base 4.13.5
+ gsk_fill_node_get_fill_rule@Base 4.13.5
+ gsk_fill_node_get_path@Base 4.13.5
+ gsk_fill_node_get_type@Base 4.13.5
+ gsk_fill_node_new@Base 4.13.5
+ gsk_fill_rule_get_type@Base 4.13.5
  gsk_gl_renderer_get_type@Base 4.0.0
  gsk_gl_renderer_new@Base 4.0.0
  gsk_gl_shader_compile@Base 4.0.0
@@ -755,6 +801,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_gl_shader_node_get_type@Base 4.0.0
  gsk_gl_shader_node_new@Base 4.0.0
  gsk_gl_uniform_type_get_type@Base 4.0.0
+ gsk_gpu_renderer_get_type@Base 4.13.5
  gsk_inset_shadow_node_get_blur_radius@Base 4.0.0
  gsk_inset_shadow_node_get_color@Base 4.0.0
  gsk_inset_shadow_node_get_dx@Base 4.0.0
@@ -763,6 +810,8 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_inset_shadow_node_get_spread@Base 4.0.0
  gsk_inset_shadow_node_get_type@Base 4.0.0
  gsk_inset_shadow_node_new@Base 4.0.0
+ gsk_line_cap_get_type@Base 4.13.5
+ gsk_line_join_get_type@Base 4.13.5
  gsk_linear_gradient_node_get_color_stops@Base 4.0.0
  gsk_linear_gradient_node_get_end@Base 4.0.0
  gsk_linear_gradient_node_get_n_color_stops@Base 4.0.0
@@ -789,6 +838,76 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_outset_shadow_node_get_spread@Base 4.0.0
  gsk_outset_shadow_node_get_type@Base 4.0.0
  gsk_outset_shadow_node_new@Base 4.0.0
+ gsk_path_builder_add_cairo_path@Base 4.13.5
+ gsk_path_builder_add_circle@Base 4.13.5
+ gsk_path_builder_add_layout@Base 4.13.5
+ gsk_path_builder_add_path@Base 4.13.5
+ gsk_path_builder_add_rect@Base 4.13.5
+ gsk_path_builder_add_reverse_path@Base 4.13.5
+ gsk_path_builder_add_rounded_rect@Base 4.13.5
+ gsk_path_builder_add_segment@Base 4.13.5
+ gsk_path_builder_arc_to@Base 4.13.5
+ gsk_path_builder_close@Base 4.13.5
+ gsk_path_builder_conic_to@Base 4.13.5
+ gsk_path_builder_cubic_to@Base 4.13.5
+ gsk_path_builder_free_to_path@Base 4.13.5
+ gsk_path_builder_get_current_point@Base 4.13.5
+ gsk_path_builder_get_type@Base 4.13.5
+ gsk_path_builder_html_arc_to@Base 4.13.5
+ gsk_path_builder_line_to@Base 4.13.5
+ gsk_path_builder_move_to@Base 4.13.5
+ gsk_path_builder_new@Base 4.13.5
+ gsk_path_builder_quad_to@Base 4.13.5
+ gsk_path_builder_ref@Base 4.13.5
+ gsk_path_builder_rel_arc_to@Base 4.13.5
+ gsk_path_builder_rel_conic_to@Base 4.13.5
+ gsk_path_builder_rel_cubic_to@Base 4.13.5
+ gsk_path_builder_rel_html_arc_to@Base 4.13.5
+ gsk_path_builder_rel_line_to@Base 4.13.5
+ gsk_path_builder_rel_move_to@Base 4.13.5
+ gsk_path_builder_rel_quad_to@Base 4.13.5
+ gsk_path_builder_rel_svg_arc_to@Base 4.13.5
+ gsk_path_builder_svg_arc_to@Base 4.13.5
+ gsk_path_builder_to_path@Base 4.13.5
+ gsk_path_builder_unref@Base 4.13.5
+ gsk_path_direction_get_type@Base 4.13.5
+ gsk_path_foreach@Base 4.13.5
+ gsk_path_foreach_flags_get_type@Base 4.13.5
+ gsk_path_get_bounds@Base 4.13.5
+ gsk_path_get_closest_point@Base 4.13.5
+ gsk_path_get_end_point@Base 4.13.5
+ gsk_path_get_start_point@Base 4.13.5
+ gsk_path_get_stroke_bounds@Base 4.13.5
+ gsk_path_get_type@Base 4.13.5
+ gsk_path_in_fill@Base 4.13.5
+ gsk_path_is_closed@Base 4.13.5
+ gsk_path_is_empty@Base 4.13.5
+ gsk_path_measure_get_length@Base 4.13.5
+ gsk_path_measure_get_path@Base 4.13.5
+ gsk_path_measure_get_point@Base 4.13.5
+ gsk_path_measure_get_tolerance@Base 4.13.5
+ gsk_path_measure_get_type@Base 4.13.5
+ gsk_path_measure_new@Base 4.13.5
+ gsk_path_measure_new_with_tolerance@Base 4.13.5
+ gsk_path_measure_ref@Base 4.13.5
+ gsk_path_measure_unref@Base 4.13.5
+ gsk_path_operation_get_type@Base 4.13.5
+ gsk_path_parse@Base 4.13.5
+ gsk_path_point_compare@Base 4.13.5
+ gsk_path_point_copy@Base 4.13.5
+ gsk_path_point_equal@Base 4.13.5
+ gsk_path_point_free@Base 4.13.5
+ gsk_path_point_get_curvature@Base 4.13.5
+ gsk_path_point_get_distance@Base 4.13.5
+ gsk_path_point_get_position@Base 4.13.5
+ gsk_path_point_get_rotation@Base 4.13.5
+ gsk_path_point_get_tangent@Base 4.13.5
+ gsk_path_point_get_type@Base 4.13.5
+ gsk_path_print@Base 4.13.5
+ gsk_path_ref@Base 4.13.5
+ gsk_path_to_cairo@Base 4.13.5
+ gsk_path_to_string@Base 4.13.5
+ gsk_path_unref@Base 4.13.5
  gsk_radial_gradient_node_get_center@Base 4.0.0
  gsk_radial_gradient_node_get_color_stops@Base 4.0.0
  gsk_radial_gradient_node_get_end@Base 4.0.0
@@ -813,6 +932,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_renderer_is_realized@Base 4.0.0
  gsk_renderer_new_for_surface@Base 4.0.0
  gsk_renderer_realize@Base 4.0.0
+ gsk_renderer_realize_for_display@Base 4.13.5
  gsk_renderer_render@Base 4.0.0
  gsk_renderer_render_texture@Base 4.0.0
  gsk_renderer_unrealize@Base 4.0.0
@@ -859,6 +979,33 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_shadow_node_get_shadow@Base 4.0.0
  gsk_shadow_node_get_type@Base 4.0.0
  gsk_shadow_node_new@Base 4.0.0
+ gsk_stroke_copy@Base 4.13.5
+ gsk_stroke_equal@Base 4.13.5
+ gsk_stroke_free@Base 4.13.5
+ gsk_stroke_get_dash@Base 4.13.5
+ gsk_stroke_get_dash_offset@Base 4.13.5
+ gsk_stroke_get_line_cap@Base 4.13.5
+ gsk_stroke_get_line_join@Base 4.13.5
+ gsk_stroke_get_line_width@Base 4.13.5
+ gsk_stroke_get_miter_limit@Base 4.13.5
+ gsk_stroke_get_type@Base 4.13.5
+ gsk_stroke_new@Base 4.13.5
+ gsk_stroke_node_get_child@Base 4.13.5
+ gsk_stroke_node_get_path@Base 4.13.5
+ gsk_stroke_node_get_stroke@Base 4.13.5
+ gsk_stroke_node_get_type@Base 4.13.5
+ gsk_stroke_node_new@Base 4.13.5
+ gsk_stroke_set_dash@Base 4.13.5
+ gsk_stroke_set_dash_offset@Base 4.13.5
+ gsk_stroke_set_line_cap@Base 4.13.5
+ gsk_stroke_set_line_join@Base 4.13.5
+ gsk_stroke_set_line_width@Base 4.13.5
+ gsk_stroke_set_miter_limit@Base 4.13.5
+ gsk_stroke_to_cairo@Base 4.13.5
+ gsk_subsurface_node_get_child@Base 4.13.5
+ gsk_subsurface_node_get_subsurface@Base 4.13.5
+ gsk_subsurface_node_get_type@Base 4.13.5
+ gsk_subsurface_node_new@Base 4.13.5
  gsk_text_node_get_color@Base 4.0.0
  gsk_text_node_get_font@Base 4.0.0
  gsk_text_node_get_glyphs@Base 4.0.0
@@ -910,6 +1057,8 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_value_get_render_node@Base 4.6.0
  gsk_value_set_render_node@Base 4.6.0
  gsk_value_take_render_node@Base 4.6.0
+ gsk_vulkan_renderer_get_type@Base 4.13.5
+ gsk_vulkan_renderer_new@Base 4.13.5
  gtk_about_dialog_add_credit_section@Base 4.0.0
  gtk_about_dialog_get_artists@Base 4.0.0
  gtk_about_dialog_get_authors@Base 4.0.0
@@ -2136,6 +2285,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_file_launcher_get_always_ask@Base 4.12.0
  gtk_file_launcher_get_file@Base 4.9.2
  gtk_file_launcher_get_type@Base 4.9.2
+ gtk_file_launcher_get_writable@Base 4.13.5
  gtk_file_launcher_launch@Base 4.9.2
  gtk_file_launcher_launch_finish@Base 4.9.2
  gtk_file_launcher_new@Base 4.9.2
@@ -2143,6 +2293,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_file_launcher_open_containing_folder_finish@Base 4.9.2
  gtk_file_launcher_set_always_ask@Base 4.12.0
  gtk_file_launcher_set_file@Base 4.9.2
+ gtk_file_launcher_set_writable@Base 4.13.5
  gtk_filter_change_get_type@Base 4.0.0
  gtk_filter_changed@Base 4.0.0
  gtk_filter_get_strictness@Base 4.0.0
@@ -2389,6 +2540,13 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_gl_area_set_has_stencil_buffer@Base 4.0.0
  gtk_gl_area_set_required_version@Base 4.0.0
  gtk_gl_area_set_use_es@Base 4.0.0
+ gtk_graphics_offload_enabled_get_type@Base 4.13.5
+ gtk_graphics_offload_get_child@Base 4.13.5
+ gtk_graphics_offload_get_enabled@Base 4.13.5
+ gtk_graphics_offload_get_type@Base 4.13.5
+ gtk_graphics_offload_new@Base 4.13.5
+ gtk_graphics_offload_set_child@Base 4.13.5
+ gtk_graphics_offload_set_enabled@Base 4.13.5
  gtk_grid_attach@Base 4.0.0
  gtk_grid_attach_next_to@Base 4.0.0
  gtk_grid_get_baseline_row@Base 4.0.0
@@ -3230,11 +3388,13 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_popover_menu_bar_remove_child@Base 4.0.0
  gtk_popover_menu_bar_set_menu_model@Base 4.0.0
  gtk_popover_menu_flags_get_type@Base 4.0.0
+ gtk_popover_menu_get_flags@Base 4.13.5
  gtk_popover_menu_get_menu_model@Base 4.0.0
  gtk_popover_menu_get_type@Base 4.0.0
  gtk_popover_menu_new_from_model@Base 4.0.0
  gtk_popover_menu_new_from_model_full@Base 4.0.0
  gtk_popover_menu_remove_child@Base 4.0.0
+ gtk_popover_menu_set_flags@Base 4.13.5
  gtk_popover_menu_set_menu_model@Base 4.0.0
  gtk_popover_new@Base 4.0.0
  gtk_popover_popdown@Base 4.0.0
@@ -3276,6 +3436,24 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_print_context_get_type@Base 4.0.0
  gtk_print_context_get_width@Base 4.0.0
  gtk_print_context_set_cairo_context@Base 4.0.0
+ gtk_print_dialog_get_accept_label@Base 4.13.5
+ gtk_print_dialog_get_modal@Base 4.13.5
+ gtk_print_dialog_get_page_setup@Base 4.13.5
+ gtk_print_dialog_get_print_settings@Base 4.13.5
+ gtk_print_dialog_get_title@Base 4.13.5
+ gtk_print_dialog_get_type@Base 4.13.5
+ gtk_print_dialog_new@Base 4.13.5
+ gtk_print_dialog_print@Base 4.13.5
+ gtk_print_dialog_print_file@Base 4.13.5
+ gtk_print_dialog_print_file_finish@Base 4.13.5
+ gtk_print_dialog_print_finish@Base 4.13.5
+ gtk_print_dialog_set_accept_label@Base 4.13.5
+ gtk_print_dialog_set_modal@Base 4.13.5
+ gtk_print_dialog_set_page_setup@Base 4.13.5
+ gtk_print_dialog_set_print_settings@Base 4.13.5
+ gtk_print_dialog_set_title@Base 4.13.5
+ gtk_print_dialog_setup@Base 4.13.5
+ gtk_print_dialog_setup_finish@Base 4.13.5
  gtk_print_duplex_get_type@Base 4.0.0
  gtk_print_error_get_type@Base 4.0.0
  gtk_print_error_quark@Base 4.0.0
@@ -3430,6 +3608,11 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_print_settings_to_gvariant@Base 4.0.0
  gtk_print_settings_to_key_file@Base 4.0.0
  gtk_print_settings_unset@Base 4.0.0
+ gtk_print_setup_get_page_setup@Base 4.13.5
+ gtk_print_setup_get_print_settings@Base 4.13.5
+ gtk_print_setup_get_type@Base 4.13.5
+ gtk_print_setup_ref@Base 4.13.5
+ gtk_print_setup_unref@Base 4.13.5
  gtk_print_status_get_type@Base 4.0.0
  gtk_print_unix_dialog_add_custom_tab@Base 4.0.0
  gtk_print_unix_dialog_get_current_page@Base 4.0.0
@@ -3806,9 +3989,12 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_shortcut_trigger_to_string@Base 4.0.0
  gtk_shortcut_trigger_trigger@Base 4.0.0
  gtk_shortcut_type_get_type@Base 4.0.0
+ gtk_shortcuts_group_add_shortcut@Base 4.13.5
  gtk_shortcuts_group_get_type@Base 4.0.0
+ gtk_shortcuts_section_add_group@Base 4.13.5
  gtk_shortcuts_section_get_type@Base 4.0.0
  gtk_shortcuts_shortcut_get_type@Base 4.0.0
+ gtk_shortcuts_window_add_section@Base 4.13.5
  gtk_shortcuts_window_get_type@Base 4.0.0
  gtk_show_about_dialog@Base 4.0.0
  gtk_show_uri@Base 4.0.0
@@ -3851,6 +4037,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_snapshot_append_cairo@Base 4.0.0
  gtk_snapshot_append_color@Base 4.0.0
  gtk_snapshot_append_conic_gradient@Base 4.0.0
+ gtk_snapshot_append_fill@Base 4.13.5
  gtk_snapshot_append_inset_shadow@Base 4.0.0
  gtk_snapshot_append_layout@Base 4.0.0
  gtk_snapshot_append_linear_gradient@Base 4.0.0
@@ -3860,6 +4047,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_snapshot_append_repeating_linear_gradient@Base 4.0.0
  gtk_snapshot_append_repeating_radial_gradient@Base 4.0.0
  gtk_snapshot_append_scaled_texture@Base 4.9.4
+ gtk_snapshot_append_stroke@Base 4.13.5
  gtk_snapshot_append_texture@Base 4.0.0
  gtk_snapshot_free_to_node@Base 4.0.0
  gtk_snapshot_free_to_paintable@Base 4.0.0
@@ -3874,12 +4062,14 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_snapshot_push_color_matrix@Base 4.0.0
  gtk_snapshot_push_cross_fade@Base 4.0.0
  gtk_snapshot_push_debug@Base 4.0.0
+ gtk_snapshot_push_fill@Base 4.13.5
  gtk_snapshot_push_gl_shader@Base 4.0.0
  gtk_snapshot_push_mask@Base 4.9.4
  gtk_snapshot_push_opacity@Base 4.0.0
  gtk_snapshot_push_repeat@Base 4.0.0
  gtk_snapshot_push_rounded_clip@Base 4.0.0
  gtk_snapshot_push_shadow@Base 4.0.0
+ gtk_snapshot_push_stroke@Base 4.13.5
  gtk_snapshot_render_background@Base 4.0.0
  gtk_snapshot_render_focus@Base 4.0.0
  gtk_snapshot_render_frame@Base 4.0.0
@@ -3916,6 +4106,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_sorter_get_type@Base 4.0.0
  gtk_sorter_order_get_type@Base 4.0.0
  gtk_spin_button_configure@Base 4.0.0
+ gtk_spin_button_get_activates_default@Base 4.13.5
  gtk_spin_button_get_adjustment@Base 4.0.0
  gtk_spin_button_get_climb_rate@Base 4.0.0
  gtk_spin_button_get_digits@Base 4.0.0
@@ -3930,6 +4121,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_spin_button_get_wrap@Base 4.0.0
  gtk_spin_button_new@Base 4.0.0
  gtk_spin_button_new_with_range@Base 4.0.0
+ gtk_spin_button_set_activates_default@Base 4.13.5
  gtk_spin_button_set_adjustment@Base 4.0.0
  gtk_spin_button_set_climb_rate@Base 4.0.0
  gtk_spin_button_set_digits@Base 4.0.0
@@ -4748,6 +4940,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_value_take_expression@Base 4.0.0
  gtk_video_get_autoplay@Base 4.0.0
  gtk_video_get_file@Base 4.0.0
+ gtk_video_get_graphics_offload@Base 4.13.5
  gtk_video_get_loop@Base 4.0.0
  gtk_video_get_media_stream@Base 4.0.0
  gtk_video_get_type@Base 4.0.0
@@ -4759,6 +4952,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_video_set_autoplay@Base 4.0.0
  gtk_video_set_file@Base 4.0.0
  gtk_video_set_filename@Base 4.0.0
+ gtk_video_set_graphics_offload@Base 4.13.5
  gtk_video_set_loop@Base 4.0.0
  gtk_video_set_media_stream@Base 4.0.0
  gtk_video_set_resource@Base 4.0.0

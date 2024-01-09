@@ -223,7 +223,9 @@ gsk_gl_driver_dispose (GObject *object)
 #define GSK_GL_DEFINE_PROGRAM(name, resource, uniforms) \
   GSK_GL_DELETE_PROGRAM(name);                          \
   GSK_GL_DELETE_PROGRAM(name ## _no_clip);              \
-  GSK_GL_DELETE_PROGRAM(name ## _rect_clip);
+  GSK_GL_DELETE_PROGRAM(name ## _rect_clip);            \
+  GSK_GL_DELETE_PROGRAM(name ## _symmetric_clip);       \
+  GSK_GL_DELETE_PROGRAM(name ## _circle_clip);
 #define GSK_GL_DELETE_PROGRAM(name)                     \
   G_STMT_START {                                        \
     if (self->name)                                     \
@@ -372,6 +374,8 @@ gsk_gl_driver_load_programs (GskGLDriver  *self,
   sources                                                                                       \
   GSK_GL_COMPILE_PROGRAM(name ## _no_clip, uniforms, "#define NO_CLIP 1\n");                    \
   GSK_GL_COMPILE_PROGRAM(name ## _rect_clip, uniforms, "#define RECT_CLIP 1\n");                \
+  GSK_GL_COMPILE_PROGRAM(name ## _symmetric_clip, uniforms, "#define SYMMETRIC_CLIP 1\n");      \
+  GSK_GL_COMPILE_PROGRAM(name ## _circle_clip, uniforms, "#define CIRCLE_CLIP 1\n");            \
   GSK_GL_COMPILE_PROGRAM(name, uniforms, "");
 #define GSK_GL_COMPILE_PROGRAM(name, uniforms, clip)                                            \
   G_STMT_START {                                                                                \

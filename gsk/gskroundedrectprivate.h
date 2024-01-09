@@ -47,6 +47,8 @@ void                     gsk_rounded_rect_dihedral              (GskRoundedRect 
                                                                  GdkDihedral               dihedral);
 
 gboolean                 gsk_rounded_rect_is_circular           (const GskRoundedRect     *self) G_GNUC_PURE;
+gboolean                 gsk_rounded_rect_is_symmetric          (const GskRoundedRect     *self) G_GNUC_PURE;
+gboolean                 gsk_rounded_rect_is_perfect_circle     (const GskRoundedRect     *self) G_GNUC_PURE;
 
 void                     gsk_rounded_rect_path                  (const GskRoundedRect     *self,
                                                                  cairo_t                  *cr);

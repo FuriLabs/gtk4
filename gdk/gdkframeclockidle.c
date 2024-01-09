@@ -332,7 +332,7 @@ maybe_start_idle (GdkFrameClockIdle *self,
         {
           GSource *source;
 
-          priv->flush_idle_id = g_timeout_add_full (GDK_PRIORITY_EVENTS + 1,
+          priv->flush_idle_id = g_timeout_add_full (GDK_PRIORITY_EVENTS,
                                                     min_interval,
                                                     gdk_frame_clock_flush_idle,
                                                     g_object_ref (self),

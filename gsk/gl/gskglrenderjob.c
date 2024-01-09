@@ -69,6 +69,8 @@ typedef struct _GskGLRenderClip
   GskRoundedRect rect;
   guint          is_rectilinear : 1;
   guint          is_fully_contained : 1;
+  guint          is_circular : 1;
+  guint          is_symmetric : 1;
 } GskGLRenderClip;
 
 #define GDK_ARRAY_NAME clips
@@ -624,6 +626,8 @@ gsk_gl_render_job_push_clip (GskGLRenderJob       *job,
 
   memcpy (&clip->rect, rect, sizeof *rect);
   clip->is_rectilinear = gsk_rounded_rect_is_rectilinear (rect);
+  clip->is_circular = gsk_rounded_rect_is_perfect_circle (rect);
+  clip->is_symmetric = gsk_rounded_rect_is_symmetric (rect);
   clip->is_fully_contained = FALSE;
 
   job->current_clip = clip;
@@ -1152,7 +1156,11 @@ gsk_gl_render_job_begin_draw (GskGLRenderJob *job,
       ? job->driver->name ## _no_clip \
       : (job->current_clip->is_rectilinear \
         ? job->driver->name ## _rect_clip \
-        : job->driver->name))
+        : (job->current_clip->is_circular \
+          ? job->driver->name ## _circle_clip \
+          : (job->current_clip->is_symmetric \
+            ? job->driver->name ## _symmetric_clip \
+            : job->driver->name))))
 
 static inline void
 gsk_gl_render_job_split_draw (GskGLRenderJob *job)

@@ -397,6 +397,55 @@ gsk_rounded_rect_is_rectilinear (const GskRoundedRect *self)
   return TRUE;
 }
 
+/*<private>
+ * gsk_rounded_rect_is_symmetric:
+  * @self: the `GskRoundedRect` to check
+  *
+  * Checks if the rectangle is symmetric, i.e. if the top left
+  * corner is the same as all other corners.
+  *
+  * Returns: %TRUE if the rectangle is symmetric
+  **/
+gboolean
+gsk_rounded_rect_is_symmetric (const GskRoundedRect *self)
+{
+  float width = self->corner[0].width;
+  float height = self->corner[0].height;
+  for (guint i = 1; i < 4; i++)
+    {
+      if (self->corner[i].width != width ||
+          self->corner[i].height != height)
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+/*<private>
+ * gsk_rounded_rect_is_perfect_circle:
+ * @self: the `GskRoundedRect` to check
+ *
+ * Checks if all corners of @self are quarter-circles with
+ * the same radius, and the radius is half the width of the
+ * rectangle.
+ *
+ * Returns: %TRUE if the rectangle is a perfect circle.
+ */
+gboolean
+gsk_rounded_rect_is_perfect_circle (const GskRoundedRect *self)
+{
+  if (!gsk_rounded_rect_is_circular (self))
+    return FALSE;
+
+  if (!gsk_rounded_rect_is_symmetric (self))
+    return FALSE;
+
+  if (self->bounds.size.width != self->bounds.size.height)
+    return FALSE;
+
+  return self->corner[0].width * 2 == self->bounds.size.width;
+}
+
 static inline gboolean
 ellipsis_contains_point (const graphene_size_t  *ellipsis,
                          const graphene_point_t *point)

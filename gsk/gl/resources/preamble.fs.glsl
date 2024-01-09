@@ -96,6 +96,57 @@ gsk_rect_coverage (vec4 r, vec2 p)
   return 1.0;
 }
 
+float
+gsk_circle_coverage (vec4 r, vec2 p)
+{
+  float x_min = step(r.x, p.x);
+  float y_min = step(r.y, p.y);
+  float x_max = step(p.x, r.z - 1.0);
+  float y_max = step(p.y, r.w - 1.0);
+
+  if (x_min * y_min * x_max * y_max == 0.0)
+    return 0.0;
+
+  vec2 center = vec2(r.x + r.z, r.y - 1.0 + r.w - 1.0) / 2.0;
+  float radius = (r.z - r.x - 2.0) / 2.0;
+
+  float distance_squared = dot(p - center, p - center);
+  if (distance_squared <= radius * radius)
+    return 1.0;
+
+  // TODO: anti-aliasing is not implemented yet
+  return 0.0;
+}
+
+float gsk_symmetric_rounded_rect_coverage(GskRoundedRect r, vec2 p) {
+  if (p.x < r.bounds.x || p.y < r.bounds.y ||
+      p.x >= r.bounds.z || p.y >= r.bounds.w)
+    return 0.0;
+
+  vec2 ref_tl = r.corner_points1.xy;
+  vec2 ref_br = r.corner_points2.xy;
+
+  if (p.x >= ref_tl.x && p.y >= ref_tl.y &&
+      p.x <= ref_br.x && p.y <= ref_br.y)
+    return 1.0;
+
+  if (p.x >= ref_tl.x && p.x <= ref_br.x &&
+      (p.y < ref_tl.y || p.y > ref_br.y))
+    return 1.0;
+
+  vec2 center = (r.bounds.xy + r.bounds.zw) * 0.5;
+  vec2 reflected_p = abs(p - center) + center;
+
+  // We are now pretending to be in the bottom right corner of the rect.
+  // We could actually probably do this higher up and save some calculations/branches. TODO!
+
+  // Fill in the middle part where there are no corners.
+  if (reflected_p.y < ref_br.y)
+    return 1.0;
+
+  return gsk_ellipsis_coverage(reflected_p, ref_br, ref_br - r.bounds.zw);
+}
+
 vec4 GskTexture(sampler2D sampler, vec2 texCoords) {
 #if defined(GSK_GLES) || defined(GSK_LEGACY)
   return texture2D(sampler, texCoords);
@@ -126,6 +177,14 @@ void gskSetOutputColor(vec4 color) {
 
 #if defined(NO_CLIP)
   result = color;
+#elif defined(CIRCLE_CLIP)
+  float coverage = gsk_circle_coverage(gsk_get_bounds(u_clip_rect),
+                                       gsk_get_frag_coord());
+  result = color * coverage;
+#elif defined(SYMMETRIC_CLIP)
+  float coverage = gsk_symmetric_rounded_rect_coverage(gsk_create_rect(u_clip_rect),
+                                                       gsk_get_frag_coord());
+  result = color * coverage;
 #elif defined(RECT_CLIP)
   float coverage = gsk_rect_coverage(gsk_get_bounds(u_clip_rect),
                                      gsk_get_frag_coord());
@@ -148,6 +207,14 @@ void gskSetScaledOutputColor(vec4 color, float alpha) {
 
 #if defined(NO_CLIP)
   result = color * alpha;
+#elif defined(CIRCLE_CLIP)
+  float coverage = gsk_circle_coverage(gsk_get_bounds(u_clip_rect),
+                                       gsk_get_frag_coord());
+  result = color * (alpha * coverage);
+#elif defined(SYMMETRIC_CLIP)
+  float coverage = gsk_symmetric_rounded_rect_coverage(gsk_create_rect(u_clip_rect),
+                                                       gsk_get_frag_coord());
+  result = color * (alpha * coverage);
 #elif defined(RECT_CLIP)
   float coverage = gsk_rect_coverage(gsk_get_bounds(u_clip_rect),
                                      gsk_get_frag_coord());

@@ -45,8 +45,8 @@ gsk_ellipsis_coverage (vec2 point, vec2 center, vec2 radius)
 float
 gsk_rounded_rect_coverage (GskRoundedRect r, vec2 p)
 {
-  if (p.x < r.bounds.x || p.y < r.bounds.y ||
-      p.x >= r.bounds.z || p.y >= r.bounds.w)
+  if (p.x < r.bounds.x || p.x >= r.bounds.z ||
+      p.y < r.bounds.y || p.y >= r.bounds.w)
     return 0.0;
 
   vec2 ref_tl = r.corner_points1.xy;
@@ -85,8 +85,8 @@ gsk_rounded_rect_coverage (GskRoundedRect r, vec2 p)
 float
 gsk_rect_coverage (vec4 r, vec2 p)
 {
-  if (p.x < r.x || p.y < r.y ||
-      p.x >= r.z || p.y >= r.w)
+  if (p.x >= r.z || p.x < r.x ||
+      p.y >= r.w || p.y < r.y)
     return 0.0;
 
   return 1.0;

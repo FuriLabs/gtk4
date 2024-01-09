@@ -173,21 +173,23 @@ void gskSetOutputColor(vec4 color) {
 
 #if defined(NO_CLIP)
   result = color;
-#elif defined(CIRCLE_CLIP)
-  float coverage = gsk_circle_coverage(gsk_get_bounds(u_clip_rect),
-                                       gsk_get_frag_coord());
-  result = color * coverage;
-#elif defined(SYMMETRIC_CLIP)
-  float coverage = gsk_symmetric_rounded_rect_coverage(gsk_create_rect(u_clip_rect),
-                                                       gsk_get_frag_coord());
-  result = color * coverage;
-#elif defined(RECT_CLIP)
-  float coverage = gsk_rect_coverage(gsk_get_bounds(u_clip_rect),
-                                     gsk_get_frag_coord());
-  result = color * coverage;
 #else
-  float coverage = gsk_rounded_rect_coverage(gsk_create_rect(u_clip_rect),
-                                             gsk_get_frag_coord());
+  float coverage = 1.0;
+
+#if defined(CIRCLE_CLIP)
+  coverage = gsk_circle_coverage(gsk_get_bounds(u_clip_rect),
+                                 gsk_get_frag_coord());
+#elif defined(SYMMETRIC_CLIP)
+  coverage = gsk_symmetric_rounded_rect_coverage(gsk_create_rect(u_clip_rect),
+                                                 gsk_get_frag_coord());
+#elif defined(RECT_CLIP)
+  coverage = gsk_rect_coverage(gsk_get_bounds(u_clip_rect),
+                               gsk_get_frag_coord());
+#else
+  coverage = gsk_rounded_rect_coverage(gsk_create_rect(u_clip_rect),
+                                       gsk_get_frag_coord());
+#endif
+
   result = color * coverage;
 #endif
 
@@ -200,25 +202,28 @@ void gskSetOutputColor(vec4 color) {
 
 void gskSetScaledOutputColor(vec4 color, float alpha) {
   vec4 result;
-
 #if defined(NO_CLIP)
   result = color * alpha;
-#elif defined(CIRCLE_CLIP)
-  float coverage = gsk_circle_coverage(gsk_get_bounds(u_clip_rect),
-                                       gsk_get_frag_coord());
-  result = color * (alpha * coverage);
+#else
+  float coverage = 1.0;
+
+#if defined(CIRCLE_CLIP)
+  coverage = gsk_circle_coverage(gsk_get_bounds(u_clip_rect),
+                                 gsk_get_frag_coord());
 #elif defined(SYMMETRIC_CLIP)
-  float coverage = gsk_symmetric_rounded_rect_coverage(gsk_create_rect(u_clip_rect),
-                                                       gsk_get_frag_coord());
+  coverage = gsk_symmetric_rounded_rect_coverage(gsk_create_rect(u_clip_rect),
+                                                 gsk_get_frag_coord());
   result = color * (alpha * coverage);
 #elif defined(RECT_CLIP)
-  float coverage = gsk_rect_coverage(gsk_get_bounds(u_clip_rect),
-                                     gsk_get_frag_coord());
-  result = color * (alpha * coverage);
+  coverage = gsk_rect_coverage(gsk_get_bounds(u_clip_rect),
+                               gsk_get_frag_coord());
+
 #else
-  float coverage = gsk_rounded_rect_coverage(gsk_create_rect(u_clip_rect),
-                                             gsk_get_frag_coord());
-  result = color * (alpha * coverage);
+  coverage = gsk_rounded_rect_coverage(gsk_create_rect(u_clip_rect),
+                                       gsk_get_frag_coord());
+#endif
+
+  result = color * alpha * coverage;
 #endif
 
 #if defined(GSK_GLES) || defined(GSK_LEGACY)

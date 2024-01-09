@@ -538,6 +538,24 @@ handle_accessible_method (GDBusConnection       *connection,
                                  "placeholder-text", gtk_string_accessible_value_get (value));
         }
 
+      if (gtk_at_context_has_accessible_relation (GTK_AT_CONTEXT (self), GTK_ACCESSIBLE_RELATION_COL_INDEX_TEXT))
+        {
+          GtkAccessibleValue *value = gtk_at_context_get_accessible_relation (GTK_AT_CONTEXT (self),
+                                                                              GTK_ACCESSIBLE_RELATION_COL_INDEX_TEXT);
+
+          g_variant_builder_add (&builder, "{ss}",
+                                 "colindextext", gtk_string_accessible_value_get (value));
+        }
+
+      if (gtk_at_context_has_accessible_relation (GTK_AT_CONTEXT (self), GTK_ACCESSIBLE_RELATION_ROW_INDEX_TEXT))
+        {
+          GtkAccessibleValue *value = gtk_at_context_get_accessible_relation (GTK_AT_CONTEXT (self),
+                                                                              GTK_ACCESSIBLE_RELATION_ROW_INDEX_TEXT);
+
+          g_variant_builder_add (&builder, "{ss}",
+                                 "rowindextext", gtk_string_accessible_value_get (value));
+        }
+
       g_variant_builder_close (&builder);
 
       g_dbus_method_invocation_return_value (invocation, g_variant_builder_end (&builder));
@@ -714,7 +732,9 @@ emit_text_changed (GtkAtSpiContext *self,
                                  "org.a11y.atspi.Event.Object",
                                  "TextChanged",
                                  g_variant_new ("(siiva{sv})",
-                                                kind, start, end, g_variant_new_string (text), NULL),
+                                                kind, start, end,
+                                                g_variant_new_string (text),
+                                                NULL),
                                  NULL);
 }
 
@@ -1453,7 +1473,6 @@ gtk_at_spi_context_realize (GtkATContext *context)
   if (self->connection == NULL)
     return;
 
-#ifdef G_ENABLE_DEBUG
   if (GTK_DEBUG_CHECK (A11Y))
     {
       GtkAccessible *accessible = gtk_at_context_get_accessible (context);
@@ -1465,7 +1484,6 @@ gtk_at_spi_context_realize (GtkATContext *context)
                  role_name);
       g_free (role_name);
     }
-#endif
 
   gtk_at_spi_root_queue_register (self->root, self, register_object);
 }

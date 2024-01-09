@@ -20,20 +20,26 @@
 
 #include "config.h"
 
-#include <gdk/gdkprofilerprivate.h>
-#include <gdk/gdkdisplayprivate.h>
-#include <gdk/gdkglcontextprivate.h>
-#include <gdk/gdksurfaceprivate.h>
-#include <glib/gi18n-lib.h>
-#include <gsk/gskdebugprivate.h>
-#include <gsk/gskrendererprivate.h>
-#include <gsk/gskrendernodeprivate.h>
+#include "gskglrendererprivate.h"
 
 #include "gskglcommandqueueprivate.h"
 #include "gskgldriverprivate.h"
 #include "gskglprogramprivate.h"
 #include "gskglrenderjobprivate.h"
-#include "gskglrendererprivate.h"
+
+#include <gdk/gdkprofilerprivate.h>
+#include <gdk/gdkdisplayprivate.h>
+#include <gdk/gdkdmabufdownloaderprivate.h>
+#include <gdk/gdkdmabuftextureprivate.h>
+#include <gdk/gdkglcontextprivate.h>
+#include <gdk/gdksurfaceprivate.h>
+#include <gdk/gdksubsurfaceprivate.h>
+#include <glib/gi18n-lib.h>
+#include <gsk/gskdebugprivate.h>
+#include <gsk/gskrendererprivate.h>
+#include <gsk/gskrendernodeprivate.h>
+#include <gsk/gskroundedrectprivate.h>
+#include <gsk/gskrectprivate.h>
 
 struct _GskGLRendererClass
 {
@@ -65,7 +71,79 @@ struct _GskGLRenderer
   GskGLDriver *driver;
 };
 
-G_DEFINE_TYPE (GskGLRenderer, gsk_gl_renderer, GSK_TYPE_RENDERER)
+static gboolean
+gsk_gl_renderer_dmabuf_downloader_supports (GdkDmabufDownloader  *downloader,
+                                            GdkDmabufTexture     *texture,
+                                            GError              **error)
+{
+  GdkDisplay *display = gdk_dmabuf_texture_get_display (texture);
+  const GdkDmabuf *dmabuf = gdk_dmabuf_texture_get_dmabuf (texture);
+
+  if (!gdk_dmabuf_formats_contains (display->egl_dmabuf_formats, dmabuf->fourcc, dmabuf->modifier))
+    {
+      g_set_error (error,
+                   GDK_DMABUF_ERROR, GDK_DMABUF_ERROR_UNSUPPORTED_FORMAT,
+                   "Unsupported dmabuf format: %.4s:%#" G_GINT64_MODIFIER "x",
+                   (char *) &dmabuf->fourcc, dmabuf->modifier);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static void
+gsk_gl_renderer_dmabuf_downloader_download (GdkDmabufDownloader *downloader_,
+                                            GdkDmabufTexture    *texture,
+                                            GdkMemoryFormat      format,
+                                            guchar              *data,
+                                            gsize                stride)
+{
+  GskRenderer *renderer = GSK_RENDERER (downloader_);
+  GdkGLContext *previous;
+  GdkTexture *native;
+  GdkTextureDownloader *downloader;
+  int width, height;
+  GskRenderNode *node;
+
+  previous = gdk_gl_context_get_current ();
+
+  width = gdk_texture_get_width (GDK_TEXTURE (texture));
+  height = gdk_texture_get_height (GDK_TEXTURE (texture));
+
+  node = gsk_texture_node_new (GDK_TEXTURE (texture), &GRAPHENE_RECT_INIT (0, 0, width, height));
+  native = gsk_renderer_render_texture (renderer, node, &GRAPHENE_RECT_INIT (0, 0, width, height));
+  gsk_render_node_unref (node);
+
+  downloader = gdk_texture_downloader_new (native);
+  gdk_texture_downloader_set_format (downloader, format);
+  gdk_texture_downloader_download_into (downloader, data, stride);
+  gdk_texture_downloader_free (downloader);
+
+  g_object_unref (native);
+
+  if (previous)
+    gdk_gl_context_make_current (previous);
+  else
+    gdk_gl_context_clear_current ();
+}
+
+static void
+gsk_gl_renderer_dmabuf_downloader_close (GdkDmabufDownloader *downloader)
+{
+  gsk_renderer_unrealize (GSK_RENDERER (downloader));
+}
+
+static void
+gsk_gl_renderer_dmabuf_downloader_init (GdkDmabufDownloaderInterface *iface)
+{
+  iface->close = gsk_gl_renderer_dmabuf_downloader_close;
+  iface->supports = gsk_gl_renderer_dmabuf_downloader_supports;
+  iface->download = gsk_gl_renderer_dmabuf_downloader_download;
+}
+
+G_DEFINE_TYPE_EXTENDED (GskGLRenderer, gsk_gl_renderer, GSK_TYPE_RENDERER, 0,
+                        G_IMPLEMENT_INTERFACE (GDK_TYPE_DMABUF_DOWNLOADER,
+                                               gsk_gl_renderer_dmabuf_downloader_init))
 
 /**
  * gsk_gl_renderer_new:
@@ -84,6 +162,7 @@ gsk_gl_renderer_new (void)
 
 static gboolean
 gsk_gl_renderer_realize (GskRenderer  *renderer,
+                         GdkDisplay   *display,
                          GdkSurface   *surface,
                          GError      **error)
 {
@@ -91,7 +170,6 @@ gsk_gl_renderer_realize (GskRenderer  *renderer,
   GskGLRenderer *self = (GskGLRenderer *)renderer;
   GdkGLContext *context = NULL;
   GskGLDriver *driver = NULL;
-  GdkDisplay *display;
   gboolean ret = FALSE;
   gboolean debug_shaders = FALSE;
   GdkGLAPI api;
@@ -104,15 +182,9 @@ gsk_gl_renderer_realize (GskRenderer  *renderer,
   g_assert (self->command_queue == NULL);
 
   if (surface == NULL)
-    {
-      display = gdk_display_get_default (); /* FIXME: allow different displays somehow ? */
-      context = gdk_display_create_gl_context (display, error);
-    }
+    context = gdk_display_create_gl_context (display, error);
   else
-    {
-      display = gdk_surface_get_display (surface);
-      context = gdk_surface_create_gl_context (surface, error);
-    }
+    context = gdk_surface_create_gl_context (surface, error);
 
   if (!context || !gdk_gl_context_realize (context, error))
     goto failure;
@@ -135,10 +207,8 @@ gsk_gl_renderer_realize (GskRenderer  *renderer,
         }
     }
 
-#ifdef G_ENABLE_DEBUG
   if (GSK_RENDERER_DEBUG_CHECK (GSK_RENDERER (self), SHADERS))
     debug_shaders = TRUE;
-#endif
 
   if (!(driver = gsk_gl_driver_for_display (display, debug_shaders, error)))
     goto failure;
@@ -290,6 +360,12 @@ gsk_gl_renderer_render (GskRenderer          *renderer,
   surface = gdk_draw_context_get_surface (GDK_DRAW_CONTEXT (self->context));
   scale = gdk_gl_context_get_scale (self->context);
 
+  if (cairo_region_is_empty (update_area))
+    {
+      gdk_draw_context_empty_frame (GDK_DRAW_CONTEXT (self->context));
+      return;
+    }
+
   viewport.origin.x = 0;
   viewport.origin.y = 0;
   viewport.size.width = gdk_surface_get_width (surface) * scale;
@@ -307,10 +383,6 @@ gsk_gl_renderer_render (GskRenderer          *renderer,
 
   gsk_gl_driver_begin_frame (self->driver, self->command_queue);
   job = gsk_gl_render_job_new (self->driver, &viewport, scale, render_region, 0, clear_framebuffer);
-#ifdef G_ENABLE_DEBUG
-  if (GSK_RENDERER_DEBUG_CHECK (GSK_RENDERER (self), FALLBACK))
-    gsk_gl_render_job_set_debug_fallback (job, TRUE);
-#endif
   gsk_gl_render_job_render (job, root);
   gsk_gl_driver_end_frame (self->driver);
   gsk_gl_render_job_free (job);
@@ -380,7 +452,7 @@ gsk_gl_renderer_render_texture (GskRenderer           *renderer,
       gdk_format = GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED;
       format = GL_RGBA32F;
     }
-  else 
+  else
     {
       format = GL_RGBA8;
       gdk_format = GDK_MEMORY_R8G8B8A8_PREMULTIPLIED;
@@ -395,10 +467,6 @@ gsk_gl_renderer_render_texture (GskRenderer           *renderer,
     {
       gsk_gl_driver_begin_frame (self->driver, self->command_queue);
       job = gsk_gl_render_job_new (self->driver, viewport, 1, NULL, render_target->framebuffer_id, TRUE);
-#ifdef G_ENABLE_DEBUG
-      if (GSK_RENDERER_DEBUG_CHECK (GSK_RENDERER (self), FALLBACK))
-        gsk_gl_render_job_set_debug_fallback (job, TRUE);
-#endif
       gsk_gl_render_job_render_flipped (job, root);
       texture_id = gsk_gl_driver_release_render_target (self->driver, render_target, FALSE);
       texture = gsk_gl_driver_create_gdk_texture (self->driver, texture_id, gdk_format);
@@ -435,6 +503,8 @@ gsk_gl_renderer_class_init (GskGLRendererClass *klass)
 
   object_class->dispose = gsk_gl_renderer_dispose;
 
+  renderer_class->supports_offload = TRUE;
+
   renderer_class->realize = gsk_gl_renderer_realize;
   renderer_class->unrealize = gsk_gl_renderer_unrealize;
   renderer_class->render = gsk_gl_renderer_render;
@@ -461,51 +531,3 @@ gsk_gl_renderer_try_compile_gl_shader (GskGLRenderer  *renderer,
   return program != NULL;
 }
 
-typedef struct {
-  GskRenderer parent_instance;
-} GskNglRenderer;
-
-typedef struct {
-  GskRendererClass parent_class;
-} GskNglRendererClass;
-
-G_DEFINE_TYPE (GskNglRenderer, gsk_ngl_renderer, GSK_TYPE_RENDERER)
-
-static void
-gsk_ngl_renderer_init (GskNglRenderer *renderer)
-{
-}
-
-static gboolean
-gsk_ngl_renderer_realize (GskRenderer  *renderer,
-                          GdkSurface   *surface,
-                          GError      **error)
-{
-  g_set_error_literal (error,
-                       G_IO_ERROR, G_IO_ERROR_FAILED,
-                       "please use the GL renderer instead");
-  return FALSE;
-}
-
-static void
-gsk_ngl_renderer_class_init (GskNglRendererClass *class)
-{
-  GSK_RENDERER_CLASS (class)->realize = gsk_ngl_renderer_realize;
-}
-
-/**
- * gsk_ngl_renderer_new:
- *
- * Same as gsk_gl_renderer_new().
- *
- * Returns: (transfer full): a new GL renderer
- *
- * Deprecated: 4.4: Use gsk_gl_renderer_new()
- */
-GskRenderer *
-gsk_ngl_renderer_new (void)
-{
-G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-  return g_object_new (gsk_ngl_renderer_get_type (), NULL);
-G_GNUC_END_IGNORE_DEPRECATIONS
-}

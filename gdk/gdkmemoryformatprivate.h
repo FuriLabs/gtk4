@@ -20,8 +20,13 @@
 #pragma once
 
 #include "gdkenums.h"
+#include "gdktypes.h"
 
 #include <epoxy/gl.h>
+
+#ifdef GDK_RENDERING_VULKAN
+#include <vulkan/vulkan.h>
+#endif
 
 G_BEGIN_DECLS
 
@@ -41,18 +46,34 @@ typedef enum {
 gsize                   gdk_memory_format_alignment         (GdkMemoryFormat             format) G_GNUC_CONST;
 GdkMemoryAlpha          gdk_memory_format_alpha             (GdkMemoryFormat             format) G_GNUC_CONST;
 gsize                   gdk_memory_format_bytes_per_pixel   (GdkMemoryFormat             format) G_GNUC_CONST;
+GdkMemoryFormat         gdk_memory_format_get_premultiplied (GdkMemoryFormat             format) G_GNUC_CONST;
+GdkMemoryFormat         gdk_memory_format_get_straight      (GdkMemoryFormat             format) G_GNUC_CONST;
+const GdkMemoryFormat * gdk_memory_format_get_fallbacks     (GdkMemoryFormat             format) G_GNUC_CONST;
 GdkMemoryDepth          gdk_memory_format_get_depth         (GdkMemoryFormat             format) G_GNUC_CONST;
 GdkMemoryDepth          gdk_memory_depth_merge              (GdkMemoryDepth              depth1,
                                                              GdkMemoryDepth              depth2) G_GNUC_CONST;
+GdkMemoryFormat         gdk_memory_depth_get_format         (GdkMemoryDepth              depth) G_GNUC_CONST;
 GdkMemoryFormat         gdk_memory_depth_get_alpha_format   (GdkMemoryDepth              depth) G_GNUC_CONST;
-gboolean                gdk_memory_format_gl_format         (GdkMemoryFormat             format,
-                                                             gboolean                    gles,
-                                                             guint                       gl_major,
-                                                             guint                       gl_minor,
-                                                             guint                      *out_internal_format,
-                                                             guint                      *out_format,
-                                                             guint                      *out_type,
-                                                             GLint                       out_gizzle[4]);
+void                    gdk_memory_format_gl_format         (GdkMemoryFormat             format,
+                                                             GLint                      *out_internal_format,
+                                                             GLenum                     *out_format,
+                                                             GLenum                     *out_type,
+                                                             GLint                       out_swizzle[4]);
+gboolean                gdk_memory_format_gl_rgba_format    (GdkMemoryFormat             format,
+                                                             GdkMemoryFormat            *out_actual_format,
+                                                             GLint                      *out_internal_format,
+                                                             GLenum                     *out_format,
+                                                             GLenum                     *out_type,
+                                                             GLint                       out_swizzle[4]);
+#ifdef GDK_RENDERING_VULKAN
+VkFormat                gdk_memory_format_vk_format         (GdkMemoryFormat             format,
+                                                             VkComponentMapping         *out_swizzle);
+VkFormat                gdk_memory_format_vk_rgba_format    (GdkMemoryFormat             format,
+                                                             GdkMemoryFormat            *out_rgba_format,
+                                                             VkComponentMapping         *out_swizzle);
+#endif
+guint32                 gdk_memory_format_get_dmabuf_fourcc (GdkMemoryFormat             format);
+
 
 void                    gdk_memory_convert                  (guchar                     *dest_data,
                                                              gsize                       dest_stride,

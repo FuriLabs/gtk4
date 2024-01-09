@@ -177,6 +177,7 @@ response_cb (GDBusConnection  *connection,
   self->custom_files = NULL;
   for (i = 0; uris[i]; i++)
     self->custom_files = g_slist_prepend (self->custom_files, g_file_new_for_uri (uris[i]));
+  self->custom_files = g_slist_reverse (self->custom_files);
 
   g_free (uris);
   g_variant_unref (response_data);
@@ -216,11 +217,9 @@ send_close (FilechooserPortalData *data)
   GError *error = NULL;
 
   message = g_dbus_message_new_method_call (PORTAL_BUS_NAME,
-                                            PORTAL_OBJECT_PATH,
+                                            data->portal_handle,
                                             PORTAL_REQUEST_INTERFACE,
                                             "Close");
-  g_dbus_message_set_body (message,
-                           g_variant_new ("(o)", data->portal_handle));
 
   if (!g_dbus_connection_send_message (data->connection,
                                        message,

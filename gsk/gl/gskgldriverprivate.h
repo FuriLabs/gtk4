@@ -69,7 +69,9 @@ typedef struct {
 #define CONCAT_EXPANDED2(a,b) a##b
 #define GSK_GL_ADD_UNIFORM(pos, KEY, name) UNIFORM_##KEY = UNIFORM_SHARED_LAST + pos,
 #define GSK_GL_DEFINE_PROGRAM(name, resource, uniforms) enum { uniforms };
+#define GSK_GL_DEFINE_PROGRAM_NO_CLIP(name, resource, uniforms) enum { uniforms };
 # include "gskglprograms.defs"
+#undef GSK_GL_DEFINE_PROGRAM_NO_CLIP
 #undef GSK_GL_DEFINE_PROGRAM
 #undef GSK_GL_ADD_UNIFORM
 #undef GSK_GL_NO_UNIFORMS
@@ -116,10 +118,13 @@ struct _GskGLDriver
   GskGLProgram *name ## _no_clip; \
   GskGLProgram *name ## _rect_clip; \
   GskGLProgram *name;
+#define GSK_GL_DEFINE_PROGRAM_NO_CLIP(name, resource, uniforms) \
+  GskGLProgram *name;
 # include "gskglprograms.defs"
 #undef GSK_GL_NO_UNIFORMS
 #undef GSK_GL_ADD_UNIFORM
 #undef GSK_GL_DEFINE_PROGRAM
+#undef GSK_GL_DEFINE_PROGRAM_NO_CLIP
 
   gint64 current_frame_id;
 
@@ -197,6 +202,7 @@ gsk_gl_driver_get_texture_by_id (GskGLDriver *self,
  * gsk_gl_driver_lookup_texture:
  * @self: a `GskGLDriver`
  * @key: the key for the texture
+ * @has_mipmap: (out): Return location for whether the texture has a mipmap
  *
  * Looks up a texture in the texture cache by @key.
  *
@@ -206,7 +212,8 @@ gsk_gl_driver_get_texture_by_id (GskGLDriver *self,
  */
 static inline guint
 gsk_gl_driver_lookup_texture (GskGLDriver         *self,
-                              const GskTextureKey *key)
+                              const GskTextureKey *key,
+                              gboolean            *has_mipmap)
 {
   gpointer id;
 
@@ -216,6 +223,9 @@ gsk_gl_driver_lookup_texture (GskGLDriver         *self,
 
       if (texture != NULL)
         texture->last_used_in_frame = self->current_frame_id;
+
+       if (has_mipmap)
+         *has_mipmap = texture ? texture->has_mipmap : FALSE;
 
       return GPOINTER_TO_UINT (id);
     }

@@ -1,8 +1,6 @@
-----
-Title: Initialization
-----
+Title: Initializing GTK
 
-# Library initialization and main loop
+## Library initialization and main loop
 
 Before using GTK, you need to initialize it using [func@Gtk.init]; this
 connects to the windowing system, sets up the locale and performs other
@@ -49,7 +47,7 @@ main (int argc, char **argv)
   // ...
 
   // Show the application window
-  gtk_widget_set_visible (window, TRUE);
+  gtk_window_present (GTK_WINDOW (window));
 
   // Enter the main event loop, and wait for user interaction
   while (!done)
@@ -66,5 +64,5 @@ as spinning the main loop.
 
 ### See also
 
-  - the GLib manual, especially `GMainLoop`
-  - signal-related functions, such as `g_signal_connect()` in GObject
+- the GLib manual, especially `GMainLoop`
+- signal-related functions, such as `g_signal_connect()` in GObject

@@ -55,11 +55,13 @@ model_to_string (GListModel *model)
 static char *
 section_model_to_string (GListModel *model)
 {
-  GString *string = g_string_new (NULL);
+  GString *string;
   guint i, s, e;
 
   if (!GTK_IS_SECTION_MODEL (model))
     return model_to_string (model);
+
+  string = g_string_new (NULL);
 
   i = 0;
   while (i < g_list_model_get_n_items (model))
@@ -514,7 +516,7 @@ new_shuffled_store (guint size)
   add (store, 1);
 
   for (i = 1; i < size; i++)
-    insert (store, g_random_int_range (0, i), i + 1);
+    insert (store, g_test_rand_int_range (0, i), i + 1);
 
   return store;
 }
@@ -553,7 +555,7 @@ test_incremental_remove (void)
         {
           guint position;
 
-          position = g_random_int_range (0, g_list_model_get_n_items (G_LIST_MODEL (store)) - 10);
+          position = g_test_rand_int_range (0, g_list_model_get_n_items (G_LIST_MODEL (store)) - 10);
           for (i = 0; i < 10; i++)
             {
               GObject *item = g_list_model_get_item (G_LIST_MODEL (store), position + i);

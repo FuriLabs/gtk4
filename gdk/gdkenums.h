@@ -114,6 +114,15 @@ typedef enum
  */
 typedef enum
 {
+  /**
+   * GDK_NO_MODIFIER_MASK:
+   *
+   * No modifier.
+   *
+   * Since: 4.14
+   */
+  GDK_NO_MODIFIER_MASK GDK_AVAILABLE_ENUMERATOR_IN_4_14 = 0,
+
   GDK_SHIFT_MASK    = 1 << 0,
   GDK_LOCK_MASK     = 1 << 1,
   GDK_CONTROL_MASK  = 1 << 2,
@@ -141,6 +150,24 @@ typedef enum
                            GDK_BUTTON1_MASK|GDK_BUTTON2_MASK|GDK_BUTTON3_MASK| \
                            GDK_BUTTON4_MASK|GDK_BUTTON5_MASK)
 
+
+/**
+ * GdkDmabufError:
+ * @GDK_DMABUF_ERROR_NOT_AVAILABLE: Dmabuf support is not available, because the OS
+ *   is not Linux, or it was explicitly disabled at compile- or runtime
+ * @GDK_DMABUF_ERROR_UNSUPPORTED_FORMAT: The requested format is not supported
+ * @GDK_DMABUF_ERROR_CREATION_FAILED: GTK failed to create the resource for other
+ *   reasons
+ *
+ * Error enumeration for `GdkDmabufTexture`.
+ *
+ * Since: 4.14
+ */
+typedef enum {
+  GDK_DMABUF_ERROR_NOT_AVAILABLE,
+  GDK_DMABUF_ERROR_UNSUPPORTED_FORMAT,
+  GDK_DMABUF_ERROR_CREATION_FAILED,
+} GdkDmabufError;
 
 /**
  * GdkGLError:
@@ -282,10 +309,16 @@ typedef enum
  *   The color values are premultiplied with the alpha value.
  * @GDK_MEMORY_R8G8B8A8_PREMULTIPLIED: 4 bytes; for red, green, blue, alpha
  *   The color values are premultiplied with the alpha value.
+ * @GDK_MEMORY_A8B8G8R8_PREMULTIPLIED: 4 bytes; for alpha, blue, green, red,
+ *   The color values are premultiplied with the alpha value. Since 4.14
  * @GDK_MEMORY_B8G8R8A8: 4 bytes; for blue, green, red, alpha.
  * @GDK_MEMORY_A8R8G8B8: 4 bytes; for alpha, red, green, blue.
  * @GDK_MEMORY_R8G8B8A8: 4 bytes; for red, green, blue, alpha.
  * @GDK_MEMORY_A8B8G8R8: 4 bytes; for alpha, blue, green, red.
+ * @GDK_MEMORY_B8G8R8X8: 4 bytes; for blue, green, red, unused. Since 4.14
+ * @GDK_MEMORY_X8R8G8B8: 4 bytes; for unused, red, green, blue. Since 4.14
+ * @GDK_MEMORY_R8G8B8X8: 4 bytes; for red, green, blue, unused. Since 4.14
+ * @GDK_MEMORY_X8B8G8R8: 4 bytes; for unused, blue, green, red. Since 4.14
  * @GDK_MEMORY_R8G8B8: 3 bytes; for red, green, blue. The data is opaque.
  * @GDK_MEMORY_B8G8R8: 3 bytes; for blue, green, red. The data is opaque.
  * @GDK_MEMORY_R16G16B16: 3 guint16 values; for red, green, blue. Since: 4.6
@@ -366,6 +399,11 @@ typedef enum {
   GDK_MEMORY_A16 GDK_AVAILABLE_ENUMERATOR_IN_4_12,
   GDK_MEMORY_A16_FLOAT GDK_AVAILABLE_ENUMERATOR_IN_4_12,
   GDK_MEMORY_A32_FLOAT GDK_AVAILABLE_ENUMERATOR_IN_4_12,
+  GDK_MEMORY_A8B8G8R8_PREMULTIPLIED GDK_AVAILABLE_ENUMERATOR_IN_4_14,
+  GDK_MEMORY_B8G8R8X8 GDK_AVAILABLE_ENUMERATOR_IN_4_14,
+  GDK_MEMORY_X8R8G8B8 GDK_AVAILABLE_ENUMERATOR_IN_4_14,
+  GDK_MEMORY_R8G8B8X8 GDK_AVAILABLE_ENUMERATOR_IN_4_14,
+  GDK_MEMORY_X8B8G8R8 GDK_AVAILABLE_ENUMERATOR_IN_4_14,
 
   GDK_MEMORY_N_FORMATS
 } GdkMemoryFormat;

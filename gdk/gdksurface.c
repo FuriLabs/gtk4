@@ -43,6 +43,7 @@
 #include "gdkrectangle.h"
 #include "gdktoplevelprivate.h"
 #include "gdkvulkancontext.h"
+#include "gdksubsurfaceprivate.h"
 
 #include <math.h>
 
@@ -56,7 +57,7 @@
  * A `GdkSurface` is a rectangular region on the screen.
  *
  * It’s a low-level object, used to implement high-level objects
- * such as [class@Gtk.Window] or [class@Gtk.Dialog] in GTK.
+ * such as [GtkWindow](../gtk4/class.Window.html).
  *
  * The surfaces you see in practice are either [iface@Gdk.Toplevel] or
  * [iface@Gdk.Popup], and those interfaces provide much of the required
@@ -254,7 +255,7 @@ maybe_flip_position (int       bounds_pos,
   *flipped = TRUE;
   secondary = rect_pos + (1 - rect_sign) * rect_size / 2 - offset - (1 - surface_sign) * surface_size / 2;
 
-  if (secondary >= bounds_pos && secondary + surface_size <= bounds_pos + bounds_size)
+  if ((secondary >= bounds_pos && secondary + surface_size <= bounds_pos + bounds_size) || primary > bounds_pos + bounds_size)
     return secondary;
 
   *flipped = FALSE;
@@ -485,12 +486,22 @@ gdk_surface_init (GdkSurface *surface)
 
   surface->device_cursor = g_hash_table_new_full (NULL, NULL,
                                                  NULL, g_object_unref);
+
+  surface->subsurfaces = g_ptr_array_new ();
 }
 
 static double
 gdk_surface_real_get_scale (GdkSurface *surface)
 {
   return 1.0;
+}
+
+static GdkSubsurface *
+gdk_surface_real_create_subsurface (GdkSurface *surface)
+{
+  GDK_DISPLAY_DEBUG (gdk_surface_get_display (surface), OFFLOAD,
+                     "Subsurfaces not supported for %s", G_OBJECT_TYPE_NAME (surface));
+  return NULL;
 }
 
 static void
@@ -515,6 +526,7 @@ gdk_surface_class_init (GdkSurfaceClass *klass)
 
   klass->beep = gdk_surface_real_beep;
   klass->get_scale = gdk_surface_real_get_scale;
+  klass->create_subsurface = gdk_surface_real_create_subsurface;
 
   /**
    * GdkSurface:cursor: (attributes org.gtk.Property.get=gdk_surface_get_cursor org.gtk.Property.set=gdk_surface_set_cursor)
@@ -756,6 +768,10 @@ gdk_surface_finalize (GObject *object)
 
   if (surface->parent)
     surface->parent->children = g_list_remove (surface->parent->children, surface);
+
+  g_assert (surface->subsurfaces->len == 0);
+
+  g_ptr_array_unref (surface->subsurfaces);
 
   G_OBJECT_CLASS (gdk_surface_parent_class)->finalize (object);
 }
@@ -1230,43 +1246,20 @@ gdk_surface_create_cairo_context (GdkSurface *surface)
  * @surface: a `GdkSurface`
  * @error: return location for an error
  *
- * Creates a new `GdkVulkanContext` for rendering on @surface.
+ * Sets an error and returns %NULL.
  *
- * If the creation of the `GdkVulkanContext` failed, @error will be set.
+ * Returns: (transfer full): %NULL
  *
- * Returns: (transfer full): the newly created `GdkVulkanContext`, or
- *   %NULL on error
+ * Deprecated: 4.14: GTK does not expose any Vulkan internals. This
+ *   function is a leftover that was accidentally exposed.
  */
 GdkVulkanContext *
 gdk_surface_create_vulkan_context (GdkSurface  *surface,
                                    GError    **error)
 {
-  GdkDisplay *display;
-
-  g_return_val_if_fail (GDK_IS_SURFACE (surface), NULL);
-  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-
-  if (gdk_display_get_debug_flags (surface->display) & GDK_DEBUG_VULKAN_DISABLE)
-    {
-      g_set_error_literal (error, GDK_VULKAN_ERROR, GDK_VULKAN_ERROR_NOT_AVAILABLE,
-                           _("Vulkan support disabled via GDK_DEBUG"));
-      return NULL;
-    }
-
-  display = surface->display;
-
-  if (GDK_DISPLAY_GET_CLASS (display)->vk_extension_name == NULL)
-    {
-      g_set_error (error, GDK_VULKAN_ERROR, GDK_VULKAN_ERROR_UNSUPPORTED,
-                   "The %s backend has no Vulkan support.", G_OBJECT_TYPE_NAME (display));
-      return FALSE;
-    }
-
-  return g_initable_new (GDK_DISPLAY_GET_CLASS (display)->vk_context_type,
-                         NULL,
-                         error,
-                         "surface", surface,
-                         NULL);
+  g_set_error (error, GDK_VULKAN_ERROR, GDK_VULKAN_ERROR_UNSUPPORTED,
+               "GTK does not expose Vulkan internals.");
+  return FALSE;
 }
 
 static gboolean
@@ -1700,7 +1693,7 @@ gdk_surface_get_device_position (GdkSurface       *surface,
  * For toplevel surfaces, withdraws them, so they will no longer be
  * known to the window manager; for all surfaces, unmaps them, so
  * they won’t be displayed. Normally done automatically as
- * part of [method@Gtk.Widget.hide].
+ * part of [gtk_widget_hide()](../gtk4/method.Widget.hide.html).
  */
 void
 gdk_surface_hide (GdkSurface *surface)
@@ -2620,7 +2613,7 @@ gdk_surface_get_scale (GdkSurface *surface)
  * GTK will update this property automatically if the @surface background
  * is opaque, as we know where the opaque regions are. If your surface
  * background is not opaque, please update this property in your
- * [vfunc@Gtk.Widget.css_changed] handler.
+ * [GtkWidgetClass.css_changed](../gtk4/vfunc.Widget.css_changed.html) handler.
  */
 void
 gdk_surface_set_opaque_region (GdkSurface      *surface,
@@ -3053,4 +3046,33 @@ gdk_surface_leave_monitor (GdkSurface *surface,
                            GdkMonitor *monitor)
 {
   g_signal_emit (surface, signals[LEAVE_MONITOR], 0, monitor);
+}
+
+GdkSubsurface *
+gdk_surface_create_subsurface (GdkSurface *surface)
+{
+  GdkSubsurface *subsurface;
+
+  subsurface = GDK_SURFACE_GET_CLASS (surface)->create_subsurface (surface);
+
+  if (subsurface)
+    {
+      subsurface->parent = g_object_ref (surface);
+      g_ptr_array_add (surface->subsurfaces, subsurface);
+    }
+
+  return subsurface;
+}
+
+gsize
+gdk_surface_get_n_subsurfaces (GdkSurface *surface)
+{
+  return surface->subsurfaces->len;
+}
+
+GdkSubsurface *
+gdk_surface_get_subsurface (GdkSurface *surface,
+                            gsize       idx)
+{
+  return g_ptr_array_index (surface->subsurfaces, idx);
 }

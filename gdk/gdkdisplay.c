@@ -31,16 +31,25 @@
 #include "gdkclipboardprivate.h"
 #include "gdkdeviceprivate.h"
 #include "gdkdisplaymanagerprivate.h"
+#include "gdkdmabufeglprivate.h"
+#include "gdkdmabufformatsbuilderprivate.h"
+#include "gdkdmabufformatsprivate.h"
+#include "gdkdmabuftextureprivate.h"
 #include "gdkeventsprivate.h"
 #include "gdkframeclockidleprivate.h"
 #include "gdkglcontextprivate.h"
 #include "gdkmonitorprivate.h"
 #include "gdkrectangle.h"
-#include "gdkvulkancontext.h"
+#include "gdkvulkancontextprivate.h"
 
 #ifdef HAVE_EGL
 #include <epoxy/egl.h>
 #endif
+
+#ifdef HAVE_SYS_SYSMACROS_H
+#include <sys/sysmacros.h>
+#endif
+
 #include <math.h>
 #include <stdlib.h>
 
@@ -69,6 +78,7 @@ enum
   PROP_COMPOSITED,
   PROP_RGBA,
   PROP_INPUT_SHAPES,
+  PROP_DMABUF_FORMATS,
   LAST_PROP
 };
 
@@ -136,6 +146,10 @@ gdk_display_get_property (GObject    *object,
 
     case PROP_INPUT_SHAPES:
       g_value_set_boolean (value, gdk_display_supports_input_shapes (display));
+      break;
+
+    case PROP_DMABUF_FORMATS:
+      g_value_set_boxed (value, gdk_display_get_dmabuf_formats (display));
       break;
 
     default:
@@ -238,6 +252,18 @@ gdk_display_class_init (GdkDisplayClass *class)
     g_param_spec_boolean ("input-shapes", NULL, NULL,
                           TRUE,
                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * GdkDisplay:dmabuf-formats:
+   *
+   * The dma-buf formats that are supported on this display
+   *
+   * Since: 4.14
+   */
+  props[PROP_DMABUF_FORMATS] =
+    g_param_spec_boxed ("dmabuf-formats", NULL, NULL,
+                        GDK_TYPE_DMABUF_FORMATS,
+                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, LAST_PROP, props);
 
@@ -373,10 +399,30 @@ gdk_display_dispose (GObject *object)
 {
   GdkDisplay *display = GDK_DISPLAY (object);
   GdkDisplayPrivate *priv = gdk_display_get_instance_private (display);
+  gsize i;
+
+  for (i = 0; i < G_N_ELEMENTS (display->dmabuf_downloaders); i++)
+    {
+      if (display->dmabuf_downloaders[i] == NULL)
+        continue;
+
+      gdk_dmabuf_downloader_close (display->dmabuf_downloaders[i]);
+      g_clear_object (&display->dmabuf_downloaders[i]);
+    }
 
   _gdk_display_manager_remove_display (gdk_display_manager_get (), display);
 
   g_queue_clear (&display->queued_events);
+
+  g_clear_pointer (&display->egl_dmabuf_formats, gdk_dmabuf_formats_unref);
+  g_clear_pointer (&display->egl_external_formats, gdk_dmabuf_formats_unref);
+#ifdef GDK_RENDERING_VULKAN
+  if (display->vk_dmabuf_formats)
+    {
+      gdk_display_unref_vulkan (display);
+      g_assert (display->vk_dmabuf_formats == NULL);
+    }
+#endif
 
   g_clear_object (&priv->gl_context);
 #ifdef HAVE_EGL
@@ -403,6 +449,8 @@ gdk_display_finalize (GObject *object)
   g_hash_table_destroy (display->pointers_info);
 
   g_list_free_full (display->seats, g_object_unref);
+
+  g_clear_pointer (&display->dmabuf_formats, gdk_dmabuf_formats_unref);
 
   G_OBJECT_CLASS (gdk_display_parent_class)->finalize (object);
 }
@@ -1148,9 +1196,9 @@ _gdk_display_get_next_serial (GdkDisplay *display)
  * Indicates to the GUI environment that the application has
  * finished loading, using a given identifier.
  *
- * GTK will call this function automatically for [class@Gtk.Window]
+ * GTK will call this function automatically for [GtkWindow](../gtk4/class.Window.html)
  * with custom startup-notification identifier unless
- * [method@Gtk.Window.set_auto_startup_notification]
+ * [gtk_window_set_auto_startup_notification()](../gtk4/method.Window.set_auto_startup_notification.html)
  * is called to disable that feature.
  *
  * Deprecated: 4.10: Using [method@Gdk.Toplevel.set_startup_id] is sufficient
@@ -1219,12 +1267,14 @@ gdk_display_get_keymap (GdkDisplay *display)
 /*<private>
  * gdk_display_create_vulkan_context:
  * @self: a `GdkDisplay`
+ * @surface: (nullable): the `GdkSurface` to use or %NULL for a surfaceless
+ *   context
  * @error: return location for an error
  *
  * Creates a new `GdkVulkanContext` for use with @display.
  *
- * The context can not be used to draw to surfaces, it can only be
- * used for custom rendering or compute.
+ * If @surface is NULL, the context can not be used to draw to surfaces,
+ * it can only be used for custom rendering or compute.
  *
  * If the creation of the `GdkVulkanContext` failed, @error will be set.
  *
@@ -1233,9 +1283,11 @@ gdk_display_get_keymap (GdkDisplay *display)
  */
 GdkVulkanContext *
 gdk_display_create_vulkan_context (GdkDisplay  *self,
+                                   GdkSurface  *surface,
                                    GError     **error)
 {
   g_return_val_if_fail (GDK_IS_DISPLAY (self), NULL);
+  g_return_val_if_fail (surface == NULL || GDK_IS_SURFACE (surface), NULL);
   g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
   if (gdk_display_get_debug_flags (self) & GDK_DEBUG_VULKAN_DISABLE)
@@ -1252,11 +1304,33 @@ gdk_display_create_vulkan_context (GdkDisplay  *self,
       return FALSE;
     }
 
-  return g_initable_new (GDK_DISPLAY_GET_CLASS (self)->vk_context_type,
-                         NULL,
-                         error,
-                         "display", self,
-                         NULL);
+  if (surface)
+    {
+      return g_initable_new (GDK_DISPLAY_GET_CLASS (self)->vk_context_type,
+                             NULL,
+                             error,
+                             "surface", surface,
+                             NULL);
+    }
+  else
+    {
+      return g_initable_new (GDK_DISPLAY_GET_CLASS (self)->vk_context_type,
+                             NULL,
+                             error,
+                             "display", self,
+                             NULL);
+    }
+}
+
+gboolean
+gdk_display_has_vulkan_feature (GdkDisplay        *self,
+                                GdkVulkanFeatures  feature)
+{
+#ifdef GDK_RENDERING_VULKAN
+  return !!(self->vulkan_features & feature);
+#else
+  return FALSE;
+#endif
 }
 
 static void
@@ -1409,7 +1483,6 @@ gdk_display_get_gl_context (GdkDisplay *self)
 }
 
 #ifdef HAVE_EGL
-#ifdef G_ENABLE_DEBUG
 static int
 strvcmp (gconstpointer p1,
          gconstpointer p2)
@@ -1466,7 +1539,6 @@ describe_egl_config (EGLDisplay egl_display,
 
   return g_strdup_printf ("R%dG%dB%dA%d%s", red, green, blue, alpha, type == EGL_COLOR_COMPONENT_TYPE_FIXED_EXT ? "" : " float");
 }
-#endif
 
 gpointer
 gdk_display_get_egl_config (GdkDisplay *self)
@@ -1670,6 +1742,23 @@ gdk_display_check_egl_extensions (EGLDisplay   egl_display,
   return TRUE;
 }
 
+static const char *
+find_egl_device (EGLDisplay egl_display)
+{
+  EGLAttrib value;
+  EGLDeviceEXT egl_device;
+
+  eglQueryDisplayAttribEXT (egl_display, EGL_DEVICE_EXT, &value);
+
+  egl_device = (EGLDeviceEXT)value;
+
+#ifndef EGL_DRM_RENDER_NODE_FILE_EXT
+#define EGL_DRM_RENDER_NODE_FILE_EXT 0x3377
+#endif
+
+  return eglQueryDeviceStringEXT (egl_device, EGL_DRM_RENDER_NODE_FILE_EXT);
+}
+
 gboolean
 gdk_display_init_egl (GdkDisplay  *self,
                       int          platform,
@@ -1755,6 +1844,10 @@ gdk_display_init_egl (GdkDisplay  *self,
     epoxy_has_egl_extension (priv->egl_display, "EGL_KHR_no_config_context");
   self->have_egl_pixel_format_float =
     epoxy_has_egl_extension (priv->egl_display, "EGL_EXT_pixel_format_float");
+  self->have_egl_dma_buf_import =
+    epoxy_has_egl_extension (priv->egl_display, "EGL_EXT_image_dma_buf_import_modifiers");
+  self->have_egl_dma_buf_export =
+    epoxy_has_egl_extension (priv->egl_display, "EGL_MESA_image_dma_buf_export");
 
   if (self->have_egl_no_config_context)
     priv->egl_config_high_depth = gdk_display_create_egl_config (self,
@@ -1763,15 +1856,22 @@ gdk_display_init_egl (GdkDisplay  *self,
   if (priv->egl_config_high_depth == NULL)
     priv->egl_config_high_depth = priv->egl_config;
 
-#ifdef G_ENABLE_DEBUG
   if (GDK_DISPLAY_DEBUG_CHECK (self, OPENGL))
     {
       char *ext = describe_extensions (priv->egl_display);
       char *std_cfg = describe_egl_config (priv->egl_display, priv->egl_config);
       char *hd_cfg = describe_egl_config (priv->egl_display, priv->egl_config_high_depth);
+      const char *path;
+      struct stat buf = { .st_rdev = 0, };
+
+      path = find_egl_device (priv->egl_display);
+      if (path)
+        stat (path, &buf);
+
       gdk_debug_message ("EGL API version %d.%d found\n"
                          " - Vendor: %s\n"
                          " - Version: %s\n"
+                         " - Device: %s, %d %d\n"
                          " - Client APIs: %s\n"
                          " - Extensions:\n"
                          "\t%s\n"
@@ -1780,6 +1880,12 @@ gdk_display_init_egl (GdkDisplay  *self,
                          major, minor,
                          eglQueryString (priv->egl_display, EGL_VENDOR),
                          eglQueryString (priv->egl_display, EGL_VERSION),
+                         path ? path : "unknown",
+#ifdef HAVE_SYS_SYSMACROS_H
+                         major (buf.st_rdev), minor (buf.st_rdev),
+#else
+                         0, 0,
+#endif
                          eglQueryString (priv->egl_display, EGL_CLIENT_APIS),
                          ext, std_cfg,
                          priv->egl_config_high_depth == priv->egl_config ? "none" : hd_cfg);
@@ -1787,7 +1893,6 @@ gdk_display_init_egl (GdkDisplay  *self,
       g_free (std_cfg);
       g_free (ext);
     }
-#endif
 
   gdk_profiler_end_mark (start_time, "init EGL", NULL);
 
@@ -1822,6 +1927,95 @@ gdk_display_get_egl_display (GdkDisplay *self)
 #else
   return NULL;
 #endif
+}
+
+#ifdef HAVE_DMABUF
+static void
+gdk_display_add_dmabuf_downloader (GdkDisplay          *display,
+                                   GdkDmabufDownloader *downloader)
+{
+  gsize i;
+
+  if (downloader == NULL)
+    return;
+
+  /* dmabuf_downloaders is NULL-terminated */
+  for (i = 0; i < G_N_ELEMENTS (display->dmabuf_downloaders) - 1; i++)
+    {
+      if (display->dmabuf_downloaders[i] == NULL)
+        break;
+    }
+
+  g_assert (i < G_N_ELEMENTS (display->dmabuf_downloaders) - 1);
+
+  display->dmabuf_downloaders[i] = downloader;
+}
+#endif
+
+/* To support a drm format, we must be able to import it into GL
+ * using the relevant EGL extensions, and download it into a memory
+ * texture, possibly doing format conversion with shaders (in GSK).
+ */
+void
+gdk_display_init_dmabuf (GdkDisplay *self)
+{
+  GdkDmabufFormatsBuilder *builder;
+
+  if (self->dmabuf_formats != NULL)
+    return;
+
+  GDK_DISPLAY_DEBUG (self, DMABUF,
+                     "Beginning initialization of dmabuf support");
+
+  builder = gdk_dmabuf_formats_builder_new ();
+
+#ifdef HAVE_DMABUF
+  if (!GDK_DISPLAY_DEBUG_CHECK (self, DMABUF_DISABLE))
+    {
+#ifdef GDK_RENDERING_VULKAN
+      gdk_display_add_dmabuf_downloader (self, gdk_vulkan_get_dmabuf_downloader (self, builder));
+#endif
+
+#ifdef HAVE_EGL
+      gdk_display_add_dmabuf_downloader (self, gdk_dmabuf_get_egl_downloader (self, builder));
+#endif
+
+      gdk_dmabuf_formats_builder_add_formats (builder,
+                                              gdk_dmabuf_get_mmap_formats ());
+    }
+#endif
+
+  self->dmabuf_formats = gdk_dmabuf_formats_builder_free_to_formats (builder);
+
+  GDK_DISPLAY_DEBUG (self, DMABUF,
+                     "Initialized support for %zu dmabuf formats",
+                     gdk_dmabuf_formats_get_n_formats (self->dmabuf_formats));
+}
+
+/**
+ * gdk_display_get_dmabuf_formats:
+ * @display: a `GdkDisplay`
+ *
+ * Returns the dma-buf formats that are supported on this display.
+ *
+ * GTK may use OpenGL or Vulkan to support some formats.
+ * Calling this function will then initialize them if they aren't yet.
+ *
+ * The formats returned by this function can be used for negotiating
+ * buffer formats with producers such as v4l, pipewire or GStreamer.
+ *
+ * To learn more about dma-bufs, see [class@Gdk.DmabufTextureBuilder].
+ *
+ * Returns: (transfer none): a `GdkDmabufFormats` object
+ *
+ * Since: 4.14
+ */
+GdkDmabufFormats *
+gdk_display_get_dmabuf_formats (GdkDisplay *display)
+{
+  gdk_display_init_dmabuf (display);
+
+  return display->dmabuf_formats;
 }
 
 GdkDebugFlags

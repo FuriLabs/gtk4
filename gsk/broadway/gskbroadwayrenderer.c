@@ -35,6 +35,7 @@ G_DEFINE_TYPE (GskBroadwayRenderer, gsk_broadway_renderer, GSK_TYPE_RENDERER)
 
 static gboolean
 gsk_broadway_renderer_realize (GskRenderer  *renderer,
+                               GdkDisplay   *display,
                                GdkSurface   *surface,
                                GError      **error)
 {
@@ -271,6 +272,9 @@ collect_reused_child_nodes (GskRenderer *renderer,
     case GSK_CROSS_FADE_NODE:
     case GSK_BLUR_NODE:
     case GSK_MASK_NODE:
+    case GSK_FILL_NODE:
+    case GSK_STROKE_NODE:
+    case GSK_SUBSURFACE_NODE:
 
     default:
 
@@ -801,6 +805,11 @@ gsk_broadway_renderer_add_node (GskRenderer *renderer,
         }
       return;
 
+    case GSK_SUBSURFACE_NODE:
+      gsk_broadway_renderer_add_node (renderer,
+                                      gsk_subsurface_node_get_child (node), offset_x, offset_y, clip_bounds);
+     return;
+
       /* Generic nodes */
 
     case GSK_CONTAINER_NODE:
@@ -862,6 +871,8 @@ gsk_broadway_renderer_add_node (GskRenderer *renderer,
     case GSK_CROSS_FADE_NODE:
     case GSK_BLUR_NODE:
     case GSK_GL_SHADER_NODE:
+    case GSK_FILL_NODE:
+    case GSK_STROKE_NODE:
     default:
       break; /* Fallback */
     }

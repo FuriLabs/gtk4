@@ -29,7 +29,7 @@
 #include <gtk/gtk.h>
 #include "gtk-rendernode-tool.h"
 
-#define N_NODE_TYPES (GSK_MASK_NODE + 1)
+#define N_NODE_TYPES (GSK_SUBSURFACE_NODE + 1)
 static void
 count_nodes (GskRenderNode *node,
              unsigned int  *counts,
@@ -130,6 +130,18 @@ count_nodes (GskRenderNode *node,
       count_nodes (gsk_mask_node_get_source (node), counts, &d);
       count_nodes (gsk_mask_node_get_mask (node), counts, &dd);
       d = MAX (d, dd);
+      break;
+
+    case GSK_FILL_NODE:
+      count_nodes (gsk_fill_node_get_child (node), counts, &d);
+      break;
+
+    case GSK_STROKE_NODE:
+      count_nodes (gsk_stroke_node_get_child (node), counts, &d);
+      break;
+
+    case GSK_SUBSURFACE_NODE:
+      count_nodes (gsk_subsurface_node_get_child (node), counts, &d);
       break;
 
     case GSK_NOT_A_RENDER_NODE:

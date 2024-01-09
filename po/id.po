@@ -12,10 +12,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gtk gtk-4-12\n"
+"Project-Id-Version: gtk main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2023-09-07 16:59+0000\n"
-"PO-Revision-Date: 2023-09-09 22:04+0700\n"
+"POT-Creation-Date: 2023-08-12 21:23+0000\n"
+"PO-Revision-Date: 2023-08-13 20:41+0700\n"
 "Last-Translator: Andika Triwidada <andika@gmail.com>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -137,7 +137,7 @@ msgstr "Aplikasi tidak mendukung API %s"
 
 #. translators: This is about OpenGL backend names, like
 #. * "Trying to use X11 GLX, but EGL is already in use"
-#: gdk/gdkglcontext.c:1864
+#: gdk/gdkglcontext.c:1863
 #, c-format
 msgid "Trying to use %s, but %s is already in use"
 msgstr "Mencoba menggunakan %s, tetapi %s sudah digunakan"
@@ -569,7 +569,7 @@ msgstr "Gagal membaca data pada baris %d"
 #: gdk/macos/gdkmacospasteboard.c:211 gdk/wayland/gdkclipboard-wayland.c:240
 #: gdk/wayland/gdkdrop-wayland.c:207 gdk/wayland/gdkprimary-wayland.c:343
 #: gdk/win32/gdkdrop-win32.c:1018 gdk/win32/gdkdrop-win32.c:1063
-#: gdk/x11/gdkclipboard-x11.c:807 gdk/x11/gdkdrop-x11.c:235
+#: gdk/x11/gdkclipboard-x11.c:805 gdk/x11/gdkdrop-x11.c:235
 msgid "No compatible transfer format found"
 msgstr "Tidak ditemukan format transfer yang kompatibel"
 
@@ -784,11 +784,11 @@ msgid "Opening %d Item"
 msgid_plural "Opening %d Items"
 msgstr[0] "Membuka %d Butir"
 
-#: gdk/x11/gdkclipboard-x11.c:477
+#: gdk/x11/gdkclipboard-x11.c:475
 msgid "Clipboard manager could not store selection."
 msgstr "Manajer papan klip tidak dapat menyimpan pilihan."
 
-#: gdk/x11/gdkclipboard-x11.c:657
+#: gdk/x11/gdkclipboard-x11.c:655
 msgid "Cannot store clipboard. No clipboard manager is active."
 msgstr ""
 "Tidak dapat menyimpan papan klip. Tidak ada manajer papan klip yang aktif."
@@ -1056,13 +1056,13 @@ msgid "Pick a Color"
 msgstr "Pilih Warna"
 
 #: gtk/deprecated/gtkcolorbutton.c:502 gtk/gtkcolorchooserwidget.c:313
-#: gtk/gtkcolordialogbutton.c:335
+#: gtk/gtkcolordialogbutton.c:302
 #, c-format
 msgid "Red %d%%, Green %d%%, Blue %d%%, Alpha %d%%"
 msgstr "Merah %d%%, Hijau %d%%, Biru %d%%, Alfa %d%%"
 
 #: gtk/deprecated/gtkcolorbutton.c:508 gtk/gtkcolorchooserwidget.c:319
-#: gtk/gtkcolordialogbutton.c:341
+#: gtk/gtkcolordialogbutton.c:308
 #, c-format
 msgid "Red %d%%, Green %d%%, Blue %d%%"
 msgstr "Merah %d%%, Hijau %d%%, Biru %d%%"
@@ -1077,11 +1077,11 @@ msgid "Pick a Font"
 msgstr "Pilih Fonta"
 
 #: gtk/deprecated/gtkfontbutton.c:597 gtk/gtkfilechooserwidget.c:3871
-#: gtk/gtkfontdialogbutton.c:126 gtk/inspector/visual.ui:169
+#: gtk/gtkfontdialogbutton.c:115 gtk/inspector/visual.ui:169
 msgid "Font"
 msgstr "Fonta"
 
-#: gtk/deprecated/gtkfontbutton.c:1152 gtk/gtkfontdialogbutton.c:652
+#: gtk/deprecated/gtkfontbutton.c:1152 gtk/gtkfontdialogbutton.c:614
 msgctxt "font"
 msgid "None"
 msgstr "Nihil"
@@ -2233,7 +2233,7 @@ msgstr "Buk_a"
 msgid "_Save"
 msgstr "_Simpan"
 
-#: gtk/gtkfilechoosernativequartz.c:344 gtk/ui/gtkfilechooserwidget.ui:288
+#: gtk/gtkfilechoosernativequartz.c:340 gtk/ui/gtkfilechooserwidget.ui:288
 msgid "Select which types of files are shown"
 msgstr "Pilih jenis berkas yang ingin ditampilkan"
 
@@ -2305,7 +2305,7 @@ msgid "If you delete an item, it will be permanently lost."
 msgstr "Jika Anda menghapus suatu butir, itu akan hilang selamanya."
 
 #: gtk/gtkfilechooserwidget.c:1185 gtk/gtkfilechooserwidget.c:1815
-#: gtk/gtklabel.c:5695 gtk/gtktext.c:6145 gtk/gtktextview.c:9018
+#: gtk/gtklabel.c:5695 gtk/gtktext.c:6125 gtk/gtktextview.c:9018
 msgid "_Delete"
 msgstr "_Hapus"
 
@@ -2446,7 +2446,7 @@ msgstr "Program"
 msgid "Audio"
 msgstr "Audio"
 
-#: gtk/gtkfilechooserwidget.c:3872 gtk/gtkfilefilter.c:1032
+#: gtk/gtkfilechooserwidget.c:3872 gtk/gtkfilefilter.c:1035
 msgid "Image"
 msgstr "Citra"
 
@@ -2557,7 +2557,7 @@ msgstr "Pilih Folder"
 msgid "Select a Folder"
 msgstr "Pilih Folder"
 
-#: gtk/gtkfilefilter.c:1045
+#: gtk/gtkfilefilter.c:1048
 msgid "Unspecified"
 msgstr "Tidak dinyatakan"
 
@@ -2645,19 +2645,19 @@ msgstr "Tutup"
 msgid "Close the infobar"
 msgstr "Tutup bilah info"
 
-#: gtk/gtklabel.c:5692 gtk/gtktext.c:6133 gtk/gtktextview.c:9006
+#: gtk/gtklabel.c:5692 gtk/gtktext.c:6113 gtk/gtktextview.c:9006
 msgid "Cu_t"
 msgstr "Po_tong"
 
-#: gtk/gtklabel.c:5693 gtk/gtktext.c:6137 gtk/gtktextview.c:9010
+#: gtk/gtklabel.c:5693 gtk/gtktext.c:6117 gtk/gtktextview.c:9010
 msgid "_Copy"
 msgstr "_Salin"
 
-#: gtk/gtklabel.c:5694 gtk/gtktext.c:6141 gtk/gtktextview.c:9014
+#: gtk/gtklabel.c:5694 gtk/gtktext.c:6121 gtk/gtktextview.c:9014
 msgid "_Paste"
 msgstr "Tem_pel"
 
-#: gtk/gtklabel.c:5700 gtk/gtktext.c:6154 gtk/gtktextview.c:9039
+#: gtk/gtklabel.c:5700 gtk/gtktext.c:6134 gtk/gtktextview.c:9039
 msgid "Select _All"
 msgstr "Pilih Semu_a"
 
@@ -2871,7 +2871,7 @@ msgstr "Tab sebelumnya"
 msgid "Next tab"
 msgstr "Tab selanjutnya"
 
-#: gtk/gtknotebook.c:4331 gtk/gtknotebook.c:6541
+#: gtk/gtknotebook.c:4331 gtk/gtknotebook.c:6539
 #, c-format
 msgid "Page %u"
 msgstr "Halaman %u"
@@ -3605,7 +3605,7 @@ msgctxt "accessibility"
 msgid "Sidebar"
 msgstr "Bilah sisi"
 
-#: gtk/gtktext.c:6159 gtk/gtktextview.c:9044
+#: gtk/gtktext.c:6139 gtk/gtktextview.c:9044
 msgid "Insert _Emoji"
 msgstr "Sisipkan _Emoji"
 
@@ -4134,7 +4134,7 @@ msgstr "Sumber:"
 msgid "Defined At"
 msgstr "Didefinisikan Pada"
 
-#: gtk/inspector/recorder.c:1865
+#: gtk/inspector/recorder.c:1922
 #, c-format
 msgid "Saving RenderNode failed"
 msgstr "Penyimpanan RenderNode gagal"
@@ -6202,7 +6202,7 @@ msgstr "Cari nama fonta"
 
 #: gtk/ui/gtkfontchooserwidget.ui:77
 msgid "Filters"
-msgstr "Tapis"
+msgstr "Penyaring"
 
 #: gtk/ui/gtkfontchooserwidget.ui:89
 msgid "Filter by"
@@ -7179,7 +7179,7 @@ msgstr ""
 #: tools/gtk-builder-tool-enumerate.c:56 tools/gtk-builder-tool-preview.c:179
 #: tools/gtk-builder-tool-preview.c:180 tools/gtk-builder-tool-screenshot.c:360
 #: tools/gtk-builder-tool-simplify.c:2529 tools/gtk-builder-tool-validate.c:261
-#: tools/gtk-rendernode-tool-info.c:200 tools/gtk-rendernode-tool-show.c:102
+#: tools/gtk-rendernode-tool-info.c:208 tools/gtk-rendernode-tool-show.c:102
 msgid "FILE"
 msgstr "BERKAS"
 
@@ -7200,7 +7200,7 @@ msgstr "Tidak ditemukan objek yang dapat dipratinjau\n"
 #: tools/gtk-builder-tool-preview.c:136
 #, c-format
 msgid "Objects of type %s can't be previewed\n"
-msgstr "Objek bertipe %s tak bisa dipratinjau\n"
+msgstr "Objek bertipe %s tidak bisa dipratinjau\n"
 
 #: tools/gtk-builder-tool-preview.c:178
 msgid "Preview only the named object"
@@ -7240,7 +7240,7 @@ msgstr "Tak ditemukan objek\n"
 #: tools/gtk-builder-tool-screenshot.c:244
 #, c-format
 msgid "Objects of type %s can't be screenshot\n"
-msgstr "Objek bertipe %s tak bisa dicuplik layar\n"
+msgstr "Objek bertipe %s tidak bisa dicuplik layarnya\n"
 
 #: tools/gtk-builder-tool-screenshot.c:298
 #, c-format
@@ -7253,7 +7253,7 @@ msgid ""
 "File %s exists.\n"
 "Use --force to overwrite.\n"
 msgstr ""
-"Berkas %s sudah ada.\n"
+"Berkas \"%s\" sudah ada.\n"
 "Gunakan --force untuk menimpa.\n"
 
 #: tools/gtk-builder-tool-screenshot.c:332
@@ -7287,7 +7287,7 @@ msgstr "BERKAS…"
 
 #: tools/gtk-builder-tool-screenshot.c:378
 msgid "Render a .ui file to an image."
-msgstr "Merender suatu berkas .ui ke suatu gambar."
+msgstr "Merender sebuah berkas .ui ke suatu gambar."
 
 #: tools/gtk-builder-tool-screenshot.c:397
 #, c-format
@@ -7378,7 +7378,7 @@ msgstr "Tipe usang:\n"
 #: tools/gtk-builder-tool-validate.c:167
 #, c-format
 msgid "Failed to create an instance of the template type %s\n"
-msgstr "Gagal membuat suatu instansi dari templat tipe %s\n"
+msgstr "Gagal membuat suatu instansi dari templat bertipe %s\n"
 
 #: tools/gtk-builder-tool-validate.c:276
 msgid "Validate the file."
@@ -7455,50 +7455,47 @@ msgid ""
 "\n"
 msgstr ""
 "Cara pakai:\n"
-"  gtk-builder-tool [PERINTAH] [OPSI…]BERKAS\n"
+"  gtk4-render-tool [PERINTAH] [OPSI…] BERKAS\n"
 "\n"
-"Melakukan berbagai tugas pada berkas .ui GtkBuilder.\n"
+"Melakukan berbagai tugas pada simpul-simpul render GTK.\n"
 "\n"
 "Perintah:\n"
-"  validate           Validasikan berkas\n"
-"  simplify    Sederhanakan berkas\n"
-"  enumerate          Tampilkan daftar semua objek bernama\n"
-"  preview     Pratinjau berkas\n"
-"  screenshot   Ambil cuplikan layar dari berkas\n"
-"\n"
+"  info         Menyediakan informasi tentang simpul\n"
+"  show         Menampilkan simpul\n"
+"  render       Mengambil cuplikan layar dari simpul\n"
 "\n"
 
-#: tools/gtk-rendernode-tool-info.c:177
+#: tools/gtk-rendernode-tool-info.c:185
 #, c-format
 msgid "Number of nodes: %u\n"
 msgstr "Cacah simpul: %u\n"
 
-#: tools/gtk-rendernode-tool-info.c:184
+#: tools/gtk-rendernode-tool-info.c:192
 #, c-format
 msgid "Depth: %u\n"
 msgstr "Kedalaman: %u\n"
 
-#: tools/gtk-rendernode-tool-info.c:187
+#: tools/gtk-rendernode-tool-info.c:195
 #, c-format
 msgid "Bounds: %g x %g\n"
 msgstr "Batas: %g x %g\n"
 
-#: tools/gtk-rendernode-tool-info.c:188
+#: tools/gtk-rendernode-tool-info.c:196
 #, c-format
 msgid "Origin: %g %g\n"
 msgstr "Asal: %g %g\n"
 
-#: tools/gtk-rendernode-tool-info.c:209
+#: tools/gtk-rendernode-tool-info.c:217
 msgid "Provide information about the render node."
 msgstr "Menyediakan informasi tentang simpul render."
 
-#: tools/gtk-rendernode-tool-info.c:222 tools/gtk-rendernode-tool-show.c:130
+#: tools/gtk-rendernode-tool-info.c:230 tools/gtk-rendernode-tool-show.c:130
 #: tools/gtk-rendernode-tool-render.c:225
 #, c-format
 msgid "No .node file specified\n"
 msgstr "Tidak ada berkas .node yang ditentukan\n"
 
-#: tools/gtk-rendernode-tool-info.c:228
+#: tools/gtk-rendernode-tool-info.c:236
 #, c-format
 msgid "Can only accept a single .node file\n"
 msgstr "Hanya dapat menerima satu berkas .node\n"
@@ -7518,7 +7515,7 @@ msgid ""
 "File %s exists.\n"
 "If you want to overwrite, specify the filename.\n"
 msgstr ""
-"Berkas %s sudah ada.\n"
+"Berkas '%s' sudah ada.\n"
 "Bila Anda ingin menimpanya, nyatakan nama berkas.\n"
 
 #: tools/gtk-rendernode-tool-render.c:137

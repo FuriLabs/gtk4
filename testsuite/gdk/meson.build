@@ -13,9 +13,7 @@ tests = [
   { 'name': 'contentformats' },
   { 'name': 'contentserializer' },
   { 'name': 'cursor' },
-  { 'name': 'display' },
   { 'name': 'displaymanager' },
-  { 'name': 'encoding' },
   { 'name': 'glcontext' },
   { 'name': 'keysyms' },
   { 'name': 'memorytexture' },
@@ -26,6 +24,13 @@ tests = [
   { 'name': 'toplevellayout' },
   { 'name': 'popuplayout' },
 ]
+
+if x11_enabled
+  tests += [
+    { 'name': 'display' },
+    { 'name': 'encoding' },
+  ]
+endif
 
 foreach t : tests
   test_name = t.get('name')
@@ -52,19 +57,28 @@ foreach t : tests
 endforeach
 
 internal_tests = [
-  'image',
-  'texture',
-  'gltexture',
+  { 'name': 'image' },
+  { 'name': 'texture' },
+  { 'name': 'gltexture' },
 ]
 
+if host_machine.system() != 'windows'
+  internal_tests += { 'name': 'dmabuftexture', 'suites': 'failing' }
+endif
+
+
 foreach t : internal_tests
-  test_exe = executable(t, '@0@.c'.format(t),
+  test_name = t.get('name')
+  test_exe = executable(test_name,
+    sources: '@0@.c'.format(test_name),
     c_args: common_cflags + ['-DGTK_COMPILATION'],
     dependencies: libgtk_static_dep,
     install: false,
   )
 
-  test(t, test_exe,
+  suites = ['gdk'] + t.get('suites', [])
+
+  test(test_name, test_exe,
     args: [ '--tap', '-k' ],
     protocol: 'tap',
     env: [
@@ -72,6 +86,6 @@ foreach t : internal_tests
       'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
       'DBUS_SESSION_BUS_ADDRESS=',
     ],
-    suite: 'gdk',
+    suite: suites,
   )
 endforeach

@@ -426,7 +426,6 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
 
   g_assert (min_size <= nat_size);
 
-#ifdef G_ENABLE_DEBUG
   if (GTK_DISPLAY_DEBUG_CHECK (_gtk_widget_get_display (widget), SIZE_REQUEST))
     {
       GString *s;
@@ -448,7 +447,6 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
       g_printerr ("%s", s->str);
       g_string_free (s, TRUE);
     }
-#endif
 }
 
 /**
@@ -608,7 +606,7 @@ gtk_widget_get_request_mode (GtkWidget *widget)
  * the required height for the natural width is generally smaller than the
  * required height for the minimum width.
  *
- * Use [id@gtk_widget_measure] if you want to support baseline alignment.
+ * Use [method@Gtk.Widget.measure] if you want to support baseline alignment.
  */
 void
 gtk_widget_get_preferred_size (GtkWidget      *widget,

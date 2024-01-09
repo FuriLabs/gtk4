@@ -54,11 +54,11 @@ G_BEGIN_DECLS
 #define gtk_internal_return_val_if_fail(__expr, __val) g_return_val_if_fail(__expr, __val)
 #endif
 
-const char * _gtk_get_datadir            (void);
-const char * _gtk_get_libdir             (void);
-const char * _gtk_get_sysconfdir         (void);
-const char * _gtk_get_localedir          (void);
-const char * _gtk_get_data_prefix        (void);
+const char * _gtk_get_datadir            (void) G_GNUC_CONST;
+const char * _gtk_get_libdir             (void) G_GNUC_CONST;
+const char * _gtk_get_sysconfdir         (void) G_GNUC_CONST;
+const char * _gtk_get_localedir          (void) G_GNUC_CONST;
+const char * _gtk_get_data_prefix        (void) G_GNUC_CONST;
 
 gboolean      _gtk_fnmatch                (const char *pattern,
                                            const char *string,
@@ -68,7 +68,7 @@ gboolean      _gtk_fnmatch                (const char *pattern,
 char *        _gtk_make_ci_glob_pattern   (const char *pattern);
 
 
-char        * _gtk_get_lc_ctype           (void);
+char        * _gtk_get_lc_ctype           (void) G_GNUC_MALLOC;
 
 void          _gtk_ensure_resources       (void);
 
@@ -106,9 +106,9 @@ double _gtk_get_slowdown (void);
 void    _gtk_set_slowdown (double slowdown_factor);
 
 char *gtk_get_portal_request_path (GDBusConnection  *connection,
-                                   char            **token);
+                                   char            **token) G_GNUC_MALLOC;
 char *gtk_get_portal_session_path (GDBusConnection  *connection,
-                                   char            **token);
+                                   char            **token) G_GNUC_MALLOC;
 guint gtk_get_portal_interface_version (GDBusConnection *connection,
                                         const char      *interface_name);
 
@@ -132,8 +132,6 @@ gboolean        gtk_get_any_display_debug_flag_set (void);
 
 GBytes *get_emoji_data (void);
 
-#ifdef G_ENABLE_DEBUG
-
 #define GTK_DISPLAY_DEBUG_CHECK(display,type)                   \
   (gtk_get_any_display_debug_flag_set () &&                     \
    G_UNLIKELY (gtk_get_display_debug_flags (display) & GTK_DEBUG_##type))
@@ -149,14 +147,6 @@ GBytes *get_emoji_data (void);
     if (GTK_DISPLAY_DEBUG_CHECK (display,type))                 \
       gdk_debug_message (__VA_ARGS__);                          \
   } G_STMT_END
-
-#else
-
-#define GTK_DISPLAY_DEBUG_CHECK(display,type) 0
-#define GTK_DISPLAY_DEBUG(display,type,...)
-#define GTK_DEBUG(type,...)
-
-#endif /* G_ENABLE_DEBUG */
 
 char * _gtk_elide_underscores (const char *original);
 

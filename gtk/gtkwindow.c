@@ -99,6 +99,13 @@
 #include "broadway/gdkbroadway.h"
 #endif
 
+#define GDK_ARRAY_ELEMENT_TYPE GtkWidget *
+#define GDK_ARRAY_TYPE_NAME GtkWidgetStack
+#define GDK_ARRAY_NAME gtk_widget_stack
+#define GDK_ARRAY_FREE_FUNC g_object_unref
+#define GDK_ARRAY_PREALLOC 16
+#include "gdk/gdkarrayimpl.c"
+
 /**
  * GtkWindow:
  *
@@ -2270,65 +2277,6 @@ gtk_window_get_title (GtkWindow *window)
 }
 
 /**
- * gtk_window_set_startup_id: (attributes org.gtk.Method.set_property=startup-id)
- * @window: a `GtkWindow`
- * @startup_id: a string with startup-notification identifier
- *
- * Sets the startup notification ID.
- *
- * Startup notification identifiers are used by desktop environment
- * to track application startup, to provide user feedback and other
- * features. This function changes the corresponding property on the
- * underlying `GdkSurface`.
- *
- * Normally, startup identifier is managed automatically and you should
- * only use this function in special cases like transferring focus from
- * other processes. You should use this function before calling
- * [method@Gtk.Window.present] or any equivalent function generating
- * a window map event.
- *
- * This function is only useful on X11, not with other GTK targets.
- */
-void
-gtk_window_set_startup_id (GtkWindow   *window,
-                           const char *startup_id)
-{
-  GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
-  GtkWidget *widget;
-
-  g_return_if_fail (GTK_IS_WINDOW (window));
-
-  widget = GTK_WIDGET (window);
-
-  g_free (priv->startup_id);
-  priv->startup_id = g_strdup (startup_id);
-
-  if (_gtk_widget_get_realized (widget))
-    {
-      guint32 timestamp = extract_time_from_startup_id (priv->startup_id);
-
-#ifdef GDK_WINDOWING_X11
-      if (timestamp != GDK_CURRENT_TIME && GDK_IS_X11_SURFACE (priv->surface))
-	gdk_x11_surface_set_user_time (priv->surface, timestamp);
-#endif
-
-      /* Here we differentiate real and "fake" startup notification IDs,
-       * constructed on purpose just to pass interaction timestamp
-       */
-      if (startup_id_is_fake (priv->startup_id))
-	gtk_window_present_with_time (window, timestamp);
-      else
-        {
-          /* If window is mapped, terminate the startup-notification */
-          if (_gtk_widget_get_mapped (widget) && !disable_startup_notification)
-            gdk_toplevel_set_startup_id (GDK_TOPLEVEL (priv->surface), priv->startup_id);
-        }
-    }
-
-  g_object_notify_by_pspec (G_OBJECT (window), window_props[PROP_STARTUP_ID]);
-}
-
-/**
  * gtk_window_set_default_widget: (attributes org.gtk.Property.set=default-widget)
  * @window: a `GtkWindow`
  * @default_widget: (nullable): widget to be the default
@@ -4355,16 +4303,16 @@ gtk_window_realize (GtkWidget *widget)
         {
           gtk_window_enable_csd (window);
 
-            if (priv->title_box == NULL)
-              {
-                priv->title_box = gtk_header_bar_new ();
-                gtk_widget_add_css_class (priv->title_box, "titlebar");
-                gtk_widget_add_css_class (priv->title_box, "default-decoration");
+          if (priv->title_box == NULL)
+            {
+              priv->title_box = gtk_header_bar_new ();
+              gtk_widget_add_css_class (priv->title_box, "titlebar");
+              gtk_widget_add_css_class (priv->title_box, "default-decoration");
 
-                gtk_widget_insert_before (priv->title_box, widget, NULL);
-              }
+              gtk_widget_insert_before (priv->title_box, widget, NULL);
+            }
 
-            update_window_actions (window);
+          update_window_actions (window);
         }
     }
 
@@ -5042,28 +4990,34 @@ gtk_window_move_focus (GtkWidget        *widget,
 }
 
 void
-check_crossing_invariants (GtkWidget *widget,
+check_crossing_invariants (GtkWidget       *widget,
                            GtkCrossingData *crossing)
 {
-#ifdef G_ENBABLE_DEBUG
+#ifdef G_ENABLE_DEBUG
   if (crossing->old_target == NULL)
-    g_assert (crossing->old_descendent == NULL);
+    {
+      g_assert (crossing->old_descendent == NULL);
+    }
   else if (crossing->old_descendent == NULL)
-    g_assert (crossing->old_target == widget || !gtk_widget_is_ancestor (crossing->old_target, widget));
+    {
+      g_assert (crossing->old_target == widget || !gtk_widget_is_ancestor (crossing->old_target, widget));
+    }
   else
     {
       g_assert (gtk_widget_get_parent (crossing->old_descendent) == widget);
-      g_assert (gtk_widget_is_ancestor (crossing->old_descendent, widget));
       g_assert (crossing->old_target == crossing->old_descendent || gtk_widget_is_ancestor (crossing->old_target, crossing->old_descendent));
     }
   if (crossing->new_target == NULL)
-    g_assert (crossing->new_descendent == NULL);
+    {
+      g_assert (crossing->new_descendent == NULL);
+    }
   else if (crossing->new_descendent == NULL)
-    g_assert (crossing->new_target == widget || !gtk_widget_is_ancestor (crossing->new_target, widget));
+    {
+      g_assert (crossing->new_target == widget || !gtk_widget_is_ancestor (crossing->new_target, widget));
+    }
   else
     {
       g_assert (gtk_widget_get_parent (crossing->new_descendent) == widget);
-      g_assert (gtk_widget_is_ancestor (crossing->new_descendent, widget));
       g_assert (crossing->new_target == crossing->new_descendent || gtk_widget_is_ancestor (crossing->new_target, crossing->new_descendent));
     }
 #endif
@@ -5078,10 +5032,11 @@ synthesize_focus_change_events (GtkWindow       *window,
   GtkCrossingData crossing;
   GtkWidget *ancestor;
   GtkWidget *widget, *focus_child;
-  GList *list, *l;
   GtkStateFlags flags;
   GtkWidget *prev;
   gboolean seen_ancestor;
+  GtkWidgetStack focus_array;
+  int i;
 
   if (old_focus == new_focus)
     return;
@@ -5097,9 +5052,9 @@ synthesize_focus_change_events (GtkWindow       *window,
 
   crossing.type = type;
   crossing.mode = GDK_CROSSING_NORMAL;
-  crossing.old_target = old_focus;
+  crossing.old_target = old_focus ? g_object_ref (old_focus) : NULL;
   crossing.old_descendent = NULL;
-  crossing.new_target = new_focus;
+  crossing.new_target = new_focus ? g_object_ref (new_focus) : NULL;
   crossing.new_descendent = NULL;
 
   crossing.direction = GTK_CROSSING_OUT;
@@ -5143,18 +5098,19 @@ synthesize_focus_change_events (GtkWindow       *window,
   if (gtk_window_get_focus_visible (GTK_WINDOW (window)))
     flags |= GTK_STATE_FLAG_FOCUS_VISIBLE;
 
-  list = NULL;
-  for (widget = new_focus; widget; widget = gtk_widget_get_parent (widget))
-    list = g_list_prepend (list, widget);
+  gtk_widget_stack_init (&focus_array);
+  for (widget = new_focus; widget; widget = _gtk_widget_get_parent (widget))
+    gtk_widget_stack_append (&focus_array, g_object_ref (widget));
 
   crossing.direction = GTK_CROSSING_IN;
 
   seen_ancestor = FALSE;
-  for (l = list; l; l = l->next)
+  for (i = gtk_widget_stack_get_size (&focus_array) - 1; i >= 0; i--)
     {
-      widget = l->data;
-      if (l->next)
-        focus_child = l->next->data;
+      widget = gtk_widget_stack_get (&focus_array, i);
+
+      if (i > 0)
+        focus_child = gtk_widget_stack_get (&focus_array, i - 1);
       else
         focus_child = NULL;
 
@@ -5177,19 +5133,23 @@ synthesize_focus_change_events (GtkWindow       *window,
         }
       else
         {
-          crossing.old_descendent = old_focus ? focus_child : NULL;
+          crossing.old_descendent = (old_focus && ancestor) ? focus_child : NULL;
         }
+
       check_crossing_invariants (widget, &crossing);
       gtk_widget_handle_crossing (widget, &crossing, 0, 0);
 
-      if (l->next == NULL)
+      if (i == 0)
         flags = flags | GTK_STATE_FLAG_FOCUSED;
 
       gtk_widget_set_state_flags (widget, flags, FALSE);
       gtk_widget_set_focus_child (widget, focus_child);
     }
 
-  g_list_free (list);
+  g_clear_object (&crossing.old_target);
+  g_clear_object (&crossing.new_target);
+
+  gtk_widget_stack_clear (&focus_array);
 }
 
 /**
@@ -5272,6 +5232,100 @@ _gtk_window_unset_focus_and_default (GtkWindow *window,
 #undef INCLUDE_CSD_SIZE
 #undef EXCLUDE_CSD_SIZE
 
+static void
+_gtk_window_present (GtkWindow *window,
+                     guint32    timestamp)
+{
+  GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
+  GtkWidget *widget = GTK_WIDGET (window);
+
+  if (gtk_widget_get_visible (widget))
+    {
+      /* Translate a timestamp of GDK_CURRENT_TIME appropriately */
+      if (timestamp == GDK_CURRENT_TIME)
+        {
+#ifdef GDK_WINDOWING_X11
+          if (GDK_IS_X11_SURFACE (priv->surface))
+            {
+              GdkDisplay *display = gtk_widget_get_display (widget);
+              timestamp = gdk_x11_display_get_user_time (display);
+            }
+          else
+#endif
+            timestamp = gtk_get_current_event_time ();
+        }
+    }
+  else
+    {
+      priv->initial_timestamp = timestamp;
+      priv->in_present = TRUE;
+      gtk_widget_set_visible (widget, TRUE);
+      priv->in_present = FALSE;
+    }
+
+  gdk_toplevel_focus (GDK_TOPLEVEL (priv->surface), timestamp);
+  gtk_window_notify_startup (window);
+}
+
+/**
+ * gtk_window_set_startup_id: (attributes org.gtk.Method.set_property=startup-id)
+ * @window: a `GtkWindow`
+ * @startup_id: a string with startup-notification identifier
+ *
+ * Sets the startup notification ID.
+ *
+ * Startup notification identifiers are used by desktop environment
+ * to track application startup, to provide user feedback and other
+ * features. This function changes the corresponding property on the
+ * underlying `GdkSurface`.
+ *
+ * Normally, startup identifier is managed automatically and you should
+ * only use this function in special cases like transferring focus from
+ * other processes. You should use this function before calling
+ * [method@Gtk.Window.present] or any equivalent function generating
+ * a window map event.
+ *
+ * This function is only useful on X11, not with other GTK targets.
+ */
+void
+gtk_window_set_startup_id (GtkWindow   *window,
+                           const char *startup_id)
+{
+  GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
+  GtkWidget *widget;
+
+  g_return_if_fail (GTK_IS_WINDOW (window));
+
+  widget = GTK_WIDGET (window);
+
+  g_free (priv->startup_id);
+  priv->startup_id = g_strdup (startup_id);
+
+  if (_gtk_widget_get_realized (widget))
+    {
+      guint32 timestamp = extract_time_from_startup_id (priv->startup_id);
+
+#ifdef GDK_WINDOWING_X11
+      if (timestamp != GDK_CURRENT_TIME && GDK_IS_X11_SURFACE (priv->surface))
+        gdk_x11_surface_set_user_time (priv->surface, timestamp);
+#endif
+
+      /* Here we differentiate real and "fake" startup notification IDs,
+       * constructed on purpose just to pass interaction timestamp
+       */
+      if (startup_id_is_fake (priv->startup_id))
+        _gtk_window_present (window, timestamp);
+      else
+        {
+          /* If window is mapped, terminate the startup-notification */
+          if (_gtk_widget_get_mapped (widget) && !disable_startup_notification)
+            gdk_toplevel_set_startup_id (GDK_TOPLEVEL (priv->surface), priv->startup_id);
+        }
+    }
+
+  g_object_notify_by_pspec (G_OBJECT (window), window_props[PROP_STARTUP_ID]);
+}
+
 /**
  * gtk_window_present:
  * @window: a `GtkWindow`
@@ -5288,7 +5342,9 @@ _gtk_window_unset_focus_and_default (GtkWindow *window,
 void
 gtk_window_present (GtkWindow *window)
 {
-  gtk_window_present_with_time (window, GDK_CURRENT_TIME);
+  g_return_if_fail (GTK_IS_WINDOW (window));
+
+  _gtk_window_present (window, GDK_CURRENT_TIME);
 }
 
 /**
@@ -5304,52 +5360,16 @@ gtk_window_present (GtkWindow *window)
  * The timestamp should be gathered when the window was requested
  * to be shown (when clicking a link for example), rather than once
  * the window is ready to be shown.
+ *
+ * Deprecated: 4.14: Use gtk_window_present()
  */
 void
 gtk_window_present_with_time (GtkWindow *window,
-			      guint32    timestamp)
+                              guint32    timestamp)
 {
-  GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
-  GtkWidget *widget;
-  GdkSurface *surface;
-
   g_return_if_fail (GTK_IS_WINDOW (window));
 
-  widget = GTK_WIDGET (window);
-
-  if (gtk_widget_get_visible (widget))
-    {
-      surface = priv->surface;
-
-      g_assert (surface != NULL);
-
-      /* Translate a timestamp of GDK_CURRENT_TIME appropriately */
-      if (timestamp == GDK_CURRENT_TIME)
-        {
-#ifdef GDK_WINDOWING_X11
-	  if (GDK_IS_X11_SURFACE (surface))
-	    {
-	      GdkDisplay *display;
-
-	      display = gtk_widget_get_display (widget);
-	      timestamp = gdk_x11_display_get_user_time (display);
-	    }
-	  else
-#endif
-	    timestamp = gtk_get_current_event_time ();
-        }
-    }
-  else
-    {
-      priv->initial_timestamp = timestamp;
-      priv->in_present = TRUE;
-      gtk_widget_set_visible (widget, TRUE);
-      priv->in_present = FALSE;
-    }
-
-  g_assert (priv->surface != NULL);
-  gdk_toplevel_focus (GDK_TOPLEVEL (priv->surface), timestamp);
-  gtk_window_notify_startup (window);
+  _gtk_window_present (window, timestamp);
 }
 
 /**

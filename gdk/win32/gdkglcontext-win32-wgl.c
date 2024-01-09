@@ -126,9 +126,6 @@ gdk_win32_gl_context_wgl_begin_frame (GdkDrawContext *draw_context,
   GDK_DRAW_CONTEXT_CLASS (gdk_win32_gl_context_wgl_parent_class)->begin_frame (draw_context, depth, update_area);
 }
 
-static int
-gdk_init_dummy_wgl_context (GdkWin32Display *display_win32);
-
 #define PIXEL_ATTRIBUTES 17
 
 static int
@@ -178,7 +175,6 @@ get_wgl_pfd (HDC                    hdc,
 
       pixelAttribs[i++] = 0; /* end of pixelAttribs */
       g_assert (i <= PIXEL_ATTRIBUTES);
-      best_pf = gdk_init_dummy_wgl_context (display_win32);
 
       if (!wglMakeCurrent (display_win32->dummy_context_wgl.hdc,
                            display_win32->dummy_context_wgl.hglrc))
@@ -339,7 +335,6 @@ gdk_win32_display_init_wgl (GdkDisplay  *display,
       return NULL;
     }
 
-#if G_ENABLE_DEBUG
   {
     int major, minor;
     gdk_gl_context_get_version (context, &major, &minor);
@@ -357,7 +352,6 @@ gdk_win32_display_init_wgl (GdkDisplay  *display,
                          display_win32->hasWglEXTSwapControl ? "yes" : "no",
                          display_win32->hasWglOMLSyncControl ? "yes" : "no"));
   }
-#endif
 
   wglMakeCurrent (NULL, NULL);
 
@@ -677,9 +671,7 @@ gdk_win32_gl_context_wgl_realize (GdkGLContext *context,
    * A legacy context cannot be shared with core profile ones, so this means we
    * must stick to a legacy context if the shared context is a legacy context
    */
-  legacy_bit = (gdk_display_get_debug_flags (display) & GDK_DEBUG_GL_LEGACY)
-                 ? TRUE
-                 : share != NULL && gdk_gl_context_is_legacy (share);
+  legacy_bit = share != NULL && gdk_gl_context_is_legacy (share);
 
   if (surface != NULL)
     hdc = GDK_WIN32_SURFACE (surface)->hdc;

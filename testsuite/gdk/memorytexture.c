@@ -1,16 +1,12 @@
 #include <gtk/gtk.h>
 
-#include "gsk/gl/gskglrenderer.h"
-#ifdef GDK_RENDERING_VULKAN
-#include "gsk/vulkan/gskvulkanrenderer.h"
-#endif
-
 #include <epoxy/gl.h>
 
 #define N 10
 
 static GdkGLContext *gl_context = NULL;
 static GskRenderer *gl_renderer = NULL;
+static GskRenderer *ngl_renderer = NULL;
 static GskRenderer *vulkan_renderer = NULL;
 
 typedef struct _TextureBuilder TextureBuilder;
@@ -20,6 +16,7 @@ typedef enum {
   TEXTURE_METHOD_GL,
   TEXTURE_METHOD_GL_RELEASED,
   TEXTURE_METHOD_GL_NATIVE,
+  TEXTURE_METHOD_NGL,
   TEXTURE_METHOD_VULKAN,
   TEXTURE_METHOD_PNG,
   TEXTURE_METHOD_PNG_PIXBUF,
@@ -102,10 +99,15 @@ gdk_memory_format_bytes_per_pixel (GdkMemoryFormat format)
     case GDK_MEMORY_B8G8R8A8_PREMULTIPLIED:
     case GDK_MEMORY_A8R8G8B8_PREMULTIPLIED:
     case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
+    case GDK_MEMORY_A8B8G8R8_PREMULTIPLIED:
     case GDK_MEMORY_B8G8R8A8:
     case GDK_MEMORY_A8R8G8B8:
     case GDK_MEMORY_R8G8B8A8:
     case GDK_MEMORY_A8B8G8R8:
+    case GDK_MEMORY_B8G8R8X8:
+    case GDK_MEMORY_X8R8G8B8:
+    case GDK_MEMORY_R8G8B8X8:
+    case GDK_MEMORY_X8B8G8R8:
     case GDK_MEMORY_G16A16_PREMULTIPLIED:
     case GDK_MEMORY_G16A16:
     case GDK_MEMORY_A32_FLOAT:
@@ -145,10 +147,15 @@ gdk_memory_format_get_channel_type (GdkMemoryFormat format)
     case GDK_MEMORY_B8G8R8A8_PREMULTIPLIED:
     case GDK_MEMORY_A8R8G8B8_PREMULTIPLIED:
     case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
+    case GDK_MEMORY_A8B8G8R8_PREMULTIPLIED:
     case GDK_MEMORY_B8G8R8A8:
     case GDK_MEMORY_A8R8G8B8:
     case GDK_MEMORY_R8G8B8A8:
     case GDK_MEMORY_A8B8G8R8:
+    case GDK_MEMORY_B8G8R8X8:
+    case GDK_MEMORY_X8R8G8B8:
+    case GDK_MEMORY_R8G8B8X8:
+    case GDK_MEMORY_X8B8G8R8:
     case GDK_MEMORY_G8:
     case GDK_MEMORY_G8A8:
     case GDK_MEMORY_G8A8_PREMULTIPLIED:
@@ -197,10 +204,15 @@ gdk_memory_format_n_colors (GdkMemoryFormat format)
     case GDK_MEMORY_B8G8R8A8_PREMULTIPLIED:
     case GDK_MEMORY_A8R8G8B8_PREMULTIPLIED:
     case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
+    case GDK_MEMORY_A8B8G8R8_PREMULTIPLIED:
     case GDK_MEMORY_B8G8R8A8:
     case GDK_MEMORY_A8R8G8B8:
     case GDK_MEMORY_R8G8B8A8:
     case GDK_MEMORY_A8B8G8R8:
+    case GDK_MEMORY_B8G8R8X8:
+    case GDK_MEMORY_X8R8G8B8:
+    case GDK_MEMORY_R8G8B8X8:
+    case GDK_MEMORY_X8B8G8R8:
     case GDK_MEMORY_R16G16B16A16_PREMULTIPLIED:
     case GDK_MEMORY_R16G16B16A16:
     case GDK_MEMORY_R16G16B16A16_FLOAT_PREMULTIPLIED:
@@ -242,11 +254,16 @@ gdk_memory_format_has_alpha (GdkMemoryFormat format)
     case GDK_MEMORY_R32G32B32_FLOAT:
     case GDK_MEMORY_G8:
     case GDK_MEMORY_G16:
+    case GDK_MEMORY_B8G8R8X8:
+    case GDK_MEMORY_X8R8G8B8:
+    case GDK_MEMORY_R8G8B8X8:
+    case GDK_MEMORY_X8B8G8R8:
       return FALSE;
 
     case GDK_MEMORY_B8G8R8A8_PREMULTIPLIED:
     case GDK_MEMORY_A8R8G8B8_PREMULTIPLIED:
     case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
+    case GDK_MEMORY_A8B8G8R8_PREMULTIPLIED:
     case GDK_MEMORY_B8G8R8A8:
     case GDK_MEMORY_A8R8G8B8:
     case GDK_MEMORY_R8G8B8A8:
@@ -282,6 +299,7 @@ gdk_memory_format_is_premultiplied (GdkMemoryFormat format)
     case GDK_MEMORY_B8G8R8A8_PREMULTIPLIED:
     case GDK_MEMORY_A8R8G8B8_PREMULTIPLIED:
     case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
+    case GDK_MEMORY_A8B8G8R8_PREMULTIPLIED:
     case GDK_MEMORY_R16G16B16A16_PREMULTIPLIED:
     case GDK_MEMORY_R16G16B16A16_FLOAT_PREMULTIPLIED:
     case GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED:
@@ -302,6 +320,10 @@ gdk_memory_format_is_premultiplied (GdkMemoryFormat format)
     case GDK_MEMORY_A8R8G8B8:
     case GDK_MEMORY_R8G8B8A8:
     case GDK_MEMORY_A8B8G8R8:
+    case GDK_MEMORY_B8G8R8X8:
+    case GDK_MEMORY_X8R8G8B8:
+    case GDK_MEMORY_R8G8B8X8:
+    case GDK_MEMORY_X8B8G8R8:
     case GDK_MEMORY_R16G16B16A16:
     case GDK_MEMORY_R16G16B16A16_FLOAT:
     case GDK_MEMORY_R32G32B32A32_FLOAT:
@@ -321,45 +343,7 @@ gdk_memory_format_is_premultiplied (GdkMemoryFormat format)
 static gboolean
 gdk_memory_format_is_deep (GdkMemoryFormat format)
 {
-  switch (format)
-    {
-    case GDK_MEMORY_B8G8R8A8_PREMULTIPLIED:
-    case GDK_MEMORY_A8R8G8B8_PREMULTIPLIED:
-    case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
-    case GDK_MEMORY_G8A8_PREMULTIPLIED:
-    case GDK_MEMORY_R8G8B8:
-    case GDK_MEMORY_B8G8R8:
-    case GDK_MEMORY_B8G8R8A8:
-    case GDK_MEMORY_A8R8G8B8:
-    case GDK_MEMORY_R8G8B8A8:
-    case GDK_MEMORY_A8B8G8R8:
-    case GDK_MEMORY_G8:
-    case GDK_MEMORY_G8A8:
-    case GDK_MEMORY_A8:
-      return FALSE;
-
-    case GDK_MEMORY_R16G16B16A16_PREMULTIPLIED:
-    case GDK_MEMORY_R16G16B16A16_FLOAT_PREMULTIPLIED:
-    case GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED:
-    case GDK_MEMORY_G16A16_PREMULTIPLIED:
-    case GDK_MEMORY_R16G16B16:
-    case GDK_MEMORY_R16G16B16_FLOAT:
-    case GDK_MEMORY_R32G32B32_FLOAT:
-    case GDK_MEMORY_R16G16B16A16:
-    case GDK_MEMORY_R16G16B16A16_FLOAT:
-    case GDK_MEMORY_R32G32B32A32_FLOAT:
-    case GDK_MEMORY_G16:
-    case GDK_MEMORY_G16A16:
-    case GDK_MEMORY_A16:
-    case GDK_MEMORY_A16_FLOAT:
-    case GDK_MEMORY_A32_FLOAT:
-      return TRUE;
-
-    case GDK_MEMORY_N_FORMATS:
-    default:
-      g_assert_not_reached ();
-      return FALSE;
-    }
+  return gdk_memory_format_get_channel_type (format) != CHANNEL_UINT_8;
 }
 
 static gboolean
@@ -373,6 +357,7 @@ gdk_memory_format_pixel_equal (GdkMemoryFormat  format,
     case GDK_MEMORY_B8G8R8A8_PREMULTIPLIED:
     case GDK_MEMORY_A8R8G8B8_PREMULTIPLIED:
     case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
+    case GDK_MEMORY_A8B8G8R8_PREMULTIPLIED:
     case GDK_MEMORY_R8G8B8:
     case GDK_MEMORY_B8G8R8:
     case GDK_MEMORY_B8G8R8A8:
@@ -384,6 +369,14 @@ gdk_memory_format_pixel_equal (GdkMemoryFormat  format,
     case GDK_MEMORY_G8A8:
     case GDK_MEMORY_G8A8_PREMULTIPLIED:
       return memcmp (pixel1, pixel2, gdk_memory_format_bytes_per_pixel (format)) == 0;
+
+    case GDK_MEMORY_B8G8R8X8:
+    case GDK_MEMORY_R8G8B8X8:
+      return memcmp (pixel1, pixel2, 3) == 0;
+
+    case GDK_MEMORY_X8R8G8B8:
+    case GDK_MEMORY_X8B8G8R8:
+      return memcmp (pixel1 + 1, pixel2 + 1, 3) == 0;
 
     case GDK_MEMORY_R16G16B16:
     case GDK_MEMORY_R16G16B16A16:
@@ -581,6 +574,9 @@ texture_builder_set_pixel (TextureBuilder  *builder,
     case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
       set_pixel_u8 (data, 0, 1, 2, 3, TRUE, color);
       break;
+    case GDK_MEMORY_A8B8G8R8_PREMULTIPLIED:
+      set_pixel_u8 (data, 3, 2, 1, 0, TRUE, color);
+      break;
     case GDK_MEMORY_B8G8R8A8:
       set_pixel_u8 (data, 2, 1, 0, 3, FALSE, color);
       break;
@@ -592,6 +588,18 @@ texture_builder_set_pixel (TextureBuilder  *builder,
       break;
     case GDK_MEMORY_A8B8G8R8:
       set_pixel_u8 (data, 3, 2, 1, 0, FALSE, color);
+      break;
+    case GDK_MEMORY_B8G8R8X8:
+      set_pixel_u8 (data, 2, 1, 0, -1, TRUE, color);
+      break;
+    case GDK_MEMORY_X8R8G8B8:
+      set_pixel_u8 (data, 1, 2, 3, -1, TRUE, color);
+      break;
+    case GDK_MEMORY_R8G8B8X8:
+      set_pixel_u8 (data, 0, 1, 2, -1, TRUE, color);
+      break;
+    case GDK_MEMORY_X8B8G8R8:
+      set_pixel_u8 (data, 3, 2, 1, -1, TRUE, color);
       break;
     case GDK_MEMORY_R8G8B8:
       set_pixel_u8 (data, 0, 1, 2, -1, TRUE, color);
@@ -852,6 +860,38 @@ upload_to_renderer (GdkTexture  *texture,
   return result;
 }
 
+static gboolean
+gl_native_should_skip_format (GdkMemoryFormat format)
+{
+  int major, minor;
+
+  if (gl_context == NULL)
+    {
+      g_test_skip ("OpenGL is not supported");
+      return TRUE;
+    }
+
+  if (!gdk_gl_context_get_use_es (gl_context))
+    return FALSE;
+
+  gdk_gl_context_get_version (gl_context, &major, &minor);
+
+  if (major < 3)
+    {
+      g_test_skip ("GLES < 3.0 is not supported");
+      return TRUE;
+    }
+
+  if (gdk_memory_format_is_deep (format) &&
+      (major < 3 || (major == 3 && minor < 1)))
+    {
+      g_test_skip ("GLES < 3.1 can't handle 16bit non-RGBA formats");
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
 static void
 release_texture (gpointer data)
 {
@@ -885,7 +925,7 @@ upload_to_gl_native (GdkTexture *texture)
     { GDK_MEMORY_A16, 2, GL_R16, GL_RED, GL_UNSIGNED_SHORT, { GL_ONE, GL_ONE, GL_ONE, GL_RED } },
   };
 
-  if (gl_context == NULL)
+  if (gl_native_should_skip_format (gdk_texture_get_format (texture)))
     return texture;
 
   gdk_gl_context_make_current (gl_context);
@@ -971,6 +1011,10 @@ create_texture (GdkMemoryFormat  format,
 
     case TEXTURE_METHOD_GL_NATIVE:
       texture = upload_to_gl_native (texture);
+      break;
+
+    case TEXTURE_METHOD_NGL:
+      texture = upload_to_renderer (texture, ngl_renderer);
       break;
 
     case TEXTURE_METHOD_VULKAN:
@@ -1060,6 +1104,7 @@ texture_method_is_accurate (TextureMethod method)
     case TEXTURE_METHOD_GL:
     case TEXTURE_METHOD_GL_RELEASED:
     case TEXTURE_METHOD_GL_NATIVE:
+    case TEXTURE_METHOD_NGL:
     case TEXTURE_METHOD_VULKAN:
     case TEXTURE_METHOD_PNG:
     case TEXTURE_METHOD_PNG_PIXBUF:
@@ -1162,6 +1207,14 @@ should_skip_download_test (GdkMemoryFormat format,
     case TEXTURE_METHOD_TIFF:
       return FALSE;
 
+    case TEXTURE_METHOD_NGL:
+      if (ngl_renderer == NULL)
+        {
+          g_test_skip ("NGL renderer is not supported");
+          return TRUE;
+        }
+      return FALSE;
+
     case TEXTURE_METHOD_GL:
     case TEXTURE_METHOD_GL_RELEASED:
       if (gl_renderer == NULL)
@@ -1169,33 +1222,10 @@ should_skip_download_test (GdkMemoryFormat format,
           g_test_skip ("OpenGL renderer is not supported");
           return TRUE;
         }
-      G_GNUC_FALLTHROUGH;
+      return FALSE;
 
     case TEXTURE_METHOD_GL_NATIVE:
-      {
-        int major, minor;
-
-        if (gl_context == NULL)
-          {
-            g_test_skip ("OpenGL is not supported");
-            return TRUE;
-          }
-
-        gdk_gl_context_get_version (gl_context, &major, &minor);
-
-        if ((method == TEXTURE_METHOD_GL ||
-             method == TEXTURE_METHOD_GL_RELEASED ||
-             method == TEXTURE_METHOD_GL_NATIVE) &&
-            gdk_gl_context_get_use_es (gl_context) &&
-            (major < 3 || (major == 3 && minor < 1)) &&
-            gdk_memory_format_is_deep (format))
-          {
-            g_test_skip ("GLES < 3.1 can't handle 16bit non-RGBA formats");
-            return TRUE;
-          }
-
-        return FALSE;
-      }
+      return gl_native_should_skip_format (format);
 
     case TEXTURE_METHOD_VULKAN:
       if (vulkan_renderer == NULL)
@@ -1242,8 +1272,9 @@ test_download (gconstpointer data,
       if (color.alpha == 0.f &&
           !gdk_memory_format_is_premultiplied (format) &&
           gdk_memory_format_has_alpha (format) &&
-          (method ==  TEXTURE_METHOD_GL || method == TEXTURE_METHOD_GL_RELEASED ||
-           method == TEXTURE_METHOD_GL_NATIVE || method == TEXTURE_METHOD_VULKAN))
+          (method == TEXTURE_METHOD_GL || method == TEXTURE_METHOD_GL_RELEASED ||
+           method == TEXTURE_METHOD_GL_NATIVE || method == TEXTURE_METHOD_VULKAN ||
+           method == TEXTURE_METHOD_NGL))
         color = (GdkRGBA) { 0, 0, 0, 0 };
 
       expected = create_texture (format, TEXTURE_METHOD_LOCAL, width, height, &color);
@@ -1372,7 +1403,18 @@ add_test (const char    *name,
     {
       for (method = 0; method < N_TEXTURE_METHODS; method++)
         {
-          const char *method_names[N_TEXTURE_METHODS] = { "local", "gl", "gl-released", "gl-native", "vulkan", "png", "png-pixbuf", "tiff", "tiff-pixbuf" };
+          const char *method_names[N_TEXTURE_METHODS] = {
+            [TEXTURE_METHOD_LOCAL] = "local",
+            [TEXTURE_METHOD_GL] = "gl",
+            [TEXTURE_METHOD_GL_RELEASED] = "gl-released",
+            [TEXTURE_METHOD_GL_NATIVE] = "gl-native",
+            [TEXTURE_METHOD_NGL] = "ngl",
+            [TEXTURE_METHOD_VULKAN] = "vulkan",
+            [TEXTURE_METHOD_PNG] = "png",
+            [TEXTURE_METHOD_PNG_PIXBUF] = "png-pixbuf",
+            [TEXTURE_METHOD_TIFF] = "tiff",
+            [TEXTURE_METHOD_TIFF_PIXBUF] = "tiff-pixbuf"
+          };
           char *test_name = g_strdup_printf ("%s/%s/%s",
                                              name,
                                              g_enum_get_value (enum_class, format)->value_nick,
@@ -1409,6 +1451,7 @@ add_conversion_test (const char    *name,
 int
 main (int argc, char *argv[])
 {
+  GdkDisplay *display;
   int result;
 
   gtk_test_init (&argc, &argv, NULL);
@@ -1418,25 +1461,31 @@ main (int argc, char *argv[])
   add_conversion_test ("/memorytexture/conversion_1x1", test_conversion_1x1);
   add_conversion_test ("/memorytexture/conversion_random", test_conversion_random);
 
-  gl_context = gdk_display_create_gl_context (gdk_display_get_default (), NULL);
+  display = gdk_display_get_default ();
+
+  gl_context = gdk_display_create_gl_context (display, NULL);
   if (gl_context == NULL || !gdk_gl_context_realize (gl_context, NULL))
     {
       g_clear_object (&gl_context);
     }
 
   gl_renderer = gsk_gl_renderer_new ();
-  if (!gsk_renderer_realize (gl_renderer, NULL, NULL))
+  if (!gsk_renderer_realize_for_display (gl_renderer, display, NULL))
     {
       g_clear_object (&gl_renderer);
     }
 
-#ifdef GDK_RENDERING_VULKAN
+  ngl_renderer = gsk_ngl_renderer_new ();
+  if (!gsk_renderer_realize_for_display (ngl_renderer, display, NULL))
+    {
+      g_clear_object (&ngl_renderer);
+    }
+
   vulkan_renderer = gsk_vulkan_renderer_new ();
-  if (!gsk_renderer_realize (vulkan_renderer, NULL, NULL))
+  if (!gsk_renderer_realize_for_display (vulkan_renderer, display, NULL))
     {
       g_clear_object (&vulkan_renderer);
     }
-#endif
 
   result = g_test_run ();
 
@@ -1447,6 +1496,11 @@ main (int argc, char *argv[])
       g_clear_object (&vulkan_renderer);
     }
 #endif
+  if (ngl_renderer)
+    {
+      gsk_renderer_unrealize (ngl_renderer);
+      g_clear_object (&ngl_renderer);
+    }
   if (gl_renderer)
     {
       gsk_renderer_unrealize (gl_renderer);

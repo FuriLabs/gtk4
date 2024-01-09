@@ -30,9 +30,13 @@
 #include <gsk/gskglshaderprivate.h>
 #include <gdk/gdktextureprivate.h>
 #include <gdk/gdkmemorytextureprivate.h>
+#include <gdk/gdkdmabuftexture.h>
+#include <gdk/gdksurfaceprivate.h>
+#include <gdk/gdksubsurfaceprivate.h>
 #include <gsk/gsktransformprivate.h>
 #include <gsk/gskroundedrectprivate.h>
 #include <gsk/gskrectprivate.h>
+#include <gsk/gskrendererprivate.h>
 #include <math.h>
 #include <string.h>
 
@@ -43,9 +47,12 @@
 #include "gskglprogramprivate.h"
 #include "gskglrenderjobprivate.h"
 #include "gskglshadowlibraryprivate.h"
+#include "gskdebugprivate.h"
 
 #include "ninesliceprivate.h"
 #include "fp16private.h"
+
+#define ALLOW_OFFLOAD_FOR_ANY_TEXTURE 1
 
 #define ORTHO_NEAR_PLANE   -10000
 #define ORTHO_FAR_PLANE     10000
@@ -160,9 +167,6 @@ struct _GskGLRenderJob
 
   guint source_is_glyph_atlas : 1;
 
-  /* If we should be rendering red zones over fallback nodes */
-  guint debug_fallback : 1;
-
   /* In some cases we might want to avoid clearing the framebuffer
    * because we're going to render over the existing contents.
    */
@@ -207,6 +211,10 @@ static void     gsk_gl_render_job_visit_node                (GskGLRenderJob     
                                                              const GskRenderNode  *node);
 static gboolean gsk_gl_render_job_visit_node_with_offscreen (GskGLRenderJob       *job,
                                                              const GskRenderNode  *node,
+                                                             GskGLRenderOffscreen *offscreen);
+static void     gsk_gl_render_job_upload_texture            (GskGLRenderJob       *job,
+                                                             GdkTexture           *texture,
+                                                             gboolean              ensure_mipmap,
                                                              GskGLRenderOffscreen *offscreen);
 
 static inline GskGLRenderClip *
@@ -289,6 +297,9 @@ node_supports_2d_transform (const GskRenderNode *node)
     case GSK_BLEND_NODE:
     case GSK_BLUR_NODE:
     case GSK_MASK_NODE:
+    case GSK_FILL_NODE:
+    case GSK_STROKE_NODE:
+    case GSK_SUBSURFACE_NODE:
       return TRUE;
 
     case GSK_SHADOW_NODE:
@@ -343,6 +354,9 @@ node_supports_transform (const GskRenderNode *node)
     case GSK_BLEND_NODE:
     case GSK_BLUR_NODE:
     case GSK_MASK_NODE:
+    case GSK_FILL_NODE:
+    case GSK_STROKE_NODE:
+    case GSK_SUBSURFACE_NODE:
       return TRUE;
 
     case GSK_SHADOW_NODE:
@@ -949,7 +963,7 @@ gsk_gl_render_job_update_clip (GskGLRenderJob        *job,
 
       /* The clip gets simpler for this node */
 
-      graphene_rect_intersection (&job->current_clip->rect.bounds, &transformed_bounds, &rect);
+      gsk_rect_intersection (&job->current_clip->rect.bounds, &transformed_bounds, &rect);
       gsk_gl_render_job_push_clip (job, &GSK_ROUNDED_RECT_INIT_FROM_RECT (rect));
 
       *pushed_clip = TRUE;
@@ -1176,7 +1190,7 @@ gsk_gl_render_job_visit_as_fallback (GskGLRenderJob      *job,
   key.scale_x = scale_x;
   key.scale_y = scale_y;
 
-  texture_id = gsk_gl_driver_lookup_texture (job->driver, &key);
+  texture_id = gsk_gl_driver_lookup_texture (job->driver, &key, NULL);
 
   if (texture_id != 0)
     goto done;
@@ -1195,7 +1209,7 @@ gsk_gl_render_job_visit_as_fallback (GskGLRenderJob      *job,
     cairo_save (cr);
     cairo_translate (cr, - floorf (node->bounds.origin.x), - floorf (node->bounds.origin.y));
     /* Render nodes don't modify state, so casting away the const is fine here */
-    gsk_render_node_draw ((GskRenderNode *)node, cr);
+    gsk_render_node_draw_fallback ((GskRenderNode *)node, cr);
     cairo_restore (cr);
     cairo_destroy (cr);
   }
@@ -1215,24 +1229,6 @@ gsk_gl_render_job_visit_as_fallback (GskGLRenderJob      *job,
   cairo_rectangle (cr, 0, 0, surface_width / fabs (scale_x), surface_height / fabs (scale_y));
   cairo_fill (cr);
   cairo_restore (cr);
-
-#ifdef G_ENABLE_DEBUG
-  if (job->debug_fallback)
-    {
-      cairo_move_to (cr, 0, 0);
-      cairo_rectangle (cr, 0, 0, node->bounds.size.width, node->bounds.size.height);
-      if (GSK_RENDER_NODE_TYPE (node) == GSK_CAIRO_NODE)
-        cairo_set_source_rgba (cr, 0.3, 0, 1, 0.25);
-      else
-        cairo_set_source_rgba (cr, 1, 0, 0, 0.25);
-      cairo_fill_preserve (cr);
-      if (GSK_RENDER_NODE_TYPE (node) == GSK_CAIRO_NODE)
-        cairo_set_source_rgba (cr, 0.3, 0, 1, 1);
-      else
-        cairo_set_source_rgba (cr, 1, 0, 0, 1);
-      cairo_stroke (cr);
-    }
-#endif
   cairo_destroy (cr);
 
   /* Create texture to upload */
@@ -1254,9 +1250,9 @@ gsk_gl_render_job_visit_as_fallback (GskGLRenderJob      *job,
 done:
   if (scale_x < 0 || scale_y < 0)
     {
-      GskTransform *transform = gsk_transform_translate (NULL,
-                                                         &GRAPHENE_POINT_INIT (scale_x < 0 ? - surface_width : 0,
-                                                                               scale_y < 0 ? - surface_height : 0));
+      GskTransform *transform = gsk_transform_translate (gsk_transform_scale (NULL, scale_x < 0 ? -1 : 1, scale_y < 0 ? -1 : 1),
+                                                         &GRAPHENE_POINT_INIT (scale_x < 0 ? - (node->bounds.size.width + 2 * node->bounds.origin.x) : 0,
+                                                                               scale_y < 0 ? - (node->bounds.size.height + 2 * node->bounds.origin.y) : 0));
       gsk_gl_render_job_push_modelview (job, transform);
       gsk_transform_unref (transform);
     }
@@ -1638,9 +1634,9 @@ gsk_gl_render_job_visit_clipped_child (GskGLRenderJob        *job,
   if (job->current_clip->is_rectilinear)
     {
       memset (&intersection.corner, 0, sizeof intersection.corner);
-      graphene_rect_intersection (&transformed_clip,
-                                  &job->current_clip->rect.bounds,
-                                  &intersection.bounds);
+      gsk_rect_intersection (&transformed_clip,
+                             &job->current_clip->rect.bounds,
+                             &intersection.bounds);
 
       gsk_gl_render_job_push_clip (job, &intersection);
       gsk_gl_render_job_visit_node (job, child);
@@ -2220,7 +2216,7 @@ gsk_gl_render_job_visit_blurred_inset_shadow_node (GskGLRenderJob      *job,
   key.scale_x = scale_x;
   key.scale_y = scale_y;
 
-  blurred_texture_id = gsk_gl_driver_lookup_texture (job->driver, &key);
+  blurred_texture_id = gsk_gl_driver_lookup_texture (job->driver, &key, NULL);
 
   if (blurred_texture_id == 0)
     {
@@ -2814,7 +2810,7 @@ equal_texture_nodes (const GskRenderNode *node1,
       gsk_texture_node_get_texture (node2))
     return FALSE;
 
-  return graphene_rect_equal (&node1->bounds, &node2->bounds);
+  return gsk_rect_equal (&node1->bounds, &node2->bounds);
 }
 
 static inline void
@@ -3220,7 +3216,7 @@ gsk_gl_render_job_visit_blur_node (GskGLRenderJob      *job,
   key.scale_x = job->scale_x;
   key.scale_y = job->scale_y;
 
-  offscreen.texture_id = gsk_gl_driver_lookup_texture (job->driver, &key);
+  offscreen.texture_id = gsk_gl_driver_lookup_texture (job->driver, &key, NULL);
   cache_texture = offscreen.texture_id == 0;
 
   blur_node (job,
@@ -3324,6 +3320,53 @@ gsk_gl_render_job_visit_blend_node (GskGLRenderJob      *job,
     }
 }
 
+static gboolean
+gsk_gl_render_job_texture_mask_for_color (GskGLRenderJob        *job,
+                                          const GskRenderNode   *mask,
+                                          const GskRenderNode   *color,
+                                          const graphene_rect_t *bounds)
+{
+  int max_texture_size = job->command_queue->max_texture_size;
+  GdkTexture *texture = gsk_texture_node_get_texture (mask);
+  const GdkRGBA *rgba;
+
+  rgba = gsk_color_node_get_color (color);
+  if (RGBA_IS_CLEAR (rgba))
+    return TRUE;
+
+  if G_LIKELY (texture->width <= max_texture_size &&
+               texture->height <= max_texture_size &&
+               gsk_gl_render_job_begin_draw (job, CHOOSE_PROGRAM (job, coloring)))
+    {
+      GskGLRenderOffscreen offscreen = {0};
+      float scale_x = mask->bounds.size.width / texture->width;
+      float scale_y = mask->bounds.size.height / texture->height;
+      gboolean use_mipmap;
+      guint16 cc[4];
+
+      use_mipmap = (scale_x * fabs (job->scale_x)) < 0.5 ||
+                   (scale_y * fabs (job->scale_y)) < 0.5;
+
+      rgba_to_half (rgba, cc);
+      gsk_gl_render_job_upload_texture (job, texture, use_mipmap, &offscreen);
+      gsk_gl_program_set_uniform_texture_with_sync (job->current_program,
+                                                    UNIFORM_SHARED_SOURCE, 0,
+                                                    GL_TEXTURE_2D,
+                                                    GL_TEXTURE0,
+                                                    offscreen.texture_id,
+                                                    offscreen.has_mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR,
+                                                    GL_LINEAR,
+                                                    offscreen.sync);
+      job->source_is_glyph_atlas = FALSE;
+      gsk_gl_render_job_draw_offscreen_with_color (job, bounds, &offscreen, cc);
+      gsk_gl_render_job_end_draw (job);
+
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
 static inline void
 gsk_gl_render_job_visit_mask_node (GskGLRenderJob      *job,
                                    const GskRenderNode *node)
@@ -3332,6 +3375,17 @@ gsk_gl_render_job_visit_mask_node (GskGLRenderJob      *job,
   const GskRenderNode *mask = gsk_mask_node_get_mask (node);
   GskGLRenderOffscreen source_offscreen = {0};
   GskGLRenderOffscreen mask_offscreen = {0};
+
+  /* If the mask is a texture and the source is a color node
+   * then we can take a shortcut and avoid offscreens.
+   */
+  if (GSK_RENDER_NODE_TYPE (mask) == GSK_TEXTURE_NODE &&
+      GSK_RENDER_NODE_TYPE (source) == GSK_COLOR_NODE &&
+      gsk_mask_node_get_mask_mode (node) == GSK_MASK_MODE_ALPHA)
+    {
+      if (gsk_gl_render_job_texture_mask_for_color (job, mask, source, &node->bounds))
+        return;
+    }
 
   source_offscreen.bounds = &node->bounds;
   source_offscreen.force_offscreen = TRUE;
@@ -3564,16 +3618,12 @@ gsk_gl_render_job_upload_texture (GskGLRenderJob       *job,
                                   gboolean              ensure_mipmap,
                                   GskGLRenderOffscreen *offscreen)
 {
-  GdkGLTexture *gl_texture = NULL;
-
-  if (GDK_IS_GL_TEXTURE (texture))
-    gl_texture = GDK_GL_TEXTURE (texture);
-
+  /* Don't put GL or dmabuf textures into icon caches, they are already on the GPU side */
   if (!ensure_mipmap &&
       gsk_gl_texture_library_can_cache ((GskGLTextureLibrary *)job->driver->icons_library,
                                         texture->width,
                                         texture->height) &&
-      !gl_texture)
+      !(GDK_IS_GL_TEXTURE (texture) || GDK_IS_DMABUF_TEXTURE (texture)))
     {
       const GskGLIconData *icon_data;
 
@@ -3587,16 +3637,20 @@ gsk_gl_render_job_upload_texture (GskGLRenderJob       *job,
       /* Only generate a mipmap if it does not make use reupload
        * a GL texture which we could otherwise use directly.
        */
-      if (gl_texture &&
-          gdk_gl_context_is_shared (gdk_gl_texture_get_context (gl_texture), job->command_queue->context))
-        ensure_mipmap = gdk_gl_texture_has_mipmap (gl_texture);
+      if (GDK_IS_GL_TEXTURE (texture) &&
+          gdk_gl_context_is_shared (gdk_gl_texture_get_context (GDK_GL_TEXTURE (texture)),
+                                    job->command_queue->context))
+        ensure_mipmap = gdk_gl_texture_has_mipmap (GDK_GL_TEXTURE (texture));
+      else if (GDK_IS_DMABUF_TEXTURE (texture))
+        ensure_mipmap = FALSE;
 
       offscreen->texture_id = gsk_gl_driver_load_texture (job->driver, texture, ensure_mipmap);
       init_full_texture_region (offscreen);
       offscreen->has_mipmap = ensure_mipmap;
 
-      if (gl_texture && offscreen->texture_id == gdk_gl_texture_get_id (gl_texture))
-        offscreen->sync = gdk_gl_texture_get_sync (gl_texture);
+      if (GDK_IS_GL_TEXTURE (texture) &&
+          offscreen->texture_id == gdk_gl_texture_get_id (GDK_GL_TEXTURE (texture)))
+        offscreen->sync = gdk_gl_texture_get_sync (GDK_GL_TEXTURE (texture));
     }
 }
 
@@ -3717,10 +3771,12 @@ gsk_gl_render_job_visit_texture_scale_node (GskGLRenderJob      *job,
   float u0, u1, v0, v1;
   GskTextureKey key;
   guint texture_id;
+  gboolean need_mipmap;
+  gboolean has_mipmap;
 
   gsk_gl_render_job_untransform_bounds (job, &job->current_clip->rect.bounds, &clip_rect);
 
-  if (!graphene_rect_intersection (bounds, &clip_rect, &clip_rect))
+  if (!gsk_rect_intersection (bounds, &clip_rect, &clip_rect))
     return;
 
   key.pointer = node;
@@ -3729,9 +3785,11 @@ gsk_gl_render_job_visit_texture_scale_node (GskGLRenderJob      *job,
   key.scale_x = 1.;
   key.scale_y = 1.;
 
-  texture_id = gsk_gl_driver_lookup_texture (job->driver, &key);
+  need_mipmap = (filter == GSK_SCALING_FILTER_TRILINEAR);
 
-  if (texture_id != 0)
+  texture_id = gsk_gl_driver_lookup_texture (job->driver, &key, &has_mipmap);
+
+  if (texture_id != 0 && (!need_mipmap || has_mipmap))
     goto render_texture;
 
   viewport = GRAPHENE_RECT_INIT (0, 0,
@@ -3762,7 +3820,7 @@ gsk_gl_render_job_visit_texture_scale_node (GskGLRenderJob      *job,
     {
       gpointer sync;
 
-      texture_id = gsk_gl_driver_load_texture (job->driver, texture, filter == GSK_SCALING_FILTER_TRILINEAR);
+      texture_id = gsk_gl_driver_load_texture (job->driver, texture, need_mipmap);
 
       if (GDK_IS_GL_TEXTURE (texture) && texture_id == gdk_gl_texture_get_id (GDK_GL_TEXTURE (texture)))
         sync = gdk_gl_texture_get_sync (GDK_GL_TEXTURE (texture));
@@ -3799,7 +3857,7 @@ gsk_gl_render_job_visit_texture_scale_node (GskGLRenderJob      *job,
       GskGLTextureSlice *slices = NULL;
       guint n_slices = 0;
 
-      gsk_gl_driver_slice_texture (job->driver, texture, filter == GSK_SCALING_FILTER_TRILINEAR, &slices, &n_slices);
+      gsk_gl_driver_slice_texture (job->driver, texture, need_mipmap, &slices, &n_slices);
 
       if (gsk_gl_render_job_begin_draw (job, CHOOSE_PROGRAM (job, blit)))
         {
@@ -3883,7 +3941,7 @@ gsk_gl_render_job_visit_repeat_node (GskGLRenderJob      *job,
   if (node_is_invisible (child))
     return;
 
-  if (!graphene_rect_equal (child_bounds, &child->bounds))
+  if (!gsk_rect_equal (child_bounds, &child->bounds))
     {
       /* TODO: implement these repeat nodes. */
       gsk_gl_render_job_visit_as_fallback (job, node);
@@ -3927,6 +3985,40 @@ gsk_gl_render_job_visit_repeat_node (GskGLRenderJob      *job,
                                     offscreen.was_offscreen ? offscreen.area.y : offscreen.area.y2);
       gsk_gl_render_job_draw_offscreen (job, &node->bounds, &offscreen);
       gsk_gl_render_job_end_draw (job);
+    }
+}
+
+static inline void
+gsk_gl_render_job_visit_subsurface_node (GskGLRenderJob      *job,
+                                         const GskRenderNode *node)
+{
+  GdkSubsurface *subsurface;
+
+  subsurface = (GdkSubsurface *) gsk_subsurface_node_get_subsurface (node);
+
+  if (subsurface &&
+      gdk_subsurface_get_texture (subsurface) && 
+      gdk_subsurface_get_parent (subsurface) == gdk_gl_context_get_surface (job->command_queue->context))
+    {
+      if (!gdk_subsurface_is_above_parent (subsurface))
+        {
+          /* Clear the area so we can see through */
+          if (gsk_gl_render_job_begin_draw (job, CHOOSE_PROGRAM (job, color)))
+            {
+              GskGLCommandBatch *batch;
+              guint16 color[4];
+              rgba_to_half (&(GdkRGBA){0,0,0,0}, color);
+
+              batch = gsk_gl_command_queue_get_batch (job->command_queue);
+              batch->draw.blend = 0;
+              gsk_gl_render_job_draw_rect_with_color (job, &node->bounds, color);
+              gsk_gl_render_job_end_draw (job);
+            }
+        }
+    }
+  else
+    {
+      gsk_gl_render_job_visit_node (job, gsk_subsurface_node_get_child (node));
     }
 }
 
@@ -4118,6 +4210,18 @@ gsk_gl_render_job_visit_node (GskGLRenderJob      *job,
       gsk_gl_render_job_visit_as_fallback (job, node);
     break;
 
+    case GSK_FILL_NODE:
+      gsk_gl_render_job_visit_as_fallback (job, node);
+    break;
+
+    case GSK_STROKE_NODE:
+      gsk_gl_render_job_visit_as_fallback (job, node);
+    break;
+
+    case GSK_SUBSURFACE_NODE:
+      gsk_gl_render_job_visit_subsurface_node (job, node);
+    break;
+
     case GSK_NOT_A_RENDER_NODE:
     default:
       g_assert_not_reached ();
@@ -4252,7 +4356,7 @@ gsk_gl_render_job_visit_node_with_offscreen (GskGLRenderJob       *job,
     }
 
   /* Check if we've already cached the drawn texture. */
-  cached_id = gsk_gl_driver_lookup_texture (job->driver, &key);
+  cached_id = gsk_gl_driver_lookup_texture (job->driver, &key, NULL);
 
   if (cached_id != 0)
     {
@@ -4439,6 +4543,7 @@ gsk_gl_render_job_render (GskGLRenderJob *job,
     gsk_gl_command_queue_clear (job->command_queue, 0, &job->viewport);
   gsk_gl_render_job_visit_node (job, root);
   gdk_gl_context_pop_debug_group (job->command_queue->context);
+
   gdk_profiler_add_mark (start_time, GDK_PROFILER_CURRENT_TIME-start_time, "Build GL command queue", "");
 
 #if 0
@@ -4458,15 +4563,6 @@ gsk_gl_render_job_render (GskGLRenderJob *job,
   gsk_gl_command_queue_execute (job->command_queue, surface_height, scale, job->region, job->default_framebuffer);
   gdk_gl_context_pop_debug_group (job->command_queue->context);
   gdk_profiler_add_mark (start_time, GDK_PROFILER_CURRENT_TIME-start_time, "Execute GL command queue", "");
-}
-
-void
-gsk_gl_render_job_set_debug_fallback (GskGLRenderJob *job,
-                                      gboolean        debug_fallback)
-{
-  g_return_if_fail (job != NULL);
-
-  job->debug_fallback = !!debug_fallback;
 }
 
 static int

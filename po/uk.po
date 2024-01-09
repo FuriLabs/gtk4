@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gtk+\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2023-09-21 15:29+0000\n"
-"PO-Revision-Date: 2023-09-21 19:21+0300\n"
+"POT-Creation-Date: 2023-08-15 19:28+0000\n"
+"PO-Revision-Date: 2023-08-16 14:37+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
@@ -54,31 +54,31 @@ msgstr "Не вдалося надати дані як %s"
 msgid "The current backend does not support OpenGL"
 msgstr "Цей модуль не підтримує OpenGL"
 
-#: gdk/gdkdisplay.c:1244 gdk/gdksurface.c:1252
+#: gdk/gdkdisplay.c:1245 gdk/gdksurface.c:1252
 msgid "Vulkan support disabled via GDK_DEBUG"
 msgstr "Вимкнено підтримування Vulkan через GDK_DEBUG"
 
-#: gdk/gdkdisplay.c:1276
+#: gdk/gdkdisplay.c:1277
 msgid "GL support disabled via GDK_DEBUG"
 msgstr "Вимкнено підтримування GL через GDK_DEBUG"
 
-#: gdk/gdkdisplay.c:1574
+#: gdk/gdkdisplay.c:1575
 msgid "No EGL configuration available"
 msgstr "Немає доступних налаштувань EGL"
 
-#: gdk/gdkdisplay.c:1582
+#: gdk/gdkdisplay.c:1583
 msgid "Failed to get EGL configurations"
 msgstr "Не вдалося отримати налаштування EGL"
 
-#: gdk/gdkdisplay.c:1612
+#: gdk/gdkdisplay.c:1613
 msgid "No EGL configuration with required features found"
 msgstr "Не знайдено налаштувань EGL із потрібними можливостями"
 
-#: gdk/gdkdisplay.c:1619
+#: gdk/gdkdisplay.c:1620
 msgid "No perfect EGL configuration found"
 msgstr "Не знайдено ідеальних налаштувань EGL"
 
-#: gdk/gdkdisplay.c:1661
+#: gdk/gdkdisplay.c:1662
 #, c-format
 msgid "EGL implementation is missing extension %s"
 msgid_plural "EGL implementation is missing %2$d extensions: %1$s"
@@ -87,23 +87,23 @@ msgstr[1] "У реалізації EGL не вистачає %2$d розшире
 msgstr[2] "У реалізації EGL не вистачає %2$d розширень %1$s"
 msgstr[3] "У реалізації EGL не вистачає розширення %1$s"
 
-#: gdk/gdkdisplay.c:1694
+#: gdk/gdkdisplay.c:1695
 msgid "libEGL not available in this sandbox"
 msgstr "libEGL є недоступною у цій пісочниці"
 
-#: gdk/gdkdisplay.c:1695
+#: gdk/gdkdisplay.c:1696
 msgid "libEGL not available"
 msgstr "libEGL є недоступною"
 
-#: gdk/gdkdisplay.c:1705
+#: gdk/gdkdisplay.c:1706
 msgid "Failed to create EGL display"
 msgstr "Не вдалося створити запис дисплея EGL"
 
-#: gdk/gdkdisplay.c:1715
+#: gdk/gdkdisplay.c:1716
 msgid "Could not initialize EGL display"
 msgstr "Не вдалося ініціалізувати дисплей EGL"
 
-#: gdk/gdkdisplay.c:1726
+#: gdk/gdkdisplay.c:1727
 #, c-format
 msgid "EGL version %d.%d is too old. GTK requires %d.%d"
 msgstr ""
@@ -571,7 +571,7 @@ msgstr "Помилка читання даних у рядку %d"
 #: gdk/macos/gdkmacospasteboard.c:211 gdk/wayland/gdkclipboard-wayland.c:240
 #: gdk/wayland/gdkdrop-wayland.c:207 gdk/wayland/gdkprimary-wayland.c:343
 #: gdk/win32/gdkdrop-win32.c:1018 gdk/win32/gdkdrop-win32.c:1063
-#: gdk/x11/gdkclipboard-x11.c:807 gdk/x11/gdkdrop-x11.c:235
+#: gdk/x11/gdkclipboard-x11.c:805 gdk/x11/gdkdrop-x11.c:235
 msgid "No compatible transfer format found"
 msgstr "Не знайдено сумісного формату передавання даних"
 
@@ -803,11 +803,11 @@ msgstr[1] "Відкривається %d пункти"
 msgstr[2] "Відкривається %d пунктів"
 msgstr[3] "Відкривається %d пункт"
 
-#: gdk/x11/gdkclipboard-x11.c:477
+#: gdk/x11/gdkclipboard-x11.c:475
 msgid "Clipboard manager could not store selection."
 msgstr "Засобу керування буфером обміну не вдалося зберегти позначене."
 
-#: gdk/x11/gdkclipboard-x11.c:657
+#: gdk/x11/gdkclipboard-x11.c:655
 msgid "Cannot store clipboard. No clipboard manager is active."
 msgstr ""
 "Не вдалося зберегти буфер обміну. Немає активної програми для керування "
@@ -1071,18 +1071,18 @@ msgctxt "progress bar label"
 msgid "%d %%"
 msgstr "%d %%"
 
-#: gtk/deprecated/gtkcolorbutton.c:183 gtk/deprecated/gtkcolorbutton.c:314
+#: gtk/deprecated/gtkcolorbutton.c:183 gtk/deprecated/gtkcolorbutton.c:311
 #: gtk/gtkcolordialog.c:411
 msgid "Pick a Color"
 msgstr "Вибір кольору"
 
-#: gtk/deprecated/gtkcolorbutton.c:505 gtk/gtkcolorchooserwidget.c:313
+#: gtk/deprecated/gtkcolorbutton.c:502 gtk/gtkcolorchooserwidget.c:313
 #: gtk/gtkcolordialogbutton.c:335
 #, c-format
 msgid "Red %d%%, Green %d%%, Blue %d%%, Alpha %d%%"
 msgstr "Червоний %d%%, Зелений %d%%, Синій %d%%, Альфа %d%%"
 
-#: gtk/deprecated/gtkcolorbutton.c:511 gtk/gtkcolorchooserwidget.c:319
+#: gtk/deprecated/gtkcolorbutton.c:508 gtk/gtkcolorchooserwidget.c:319
 #: gtk/gtkcolordialogbutton.c:341
 #, c-format
 msgid "Red %d%%, Green %d%%, Blue %d%%"
@@ -1092,17 +1092,17 @@ msgstr "Червоний %d%%, Зелений %d%%, Синій %d%%"
 msgid "Sans 12"
 msgstr "Sans 12"
 
-#: gtk/deprecated/gtkfontbutton.c:507 gtk/deprecated/gtkfontbutton.c:624
+#: gtk/deprecated/gtkfontbutton.c:507 gtk/deprecated/gtkfontbutton.c:621
 #: gtk/gtkfontdialog.c:596
 msgid "Pick a Font"
 msgstr "Виберіть шрифт"
 
-#: gtk/deprecated/gtkfontbutton.c:600 gtk/gtkfilechooserwidget.c:3871
+#: gtk/deprecated/gtkfontbutton.c:597 gtk/gtkfilechooserwidget.c:3871
 #: gtk/gtkfontdialogbutton.c:126 gtk/inspector/visual.ui:169
 msgid "Font"
 msgstr "Шрифт"
 
-#: gtk/deprecated/gtkfontbutton.c:1155 gtk/gtkfontdialogbutton.c:652
+#: gtk/deprecated/gtkfontbutton.c:1152 gtk/gtkfontdialogbutton.c:652
 msgctxt "font"
 msgid "None"
 msgstr "Немає"
@@ -2168,7 +2168,7 @@ msgstr "_Праве:"
 msgid "Paper Margins"
 msgstr "Поля сторінки"
 
-#: gtk/gtkentry.c:3685
+#: gtk/gtkentry.c:3673
 msgid "Insert Emoji"
 msgstr "Вставити емодзі"
 
@@ -2326,7 +2326,7 @@ msgid "If you delete an item, it will be permanently lost."
 msgstr "Якщо вилучити об'єкт, його буде втрачено назавжди."
 
 #: gtk/gtkfilechooserwidget.c:1185 gtk/gtkfilechooserwidget.c:1815
-#: gtk/gtklabel.c:5695 gtk/gtktext.c:6147 gtk/gtktextview.c:9018
+#: gtk/gtklabel.c:5695 gtk/gtktext.c:6145 gtk/gtktextview.c:9018
 msgid "_Delete"
 msgstr "В_илучити"
 
@@ -2664,19 +2664,19 @@ msgstr "Закрити"
 msgid "Close the infobar"
 msgstr "Закрити панель відомостей"
 
-#: gtk/gtklabel.c:5692 gtk/gtktext.c:6135 gtk/gtktextview.c:9006
+#: gtk/gtklabel.c:5692 gtk/gtktext.c:6133 gtk/gtktextview.c:9006
 msgid "Cu_t"
 msgstr "Ви_різати"
 
-#: gtk/gtklabel.c:5693 gtk/gtktext.c:6139 gtk/gtktextview.c:9010
+#: gtk/gtklabel.c:5693 gtk/gtktext.c:6137 gtk/gtktextview.c:9010
 msgid "_Copy"
 msgstr "_Копіювати"
 
-#: gtk/gtklabel.c:5694 gtk/gtktext.c:6143 gtk/gtktextview.c:9014
+#: gtk/gtklabel.c:5694 gtk/gtktext.c:6141 gtk/gtktextview.c:9014
 msgid "_Paste"
 msgstr "Вст_авити"
 
-#: gtk/gtklabel.c:5700 gtk/gtktext.c:6156 gtk/gtktextview.c:9039
+#: gtk/gtklabel.c:5700 gtk/gtktext.c:6154 gtk/gtktextview.c:9039
 msgid "Select _All"
 msgstr "Виді_лити все"
 
@@ -2891,7 +2891,7 @@ msgstr "Попередня вкладка"
 msgid "Next tab"
 msgstr "Наступна вкладка"
 
-#: gtk/gtknotebook.c:4331 gtk/gtknotebook.c:6541
+#: gtk/gtknotebook.c:4331 gtk/gtknotebook.c:6539
 #, c-format
 msgid "Page %u"
 msgstr "Сторінка %u"
@@ -3537,7 +3537,7 @@ msgid "No registered application with name “%s” for item with URI “%s” f
 msgstr ""
 "Не знайдено зареєстрованої програми з назвою «%s» для пункту з URI «%s»"
 
-#: gtk/gtksearchentry.c:767
+#: gtk/gtksearchentry.c:758
 msgid "Clear Entry"
 msgstr "Спорожнити запис"
 
@@ -3628,7 +3628,7 @@ msgctxt "accessibility"
 msgid "Sidebar"
 msgstr "Бічна панель"
 
-#: gtk/gtktext.c:6161 gtk/gtktextview.c:9044
+#: gtk/gtktext.c:6159 gtk/gtktextview.c:9044
 msgid "Insert _Emoji"
 msgstr "Вставити _емодзі"
 
@@ -3693,6 +3693,7 @@ msgid "Description"
 msgstr "Опис"
 
 #: gtk/inspector/a11y.ui:99 gtk/inspector/misc-info.ui:296
+#: tools/gtk-path-tool-info.c:128
 msgid "Bounds"
 msgstr "Межі"
 
@@ -4005,8 +4006,8 @@ msgid "Surface"
 msgstr "Поверхня"
 
 #: gtk/inspector/misc-info.ui:365 gtk/inspector/misc-info.ui:400
-#: gtk/inspector/misc-info.ui:435 gtk/inspector/prop-editor.c:1153
-#: gtk/inspector/prop-editor.c:1536 gtk/inspector/window.ui:396
+#: gtk/inspector/misc-info.ui:435 gtk/inspector/prop-editor.c:1150
+#: gtk/inspector/prop-editor.c:1533 gtk/inspector/window.ui:396
 msgid "Properties"
 msgstr "Властивості"
 
@@ -4058,7 +4059,7 @@ msgstr "Принтер: %p"
 #. Translators: %s is a type name, for example
 #. * GtkPropertyExpression with value \"2.5\"
 #.
-#: gtk/inspector/prop-editor.c:827
+#: gtk/inspector/prop-editor.c:824
 #, c-format
 msgid "%s with value \"%s\""
 msgstr "%s зі значенням «%s»"
@@ -4066,7 +4067,7 @@ msgstr "%s зі значенням «%s»"
 #. Translators: Both %s are type names, for example
 #. * GtkPropertyExpression with type GObject
 #.
-#: gtk/inspector/prop-editor.c:838
+#: gtk/inspector/prop-editor.c:835
 #, c-format
 msgid "%s with type %s"
 msgstr "%s з типом %s"
@@ -4074,7 +4075,7 @@ msgstr "%s з типом %s"
 #. Translators: Both %s are type names, for example
 #. * GtkObjectExpression for GtkStringObject 0x23456789
 #.
-#: gtk/inspector/prop-editor.c:851
+#: gtk/inspector/prop-editor.c:848
 #, c-format
 msgid "%s for %s %p"
 msgstr "%s для %s %p"
@@ -4082,71 +4083,71 @@ msgstr "%s для %s %p"
 #. Translators: Both %s are type names, for example
 #. * GtkPropertyExpression with value type: gchararray
 #.
-#: gtk/inspector/prop-editor.c:881
+#: gtk/inspector/prop-editor.c:878
 #, c-format
 msgid "%s with value type %s"
 msgstr "%s із типом значення %s"
 
-#: gtk/inspector/prop-editor.c:1230
+#: gtk/inspector/prop-editor.c:1227
 #, c-format
 msgid "Uneditable property type: %s"
 msgstr "Неможливо редагувати цей тип властивості: %s"
 
-#: gtk/inspector/prop-editor.c:1388
+#: gtk/inspector/prop-editor.c:1385
 msgctxt "column number"
 msgid "None"
 msgstr "Немає"
 
-#: gtk/inspector/prop-editor.c:1425
+#: gtk/inspector/prop-editor.c:1422
 msgid "Attribute:"
 msgstr "Атрибут:"
 
-#: gtk/inspector/prop-editor.c:1428
+#: gtk/inspector/prop-editor.c:1425
 msgid "Model"
 msgstr "Модель"
 
-#: gtk/inspector/prop-editor.c:1433
+#: gtk/inspector/prop-editor.c:1430
 msgid "Column:"
 msgstr "Стовпець:"
 
 #. Translators: %s is a type name, for example
 #. * Action from 0x2345678 (GtkApplicationWindow)
 #.
-#: gtk/inspector/prop-editor.c:1532
+#: gtk/inspector/prop-editor.c:1529
 #, c-format
 msgid "Action from: %p (%s)"
 msgstr "Джерело дії: %p (%s)"
 
-#: gtk/inspector/prop-editor.c:1587
+#: gtk/inspector/prop-editor.c:1584
 msgid "Reset"
 msgstr "Скинути"
 
-#: gtk/inspector/prop-editor.c:1595
+#: gtk/inspector/prop-editor.c:1592
 msgctxt "GtkSettings source"
 msgid "Default"
 msgstr "Типове"
 
-#: gtk/inspector/prop-editor.c:1598
+#: gtk/inspector/prop-editor.c:1595
 msgctxt "GtkSettings source"
 msgid "Theme"
 msgstr "Тема"
 
-#: gtk/inspector/prop-editor.c:1601
+#: gtk/inspector/prop-editor.c:1598
 msgctxt "GtkSettings source"
 msgid "XSettings"
 msgstr "XSettings"
 
-#: gtk/inspector/prop-editor.c:1605
+#: gtk/inspector/prop-editor.c:1602
 msgctxt "GtkSettings source"
 msgid "Application"
 msgstr "Програма"
 
-#: gtk/inspector/prop-editor.c:1608
+#: gtk/inspector/prop-editor.c:1605
 msgctxt "GtkSettings source"
 msgid "Unknown"
 msgstr "Невідоме"
 
-#: gtk/inspector/prop-editor.c:1611
+#: gtk/inspector/prop-editor.c:1608
 msgid "Source:"
 msgstr "Джерело:"
 
@@ -4154,7 +4155,7 @@ msgstr "Джерело:"
 msgid "Defined At"
 msgstr "Визначено в"
 
-#: gtk/inspector/recorder.c:1865
+#: gtk/inspector/recorder.c:1922
 #, c-format
 msgid "Saving RenderNode failed"
 msgstr "Не вдалося зберегти RenderNode"
@@ -7201,7 +7202,8 @@ msgstr ""
 #: tools/gtk-builder-tool-enumerate.c:56 tools/gtk-builder-tool-preview.c:179
 #: tools/gtk-builder-tool-preview.c:180 tools/gtk-builder-tool-screenshot.c:360
 #: tools/gtk-builder-tool-simplify.c:2529 tools/gtk-builder-tool-validate.c:261
-#: tools/gtk-rendernode-tool-info.c:202 tools/gtk-rendernode-tool-show.c:102
+#: tools/gtk-path-tool-render.c:62 tools/gtk-rendernode-tool-info.c:208
+#: tools/gtk-rendernode-tool-show.c:102
 msgid "FILE"
 msgstr "ФАЙЛ"
 
@@ -7233,8 +7235,8 @@ msgid "Use style from CSS file"
 msgstr "Використати стиль з файла CSS"
 
 #: tools/gtk-builder-tool-preview.c:187 tools/gtk-builder-tool-screenshot.c:370
-#: tools/gtk-builder-tool-validate.c:268 tools/gtk-rendernode-tool-show.c:109
-#: tools/gtk-rendernode-tool-render.c:204
+#: tools/gtk-builder-tool-validate.c:268 tools/gtk-rendernode-tool-render.c:204
+#: tools/gtk-rendernode-tool-show.c:109
 #, c-format
 msgid "Could not initialize windowing system\n"
 msgstr "Не вдалося ініціалізувати систему вікон\n"
@@ -7463,6 +7465,243 @@ msgstr "%s: нема такої програми %s"
 msgid "%s: error launching application: %s\n"
 msgstr "%s: помилка запускання програми: %s\n"
 
+#: tools/gtk-path-tool.c:35
+#, c-format
+msgid ""
+"Usage:\n"
+"  gtk4-path-tool [COMMAND] [OPTION…] PATH\n"
+"\n"
+"Perform various tasks on paths.\n"
+"\n"
+"Commands:\n"
+"  decompose    Decompose the path\n"
+"  show         Display the path in a window\n"
+"  render       Render the path as an image\n"
+"  info         Print information about the path\n"
+"\n"
+msgstr ""
+"Користування:\n"
+"  gtk4-path-tool [КОМАНДА] [ПАРАМЕТР…] КОНТУР\n"
+"\n"
+"Виконати різноманітні завдання щодо контурів.\n"
+"\n"
+"Команди:\n"
+"  decompose    розкласти контур на частини\n"
+"  show         показати контур у вікні\n"
+"  render       обробити контур до зображення\n"
+"  info         вивести відомості щодо контура\n"
+"\n"
+
+#: tools/gtk-path-tool-decompose.c:75
+msgid "Allow quadratic Bézier curves"
+msgstr "Дозволити квадратичні криві Безьє"
+
+#: tools/gtk-path-tool-decompose.c:76
+msgid "Allow cubic Bézier curves"
+msgstr "Дозволити кубічні криві Безьє"
+
+#: tools/gtk-path-tool-decompose.c:77 tools/gtk-path-tool-info.c:88
+#: tools/gtk-path-tool-render.c:63 tools/gtk-path-tool-show.c:132
+msgid "PATH"
+msgstr "КОНТУР"
+
+#: tools/gtk-path-tool-decompose.c:89
+msgid "Decompose a path."
+msgstr "Розкласти шлях."
+
+#: tools/gtk-path-tool-decompose.c:102 tools/gtk-path-tool-info.c:112
+msgid "No paths given."
+msgstr "Не задано контурів."
+
+#: tools/gtk-path-tool-decompose.c:128
+msgid "That didn't work out."
+msgstr "Не спрацювало."
+
+#: tools/gtk-path-tool-info.c:99
+msgid "Print information about a path."
+msgstr "Вивести відомості щодо контура."
+
+#: tools/gtk-path-tool-info.c:119
+msgid "Path is empty."
+msgstr "Порожній шлях."
+
+#: tools/gtk-path-tool-info.c:125
+msgid "Path is closed"
+msgstr "Контур замкнено"
+
+#: tools/gtk-path-tool-info.c:134
+#, c-format
+msgid "%d contours"
+msgstr "%d контурів"
+
+#: tools/gtk-path-tool-info.c:136
+#, c-format
+#| msgid "Fractions"
+msgid "%d operations"
+msgstr "%d дій"
+
+#: tools/gtk-path-tool-info.c:140
+#, c-format
+#| msgctxt "Script"
+#| msgid "Balinese"
+msgid "%d lines"
+msgstr "%d ліній"
+
+#: tools/gtk-path-tool-info.c:145
+#, c-format
+msgid "%d quadratics"
+msgstr "%d квадратних апроксимацій"
+
+#: tools/gtk-path-tool-info.c:150
+#, c-format
+msgid "%d cubics"
+msgstr "%d кубічних апроксимацій"
+
+#: tools/gtk-path-tool-render.c:52 tools/gtk-path-tool-show.c:122
+msgid "Fill rule (winding, even-odd)"
+msgstr "Правило заповнення (віконне, парне-непарне)"
+
+#: tools/gtk-path-tool-render.c:52 tools/gtk-path-tool-render.c:56
+#: tools/gtk-path-tool-render.c:57 tools/gtk-path-tool-render.c:58
+#: tools/gtk-path-tool-render.c:59 tools/gtk-path-tool-render.c:60
+#: tools/gtk-path-tool-render.c:61 tools/gtk-path-tool-show.c:122
+#: tools/gtk-path-tool-show.c:126 tools/gtk-path-tool-show.c:127
+#: tools/gtk-path-tool-show.c:128 tools/gtk-path-tool-show.c:129
+#: tools/gtk-path-tool-show.c:130 tools/gtk-path-tool-show.c:131
+msgid "VALUE"
+msgstr "ЗНАЧЕННЯ"
+
+#: tools/gtk-path-tool-render.c:53 tools/gtk-path-tool-show.c:123
+msgid "Foreground color"
+msgstr "Колір переднього плану"
+
+#: tools/gtk-path-tool-render.c:53 tools/gtk-path-tool-render.c:54
+#: tools/gtk-path-tool-show.c:123 tools/gtk-path-tool-show.c:124
+msgid "COLOR"
+msgstr "КОЛІР"
+
+#: tools/gtk-path-tool-render.c:54 tools/gtk-path-tool-show.c:124
+msgid "Background color"
+msgstr "Колір тла"
+
+#: tools/gtk-path-tool-render.c:55 tools/gtk-path-tool-show.c:125
+msgid "Stroke the path instead of filling it"
+msgstr "Заштрихувати контур, а не заповнювати його"
+
+#: tools/gtk-path-tool-render.c:56 tools/gtk-path-tool-show.c:126
+msgid "Line width (number)"
+msgstr "Товщина лінії (число)"
+
+#: tools/gtk-path-tool-render.c:57 tools/gtk-path-tool-show.c:127
+msgid "Line cap (butt, round, square)"
+msgstr "Кінець лінії (торець, заокруглення, квадрат)"
+
+#: tools/gtk-path-tool-render.c:58 tools/gtk-path-tool-show.c:128
+msgid "Line join (miter, miter-clip, round, bevel, arcs)"
+msgstr ""
+"З'єднання лінії (під кутом, під кутом з обрізанням, заокруглення, "
+"загострення, дуги)"
+
+#: tools/gtk-path-tool-render.c:59 tools/gtk-path-tool-show.c:129
+msgid "Miter limit (number)"
+msgstr "Обмеження зрізу (число)"
+
+#: tools/gtk-path-tool-render.c:60 tools/gtk-path-tool-show.c:130
+msgid "Dash pattern (comma-separated numbers)"
+msgstr "Взірець штриха (числа, які відокремлено комами)"
+
+#: tools/gtk-path-tool-render.c:61 tools/gtk-path-tool-show.c:131
+msgid "Dash offset (number)"
+msgstr "Відступ штриха (число)"
+
+#: tools/gtk-path-tool-render.c:62
+msgid "The output file"
+msgstr "Файл результатів"
+
+#: tools/gtk-path-tool-render.c:81 tools/gtk-path-tool-show.c:145
+msgid "Could not initialize windowing system"
+msgstr "Не вдалося ініціалізувати систему вікон"
+
+#: tools/gtk-path-tool-render.c:89
+msgid "Render the path to a png image."
+msgstr "Обробити контур до зображення png."
+
+#: tools/gtk-path-tool-render.c:102 tools/gtk-path-tool-show.c:166
+msgid "No path specified"
+msgstr "Не вказано контур"
+
+#: tools/gtk-path-tool-render.c:108
+msgid "Can only render a single path"
+msgstr "Можлива обробка для показу лише одного контура"
+
+#: tools/gtk-path-tool-render.c:114 tools/gtk-path-tool-show.c:178
+msgid "fill rule"
+msgstr "правило заповнення"
+
+#: tools/gtk-path-tool-render.c:118 tools/gtk-path-tool-show.c:182
+msgid "line cap"
+msgstr "кінчик лінії"
+
+#: tools/gtk-path-tool-render.c:119 tools/gtk-path-tool-show.c:183
+msgid "line join"
+msgstr "об'єднання рядків"
+
+#: tools/gtk-path-tool-render.c:143 tools/gtk-path-tool-show.c:207
+#, c-format
+msgid "Failed to parse '%s' as number"
+msgstr "Не вдалося обробити «%s» як число"
+
+#: tools/gtk-path-tool-render.c:187
+#, c-format
+msgid "Saving png to '%s' failed"
+msgstr "Не вдалося зберегти png до «%s»"
+
+#: tools/gtk-path-tool-render.c:194
+#, c-format
+msgid "Output written to '%s'."
+msgstr "Результати записано до «%s»."
+
+#: tools/gtk-path-tool-show.c:43 tools/gtk-path-tool-show.c:78
+msgid "Path Preview"
+msgstr "Перегляд контура"
+
+#: tools/gtk-path-tool-show.c:153
+msgid "Display the path."
+msgstr "Показати контур."
+
+#: tools/gtk-path-tool-show.c:172
+msgid "Can only show a single path"
+msgstr "Можливий показ лише одного контура"
+
+#: tools/gtk-path-tool-utils.c:58
+#, c-format
+msgid "Failed to read from standard input: %s\n"
+msgstr "Не вдалося прочитати дані зі стандартного джерела даних: %s\n"
+
+#: tools/gtk-path-tool-utils.c:64
+#, c-format
+msgid "Error reading from standard input: %s\n"
+msgstr "Помилка під час спроби читання зі стандартного джерела даних: %s\n"
+
+#: tools/gtk-path-tool-utils.c:83
+#, c-format
+msgid "Failed to parse '%s' as path.\n"
+msgstr "Не вдалося обробити «%s» як контур.\n"
+
+#: tools/gtk-path-tool-utils.c:109
+#, c-format
+msgid "Failed to parse '%s' as %s."
+msgstr "Не вдалося обробити «%s» як %s."
+
+#: tools/gtk-path-tool-utils.c:111
+msgid "Possible values: "
+msgstr "Можливі значення:"
+
+#: tools/gtk-path-tool-utils.c:135
+#, c-format
+msgid "Could not parse '%s' as color"
+msgstr "Не вдалося обробити «%s» як колір"
+
 #: tools/gtk-rendernode-tool.c:35
 #, c-format
 msgid ""
@@ -7488,49 +7727,40 @@ msgstr ""
 "  render       Створити знімок вікна вузла\n"
 "\n"
 
-#: tools/gtk-rendernode-tool-info.c:179
+#: tools/gtk-rendernode-tool-info.c:185
 #, c-format
 msgid "Number of nodes: %u\n"
 msgstr "Кількість вузлів: %u\n"
 
-#: tools/gtk-rendernode-tool-info.c:186
+#: tools/gtk-rendernode-tool-info.c:192
 #, c-format
 msgid "Depth: %u\n"
 msgstr "Глибина: %u\n"
 
-#: tools/gtk-rendernode-tool-info.c:189
+#: tools/gtk-rendernode-tool-info.c:195
 #, c-format
 msgid "Bounds: %g x %g\n"
 msgstr "Межі: %g x %g\n"
 
-#: tools/gtk-rendernode-tool-info.c:190
+#: tools/gtk-rendernode-tool-info.c:196
 #, c-format
 msgid "Origin: %g %g\n"
 msgstr "Початок координат: %g %g\n"
 
-#: tools/gtk-rendernode-tool-info.c:211
+#: tools/gtk-rendernode-tool-info.c:217
 msgid "Provide information about the render node."
 msgstr "Надати дані щодо вузла обробки."
 
-#: tools/gtk-rendernode-tool-info.c:224 tools/gtk-rendernode-tool-show.c:130
-#: tools/gtk-rendernode-tool-render.c:225
+#: tools/gtk-rendernode-tool-info.c:230 tools/gtk-rendernode-tool-render.c:225
+#: tools/gtk-rendernode-tool-show.c:130
 #, c-format
 msgid "No .node file specified\n"
 msgstr "Не вказано файл .node\n"
 
-#: tools/gtk-rendernode-tool-info.c:230
+#: tools/gtk-rendernode-tool-info.c:236
 #, c-format
 msgid "Can only accept a single .node file\n"
 msgstr "Можлива одночасна обробка лише одного файла .node\n"
-
-#: tools/gtk-rendernode-tool-show.c:117
-msgid "Show the render node."
-msgstr "Показати вузол обробки."
-
-#: tools/gtk-rendernode-tool-show.c:136
-#, c-format
-msgid "Can only preview a single .node file\n"
-msgstr "Можливий попередній перегляд лише одного файла .node\n"
 
 #: tools/gtk-rendernode-tool-render.c:123
 #, c-format
@@ -7565,16 +7795,19 @@ msgstr ""
 "Одночасно можливе створення лише одного знімка вікна файла .node і виведення "
 "даних лише до одного файла\n"
 
+#: tools/gtk-rendernode-tool-show.c:117
+msgid "Show the render node."
+msgstr "Показати вузол обробки."
+
+#: tools/gtk-rendernode-tool-show.c:136
+#, c-format
+msgid "Can only preview a single .node file\n"
+msgstr "Можливий попередній перегляд лише одного файла .node\n"
+
 #: tools/gtk-rendernode-tool-utils.c:51
 #, c-format
 msgid "Error at %s: %s\n"
 msgstr "Помилка у %s: %s\n"
-
-#: tools/gtk-rendernode-tool-utils.c:69
-#, c-format
-#| msgid "Failed to open file %s : %s\n"
-msgid "Failed to load node file: %s\n"
-msgstr "Не вдалося завантажити файл вузла: %s\n"
 
 #: tools/updateiconcache.c:1391
 #, c-format
@@ -8080,10 +8313,6 @@ msgstr ""
 #~ msgstr "невідома"
 
 #~ msgctxt "Script"
-#~ msgid "Balinese"
-#~ msgstr "балійська"
-
-#~ msgctxt "Script"
 #~ msgid "Cuneiform"
 #~ msgstr "клинопис"
 
@@ -8464,10 +8693,6 @@ msgstr ""
 
 #~ msgid "Can't parse “%s”\n"
 #~ msgstr "Не вдалося обробити «%s»\n"
-
-#~| msgid "Failed to write header\n"
-#~ msgid "Failed to parse png image"
-#~ msgstr "Не вдалося обробити дані зображення png"
 
 #~ msgid "Sandbox does not provide an OpenGL implementation"
 #~ msgstr "Пісочниця не надає реалізації OpenGL"

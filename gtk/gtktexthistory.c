@@ -1083,7 +1083,6 @@ gtk_text_history_modified_changed (GtkTextHistory *self,
 
   return_if_not_enabled (self);
   return_if_applying (self);
-  return_if_irreversible (self);
 
   /* If we have a new save point, clear all previous modified states. */
   gtk_text_history_clear_modified (self);
@@ -1104,7 +1103,8 @@ gtk_text_history_modified_changed (GtkTextHistory *self,
     {
       if (peek->kind == ACTION_KIND_BARRIER)
         {
-          if (!(peek = peek->link.next->data))
+          if (peek->link.next == NULL ||
+              !(peek = peek->link.next->data))
             return;
         }
 
@@ -1115,7 +1115,8 @@ gtk_text_history_modified_changed (GtkTextHistory *self,
   self->is_modified = !!modified;
   self->is_modified_set = TRUE;
 
-  gtk_text_history_update_state (self);
+  if (!self->irreversible)
+    gtk_text_history_update_state (self);
 }
 
 void

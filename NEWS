@@ -1,70 +1,174 @@
-Overview of Changes in 4.12.4, 17-11-2023
+Overview of Changes in 4.13.5, 07 01 2024
 =========================================
 
-* a11y:
- - Tweak name computation for some corner cases
+This release adds two new GSK renderers called vulkan and ngl,
+that are built from the same sources. The new renderers can
+handle many corner cases correctly that the current gl renderer
+does not handle, and they offer advantages such as antialiasing
+and supersampled gradients.
 
-* gdk:
- - gl: Improve our use of GLES a bit (use vertex arrays and
-   GL_BGRA if available)
- - Fix some errors in our memory format tables
+The new renderers are still considered experimental, and GTK
+will only use them if they are explicitly selected using the
+GSK_RENDERER environment variable.
 
-* gsk:
- - gl: handle texture-scale nodes more faithfully
- - gl: Fix icon padding in the atlas
+As part of this work, the GSK include files have been rearranged.
+It is no longer necessary to include renderer-specific headers for
+ngl and vulkan (and doing so will trigger deprecation warnings),
+and their constructors are always available.
 
-* Windows:
- - Stop relying on glib for build configuration
+The previously available experimental GdkVulkanContext APIs and
+the old Vulkan renderer have been removed.
 
-* Tools:
- - Add a --undecorated option to gtk4-rendernode-tool
+Vulkan is now enabled by default, and Linux distributions should
+build GTK with Vulkan support. This requires the glslc shader
+compiler as a new dependency.
+
+Vulkan is now also used for dmabuf support.
+
+* GtkDropdown:
+ - Fix display of initial selection
+
+* GtkShortcutsWindow:
+ - Make the window adapt to smaller screen widths
+
+* GtkTextView:
+ - Fix a possible NULL dereference in history
+
+* GDK:
+ - Make the png loader safer against overflows
+
+* GL:
+ - Fix some errors in handling of texture formats and mipmaps
+
+
+Overview of Changes in 4.13.4, 30-12-2023
+=========================================
+
+* GtkFileDialog:
+ - Return an error if no file is selected
+
+* GtkFileLauncher:
+ - Add a writable property
+
+* GtkFileChooserNative:
+ - Make closing portal file dialogs work
+
+* GtkEmojiChooser:
+ - Update Emoji data to CLDR v43
+
+* GtkStringList:
+ - Add item-type and n-itmes properties
+
+* Input:
+ - Respect GTK grabs on DND events
+ - Fix crossing event generation for enter/leave
+
+* Wayland:
+ - Avoid recreating wl_buffers needlessly
+ - Be more careful when loading cursors
+
+* Dmabuf:
+ - Add support for all Dmabuf formats
+ - Tweak the offload code a bit, allow offloading translucent
+   textures, as long as they are raised. Decline to offload
+   with fractional scales.
+
+* Accessibility:
+ - Add a few more accessible roles
+
+* GL:
+ - Use GLES by default
+ - Tweak GDK_DEBUG values. The new values are
+   gl-disable-gl, gl-disable-gles and gl-prefer-gl.
+   The gl-legacy and nograbs values have been dropped.
+
+* Css:
+ - Reduce memory consumption during theme loading
+ - Fix opacity handling
+
+* Theme:
+ - Refresh some of the included symbolic icons
+
+* MacOs:
+ - Silence secure-restore message
+
+* Build:
+ - Require Vulkan 1.3
+
+* Translation updates:
+ Chinese (China)
+ Czech
+ Hebrew
+ Icelandic
+ Polish
+ Russian
+
+
+Overview of Changes in 4.13.3, 15-11-2023
+=========================================
+
+* GtkGraphicsOffload: A new widget to support passthrough
+  of dmabuf textures with subsurfaces on Wayland
+
+* GtkListView:
+ - reduce tree indentation
+
+* GtkInspector:
+ - Show more GL information
+ - Add a subsurface overlay
+ - Improve the fps overlay
+
+* GDK
+ - Allow implicit modifiers for dmabufs
+ - Support more dmabuf formats: NV16, NV61, NV24, NV42
+   and 3-plane YUV formats
+
+* GSK
+ - Fix padding of icons in the GL atlas
+ - Fix handling of texture-scale nodes in cairo
+ - Treat texture-scale nodes more faithfully in GL
+
+* Accessibility:
+ - Tweak the accessible name computation for corner cases
+
+* The GTK/GDK/GSK_DEBUG environment variables now
+  work in productions as well as in debug builds
 
 * Translation updates
  Catalan
  French
- Romanian
  Russian
- Spanish
- Turkish
 
 
-Overview of Changes in 4.12.3, 28-09-2023
+Overview of Changes in 4.13.2, 22-10-2023
 =========================================
 
-* GtkWindow:
- - Don't assume titlebars are GtkHeaderBar
+* GtkPrintdialog:
+ - New async-style api to replace GtkPrintOperation
 
-* GtkTreeView:
- - Fix a crash in gtk_tree_view_is_blank_at_pos
+* GtkEmojiChooser:
+ - Add more languages: Bengali, Hindi, Japanese, Finnish,
+   Thai and Norwegian bokmål
 
-* printing:
- - Fix some issues with the portal implementation
+* Accessibility:
+ - Fix some utf8 handling issues
+
+* GDK:
+ - Add support for dmabuf textures, with GdkDmabufTextureBuilder
+ - Add a few more supported memory formats for textures
 
 * GSK:
- - Some optimizations in the GL renderer
- - Fix memory leaks in the Broadway renderer
+ - Add a fast-path for masking color
+ - Add support for importing dmabuf textures
+ - Handle GLES better by using some extensions
 
-* demos:
- - Fix a crash in gtk4-demo
-
-* Translation updates
- Basque
- Brazilian Portuguese
- Czech
- Galician
- Georgian
- German
- Hungarian
- Kazakh
- Lithuanian
- Persian
- Polish
- Spanish
- Swedish
+* Translation updates:
+ Catalan
+ Russian
  Turkish
 
 
-Overview of Changes in 4.12.2, 20-09-2023
+Overview of Changes in 4.13.1, 28-09-2023
 =========================================
 
 * GtkTooltip:
@@ -73,48 +177,94 @@ Overview of Changes in 4.12.2, 20-09-2023
 * GtkCenterLayout, GtkEntry, GtkSearchEntry:
  - Fix some issues with baseline handling
 
+* GtkColorButton, GtkFontButton:
+ - Propagate focus-on-click
+
+* GtkFileChooser:
+ - Make "Visit file" scroll to the file
+
 * GtkSwitch:
  - Respect text direction
 
-* Theme:
- - Use relative font sizes
+* GtkWindow:
+ - Don't assume titlebars are GtkHeaderBars
+
+* Printing:
+ - Fix some problems with the portal implementation
+ - Add a new simple print API: GtkPrintDialog
+
+* Paths:
+ - GskPathMeasure performance has been improved
+ - Add custom contours for circles, rounded rectangles and rectangles
+ - Simplify GskPathPoint handling
+ - gsk_path_point_get_closest_point now returns the distance as well
+ - Make GskPathBuilder simplify curves
+
+* Input:
+ - Handle (some) single-key compose sequences
+ - Fix active state tracking with sensitivity changes and grabs
 
 * GSK:
- - Make repeated gradients match between GL and cairo
+ - Make the repeated gradients match between GL and cairo
  - Make rounded rect shrinking match between Vulkan, GL and cairo
  - Fix parsing of text nodes with color glyphs
- - Restrict an optimization to the cases where it is correct
+ - Restrict an optimization to the cases where it is crrect
  - Fix rendering of shadows with opacity
+ - The Vulkan renderer now requires Vulkan 1.2
+ - GL: Transition gradients unpremultiplied
+ - GL: Fix clipping of shadows
+ - GL: Some optimizations
+ - Broadway: Fix memory leaks in the renderer
+
+* Wayland:
+ - Make activation more reliable
 
 * macOS:
  - Clamp damage regions to the surface size
 
-* Windows:
- - Fix missing minimize and maximize buttons
+* Tools:
+ - gtk4-path-tool gained restrict and reverse commands
+ - gtk4-path-tool show and render can show control points
+
+* Demos:
+ - Add a demo for hit testing with paths
+
+* Build:
+ - Fix build problems with C++ compilers
+
+* Deprecations:
+ - gtk_window_present_with_time
 
 * Translation updates
- Basque
  Brazilian Portuguese
+ British English
  Catalan
  Chinese (China)
  Czech
  Danish
  Dutch
- Finnish
+ Esperanto
  Galician
- German
- Hungarian
+ Georgian
  Italian
- Kazakh
+ Korean
  Latvian
  Lithuanian
+ Persian
+ Polish
+ Punjabi
  Slovenian
- Spanish
  Turkish
 
 
-Overview of Changes in 4.12.1, 25-08-2023
+Overview of Changes in 4.13.0, 25-08-2023
 =========================================
+
+* GskPath, GskPathBuilder, GskPathMeasure:
+  Data types and APIs for path rendering. These APIs are still
+  considered experimental, and may change until 4.14. Please try
+  them out and give us feedback. Documentation can be found
+  here: https://docs.gtk.org/gsk4/paths.html
 
 * GtkGridView:
  - Fix a crash when scrolling
@@ -137,6 +287,10 @@ Overview of Changes in 4.12.1, 25-08-2023
 * GtkMenuButton:
  - Fix problems with focus handling
  - Fix problems with DND
+ - Make flags a settable property
+
+* GtkShortcutsWindow:
+ - Add API to build shortcuts windows programmatically
 
 * Printing
  - Fix the cpdb backend build
@@ -150,9 +304,32 @@ Overview of Changes in 4.12.1, 25-08-2023
 * Wayland:
  - Fix a crash with compositors other than gnome-shell
 
+* Deprecations:
+ - Remaining GtkTreeModel-related types
+
+* Demos:
+ - Add a few path demos to gtk4-demo
+
+* Tools:
+ - gtk4-path-tool provides a commandline interface for paths
+
 * Translation updates:
+ Basque
+ Catalan
+ Finnish
+ Galician
+ Georgian
+ German
+ Greek
+ Indonesian
+ Kazakh
+ Persian
  Polish
+ Romanian
+ Spanish
  Swedish
+ Turkish
+ Ukrainian
 
 
 Overview of Changes in 4.12.0, 05-08-2023

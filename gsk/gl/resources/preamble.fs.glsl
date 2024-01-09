@@ -29,9 +29,6 @@ GskRoundedRect gsk_decode_rect(_GSK_ROUNDED_RECT_UNIFORM_ r)
 float
 gsk_ellipsis_dist (vec2 p, vec2 radius)
 {
-  if (radius == vec2(0, 0))
-    return 0.0;
-
   vec2 p0 = p / radius;
   vec2 p1 = 2.0 * p0 / radius;
 

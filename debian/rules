@@ -145,6 +145,7 @@ configure_flags_udeb = \
 	-Dbuild-tests=false \
 	-Dinstall-tests=false \
 	-Dintrospection=disabled \
+	-Dvulkan=disabled \
 	-Dwayland-backend=false \
 	-Dx11-backend=true \
 	$(NULL)

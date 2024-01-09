@@ -22,7 +22,6 @@ GskRoundedRect gsk_decode_rect(_GSK_ROUNDED_RECT_UNIFORM_ r)
 #else
   rect = r;
 #endif
-  gsk_rounded_rect_normalize (rect);
 
   return rect;
 }

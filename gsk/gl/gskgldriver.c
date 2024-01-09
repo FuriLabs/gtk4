@@ -602,7 +602,7 @@ gsk_gl_driver_begin_frame (GskGLDriver       *self,
    * of the following frame instead of the end so that we reduce chances
    * we block on any resources while delivering our frames.
    */
-  gsk_gl_driver_collect_unused_textures (self, last_frame_id - 1);
+  gsk_gl_driver_collect_unused_textures (self, last_frame_id - 300);
 }
 
 /**

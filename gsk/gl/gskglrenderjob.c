@@ -1189,20 +1189,9 @@ gsk_gl_render_job_visit_as_fallback (GskGLRenderJob      *job,
   cairo_surface_t *rendered_surface;
   cairo_t *cr;
   int texture_id;
-  GskTextureKey key;
 
   if (surface_width <= 0 || surface_height <= 0)
     return;
-
-  key.pointer = node;
-  key.pointer_is_child = FALSE;
-  key.scale_x = scale_x;
-  key.scale_y = scale_y;
-
-  texture_id = gsk_gl_driver_lookup_texture (job->driver, &key, NULL);
-
-  if (texture_id != 0)
-    goto done;
 
   /* We first draw the recording surface on an image surface,
    * just because the scaleY(-1) later otherwise screws up the
@@ -1253,8 +1242,6 @@ gsk_gl_render_job_visit_as_fallback (GskGLRenderJob      *job,
   g_object_unref (texture);
   cairo_surface_destroy (surface);
   cairo_surface_destroy (rendered_surface);
-
-  gsk_gl_driver_cache_texture (job->driver, &key, texture_id);
 
 done:
   if (scale_x < 0 || scale_y < 0)

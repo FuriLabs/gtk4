@@ -141,7 +141,7 @@ configure_flags_udeb = \
 	$(NULL)
 
 %:
-	dh $@ --with gir --buildsystem=meson $(dh_options)
+	dh $@ --buildsystem=meson $(dh_options)
 
 override_dh_clean: debian/control
 	rm -f $(call dh_subst_files,$(all_binaries))

@@ -1,4 +1,4 @@
-gtk4 (4.12.4+ds-4) UNRELEASED; urgency=medium
+gtk4 (4.12.4+ds-4) unstable; urgency=medium
 
   [ Dandan Zhang ]
   * Add loong64 to the list of architectures that have librsvg
@@ -23,7 +23,7 @@ gtk4 (4.12.4+ds-4) UNRELEASED; urgency=medium
   * d/control: Don't require python3-gi when not running tests.
     This makes the build-dependencies satisfiable during cross-builds.
 
- -- Simon McVittie <smcv@debian.org>  Wed, 17 Jan 2024 11:32:34 +0000
+ -- Simon McVittie <smcv@debian.org>  Wed, 17 Jan 2024 11:43:08 +0000
 
 gtk4 (4.12.4+ds-3) unstable; urgency=medium
 

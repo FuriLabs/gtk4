@@ -305,10 +305,7 @@ Depends: ${gir:Depends},
          ${misc:Depends},
          ${shlibs:Depends},
          libgtk-4-common
-Provides: gir1.2-gdk-4.0 (= ${binary:Version}),
-          gir1.2-gdkwayland-4.0 (= ${binary:Version}) [linux-any],
-          gir1.2-gdkx11-4.0 (= ${binary:Version}),
-          gir1.2-gsk-4.0 (= ${binary:Version})
+Provides: ${gir:Provides},
 Description: GTK graphical user interface library -- gir bindings
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable

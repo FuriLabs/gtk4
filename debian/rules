@@ -73,6 +73,10 @@ configure_flags_deb = \
 	-Dx11-backend=true \
 	${NULL}
 
+ifneq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
+configure_flags_deb += --cross-file=$(DEB_HOST_GNU_TYPE)-gobject-introspection.ini
+endif
+
 ifeq (,$(filter stage1,$(DEB_BUILD_PROFILES)))
 configure_flags_deb += -Dcolord=enabled
 else

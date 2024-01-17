@@ -1,3 +1,17 @@
+gtk4 (4.12.4+ds-4) UNRELEASED; urgency=medium
+
+  [ Dandan Zhang ]
+  * Add loong64 to the list of architectures that have librsvg
+  * Extend test timeout on loong64 (Closes: #1059613)
+
+  [ Jeremy Bícha ]
+  * Remove references to obsolete mipsel
+
+  [ Simon McVittie ]
+  * d/control: Use dh-sequence-gir to activate debhelper addon
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 17 Jan 2024 11:07:06 +0000
+
 gtk4 (4.12.4+ds-3) unstable; urgency=medium
 
   * d/control: Remove pandoc build-dependency.

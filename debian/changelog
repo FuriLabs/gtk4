@@ -2,7 +2,8 @@ gtk4 (4.12.4+ds-4) UNRELEASED; urgency=medium
 
   [ Dandan Zhang ]
   * Add loong64 to the list of architectures that have librsvg
-  * Extend test timeout on loong64 (Closes: #1059613)
+    (Closes: #1059613)
+  * Extend test timeout on loong64
 
   [ Jeremy Bícha ]
   * Remove references to obsolete mipsel
@@ -19,8 +20,10 @@ gtk4 (4.12.4+ds-4) UNRELEASED; urgency=medium
     This package is problematic because it cannot be Multi-Arch
     co-installable, but with recent changes to the Build-Depends, we no
     longer need it.
+  * d/control: Don't require python3-gi when not running tests.
+    This makes the build-dependencies satisfiable during cross-builds.
 
- -- Simon McVittie <smcv@debian.org>  Wed, 17 Jan 2024 11:16:21 +0000
+ -- Simon McVittie <smcv@debian.org>  Wed, 17 Jan 2024 11:32:34 +0000
 
 gtk4 (4.12.4+ds-3) unstable; urgency=medium
 

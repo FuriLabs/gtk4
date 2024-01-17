@@ -9,8 +9,18 @@ gtk4 (4.12.4+ds-4) UNRELEASED; urgency=medium
 
   [ Simon McVittie ]
   * d/control: Use dh-sequence-gir to activate debhelper addon
+  * d/control: Rely on ${gir:Provides} for gir1.2-gtk-4.0's Provides.
+    The version of gobject-introspection in testing now supports this.
+  * d/rules: Disable GObject-Introspection in the udeb build.
+    debian-installer does not use GTK from an interpreted language and
+    is unlikely to do so any time soon.
+  * d/control, d/rules: Use a cross g-ir-scanner if cross-compiled
+  * d/control: Stop build-depending on libgirepository1.0-dev.
+    This package is problematic because it cannot be Multi-Arch
+    co-installable, but with recent changes to the Build-Depends, we no
+    longer need it.
 
- -- Simon McVittie <smcv@debian.org>  Wed, 17 Jan 2024 11:07:06 +0000
+ -- Simon McVittie <smcv@debian.org>  Wed, 17 Jan 2024 11:16:21 +0000
 
 gtk4 (4.12.4+ds-3) unstable; urgency=medium
 

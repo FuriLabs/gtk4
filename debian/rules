@@ -75,6 +75,10 @@ configure_flags_deb = \
 	-Dx11-backend=true \
 	${NULL}
 
+ifneq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
+configure_flags_deb += --cross-file=$(DEB_HOST_GNU_TYPE)-gobject-introspection.ini
+endif
+
 ifeq (,$(filter stage1,$(DEB_BUILD_PROFILES)))
 configure_flags_deb += -Dcolord=enabled
 else
@@ -138,12 +142,13 @@ configure_flags_udeb = \
 	-Ddemos=false \
 	-Dbuild-tests=false \
 	-Dinstall-tests=false \
+	-Dintrospection=disabled \
 	-Dwayland-backend=false \
 	-Dx11-backend=true \
 	$(NULL)
 
 %:
-	dh $@ --with gir --buildsystem=meson $(dh_options)
+	dh $@ --buildsystem=meson $(dh_options)
 
 override_dh_clean: debian/control
 	rm -f $(call dh_subst_files,$(all_binaries))
@@ -198,7 +203,7 @@ $(info Slow architecture detected, increasing test timeout)
 test_timeout_multiplier = 10
 endif
 
-ifneq ($(filter m68k riscv64 sh4,$(DEB_HOST_ARCH_CPU)),)
+ifneq ($(filter loong64 m68k riscv64 sh4,$(DEB_HOST_ARCH_CPU)),)
 $(info Architecture with qemu buildds detected, increasing test timeout a lot)
 test_timeout_multiplier = 20
 endif

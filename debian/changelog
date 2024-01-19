@@ -1,3 +1,39 @@
+gtk4 (4.12.5+ds-1) unstable; urgency=medium
+
+  * New upstream release
+    - Update emoji chooser for Unicode 15.1
+  * missing-sources: Update emojibase
+  * missing-sources: Copy emoji 15.1 files from Debian's unicode-data package
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 19 Jan 2024 15:20:15 -0500
+
+gtk4 (4.12.4+ds-4) unstable; urgency=medium
+
+  [ Dandan Zhang ]
+  * Add loong64 to the list of architectures that have librsvg
+    (Closes: #1059613)
+  * Extend test timeout on loong64
+
+  [ Jeremy Bícha ]
+  * Remove references to obsolete mipsel
+
+  [ Simon McVittie ]
+  * d/control: Use dh-sequence-gir to activate debhelper addon
+  * d/control: Rely on ${gir:Provides} for gir1.2-gtk-4.0's Provides.
+    The version of gobject-introspection in testing now supports this.
+  * d/rules: Disable GObject-Introspection in the udeb build.
+    debian-installer does not use GTK from an interpreted language and
+    is unlikely to do so any time soon.
+  * d/control, d/rules: Use a cross g-ir-scanner if cross-compiled
+  * d/control: Stop build-depending on libgirepository1.0-dev.
+    This package is problematic because it cannot be Multi-Arch
+    co-installable, but with recent changes to the Build-Depends, we no
+    longer need it.
+  * d/control: Don't require python3-gi when not running tests.
+    This makes the build-dependencies satisfiable during cross-builds.
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 17 Jan 2024 11:43:08 +0000
+
 gtk4 (4.12.4+ds-3ubuntu1) noble; urgency=medium
 
   * Merge with Debian. Remaining changes:

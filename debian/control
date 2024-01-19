@@ -9,6 +9,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                dbus-daemon <!nocheck>,
                debhelper-compat (= 13),
                dh-exec,
+               dh-sequence-gir,
                dh-sequence-gnome,
                fonts-cantarell <!nocheck>,
                fonts-noto-core <!nocheck>,
@@ -20,13 +21,14 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                gir1.2-pangocairo-1.0-dev,
                gir1.2-xlib-2.0-dev,
                gobject-introspection (>= 1.76.0),
+               gobject-introspection (>= 1.78.1-9~) <cross>,
                gsettings-desktop-schemas <!nocheck>,
                iso-codes <!nocheck>,
-               libavcodec-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libavdevice-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libavfilter-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libavformat-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libavutil-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
+               libavcodec-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
+               libavdevice-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
+               libavfilter-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
+               libavformat-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
+               libavutil-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
                libcairo2-dev,
                libcpdb-dev (>= 2.0~b4-0ubuntu3~),
                libcpdb-frontend-dev (>= 2.0~b4-0ubuntu3~),
@@ -37,7 +39,6 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libfontconfig-dev,
                libfribidi-dev,
                libgdk-pixbuf-2.0-dev,
-               libgirepository1.0-dev (>= 1.72.0),
                libglib2.0-dev (>= 2.76.0),
                libgraphene-1.0-dev,
                libgstreamer1.0-dev,
@@ -48,10 +49,10 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libpango1.0-dev (>= 1.50.0),
                libpng-dev,
                libpolkit-gobject-1-dev [linux-any],
-               librsvg2-common [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32] <!nocheck>,
-               librsvg2-dev (>= 2.52.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
-               libswresample-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
-               libswscale-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x],
+               librsvg2-common [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32] <!nocheck>,
+               librsvg2-dev (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
+               libswresample-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
+               libswscale-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x],
                libsysprof-capture-4-dev (>= 3.40.1) [linux-any],
                libtiff-dev,
                libvulkan-dev [linux-any],
@@ -72,7 +73,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                meson (>= 0.63),
                pkg-config,
                python3-docutils <!nodoc>,
-               python3-gi (>= 3.40),
+               python3-gi (>= 3.40) <!nocheck>,
                sassc,
                wayland-protocols (>= 1.32) [linux-any],
                weston [linux-any] <!nocheck>,
@@ -247,7 +248,7 @@ Description: GStreamer media backend for the GTK graphical user interface librar
 Package: libgtk-4-media-ffmpeg
 Build-Profiles: <pkg.gtk4.ffmpeg>
 Section: x11
-Architecture: amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x
+Architecture: amd64 arm64 armel armhf i386 mips64el ppc64el s390x
 Multi-Arch: foreign
 Depends: ${misc:Depends},
          ${shlibs:Depends},
@@ -269,7 +270,7 @@ Depends: ${misc:Depends},
          ${shlibs:Depends},
          libgtk-4-1 (= ${binary:Version})
 Recommends: fonts-cantarell,
-            librsvg2-common (>= 2.52.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
+            librsvg2-common (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
 Description: example files for GTK 4
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable
@@ -284,7 +285,7 @@ Build-Profiles: <!noinsttest>
 Section: x11
 Architecture: any
 Depends: iso-codes,
-         librsvg2-common (>= 2.52.0) [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
+         librsvg2-common (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
          ${misc:Depends},
          ${shlibs:Depends},
          libgtk-4-1 (= ${binary:Version}),
@@ -307,10 +308,7 @@ Depends: ${gir:Depends},
          ${misc:Depends},
          ${shlibs:Depends},
          libgtk-4-common
-Provides: gir1.2-gdk-4.0 (= ${binary:Version}),
-          gir1.2-gdkwayland-4.0 (= ${binary:Version}) [linux-any],
-          gir1.2-gdkx11-4.0 (= ${binary:Version}),
-          gir1.2-gsk-4.0 (= ${binary:Version})
+Provides: ${gir:Provides},
 Description: GTK graphical user interface library -- gir bindings
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable

@@ -96,7 +96,7 @@
  *
  * The GtkLabel implementation of the GtkBuildable interface supports a
  * custom `<attributes>` element, which supports any number of `<attribute>`
- * elements. The <attribute> element has attributes named “name“, “value“,
+ * elements. The `<attribute>` element has attributes named “name“, “value“,
  * “start“ and “end“ and allows you to specify [struct@Pango.Attribute]
  * values for this label.
  *
@@ -131,8 +131,9 @@
  * Mnemonics automatically activate any activatable widget the label is
  * inside, such as a [class@Gtk.Button]; if the label is not inside the
  * mnemonic’s target widget, you have to tell the label about the target
- * using [class@Gtk.Label.set_mnemonic_widget]. Here’s a simple example where
- * the label is inside a button:
+ * using [method@Gtk.Label.set_mnemonic_widget].
+ *
+ * Here’s a simple example where the label is inside a button:
  *
  * ```c
  * // Pressing Alt+H will activate this button

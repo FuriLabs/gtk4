@@ -1,8 +1,11 @@
-gtk4 (4.12.5+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.12.5+ds-1) unstable; urgency=medium
 
   * New upstream release
+    - Update emoji chooser for Unicode 15.1
+  * missing-sources: Update emojibase
+  * missing-sources: Copy emoji 15.1 files from Debian's unicode-data package
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 19 Jan 2024 08:31:51 -0500
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 19 Jan 2024 15:20:15 -0500
 
 gtk4 (4.12.4+ds-4) unstable; urgency=medium
 

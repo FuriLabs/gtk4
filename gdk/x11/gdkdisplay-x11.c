@@ -745,6 +745,7 @@ gdk_x11_display_translate_event (GdkEventTranslator *translator,
       break;
 
     case VisibilityNotify:
+#ifdef G_ENABLE_DEBUG
       if (GDK_DISPLAY_DEBUG_CHECK (display, EVENTS))
 	switch (xevent->xvisibility.state)
 	  {
@@ -763,6 +764,7 @@ gdk_x11_display_translate_event (GdkEventTranslator *translator,
           default:
             break;
 	  }
+#endif /* G_ENABLE_DEBUG */
       /* not handled */
       break;
 
@@ -1227,11 +1229,13 @@ _gdk_wm_protocols_filter (const XEvent  *xevent,
                 timings->refresh_interval = refresh_interval;
 
               timings->complete = TRUE;
+#ifdef G_ENABLE_DEBUG
               if (GDK_DISPLAY_DEBUG_CHECK (display, FRAMES))
                 _gdk_frame_clock_debug_print_timings (clock, timings);
 
               if (GDK_PROFILER_IS_RUNNING)
                 _gdk_frame_clock_add_timings_to_profiler (clock, timings);
+#endif /* G_ENABLE_DEBUG */
             }
         }
     }

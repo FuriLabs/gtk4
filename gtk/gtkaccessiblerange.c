@@ -46,7 +46,7 @@ static gboolean
 gtk_accessible_range_default_set_current_value (GtkAccessibleRange *accessible_range,
                                                 double              value)
 {
-  return TRUE;
+  return FALSE;
 }
 
 static void

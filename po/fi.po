@@ -15,8 +15,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gtk+\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2023-08-16 20:40+0000\n"
-"PO-Revision-Date: 2023-08-17 20:51+0300\n"
+"POT-Creation-Date: 2023-08-26 18:33+0000\n"
+"PO-Revision-Date: 2023-08-27 17:41+0300\n"
 "Last-Translator: Jiri Grönroos <jiri.gronroos+l10n@iki.fi>\n"
 "Language-Team: suomi <lokalisointi-lista@googlegroups.com>\n"
 "Language: fi\n"
@@ -579,7 +579,7 @@ msgstr "Data lukeminen epäonnistui rivillä %d"
 #: gdk/macos/gdkmacospasteboard.c:211 gdk/wayland/gdkclipboard-wayland.c:240
 #: gdk/wayland/gdkdrop-wayland.c:207 gdk/wayland/gdkprimary-wayland.c:343
 #: gdk/win32/gdkdrop-win32.c:1018 gdk/win32/gdkdrop-win32.c:1063
-#: gdk/x11/gdkclipboard-x11.c:805 gdk/x11/gdkdrop-x11.c:235
+#: gdk/x11/gdkclipboard-x11.c:807 gdk/x11/gdkdrop-x11.c:235
 msgid "No compatible transfer format found"
 msgstr "Yhteensopivaa siirtomuotoa ei löytynyt"
 
@@ -708,7 +708,7 @@ msgstr ""
 #: gdk/win32/gdkdrop-win32.c:1082
 #, c-format
 msgid "IDataObject_GetData (0x%x) failed, returning 0x%lx"
-msgstr ""
+msgstr "IDataObject_GetData (0x%x) epäonnistui, palautetaan 0x%lx"
 
 #: gdk/win32/gdkdrop-win32.c:1114
 #, c-format
@@ -785,11 +785,11 @@ msgid_plural "Opening %d Items"
 msgstr[0] "Avataan %d kohde"
 msgstr[1] "Avataan %d kohdetta"
 
-#: gdk/x11/gdkclipboard-x11.c:475
+#: gdk/x11/gdkclipboard-x11.c:477
 msgid "Clipboard manager could not store selection."
 msgstr "Leikepöydän hallinta ei voinut tallettaa valintaa."
 
-#: gdk/x11/gdkclipboard-x11.c:655
+#: gdk/x11/gdkclipboard-x11.c:657
 msgid "Cannot store clipboard. No clipboard manager is active."
 msgstr "Leikepöytää ei voi tallettaa. Leikepöydän hallinta ei ole aktiivinen."
 
@@ -2028,14 +2028,20 @@ msgid "Dark Purple"
 msgstr "Tumma violetti"
 
 #: gtk/gtkcolorchooserwidget.c:470
+#, fuzzy
+#| msgctxt "Color name"
+#| msgid "Very Dark Gray"
 msgctxt "Color name"
 msgid "Very Dark Purple"
-msgstr "Erittäin tumma violetti"
+msgstr "Erittäin tumma harmaa"
 
 #: gtk/gtkcolorchooserwidget.c:471
+#, fuzzy
+#| msgctxt "Color name"
+#| msgid "Very Light Gray"
 msgctxt "Color name"
 msgid "Very Light Brown"
-msgstr "Erittäin vaalea ruskea"
+msgstr "Erittän vaalea harmaa"
 
 #: gtk/gtkcolorchooserwidget.c:472
 msgctxt "Color name"
@@ -2603,10 +2609,8 @@ msgid "Select a Folder"
 msgstr "Valitse kansio"
 
 #: gtk/gtkfilefilter.c:1045
-#, fuzzy
-#| msgid "Unspecified error"
 msgid "Unspecified"
-msgstr "Määrittelemätön virhe"
+msgstr "Määrittämätön"
 
 #: gtk/gtkfontchooserdialog.c:192 gtk/gtkfontchooserdialog.c:195
 msgid "Change Font Features"
@@ -2677,10 +2681,8 @@ msgid "Fractions"
 msgstr "Toiminnot"
 
 #: gtk/gtkfontchooserwidget.c:2524
-#, fuzzy
-#| msgid "Style Properties"
 msgid "Style Variations"
-msgstr "Tyylin iminaisuudet"
+msgstr "Tyylivariaatiot"
 
 #: gtk/gtkfontchooserwidget.c:2526
 #, fuzzy
@@ -2934,7 +2936,7 @@ msgid "Next tab"
 msgstr "Seuraava välilehti"
 
 # , c-format
-#: gtk/gtknotebook.c:4331 gtk/gtknotebook.c:6539
+#: gtk/gtknotebook.c:4331 gtk/gtknotebook.c:6541
 #, c-format
 msgid "Page %u"
 msgstr "Sivu %u"
@@ -3672,7 +3674,7 @@ msgstr "Kokeile eri hakuehtoja"
 #: gtk/gtkstacksidebar.c:154
 msgctxt "accessibility"
 msgid "Sidebar"
-msgstr "sivupalkki"
+msgstr "Sivupalkki"
 
 #: gtk/gtktext.c:6159 gtk/gtktextview.c:9044
 msgid "Insert _Emoji"
@@ -3736,7 +3738,6 @@ msgid "Description"
 msgstr "Kuvaus"
 
 #: gtk/inspector/a11y.ui:99 gtk/inspector/misc-info.ui:296
-#: tools/gtk-path-tool-info.c:128
 #, fuzzy
 #| msgctxt "keyboard label"
 #| msgid "Left"
@@ -4237,7 +4238,7 @@ msgstr "Lähde:"
 msgid "Defined At"
 msgstr ""
 
-#: gtk/inspector/recorder.c:1922
+#: gtk/inspector/recorder.c:1865
 #, c-format
 msgid "Saving RenderNode failed"
 msgstr "RenderNoden tallentaminen epäonnistui"
@@ -6431,15 +6432,11 @@ msgid "No Fonts Found"
 msgstr "Fontteja ei löytynyt"
 
 #: gtk/ui/gtkmediacontrols.ui:47
-#, fuzzy
-#| msgid "Location"
 msgctxt "media controls"
 msgid "Position"
 msgstr "Sijainti"
 
 #: gtk/ui/gtkmediacontrols.ui:65
-#, fuzzy
-#| msgid "Volume"
 msgctxt "media controls"
 msgid "Volume"
 msgstr "Äänenvoimakkuus"
@@ -7392,8 +7389,7 @@ msgstr ""
 #: tools/gtk-builder-tool-enumerate.c:56 tools/gtk-builder-tool-preview.c:179
 #: tools/gtk-builder-tool-preview.c:180 tools/gtk-builder-tool-screenshot.c:360
 #: tools/gtk-builder-tool-simplify.c:2529 tools/gtk-builder-tool-validate.c:261
-#: tools/gtk-path-tool-render.c:62 tools/gtk-rendernode-tool-info.c:208
-#: tools/gtk-rendernode-tool-show.c:102
+#: tools/gtk-rendernode-tool-info.c:200 tools/gtk-rendernode-tool-show.c:102
 msgid "FILE"
 msgstr ""
 
@@ -7425,8 +7421,8 @@ msgid "Use style from CSS file"
 msgstr "Käytä tyyliä CSS-tiedostosta"
 
 #: tools/gtk-builder-tool-preview.c:187 tools/gtk-builder-tool-screenshot.c:370
-#: tools/gtk-builder-tool-validate.c:268 tools/gtk-rendernode-tool-render.c:204
-#: tools/gtk-rendernode-tool-show.c:109
+#: tools/gtk-builder-tool-validate.c:268 tools/gtk-rendernode-tool-show.c:109
+#: tools/gtk-rendernode-tool-render.c:204
 #, c-format
 msgid "Could not initialize windowing system\n"
 msgstr ""
@@ -7468,6 +7464,8 @@ msgid ""
 "File %s exists.\n"
 "Use --force to overwrite.\n"
 msgstr ""
+"Tiedosto %s on olemassa.\n"
+"Käytä --force korvataksesi tiedoston.\n"
 
 #: tools/gtk-builder-tool-screenshot.c:332
 #: tools/gtk-rendernode-tool-render.c:172
@@ -7518,7 +7516,7 @@ msgstr "Tiedoston %s uudelleennimeäminen nimelle %s epäonnistui: %s\n"
 #, c-format
 #| msgid "Invalid property: %s.%s on line %d"
 msgid "Property %s not found"
-msgstr "Ominaisuutta %s ei löydy"
+msgstr "Ominaisuutta %s ei löytynyt"
 
 #: tools/gtk-builder-tool-simplify.c:661
 #, fuzzy, c-format
@@ -7656,244 +7654,6 @@ msgstr "%s: ei sovellusta %s"
 msgid "%s: error launching application: %s\n"
 msgstr "%s: virhe käynnistäessä sovellusta: %s\n"
 
-#: tools/gtk-path-tool.c:35
-#, c-format
-msgid ""
-"Usage:\n"
-"  gtk4-path-tool [COMMAND] [OPTION…] PATH\n"
-"\n"
-"Perform various tasks on paths.\n"
-"\n"
-"Commands:\n"
-"  decompose    Decompose the path\n"
-"  show         Display the path in a window\n"
-"  render       Render the path as an image\n"
-"  info         Print information about the path\n"
-"\n"
-msgstr ""
-
-#: tools/gtk-path-tool-decompose.c:75
-msgid "Allow quadratic Bézier curves"
-msgstr ""
-
-#: tools/gtk-path-tool-decompose.c:76
-msgid "Allow cubic Bézier curves"
-msgstr ""
-
-#: tools/gtk-path-tool-decompose.c:77 tools/gtk-path-tool-info.c:88
-#: tools/gtk-path-tool-render.c:63 tools/gtk-path-tool-show.c:132
-msgid "PATH"
-msgstr ""
-
-#: tools/gtk-path-tool-decompose.c:89
-msgid "Decompose a path."
-msgstr ""
-
-#: tools/gtk-path-tool-decompose.c:102 tools/gtk-path-tool-info.c:112
-msgid "No paths given."
-msgstr ""
-
-#: tools/gtk-path-tool-decompose.c:128
-msgid "That didn't work out."
-msgstr ""
-
-#: tools/gtk-path-tool-info.c:99
-msgid "Print information about a path."
-msgstr ""
-
-#: tools/gtk-path-tool-info.c:119
-msgid "Path is empty."
-msgstr ""
-
-#: tools/gtk-path-tool-info.c:125
-msgid "Path is closed"
-msgstr ""
-
-#: tools/gtk-path-tool-info.c:134
-#, c-format
-msgid "%d contours"
-msgstr ""
-
-#: tools/gtk-path-tool-info.c:136
-#, fuzzy, c-format
-#| msgid "Actions"
-msgid "%d operations"
-msgstr "Toiminnot"
-
-#: tools/gtk-path-tool-info.c:140
-#, c-format
-msgid "%d lines"
-msgstr ""
-
-#: tools/gtk-path-tool-info.c:145
-#, c-format
-msgid "%d quadratics"
-msgstr ""
-
-#: tools/gtk-path-tool-info.c:150
-#, c-format
-msgid "%d cubics"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:52 tools/gtk-path-tool-show.c:122
-msgid "Fill rule (winding, even-odd)"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:52 tools/gtk-path-tool-render.c:56
-#: tools/gtk-path-tool-render.c:57 tools/gtk-path-tool-render.c:58
-#: tools/gtk-path-tool-render.c:59 tools/gtk-path-tool-render.c:60
-#: tools/gtk-path-tool-render.c:61 tools/gtk-path-tool-show.c:122
-#: tools/gtk-path-tool-show.c:126 tools/gtk-path-tool-show.c:127
-#: tools/gtk-path-tool-show.c:128 tools/gtk-path-tool-show.c:129
-#: tools/gtk-path-tool-show.c:130 tools/gtk-path-tool-show.c:131
-msgid "VALUE"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:53 tools/gtk-path-tool-show.c:123
-msgid "Foreground color"
-msgstr "Edustaväri"
-
-#: tools/gtk-path-tool-render.c:53 tools/gtk-path-tool-render.c:54
-#: tools/gtk-path-tool-show.c:123 tools/gtk-path-tool-show.c:124
-#, fuzzy
-#| msgid "COLORS"
-msgid "COLOR"
-msgstr "VÄREJÄ"
-
-#: tools/gtk-path-tool-render.c:54 tools/gtk-path-tool-show.c:124
-msgid "Background color"
-msgstr "Taustaväri"
-
-#: tools/gtk-path-tool-render.c:55 tools/gtk-path-tool-show.c:125
-msgid "Stroke the path instead of filling it"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:56 tools/gtk-path-tool-show.c:126
-msgid "Line width (number)"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:57 tools/gtk-path-tool-show.c:127
-msgid "Line cap (butt, round, square)"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:58 tools/gtk-path-tool-show.c:128
-msgid "Line join (miter, miter-clip, round, bevel, arcs)"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:59 tools/gtk-path-tool-show.c:129
-msgid "Miter limit (number)"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:60 tools/gtk-path-tool-show.c:130
-msgid "Dash pattern (comma-separated numbers)"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:61 tools/gtk-path-tool-show.c:131
-msgid "Dash offset (number)"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:62
-msgid "The output file"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:81 tools/gtk-path-tool-show.c:145
-msgid "Could not initialize windowing system"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:89
-#, fuzzy
-#| msgid "Unsupported depth %u in png image"
-msgid "Render the path to a png image."
-msgstr "Ei-tuettu syvyys %u png-kuvassa"
-
-#: tools/gtk-path-tool-render.c:102 tools/gtk-path-tool-show.c:166
-#, fuzzy
-#| msgid "Reason not specified"
-msgid "No path specified"
-msgstr "Syytä ei annettu"
-
-#: tools/gtk-path-tool-render.c:108
-msgid "Can only render a single path"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:114 tools/gtk-path-tool-show.c:178
-msgid "fill rule"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:118 tools/gtk-path-tool-show.c:182
-msgid "line cap"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:119 tools/gtk-path-tool-show.c:183
-msgid "line join"
-msgstr ""
-
-#: tools/gtk-path-tool-render.c:143 tools/gtk-path-tool-show.c:207
-#, fuzzy, c-format
-#| msgid "Failed to write hash table\n"
-msgid "Failed to parse '%s' as number"
-msgstr "Hajautustaulun kirjoitus epäonnistui\n"
-
-#: tools/gtk-path-tool-render.c:187
-#, fuzzy, c-format
-#| msgid "Saving CSS failed"
-msgid "Saving png to '%s' failed"
-msgstr "CSS:n tallentaminen epäonnistui"
-
-#: tools/gtk-path-tool-render.c:194
-#, c-format
-msgid "Output written to '%s'."
-msgstr ""
-
-#: tools/gtk-path-tool-show.c:43 tools/gtk-path-tool-show.c:78
-#, fuzzy
-#| msgctxt "Stock label"
-#| msgid "Print Pre_view"
-msgid "Path Preview"
-msgstr "Tulostuksen _esikatselu"
-
-#: tools/gtk-path-tool-show.c:153
-msgid "Display the path."
-msgstr ""
-
-#: tools/gtk-path-tool-show.c:172
-msgid "Can only show a single path"
-msgstr ""
-
-#: tools/gtk-path-tool-utils.c:58
-#, fuzzy, c-format
-#| msgid "Failed to read “%s”: %s\n"
-msgid "Failed to read from standard input: %s\n"
-msgstr "Tiedoston “%s” lukeminen epäonnistui: %s\n"
-
-#: tools/gtk-path-tool-utils.c:64
-#, fuzzy, c-format
-#| msgid "Error parsing commandline options: %s\n"
-msgid "Error reading from standard input: %s\n"
-msgstr "Virhe jäsennettäessä komentorivivalintoja: %s\n"
-
-#: tools/gtk-path-tool-utils.c:83
-#, fuzzy, c-format
-#| msgid "Failed to write hash table\n"
-msgid "Failed to parse '%s' as path.\n"
-msgstr "Hajautustaulun kirjoitus epäonnistui\n"
-
-#: tools/gtk-path-tool-utils.c:109
-#, fuzzy, c-format
-#| msgid "Failed to open file %s : %s\n"
-msgid "Failed to parse '%s' as %s."
-msgstr "Tiedostoa ”%s” ei voitu avata: %s\n"
-
-#: tools/gtk-path-tool-utils.c:111
-msgid "Possible values: "
-msgstr "Mahdolliset arvot: "
-
-#: tools/gtk-path-tool-utils.c:135
-#, fuzzy, c-format
-#| msgid "Could not rename %s to %s: %s\n"
-msgid "Could not parse '%s' as color"
-msgstr "Tiedoston %s uudelleennimeäminen nimelle %s epäonnistui: %s\n"
-
 #: tools/gtk-rendernode-tool.c:35
 #, c-format
 msgid ""
@@ -7909,40 +7669,49 @@ msgid ""
 "\n"
 msgstr ""
 
-#: tools/gtk-rendernode-tool-info.c:185
+#: tools/gtk-rendernode-tool-info.c:177
 #, c-format
 msgid "Number of nodes: %u\n"
 msgstr ""
 
-#: tools/gtk-rendernode-tool-info.c:192
+#: tools/gtk-rendernode-tool-info.c:184
 #, c-format
 msgid "Depth: %u\n"
 msgstr ""
 
-#: tools/gtk-rendernode-tool-info.c:195
+#: tools/gtk-rendernode-tool-info.c:187
 #, c-format
 msgid "Bounds: %g x %g\n"
 msgstr ""
 
-#: tools/gtk-rendernode-tool-info.c:196
+#: tools/gtk-rendernode-tool-info.c:188
 #, c-format
 msgid "Origin: %g %g\n"
 msgstr ""
 
-#: tools/gtk-rendernode-tool-info.c:217
+#: tools/gtk-rendernode-tool-info.c:209
 msgid "Provide information about the render node."
 msgstr ""
 
-#: tools/gtk-rendernode-tool-info.c:230 tools/gtk-rendernode-tool-render.c:225
-#: tools/gtk-rendernode-tool-show.c:130
+#: tools/gtk-rendernode-tool-info.c:222 tools/gtk-rendernode-tool-show.c:130
+#: tools/gtk-rendernode-tool-render.c:225
 #, fuzzy, c-format
 #| msgid "No .ui file specified\n"
 msgid "No .node file specified\n"
 msgstr "Ei määritetty .ui-tiedostoa\n"
 
-#: tools/gtk-rendernode-tool-info.c:236
+#: tools/gtk-rendernode-tool-info.c:228
 #, c-format
 msgid "Can only accept a single .node file\n"
+msgstr "Hyväksyy vain yhden .node-tiedoston\n"
+
+#: tools/gtk-rendernode-tool-show.c:117
+msgid "Show the render node."
+msgstr ""
+
+#: tools/gtk-rendernode-tool-show.c:136
+#, c-format
+msgid "Can only preview a single .node file\n"
 msgstr ""
 
 #: tools/gtk-rendernode-tool-render.c:123
@@ -7953,10 +7722,10 @@ msgid ""
 msgstr ""
 
 #: tools/gtk-rendernode-tool-render.c:137
-#, c-format
+#, fuzzy, c-format
 #| msgid "Failed to open file %s : %s\n"
 msgid "Failed to generate SVG: %s\n"
-msgstr "SVG:n generointi epäonnistui: %s\n"
+msgstr "Tiedostoa ”%s” ei voitu avata: %s\n"
 
 #: tools/gtk-rendernode-tool-render.c:196
 #, fuzzy
@@ -7976,15 +7745,6 @@ msgstr ""
 #: tools/gtk-rendernode-tool-render.c:231
 #, c-format
 msgid "Can only render a single .node file to a single output file\n"
-msgstr ""
-
-#: tools/gtk-rendernode-tool-show.c:117
-msgid "Show the render node."
-msgstr ""
-
-#: tools/gtk-rendernode-tool-show.c:136
-#, c-format
-msgid "Can only preview a single .node file\n"
 msgstr ""
 
 #: tools/gtk-rendernode-tool-utils.c:51
@@ -8258,6 +8018,9 @@ msgstr ""
 #~ msgid "Size of the palette in 8 bit mode"
 #~ msgstr "Paletin koko 8-bittisessä tilassa"
 
+#~ msgid "COLORS"
+#~ msgstr "VÄREJÄ"
+
 #~ msgid "Opening %s"
 #~ msgstr "Avataan ”%s”"
 
@@ -8460,6 +8223,10 @@ msgstr ""
 #~ msgctxt "Stock label"
 #~ msgid "_Print"
 #~ msgstr "Tul_osta"
+
+#~ msgctxt "Stock label"
+#~ msgid "Print Pre_view"
+#~ msgstr "Tulostuksen _esikatselu"
 
 #~ msgctxt "Stock label"
 #~ msgid "_Properties"

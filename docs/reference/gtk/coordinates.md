@@ -1,5 +1,7 @@
-Title: Coordinate systems in GTK
+Title: Coordinate systems
 Slug: gtk-coordinates
+
+## Coordinate systems in GTK
 
 All coordinate systems in GTK have the origin at the top left, with the X axis
 pointing right, and the Y axis pointing down. This matches the convention used

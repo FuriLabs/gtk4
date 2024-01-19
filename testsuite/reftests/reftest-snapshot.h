@@ -15,7 +15,8 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#ifndef __REFTEST_SNAPSHOT_H__
+#define __REFTEST_SNAPSHOT_H__
 
 #include <gtk/gtk.h>
 
@@ -25,3 +26,5 @@ G_MODULE_EXPORT
 GdkTexture *            reftest_snapshot_ui_file                (const char     *ui_file);
 
 G_END_DECLS
+
+#endif /* __REFTEST_SNAPSHOT_H__ */

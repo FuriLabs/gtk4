@@ -14,16 +14,16 @@
 # Antón Méixome <meixome@certima.net>, 2009, 2010.
 # Leandro Regueiro <leandro.regueiro@gmail.com>, 2012.
 # Fran Diéguez <frandieguez@gnome.org>, 2009-2022.
-# Fran Dieguez <frandieguez@gnome.org>, 2012-2023.
+# Fran Dieguez <frandieguez@gnome.org>, 2012-2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gtk+-master-po-gl-77922___.merged\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2023-08-28 15:54+0000\n"
-"PO-Revision-Date: 2023-08-29 00:36+0200\n"
+"POT-Creation-Date: 2023-09-21 03:44+0000\n"
+"PO-Revision-Date: 2023-09-21 12:14+0200\n"
 "Last-Translator: Fran Dieguez <frandieguez@gnome.org>\n"
-"Language-Team: Galician <proxecto@trasno.gal>\n"
+"Language-Team: Galician <Proxecto Trasno <proxecto@trasno.gal>>\n"
 "Language: gl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -35,7 +35,7 @@ msgstr ""
 "X-DL-Module: gtk\n"
 "X-DL-Branch: main\n"
 "X-DL-Domain: po\n"
-"X-DL-State: None\n"
+"X-DL-State: Translating\n"
 
 #: gdk/broadway/gdkbroadway-server.c:135
 #, c-format
@@ -69,54 +69,54 @@ msgstr "Non foi posíbel fornecer contidos como %s"
 msgid "The current backend does not support OpenGL"
 msgstr "O backend actual non admite o OpenGL"
 
-#: gdk/gdkdisplay.c:1245 gdk/gdksurface.c:1252
+#: gdk/gdkdisplay.c:1244 gdk/gdksurface.c:1252
 msgid "Vulkan support disabled via GDK_DEBUG"
 msgstr "Compatibilidade de Vulkan desactivada mediante GDK_DEBUG"
 
-#: gdk/gdkdisplay.c:1277
+#: gdk/gdkdisplay.c:1276
 msgid "GL support disabled via GDK_DEBUG"
 msgstr "Compatibilidade de GL desactivada mediante GDK_DEBUG"
 
-#: gdk/gdkdisplay.c:1575
+#: gdk/gdkdisplay.c:1574
 msgid "No EGL configuration available"
 msgstr "Non hai unha configuración de EGL dispoñíbel"
 
-#: gdk/gdkdisplay.c:1583
+#: gdk/gdkdisplay.c:1582
 msgid "Failed to get EGL configurations"
 msgstr "Produciuse un fallo ao obter as configuracións de EGL"
 
-#: gdk/gdkdisplay.c:1613
+#: gdk/gdkdisplay.c:1612
 msgid "No EGL configuration with required features found"
 msgstr "Non se atoparon configuracións de EGL coas características requiridas"
 
-#: gdk/gdkdisplay.c:1620
+#: gdk/gdkdisplay.c:1619
 msgid "No perfect EGL configuration found"
 msgstr "Non se atopou a configuración de EGL perfecta"
 
-#: gdk/gdkdisplay.c:1662
+#: gdk/gdkdisplay.c:1661
 #, c-format
 msgid "EGL implementation is missing extension %s"
 msgid_plural "EGL implementation is missing %2$d extensions: %1$s"
 msgstr[0] "Á implementación de EGL fáltalle a extensión %s"
 msgstr[1] "Á implementación de EGL fáltanlle %2$d extensións: %1$s"
 
-#: gdk/gdkdisplay.c:1695
+#: gdk/gdkdisplay.c:1694
 msgid "libEGL not available in this sandbox"
 msgstr "libEGL non está dispoñíbel neste sandbox"
 
-#: gdk/gdkdisplay.c:1696
+#: gdk/gdkdisplay.c:1695
 msgid "libEGL not available"
 msgstr "libEGL non dispoñíbel"
 
-#: gdk/gdkdisplay.c:1706
+#: gdk/gdkdisplay.c:1705
 msgid "Failed to create EGL display"
 msgstr "Non é posíbel crear unha pantalla de EGL"
 
-#: gdk/gdkdisplay.c:1716
+#: gdk/gdkdisplay.c:1715
 msgid "Could not initialize EGL display"
 msgstr "Non foi posíbel inicializar a pantalla de EGL"
 
-#: gdk/gdkdisplay.c:1727
+#: gdk/gdkdisplay.c:1726
 #, c-format
 msgid "EGL version %d.%d is too old. GTK requires %d.%d"
 msgstr "A versión de EGL %d.%d é demasiado antiga. GTK require %d.%d"
@@ -744,13 +744,12 @@ msgstr "Non hai unha implementación de GL dispoñíbel"
 #: gdk/win32/gdkglcontext-win32-wgl.c:396
 #, c-format
 msgid "WGL version %d.%d is too low, need at least %d.%d"
-msgstr ""
-"A versión de WGL %d.%d é demasiado antiga, requírese cando menos a %d.%d"
+msgstr "A versión de WGL %d.%d é demasiado antiga. requírese cando menos %d.%d"
 
 #: gdk/win32/gdkglcontext-win32-wgl.c:414
 #, c-format
 msgid "GL implementation cannot share GL contexts"
-msgstr "A implementación de GL non pode compartir os contextos de GL"
+msgstr "A implementación de GL non pode compartir contextos de GL"
 
 #: gdk/win32/gdkglcontext-win32-wgl.c:696
 msgid "No available configurations for the given pixel format"
@@ -1075,18 +1074,18 @@ msgctxt "progress bar label"
 msgid "%d %%"
 msgstr "%d %%"
 
-#: gtk/deprecated/gtkcolorbutton.c:183 gtk/deprecated/gtkcolorbutton.c:311
+#: gtk/deprecated/gtkcolorbutton.c:183 gtk/deprecated/gtkcolorbutton.c:314
 #: gtk/gtkcolordialog.c:411
 msgid "Pick a Color"
 msgstr "Escolla unha cor"
 
-#: gtk/deprecated/gtkcolorbutton.c:502 gtk/gtkcolorchooserwidget.c:313
+#: gtk/deprecated/gtkcolorbutton.c:505 gtk/gtkcolorchooserwidget.c:313
 #: gtk/gtkcolordialogbutton.c:335
 #, c-format
 msgid "Red %d%%, Green %d%%, Blue %d%%, Alpha %d%%"
 msgstr "Vermello %d%%, verde %d%%, Azul %d%%, Alfa %d%%"
 
-#: gtk/deprecated/gtkcolorbutton.c:508 gtk/gtkcolorchooserwidget.c:319
+#: gtk/deprecated/gtkcolorbutton.c:511 gtk/gtkcolorchooserwidget.c:319
 #: gtk/gtkcolordialogbutton.c:341
 #, c-format
 msgid "Red %d%%, Green %d%%, Blue %d%%"
@@ -1096,17 +1095,17 @@ msgstr "Vermello %d%%, Verde %d%%, Azul %d%%"
 msgid "Sans 12"
 msgstr "Sans 12"
 
-#: gtk/deprecated/gtkfontbutton.c:507 gtk/deprecated/gtkfontbutton.c:621
+#: gtk/deprecated/gtkfontbutton.c:507 gtk/deprecated/gtkfontbutton.c:624
 #: gtk/gtkfontdialog.c:596
 msgid "Pick a Font"
 msgstr "Escolla un tipo de letra"
 
-#: gtk/deprecated/gtkfontbutton.c:597 gtk/gtkfilechooserwidget.c:3871
+#: gtk/deprecated/gtkfontbutton.c:600 gtk/gtkfilechooserwidget.c:3871
 #: gtk/gtkfontdialogbutton.c:126 gtk/inspector/visual.ui:169
 msgid "Font"
 msgstr "Tipo de letra"
 
-#: gtk/deprecated/gtkfontbutton.c:1152 gtk/gtkfontdialogbutton.c:652
+#: gtk/deprecated/gtkfontbutton.c:1155 gtk/gtkfontdialogbutton.c:652
 msgctxt "font"
 msgid "None"
 msgstr "Ningún"
@@ -1443,12 +1442,12 @@ msgstr "xenérico"
 #: gtk/gtkaccessible.c:771
 msgctxt "accessibility"
 msgid "grid"
-msgstr "grella"
+msgstr "grade"
 
 #: gtk/gtkaccessible.c:772
 msgctxt "accessibility"
 msgid "grid cell"
-msgstr "cela da grella"
+msgstr "cela da grade"
 
 #: gtk/gtkaccessible.c:773
 msgctxt "accessibility"
@@ -1733,7 +1732,7 @@ msgstr "árbore"
 #: gtk/gtkaccessible.c:829
 msgctxt "accessibility"
 msgid "tree grid"
-msgstr "grella de árbore"
+msgstr "grade en árbore"
 
 #: gtk/gtkaccessible.c:830
 msgctxt "accessibility"
@@ -2170,7 +2169,7 @@ msgstr "_Dereito:"
 msgid "Paper Margins"
 msgstr "Marxes do papel"
 
-#: gtk/gtkentry.c:3673
+#: gtk/gtkentry.c:3685
 msgid "Insert Emoji"
 msgstr "Inserir emoticono"
 
@@ -2331,7 +2330,7 @@ msgid "If you delete an item, it will be permanently lost."
 msgstr "Se elimina un elemento perderase para sempre."
 
 #: gtk/gtkfilechooserwidget.c:1185 gtk/gtkfilechooserwidget.c:1815
-#: gtk/gtklabel.c:5695 gtk/gtktext.c:6145 gtk/gtktextview.c:9018
+#: gtk/gtklabel.c:5695 gtk/gtktext.c:6147 gtk/gtktextview.c:9018
 msgid "_Delete"
 msgstr "E_liminar"
 
@@ -2345,7 +2344,7 @@ msgstr "Non foi posíbel seleccionar o ficheiro"
 
 #: gtk/gtkfilechooserwidget.c:1724 gtk/ui/gtkfilechooserwidget.ui:66
 msgid "Grid View"
-msgstr "Vista en grella"
+msgstr "Vista en grade"
 
 #: gtk/gtkfilechooserwidget.c:1730
 msgid "List View"
@@ -2668,21 +2667,21 @@ msgstr "Pechar"
 
 #: gtk/deprecated/gtkinfobar.c:499
 msgid "Close the infobar"
-msgstr "Pecha a barra de información"
+msgstr "Pechar a barra de información"
 
-#: gtk/gtklabel.c:5692 gtk/gtktext.c:6133 gtk/gtktextview.c:9006
+#: gtk/gtklabel.c:5692 gtk/gtktext.c:6135 gtk/gtktextview.c:9006
 msgid "Cu_t"
 msgstr "Cor_tar"
 
-#: gtk/gtklabel.c:5693 gtk/gtktext.c:6137 gtk/gtktextview.c:9010
+#: gtk/gtklabel.c:5693 gtk/gtktext.c:6139 gtk/gtktextview.c:9010
 msgid "_Copy"
 msgstr "_Copiar"
 
-#: gtk/gtklabel.c:5694 gtk/gtktext.c:6141 gtk/gtktextview.c:9014
+#: gtk/gtklabel.c:5694 gtk/gtktext.c:6143 gtk/gtktextview.c:9014
 msgid "_Paste"
 msgstr "_Pegar"
 
-#: gtk/gtklabel.c:5700 gtk/gtktext.c:6154 gtk/gtktextview.c:9039
+#: gtk/gtklabel.c:5700 gtk/gtktext.c:6156 gtk/gtktextview.c:9039
 msgid "Select _All"
 msgstr "Seleccionar _todo"
 
@@ -3541,7 +3540,7 @@ msgstr ""
 "Non foi posíbel atopar ningunha aplicación rexistrada co nome «%s» para o "
 "elemento co URI «%s»"
 
-#: gtk/gtksearchentry.c:758
+#: gtk/gtksearchentry.c:767
 msgid "Clear Entry"
 msgstr "Limpar entrada"
 
@@ -3565,7 +3564,7 @@ msgctxt "keyboard side marker"
 msgid "R"
 msgstr "D"
 
-#: gtk/gtkshortcutssection.c:414
+#: gtk/gtkshortcutssection.c:407
 msgid "_Show All"
 msgstr "_Mostrar todos"
 
@@ -3602,27 +3601,27 @@ msgid "Swipe right"
 msgstr "Deslizar á dereita"
 
 #. Translators: This is placeholder text for the search entry in the shortcuts window
-#: gtk/gtkshortcutswindow.c:879 gtk/gtkshortcutswindow.c:946
-#: gtk/gtkshortcutswindow.c:951
+#: gtk/gtkshortcutswindow.c:855 gtk/gtkshortcutswindow.c:922
+#: gtk/gtkshortcutswindow.c:927
 msgid "Search Shortcuts"
 msgstr "Atallos da busca"
 
 #. Translators: This is the window title for the shortcuts window in normal mode
-#: gtk/gtkshortcutswindow.c:911 gtk/inspector/window.ui:498
+#: gtk/gtkshortcutswindow.c:887 gtk/inspector/window.ui:498
 msgid "Shortcuts"
 msgstr "Atallos"
 
 #. Translators: This is the window title for the shortcuts window in search mode
-#: gtk/gtkshortcutswindow.c:916
+#: gtk/gtkshortcutswindow.c:892
 msgid "Search Results"
 msgstr "Resultados da busca"
 
-#: gtk/gtkshortcutswindow.c:1013 gtk/ui/gtkemojichooser.ui:349
+#: gtk/gtkshortcutswindow.c:989 gtk/ui/gtkemojichooser.ui:349
 #: gtk/ui/gtkfilechooserwidget.ui:239
 msgid "No Results Found"
 msgstr "Non se atopou ningún resultado"
 
-#: gtk/gtkshortcutswindow.c:1024 gtk/ui/gtkemojichooser.ui:362
+#: gtk/gtkshortcutswindow.c:1000 gtk/ui/gtkemojichooser.ui:362
 #: gtk/ui/gtkfilechooserwidget.ui:252 gtk/ui/gtkplacesview.ui:218
 msgid "Try a different search"
 msgstr "Tente unha busca diferente"
@@ -3632,7 +3631,7 @@ msgctxt "accessibility"
 msgid "Sidebar"
 msgstr "Barra lateral"
 
-#: gtk/gtktext.c:6159 gtk/gtktextview.c:9044
+#: gtk/gtktext.c:6161 gtk/gtktextview.c:9044
 msgid "Insert _Emoji"
 msgstr "Inserir _emoticono"
 
@@ -3697,9 +3696,8 @@ msgid "Description"
 msgstr "Descrición"
 
 #: gtk/inspector/a11y.ui:99 gtk/inspector/misc-info.ui:296
-#: tools/gtk-path-tool-info.c:132
 msgid "Bounds"
-msgstr "Limiares"
+msgstr "Marxes"
 
 #: gtk/inspector/a11y.ui:125
 msgid "Object Path"
@@ -4012,8 +4010,8 @@ msgid "Surface"
 msgstr "Superficie"
 
 #: gtk/inspector/misc-info.ui:365 gtk/inspector/misc-info.ui:400
-#: gtk/inspector/misc-info.ui:435 gtk/inspector/prop-editor.c:1150
-#: gtk/inspector/prop-editor.c:1533 gtk/inspector/window.ui:396
+#: gtk/inspector/misc-info.ui:435 gtk/inspector/prop-editor.c:1153
+#: gtk/inspector/prop-editor.c:1536 gtk/inspector/window.ui:396
 msgid "Properties"
 msgstr "Propiedades"
 
@@ -4065,7 +4063,7 @@ msgstr "Punteiro: %p"
 #. Translators: %s is a type name, for example
 #. * GtkPropertyExpression with value \"2.5\"
 #.
-#: gtk/inspector/prop-editor.c:824
+#: gtk/inspector/prop-editor.c:827
 #, c-format
 msgid "%s with value \"%s\""
 msgstr "%s con valor \"%s\""
@@ -4073,7 +4071,7 @@ msgstr "%s con valor \"%s\""
 #. Translators: Both %s are type names, for example
 #. * GtkPropertyExpression with type GObject
 #.
-#: gtk/inspector/prop-editor.c:835
+#: gtk/inspector/prop-editor.c:838
 #, c-format
 msgid "%s with type %s"
 msgstr "%s con tipo %s"
@@ -4081,7 +4079,7 @@ msgstr "%s con tipo %s"
 #. Translators: Both %s are type names, for example
 #. * GtkObjectExpression for GtkStringObject 0x23456789
 #.
-#: gtk/inspector/prop-editor.c:848
+#: gtk/inspector/prop-editor.c:851
 #, c-format
 msgid "%s for %s %p"
 msgstr "%s para %s %p"
@@ -4089,71 +4087,71 @@ msgstr "%s para %s %p"
 #. Translators: Both %s are type names, for example
 #. * GtkPropertyExpression with value type: gchararray
 #.
-#: gtk/inspector/prop-editor.c:878
+#: gtk/inspector/prop-editor.c:881
 #, c-format
 msgid "%s with value type %s"
 msgstr "%s con tipo de valor %s"
 
-#: gtk/inspector/prop-editor.c:1227
+#: gtk/inspector/prop-editor.c:1230
 #, c-format
 msgid "Uneditable property type: %s"
 msgstr "Tipo de propiedade non editábel: %s"
 
-#: gtk/inspector/prop-editor.c:1385
+#: gtk/inspector/prop-editor.c:1388
 msgctxt "column number"
 msgid "None"
 msgstr "Ningún"
 
-#: gtk/inspector/prop-editor.c:1422
+#: gtk/inspector/prop-editor.c:1425
 msgid "Attribute:"
 msgstr "Atributo:"
 
-#: gtk/inspector/prop-editor.c:1425
+#: gtk/inspector/prop-editor.c:1428
 msgid "Model"
 msgstr "Modelo"
 
-#: gtk/inspector/prop-editor.c:1430
+#: gtk/inspector/prop-editor.c:1433
 msgid "Column:"
 msgstr "Columna:"
 
 #. Translators: %s is a type name, for example
 #. * Action from 0x2345678 (GtkApplicationWindow)
 #.
-#: gtk/inspector/prop-editor.c:1529
+#: gtk/inspector/prop-editor.c:1532
 #, c-format
 msgid "Action from: %p (%s)"
 msgstr "Acción desde: %p (%s)"
 
-#: gtk/inspector/prop-editor.c:1584
+#: gtk/inspector/prop-editor.c:1587
 msgid "Reset"
 msgstr "Restabelecer"
 
-#: gtk/inspector/prop-editor.c:1592
+#: gtk/inspector/prop-editor.c:1595
 msgctxt "GtkSettings source"
 msgid "Default"
 msgstr "Por omisión"
 
-#: gtk/inspector/prop-editor.c:1595
+#: gtk/inspector/prop-editor.c:1598
 msgctxt "GtkSettings source"
 msgid "Theme"
 msgstr "Tema"
 
-#: gtk/inspector/prop-editor.c:1598
+#: gtk/inspector/prop-editor.c:1601
 msgctxt "GtkSettings source"
 msgid "XSettings"
 msgstr "XSettings"
 
-#: gtk/inspector/prop-editor.c:1602
+#: gtk/inspector/prop-editor.c:1605
 msgctxt "GtkSettings source"
 msgid "Application"
 msgstr "Aplicación"
 
-#: gtk/inspector/prop-editor.c:1605
+#: gtk/inspector/prop-editor.c:1608
 msgctxt "GtkSettings source"
 msgid "Unknown"
 msgstr "Descoñecido"
 
-#: gtk/inspector/prop-editor.c:1608
+#: gtk/inspector/prop-editor.c:1611
 msgid "Source:"
 msgstr "Orixe:"
 
@@ -4161,7 +4159,7 @@ msgstr "Orixe:"
 msgid "Defined At"
 msgstr "Definido en"
 
-#: gtk/inspector/recorder.c:1922
+#: gtk/inspector/recorder.c:1865
 #, c-format
 msgid "Saving RenderNode failed"
 msgstr "Fallou o gardado do RenderNode"
@@ -4875,7 +4873,7 @@ msgstr "Figuras estilo antigo"
 #: gtk/open-type-layout.h:83
 msgctxt "OpenType layout"
 msgid "Optical Bounds"
-msgstr "Ligazóns ópticas"
+msgstr "Marxes ópticas"
 
 #: gtk/open-type-layout.h:84
 msgctxt "OpenType layout"
@@ -4965,7 +4963,7 @@ msgstr "Formas Reph"
 #: gtk/open-type-layout.h:101
 msgctxt "OpenType layout"
 msgid "Right Bounds"
-msgstr "Ligazóns á esquerda"
+msgstr "Marxes esquerdas"
 
 #: gtk/open-type-layout.h:102
 msgctxt "OpenType layout"
@@ -5570,7 +5568,7 @@ msgstr "Sobre Choukei 40"
 #: gtk/print/paper_names_offsets.c:92
 msgctxt "paper size"
 msgid "hagaki (postcard)"
-msgstr "hagaki (postal)"
+msgstr "Hagaki (postal)"
 
 #: gtk/print/paper_names_offsets.c:93
 msgctxt "paper size"
@@ -7195,7 +7193,7 @@ msgid ""
 "\n"
 msgstr ""
 "Uso:\n"
-"  gtk-builder-tool [ORDE] FICHEIRO\n"
+"  gtk-builder-tool [ORDE]  [OPCIÓN…]FICHEIRO\n"
 "\n"
 "Leva a cabo varias tarefas en ficheiros .ui de GtkBuilder.\n"
 "\n"
@@ -7204,6 +7202,7 @@ msgstr ""
 "  simplify     Simplifica o ficheiro\n"
 "  enumerate    Lista todos os obxectos con nome\n"
 "  preview      Vista previa do ficheiro\n"
+"\n"
 "  render       Facer unha captura de pantalla dun ficheiro\n"
 "  screenshot   Facer unha captura de pantalla dun ficheiro\n"
 "\n"
@@ -7211,8 +7210,7 @@ msgstr ""
 #: tools/gtk-builder-tool-enumerate.c:56 tools/gtk-builder-tool-preview.c:179
 #: tools/gtk-builder-tool-preview.c:180 tools/gtk-builder-tool-screenshot.c:360
 #: tools/gtk-builder-tool-simplify.c:2529 tools/gtk-builder-tool-validate.c:261
-#: tools/gtk-path-tool-render.c:55 tools/gtk-rendernode-tool-info.c:208
-#: tools/gtk-rendernode-tool-show.c:102
+#: tools/gtk-rendernode-tool-info.c:202 tools/gtk-rendernode-tool-show.c:102
 msgid "FILE"
 msgstr "FICHEIRO"
 
@@ -7223,17 +7221,17 @@ msgstr "Lista todos os obxectos con nome."
 #: tools/gtk-builder-tool-preview.c:128 tools/gtk-builder-tool-screenshot.c:236
 #, c-format
 msgid "No object with ID '%s' found\n"
-msgstr "Non se atopou un obxecto co ID «%s»\n"
+msgstr "Non hai atopou un obxecto co ID «%s»\n"
 
 #: tools/gtk-builder-tool-preview.c:130
 #, c-format
 msgid "No previewable object found\n"
-msgstr "Non se atoparon obxectos con previsualización\n"
+msgstr "Non se atoparon obxectos que se poidan prever\n"
 
 #: tools/gtk-builder-tool-preview.c:136
 #, c-format
 msgid "Objects of type %s can't be previewed\n"
-msgstr "Non é posíbel xerar unha previsualización dos obxectos de tipo %s\n"
+msgstr "Os obxectos to tipo %s non poden preverse\n"
 
 #: tools/gtk-builder-tool-preview.c:178
 msgid "Preview only the named object"
@@ -7244,11 +7242,11 @@ msgid "Use style from CSS file"
 msgstr "Usar o estilo dun ficheiro CSS"
 
 #: tools/gtk-builder-tool-preview.c:187 tools/gtk-builder-tool-screenshot.c:370
-#: tools/gtk-builder-tool-validate.c:268 tools/gtk-rendernode-tool-render.c:204
-#: tools/gtk-rendernode-tool-show.c:109
+#: tools/gtk-builder-tool-validate.c:268 tools/gtk-rendernode-tool-show.c:109
+#: tools/gtk-rendernode-tool-render.c:204
 #, c-format
 msgid "Could not initialize windowing system\n"
-msgstr "Non foi posíbel inicializar sistema de xanelas\n"
+msgstr "Non foi posíbel inicializar o sistema de xanelas\n"
 
 #: tools/gtk-builder-tool-preview.c:195
 msgid "Preview the file."
@@ -7263,7 +7261,7 @@ msgstr "Non se especificou ningún ficheiro .ui\n"
 #: tools/gtk-builder-tool-preview.c:214
 #, c-format
 msgid "Can only preview a single .ui file\n"
-msgstr "Só pode previsualizar un único ficheiro .ui\n"
+msgstr "Só pode previsualizar un ficheiro .ui á evz\n"
 
 #: tools/gtk-builder-tool-screenshot.c:238
 #, c-format
@@ -7273,12 +7271,12 @@ msgstr "Non se atopou ningún obxecto\n"
 #: tools/gtk-builder-tool-screenshot.c:244
 #, c-format
 msgid "Objects of type %s can't be screenshot\n"
-msgstr "Non é posíbel xerar unha captura  dos obxectos de tipo %s\n"
+msgstr "Aos obxectos do tipo %s non se lles pode sacar unha captura\n"
 
 #: tools/gtk-builder-tool-screenshot.c:298
 #, c-format
 msgid "Failed to take a screenshot\n"
-msgstr "Produciuse un erro ao sacar unha captura de pantalla\n"
+msgstr "Produciuse un erro ao facer unha captura de pantalla\n"
 
 #: tools/gtk-builder-tool-screenshot.c:309
 #, c-format
@@ -7286,20 +7284,20 @@ msgid ""
 "File %s exists.\n"
 "Use --force to overwrite.\n"
 msgstr ""
-"O ficheiro %s xa existe\n"
-"Use --force para sobrescribilo.\n"
+"O ficheiro %s existe.\n"
+"Use --force para sobrescribir.\n"
 
 #: tools/gtk-builder-tool-screenshot.c:332
 #: tools/gtk-rendernode-tool-render.c:172
 #, c-format
 msgid "Output written to %s.\n"
-msgstr "Saída escrita en %s.\n"
+msgstr "Saída escrita a %s.\n"
 
 #: tools/gtk-builder-tool-screenshot.c:336
 #: tools/gtk-rendernode-tool-render.c:176
 #, c-format
 msgid "Failed to save %s: %s\n"
-msgstr "Produciuse un erro ao gardar %s: %s\n"
+msgstr "Produciuse un erro ao gardar %s : %s\n"
 
 #: tools/gtk-builder-tool-screenshot.c:359
 msgid "Screenshot only the named object"
@@ -7320,12 +7318,12 @@ msgstr "FICHEIRO…"
 
 #: tools/gtk-builder-tool-screenshot.c:378
 msgid "Render a .ui file to an image."
-msgstr "Renderizar un ficheiro .ui nunha imaxe."
+msgstr "Renderiza un ficheiro .ui a unha imaxe."
 
 #: tools/gtk-builder-tool-screenshot.c:397
 #, c-format
 msgid "Can only render a single .ui file to a single output file\n"
-msgstr "Só pode renderizar un ficheiro .ui único nun ficheiro de saída único\n"
+msgstr "Só pode renderizar un ficheiro .ui a un ficheiro de saída único\n"
 
 #: tools/gtk-builder-tool-simplify.c:444
 #, c-format
@@ -7335,22 +7333,22 @@ msgstr "%s:%d: Non foi posíbel analizar o valor para «%s»: %s\n"
 #: tools/gtk-builder-tool-simplify.c:658
 #, c-format
 msgid "Property %s not found"
-msgstr "Non se atopou a propiedade %s"
+msgstr "Propiedade %s non atopada"
 
 #: tools/gtk-builder-tool-simplify.c:661
 #, c-format
 msgid "Packing property %s not found"
-msgstr "Non se atopou a propiedade Packing %s"
+msgstr "Propiedade de empaquetado %s non atopada"
 
 #: tools/gtk-builder-tool-simplify.c:664
 #, c-format
 msgid "Cell property %s not found"
-msgstr "Non se atopou a propiedade da cela %s"
+msgstr "Propiedade de cela %s non atopada"
 
 #: tools/gtk-builder-tool-simplify.c:667
 #, c-format
 msgid "Layout property %s not found"
-msgstr "Non se atopou a propiedade de disposición %s"
+msgstr "Propiedade de disposición %s non atopada"
 
 #: tools/gtk-builder-tool-simplify.c:1397
 #, c-format
@@ -7377,7 +7375,7 @@ msgstr "Produciuse un erro ao ler «%s» : %s\n"
 #: tools/gtk-builder-tool-simplify.c:2510
 #, c-format
 msgid "Failed to write “%s”: “%s”\n"
-msgstr "Produciuse un erro ao escribir «%s» : «%s»\n"
+msgstr "Produciuse un erro ao escribir «%s» : %s»\n"
 
 #: tools/gtk-builder-tool-simplify.c:2527
 msgid "Replace the file"
@@ -7399,7 +7397,7 @@ msgstr "Só pode simplificar un ficheiro .ui sen --replace\n"
 #: tools/gtk-builder-tool-validate.c:45
 #, c-format
 msgid "Failed to lookup template parent type %s\n"
-msgstr "Produciuse un erro ao buscar polo tipo de modelo pai %s\n"
+msgstr "Produciuse un erro ao buscar polo tipo de pai modelo %s\n"
 
 #: tools/gtk-builder-tool-validate.c:123
 msgid "Deprecated types:\n"
@@ -7472,295 +7470,6 @@ msgstr "%s: non existe a aplicación %s"
 msgid "%s: error launching application: %s\n"
 msgstr "%s: produciuse un erro ao iniciar a aplicación: %s\n"
 
-#: tools/gtk-path-tool.c:35
-#, c-format
-msgid ""
-"Usage:\n"
-"  gtk4-path-tool [COMMAND] [OPTION…] PATH\n"
-"\n"
-"Perform various tasks on paths.\n"
-"\n"
-"Commands:\n"
-"  decompose    Decompose the path\n"
-"  reverse      Reverse the path\n"
-"  restrict     Restrict the path to a segment\n"
-"  show         Display the path in a window\n"
-"  render       Render the path as an image\n"
-"  info         Print information about the path\n"
-"\n"
-msgstr ""
-"Uso:\n"
-"  gtk4-path-tool [ORDE] [OPCIÓN…] FICHEIRO\n"
-"\n"
-"Leva a cabo varias tarefas en rutas.\n"
-"\n"
-"Ordes:\n"
-"\n"
-"  decompose         Descompoñer a ruta\n"
-"  reverse      Reverter a ruta\n"
-"\n"
-"  restrict     Restrinxir a ruta dun segmento\n"
-"  show         Mostra a ruta nunha xanela\n"
-"  render       Renderiza a ruta como unha imaxe\n"
-"  info         Fornece información da ruta\n"
-"\n"
-
-#: tools/gtk-path-tool-decompose.c:84
-msgid "Allow quadratic Bézier curves"
-msgstr "Permitir curvas Bézier cuadráticas"
-
-#: tools/gtk-path-tool-decompose.c:85
-msgid "Allow cubic Bézier curves"
-msgstr "Permitir curvas Bézier cúbicas"
-
-#: tools/gtk-path-tool-decompose.c:86
-msgid "Allow conic Bézier curves"
-msgstr "Permitir curvas Bézier cónicas"
-
-#: tools/gtk-path-tool-decompose.c:87 tools/gtk-path-tool-info.c:88
-#: tools/gtk-path-tool-render.c:58 tools/gtk-path-tool-restrict.c:38
-#: tools/gtk-path-tool-show.c:127
-msgid "PATH"
-msgstr "RUTA"
-
-#: tools/gtk-path-tool-decompose.c:99
-msgid "Decompose a path."
-msgstr "Descompoñer unha ruta."
-
-#: tools/gtk-path-tool-decompose.c:112 tools/gtk-path-tool-info.c:113
-#: tools/gtk-path-tool-restrict.c:64
-msgid "No paths given."
-msgstr "Non se forneceron rutas."
-
-#: tools/gtk-path-tool-decompose.c:140 tools/gtk-path-tool-restrict.c:94
-msgid "That didn't work out."
-msgstr "Iso non funcionou."
-
-#: tools/gtk-path-tool-info.c:100
-msgid "Print information about a path."
-msgstr "Mostra a información sobre a ruta."
-
-#: tools/gtk-path-tool-info.c:121
-msgid "Path is empty."
-msgstr "A ruta está baleira."
-
-#: tools/gtk-path-tool-info.c:127
-msgid "Path is closed"
-msgstr "A ruta está pechada"
-
-#: tools/gtk-path-tool-info.c:129
-msgid "Path length"
-msgstr "Lonxitude da ruta"
-
-#: tools/gtk-path-tool-info.c:138
-#, c-format
-msgid "%d contours"
-msgstr "%d contornos"
-
-#: tools/gtk-path-tool-info.c:140
-#, c-format
-msgid "%d operations"
-msgstr "%d operacións"
-
-#: tools/gtk-path-tool-info.c:144
-#, c-format
-msgid "%d lines"
-msgstr "%d liñas"
-
-#: tools/gtk-path-tool-info.c:149
-#, c-format
-msgid "%d quadratics"
-msgstr "%d cuadráticas"
-
-#: tools/gtk-path-tool-info.c:154
-#, c-format
-msgid "%d cubics"
-msgstr "%d cúbicas"
-
-#: tools/gtk-path-tool-info.c:159
-#, c-format
-msgid "%d conics"
-msgstr "%d cónicas"
-
-#: tools/gtk-path-tool-render.c:53 tools/gtk-path-tool-show.c:123
-msgid "Fill the path (the default)"
-msgstr "Completar a ruta (a predeterminada)"
-
-#: tools/gtk-path-tool-render.c:54 tools/gtk-path-tool-show.c:124
-msgid "Stroke the path"
-msgstr "Riscar a ruta"
-
-#: tools/gtk-path-tool-render.c:55
-msgid "The output file"
-msgstr "O ficheiro de saída"
-
-#: tools/gtk-path-tool-render.c:56 tools/gtk-path-tool-show.c:125
-msgid "Foreground color"
-msgstr "Cor do primeiro plano"
-
-#: tools/gtk-path-tool-render.c:56 tools/gtk-path-tool-render.c:57
-#: tools/gtk-path-tool-show.c:125 tools/gtk-path-tool-show.c:126
-msgid "COLOR"
-msgstr "COR"
-
-#: tools/gtk-path-tool-render.c:57 tools/gtk-path-tool-show.c:126
-msgid "Background color"
-msgstr "Cor do fondo"
-
-#: tools/gtk-path-tool-render.c:62 tools/gtk-path-tool-show.c:131
-msgid "Fill rule (winding, even-odd)"
-msgstr "Regra de recheo (sinuoso, par-impar)"
-
-#: tools/gtk-path-tool-render.c:62 tools/gtk-path-tool-render.c:66
-#: tools/gtk-path-tool-render.c:67 tools/gtk-path-tool-render.c:68
-#: tools/gtk-path-tool-render.c:69 tools/gtk-path-tool-render.c:70
-#: tools/gtk-path-tool-render.c:71 tools/gtk-path-tool-show.c:131
-#: tools/gtk-path-tool-show.c:135 tools/gtk-path-tool-show.c:136
-#: tools/gtk-path-tool-show.c:137 tools/gtk-path-tool-show.c:138
-#: tools/gtk-path-tool-show.c:139 tools/gtk-path-tool-show.c:140
-msgid "VALUE"
-msgstr "VALOR"
-
-#: tools/gtk-path-tool-render.c:66 tools/gtk-path-tool-show.c:135
-msgid "Line width (number)"
-msgstr "Anchura da liña (número)"
-
-#: tools/gtk-path-tool-render.c:67 tools/gtk-path-tool-show.c:136
-msgid "Line cap (butt, round, square)"
-msgstr "Límite de liña (tope, redondo, cadrada)"
-
-#: tools/gtk-path-tool-render.c:68 tools/gtk-path-tool-show.c:137
-msgid "Line join (miter, miter-clip, round, bevel, arcs)"
-msgstr "Unión de liña (inglete, inglete-clip, redondo, bisel, arcos)"
-
-#: tools/gtk-path-tool-render.c:69 tools/gtk-path-tool-show.c:138
-msgid "Miter limit (number)"
-msgstr "Límite de inglete (número)"
-
-#: tools/gtk-path-tool-render.c:70 tools/gtk-path-tool-show.c:139
-msgid "Dash pattern (comma-separated numbers)"
-msgstr "Patrón de guión (números separados por comas)"
-
-#: tools/gtk-path-tool-render.c:71 tools/gtk-path-tool-show.c:140
-msgid "Dash offset (number)"
-msgstr "Desprazamento do guión (número)"
-
-#: tools/gtk-path-tool-render.c:90 tools/gtk-path-tool-show.c:153
-msgid "Could not initialize windowing system"
-msgstr "Non foi posíbel inicializar sistema de xanelas"
-
-#: tools/gtk-path-tool-render.c:97
-msgid "Render the path to a png image."
-msgstr "Renderiza a ruta a unha imaxe png."
-
-#: tools/gtk-path-tool-render.c:102 tools/gtk-path-tool-show.c:164
-msgid "Options related to filling"
-msgstr "Opcións relacionadas para rechear"
-
-#: tools/gtk-path-tool-render.c:103 tools/gtk-path-tool-show.c:165
-msgid "Show help for fill options"
-msgstr "Mostrar axuda para as opcións de recheo"
-
-#: tools/gtk-path-tool-render.c:110 tools/gtk-path-tool-show.c:172
-msgid "Options related to stroking"
-msgstr "Opcións relacionadas para riscar"
-
-#: tools/gtk-path-tool-render.c:111 tools/gtk-path-tool-show.c:173
-msgid "Show help for stroke options"
-msgstr "Mostrar axuda para as opcións de riscado"
-
-#: tools/gtk-path-tool-render.c:128 tools/gtk-path-tool-show.c:190
-msgid "No path specified"
-msgstr "Ruta non especificada"
-
-#: tools/gtk-path-tool-render.c:134
-msgid "Can only render a single path"
-msgstr "Só pode renderizar unha única ruta"
-
-#: tools/gtk-path-tool-render.c:140 tools/gtk-path-tool-show.c:202
-msgid "fill rule"
-msgstr "regra de recheo"
-
-#: tools/gtk-path-tool-render.c:144 tools/gtk-path-tool-show.c:206
-msgid "line cap"
-msgstr "límite de liña"
-
-#: tools/gtk-path-tool-render.c:145 tools/gtk-path-tool-show.c:207
-msgid "line join"
-msgstr "unión de liña"
-
-#: tools/gtk-path-tool-render.c:169 tools/gtk-path-tool-show.c:231
-#, c-format
-msgid "Failed to parse '%s' as number"
-msgstr "Produciuse un erro ao analizar «%s» como un número"
-
-#: tools/gtk-path-tool-render.c:213
-#, c-format
-msgid "Saving png to '%s' failed"
-msgstr "Fallou o gardado do png en «%s»"
-
-#: tools/gtk-path-tool-render.c:220
-#, c-format
-msgid "Output written to '%s'."
-msgstr "Saída escrita en «%s»."
-
-#: tools/gtk-path-tool-restrict.c:36
-msgid "Beginning of segment"
-msgstr "Comezo do segmento"
-
-#: tools/gtk-path-tool-restrict.c:36 tools/gtk-path-tool-restrict.c:37
-msgid "LENGTH"
-msgstr "LONXITUDE"
-
-#: tools/gtk-path-tool-restrict.c:37
-msgid "End of segment"
-msgstr "Final do segmento"
-
-#: tools/gtk-path-tool-restrict.c:51
-msgid "Restrict a path to a segment."
-msgstr "Restrinxir unha ruta a unha segmento."
-
-#: tools/gtk-path-tool-show.c:43 tools/gtk-path-tool-show.c:78
-msgid "Path Preview"
-msgstr "Vista previa"
-
-#: tools/gtk-path-tool-show.c:161
-msgid "Display the path."
-msgstr "Mostrar a ruta."
-
-#: tools/gtk-path-tool-show.c:196
-msgid "Can only show a single path"
-msgstr "Só pode mostrar unha única ruta"
-
-#: tools/gtk-path-tool-utils.c:58
-#, c-format
-msgid "Failed to read from standard input: %s\n"
-msgstr "Produciuse un erro ao ler desde a entrada estándar: %s\n"
-
-#: tools/gtk-path-tool-utils.c:64
-#, c-format
-msgid "Error reading from standard input: %s\n"
-msgstr "Produciuse un erro ao ler desde a entrada estándar: %s\n"
-
-#: tools/gtk-path-tool-utils.c:83
-#, c-format
-msgid "Failed to parse '%s' as path.\n"
-msgstr "Produciuse un erro ao analizar «%s» como unha ruta.\n"
-
-#: tools/gtk-path-tool-utils.c:109
-#, c-format
-msgid "Failed to parse '%s' as %s."
-msgstr "Produciuse un erro ao analizar «%s» como %s."
-
-#: tools/gtk-path-tool-utils.c:111
-msgid "Possible values: "
-msgstr "Valores posíbeis: "
-
-#: tools/gtk-path-tool-utils.c:135
-#, c-format
-msgid "Could not parse '%s' as color"
-msgstr "Non foi posíbel analizar «%s» como unha cor"
-
 #: tools/gtk-rendernode-tool.c:35
 #, c-format
 msgid ""
@@ -7776,50 +7485,59 @@ msgid ""
 "\n"
 msgstr ""
 "Uso:\n"
-"  gtk4-rendernode-tool [ORDE] FICHEIRO\n"
+"  gtk-builder-tool [ORDE] [OPCIÓN…] FICHEIRO\n"
 "\n"
-"Leva a cabo varias tarefas en nodos de renderizado de GTK.\n"
+"Leva a cabo varias tarefas en nodos de renderizado GTK.\n"
 "\n"
 "Ordes:\n"
-"  info         Fornece información sobre o nodo\n"
-"  show         Mostra o nodo\n"
-"  render       Saca unha captura de pantalla do nodo\n"
+"  info     Fornece información sobre o nodo\n"
+"  show      Mostra o nodo\n"
+"  render   Facer unha captura de pantalla do nodo\n"
 "\n"
 
-#: tools/gtk-rendernode-tool-info.c:185
+#: tools/gtk-rendernode-tool-info.c:179
 #, c-format
 msgid "Number of nodes: %u\n"
 msgstr "Número de nodos: %u\n"
 
-#: tools/gtk-rendernode-tool-info.c:192
+#: tools/gtk-rendernode-tool-info.c:186
 #, c-format
 msgid "Depth: %u\n"
 msgstr "Profundidade: %u\n"
 
-#: tools/gtk-rendernode-tool-info.c:195
+#: tools/gtk-rendernode-tool-info.c:189
 #, c-format
 msgid "Bounds: %g x %g\n"
 msgstr "Marxes: %g x %g\n"
 
-#: tools/gtk-rendernode-tool-info.c:196
+#: tools/gtk-rendernode-tool-info.c:190
 #, c-format
 msgid "Origin: %g %g\n"
 msgstr "Orixe: %g %g\n"
 
-#: tools/gtk-rendernode-tool-info.c:217
+#: tools/gtk-rendernode-tool-info.c:211
 msgid "Provide information about the render node."
-msgstr "Fornece información sobre o nodo renderizado."
+msgstr "Información fornecida sobre o nodo renderizado."
 
-#: tools/gtk-rendernode-tool-info.c:230 tools/gtk-rendernode-tool-render.c:225
-#: tools/gtk-rendernode-tool-show.c:130
+#: tools/gtk-rendernode-tool-info.c:224 tools/gtk-rendernode-tool-show.c:130
+#: tools/gtk-rendernode-tool-render.c:225
 #, c-format
 msgid "No .node file specified\n"
 msgstr "Non se especificou ningún ficheiro .node\n"
 
-#: tools/gtk-rendernode-tool-info.c:236
+#: tools/gtk-rendernode-tool-info.c:230
 #, c-format
 msgid "Can only accept a single .node file\n"
-msgstr "Só pode aceptar un ficheiro .node\n"
+msgstr "Só pode aceptar un ficheiro .node á vez\n"
+
+#: tools/gtk-rendernode-tool-show.c:117
+msgid "Show the render node."
+msgstr "Mostrar o nodo renderizado."
+
+#: tools/gtk-rendernode-tool-show.c:136
+#, c-format
+msgid "Can only preview a single .node file\n"
+msgstr "Só pode previsualizar un ficheiro .node á vez\n"
 
 #: tools/gtk-rendernode-tool-render.c:123
 #, c-format
@@ -7827,13 +7545,13 @@ msgid ""
 "File %s exists.\n"
 "If you want to overwrite, specify the filename.\n"
 msgstr ""
-"O ficheiro %s xa existe.\n"
+"O ficheiro %s existe.\n"
 "Se quere sobrescribilo, especifique o nome de ficheiro.\n"
 
 #: tools/gtk-rendernode-tool-render.c:137
 #, c-format
 msgid "Failed to generate SVG: %s\n"
-msgstr "Produciuse un erro ao xerar o SVG: %s\n"
+msgstr "Produciuse un erro ao xerra o SVG: %s\n"
 
 #: tools/gtk-rendernode-tool-render.c:196
 msgid "Renderer to use"
@@ -7845,27 +7563,24 @@ msgstr "RENDERIZADOR"
 
 #: tools/gtk-rendernode-tool-render.c:212
 msgid "Render a .node file to an image."
-msgstr "Renderiza un ficheiro .node nunha imaxe."
+msgstr "Renderiza un ficheiro .node a unha imaxe."
 
 #: tools/gtk-rendernode-tool-render.c:231
 #, c-format
 msgid "Can only render a single .node file to a single output file\n"
 msgstr ""
-"Só pode renderizar un ficheiro .node único nun ficheiro de saída único\n"
-
-#: tools/gtk-rendernode-tool-show.c:117
-msgid "Show the render node."
-msgstr "Mostrar o nodo renderizado."
-
-#: tools/gtk-rendernode-tool-show.c:136
-#, c-format
-msgid "Can only preview a single .node file\n"
-msgstr "Só se pode previsualizar un único ficheiro .node\n"
+"Só se poden renderizar un ficheiro .node sinxelo a un ficheiro de saída "
+"único\n"
 
 #: tools/gtk-rendernode-tool-utils.c:51
 #, c-format
 msgid "Error at %s: %s\n"
 msgstr "Erro en %s: %s\n"
+
+#: tools/gtk-rendernode-tool-utils.c:69
+#, c-format
+msgid "Failed to load node file: %s\n"
+msgstr "Produciuse un erro ao cargar o ficheiro do nodo: %s\n"
 
 #: tools/updateiconcache.c:1391
 #, c-format
@@ -7975,12 +7690,21 @@ msgstr ""
 "Se está seguro de que quere crear unha caché de iconas aquí, use --ignore-"
 "theme-index.\n"
 
-#~ msgid "Allow elliptical arcs"
-#~ msgstr "Permitir arcos elípticos"
+#~ msgid "Tab list"
+#~ msgstr "Lista de lapelas"
+
+#~ msgid "Allocation"
+#~ msgstr "Asignación"
+
+#~ msgid "Show fps overlay"
+#~ msgstr "Mostrar capa superposta cos fps"
+
+#~ msgid "Simulate Touchscreen"
+#~ msgstr "Simular pantalla táctil"
+
+#~ msgid "Take a screenshot of the file."
+#~ msgstr "Tomar unha captura de pantalla dun ficheiro."
 
 #, c-format
-#~ msgid "%d arcs"
-#~ msgstr "%d arcos"
-
-#~ msgid "Stroke the path instead of filling it"
-#~ msgstr "Traza a ruta en lugar de enchela"
+#~ msgid "Can’t parse “%s”\n"
+#~ msgstr "Non é posíbel analizar «%s»\n"

@@ -155,7 +155,6 @@
 #include <gtk/gtkgestureswipe.h>
 #include <gtk/gtkgesturezoom.h>
 #include <gtk/gtkglarea.h>
-#include <gtk/gtkgraphicsoffload.h>
 #include <gtk/gtkgrid.h>
 #include <gtk/gtkgridlayout.h>
 #include <gtk/gtkgridview.h>
@@ -210,7 +209,6 @@
 #include <gtk/gtkpopover.h>
 #include <gtk/gtkpopovermenu.h>
 #include <gtk/gtkpopovermenubar.h>
-#include <gtk/gtkprintdialog.h>
 #include <gtk/print/gtkprintcontext.h>
 #include <gtk/print/gtkprintoperation.h>
 #include <gtk/print/gtkprintoperationpreview.h>

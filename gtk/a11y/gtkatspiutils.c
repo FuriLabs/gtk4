@@ -48,14 +48,8 @@ gtk_accessible_role_to_atspi_role (GtkAccessibleRole role)
     case GTK_ACCESSIBLE_ROLE_APPLICATION:
       return ATSPI_ROLE_FRAME;
 
-    case GTK_ACCESSIBLE_ROLE_ARTICLE:
-      return ATSPI_ROLE_ARTICLE;
-
     case GTK_ACCESSIBLE_ROLE_BANNER:
       break;
-
-    case GTK_ACCESSIBLE_ROLE_BLOCK_QUOTE:
-      return ATSPI_ROLE_BLOCK_QUOTE;
 
     case GTK_ACCESSIBLE_ROLE_BUTTON:
       return ATSPI_ROLE_PUSH_BUTTON;
@@ -77,9 +71,6 @@ gtk_accessible_role_to_atspi_role (GtkAccessibleRole role)
 
     case GTK_ACCESSIBLE_ROLE_COMMAND:
       break;
-
-    case GTK_ACCESSIBLE_ROLE_COMMENT:
-      return ATSPI_ROLE_COMMENT;
 
     case GTK_ACCESSIBLE_ROLE_COMPOSITE:
       break;
@@ -179,9 +170,6 @@ gtk_accessible_role_to_atspi_role (GtkAccessibleRole role)
 
     case GTK_ACCESSIBLE_ROLE_OPTION:
       return ATSPI_ROLE_OPTION_PANE;
-
-    case GTK_ACCESSIBLE_ROLE_PARAGRAPH:
-      return ATSPI_ROLE_PARAGRAPH;
 
     case GTK_ACCESSIBLE_ROLE_PRESENTATION:
       return ATSPI_ROLE_INVALID;

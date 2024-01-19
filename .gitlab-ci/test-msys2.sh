@@ -33,8 +33,7 @@ pacman --noconfirm -S --needed \
     mingw-w64-$MSYS2_ARCH-gst-plugins-bad-libs \
     mingw-w64-$MSYS2_ARCH-shared-mime-info \
     mingw-w64-$MSYS2_ARCH-python-gobject \
-    mingw-w64-$MSYS2_ARCH-shaderc \
-    mingw-w64-$MSYS2_ARCH-vulkan
+    mingw-w64-$MSYS2_ARCH-shaderc
 
 mkdir -p _ccache
 export CCACHE_BASEDIR="$(pwd)"
@@ -48,6 +47,7 @@ meson \
     -Dx11-backend=false \
     -Dwayland-backend=false \
     -Dwin32-backend=true \
+    -Dvulkan=disabled \
     -Dintrospection=enabled \
     -Dgtk:werror=true \
     _build

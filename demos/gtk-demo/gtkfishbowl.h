@@ -15,7 +15,8 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#ifndef __GTK_FISHBOWL_H__
+#define __GTK_FISHBOWL_H__
 
 #include <gtk/gtk.h>
 
@@ -64,3 +65,5 @@ void       gtk_fishbowl_set_creation_func (GtkFishbowl       *fishbowl,
                                            GtkFishCreationFunc creation_func);
 
 G_END_DECLS
+
+#endif /* __GTK_FISHBOWL_H__ */

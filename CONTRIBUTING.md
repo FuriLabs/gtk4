@@ -35,7 +35,8 @@ The issue tracker is meant to be used for actionable issues only.
 
 You should not open a new issue for security related questions.
 
-When in doubt, follow [security](https://security.gnome.org/).
+When in doubt, send an email to the [security](mailto:security@gnome.org)
+mailing list.
 
 ### Bug reports
 
@@ -213,7 +214,7 @@ Closes #1234
  `git commit -a --author "Joe Coder <joe@coder.org>"` and `--signoff`.
 
  - If your commit is addressing an issue, use the
- [GitLab syntax](https://docs.gitlab.com/ce/user/project/issues/automatic_issue_closing.html)
+ [GitLab syntax](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
  to automatically close the issue when merging the commit with the upstream
  repository:
 
@@ -243,11 +244,13 @@ people committing to GTK to follow a few rules:
    code, you should always ask. If your change is minor and you've been
    working on GTK for a while it probably isn't necessary to ask. But when
    in doubt, ask. Even if your change is correct, somebody may know a
-   better way to do things.
-   The `gtk` [room on matrix](https://matrix.to/#/#gtk:gnome.org) is also a
-   good place to find GTK developers to discuss changes, but if you live
-   outside of the EU/US time zones, the [gtk tag on the GNOME Discourse instance](https://discourse.gnome.org/tag/gtk)
-   is the most certain and preferred method.
+   better way to do things. If you are making changes to GTK, you should
+   be subscribed to the [gtk-devel](https://mail.gnome.org/mailman/listinfo/gtk-devel-list)
+   mailing list; this is a good place to ask about intended changes.
+   The `#gtk` IRC channel on irc.gnome.org is also a good place to find GTK
+   developers to discuss changes, but if you live outside of the EU/US time
+   zones, an email to the gtk-devel mailing list is the most certain and
+   preferred method.
 
 0. Ask _first_.
 

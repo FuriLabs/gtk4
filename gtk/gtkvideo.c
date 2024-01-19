@@ -22,7 +22,6 @@
 #include "gtkvideo.h"
 
 #include "gtkbinlayout.h"
-#include "gtkgraphicsoffload.h"
 #include "gtkeventcontrollermotion.h"
 #include "gtkimage.h"
 #include <glib/gi18n-lib.h>
@@ -34,7 +33,6 @@
 #include "gtkwidgetprivate.h"
 #include "gtkgestureclick.h"
 #include "gtkprivate.h"
-#include "gtktypebuiltins.h"
 
 /**
  * GtkVideo:
@@ -67,17 +65,11 @@ struct _GtkVideo
   GtkWidget *overlay_icon;
   GtkWidget *controls_revealer;
   GtkWidget *controls;
-  GtkWidget *graphics_offload;
   guint controls_hide_source;
-  guint cursor_hide_source;
-  double last_x;
-  double last_y;
 
   guint autoplay : 1;
   guint loop : 1;
   guint grabbed : 1;
-  guint fullscreen : 1;
-  guint cursor_hidden : 1;
 };
 
 enum
@@ -87,7 +79,6 @@ enum
   PROP_FILE,
   PROP_LOOP,
   PROP_MEDIA_STREAM,
-  PROP_GRAPHICS_OFFLOAD,
 
   N_PROPS
 };
@@ -97,21 +88,14 @@ G_DEFINE_TYPE (GtkVideo, gtk_video, GTK_TYPE_WIDGET)
 static GParamSpec *properties[N_PROPS] = { NULL, };
 
 static gboolean
-gtk_video_get_playing (GtkVideo *self)
-{
-  if (self->media_stream != NULL)
-    return gtk_media_stream_get_playing (self->media_stream);
-
-  return FALSE;
-}
-
-static gboolean
 gtk_video_hide_controls (gpointer data)
 {
   GtkVideo *self = data;
 
-  if (gtk_video_get_playing (self))
-    gtk_revealer_set_reveal_child (GTK_REVEALER (self->controls_revealer), FALSE);
+  if (self->grabbed)
+    return G_SOURCE_CONTINUE;
+
+  gtk_revealer_set_reveal_child (GTK_REVEALER (self->controls_revealer), FALSE);
 
   self->controls_hide_source = 0;
 
@@ -124,39 +108,10 @@ gtk_video_reveal_controls (GtkVideo *self)
   gtk_revealer_set_reveal_child (GTK_REVEALER (self->controls_revealer), TRUE);
   if (self->controls_hide_source)
     g_source_remove (self->controls_hide_source);
-  self->controls_hide_source = g_timeout_add (3 * 1000,
+  self->controls_hide_source = g_timeout_add (5 * 1000,
                                               gtk_video_hide_controls,
                                               self);
   gdk_source_set_static_name_by_id (self->controls_hide_source, "[gtk] gtk_video_hide_controls");
-}
-
-static gboolean
-gtk_video_hide_cursor (gpointer data)
-{
-  GtkVideo *self = data;
-
-  if (self->fullscreen && gtk_video_get_playing (self) && !self->cursor_hidden)
-    {
-      gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "none");
-      self->cursor_hidden = TRUE;
-    }
-
-  self->cursor_hide_source = 0;
-
-  return G_SOURCE_REMOVE;
-}
-
-static void
-gtk_video_reveal_cursor (GtkVideo *self)
-{
-  gtk_widget_set_cursor (GTK_WIDGET (self), NULL);
-  self->cursor_hidden = FALSE;
-  if (self->cursor_hide_source)
-    g_source_remove (self->cursor_hide_source);
-  self->cursor_hide_source = g_timeout_add (3 * 1000,
-                                            gtk_video_hide_cursor,
-                                            self);
-  gdk_source_set_static_name_by_id (self->cursor_hide_source, "[gtk] gtk_video_hide_cursor");
 }
 
 static void
@@ -165,13 +120,6 @@ gtk_video_motion (GtkEventControllerMotion *motion,
                   double                    y,
                   GtkVideo                 *self)
 {
-  if (self->last_x == x && self->last_y == y)
-    return;
-
-  self->last_x = x;
-  self->last_y = y;
-
-  gtk_video_reveal_cursor (self);
   gtk_video_reveal_controls (self);
 }
 
@@ -256,13 +204,6 @@ gtk_video_unmap (GtkWidget *widget)
       gtk_revealer_set_reveal_child (GTK_REVEALER (self->controls_revealer), FALSE);
     }
 
-  if (self->cursor_hide_source)
-    {
-      g_source_remove (self->cursor_hide_source);
-      self->cursor_hide_source = 0;
-      gtk_widget_set_cursor (widget, NULL);
-    }
-
   GTK_WIDGET_CLASS (gtk_video_parent_class)->unmap (widget);
 }
 
@@ -275,6 +216,17 @@ gtk_video_hide (GtkWidget *widget)
     gtk_media_stream_pause (self->media_stream);
 
   GTK_WIDGET_CLASS (gtk_video_parent_class)->hide (widget);
+}
+
+static void
+gtk_video_set_focus_child (GtkWidget *widget,
+                           GtkWidget *child)
+{
+  GtkVideo *self = GTK_VIDEO (widget);
+
+  self->grabbed = child != NULL;
+
+  GTK_WIDGET_CLASS (gtk_video_parent_class)->set_focus_child (widget, child);
 }
 
 static void
@@ -316,10 +268,6 @@ gtk_video_get_property (GObject    *object,
       g_value_set_object (value, self->media_stream);
       break;
 
-    case PROP_GRAPHICS_OFFLOAD:
-      g_value_set_enum (value, gtk_video_get_graphics_offload (self));
-      break;
-
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
@@ -352,42 +300,10 @@ gtk_video_set_property (GObject      *object,
       gtk_video_set_media_stream (self, g_value_get_object (value));
       break;
 
-    case PROP_GRAPHICS_OFFLOAD:
-      gtk_video_set_graphics_offload (self, g_value_get_enum (value));
-      break;
-
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
     }
-}
-
-static void
-fullscreen_changed (GtkWindow  *window,
-                    GParamSpec *pspec,
-                    GtkVideo   *self)
-{
-  self->fullscreen = gtk_window_is_fullscreen (window);
-}
-
-static void
-gtk_video_root (GtkWidget *widget)
-{
-  GTK_WIDGET_CLASS (gtk_video_parent_class)->root (widget);
-
-  g_signal_connect (gtk_widget_get_root (widget), "notify::fullscreened",
-                    G_CALLBACK (fullscreen_changed), widget);
-
-  gtk_video_reveal_cursor (GTK_VIDEO (widget));
-}
-
-static void
-gtk_video_unroot (GtkWidget *widget)
-{
-  g_signal_handlers_disconnect_by_func (gtk_widget_get_root (widget),
-                                        fullscreen_changed, widget);
-
-  GTK_WIDGET_CLASS (gtk_video_parent_class)->unroot (widget);
 }
 
 static void
@@ -401,8 +317,7 @@ gtk_video_class_init (GtkVideoClass *klass)
   widget_class->map = gtk_video_map;
   widget_class->unmap = gtk_video_unmap;
   widget_class->hide = gtk_video_hide;
-  widget_class->root = gtk_video_root;
-  widget_class->unroot = gtk_video_unroot;
+  widget_class->set_focus_child = gtk_video_set_focus_child;
 
   gobject_class->dispose = gtk_video_dispose;
   gobject_class->get_property = gtk_video_get_property;
@@ -448,19 +363,6 @@ gtk_video_class_init (GtkVideoClass *klass)
                          GTK_TYPE_MEDIA_STREAM,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GtkVideo:graphics-offload: (attributes org.gtk.Property.get=gtk_video_get_graphics_offload org.gtk.Property.set=gtk_video_set_graphics_offload)
-   *
-   * Whether to enable graphics offload.
-   *
-   * Since: 4.14
-   */
-  properties[PROP_GRAPHICS_OFFLOAD] =
-    g_param_spec_enum ("graphics-offload", NULL, NULL,
-                       GTK_TYPE_GRAPHICS_OFFLOAD_ENABLED,
-                       GTK_GRAPHICS_OFFLOAD_DISABLED,
-                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
-
   g_object_class_install_properties (gobject_class, N_PROPS, properties);
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/gtk/libgtk/ui/gtkvideo.ui");
@@ -469,7 +371,6 @@ gtk_video_class_init (GtkVideoClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GtkVideo, overlay_icon);
   gtk_widget_class_bind_template_child (widget_class, GtkVideo, controls);
   gtk_widget_class_bind_template_child (widget_class, GtkVideo, controls_revealer);
-  gtk_widget_class_bind_template_child (widget_class, GtkVideo, graphics_offload);
   gtk_widget_class_bind_template_callback (widget_class, gtk_video_motion);
   gtk_widget_class_bind_template_callback (widget_class, gtk_video_pressed);
   gtk_widget_class_bind_template_callback (widget_class, overlay_clicked_cb);
@@ -658,11 +559,14 @@ gtk_video_update_error (GtkVideo *self)
 static void
 gtk_video_update_playing (GtkVideo *self)
 {
-  gboolean playing = gtk_video_get_playing (self);
+  gboolean playing;
+
+  if (self->media_stream != NULL)
+    playing = gtk_media_stream_get_playing (self->media_stream);
+  else
+    playing = FALSE;
 
   gtk_widget_set_visible (self->overlay_icon, !playing);
-  gtk_widget_set_cursor (GTK_WIDGET (self), NULL);
-  self->cursor_hidden = FALSE;
 }
 
 static void
@@ -969,49 +873,4 @@ gtk_video_set_loop (GtkVideo *self,
   self->loop = loop;
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_LOOP]);
-}
-
-/**
- * gtk_video_get_graphics_offload: (attributes org.gtk.Method.get_property=graphics-offload)
- * @self: a `GtkVideo`
- *
- * Returns whether graphics offload is enabled.
- *
- * See [class@Gtk.GraphicsOffload] for more information on graphics offload.
- *
- * Returns: the graphics offload status
- *
- * Since: 4.14
- */
-GtkGraphicsOffloadEnabled
-gtk_video_get_graphics_offload (GtkVideo *self)
-{
-  g_return_val_if_fail (GTK_IS_VIDEO (self), GTK_GRAPHICS_OFFLOAD_DISABLED);
-
-  return gtk_graphics_offload_get_enabled (GTK_GRAPHICS_OFFLOAD (self->graphics_offload));;
-}
-
-/**
- * gtk_video_set_graphics_offload: (attributes org.gtk.Method.set_property=graphics-offload)
- * @self: a `GtkVideo`
- * @enabled: the new graphics offload status
- *
- * Sets whether to enable graphics offload.
- *
- * See [class@Gtk.GraphicsOffload] for more information on graphics offload.
- *
- * Since: 4.14
- */
-void
-gtk_video_set_graphics_offload (GtkVideo                  *self,
-                                GtkGraphicsOffloadEnabled  enabled)
-{
-  g_return_if_fail (GTK_IS_VIDEO (self));
-
-  if (gtk_graphics_offload_get_enabled (GTK_GRAPHICS_OFFLOAD (self->graphics_offload)) == enabled)
-    return;
-
-  gtk_graphics_offload_set_enabled (GTK_GRAPHICS_OFFLOAD (self->graphics_offload), enabled);
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_GRAPHICS_OFFLOAD]);
 }

@@ -333,14 +333,17 @@ gdk_x11_device_xi2_grab (GdkDevice    *device,
                                                         event_mask,
                                                         &mask.mask_len);
 
-  status = XIGrabDevice (GDK_DISPLAY_XDISPLAY (display),
-                         device_xi2->device_id,
-                         xwindow,
-                         time_,
-                         xcursor,
-                         GrabModeAsync, GrabModeAsync,
-                         owner_events,
-                         &mask);
+  if (gdk_display_get_debug_flags (display) & GDK_DEBUG_NOGRABS)
+    status = GrabSuccess;
+  else
+    status = XIGrabDevice (GDK_DISPLAY_XDISPLAY (display),
+                           device_xi2->device_id,
+                           xwindow,
+                           time_,
+                           xcursor,
+                           GrabModeAsync, GrabModeAsync,
+                           owner_events,
+                           &mask);
 
   g_free (mask.mask);
 

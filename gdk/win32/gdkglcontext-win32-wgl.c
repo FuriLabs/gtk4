@@ -335,6 +335,7 @@ gdk_win32_display_init_wgl (GdkDisplay  *display,
       return NULL;
     }
 
+#if G_ENABLE_DEBUG
   {
     int major, minor;
     gdk_gl_context_get_version (context, &major, &minor);
@@ -352,6 +353,7 @@ gdk_win32_display_init_wgl (GdkDisplay  *display,
                          display_win32->hasWglEXTSwapControl ? "yes" : "no",
                          display_win32->hasWglOMLSyncControl ? "yes" : "no"));
   }
+#endif
 
   wglMakeCurrent (NULL, NULL);
 
@@ -671,7 +673,9 @@ gdk_win32_gl_context_wgl_realize (GdkGLContext *context,
    * A legacy context cannot be shared with core profile ones, so this means we
    * must stick to a legacy context if the shared context is a legacy context
    */
-  legacy_bit = share != NULL && gdk_gl_context_is_legacy (share);
+  legacy_bit = (gdk_display_get_debug_flags (display) & GDK_DEBUG_GL_LEGACY)
+                 ? TRUE
+                 : share != NULL && gdk_gl_context_is_legacy (share);
 
   if (surface != NULL)
     hdc = GDK_WIN32_SURFACE (surface)->hdc;

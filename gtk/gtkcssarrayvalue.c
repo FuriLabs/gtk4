@@ -95,7 +95,7 @@ gtk_css_value_array_equal (const GtkCssValue *value1,
   return TRUE;
 }
 
-static inline guint
+static guint
 gcd (guint a, guint b)
 {
   while (b != 0)
@@ -107,7 +107,7 @@ gcd (guint a, guint b)
   return a;
 }
 
-static inline guint
+static guint
 lcm (guint a, guint b)
 {
   return a / gcd (a, b) * b;

@@ -714,6 +714,8 @@ build_pointer_event_state (MSG *msg)
   return state;
 }
 
+#ifdef G_ENABLE_DEBUG
+
 static void
 print_event_state (guint state)
 {
@@ -857,6 +859,8 @@ decode_key_lparam (LPARAM lParam)
 
   return buf;
 }
+
+#endif
 
 static void
 fixup_event (GdkEvent *event)
@@ -2932,6 +2936,7 @@ gdk_event_translate (MSG *msg,
       break;
 
     case WM_WINDOWPOSCHANGING:
+#ifdef G_ENABLE_DEBUG
       {
         char buf[256];
         GDK_NOTE (EVENTS, (windowpos = (WINDOWPOS *) msg->lParam,
@@ -2946,6 +2951,7 @@ gdk_event_translate (MSG *msg,
                                     windowpos->cx, windowpos->cy, windowpos->x, windowpos->y,
                                     GetNextWindow (msg->hwnd, GW_HWNDPREV))));
       }
+#endif
 
       if (GDK_SURFACE_IS_MAPPED (window))
         {
@@ -2980,6 +2986,7 @@ gdk_event_translate (MSG *msg,
     case WM_WINDOWPOSCHANGED:
       windowpos = (WINDOWPOS *) msg->lParam;
 
+#ifdef G_ENABLE_DEBUG
       {
         char buf[256];
         GDK_NOTE (EVENTS, g_print (" %s %s %dx%d@%+d%+d",
@@ -2992,6 +2999,7 @@ gdk_event_translate (MSG *msg,
                                         buf))))),
                                    windowpos->cx, windowpos->cy, windowpos->x, windowpos->y));
       }
+#endif
 
       impl = GDK_WIN32_SURFACE (window);
 

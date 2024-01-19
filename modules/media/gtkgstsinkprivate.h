@@ -18,7 +18,8 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#pragma once
+#ifndef __GTK_GST_SINK_PRIVATE_H__
+#define __GTK_GST_SINK_PRIVATE_H__
 
 #include "gtkgstpaintableprivate.h"
 
@@ -62,3 +63,5 @@ struct _GtkGstSinkClass
 GType gtk_gst_sink_get_type (void);
 
 G_END_DECLS
+
+#endif /* __GTK_GST_SINK_PRIVATE_H__ */

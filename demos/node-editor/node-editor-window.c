@@ -24,8 +24,12 @@
 #include "gtkrendererpaintableprivate.h"
 
 #include "gsk/gskrendernodeparserprivate.h"
+#include "gsk/gl/gskglrenderer.h"
 #ifdef GDK_WINDOWING_BROADWAY
 #include "gsk/broadway/gskbroadwayrenderer.h"
+#endif
+#ifdef GDK_RENDERING_VULKAN
+#include "gsk/vulkan/gskvulkanrenderer.h"
 #endif
 
 #include <cairo.h>
@@ -790,7 +794,7 @@ create_cairo_texture (NodeEditorWindow *self)
     return NULL;
 
   renderer = gsk_cairo_renderer_new ();
-  gsk_renderer_realize_for_display (renderer, gtk_widget_get_display (GTK_WIDGET (self)), NULL);
+  gsk_renderer_realize (renderer, NULL, NULL);
 
   texture = gsk_renderer_render_texture (renderer, node, NULL);
   gsk_render_node_unref (node);
@@ -862,11 +866,11 @@ export_image_response_cb (GObject      *source,
       GskRenderer *renderer;
 
       renderer = gsk_gl_renderer_new ();
-      if (!gsk_renderer_realize_for_display (renderer, gdk_display_get_default (), NULL))
+      if (!gsk_renderer_realize (renderer, NULL, NULL))
         {
           g_object_unref (renderer);
           renderer = gsk_cairo_renderer_new ();
-          if (!gsk_renderer_realize_for_display (renderer, gdk_display_get_default (), NULL))
+          if (!gsk_renderer_realize (renderer, NULL, NULL))
             {
               g_assert_not_reached ();
             }
@@ -1117,11 +1121,8 @@ node_editor_window_add_renderer (NodeEditorWindow *self,
                                  const char       *description)
 {
   GdkPaintable *paintable;
-  GdkDisplay *display;
 
-  display = gtk_widget_get_display (GTK_WIDGET (self));
-
-  if (!gsk_renderer_realize_for_display (renderer, display, NULL))
+  if (!gsk_renderer_realize (renderer, NULL, NULL))
     {
       GdkSurface *surface = gtk_native_get_surface (GTK_NATIVE (self));
       g_assert (surface != NULL);
@@ -1156,9 +1157,6 @@ node_editor_window_realize (GtkWidget *widget)
   node_editor_window_add_renderer (self,
                                    gsk_gl_renderer_new (),
                                    "OpenGL");
-  node_editor_window_add_renderer (self,
-                                   gsk_ngl_renderer_new (),
-                                   "NGL");
 #ifdef GDK_RENDERING_VULKAN
   node_editor_window_add_renderer (self,
                                    gsk_vulkan_renderer_new (),

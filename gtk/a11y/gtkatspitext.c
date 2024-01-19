@@ -1614,10 +1614,7 @@ insert_text_cb (GtkEditable *editable,
     return;
 
   length = g_utf8_strlen (new_text, new_text_length);
-
-  char *inserted_text = g_utf8_substring (new_text, 0, length);
-  changed->text_changed (changed->data, "insert", *position - length, length, inserted_text);
-  g_free (inserted_text);
+  changed->text_changed (changed->data, "insert", *position - length, length, new_text);
 }
 
 static void
@@ -1632,10 +1629,6 @@ delete_text_cb (GtkEditable *editable,
     return;
 
   text = gtk_editable_get_chars (editable, start, end);
-
-  if (end < 0)
-    end = g_utf8_strlen(text, -1);
-
   changed->text_changed (changed->data, "delete", start, end - start, text);
   g_free (text);
 }
@@ -1714,9 +1707,7 @@ insert_range_cb (GtkTextBuffer *buffer,
   position = gtk_text_iter_get_offset (iter);
   length = g_utf8_strlen (text, len);
 
-  char *inserted_text = g_utf8_substring (text, 0, length);
-  changed->text_changed (changed->data, "insert", position - length, length, inserted_text);
-  g_free (inserted_text);
+  changed->text_changed (changed->data, "insert", position - length, length, text);
 
   update_cursor (buffer, changed);
 }
@@ -1793,7 +1784,7 @@ buffer_changed (GtkWidget   *widget,
   if (changed->buffer)
     {
       g_object_ref (changed->buffer);
-      g_signal_connect_after (changed->buffer, "insert-text", G_CALLBACK (insert_range_cb), changed);
+      g_signal_connect (changed->buffer, "insert-text", G_CALLBACK (insert_range_cb), changed);
       g_signal_connect (changed->buffer, "delete-range", G_CALLBACK (delete_range_cb), changed);
       g_signal_connect_after (changed->buffer, "delete-range", G_CALLBACK (delete_range_after_cb), changed);
       g_signal_connect_after (changed->buffer, "mark-set", G_CALLBACK (mark_set_cb), changed);

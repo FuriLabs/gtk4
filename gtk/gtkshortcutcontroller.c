@@ -407,6 +407,7 @@ gtk_shortcut_controller_run_controllers (GtkEventController *controller,
       data->widget = widget;
     }
 
+#ifdef G_ENABLE_DEBUG
   if (GTK_DEBUG_CHECK (KEYBINDINGS))
     {
       g_message ("Found %u shortcuts triggered %s by %s %u %u",
@@ -416,6 +417,7 @@ gtk_shortcut_controller_run_controllers (GtkEventController *controller,
                  gdk_key_event_get_keyval (event),
                  gdk_event_get_modifier_state (event));
     }
+#endif
 
   if (!shortcuts)
     return retval;

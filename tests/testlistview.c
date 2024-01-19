@@ -376,9 +376,13 @@ row_data_update_info (RowData   *data,
       icon = g_file_icon_new (thumbnail_file);
       g_object_unref (thumbnail_file);
     }
-  else
+  else if (g_file_info_has_attribute (info, G_FILE_ATTRIBUTE_STANDARD_ICON))
     {
       icon = g_file_info_get_icon (info);
+    }
+  else
+    {
+      icon = NULL;
     }
 
   gtk_widget_set_visible (data->icon, icon != NULL);
@@ -553,6 +557,7 @@ update_statusbar (GtkStatusbar *statusbar)
       g_string_append_printf (string, " (%u directories remaining)", active + g_slist_length (pending));
       result = G_SOURCE_CONTINUE;
     }
+      result = G_SOURCE_CONTINUE;
 
   gtk_statusbar_push (statusbar, 0, string->str);
   g_free (string->str);

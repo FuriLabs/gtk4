@@ -20,10 +20,6 @@
 
 #pragma once
 
-#if !defined (__GSK_H_INSIDE__) && !defined (GTK_COMPILATION)
-#error "Only <gsk/gsk.h> can be included directly."
-#endif
-
 #include <cairo.h>
 #include <gsk/gskrenderer.h>
 

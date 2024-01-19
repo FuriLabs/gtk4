@@ -15,7 +15,8 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#ifndef __REFTEST_MODULE_H__
+#define __REFTEST_MODULE_H__
 
 #include <gtk/gtk.h>
 
@@ -39,3 +40,5 @@ GCallback       reftest_module_lookup           (ReftestModule  *module,
                                                  const char     *function_name);
 
 G_END_DECLS
+
+#endif /* __REFTEST_MODULE_H__ */

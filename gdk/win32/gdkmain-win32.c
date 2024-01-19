@@ -125,6 +125,8 @@ _gdk_other_api_failed (const char *where,
 }
 
 
+#ifdef G_ENABLE_DEBUG
+
 /*
  * Like g_strdup_printf, but to a static buffer. Return value does not
  * have to be g_free()d. The buffer is of bounded size and reused
@@ -794,3 +796,5 @@ _gdk_win32_rect_to_string (const RECT *rect)
 			(rect->right - rect->left), (rect->bottom - rect->top),
 			rect->left, rect->top);
 }
+
+#endif /* G_ENABLE_DEBUG */

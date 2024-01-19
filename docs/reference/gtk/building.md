@@ -1,5 +1,7 @@
-Title: Building GTK
+Title: Compiling the GTK Libraries
 Slug: gtk-building
+
+## Building GTK
 
 Before we get into the details of how to compile GTK, we should
 mention that in many cases, binary packages of GTK prebuilt for

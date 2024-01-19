@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2023-08-19 01:57+0000\n"
-"PO-Revision-Date: 2023-08-20 00:03+0600\n"
+"POT-Creation-Date: 2023-09-21 12:42+0000\n"
+"PO-Revision-Date: 2023-09-21 21:28+0600\n"
 "Last-Translator: Baurzhan Muftakhidinov <baurthefirst@gmail.com>\n"
 "Language-Team: Kazakh <kk_KZ@googlegroups.com>\n"
 "Language: kk\n"
@@ -50,53 +50,53 @@ msgstr "Мазмұнды %s ретінде ұсыну мүмкін емес"
 msgid "The current backend does not support OpenGL"
 msgstr "Ағымдағы қозғалтқыш OpenGL қолдамайды"
 
-#: gdk/gdkdisplay.c:1245 gdk/gdksurface.c:1252
+#: gdk/gdkdisplay.c:1244 gdk/gdksurface.c:1252
 msgid "Vulkan support disabled via GDK_DEBUG"
 msgstr "Vulkan қолдауы GDK_DEBUG арқылы сөндірілген"
 
-#: gdk/gdkdisplay.c:1277
+#: gdk/gdkdisplay.c:1276
 msgid "GL support disabled via GDK_DEBUG"
 msgstr "GL қолдауы GDK_DEBUG арқылы сөндірілген"
 
-#: gdk/gdkdisplay.c:1575
+#: gdk/gdkdisplay.c:1574
 msgid "No EGL configuration available"
 msgstr "Бірде-бір EGL іске асыру нұсқасы қолжетімсіз"
 
-#: gdk/gdkdisplay.c:1583
+#: gdk/gdkdisplay.c:1582
 msgid "Failed to get EGL configurations"
 msgstr "EGL конфигурациялары алынбады"
 
-#: gdk/gdkdisplay.c:1613
+#: gdk/gdkdisplay.c:1612
 msgid "No EGL configuration with required features found"
 msgstr "Қажетті мүмкіндіктері бар EGL конфигурациясы табылмады"
 
-#: gdk/gdkdisplay.c:1620
+#: gdk/gdkdisplay.c:1619
 msgid "No perfect EGL configuration found"
 msgstr "Сәйкес келетін EGL конфигурациясы табылмады"
 
-#: gdk/gdkdisplay.c:1662
+#: gdk/gdkdisplay.c:1661
 #, c-format
 msgid "EGL implementation is missing extension %s"
 msgid_plural "EGL implementation is missing %2$d extensions: %1$s"
 msgstr[0] "EGL іске асыруында %2$d кеңейту жоқ: %1$s"
 
-#: gdk/gdkdisplay.c:1695
+#: gdk/gdkdisplay.c:1694
 msgid "libEGL not available in this sandbox"
 msgstr "libEGL бұл құмжәшігінде қол жетімді емес"
 
-#: gdk/gdkdisplay.c:1696
+#: gdk/gdkdisplay.c:1695
 msgid "libEGL not available"
 msgstr "libEGL қолжетімді емес"
 
-#: gdk/gdkdisplay.c:1706
+#: gdk/gdkdisplay.c:1705
 msgid "Failed to create EGL display"
 msgstr "EGL экранын жасау сәтсіз"
 
-#: gdk/gdkdisplay.c:1716
+#: gdk/gdkdisplay.c:1715
 msgid "Could not initialize EGL display"
 msgstr "EGL экранын іске қосу сәтсіз"
 
-#: gdk/gdkdisplay.c:1727
+#: gdk/gdkdisplay.c:1726
 #, c-format
 msgid "EGL version %d.%d is too old. GTK requires %d.%d"
 msgstr "EGL нұсқасы %d.%d тым ескі. GTK %d.%d нұсқасын талап етеді"
@@ -562,7 +562,7 @@ msgstr "Деректерді оқу %d жолында сәтсіз аяқтал�
 #: gdk/macos/gdkmacospasteboard.c:211 gdk/wayland/gdkclipboard-wayland.c:240
 #: gdk/wayland/gdkdrop-wayland.c:207 gdk/wayland/gdkprimary-wayland.c:343
 #: gdk/win32/gdkdrop-win32.c:1018 gdk/win32/gdkdrop-win32.c:1063
-#: gdk/x11/gdkclipboard-x11.c:805 gdk/x11/gdkdrop-x11.c:235
+#: gdk/x11/gdkclipboard-x11.c:807 gdk/x11/gdkdrop-x11.c:235
 msgid "No compatible transfer format found"
 msgstr "Тасымалдау үшін үйлесімді пішім табылмады"
 
@@ -733,7 +733,6 @@ msgstr "Бірде-бір GL іске асыру нұсқасы қолжетім
 
 #: gdk/win32/gdkglcontext-win32-wgl.c:396
 #, c-format
-#| msgid "EGL version %d.%d is too old. GTK requires %d.%d"
 msgid "WGL version %d.%d is too low, need at least %d.%d"
 msgstr "WGL нұсқасы %d.%d тым төмен, кем дегенде %d.%d керек"
 
@@ -796,11 +795,11 @@ msgid "Opening %d Item"
 msgid_plural "Opening %d Items"
 msgstr[0] "%d нәрсе ашылуда"
 
-#: gdk/x11/gdkclipboard-x11.c:475
+#: gdk/x11/gdkclipboard-x11.c:477
 msgid "Clipboard manager could not store selection."
 msgstr "Алмасу буфері басқарушысы таңдауды сақтай алмайды."
 
-#: gdk/x11/gdkclipboard-x11.c:655
+#: gdk/x11/gdkclipboard-x11.c:657
 msgid "Cannot store clipboard. No clipboard manager is active."
 msgstr ""
 "Алмасу буферін сақтау мүмкін емес. Бірде-бір алмасу буфері басқарушысы "
@@ -1011,13 +1010,11 @@ msgid "Failed to start GNOME Software"
 msgstr "GNOME Software іске қосу сәтсіз аяқталды"
 
 #: gtk/deprecated/gtkappchooserwidget.c:525
-#| msgid "Default"
 msgid "Default App"
 msgstr "Үнсіз келісім қолданбасы"
 
 #: gtk/deprecated/gtkappchooserwidget.c:575
 #, c-format
-#| msgid "No applications found for “%s”."
 msgid "No apps found for “%s”."
 msgstr "\"%s\" үшін қолданбалар табылмады."
 
@@ -1066,18 +1063,18 @@ msgctxt "progress bar label"
 msgid "%d %%"
 msgstr "%d %%"
 
-#: gtk/deprecated/gtkcolorbutton.c:183 gtk/deprecated/gtkcolorbutton.c:311
+#: gtk/deprecated/gtkcolorbutton.c:183 gtk/deprecated/gtkcolorbutton.c:314
 #: gtk/gtkcolordialog.c:411
 msgid "Pick a Color"
 msgstr "Түсті таңдаңыз"
 
-#: gtk/deprecated/gtkcolorbutton.c:502 gtk/gtkcolorchooserwidget.c:313
+#: gtk/deprecated/gtkcolorbutton.c:505 gtk/gtkcolorchooserwidget.c:313
 #: gtk/gtkcolordialogbutton.c:335
 #, c-format
 msgid "Red %d%%, Green %d%%, Blue %d%%, Alpha %d%%"
 msgstr "Қызыл %d%%, Жасыл %d%%, Көк %d%%, Мөлдір %d%%"
 
-#: gtk/deprecated/gtkcolorbutton.c:508 gtk/gtkcolorchooserwidget.c:319
+#: gtk/deprecated/gtkcolorbutton.c:511 gtk/gtkcolorchooserwidget.c:319
 #: gtk/gtkcolordialogbutton.c:341
 #, c-format
 msgid "Red %d%%, Green %d%%, Blue %d%%"
@@ -1087,17 +1084,17 @@ msgstr "Қызыл %d%%, Жасыл %d%%, Көк %d%%"
 msgid "Sans 12"
 msgstr "Sans 12"
 
-#: gtk/deprecated/gtkfontbutton.c:507 gtk/deprecated/gtkfontbutton.c:621
+#: gtk/deprecated/gtkfontbutton.c:507 gtk/deprecated/gtkfontbutton.c:624
 #: gtk/gtkfontdialog.c:596
 msgid "Pick a Font"
 msgstr "Қаріпті таңдаңыз"
 
-#: gtk/deprecated/gtkfontbutton.c:597 gtk/gtkfilechooserwidget.c:3871
+#: gtk/deprecated/gtkfontbutton.c:600 gtk/gtkfilechooserwidget.c:3871
 #: gtk/gtkfontdialogbutton.c:126 gtk/inspector/visual.ui:169
 msgid "Font"
 msgstr "Қаріп"
 
-#: gtk/deprecated/gtkfontbutton.c:1152 gtk/gtkfontdialogbutton.c:652
+#: gtk/deprecated/gtkfontbutton.c:1155 gtk/gtkfontdialogbutton.c:652
 msgctxt "font"
 msgid "None"
 msgstr "Ешнәрсе"
@@ -2161,7 +2158,7 @@ msgstr "Оң ж_ақ:"
 msgid "Paper Margins"
 msgstr "Қағаздың шет өрістері"
 
-#: gtk/gtkentry.c:3673
+#: gtk/gtkentry.c:3685
 msgid "Insert Emoji"
 msgstr "Эмодзи кірістіру"
 
@@ -2319,7 +2316,7 @@ msgid "If you delete an item, it will be permanently lost."
 msgstr "Нәрсені өшірсеңіз, ол толығымен жоғалады."
 
 #: gtk/gtkfilechooserwidget.c:1185 gtk/gtkfilechooserwidget.c:1815
-#: gtk/gtklabel.c:5695 gtk/gtktext.c:6145 gtk/gtktextview.c:9018
+#: gtk/gtklabel.c:5695 gtk/gtktext.c:6147 gtk/gtktextview.c:9018
 msgid "_Delete"
 msgstr "Ө_шіру"
 
@@ -2656,23 +2653,22 @@ msgid "Close"
 msgstr "Жабу"
 
 #: gtk/deprecated/gtkinfobar.c:499
-#| msgid "Close the window"
 msgid "Close the infobar"
 msgstr "Ақпараттық панельді жабу"
 
-#: gtk/gtklabel.c:5692 gtk/gtktext.c:6133 gtk/gtktextview.c:9006
+#: gtk/gtklabel.c:5692 gtk/gtktext.c:6135 gtk/gtktextview.c:9006
 msgid "Cu_t"
 msgstr "Қ_иып алу"
 
-#: gtk/gtklabel.c:5693 gtk/gtktext.c:6137 gtk/gtktextview.c:9010
+#: gtk/gtklabel.c:5693 gtk/gtktext.c:6139 gtk/gtktextview.c:9010
 msgid "_Copy"
 msgstr "_Көшіру"
 
-#: gtk/gtklabel.c:5694 gtk/gtktext.c:6141 gtk/gtktextview.c:9014
+#: gtk/gtklabel.c:5694 gtk/gtktext.c:6143 gtk/gtktextview.c:9014
 msgid "_Paste"
 msgstr "Кірі_стіру"
 
-#: gtk/gtklabel.c:5700 gtk/gtktext.c:6154 gtk/gtktextview.c:9039
+#: gtk/gtklabel.c:5700 gtk/gtktext.c:6156 gtk/gtktextview.c:9039
 msgid "Select _All"
 msgstr "Б_арлығын таңдау"
 
@@ -2885,7 +2881,7 @@ msgstr "Алдыңғы бет"
 msgid "Next tab"
 msgstr "Келесі бет"
 
-#: gtk/gtknotebook.c:4331 gtk/gtknotebook.c:6539
+#: gtk/gtknotebook.c:4331 gtk/gtknotebook.c:6541
 #, c-format
 msgid "Page %u"
 msgstr "Бет %u"
@@ -3526,7 +3522,7 @@ msgstr "URI \"%s\" болатын нәрсені \"%s\" мақсатына жы�
 msgid "No registered application with name “%s” for item with URI “%s” found"
 msgstr "URI \"%s\" үшін аты \"%s\" болатын ешбір тіркелген қолданба табылмады"
 
-#: gtk/gtksearchentry.c:758
+#: gtk/gtksearchentry.c:767
 msgid "Clear Entry"
 msgstr "Жазбаны тазарту"
 
@@ -3617,7 +3613,7 @@ msgctxt "accessibility"
 msgid "Sidebar"
 msgstr "Бүйір панелі"
 
-#: gtk/gtktext.c:6159 gtk/gtktextview.c:9044
+#: gtk/gtktext.c:6161 gtk/gtktextview.c:9044
 msgid "Insert _Emoji"
 msgstr "_Эмодзи кірістіру"
 
@@ -3678,12 +3674,10 @@ msgid "Role"
 msgstr "Ролі"
 
 #: gtk/inspector/a11y.ui:71
-#| msgid "Direction"
 msgid "Description"
 msgstr "Сипаттамасы"
 
 #: gtk/inspector/a11y.ui:99 gtk/inspector/misc-info.ui:296
-#: tools/gtk-path-tool-info.c:128
 msgid "Bounds"
 msgstr "Шектері"
 
@@ -3998,8 +3992,8 @@ msgid "Surface"
 msgstr "Бет"
 
 #: gtk/inspector/misc-info.ui:365 gtk/inspector/misc-info.ui:400
-#: gtk/inspector/misc-info.ui:435 gtk/inspector/prop-editor.c:1150
-#: gtk/inspector/prop-editor.c:1533 gtk/inspector/window.ui:396
+#: gtk/inspector/misc-info.ui:435 gtk/inspector/prop-editor.c:1153
+#: gtk/inspector/prop-editor.c:1536 gtk/inspector/window.ui:396
 msgid "Properties"
 msgstr "Қасиеттері"
 
@@ -4051,7 +4045,7 @@ msgstr "Көрсеткіш: %p"
 #. Translators: %s is a type name, for example
 #. * GtkPropertyExpression with value \"2.5\"
 #.
-#: gtk/inspector/prop-editor.c:824
+#: gtk/inspector/prop-editor.c:827
 #, c-format
 msgid "%s with value \"%s\""
 msgstr "%s, мәні \"%s\""
@@ -4059,7 +4053,7 @@ msgstr "%s, мәні \"%s\""
 #. Translators: Both %s are type names, for example
 #. * GtkPropertyExpression with type GObject
 #.
-#: gtk/inspector/prop-editor.c:835
+#: gtk/inspector/prop-editor.c:838
 #, c-format
 msgid "%s with type %s"
 msgstr "%s, түрі %s"
@@ -4067,7 +4061,7 @@ msgstr "%s, түрі %s"
 #. Translators: Both %s are type names, for example
 #. * GtkObjectExpression for GtkStringObject 0x23456789
 #.
-#: gtk/inspector/prop-editor.c:848
+#: gtk/inspector/prop-editor.c:851
 #, c-format
 msgid "%s for %s %p"
 msgstr "%s, %s %p үшін"
@@ -4075,71 +4069,71 @@ msgstr "%s, %s %p үшін"
 #. Translators: Both %s are type names, for example
 #. * GtkPropertyExpression with value type: gchararray
 #.
-#: gtk/inspector/prop-editor.c:878
+#: gtk/inspector/prop-editor.c:881
 #, c-format
 msgid "%s with value type %s"
 msgstr "%s, мән түрі %s"
 
-#: gtk/inspector/prop-editor.c:1227
+#: gtk/inspector/prop-editor.c:1230
 #, c-format
 msgid "Uneditable property type: %s"
 msgstr "Түзетілмейтін қасиет түрі: %s"
 
-#: gtk/inspector/prop-editor.c:1385
+#: gtk/inspector/prop-editor.c:1388
 msgctxt "column number"
 msgid "None"
 msgstr "Ешнәрсе"
 
-#: gtk/inspector/prop-editor.c:1422
+#: gtk/inspector/prop-editor.c:1425
 msgid "Attribute:"
 msgstr "Атрибут:"
 
-#: gtk/inspector/prop-editor.c:1425
+#: gtk/inspector/prop-editor.c:1428
 msgid "Model"
 msgstr "Модель"
 
-#: gtk/inspector/prop-editor.c:1430
+#: gtk/inspector/prop-editor.c:1433
 msgid "Column:"
 msgstr "Баған:"
 
 #. Translators: %s is a type name, for example
 #. * Action from 0x2345678 (GtkApplicationWindow)
 #.
-#: gtk/inspector/prop-editor.c:1529
+#: gtk/inspector/prop-editor.c:1532
 #, c-format
 msgid "Action from: %p (%s)"
 msgstr "Кімнен әрекет: %p (%s)"
 
-#: gtk/inspector/prop-editor.c:1584
+#: gtk/inspector/prop-editor.c:1587
 msgid "Reset"
 msgstr "Тастау"
 
-#: gtk/inspector/prop-editor.c:1592
+#: gtk/inspector/prop-editor.c:1595
 msgctxt "GtkSettings source"
 msgid "Default"
 msgstr "Үнсіз келісім бойынша"
 
-#: gtk/inspector/prop-editor.c:1595
+#: gtk/inspector/prop-editor.c:1598
 msgctxt "GtkSettings source"
 msgid "Theme"
 msgstr "Тема"
 
-#: gtk/inspector/prop-editor.c:1598
+#: gtk/inspector/prop-editor.c:1601
 msgctxt "GtkSettings source"
 msgid "XSettings"
 msgstr "XSettings"
 
-#: gtk/inspector/prop-editor.c:1602
+#: gtk/inspector/prop-editor.c:1605
 msgctxt "GtkSettings source"
 msgid "Application"
 msgstr "Қолданба"
 
-#: gtk/inspector/prop-editor.c:1605
+#: gtk/inspector/prop-editor.c:1608
 msgctxt "GtkSettings source"
 msgid "Unknown"
 msgstr "Белгісіз"
 
-#: gtk/inspector/prop-editor.c:1608
+#: gtk/inspector/prop-editor.c:1611
 msgid "Source:"
 msgstr "Қайнар көзі:"
 
@@ -4147,7 +4141,7 @@ msgstr "Қайнар көзі:"
 msgid "Defined At"
 msgstr "Анықталған жері"
 
-#: gtk/inspector/recorder.c:1922
+#: gtk/inspector/recorder.c:1865
 #, c-format
 msgid "Saving RenderNode failed"
 msgstr "RenderNode сақтау сәтсіз аяқталды"
@@ -6239,15 +6233,14 @@ msgid "No Fonts Found"
 msgstr "Қаріптер табылмады"
 
 #: gtk/ui/gtkmediacontrols.ui:47
-#| msgid "List Position"
 msgctxt "media controls"
 msgid "Position"
-msgstr "Орны"
+msgstr "Қызметі"
 
 #: gtk/ui/gtkmediacontrols.ui:65
 msgctxt "media controls"
 msgid "Volume"
-msgstr "Дыбыс деңгейі"
+msgstr "Том"
 
 #: gtk/print/ui/gtkpagesetupunixdialog.ui:30
 msgid "_Format for:"
@@ -6592,8 +6585,6 @@ msgid "After"
 msgstr "Кейін"
 
 #: modules/printbackends/gtkprintbackendcpdb.c:592
-#| msgctxt "printer option"
-#| msgid "Print at"
 msgid "Print at"
 msgstr "Баспаға шығару орны"
 
@@ -7193,8 +7184,7 @@ msgstr ""
 #: tools/gtk-builder-tool-enumerate.c:56 tools/gtk-builder-tool-preview.c:179
 #: tools/gtk-builder-tool-preview.c:180 tools/gtk-builder-tool-screenshot.c:360
 #: tools/gtk-builder-tool-simplify.c:2529 tools/gtk-builder-tool-validate.c:261
-#: tools/gtk-path-tool-render.c:62 tools/gtk-rendernode-tool-info.c:208
-#: tools/gtk-rendernode-tool-show.c:102
+#: tools/gtk-rendernode-tool-info.c:202 tools/gtk-rendernode-tool-show.c:102
 msgid "FILE"
 msgstr "ФАЙЛ"
 
@@ -7226,10 +7216,9 @@ msgid "Use style from CSS file"
 msgstr "CSS файлынан стильді пайдалану"
 
 #: tools/gtk-builder-tool-preview.c:187 tools/gtk-builder-tool-screenshot.c:370
-#: tools/gtk-builder-tool-validate.c:268 tools/gtk-rendernode-tool-render.c:204
-#: tools/gtk-rendernode-tool-show.c:109
+#: tools/gtk-builder-tool-validate.c:268 tools/gtk-rendernode-tool-show.c:109
+#: tools/gtk-rendernode-tool-render.c:204
 #, c-format
-#| msgid "Could not initialize EGL display"
 msgid "Could not initialize windowing system\n"
 msgstr "Терезелерді басқару жүйесін іске қосу мүмкін емес\n"
 
@@ -7245,7 +7234,6 @@ msgstr ".ui файлы көрсетілмеген\n"
 
 #: tools/gtk-builder-tool-preview.c:214
 #, c-format
-#| msgid "Can only simplify a single .ui file without --replace\n"
 msgid "Can only preview a single .ui file\n"
 msgstr "Тек бір .ui файлын алдын-ала қарауға болады\n"
 
@@ -7282,7 +7270,6 @@ msgstr "Шығыс %s ішіне жазылды.\n"
 #: tools/gtk-builder-tool-screenshot.c:336
 #: tools/gtk-rendernode-tool-render.c:176
 #, c-format
-#| msgid "Failed to open file %s : %s\n"
 msgid "Failed to save %s: %s\n"
 msgstr "%s сақтау сәтсіз аяқталды: %s\n"
 
@@ -7309,7 +7296,6 @@ msgstr ".ui файлын суретке өңдеп шығару."
 
 #: tools/gtk-builder-tool-screenshot.c:397
 #, c-format
-#| msgid "Can only simplify a single .ui file without --replace\n"
 msgid "Can only render a single .ui file to a single output file\n"
 msgstr "Тек бір .ui файлын бір шығыс файлға өңдеп шығаруға болады\n"
 
@@ -7320,25 +7306,21 @@ msgstr "%s:%d: '%s' қасиеті үшін мәнді талдау мүмкін
 
 #: tools/gtk-builder-tool-simplify.c:658
 #, c-format
-#| msgid "Cell property %s::%s not found\n"
 msgid "Property %s not found"
 msgstr "%s қасиеті табылмады"
 
 #: tools/gtk-builder-tool-simplify.c:661
 #, c-format
-#| msgid "Packing property %s::%s not found\n"
 msgid "Packing property %s not found"
 msgstr "%s орау қасиеті табылмады"
 
 #: tools/gtk-builder-tool-simplify.c:664
 #, c-format
-#| msgid "Cell property %s::%s not found\n"
 msgid "Cell property %s not found"
 msgstr "%s ұяшық қасиеті табылмады"
 
 #: tools/gtk-builder-tool-simplify.c:667
 #, c-format
-#| msgid "Cell property %s::%s not found\n"
 msgid "Layout property %s not found"
 msgstr "%s жайма қасиеті табылмады"
 
@@ -7366,7 +7348,6 @@ msgstr "“%s” оқу сәтсіз аяқталды: %s\n"
 
 #: tools/gtk-builder-tool-simplify.c:2510
 #, c-format
-#| msgid "Failed to write %s: “%s”\n"
 msgid "Failed to write “%s”: “%s”\n"
 msgstr "\"%s\" жазу сәтсіз аяқталды: \"%s\"\n"
 
@@ -7389,7 +7370,6 @@ msgstr "Тек бір .ui файлын --replace опциясыз оңайлат
 
 #: tools/gtk-builder-tool-validate.c:45
 #, c-format
-#| msgid "Failed to open file %s : %s\n"
 msgid "Failed to lookup template parent type %s\n"
 msgstr "%s үлгісінің аталық түрін табу сәтсіз аяқталды\n"
 
@@ -7464,265 +7444,8 @@ msgstr "%s: ондай қолданба жоқ %s"
 msgid "%s: error launching application: %s\n"
 msgstr "%s: қолданбаны жөнелту қатесі: %s\n"
 
-#: tools/gtk-path-tool.c:35
-#, c-format
-msgid ""
-"Usage:\n"
-"  gtk4-path-tool [COMMAND] [OPTION…] PATH\n"
-"\n"
-"Perform various tasks on paths.\n"
-"\n"
-"Commands:\n"
-"  decompose    Decompose the path\n"
-"  show         Display the path in a window\n"
-"  render       Render the path as an image\n"
-"  info         Print information about the path\n"
-"\n"
-msgstr ""
-"Қолданылуы:\n"
-"  gtk4-path-tool [КОМАНДА] [ОПЦИЯ…] ОРНАЛАСУ\n"
-"\n"
-"Жолдарға әр түрлі әрекеттері орындау.\n"
-"\n"
-"Командалар:\n"
-"  decompose    Жолды бөлу\n"
-"  show         Жолды терезеде көрсету\n"
-"  render       Жолды сурет ретінде өңдеу\n"
-"  info         Жол туралы ақпаратты шығару\n"
-"\n"
-
-#: tools/gtk-path-tool-decompose.c:75
-msgid "Allow quadratic Bézier curves"
-msgstr "Квадраттық Безье қисықтарын рұқсат ету"
-
-#: tools/gtk-path-tool-decompose.c:76
-msgid "Allow cubic Bézier curves"
-msgstr "Текшелік Безье қисықтарын рұқсат ету"
-
-#: tools/gtk-path-tool-decompose.c:77 tools/gtk-path-tool-info.c:88
-#: tools/gtk-path-tool-render.c:63 tools/gtk-path-tool-show.c:132
-msgid "PATH"
-msgstr "ЖОЛ"
-
-#: tools/gtk-path-tool-decompose.c:89
-msgid "Decompose a path."
-msgstr "Жолды бөлу."
-
-#: tools/gtk-path-tool-decompose.c:102 tools/gtk-path-tool-info.c:112
-msgid "No paths given."
-msgstr "Жол көрсетілмеген."
-
-#: tools/gtk-path-tool-decompose.c:128
-msgid "That didn't work out."
-msgstr "Бұл нәтиже бермеді."
-
-#: tools/gtk-path-tool-info.c:99
-#| msgid "Could not retrieve information about the file"
-msgid "Print information about a path."
-msgstr "Жол туралы ақпаратты шығару."
-
-#: tools/gtk-path-tool-info.c:119
-msgid "Path is empty."
-msgstr "Жол бос болып тұр."
-
-#: tools/gtk-path-tool-info.c:125
-msgid "Path is closed"
-msgstr "Жол жабық"
-
-#: tools/gtk-path-tool-info.c:134
-#, c-format
-msgid "%d contours"
-msgstr "%d контур"
-
-#: tools/gtk-path-tool-info.c:136
-#, c-format
-#| msgid "Fractions"
-msgid "%d operations"
-msgstr "%d әрекет"
-
-#: tools/gtk-path-tool-info.c:140
-#, c-format
-#| msgctxt "Script"
-#| msgid "Balinese"
-msgid "%d lines"
-msgstr "%d жол"
-
-#: tools/gtk-path-tool-info.c:145
-#, c-format
-msgid "%d quadratics"
-msgstr "%d квадрат"
-
-#: tools/gtk-path-tool-info.c:150
-#, c-format
-msgid "%d cubics"
-msgstr "%d текше"
-
-#: tools/gtk-path-tool-render.c:52 tools/gtk-path-tool-show.c:122
-msgid "Fill rule (winding, even-odd)"
-msgstr "Толтыру ережесі (орам, жұп-тақ)"
-
-#: tools/gtk-path-tool-render.c:52 tools/gtk-path-tool-render.c:56
-#: tools/gtk-path-tool-render.c:57 tools/gtk-path-tool-render.c:58
-#: tools/gtk-path-tool-render.c:59 tools/gtk-path-tool-render.c:60
-#: tools/gtk-path-tool-render.c:61 tools/gtk-path-tool-show.c:122
-#: tools/gtk-path-tool-show.c:126 tools/gtk-path-tool-show.c:127
-#: tools/gtk-path-tool-show.c:128 tools/gtk-path-tool-show.c:129
-#: tools/gtk-path-tool-show.c:130 tools/gtk-path-tool-show.c:131
-msgid "VALUE"
-msgstr "МӘНІ"
-
-#: tools/gtk-path-tool-render.c:53 tools/gtk-path-tool-show.c:123
-msgid "Foreground color"
-msgstr "Алдыңғы көрініс түсі"
-
-#: tools/gtk-path-tool-render.c:53 tools/gtk-path-tool-render.c:54
-#: tools/gtk-path-tool-show.c:123 tools/gtk-path-tool-show.c:124
-msgid "COLOR"
-msgstr "ТҮС"
-
-#: tools/gtk-path-tool-render.c:54 tools/gtk-path-tool-show.c:124
-msgid "Background color"
-msgstr "Фон түсі"
-
-#: tools/gtk-path-tool-render.c:55 tools/gtk-path-tool-show.c:125
-msgid "Stroke the path instead of filling it"
-msgstr "Жолды толтырудың орнына сызып шығу"
-
-#: tools/gtk-path-tool-render.c:56 tools/gtk-path-tool-show.c:126
-msgid "Line width (number)"
-msgstr "Жол ені (сан)"
-
-#: tools/gtk-path-tool-render.c:57 tools/gtk-path-tool-show.c:127
-msgid "Line cap (butt, round, square)"
-msgstr "Сызық ұшы (соңы, дөңгелек, шаршы)"
-
-#: tools/gtk-path-tool-render.c:58 tools/gtk-path-tool-show.c:128
-msgid "Line join (miter, miter-clip, round, bevel, arcs)"
-msgstr "Сызықтар қосылуы (өткір, өткір кесілген, дөңгелек, кесілген, арка)"
-
-#: tools/gtk-path-tool-render.c:59 tools/gtk-path-tool-show.c:129
-msgid "Miter limit (number)"
-msgstr "Өткір қосылу шегі (сан)"
-
-#: tools/gtk-path-tool-render.c:60 tools/gtk-path-tool-show.c:130
-msgid "Dash pattern (comma-separated numbers)"
-msgstr "Штрихтеу өрнегі (үтірмен ажыратылған сандар)"
-
-#: tools/gtk-path-tool-render.c:61 tools/gtk-path-tool-show.c:131
-msgid "Dash offset (number)"
-msgstr "Штрихтау шегінісі (сан)"
-
-#: tools/gtk-path-tool-render.c:62
-msgid "The output file"
-msgstr "Шығыс файлы"
-
-#: tools/gtk-path-tool-render.c:81 tools/gtk-path-tool-show.c:145
-#| msgid "Could not initialize EGL display"
-msgid "Could not initialize windowing system"
-msgstr "Терезелерді басқару жүйесін іске қосу мүмкін емес"
-
-#: tools/gtk-path-tool-render.c:89
-#| msgid "Unsupported depth %u in png image"
-msgid "Render the path to a png image."
-msgstr "Жолды png суретіне өңдеп шығару."
-
-#: tools/gtk-path-tool-render.c:102 tools/gtk-path-tool-show.c:166
-msgid "No path specified"
-msgstr "Орналасу көрсетілмеген"
-
-#: tools/gtk-path-tool-render.c:108
-msgid "Can only render a single path"
-msgstr "Тек бір жолды өңдеп шығаруға болады"
-
-#: tools/gtk-path-tool-render.c:114 tools/gtk-path-tool-show.c:178
-msgid "fill rule"
-msgstr "толтыру ережесі"
-
-#: tools/gtk-path-tool-render.c:118 tools/gtk-path-tool-show.c:182
-msgid "line cap"
-msgstr "сызық ұшы"
-
-#: tools/gtk-path-tool-render.c:119 tools/gtk-path-tool-show.c:183
-msgid "line join"
-msgstr "сызықтар қосылуы"
-
-#: tools/gtk-path-tool-render.c:143 tools/gtk-path-tool-show.c:207
-#, c-format
-#| msgid "Failed to open file '%s': %s"
-msgid "Failed to parse '%s' as number"
-msgstr "'%s' мәнін сан ретінде талдау мүмкін емес"
-
-#: tools/gtk-path-tool-render.c:187
-#, c-format
-#| msgid "Saving CSS failed"
-msgid "Saving png to '%s' failed"
-msgstr "PNG файлын '%s' ішіне сақтау сәтсіз аяқталды"
-
-#: tools/gtk-path-tool-render.c:194
-#, c-format
-msgid "Output written to '%s'."
-msgstr "Шығыс \"%s\" ішіне жазылды."
-
-#: tools/gtk-path-tool-show.c:43 tools/gtk-path-tool-show.c:78
-msgid "Path Preview"
-msgstr "Жолды алдын-ала қарау"
-
-#: tools/gtk-path-tool-show.c:153
-msgid "Display the path."
-msgstr "Жолды көрсету."
-
-#: tools/gtk-path-tool-show.c:172
-msgid "Can only show a single path"
-msgstr "Тек бір жолды көрсете алады"
-
-#: tools/gtk-path-tool-utils.c:58
-#, c-format
-#| msgid "Failed to read from temporary file"
-msgid "Failed to read from standard input: %s\n"
-msgstr "Стандартты кірістен оқу қатесі: %s\n"
-
-#: tools/gtk-path-tool-utils.c:64
-#, c-format
-msgid "Error reading from standard input: %s\n"
-msgstr "Стандартты кірістен оқу қатесі: %s\n"
-
-#: tools/gtk-path-tool-utils.c:83
-#, c-format
-#| msgid "Failed to open file '%s': %s"
-msgid "Failed to parse '%s' as path.\n"
-msgstr "'%s' мәнін орналасу ретінде талдау мүмкін емес\n"
-
-#: tools/gtk-path-tool-utils.c:109
-#, c-format
-#| msgid "Failed to open file '%s': %s"
-msgid "Failed to parse '%s' as %s."
-msgstr "'%s' мәнін %s ретінде талдау мүмкін емес."
-
-#: tools/gtk-path-tool-utils.c:111
-msgid "Possible values: "
-msgstr "Мүмкін мәндер: "
-
-#: tools/gtk-path-tool-utils.c:135
-#, c-format
-#| msgid "Could not add a bookmark"
-msgid "Could not parse '%s' as color"
-msgstr "'%s' мәнін түс ретінде талдау мүмкін емес"
-
 #: tools/gtk-rendernode-tool.c:35
 #, c-format
-#| msgid ""
-#| "Usage:\n"
-#| "  gtk-builder-tool [COMMAND] [OPTION…] FILE\n"
-#| "\n"
-#| "Perform various tasks on GtkBuilder .ui files.\n"
-#| "\n"
-#| "Commands:\n"
-#| "  validate     Validate the file\n"
-#| "  simplify     Simplify the file\n"
-#| "  enumerate    List all named objects\n"
-#| "  preview      Preview the file\n"
-#| "  screenshot   Take a screenshot of the file\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  gtk4-rendernode-tool [COMMAND] [OPTION…] FILE\n"
@@ -7746,43 +7469,49 @@ msgstr ""
 "  render       Торап скриншотын түсіру\n"
 "\n"
 
-#: tools/gtk-rendernode-tool-info.c:185
+#: tools/gtk-rendernode-tool-info.c:179
 #, c-format
 msgid "Number of nodes: %u\n"
 msgstr "Тораптар саны: %u\n"
 
-#: tools/gtk-rendernode-tool-info.c:192
+#: tools/gtk-rendernode-tool-info.c:186
 #, c-format
 msgid "Depth: %u\n"
 msgstr "Тереңдігі: %u\n"
 
-#: tools/gtk-rendernode-tool-info.c:195
+#: tools/gtk-rendernode-tool-info.c:189
 #, c-format
 msgid "Bounds: %g x %g\n"
 msgstr "Шекаралар: %g x %g\n"
 
-#: tools/gtk-rendernode-tool-info.c:196
+#: tools/gtk-rendernode-tool-info.c:190
 #, c-format
 msgid "Origin: %g %g\n"
 msgstr "Түпнұсқа: %g %g\n"
 
-#: tools/gtk-rendernode-tool-info.c:217
-#| msgid "Could not retrieve information about the file"
+#: tools/gtk-rendernode-tool-info.c:211
 msgid "Provide information about the render node."
 msgstr "Өңдеп шығару торабы туралы ақпаратты ұсыну."
 
-#: tools/gtk-rendernode-tool-info.c:230 tools/gtk-rendernode-tool-render.c:225
-#: tools/gtk-rendernode-tool-show.c:130
+#: tools/gtk-rendernode-tool-info.c:224 tools/gtk-rendernode-tool-show.c:130
+#: tools/gtk-rendernode-tool-render.c:225
 #, c-format
-#| msgid "No .ui file specified\n"
 msgid "No .node file specified\n"
 msgstr "Ешбір .node файлы көрсетілмеген\n"
 
-#: tools/gtk-rendernode-tool-info.c:236
+#: tools/gtk-rendernode-tool-info.c:230
 #, c-format
-#| msgid "Can only simplify a single .ui file without --replace\n"
 msgid "Can only accept a single .node file\n"
 msgstr "Тек бір .node файлын қабылдай алады\n"
+
+#: tools/gtk-rendernode-tool-show.c:117
+msgid "Show the render node."
+msgstr "Өңдеу торабын көрсету."
+
+#: tools/gtk-rendernode-tool-show.c:136
+#, c-format
+msgid "Can only preview a single .node file\n"
+msgstr "Тек бір .node файлын алдын-ала қарауға болады\n"
 
 #: tools/gtk-rendernode-tool-render.c:123
 #, c-format
@@ -7795,7 +7524,6 @@ msgstr ""
 
 #: tools/gtk-rendernode-tool-render.c:137
 #, c-format
-#| msgid "Failed to open file %s : %s\n"
 msgid "Failed to generate SVG: %s\n"
 msgstr "SVG жасау сәтсіз аяқталды: %s\n"
 
@@ -7816,21 +7544,15 @@ msgstr ".node файлын сурет ретінде өңдеп шығару."
 msgid "Can only render a single .node file to a single output file\n"
 msgstr "Тек бір .node файлын бір шығыс файлға өңдеп шығаруға болады\n"
 
-#: tools/gtk-rendernode-tool-show.c:117
-msgid "Show the render node."
-msgstr "Өңдеу торабын көрсету."
-
-#: tools/gtk-rendernode-tool-show.c:136
-#, c-format
-#| msgid "Can only simplify a single .ui file without --replace\n"
-msgid "Can only preview a single .node file\n"
-msgstr "Тек бір .node файлын алдын-ала қарауға болады\n"
-
 #: tools/gtk-rendernode-tool-utils.c:51
 #, c-format
-#| msgid "Error creating folder '%s': %s"
 msgid "Error at %s: %s\n"
 msgstr "%s жеріндегі қате: %s\n"
+
+#: tools/gtk-rendernode-tool-utils.c:69
+#, c-format
+msgid "Failed to load node file: %s\n"
+msgstr "Торап файлын жүктеу қатемен аяқталды: %s\n"
 
 #: tools/updateiconcache.c:1391
 #, c-format
@@ -8330,6 +8052,10 @@ msgstr ""
 #~ msgctxt "Script"
 #~ msgid "Unknown"
 #~ msgstr "Белгісіз"
+
+#~ msgctxt "Script"
+#~ msgid "Balinese"
+#~ msgstr "Балилік"
 
 #~ msgctxt "Script"
 #~ msgid "Cuneiform"
@@ -9037,6 +8763,10 @@ msgstr ""
 #~ msgstr "Бас_паға шығару"
 
 #~ msgctxt "Stock label"
+#~ msgid "Print Pre_view"
+#~ msgstr "Баспа а_лдында қарау"
+
+#~ msgctxt "Stock label"
 #~ msgid "_Properties"
 #~ msgstr "Қас_иеттері"
 
@@ -9237,6 +8967,9 @@ msgstr ""
 
 #~ msgid "Size of the palette in 8 bit mode"
 #~ msgstr "8 биттік режиміндегі палитра өлшемі"
+
+#~ msgid "COLORS"
+#~ msgstr "ТҮСТЕР"
 
 #~ msgid "Opening %s"
 #~ msgstr "%s ашу"
@@ -10251,6 +9984,9 @@ msgstr ""
 #~ msgid "_Insert Unicode Control Character"
 #~ msgstr "Unicode б_асқару таңбасын кірістіру"
 
+#~ msgid "Could not add a bookmark"
+#~ msgstr "Бетбелгіні қосу мүмкін емес"
+
 #~ msgid "Could not remove bookmark"
 #~ msgstr "Бетбелгіні өшіру мүмкін емес"
 
@@ -10368,6 +10104,9 @@ msgstr ""
 
 #~ msgid "Could not get information for file '%s': %s"
 #~ msgstr "'%s' файлы үшін ақпаратты алу мүмкін емес: %s"
+
+#~ msgid "Failed to open file '%s': %s"
+#~ msgstr "'%s' файлын ашу сәтсіз: %s"
 
 #~ msgid ""
 #~ "Failed to load image '%s': reason not known, probably a corrupt image file"
@@ -10567,6 +10306,9 @@ msgstr ""
 
 #~ msgid "Failed to open temporary file"
 #~ msgstr "Уақытша файлды ашу сәтсіз"
+
+#~ msgid "Failed to read from temporary file"
+#~ msgstr "Уақытша файлдан оқу сәтсіз"
 
 #~ msgid "Failed to open '%s' for writing: %s"
 #~ msgstr "Жазу үшін '%s' ашу сәтсіз: %s"

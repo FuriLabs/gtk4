@@ -21,7 +21,6 @@
 #include "gskrenderer.h"
 #include "gskprofilerprivate.h"
 #include "gskdebugprivate.h"
-#include "gskoffloadprivate.h"
 
 G_BEGIN_DECLS
 
@@ -38,10 +37,7 @@ struct _GskRendererClass
 {
   GObjectClass parent_class;
 
-  gboolean supports_offload;
-
   gboolean             (* realize)                              (GskRenderer            *renderer,
-                                                                 GdkDisplay             *display,
                                                                  GdkSurface             *surface,
                                                                  GError                **error);
   void                 (* unrealize)                            (GskRenderer            *renderer);

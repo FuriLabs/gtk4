@@ -54,7 +54,6 @@ typedef struct _GskGLCommandBind
    */
   guint texture : 4;
 
-  /* the sampler to use. We set sampler to 15 to indicate external textures */
   guint sampler : 4;
 
   /* The identifier for the texture created with glGenTextures(). */
@@ -101,15 +100,13 @@ typedef struct _GskGLCommandDraw
 {
   GskGLCommandBatchAny head;
 
-  guint blend : 1;
-
   /* There doesn't seem to be a limit on the framebuffer identifier that
    * can be returned, so we have to use a whole unsigned for the framebuffer
    * we are drawing to. When processing batches, we check to see if this
    * changes and adjust the render target accordingly. Some sorting is
    * performed to reduce the amount we change framebuffers.
    */
-  guint framebuffer : 31;
+  guint framebuffer;
 
   /* The number of uniforms to change. This must be less than or equal to
    * GL_MAX_UNIFORM_LOCATIONS but only guaranteed up to 1024 by any OpenGL
@@ -237,13 +234,8 @@ struct _GskGLCommandQueue
 
   /* Array of samplers that we use for mag/min filter handling. It is indexed
    * by the sampler_index() function.
-   *
    * Note that when samplers are not supported (hello GLES), we fall back to
    * setting the texture filter, but that needs to be done for every texture.
-   *
-   * Also note that we don't use all of these samplers since some combinations
-   * are invalid. An index of SAMPLER_EXTERNAL is used to indicate an external
-   * texture, which needs special sampler treatment.
    */
   GLuint samplers[GSK_GL_N_FILTERS * GSK_GL_N_FILTERS];
 
@@ -286,9 +278,6 @@ struct _GskGLCommandQueue
   /* If the GL context is new enough for sampler support */
   guint has_samplers : 1;
 
-  /* If the GL context is new enough to support swizzling (ie is not GLES2) */
-  guint can_swizzle : 1;
-
   /* If we're inside a begin/end_frame pair */
   guint in_frame : 1;
 
@@ -313,9 +302,7 @@ void                gsk_gl_command_queue_execute              (GskGLCommandQueue
                                                                const cairo_region_t *scissor,
                                                                guint                 default_framebuffer);
 int                 gsk_gl_command_queue_upload_texture       (GskGLCommandQueue    *self,
-                                                               GdkTexture           *texture,
-                                                               gboolean              ensure_mipmap,
-                                                               gboolean             *out_can_mipmap);
+                                                               GdkTexture           *texture);
 int                 gsk_gl_command_queue_create_texture       (GskGLCommandQueue    *self,
                                                                int                   width,
                                                                int                   height,
@@ -329,10 +316,8 @@ typedef struct {
 } GskGLTextureChunk;
 
 int                 gsk_gl_command_queue_upload_texture_chunks(GskGLCommandQueue    *self,
-                                                               gboolean              ensure_mipmap,
                                                                unsigned int          n_chunks,
-                                                               GskGLTextureChunk    *chunks,
-                                                               gboolean             *out_can_mipmap);
+                                                               GskGLTextureChunk    *chunks);
 
 guint               gsk_gl_command_queue_create_framebuffer   (GskGLCommandQueue    *self);
 gboolean            gsk_gl_command_queue_create_render_target (GskGLCommandQueue    *self,

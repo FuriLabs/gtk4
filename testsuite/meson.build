@@ -16,15 +16,11 @@ exclude_unstable = ['flaky', 'failing']
 setups = [
   { 'backend': 'x11', 'if': x11_enabled, },
   { 'backend': 'wayland', 'if': wayland_enabled, 'is_default': true, },
-  { 'name': 'wayland_gles2',
+  { 'name': 'wayland_gles',
     'backend': 'wayland', 'if': wayland_enabled,
-    'env': ['GDK_DEBUG=default-settings',
+    'env': ['GDK_DEBUG=gl-gles,default-settings',
             'MESA_GLES_VERSION_OVERRIDE=2.0',
             'GSK_MAX_TEXTURE_SIZE=1024',
-           ], },
-  { 'name': 'wayland_gl',
-    'backend': 'wayland', 'if': wayland_enabled,
-    'env': ['GDK_DEBUG=gl-prefer-gl,default-settings',
            ], },
   { 'backend': 'win32', 'if': os_win32 },
   { 'backend': 'broadway', 'if': broadway_enabled, },
@@ -41,9 +37,8 @@ foreach setup : setups
       exclude += 'gsk-compare-broadway'
     endif
 
-    if name == 'wayland_gles2'
-      # exclude tests that are failing with the small texture size in this setup
-      exclude += 'wayland_gles2_failing'
+    if name == 'wayland_gles'
+      exclude += 'wayland_gles_failing'
     endif
 
     env = common_env + [
@@ -65,6 +60,7 @@ foreach setup : setups
   endif
 endforeach
 
+subdir('performance')
 subdir('gdk')
 subdir('gsk')
 subdir('gtk')

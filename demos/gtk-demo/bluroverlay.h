@@ -18,7 +18,8 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#ifndef __BLUR_OVERLAY_H__
+#define __BLUR_OVERLAY_H__
 
 #include <gtk/gtk.h>
 
@@ -59,3 +60,5 @@ void       blur_overlay_set_child   (BlurOverlay *overlay,
                                      GtkWidget   *widget);
 
 G_END_DECLS
+
+#endif /* __BLUR_OVERLAY_H__ */

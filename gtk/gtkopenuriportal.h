@@ -18,7 +18,7 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#ifndef __G_OPEN_URI_PORTAL_H__
 
 #include "gtkwindow.h"
 #include <glib.h>
@@ -28,15 +28,9 @@ G_BEGIN_DECLS
 
 gboolean gtk_openuri_portal_is_available (void);
 
-typedef enum
-{
- GTK_OPENURI_FLAGS_ASK      = 1 << 0,
- GTK_OPENURI_FLAGS_WRITABLE = 1 << 1,
-} GtkOpenuriFlags;
-
 void     gtk_openuri_portal_open_async   (GFile               *file,
                                           gboolean             open_folder,
-                                          GtkOpenuriFlags      flags,
+                                          gboolean             always_ask,
                                           GtkWindow           *window,
                                           GCancellable        *cancellable,
                                           GAsyncReadyCallback  callback,
@@ -55,3 +49,5 @@ gboolean gtk_openuri_portal_open_uri_finish (GAsyncResult        *result,
                                              GError             **error);
 
 G_END_DECLS
+
+#endif

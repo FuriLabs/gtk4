@@ -130,6 +130,7 @@ struct _GtkStringSet {
   int used_in_chunk;
 };
 
+#ifdef G_ENABLE_DEBUG
 static void
 dump_string_set (GtkStringSet *set)
 {
@@ -152,6 +153,7 @@ dump_string_set (GtkStringSet *set)
       g_print ("%s\n", string);
     }
 }
+#endif
 
 static void
 gtk_string_set_init (GtkStringSet *set)
@@ -2017,6 +2019,7 @@ load_themes (GtkIconTheme *self)
 
   self->last_stat_time = g_get_monotonic_time ();
 
+#ifdef G_ENABLE_DEBUG
   if (GTK_DISPLAY_DEBUG_CHECK (self->display, ICONTHEME))
     {
       GList *l;
@@ -2033,6 +2036,7 @@ load_themes (GtkIconTheme *self)
 
       dump_string_set (&self->icons);
     }
+#endif
 }
 
 static gboolean
@@ -2151,11 +2155,13 @@ real_choose_icon (GtkIconTheme      *self,
   key.flags = flags;
 
   /* This is used in the icontheme unit test */
+#ifdef G_ENABLE_DEBUG
   if (GTK_DISPLAY_DEBUG_CHECK (self->display, ICONTHEME))
     {
       for (i = 0; icon_names[i]; i++)
         gdk_debug_message ("\tlookup name: %s", icon_names[i]);
     }
+#endif
 
   icon = icon_cache_lookup (self, &key);
   if (icon)
@@ -2260,12 +2266,14 @@ real_choose_icon (GtkIconTheme      *self,
   /* Fall back to missing icon */
   if (icon == NULL)
     {
+#ifdef G_ENABLE_DEBUG
       if (GTK_DEBUG_CHECK (ICONFALLBACK))
         {
           char *s = g_strjoinv (", ", (char **)icon_names);
           gdk_debug_message ("No icon found in %s (or fallbacks) for: %s", self->current_theme, s);
           g_free (s);
         }
+#endif
       icon = icon_paintable_new ("image-missing", size, scale);
       icon->filename = g_strdup (IMAGE_MISSING_RESOURCE_PATH);
       icon->is_resource = TRUE;

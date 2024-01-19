@@ -134,10 +134,6 @@ gboolean     gdk_display_get_setting (GdkDisplay *display,
                                       const char *name,
                                       GValue     *value);
 
-GDK_AVAILABLE_IN_4_14
-GdkDmabufFormats *
-             gdk_display_get_dmabuf_formats (GdkDisplay *display);
-
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkDisplay, g_object_unref)
 
 G_END_DECLS

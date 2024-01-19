@@ -14,8 +14,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
-
-#pragma once
+#ifndef __GTK_SECRETS_UTILS_H__
+#define __GTK_SECRETS_UTILS_H__
 
 #include <glib.h>
 
@@ -37,3 +37,5 @@ void  gtk_cups_secrets_service_store      (char                     **auth_info,
                                            const char                *printer_uri);
 
 G_END_DECLS
+
+#endif /* __GTK_SECRETS_UTILS_H__ */

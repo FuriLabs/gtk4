@@ -21,7 +21,7 @@
 
 G_BEGIN_DECLS
 
-char *_gtk_get_theme_dir (void) G_GNUC_MALLOC;
+char *_gtk_get_theme_dir (void);
 
 const char *_gtk_css_provider_get_theme_dir (GtkCssProvider *provider);
 

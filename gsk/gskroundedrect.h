@@ -44,6 +44,8 @@ G_BEGIN_DECLS
                                                                        GRAPHENE_SIZE_INIT(0, 0),\
                                                                     }}
 
+typedef struct _GskRoundedRect           GskRoundedRect;
+
 struct _GskRoundedRect
 {
   graphene_rect_t bounds;

@@ -57,28 +57,19 @@ foreach t : tests
 endforeach
 
 internal_tests = [
-  { 'name': 'image' },
-  { 'name': 'texture' },
-  { 'name': 'gltexture' },
+  'image',
+  'texture',
+  'gltexture',
 ]
 
-if host_machine.system() != 'windows'
-  internal_tests += { 'name': 'dmabuftexture', 'suites': 'failing' }
-endif
-
-
 foreach t : internal_tests
-  test_name = t.get('name')
-  test_exe = executable(test_name,
-    sources: '@0@.c'.format(test_name),
+  test_exe = executable(t, '@0@.c'.format(t),
     c_args: common_cflags + ['-DGTK_COMPILATION'],
     dependencies: libgtk_static_dep,
     install: false,
   )
 
-  suites = ['gdk'] + t.get('suites', [])
-
-  test(test_name, test_exe,
+  test(t, test_exe,
     args: [ '--tap', '-k' ],
     protocol: 'tap',
     env: [
@@ -86,6 +77,6 @@ foreach t : internal_tests
       'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
       'DBUS_SESSION_BUS_ADDRESS=',
     ],
-    suite: suites,
+    suite: 'gdk',
   )
 endforeach

@@ -408,14 +408,8 @@ gtk_string_list_buildable_init (GtkBuildableIface *iface)
 /* {{{ GObject implementation */
 
 enum {
-  PROP_0,
-  PROP_ITEM_TYPE,
-  PROP_N_ITEMS,
-  PROP_STRINGS,
-  N_PROPS
+  PROP_STRINGS = 1
 };
-
-static GParamSpec *properties[N_PROPS] = { NULL, };
 
 G_DEFINE_TYPE_WITH_CODE (GtkStringList, gtk_string_list, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
@@ -431,30 +425,6 @@ gtk_string_list_dispose (GObject *object)
   objects_clear (&self->items);
 
   G_OBJECT_CLASS (gtk_string_list_parent_class)->dispose (object);
-}
-
-static void
-gtk_string_list_get_property (GObject    *object,
-                              guint       prop_id,
-                              GValue     *value,
-                              GParamSpec *pspec)
-{
-  GtkStringList *self = GTK_STRING_LIST (object);
-
-  switch (prop_id)
-    {
-    case PROP_ITEM_TYPE:
-      g_value_set_gtype (value, gtk_string_list_get_item_type (G_LIST_MODEL (self)));
-      break;
-
-    case PROP_N_ITEMS:
-      g_value_set_uint (value, gtk_string_list_get_n_items (G_LIST_MODEL (self)));
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
-    }
 }
 
 static void
@@ -484,44 +454,17 @@ gtk_string_list_class_init (GtkStringListClass *class)
   GObjectClass *gobject_class = G_OBJECT_CLASS (class);
 
   gobject_class->dispose = gtk_string_list_dispose;
-  gobject_class->get_property = gtk_string_list_get_property;
   gobject_class->set_property = gtk_string_list_set_property;
-
-  /**
-   * GtkStringList:item-type:
-   *
-   * The type of items. See [method@Gio.ListModel.get_item_type].
-   *
-   * Since: 4.14
-   **/
-  properties[PROP_ITEM_TYPE] =
-    g_param_spec_gtype ("item-type", NULL, NULL,
-                        G_TYPE_OBJECT,
-                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
-
-  /**
-   * GtkStringList:n-items:
-   *
-   * The number of items. See [method@Gio.ListModel.get_n_items].
-   *
-   * Since: 4.14
-   **/
-  properties[PROP_N_ITEMS] =
-    g_param_spec_uint ("n-items", NULL, NULL,
-                       0, G_MAXUINT, 0,
-                       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GtkStringList:strings:
    *
    * Since: 4.10
    */
-  properties[PROP_STRINGS] =
+  g_object_class_install_property (gobject_class, PROP_STRINGS,
       g_param_spec_boxed ("strings", NULL, NULL,
                           G_TYPE_STRV,
-                          G_PARAM_WRITABLE|G_PARAM_STATIC_STRINGS|G_PARAM_CONSTRUCT_ONLY);
-
-  g_object_class_install_properties (gobject_class, N_PROPS, properties);
+                          G_PARAM_WRITABLE|G_PARAM_STATIC_STRINGS|G_PARAM_CONSTRUCT_ONLY));
 }
 
 static void
@@ -595,9 +538,6 @@ gtk_string_list_splice (GtkStringList      *self,
 
   if (n_removals || n_additions)
     g_list_model_items_changed (G_LIST_MODEL (self), position, n_removals, n_additions);
-
-  if (n_removals != n_additions)
-    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
 }
 
 /**
@@ -619,7 +559,6 @@ gtk_string_list_append (GtkStringList *self,
   objects_append (&self->items, gtk_string_object_new (string));
 
   g_list_model_items_changed (G_LIST_MODEL (self), objects_get_size (&self->items) - 1, 0, 1);
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
 }
 
 /**
@@ -646,7 +585,6 @@ gtk_string_list_take (GtkStringList *self,
   objects_append (&self->items, gtk_string_object_new_take (string));
 
   g_list_model_items_changed (G_LIST_MODEL (self), objects_get_size (&self->items) - 1, 0, 1);
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_N_ITEMS]);
 }
 
 /**

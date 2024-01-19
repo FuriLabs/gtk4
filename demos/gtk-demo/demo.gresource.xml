@@ -127,7 +127,6 @@
     <file>fishbowl.ui</file>
     <file>gtkfishbowl.c</file>
     <file>gtkfishbowl.h</file>
-    <file>tiger.node</file>
   </gresource>
   <gresource prefix="/frames">
     <file>frames.ui</file>
@@ -336,11 +335,6 @@
     <file>paintable_symbolic.c</file>
     <file>panes.c</file>
     <file>password_entry.c</file>
-    <file>path_fill.c</file>
-    <file>path_maze.c</file>
-    <file>path_spinner.c</file>
-    <file>path_walk.c</file>
-    <file>path_text.c</file>
     <file>peg_solitaire.c</file>
     <file>pickers.c</file>
     <file>printing.c</file>
@@ -425,13 +419,6 @@
   </gresource>
   <gresource prefix="/fontrendering">
     <file>fontrendering.ui</file>
-  </gresource>
-  <gresource prefix="/path_walk">
-    <file>path_walk.ui</file>
-    <file compressed="true">path_world.txt</file>
-  </gresource>
-  <gresource prefix="/path_text">
-    <file>path_text.ui</file>
   </gresource>
   <gresource prefix="/org/gtk/Demo4">
     <file>icons/16x16/actions/application-exit.png</file>

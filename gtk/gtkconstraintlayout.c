@@ -1099,6 +1099,7 @@ gtk_constraint_layout_allocate (GtkLayoutManager *manager,
                                 child_baseline);
     }
 
+#ifdef G_ENABLE_DEBUG
   if (GTK_DEBUG_CHECK (LAYOUT))
     {
       GHashTableIter iter;
@@ -1120,6 +1121,7 @@ gtk_constraint_layout_allocate (GtkLayoutManager *manager,
                    gtk_constraint_variable_get_value (var_height));
         }
     }
+#endif
 
   /* The allocation stay constraints are not needed any more */
   gtk_constraint_solver_remove_constraint (solver, stay_w);

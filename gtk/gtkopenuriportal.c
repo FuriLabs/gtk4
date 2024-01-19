@@ -112,7 +112,7 @@ typedef struct {
   GFile *file;
   char *uri;
   gboolean open_folder;
-  GtkOpenuriFlags flags;
+  gboolean always_ask;
   GDBusConnection *connection;
   GCancellable *cancellable;
   GTask *task;
@@ -275,6 +275,7 @@ open_uri (OpenUriData         *data,
 {
   GFile *file = data->file;
   gboolean open_folder = data->open_folder;
+  gboolean always_ask = data->always_ask;
   GTask *task;
   GVariant *opts = NULL;
   int i;
@@ -319,13 +320,8 @@ open_uri (OpenUriData         *data,
   if (activation_token)
     g_variant_builder_add (&opt_builder, "{sv}", "activation_token", g_variant_new_string (activation_token));
 
-  if (!open_folder)
-    {
-      if (data->flags & GTK_OPENURI_FLAGS_ASK)
-        g_variant_builder_add (&opt_builder, "{sv}", "ask", g_variant_new_boolean (TRUE));
-      if (data->flags & GTK_OPENURI_FLAGS_WRITABLE)
-        g_variant_builder_add (&opt_builder, "{sv}", "writable", g_variant_new_boolean (TRUE));
-    }
+  if (always_ask && !open_folder)
+    g_variant_builder_add (&opt_builder, "{sv}", "ask", g_variant_new_boolean (always_ask));
 
   opts = g_variant_builder_end (&opt_builder);
 
@@ -461,7 +457,7 @@ window_handle_exported (GtkWindow  *window,
 void
 gtk_openuri_portal_open_async (GFile               *file,
                                gboolean             open_folder,
-                               GtkOpenuriFlags      flags,
+                               gboolean             always_ask,
                                GtkWindow           *parent,
                                GCancellable        *cancellable,
                                GAsyncReadyCallback  callback,
@@ -481,7 +477,7 @@ gtk_openuri_portal_open_async (GFile               *file,
   data->parent = parent ? g_object_ref (parent) : NULL;
   data->file = g_object_ref (file);
   data->open_folder = open_folder;
-  data->flags = flags;
+  data->always_ask = always_ask;
   data->cancellable = cancellable ? g_object_ref (cancellable) : NULL;
   data->task = g_task_new (parent, cancellable, callback, user_data);
   g_task_set_check_cancellable (data->task, FALSE);

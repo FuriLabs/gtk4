@@ -195,11 +195,11 @@ static const GdkDebugKey gtk_debug_keys[] = {
   { "builder", GTK_DEBUG_BUILDER, "Trace GtkBuilder operation" },
   { "builder-objects", GTK_DEBUG_BUILDER_OBJECTS, "Log unused GtkBuilder objects" },
   { "no-css-cache", GTK_DEBUG_NO_CSS_CACHE, "Disable style property cache" },
-  { "interactive", GTK_DEBUG_INTERACTIVE, "Enable the GTK inspector" },
+  { "interactive", GTK_DEBUG_INTERACTIVE, "Enable the GTK inspector", TRUE },
   { "snapshot", GTK_DEBUG_SNAPSHOT, "Generate debug render nodes" },
   { "accessibility", GTK_DEBUG_A11Y, "Information about accessibility state changes" },
   { "iconfallback", GTK_DEBUG_ICONFALLBACK, "Information about icon fallback" },
-  { "invert-text-dir", GTK_DEBUG_INVERT_TEXT_DIR, "Invert the default text direction" },
+  { "invert-text-dir", GTK_DEBUG_INVERT_TEXT_DIR, "Invert the default text direction", TRUE },
 };
 
 /* This checks to see if the process is running suid or sgid
@@ -247,7 +247,7 @@ static gboolean do_setlocale = TRUE;
 /**
  * gtk_disable_setlocale:
  *
- * Prevents [func@Gtk.init] and [func@Gtk.init_check] from automatically calling
+ * Prevents [id@gtk_init] and [id@gtk_init_check] from automatically calling
  * `setlocale (LC_ALL, "")`.
  *
  * You would want to use this function if you wanted to set the locale for
@@ -1198,8 +1198,8 @@ gtk_synthesize_crossing_events (GtkRoot         *toplevel,
     {
       widget = gtk_widget_stack_get (&target_array, i);
 
-      if (i > 0)
-        crossing.new_descendent = gtk_widget_stack_get (&target_array, i - 1);
+      if (i < gtk_widget_stack_get_size (&target_array) - 1)
+        crossing.new_descendent = gtk_widget_stack_get (&target_array, i + 1);
       else
         crossing.new_descendent = NULL;
 
@@ -1219,10 +1219,9 @@ gtk_synthesize_crossing_events (GtkRoot         *toplevel,
         }
       else
         {
-          crossing.old_descendent = (old_target && ancestor) ? crossing.new_descendent : NULL;
+          crossing.old_descendent = old_target ? crossing.new_descendent : NULL;
         }
 
-      check_crossing_invariants (widget, &crossing);
       translate_coordinates (surface_x, surface_y, &x, &y, widget);
       gtk_widget_handle_crossing (widget, &crossing, x, y);
       if (crossing_type == GTK_CROSSING_POINTER)
@@ -1697,7 +1696,7 @@ gtk_main_do_event (GdkEvent *event)
       {
         GdkDrop *drop = gdk_dnd_event_get_drop (event);
         gtk_drop_begin_event (drop, gdk_event_get_event_type (event));
-        gtk_propagate_event (grab_widget, event);
+        gtk_propagate_event (target_widget, event);
         gtk_drop_end_event (drop);
       }
       break;

@@ -495,6 +495,7 @@ static void
 print_modifiers (GdkDisplay        *display,
                  struct xkb_keymap *keymap)
 {
+#ifdef G_ENABLE_DEBUG
   int i, j;
   uint32_t real;
   struct xkb_state *state;
@@ -537,6 +538,7 @@ print_modifiers (GdkDisplay        *display,
   g_string_free (str, TRUE);
 
   xkb_state_unref (state);
+#endif
 }
 
 void

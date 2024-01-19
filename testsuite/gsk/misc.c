@@ -1,6 +1,10 @@
 #include <gtk/gtk.h>
 #include "gsk/gskrendernodeprivate.h"
 
+#ifdef GDK_RENDERING_GL
+#include <gsk/gl/gskglrenderer.h>
+#endif
+
 #include <gobject/gvaluecollector.h>
 
 static void

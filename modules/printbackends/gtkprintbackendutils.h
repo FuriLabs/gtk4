@@ -17,8 +17,11 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#ifndef __GTK_PRINT_BACKEND_UTILS_H__
+#define __GTK_PRINT_BACKEND_UTILS_H__
 
 char *random_string                          (int size);
 char *localtime_to_utctime                   (const char *local_time);
 gboolean supports_am_pm                      (void);
+
+#endif /* __GTK_PRINT_BACKEND_UTILS_H__ */

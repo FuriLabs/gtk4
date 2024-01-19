@@ -49,8 +49,6 @@
 
 #include <glib/gi18n-lib.h>
 #include <gdk/gdktextureprivate.h>
-#include <gdk/gdksurfaceprivate.h>
-#include <gdk/gdksubsurfaceprivate.h>
 #include "gtk/gtkdebug.h"
 #include "gtk/gtkbuiltiniconprivate.h"
 #include "gtk/gtkrendernodepaintableprivate.h"
@@ -300,12 +298,6 @@ create_list_model_for_render_node (GskRenderNode *node)
     case GSK_ROUNDED_CLIP_NODE:
       return create_render_node_list_model ((GskRenderNode *[1]) { gsk_rounded_clip_node_get_child (node) }, 1);
 
-    case GSK_FILL_NODE:
-      return create_render_node_list_model ((GskRenderNode *[1]) { gsk_fill_node_get_child (node) }, 1);
-
-    case GSK_STROKE_NODE:
-      return create_render_node_list_model ((GskRenderNode *[1]) { gsk_stroke_node_get_child (node) }, 1);
-
     case GSK_SHADOW_NODE:
       return create_render_node_list_model ((GskRenderNode *[1]) { gsk_shadow_node_get_child (node) }, 1);
 
@@ -365,9 +357,6 @@ create_list_model_for_render_node (GskRenderNode *node)
 
     case GSK_DEBUG_NODE:
       return create_render_node_list_model ((GskRenderNode *[1]) { gsk_debug_node_get_child (node) }, 1);
-
-    case GSK_SUBSURFACE_NODE:
-      return create_render_node_list_model ((GskRenderNode *[1]) { gsk_subsurface_node_get_child (node) }, 1);
     }
 }
 
@@ -436,10 +425,6 @@ node_type_name (GskRenderNodeType type)
       return "Clip";
     case GSK_ROUNDED_CLIP_NODE:
       return "Rounded Clip";
-    case GSK_FILL_NODE:
-      return "Fill";
-    case GSK_STROKE_NODE:
-      return "Stroke";
     case GSK_SHADOW_NODE:
       return "Shadow";
     case GSK_BLEND_NODE:
@@ -454,8 +439,6 @@ node_type_name (GskRenderNodeType type)
       return "Blur";
     case GSK_GL_SHADER_NODE:
       return "GL Shader";
-    case GSK_SUBSURFACE_NODE:
-      return "Subsurface";
     }
 }
 
@@ -483,8 +466,6 @@ node_name (GskRenderNode *node)
     case GSK_REPEAT_NODE:
     case GSK_CLIP_NODE:
     case GSK_ROUNDED_CLIP_NODE:
-    case GSK_FILL_NODE:
-    case GSK_STROKE_NODE:
     case GSK_SHADOW_NODE:
     case GSK_BLEND_NODE:
     case GSK_MASK_NODE:
@@ -492,7 +473,6 @@ node_name (GskRenderNode *node)
     case GSK_TEXT_NODE:
     case GSK_BLUR_NODE:
     case GSK_GL_SHADER_NODE:
-    case GSK_SUBSURFACE_NODE:
       return g_strdup (node_type_name (gsk_render_node_get_node_type (node)));
 
     case GSK_DEBUG_NODE:
@@ -914,20 +894,6 @@ add_float_row (GListStore  *store,
   g_free (text);
 }
 
-static const char *
-enum_to_nick (GType type,
-              int   value)
-{
-  GEnumClass *class;
-  GEnumValue *v;
-
-  class = g_type_class_ref (type);
-  v = g_enum_get_value (class, value);
-  g_type_class_unref (class);
-
-  return v->value_nick;
-}
-
 static void
 populate_render_node_properties (GListStore    *store,
                                  GskRenderNode *node)
@@ -1167,7 +1133,9 @@ populate_render_node_properties (GListStore    *store,
     case GSK_BLEND_NODE:
       {
         GskBlendMode mode = gsk_blend_node_get_blend_mode (node);
-        add_text_row (store, "Blendmode", enum_to_nick (GSK_TYPE_BLEND_MODE, mode));
+        tmp = g_enum_to_string (GSK_TYPE_BLEND_MODE, mode);
+        add_text_row (store, "Blendmode", tmp);
+        g_free (tmp);
       }
       break;
 
@@ -1409,39 +1377,6 @@ populate_render_node_properties (GListStore    *store,
       }
       break;
 
-    case GSK_FILL_NODE:
-      {
-        GskPath *path = gsk_fill_node_get_path (node);
-        GskFillRule fill_rule = gsk_fill_node_get_fill_rule (node);
-
-        tmp = gsk_path_to_string (path);
-        add_text_row (store, "Path", tmp);
-        g_free (tmp);
-
-        add_text_row (store, "Fill rule", enum_to_nick (GSK_TYPE_FILL_RULE, fill_rule));
-      }
-      break;
-
-    case GSK_STROKE_NODE:
-      {
-        GskPath *path = gsk_stroke_node_get_path (node);
-        const GskStroke *stroke = gsk_stroke_node_get_stroke (node);
-        GskLineCap line_cap = gsk_stroke_get_line_cap (stroke);
-        GskLineJoin line_join = gsk_stroke_get_line_join (stroke);
-
-        tmp = gsk_path_to_string (path);
-        add_text_row (store, "Path", tmp);
-        g_free (tmp);
-
-        tmp = g_strdup_printf ("%.2f", gsk_stroke_get_line_width (stroke));
-        add_text_row (store, "Line width", tmp);
-        g_free (tmp);
-
-        add_text_row (store, "Line cap", enum_to_nick (GSK_TYPE_LINE_CAP, line_cap));
-        add_text_row (store, "Line join", enum_to_nick (GSK_TYPE_LINE_JOIN, line_join));
-      }
-      break;
-
     case GSK_CONTAINER_NODE:
       tmp = g_strdup_printf ("%d", gsk_container_node_get_n_children (node));
       add_text_row (store, "Children", tmp);
@@ -1498,17 +1433,6 @@ populate_render_node_properties (GListStore    *store,
         add_text_row (store, "Matrix", s);
         g_free (s);
         add_text_row (store, "Category", category_names[gsk_transform_get_category (transform)]);
-      }
-      break;
-
-    case GSK_SUBSURFACE_NODE:
-      {
-        GdkSubsurface *subsurface = gsk_subsurface_node_get_subsurface (node);
-        char s[40];
-
-        g_snprintf (s, sizeof (s), "%p", subsurface);
-
-        add_text_row (store, "Subsurface", s);
       }
       break;
 

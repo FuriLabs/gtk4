@@ -46,10 +46,7 @@ print_attribute (PangoAttribute *attr, GString *string)
       g_free (text);
     }
   else if ((shape = pango_attribute_as_shape (attr)) != NULL)
-    {
-      g_assert_true (shape != NULL);
-      g_string_append_printf (string, "shape");
-    }
+    g_string_append_printf (string, "shape");
   else
     g_assert_not_reached ();
 }

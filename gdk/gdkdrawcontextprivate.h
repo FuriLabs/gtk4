@@ -46,7 +46,6 @@ struct _GdkDrawContextClass
                                                                  cairo_region_t         *update_area);
   void                  (* end_frame)                           (GdkDrawContext         *context,
                                                                  cairo_region_t         *painted);
-  void                  (* empty_frame)                         (GdkDrawContext         *context);
   void                  (* surface_resized)                     (GdkDrawContext         *context);
 };
 
@@ -55,9 +54,5 @@ void                    gdk_draw_context_surface_resized        (GdkDrawContext 
 void                    gdk_draw_context_begin_frame_full       (GdkDrawContext         *context,
                                                                  GdkMemoryDepth          depth,
                                                                  const cairo_region_t   *region);
-
-void                    gdk_draw_context_empty_frame            (GdkDrawContext         *context);
-
-
 G_END_DECLS
 

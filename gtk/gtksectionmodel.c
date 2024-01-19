@@ -66,7 +66,6 @@ gtk_section_model_default_get_section (GtkSectionModel *self,
     {
       *out_start = n_items;
       *out_end = G_MAXUINT;
-      return;
     }
 
   *out_start = 0;

@@ -108,6 +108,7 @@ gtk_icon_cache_new_for_path (const char *path)
   if (!map)
     goto done;
 
+#ifdef G_ENABLE_DEBUG
   if (GTK_DEBUG_CHECK (ICONTHEME))
     {
       CacheInfo info;
@@ -125,6 +126,7 @@ gtk_icon_cache_new_for_path (const char *path)
           goto done;
         }
     }
+#endif
 
   GTK_DEBUG (ICONTHEME, "found icon cache for %s", path);
 

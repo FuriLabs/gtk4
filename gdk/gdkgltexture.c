@@ -95,11 +95,10 @@ static gboolean
 gdk_gl_texture_invoke_callback (gpointer data)
 {
   InvokeData *invoke = data;
-  GdkGLContext *context, *previous;
+  GdkGLContext *context;
 
   context = gdk_display_get_gl_context (gdk_gl_context_get_display (invoke->self->context));
 
-  previous = gdk_gl_context_get_current ();
   gdk_gl_context_make_current (context);
 
   if (invoke->self->sync && context != invoke->self->context)
@@ -110,11 +109,6 @@ gdk_gl_texture_invoke_callback (gpointer data)
   invoke->func (invoke->self, context, invoke->data);
 
   g_atomic_int_set (&invoke->spinlock, 1);
-
-  if (previous)
-    gdk_gl_context_make_current (previous);
-  else
-    gdk_gl_context_clear_current ();
 
   return FALSE;
 }
@@ -141,7 +135,9 @@ struct _Download
 };
 
 static gboolean
-gdk_gl_texture_find_format (GdkGLContext    *context,
+gdk_gl_texture_find_format (gboolean         use_es,
+                            guint            gl_major,
+                            guint            gl_minor,
                             GdkMemoryAlpha   alpha,
                             GLint            gl_format,
                             GLint            gl_type,
@@ -151,17 +147,14 @@ gdk_gl_texture_find_format (GdkGLContext    *context,
 
   for (format = 0; format < GDK_MEMORY_N_FORMATS; format++)
     {
-      GLint q_internal_format;
-      GLenum q_format, q_type;
+      GLenum q_internal_format, q_format, q_type;
       GLint q_swizzle[4];
 
       if (gdk_memory_format_alpha (format) != alpha)
         continue;
 
-      if (!(gdk_gl_context_get_format_flags (context, format) & GDK_GL_FORMAT_RENDERABLE))
+      if (!gdk_memory_format_gl_format (format, use_es, gl_major, gl_minor, &q_internal_format, &q_format, &q_type, q_swizzle))
         continue;
-
-      gdk_memory_format_gl_format (format, &q_internal_format, &q_format, &q_type, q_swizzle);
 
       if (q_format != gl_format || q_type != gl_type)
         continue;
@@ -182,19 +175,21 @@ gdk_gl_texture_do_download (GdkGLTexture *self,
   GdkMemoryFormat format;
   gsize expected_stride;
   Download *download = download_;
-  GLint gl_internal_format;
-  GLenum gl_format, gl_type;
+  GLenum gl_internal_format, gl_format, gl_type;
   GLint gl_swizzle[4];
+  int major, minor;
 
   format = gdk_texture_get_format (texture),
   expected_stride = texture->width * gdk_memory_format_bytes_per_pixel (download->format);
+  gdk_gl_context_get_version (context, &major, &minor);
 
   if (!gdk_gl_context_get_use_es (context) &&
-      ((gdk_gl_context_get_format_flags (context, format) & GDK_GL_FORMAT_USABLE) == GDK_GL_FORMAT_USABLE))
-    {
       gdk_memory_format_gl_format (format,
+                                   FALSE,
+                                   major, minor,
                                    &gl_internal_format,
-                                   &gl_format, &gl_type, gl_swizzle);
+                                   &gl_format, &gl_type, gl_swizzle))
+    {
       if (download->stride == expected_stride &&
           download->format == format)
         {
@@ -232,7 +227,7 @@ gdk_gl_texture_do_download (GdkGLTexture *self,
   else
     {
       GdkMemoryFormat actual_format;
-      GLenum gl_read_format, gl_read_type;
+      GLint gl_read_format, gl_read_type;
       GLuint fbo;
 
       glGenFramebuffers (1, &fbo);
@@ -240,34 +235,26 @@ gdk_gl_texture_do_download (GdkGLTexture *self,
       glFramebufferTexture2D (GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, self->id, 0);
       if (gdk_gl_context_check_version (context, "4.3", "3.1"))
         {
-          GLint read_format, read_type;
-          glGetFramebufferParameteriv (GL_FRAMEBUFFER, GL_IMPLEMENTATION_COLOR_READ_FORMAT, &read_format);
-          glGetFramebufferParameteriv (GL_FRAMEBUFFER, GL_IMPLEMENTATION_COLOR_READ_TYPE, &read_type);
-          if (gdk_gl_texture_find_format (context, gdk_memory_format_alpha (format), read_format, read_type, &actual_format))
+          glGetFramebufferParameteriv (GL_FRAMEBUFFER, GL_IMPLEMENTATION_COLOR_READ_FORMAT, &gl_read_format);
+          glGetFramebufferParameteriv (GL_FRAMEBUFFER, GL_IMPLEMENTATION_COLOR_READ_TYPE, &gl_read_type);
+          if (!gdk_gl_texture_find_format (TRUE, major, minor, gdk_memory_format_alpha (format), gl_read_format, gl_read_type, &actual_format))
             {
-              gl_read_format = read_format;
-              gl_read_type = read_type;
-            }
-          else
-            {
-              actual_format = gdk_memory_depth_get_format (gdk_memory_format_get_depth (format));
-              if (gdk_memory_format_alpha (format) == GDK_MEMORY_ALPHA_STRAIGHT)
-                actual_format = gdk_memory_format_get_straight (actual_format);
-
-              gdk_memory_format_gl_format (actual_format,
-                                           &gl_internal_format,
-                                           &gl_read_format, &gl_read_type, gl_swizzle);
+              gl_read_format = GL_RGBA;
+              gl_read_type = GL_UNSIGNED_BYTE;
+              if (gdk_memory_format_alpha (format) == GDK_MEMORY_ALPHA_PREMULTIPLIED)
+                actual_format = GDK_MEMORY_R8G8B8A8_PREMULTIPLIED; /* pray */
+              else
+                actual_format = GDK_MEMORY_R8G8B8A8;
             }
         }
       else
         {
-          actual_format = gdk_memory_depth_get_format (gdk_memory_format_get_depth (format));
-          if (gdk_memory_format_alpha (format) == GDK_MEMORY_ALPHA_STRAIGHT)
-            actual_format = gdk_memory_format_get_straight (actual_format);
-
-          gdk_memory_format_gl_format (actual_format,
-                                       &gl_internal_format,
-                                       &gl_read_format, &gl_read_type, gl_swizzle);
+          gl_read_format = GL_RGBA;
+          gl_read_type = GL_UNSIGNED_BYTE;
+          if (gdk_memory_format_alpha (format) == GDK_MEMORY_ALPHA_PREMULTIPLIED)
+            actual_format = GDK_MEMORY_R8G8B8A8_PREMULTIPLIED; /* pray */
+          else
+            actual_format = GDK_MEMORY_R8G8B8A8;
         }
 
       if (download->format == actual_format &&

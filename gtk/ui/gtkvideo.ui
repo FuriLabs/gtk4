@@ -4,10 +4,7 @@
     <child>
       <object class="GtkOverlay" id="box">
         <child>
-          <object class="GtkGraphicsOffload" id="graphics_offload">
-            <property name="enabled">disabled</property>
-            <property name="child"><object class="GtkPicture" id="video_picture"/></property>
-          </object>
+          <object class="GtkPicture" id="video_picture"/>
         </child>
         <child type="overlay">
           <object class="GtkImage" id="overlay_icon">

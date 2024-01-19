@@ -1,4 +1,6 @@
+----
 Title: Cairo interaction
+----
 
 ## Functions to support using cairo
 

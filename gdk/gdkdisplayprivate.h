@@ -25,8 +25,6 @@
 #include "gdksurfaceprivate.h"
 #include "gdkkeysprivate.h"
 #include "gdkdeviceprivate.h"
-#include "gdkdmabufprivate.h"
-#include "gdkdmabufdownloaderprivate.h"
 
 #ifdef GDK_RENDERING_VULKAN
 #include <vulkan/vulkan.h>
@@ -40,17 +38,6 @@ G_BEGIN_DECLS
 
 
 typedef struct _GdkDisplayClass GdkDisplayClass;
-
-typedef enum {
-  GDK_VULKAN_FEATURE_DMABUF                     = 1 << 0,
-  GDK_VULKAN_FEATURE_YCBCR                      = 1 << 1,
-  GDK_VULKAN_FEATURE_DESCRIPTOR_INDEXING        = 1 << 2,
-  GDK_VULKAN_FEATURE_DYNAMIC_INDEXING           = 1 << 3,
-  GDK_VULKAN_FEATURE_NONUNIFORM_INDEXING        = 1 << 4,
-  GDK_VULKAN_FEATURE_SEMAPHORE_EXPORT           = 1 << 5,
-  GDK_VULKAN_FEATURE_SEMAPHORE_IMPORT           = 1 << 6,
-  GDK_VULKAN_FEATURE_INCREMENTAL_PRESENT        = 1 << 7,
-} GdkVulkanFeatures;
 
 /* Tracks information about the device grab on this display */
 typedef struct
@@ -118,8 +105,6 @@ struct _GdkDisplay
   char *vk_pipeline_cache_etag;
   guint vk_save_pipeline_cache_source;
   GHashTable *vk_shader_modules;
-  GdkDmabufFormats *vk_dmabuf_formats;
-  GdkVulkanFeatures vulkan_features;
 
   guint vulkan_refcount;
 #endif /* GDK_RENDERING_VULKAN */
@@ -128,15 +113,6 @@ struct _GdkDisplay
   guint have_egl_buffer_age : 1;
   guint have_egl_no_config_context : 1;
   guint have_egl_pixel_format_float : 1;
-  guint have_egl_dma_buf_import : 1;
-  guint have_egl_dma_buf_export : 1;
-
-  GdkDmabufFormats *dmabuf_formats;
-  GdkDmabufDownloader *dmabuf_downloaders[4];
-
-   /* Cached data the EGL dmabuf downloader */
-  GdkDmabufFormats *egl_dmabuf_formats;
-  GdkDmabufFormats *egl_external_formats;
 };
 
 struct _GdkDisplayClass
@@ -231,12 +207,7 @@ gulong              _gdk_display_get_next_serial      (GdkDisplay       *display
 void                _gdk_display_pause_events         (GdkDisplay       *display);
 void                _gdk_display_unpause_events       (GdkDisplay       *display);
 
-void                gdk_display_init_dmabuf           (GdkDisplay       *self);
-
-gboolean            gdk_display_has_vulkan_feature    (GdkDisplay       *self,
-                                                       GdkVulkanFeatures feature);
 GdkVulkanContext *  gdk_display_create_vulkan_context (GdkDisplay       *self,
-                                                       GdkSurface       *surface,
                                                        GError          **error);
 
 GdkGLContext *      gdk_display_get_gl_context        (GdkDisplay       *display);

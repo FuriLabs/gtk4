@@ -744,7 +744,5 @@ gtk_viewport_scroll_to (GtkViewport   *viewport,
 
   gtk_adjustment_animate_to_value (viewport->adjustment[GTK_ORIENTATION_HORIZONTAL], x);
   gtk_adjustment_animate_to_value (viewport->adjustment[GTK_ORIENTATION_VERTICAL], y);
-
-  g_clear_pointer (&scroll, gtk_scroll_info_unref);
 }
 

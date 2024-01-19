@@ -22,8 +22,6 @@
 
 #include "gskglrenderer.h"
 
-#include "gskglshader.h"
-
 G_BEGIN_DECLS
 
 gboolean gsk_gl_renderer_try_compile_gl_shader (GskGLRenderer  *renderer,

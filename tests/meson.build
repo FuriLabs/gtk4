@@ -125,10 +125,7 @@ gtk_tests = [
 ]
 
 if os_unix
-  gtk_tests += [
-    ['testfontchooserdialog'],
-    ['testdmabuf'],
-  ]
+  gtk_tests += [['testfontchooserdialog']]
 endif
 
 if x11_enabled
@@ -149,3 +146,10 @@ foreach t: gtk_tests
     dependencies: [libgtk_dep, libm],
   )
 endforeach
+
+if libsysprof_dep.found()
+  executable('testperf',
+    sources: 'testperf.c',
+    dependencies: [libsysprof_dep, platform_gio_dep, libm],
+  )
+endif

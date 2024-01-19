@@ -23,13 +23,8 @@
 #include "gdkenumtypes.h"
 #include "gdksurface.h"
 #include "gdktoplevel.h"
-#include <graphene.h>
 
 G_BEGIN_DECLS
-
-typedef struct _GdkSubsurface GdkSubsurface;
-
-typedef struct _GskRenderNode GskRenderNode;
 
 struct _GdkSurface
 {
@@ -97,8 +92,6 @@ struct _GdkSurface
   cairo_region_t *opaque_region;
 
   GdkSeat *current_shortcuts_inhibited_seat;
-
-  GPtrArray *subsurfaces;
 };
 
 struct _GdkSurfaceClass
@@ -153,9 +146,6 @@ struct _GdkSurfaceClass
                                            cairo_region_t *region);
   void         (* request_layout)         (GdkSurface     *surface);
   gboolean     (* compute_size)           (GdkSurface     *surface);
-
-  GdkSubsurface *
-               (* create_subsurface)      (GdkSurface          *surface);
 };
 
 #define GDK_SURFACE_DESTROYED(d) (((GdkSurface *)(d))->destroyed)
@@ -344,11 +334,7 @@ void           gdk_surface_request_motion (GdkSurface *surface);
 
 gboolean       gdk_surface_supports_edge_constraints    (GdkSurface *surface);
 
-GdkSubsurface * gdk_surface_create_subsurface  (GdkSurface          *surface);
-void            gdk_surface_destroy_subsurface (GdkSurface          *surface,
-                                                GdkSubsurface       *subsurface);
-gsize           gdk_surface_get_n_subsurfaces  (GdkSurface          *surface);
-GdkSubsurface * gdk_surface_get_subsurface     (GdkSurface          *surface,
-                                                gsize                idx);
+
 
 G_END_DECLS
+

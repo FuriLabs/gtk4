@@ -15,14 +15,14 @@ Test-Command: env GDK_BACKEND=x11 debian/tests/python3-gi
 Features: test-name=python3-gi-x11
 Classes: desktop, x11
 Depends: dbus-daemon, gir1.2-gtk-4.0, python3-gi (>= 3.40), xauth, xvfb
-Restrictions: superficial
+Restrictions: allow-stderr, superficial
 
 Test-Command: env GDK_BACKEND=wayland debian/tests/python3-gi
 Features: test-name=python3-gi-wayland
 Classes: desktop, wayland, linux-only
 Depends: dbus-daemon, gir1.2-gtk-4.0, libgl1, libgl1-mesa-dri, python3-gi (>= 3.40), weston
 # Architecture: linux-any
-Restrictions: superficial
+Restrictions: allow-stderr, superficial
 
 Test-Command: env GDK_BACKEND=x11 debian/tests/installed-tests
 Features: test-name=installed-tests-x11

@@ -1,3 +1,13 @@
+gtk4 (4.12.5+ds-2ubuntu1) noble; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - debian/tests:
+      + include the memorytexture test in the flaky set, it has been unreliable
+    - debian/control, debian/rules:
+      + Switch from the CUPS print backend to CPDB
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 26 Jan 2024 15:26:45 -0500
+
 gtk4 (4.12.5+ds-2) unstable; urgency=medium
 
   * Allow stderr for python3-gi autopkgtests to not fail

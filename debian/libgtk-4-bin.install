@@ -6,4 +6,3 @@ usr/bin/gtk4-launch
 usr/bin/gtk4-path-tool
 usr/bin/gtk4-query-settings
 usr/bin/gtk4-rendernode-tool
-usr/bin/gtk4-update-icon-cache

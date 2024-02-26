@@ -206,10 +206,11 @@ $(info Architecture with qemu buildds detected, increasing test timeout a lot)
 test_timeout_multiplier = 20
 endif
 
+export LIBGL_ALWAYS_SOFTWARE=true
+
 ifneq ($(filter mips%,$(DEB_HOST_ARCH_CPU)),)
 $(info Disabling use of llvmpipe due to mips family CPU, see https://bugs.debian.org/993550)
 export GALLIUM_DRIVER=softpipe
-export LIBGL_ALWAYS_SOFTWARE=true
 endif
 
 fuzzy_gsk_compare = \

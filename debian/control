@@ -24,11 +24,6 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                gobject-introspection (>= 1.78.1-9~) <cross>,
                gsettings-desktop-schemas <!nocheck>,
                iso-codes <!nocheck>,
-               libavcodec-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x] <pkg.gtk4.ffmpeg>,
-               libavdevice-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x] <pkg.gtk4.ffmpeg>,
-               libavfilter-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x] <pkg.gtk4.ffmpeg>,
-               libavformat-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x] <pkg.gtk4.ffmpeg>,
-               libavutil-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x] <pkg.gtk4.ffmpeg>,
                libcairo2-dev,
                libcolord-dev <!pkg.gtk4.nocolord>,
                libcloudproviders-dev (>= 0.3.1),
@@ -50,8 +45,6 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libpolkit-gobject-1-dev [linux-any],
                librsvg2-common [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32] <!nocheck>,
                librsvg2-dev (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
-               libswresample-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x] <pkg.gtk4.ffmpeg>,
-               libswscale-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x] <pkg.gtk4.ffmpeg>,
                libsysprof-capture-4-dev (>= 3.40.1) [amd64 arm64 armel armhf i386 mips64el ppc64el riscv64 s390x powerpc ppc64],
                libtiff-dev,
                libvulkan-dev [linux-any],
@@ -243,23 +236,6 @@ Description: GStreamer media backend for the GTK graphical user interface librar
  suites.
  .
  This package contains the media module that uses GStreamer as backend.
-
-Package: libgtk-4-media-ffmpeg
-Build-Profiles: <pkg.gtk4.ffmpeg>
-Section: x11
-Architecture: amd64 arm64 armel armhf i386 mips64el ppc64el s390x
-Multi-Arch: foreign
-Depends: ${misc:Depends},
-         ${shlibs:Depends},
-Description: FFmpeg media backend for the GTK graphical user interface library
- GTK is a multi-platform toolkit for creating graphical user
- interfaces. Offering a complete set of widgets, GTK is suitable
- for projects ranging from small one-off tools to complete application
- suites.
- .
- This package contains the media module that uses FFmpeg as backend.
- This module is considered incomplete and experimental, and using the
- libgtk-4-media-gstreamer module instead is recommended.
 
 Package: gtk-4-examples
 Build-Profiles: <!noinsttest>

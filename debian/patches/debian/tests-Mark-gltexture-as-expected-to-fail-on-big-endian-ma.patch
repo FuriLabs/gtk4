@@ -4,32 +4,21 @@ Subject: tests: Mark gltexture as expected to fail on big-endian machines
 
 Forwarded: not-needed, workaround
 ---
- testsuite/gdk/meson.build | 8 +++++++-
- 1 file changed, 7 insertions(+), 1 deletion(-)
+ testsuite/gdk/meson.build | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index a958735..38cf9f9 100644
---- a/testsuite/gdk/meson.build
-+++ b/testsuite/gdk/meson.build
-@@ -74,6 +74,12 @@ foreach t : internal_tests
-     install_dir: testexecdir,
-   )
+Index: gtk4-4.14.1+ds/testsuite/gdk/meson.build
+===================================================================
+--- gtk4-4.14.1+ds.orig/testsuite/gdk/meson.build	2024-03-20 17:00:36.058661277 +0100
++++ gtk4-4.14.1+ds/testsuite/gdk/meson.build	2024-03-20 17:00:36.054661336 +0100
+@@ -85,6 +85,10 @@
  
-+  suites = ['gdk']
-+
-+  if host_machine.endian() == 'big' and t == 'gltexture'
+   suites = ['gdk'] + t.get('suites', [])
+ 
++  if host_machine.endian() == 'big' and t.get('name') == 'gltexture'
 +    suites += 'failing'
 +  endif
 +
-   test(t, test_exe,
+   test(test_name, test_exe,
      args: [ '--tap', '-k' ],
      protocol: 'tap',
-@@ -82,7 +88,7 @@ foreach t : internal_tests
-       'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
-       'DBUS_SESSION_BUS_ADDRESS=',
-     ],
--    suite: 'gdk',
-+    suite: suites,
-   )
- endforeach
- 

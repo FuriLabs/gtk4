@@ -22,7 +22,7 @@ This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
  12 files changed, 353 insertions(+), 43 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index 0c42d4c..05c71bf 100644
+index 56b403f..0a9a876 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -921,6 +921,7 @@ summary('Documentation', get_option('documentation'), section: 'Build')
@@ -404,7 +404,7 @@ index 7fc4036..52c962c 100644
 +  install_data(test_data, install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index 2cc27d5..92dc6ab 100644
+index 7219726..a958735 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
 @@ -1,10 +1,13 @@
@@ -427,7 +427,7 @@ index 2cc27d5..92dc6ab 100644
  
  tests = [
    { 'name': 'array' },
-@@ -33,7 +36,8 @@ foreach t : tests
+@@ -38,7 +41,8 @@ foreach t : tests
      sources: '@0@.c'.format(test_name),
      c_args: common_cflags,
      dependencies: libgtk_dep,
@@ -437,7 +437,7 @@ index 2cc27d5..92dc6ab 100644
    )
  
    suites = ['gdk'] + t.get('suites', [])
-@@ -61,7 +65,8 @@ foreach t : internal_tests
+@@ -66,7 +70,8 @@ foreach t : internal_tests
    test_exe = executable(t, '@0@.c'.format(t),
      c_args: common_cflags + ['-DGTK_COMPILATION'],
      dependencies: libgtk_static_dep,
@@ -447,7 +447,7 @@ index 2cc27d5..92dc6ab 100644
    )
  
    test(t, test_exe,
-@@ -75,3 +80,28 @@ foreach t : internal_tests
+@@ -80,3 +85,28 @@ foreach t : internal_tests
      suite: 'gdk',
    )
  endforeach
@@ -535,7 +535,7 @@ index 7c7e3e9..77cbe47 100644
  
    test(test_name, test_exe,
 diff --git a/testsuite/gtk/meson.build b/testsuite/gtk/meson.build
-index 12b025f..f7700bb 100644
+index 744738d..a6c4731 100644
 --- a/testsuite/gtk/meson.build
 +++ b/testsuite/gtk/meson.build
 @@ -1,3 +1,6 @@
@@ -545,7 +545,7 @@ index 12b025f..f7700bb 100644
  gtk_tests_export_dynamic_ldflag = []
  
  if cc.get_id() != 'msvc'
-@@ -167,6 +170,8 @@ foreach t : tests
+@@ -172,6 +175,8 @@ foreach t : tests
      c_args: test_cargs + test_extra_cargs,
      link_args: test_extra_ldflags,
      dependencies: libgtk_dep,
@@ -554,7 +554,7 @@ index 12b025f..f7700bb 100644
    )
  
    if test_extra_suites.contains('slow')
-@@ -195,6 +200,8 @@ foreach t : internal_tests
+@@ -200,6 +205,8 @@ foreach t : internal_tests
      c_args: test_cargs + test_extra_cargs + ['-DGTK_COMPILATION'],
      link_args: test_extra_ldflags,
      dependencies: libgtk_static_dep,
@@ -563,7 +563,7 @@ index 12b025f..f7700bb 100644
    )
  
    if test_extra_suites.contains('slow')
-@@ -213,8 +220,10 @@ endforeach
+@@ -218,8 +225,10 @@ endforeach
  # FIXME: if objc autotestkeywords_CPPFLAGS += -DHAVE_OBJC=1 -x objective-c++
  if add_languages('cpp', required: false, native: false)
    test_exe = executable('autotestkeywords',
@@ -575,7 +575,7 @@ index 12b025f..f7700bb 100644
    )
    test('c++ keywords', test_exe,
      args: [ '--tap', '-k' ],
-@@ -222,6 +231,16 @@ if add_languages('cpp', required: false, native: false)
+@@ -227,6 +236,16 @@ if add_languages('cpp', required: false, native: false)
      env: test_env,
      suite: 'gtk',
    )
@@ -592,7 +592,7 @@ index 12b025f..f7700bb 100644
  endif
  
  
-@@ -247,10 +266,13 @@ focus_chain_tests = [
+@@ -252,10 +271,13 @@ focus_chain_tests = [
    #[ 'widget-factory3', 'tab-backward' ],
  ]
  
@@ -607,7 +607,7 @@ index 12b025f..f7700bb 100644
  )
  
  foreach test : focus_chain_tests
-@@ -273,6 +295,30 @@ test('potfiles', make_pot,
+@@ -278,6 +300,30 @@ test('potfiles', make_pot,
       workdir: meson.project_source_root(),
       suite: ['gtk', 'translations' ])
  

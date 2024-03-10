@@ -1,0 +1,25 @@
+From: =?utf-8?q?Jeremy_B=C3=ADcha?= <jeremy.bicha@canonical.com>
+Date: Sat, 9 Mar 2024 20:04:02 -0500
+Subject: nodeparser: Adjust test for pango 1.52.0
+
+Adjust test result for changed output resulting from
+https://gitlab.gnome.org/GNOME/pango/-/commit/d489fc8c4
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7002
+---
+ testsuite/gsk/nodeparser/widgetfactory.ref.node | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/testsuite/gsk/nodeparser/widgetfactory.ref.node b/testsuite/gsk/nodeparser/widgetfactory.ref.node
+index ac96d76..4e8ed93 100644
+--- a/testsuite/gsk/nodeparser/widgetfactory.ref.node
++++ b/testsuite/gsk/nodeparser/widgetfactory.ref.node
+@@ -1780,7 +1780,7 @@ RU5ErkJggg==\
+                   transform: translate(235, 0);
+                   child: text {
+                     color: rgba(46,52,54,0.4);
+-                    font: "Cantarell 9.1669921875";
++                    font: "Cantarell 9.167";
+                     glyphs: "50", 859 1, "%";
+                     offset: 0 13;
+                   }

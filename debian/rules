@@ -112,11 +112,11 @@ configure_flags_deb += -Dbuild-examples=true
 configure_flags_deb += -Ddemos=true
 endif
 
-ifeq ($(filter %-tests,$(built_binaries)),)
-configure_flags_deb += -Dinstall-tests=false
-else
-configure_flags_deb += -Dinstall-tests=true
-endif
+#ifeq ($(filter %-tests,$(built_binaries)),)
+#configure_flags_deb += -Dinstall-tests=false
+#else
+#configure_flags_deb += -Dinstall-tests=true
+#endif
 
 # Upstream consider the ffmpeg backend to be experimental, let's not
 # build that by default.
@@ -139,7 +139,7 @@ configure_flags_udeb = \
 	-Dbuild-examples=false \
 	-Ddemos=false \
 	-Dbuild-tests=false \
-	-Dinstall-tests=false \
+#	-Dinstall-tests=false \
 	-Dintrospection=disabled \
 	-Dwayland-backend=false \
 	-Dx11-backend=true \

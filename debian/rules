@@ -130,11 +130,11 @@ configure_flags_deb += -Dbuild-demos=true
 configure_flags_deb += -Dbuild-examples=true
 endif
 
-ifeq ($(filter %-tests,$(built_binaries)),)
-configure_flags_deb += -Dinstall-tests=false
-else
-configure_flags_deb += -Dinstall-tests=true
-endif
+#ifeq ($(filter %-tests,$(built_binaries)),)
+#configure_flags_deb += -Dinstall-tests=false
+#else
+#configure_flags_deb += -Dinstall-tests=true
+#endif
 
 ifeq ($(shell dpkg-vendor --is Ubuntu && echo yes), yes)
 # Not in main repository
@@ -149,7 +149,7 @@ configure_flags_udeb = \
 	-Dbuild-examples=false \
 	-Dbuild-demos=false \
 	-Dbuild-tests=false \
-	-Dinstall-tests=false \
+#	-Dinstall-tests=false \
 	-Dintrospection=disabled \
 	-Dvulkan=disabled \
 	-Dwayland-backend=false \

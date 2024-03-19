@@ -1,6 +1,4 @@
 gsk-Always-use-RGBA-on-big-endian-architectures.patch
-Revert-tests-Stop-copying-the-tool-tests.patch
-Revert-build-Drop-the-install-tests-option.patch
 tests-mark-headless-tests-as-flaky.patch
 debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
 debian/reftests-Allow-minor-differences-to-be-tolerated.patch
@@ -9,6 +7,5 @@ debian/subprojects-Add-gst-player-1.0-as-subporject.patch
 debian/gstreamer-player-1.0-Do-not-install-it-if-it-s-a-subproje.patch
 debian/media-Use-gstplayer-from-meson-subproject.patch
 debian/gstreamer-player-Use-GtkName-Prefix-to-avoid-issues-if-ac.patch
-debian/tests-Mark-gltexture-as-expected-to-fail-on-big-endian-ma.patch
 debian/tests-Allow-longer-for-a-dialog-to-open.patch
 nodeparser-Adjust-test-for-pango-1.52.0.patch

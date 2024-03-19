@@ -278,26 +278,6 @@ Description: example files for GTK 4
  This package contains the example files and a demonstration program
  for GTK4.
 
-Package: gtk-4-tests
-Build-Profiles: <!noinsttest>
-Section: x11
-Architecture: any
-Depends: iso-codes,
-         librsvg2-common (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
-         ${misc:Depends},
-         ${shlibs:Depends},
-         libgtk-4-1 (= ${binary:Version}),
-Recommends: gnome-desktop-testing,
-            locales | locales-all,
-Description: "as-installed" tests for GTK 4
- GTK is a multi-platform toolkit for creating graphical user
- interfaces. Offering a complete set of widgets, GTK is suitable
- for projects ranging from small one-off tools to complete application
- suites.
- .
- This package contains installable test programs, primarily for use with
- autopkgtest.
-
 Package: gir1.2-gtk-4.0
 Section: introspection
 Architecture: any

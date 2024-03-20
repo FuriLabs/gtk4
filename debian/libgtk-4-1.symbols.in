@@ -198,12 +198,14 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_display_prepare_gl@Base 4.3.2
  gdk_display_put_event@Base 4.0.0
  gdk_display_supports_input_shapes@Base 4.0.0
+ gdk_display_supports_shadow_width@Base 4.13.8
  gdk_display_sync@Base 4.0.0
  gdk_display_translate_key@Base 4.0.0
  gdk_dmabuf_downloader_get_type@Base 4.13.5
  gdk_dmabuf_error_get_type@Base 4.13.5
  gdk_dmabuf_error_quark@Base 4.13.5
  gdk_dmabuf_formats_contains@Base 4.13.5
+ gdk_dmabuf_formats_equal@Base 4.13.8
  gdk_dmabuf_formats_get_format@Base 4.13.5
  gdk_dmabuf_formats_get_n_formats@Base 4.13.5
  gdk_dmabuf_formats_get_type@Base 4.13.5
@@ -414,6 +416,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_monitor_get_manufacturer@Base 4.0.0
  gdk_monitor_get_model@Base 4.0.0
  gdk_monitor_get_refresh_rate@Base 4.0.0
+ gdk_monitor_get_scale@Base 4.13.8
  gdk_monitor_get_scale_factor@Base 4.0.0
  gdk_monitor_get_subpixel_layout@Base 4.0.0
  gdk_monitor_get_type@Base 4.0.0
@@ -1102,6 +1105,8 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_accelerator_parse@Base 4.0.0
  gtk_accelerator_parse_with_keycode@Base 4.0.0
  gtk_accelerator_valid@Base 4.0.0
+ gtk_accessible_announce@Base 4.13.8
+ gtk_accessible_announcement_priority_get_type@Base 4.13.8
  gtk_accessible_autocomplete_get_type@Base 4.0.0
  gtk_accessible_get_accessible_parent@Base 4.9.3
  gtk_accessible_get_accessible_role@Base 4.0.0
@@ -1112,6 +1117,10 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_accessible_get_platform_state@Base 4.9.3
  gtk_accessible_get_type@Base 4.0.0
  gtk_accessible_invalid_state_get_type@Base 4.0.0
+ gtk_accessible_list_get_objects@Base 4.13.8
+ gtk_accessible_list_get_type@Base 4.13.8
+ gtk_accessible_list_new_from_array@Base 4.13.8
+ gtk_accessible_list_new_from_list@Base 4.13.8
  gtk_accessible_platform_state_get_type@Base 4.9.3
  gtk_accessible_property_get_type@Base 4.0.0
  gtk_accessible_property_init_value@Base 4.0.0
@@ -1126,6 +1135,12 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_accessible_sort_get_type@Base 4.0.0
  gtk_accessible_state_get_type@Base 4.0.0
  gtk_accessible_state_init_value@Base 4.0.0
+ gtk_accessible_text_content_change_get_type@Base 4.13.8
+ gtk_accessible_text_get_type@Base 4.13.8
+ gtk_accessible_text_granularity_get_type@Base 4.13.8
+ gtk_accessible_text_update_caret_position@Base 4.13.8
+ gtk_accessible_text_update_contents@Base 4.13.8
+ gtk_accessible_text_update_selection_bound@Base 4.13.8
  gtk_accessible_tristate_get_type@Base 4.0.0
  gtk_accessible_update_next_accessible_sibling@Base 4.10.0
  gtk_accessible_update_property@Base 4.0.0
@@ -1299,6 +1314,10 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_at_context_get_accessible@Base 4.0.0
  gtk_at_context_get_accessible_role@Base 4.0.0
  gtk_at_context_get_type@Base 4.0.0
+ gtk_at_spi_socket_get_bus_name@Base 4.13.8
+ gtk_at_spi_socket_get_object_path@Base 4.13.8
+ gtk_at_spi_socket_get_type@Base 4.13.8
+ gtk_at_spi_socket_new@Base 4.13.8
  gtk_baseline_position_get_type@Base 4.0.0
  gtk_bin_layout_get_type@Base 4.0.0
  gtk_bin_layout_new@Base 4.0.0
@@ -1451,17 +1470,23 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_buttons_type_get_type@Base 4.0.0
  gtk_calendar_clear_marks@Base 4.0.0
  gtk_calendar_get_date@Base 4.0.0
+ gtk_calendar_get_day@Base 4.13.8
  gtk_calendar_get_day_is_marked@Base 4.0.0
+ gtk_calendar_get_month@Base 4.13.8
  gtk_calendar_get_show_day_names@Base 4.0.0
  gtk_calendar_get_show_heading@Base 4.0.0
  gtk_calendar_get_show_week_numbers@Base 4.0.0
  gtk_calendar_get_type@Base 4.0.0
+ gtk_calendar_get_year@Base 4.13.8
  gtk_calendar_mark_day@Base 4.0.0
  gtk_calendar_new@Base 4.0.0
  gtk_calendar_select_day@Base 4.0.0
+ gtk_calendar_set_day@Base 4.13.8
+ gtk_calendar_set_month@Base 4.13.8
  gtk_calendar_set_show_day_names@Base 4.0.0
  gtk_calendar_set_show_heading@Base 4.0.0
  gtk_calendar_set_show_week_numbers@Base 4.0.0
+ gtk_calendar_set_year@Base 4.13.8
  gtk_calendar_unmark_day@Base 4.0.0
  gtk_callback_action_get_type@Base 4.0.0
  gtk_callback_action_new@Base 4.0.0
@@ -3817,6 +3842,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_scale_add_mark@Base 4.0.0
  gtk_scale_button_get_active@Base 4.9.4
  gtk_scale_button_get_adjustment@Base 4.0.0
+ gtk_scale_button_get_has_frame@Base 4.13.8
  gtk_scale_button_get_minus_button@Base 4.0.0
  gtk_scale_button_get_plus_button@Base 4.0.0
  gtk_scale_button_get_popup@Base 4.0.0
@@ -3824,6 +3850,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_scale_button_get_value@Base 4.0.0
  gtk_scale_button_new@Base 4.0.0
  gtk_scale_button_set_adjustment@Base 4.0.0
+ gtk_scale_button_set_has_frame@Base 4.13.8
  gtk_scale_button_set_icons@Base 4.0.0
  gtk_scale_button_set_value@Base 4.0.0
  gtk_scale_clear_marks@Base 4.0.0
@@ -3910,11 +3937,15 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_search_bar_set_key_capture_widget@Base 4.0.0
  gtk_search_bar_set_search_mode@Base 4.0.0
  gtk_search_bar_set_show_close_button@Base 4.0.0
+ gtk_search_entry_get_input_hints@Base 4.13.8
+ gtk_search_entry_get_input_purpose@Base 4.13.8
  gtk_search_entry_get_key_capture_widget@Base 4.0.0
  gtk_search_entry_get_placeholder_text@Base 4.9.4
  gtk_search_entry_get_search_delay@Base 4.7.2
  gtk_search_entry_get_type@Base 4.0.0
  gtk_search_entry_new@Base 4.0.0
+ gtk_search_entry_set_input_hints@Base 4.13.8
+ gtk_search_entry_set_input_purpose@Base 4.13.8
  gtk_search_entry_set_key_capture_widget@Base 4.0.0
  gtk_search_entry_set_placeholder_text@Base 4.9.4
  gtk_search_entry_set_search_delay@Base 4.7.2

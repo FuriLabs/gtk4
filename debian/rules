@@ -105,11 +105,11 @@ configure_flags_deb += -Ddocumentation=true
 endif
 
 ifeq ($(filter %-examples,$(built_binaries)),)
+configure_flags_deb += -Dbuild-demos=false
 configure_flags_deb += -Dbuild-examples=false
-configure_flags_deb += -Ddemos=false
 else
+configure_flags_deb += -Dbuild-demos=true
 configure_flags_deb += -Dbuild-examples=true
-configure_flags_deb += -Ddemos=true
 endif
 
 ifeq ($(filter %-tests,$(built_binaries)),)

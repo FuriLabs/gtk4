@@ -70,6 +70,7 @@ Build-Depends: adwaita-icon-theme [!armel !armhf !hppa !m68k !powerpc !sh4] <!no
                locales <!nocheck> | locales-all <!nocheck>,
                meson (>= 0.63),
                pkgconf,
+               pkgconf:native,
                python3-docutils <!nodoc>,
                python3-gi (>= 3.40) [!armel !armhf !hppa !m68k !powerpc !sh4] <!nocheck>,
                sassc,

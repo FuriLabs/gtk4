@@ -1255,10 +1255,7 @@ _gtk_print_operation_platform_backend_run_dialog (GtkPrintOperation *op,
 						  GtkWindow         *parent,
 						  gboolean          *do_print)
 {
-  if (gdk_should_use_portal ())
-    return gtk_print_operation_portal_run_dialog (op, show_dialog, parent, do_print);
-  else
-    return gtk_print_operation_unix_run_dialog (op, show_dialog, parent, do_print);
+  return gtk_print_operation_portal_run_dialog (op, show_dialog, parent, do_print);
 }
 
 void
@@ -1267,10 +1264,7 @@ _gtk_print_operation_platform_backend_run_dialog_async (GtkPrintOperation       
                                                         GtkWindow                  *parent,
 							GtkPrintOperationPrintFunc  print_cb)
 {
-  if (gdk_should_use_portal ())
-    gtk_print_operation_portal_run_dialog_async (op, show_dialog, parent, print_cb);
-  else
-    gtk_print_operation_unix_run_dialog_async (op, show_dialog, parent, print_cb);
+  gtk_print_operation_portal_run_dialog_async (op, show_dialog, parent, print_cb);
 }
 
 void
@@ -1279,10 +1273,7 @@ _gtk_print_operation_platform_backend_launch_preview (GtkPrintOperation *op,
                                                       GtkWindow         *parent,
                                                       const char        *filename)
 {
-  if (gdk_should_use_portal ())
-    gtk_print_operation_portal_launch_preview (op, surface, parent, filename);
-  else
-    gtk_print_operation_unix_launch_preview (op, surface, parent, filename);
+  gtk_print_operation_portal_launch_preview (op, surface, parent, filename);
 }
 
 cairo_surface_t *

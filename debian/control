@@ -29,7 +29,7 @@ Build-Depends: adwaita-icon-theme [!armel !armhf !hppa !m68k !powerpc !sh4] <!no
                libavformat-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x] <pkg.gtk4.ffmpeg>,
                libavutil-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x] <pkg.gtk4.ffmpeg>,
                libcairo2-dev,
-               libcolord-dev [!armel !armhf !hppa !m68k !powerpc !sh4] <!pkg.gtk4.nocolord>,
+               libcolord-dev <!pkg.gtk4.nocolord>,
                libcloudproviders-dev (>= 0.3.1),
                libcups2-dev,
                libegl1-mesa-dev [linux-any],

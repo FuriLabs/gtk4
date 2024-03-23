@@ -1,3 +1,15 @@
+gtk4 (4.12.5+ds-6) UNRELEASED; urgency=medium
+
+  * Reinstate colord integration on 32-bit
+  * d/control, d/tests/build: Prefer pkgconf over pkg-config
+  * d/control, d/rules: Make it more obvious that we use the correct
+    pkgconf.
+    We intentionally compile convert-emoji with the build architecture
+    pkgconf, because we need to run it during build, but we do not need
+    to install it.
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 23 Mar 2024 10:09:29 +0000
+
 gtk4 (4.12.5+ds-5) unstable; urgency=medium
 
   * d/rules: Replace deprecated -Ddemos with -Dbuild-demos

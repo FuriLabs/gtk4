@@ -51,7 +51,7 @@ Build-Depends: adwaita-icon-theme [!armel !armhf !hppa !m68k !powerpc !sh4] <!no
                librsvg2-dev (>= 2.52.0) [amd64 arm64 i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
                libswresample-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x] <pkg.gtk4.ffmpeg>,
                libswscale-dev [amd64 arm64 armel armhf i386 mips64el ppc64el s390x] <pkg.gtk4.ffmpeg>,
-               libsysprof-capture-4-dev (>= 3.40.1) [linux-any],
+               libsysprof-capture-4-dev (>= 3.40.1) [amd64 arm64 armel armhf i386 mips64el ppc64el riscv64 s390x powerpc ppc64],
                libtiff-dev,
                libvulkan-dev [linux-any],
                libwayland-dev (>= 1.21.0) [linux-any],

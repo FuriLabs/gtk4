@@ -90,12 +90,16 @@ configure_flags_deb += -Dman-pages=false
 endif
 
 ifeq (linux,$(DEB_HOST_ARCH_OS))
-configure_flags_deb += -Dsysprof=enabled
 configure_flags_deb += -Dwayland-backend=true
 else
-configure_flags_deb += -Dsysprof=disabled
 configure_flags_deb += -Dvulkan=disabled
 configure_flags_deb += -Dwayland-backend=false
+endif
+
+ifneq (,$(filter amd64 arm64 armel armhf i386 mips64el ppc64el riscv64 s390x powerpc ppc64,$(DEB_HOST_ARCH)))
+configure_flags_deb += -Dsysprof=enabled
+else
+configure_flags_deb += -Dsysprof=disabled
 endif
 
 ifeq ($(filter %-doc,$(built_binaries)),)

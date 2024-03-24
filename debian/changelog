@@ -7,8 +7,10 @@ gtk4 (4.12.5+ds-6) UNRELEASED; urgency=medium
     We intentionally compile convert-emoji with the build architecture
     pkgconf, because we need to run it during build, but we do not need
     to install it.
+  * d/control, d/rules: Only enable sysprof on architectures that have it.
+    See #1067577.
 
- -- Simon McVittie <smcv@debian.org>  Sat, 23 Mar 2024 10:09:29 +0000
+ -- Simon McVittie <smcv@debian.org>  Sun, 24 Mar 2024 16:05:33 +0000
 
 gtk4 (4.12.5+ds-5) unstable; urgency=medium
 

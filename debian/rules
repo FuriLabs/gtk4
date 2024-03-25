@@ -281,9 +281,6 @@ ifeq (big,$(DEB_HOST_ARCH_ENDIAN))
 endif
 
 override_dh_auto_test:
-ifeq ($(DEB_HOST_ARCH_BITS)$(filter i386,$(DEB_HOST_ARCH_CPU)),32)
-	: # TODO: Tests temporarily disabled for 64-bit time_t transition
-else
 	env \
 		BUILDDIR=debian/build/deb \
 		FUZZY_GSK_COMPARE="$(fuzzy_gsk_compare)" \
@@ -296,7 +293,6 @@ else
 	debian/run-tests.sh -t $(test_timeout_multiplier) \
 		$(addprefix --no-suite=,$(skipped_suites)) \
 		$(NULL)
-endif
 
 override_dh_auto_install:
 	dh_auto_install --builddirectory=debian/build/deb --destdir=debian/install/deb

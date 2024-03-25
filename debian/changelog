@@ -1,6 +1,7 @@
 gtk4 (4.12.5+ds-6) UNRELEASED; urgency=medium
 
-  * Reinstate colord integration on 32-bit
+  * d/control, d/rules: Reinstate colord integration on 32-bit
+  * d/control, d/rules: Reinstate build-time tests on 32-bit
   * d/control, d/tests/build: Prefer pkgconf over pkg-config
   * d/control, d/rules: Make it more obvious that we use the correct
     pkgconf.
@@ -10,7 +11,7 @@ gtk4 (4.12.5+ds-6) UNRELEASED; urgency=medium
   * d/control, d/rules: Only enable sysprof on architectures that have it.
     See #1067577.
 
- -- Simon McVittie <smcv@debian.org>  Sun, 24 Mar 2024 16:05:33 +0000
+ -- Simon McVittie <smcv@debian.org>  Mon, 25 Mar 2024 11:05:31 +0000
 
 gtk4 (4.12.5+ds-5) unstable; urgency=medium
 

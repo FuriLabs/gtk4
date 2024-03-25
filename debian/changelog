@@ -1,4 +1,4 @@
-gtk4 (4.12.5+ds-6) UNRELEASED; urgency=medium
+gtk4 (4.12.5+ds-6) unstable; urgency=medium
 
   * d/control, d/rules: Reinstate colord integration on 32-bit
   * d/control, d/rules: Reinstate build-time tests on 32-bit
@@ -11,7 +11,7 @@ gtk4 (4.12.5+ds-6) UNRELEASED; urgency=medium
   * d/control, d/rules: Only enable sysprof on architectures that have it.
     See #1067577.
 
- -- Simon McVittie <smcv@debian.org>  Mon, 25 Mar 2024 11:05:31 +0000
+ -- Simon McVittie <smcv@debian.org>  Mon, 25 Mar 2024 14:45:21 +0000
 
 gtk4 (4.12.5+ds-5) unstable; urgency=medium
 

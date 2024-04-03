@@ -75,6 +75,8 @@
  * On Wayland, the settings are obtained either via a settings portal,
  * or by reading desktop settings from DConf.
  *
+ * On macOS, the settings are obtained from `NSUserDefaults`.
+ *
  * In the absence of these sharing mechanisms, GTK reads default values for
  * settings from `settings.ini` files in `/etc/gtk-4.0`, `$XDG_CONFIG_DIRS/gtk-4.0`
  * and `$XDG_CONFIG_HOME/gtk-4.0`. These files must be valid key files (see
@@ -172,6 +174,7 @@ enum {
   PROP_ALTERNATIVE_SORT_ARROWS,
   PROP_ENABLE_ANIMATIONS,
   PROP_ERROR_BELL,
+  PROP_STATUS_SHAPES,
   PROP_PRINT_BACKENDS,
   PROP_PRINT_PREVIEW_COMMAND,
   PROP_ENABLE_ACCELS,
@@ -474,6 +477,9 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * The type of subpixel antialiasing to use.
    *
    * The possible values are none, rgb, bgr, vrgb, vbgr.
+   *
+   * Note that GSK does not support subpixel antialiasing, and this
+   * setting has no effect on font rendering in GTK.
    */
   pspecs[PROP_XFT_RGBA] = g_param_spec_string ("gtk-xft-rgba", NULL, NULL,
                                                NULL,
@@ -570,6 +576,17 @@ gtk_settings_class_init (GtkSettingsClass *class)
   pspecs[PROP_ERROR_BELL] = g_param_spec_boolean ("gtk-error-bell", NULL, NULL,
                                                   TRUE,
                                                   GTK_PARAM_READWRITE);
+
+  /**
+   * GtkSettings:gtk-show-status-shapes:
+   *
+   * When %TRUE, widgets like switches include shapes to indicate their on/off state.
+   *
+   * Since: 4.14
+   */
+  pspecs[PROP_STATUS_SHAPES] = g_param_spec_boolean ("gtk-show-status-shapes", NULL, NULL,
+                                                     FALSE,
+                                                     GTK_PARAM_READWRITE);
 
   /**
    * GtkSettings:gtk-print-backends:
@@ -1409,8 +1426,6 @@ settings_update_font_options (GtkSettings *settings)
   cairo_hint_style_t hint_style;
   int antialias;
   cairo_antialias_t antialias_mode;
-  char *rgba_str;
-  cairo_subpixel_order_t subpixel_order;
   gboolean hint_font_metrics;
 
   if (settings->font_options)
@@ -1420,7 +1435,6 @@ settings_update_font_options (GtkSettings *settings)
                 "gtk-xft-antialias", &antialias,
                 "gtk-xft-hinting", &hinting,
                 "gtk-xft-hintstyle", &hint_style_str,
-                "gtk-xft-rgba", &rgba_str,
                 "gtk-hint-font-metrics", &hint_font_metrics,
                 NULL);
 
@@ -1454,35 +1468,10 @@ settings_update_font_options (GtkSettings *settings)
 
   cairo_font_options_set_hint_style (settings->font_options, hint_style);
 
-  subpixel_order = CAIRO_SUBPIXEL_ORDER_DEFAULT;
-  if (rgba_str)
-    {
-      if (strcmp (rgba_str, "rgb") == 0)
-        subpixel_order = CAIRO_SUBPIXEL_ORDER_RGB;
-      else if (strcmp (rgba_str, "bgr") == 0)
-        subpixel_order = CAIRO_SUBPIXEL_ORDER_BGR;
-      else if (strcmp (rgba_str, "vrgb") == 0)
-        subpixel_order = CAIRO_SUBPIXEL_ORDER_VRGB;
-      else if (strcmp (rgba_str, "vbgr") == 0)
-        subpixel_order = CAIRO_SUBPIXEL_ORDER_VBGR;
-    }
-
-  g_free (rgba_str);
-
-  cairo_font_options_set_subpixel_order (settings->font_options, subpixel_order);
-
-  antialias_mode = CAIRO_ANTIALIAS_DEFAULT;
   if (antialias == 0)
-    {
-      antialias_mode = CAIRO_ANTIALIAS_NONE;
-    }
-  else if (antialias == 1)
-    {
-      if (subpixel_order != CAIRO_SUBPIXEL_ORDER_DEFAULT)
-        antialias_mode = CAIRO_ANTIALIAS_SUBPIXEL;
-      else
-        antialias_mode = CAIRO_ANTIALIAS_GRAY;
-    }
+    antialias_mode = CAIRO_ANTIALIAS_NONE;
+  else
+    antialias_mode = CAIRO_ANTIALIAS_GRAY;
 
   cairo_font_options_set_antialias (settings->font_options, antialias_mode);
 }

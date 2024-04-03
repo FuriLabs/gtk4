@@ -50,18 +50,6 @@
 #include "gdkenumtypes.h"
 #include "gdkeventsprivate.h"
 
-static struct {
-  GdkDragAction action;
-  const char   *name;
-  GdkCursor    *cursor;
-} drag_cursors[] = {
-  { GDK_ACTION_ASK,     "dnd-ask",  NULL },
-  { GDK_ACTION_COPY,    "dnd-copy", NULL },
-  { GDK_ACTION_MOVE,    "dnd-move", NULL },
-  { GDK_ACTION_LINK,    "dnd-link", NULL },
-  { 0,                  "dnd-none", NULL },
-};
-
 enum {
   PROP_0,
   PROP_CONTENT,
@@ -785,6 +773,20 @@ gdk_drag_handle_source_event (GdkEvent *event)
 
   return FALSE;
 }
+
+static struct {
+  GdkDragAction action;
+  const char   *name;
+  GdkCursor    *cursor;
+} drag_cursors[] = {
+  { 0,               "default",  NULL },
+  { GDK_ACTION_ASK,  "dnd-ask",  NULL },
+  { GDK_ACTION_COPY, "copy",     NULL },
+  { GDK_ACTION_MOVE, "dnd-move", NULL }, /* Not using move here, since move is stuck using
+                                          * a mismatched visual metaphor in Adwaita
+                                          */
+  { GDK_ACTION_LINK, "alias",    NULL },
+};
 
 GdkCursor *
 gdk_drag_get_cursor (GdkDrag       *drag,

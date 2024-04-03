@@ -72,6 +72,11 @@ demos = files([
   'paintable_symbolic.c',
   'panes.c',
   'password_entry.c',
+  'path_fill.c',
+  'path_maze.c',
+  'path_spinner.c',
+  'path_walk.c',
+  'path_text.c',
   'peg_solitaire.c',
   'pickers.c',
   'printing.c',
@@ -136,6 +141,8 @@ extra_demo_sources = files([
   'unicode-names.c',
   'suggestionentry.c',
   'language-names.c',
+  'nodewidget.c',
+  'graphwidget.c',
 ])
 
 if os_unix
@@ -229,7 +236,7 @@ foreach flag: common_cflags
   endif
 endforeach
 
-gtkdemo_deps += [ demo_conf_h ]
+gtkdemo_deps += [ profile_conf_h ]
 
 executable('gtk4-demo',
   sources: [demos, demos_h, extra_demo_sources, gtkdemo_resources],

@@ -18,8 +18,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GTK_GST_SINK_PRIVATE_H__
-#define __GTK_GST_SINK_PRIVATE_H__
+#pragma once
 
 #include "gtkgstpaintableprivate.h"
 
@@ -48,11 +47,16 @@ struct _GtkGstSink
   GstVideoSink         parent;
 
   GstVideoInfo         v_info;
+#ifdef HAVE_GSTREAMER_DRM
+  GstVideoInfoDmaDrm   drm_info;
+#endif
+
   GtkGstPaintable *    paintable;
   GdkGLContext *       gdk_context;
   GstGLDisplay *       gst_display;
   GstGLContext *       gst_gdk_context;
   GstGLContext *       gst_context;
+  GdkDmabufFormats *   dmabuf_formats;
 };
 
 struct _GtkGstSinkClass
@@ -63,5 +67,3 @@ struct _GtkGstSinkClass
 GType gtk_gst_sink_get_type (void);
 
 G_END_DECLS
-
-#endif /* __GTK_GST_SINK_PRIVATE_H__ */

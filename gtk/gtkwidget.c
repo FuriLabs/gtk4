@@ -126,13 +126,13 @@
  * For example, when queried in the normal %GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH mode:
  *
  * First, the default minimum and natural width for each widget
- * in the interface will be computed using [id@gtk_widget_measure] with an
+ * in the interface will be computed using [method@Gtk.Widget.measure] with an
  * orientation of %GTK_ORIENTATION_HORIZONTAL and a for_size of -1.
  * Because the preferred widths for each widget depend on the preferred
  * widths of their children, this information propagates up the hierarchy,
  * and finally a minimum and natural width is determined for the entire
  * toplevel. Next, the toplevel will use the minimum width to query for the
- * minimum height contextual to that width using [id@gtk_widget_measure] with an
+ * minimum height contextual to that width using [method@Gtk.Widget.measure] with an
  * orientation of %GTK_ORIENTATION_VERTICAL and a for_size of the just computed
  * width. This will also be a highly recursive operation. The minimum height
  * for the minimum width is normally used to set the minimum size constraint
@@ -223,7 +223,7 @@
  * to do it.
  *
  * Of course if you are getting the size request for another widget, such
- * as a child widget, you must use [id@gtk_widget_measure]; otherwise, you
+ * as a child widget, you must use [method@Gtk.Widget.measure]; otherwise, you
  * would not properly consider widget margins, [class@Gtk.SizeGroup], and
  * so forth.
  *
@@ -240,7 +240,7 @@
  *
  * If a widget ends up baseline aligned it will be allocated all the space in
  * the parent as if it was %GTK_ALIGN_FILL, but the selected baseline can be
- * found via [id@gtk_widget_get_baseline]. If the baseline has a
+ * found via [method@Gtk.Widget.get_baseline]. If the baseline has a
  * value other than -1 you need to align the widget such that the baseline
  * appears at the position.
  *
@@ -335,7 +335,13 @@
  * which might be referenced by other widgets declared as children of the
  * `<template>` tag.
  *
- * An example of a template definition:
+ * Since, unlike the `<object>` tag, the `<template>` tag does not contain an
+ * “id” attribute, if you need to refer to the instance of the object itself that
+ * the template will create, simply refer to the template class name in an
+ * applicable element content.
+ *
+ * Here is an example of a template definition, which includes an example of
+ * this in the `<signal>` tag:
  *
  * ```xml
  * <interface>
@@ -405,7 +411,7 @@
  * ```
  *
  * You can access widgets defined in the template using the
- * [id@gtk_widget_get_template_child] function, but you will typically declare
+ * [method@Gtk.Widget.get_template_child] function, but you will typically declare
  * a pointer in the instance private data structure of your type using the same
  * name as the widget in the template definition, and call
  * [method@Gtk.WidgetClass.bind_template_child_full] (or one of its wrapper macros
@@ -4101,14 +4107,12 @@ gtk_widget_allocate (GtkWidget    *widget,
         }
 
       /* Size allocation is god... after consulting god, no further requests or allocations are needed */
-#ifdef G_ENABLE_DEBUG
       if (GTK_DISPLAY_DEBUG_CHECK (_gtk_widget_get_display (widget), GEOMETRY) &&
           gtk_widget_get_resize_needed (widget))
         {
           g_warning ("%s %p or a child called gtk_widget_queue_resize() during size_allocate().",
                      gtk_widget_get_name (widget), widget);
         }
-#endif
 
       gtk_widget_ensure_resize (widget);
       priv->alloc_needed = FALSE;
@@ -4580,7 +4584,6 @@ gtk_widget_run_controllers (GtkWidget           *widget,
               is_gesture = GTK_IS_GESTURE (controller);
               this_handled = gtk_event_controller_handle_event (controller, event, target, x, y);
 
-#ifdef G_ENABLE_DEBUG
               if (GTK_DEBUG_CHECK (KEYBINDINGS))
                 {
                   GdkEventType type = gdk_event_get_event_type (event);
@@ -4594,7 +4597,6 @@ gtk_widget_run_controllers (GtkWidget           *widget,
                                  gtk_event_controller_get_name (controller));
                     }
                 }
-#endif
 
               handled |= this_handled;
 
@@ -6536,7 +6538,7 @@ gtk_widget_update_default_pango_context (GtkWidget *widget)
     return;
 
   if (gtk_widget_update_pango_context (widget, context, _gtk_widget_get_direction (widget)))
-    gtk_widget_queue_draw (widget);
+    gtk_widget_queue_resize (widget);
 }
 
 /**
@@ -11954,7 +11956,7 @@ gtk_widget_render (GtkWidget            *widget,
   if (GDK_PROFILER_IS_RUNNING)
     {
       before_render = GDK_PROFILER_CURRENT_TIME;
-      gdk_profiler_add_mark (before_snapshot, (before_render - before_snapshot), "widget snapshot", "");
+      gdk_profiler_add_mark (before_snapshot, (before_render - before_snapshot), "Widget snapshot", "");
     }
 
   if (root != NULL)
@@ -11970,7 +11972,7 @@ gtk_widget_render (GtkWidget            *widget,
 
       gsk_render_node_unref (root);
 
-      gdk_profiler_end_mark (before_render, "widget render", "");
+      gdk_profiler_end_mark (before_render, "Widget render", "");
     }
 }
 

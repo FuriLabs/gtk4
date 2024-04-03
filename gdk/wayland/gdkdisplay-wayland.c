@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/sysmacros.h>
 
 #ifdef HAVE_LINUX_MEMFD_H
 #include <linux/memfd.h>
@@ -56,6 +57,8 @@
 #include <wayland/xdg-foreign-unstable-v1-client-protocol.h>
 #include <wayland/xdg-foreign-unstable-v2-client-protocol.h>
 #include <wayland/server-decoration-client-protocol.h>
+#include "linux-dmabuf-unstable-v1-client-protocol.h"
+#include "presentation-time-client-protocol.h"
 
 #include "wm-button-layout-translation.h"
 
@@ -93,7 +96,6 @@
 #define GTK_SHELL1_VERSION       5
 #define OUTPUT_VERSION_WITH_DONE 2
 #define NO_XDG_OUTPUT_DONE_SINCE_VERSION 3
-#define XDG_ACTIVATION_VERSION   1
 #define OUTPUT_VERSION           3
 
 #ifdef HAVE_TOPLEVEL_STATE_SUSPENDED
@@ -267,43 +269,106 @@ postpone_on_globals_closure (GdkWaylandDisplay *display_wayland,
     g_list_append (display_wayland->on_has_globals_closures, closure);
 }
 
-#ifdef G_ENABLE_DEBUG
-
-static const char *
-get_format_name (uint32_t format,
-                 char     name[10])
-{
-  if (format == 0)
-    g_strlcpy (name, "ARGB8888", 10);
-  else if (format == 1)
-    g_strlcpy (name, "XRGB8888", 10);
-  else
-    g_snprintf (name, 10, "4cc %c%c%c%c",
-               (char) (format & 0xff),
-               (char) ((format >> 8) & 0xff),
-               (char) ((format >> 16) & 0xff),
-               (char) ((format >> 24) & 0xff));
-
-  return name;
-}
-
-#endif
-
 static void
 wl_shm_format (void          *data,
                struct wl_shm *wl_shm,
                uint32_t       format)
 {
-#ifdef G_ENABLE_DEBUG
-  char buf[10];
-#endif
-
-  GDK_DEBUG (MISC, "supported pixel format %s (0x%X)",
-                   get_format_name (format, buf), (guint) format);
+  GDK_DEBUG (MISC, "supported shm pixel format %.4s (0x%X)",
+             format == 0 ? "ARGB8888"
+               : (format == 1 ? "XRGB8888"
+               : (char *) &format), format);
 }
 
 static const struct wl_shm_listener wl_shm_listener = {
   wl_shm_format
+};
+
+static void
+linux_dmabuf_done (void *data,
+                   struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1)
+{
+  GDK_DEBUG (MISC, "dmabuf feedback done");
+}
+
+static void
+linux_dmabuf_format_table (void *data,
+                           struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1,
+                           int32_t fd,
+                           uint32_t size)
+{
+  GdkWaylandDisplay *display_wayland = data;
+
+  display_wayland->linux_dmabuf_n_formats = size / 16;
+  display_wayland->linux_dmabuf_formats = mmap (NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+  GDK_DEBUG (MISC, "got dmabuf format table (%lu entries)", display_wayland->linux_dmabuf_n_formats);
+}
+
+static void
+linux_dmabuf_main_device (void *data,
+                          struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1,
+                          struct wl_array *device)
+{
+  dev_t dev G_GNUC_UNUSED = *(dev_t *)device->data;
+
+  GDK_DEBUG (MISC, "got dmabuf main device: %u %u", major (dev), minor (dev));
+}
+
+static void
+linux_dmabuf_tranche_done (void *data,
+                           struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1)
+{
+  GDK_DEBUG (MISC, "dmabuf feedback tranche done");
+}
+
+static void
+linux_dmabuf_tranche_target_device (void *data,
+                                    struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1,
+                                    struct wl_array *device)
+{
+  dev_t dev G_GNUC_UNUSED = *(dev_t *)device->data;
+
+  GDK_DEBUG (MISC, "got dmabuf tranche target device: %u %u", major (dev), minor (dev));
+}
+
+static void
+linux_dmabuf_tranche_formats (void *data,
+                              struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1,
+                              struct wl_array *indices)
+{
+  GdkWaylandDisplay *display_wayland = data;
+
+  GDK_DEBUG (MISC, "got dmabuf tranche formats (%lu entries):", indices->size / sizeof (guint16));
+  guint16 *pos;
+
+  wl_array_for_each (pos, indices)
+    {
+      LinuxDmabufFormat *fmt G_GNUC_UNUSED = &display_wayland->linux_dmabuf_formats[*pos];
+      uint32_t f G_GNUC_UNUSED = fmt->fourcc;
+      uint64_t m G_GNUC_UNUSED = fmt->modifier;
+      GDK_DEBUG (MISC, "  %.4s:%#" G_GINT64_MODIFIER "x", (char *) &f, m);
+    }
+}
+
+static void
+linux_dmabuf_tranche_flags (void *data,
+                            struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1,
+                            uint32_t flags)
+{
+  GDK_DEBUG (MISC,
+             "got dmabuf tranche flags: %s",
+             flags & ZWP_LINUX_DMABUF_FEEDBACK_V1_TRANCHE_FLAGS_SCANOUT ? "scanout" : "");
+}
+
+static const struct zwp_linux_dmabuf_feedback_v1_listener linux_dmabuf_feedback_listener = {
+  linux_dmabuf_done,
+  linux_dmabuf_format_table,
+  linux_dmabuf_main_device,
+  linux_dmabuf_tranche_done,
+  linux_dmabuf_tranche_target_device,
+  linux_dmabuf_tranche_formats,
+  linux_dmabuf_tranche_flags,
 };
 
 static void
@@ -312,13 +377,11 @@ server_decoration_manager_default_mode (void                                    
                                         uint32_t                                       mode)
 {
   g_assert (mode <= ORG_KDE_KWIN_SERVER_DECORATION_MANAGER_MODE_SERVER);
-#ifdef G_ENABLE_DEBUG
   const char *modes[] = {
     [ORG_KDE_KWIN_SERVER_DECORATION_MANAGER_MODE_NONE]   = "none",
     [ORG_KDE_KWIN_SERVER_DECORATION_MANAGER_MODE_CLIENT] = "client",
     [ORG_KDE_KWIN_SERVER_DECORATION_MANAGER_MODE_SERVER] = "server",
   };
-#endif
   GdkWaylandDisplay *display_wayland = data;
   GDK_DISPLAY_DEBUG (GDK_DISPLAY (data), MISC, "Compositor prefers decoration mode '%s'", modes[mode]);
   display_wayland->server_decoration_mode = mode;
@@ -381,6 +444,16 @@ gdk_registry_handle_global (void               *data,
       display_wayland->shm =
         wl_registry_bind (display_wayland->wl_registry, id, &wl_shm_interface, 1);
       wl_shm_add_listener (display_wayland->shm, &wl_shm_listener, display_wayland);
+    }
+  else if (strcmp (interface, "zwp_linux_dmabuf_v1") == 0 && version >= 4)
+    {
+      display_wayland->linux_dmabuf =
+        wl_registry_bind (display_wayland->wl_registry, id, &zwp_linux_dmabuf_v1_interface, version);
+      display_wayland->linux_dmabuf_feedback =
+        zwp_linux_dmabuf_v1_get_default_feedback (display_wayland->linux_dmabuf);
+     zwp_linux_dmabuf_feedback_v1_add_listener (display_wayland->linux_dmabuf_feedback,
+                                                &linux_dmabuf_feedback_listener, display_wayland);
+      _gdk_wayland_display_async_roundtrip (display_wayland);
     }
   else if (strcmp (interface, "xdg_wm_base") == 0)
     {
@@ -512,21 +585,25 @@ gdk_registry_handle_global (void               *data,
     {
       display_wayland->xdg_activation =
         wl_registry_bind (display_wayland->wl_registry, id,
-                          &xdg_activation_v1_interface,
-                          MIN (version, XDG_ACTIVATION_VERSION));
+                          &xdg_activation_v1_interface, 1);
     }
   else if (strcmp (interface, "wp_fractional_scale_manager_v1") == 0)
     {
       display_wayland->fractional_scale =
         wl_registry_bind (display_wayland->wl_registry, id,
-                          &wp_fractional_scale_manager_v1_interface,
-                          MIN (version, 1));
+                          &wp_fractional_scale_manager_v1_interface, 1);
     }
   else if (strcmp (interface, "wp_viewporter") == 0)
     {
       display_wayland->viewporter =
         wl_registry_bind (display_wayland->wl_registry, id,
-                          &wp_viewporter_interface,
+                          &wp_viewporter_interface, 1);
+    }
+  else if (strcmp (interface, "wp_presentation") == 0)
+    {
+      display_wayland->presentation =
+        wl_registry_bind (display_wayland->wl_registry, id,
+                          &wp_presentation_interface,
                           MIN (version, 1));
     }
 
@@ -627,7 +704,8 @@ _gdk_wayland_display_open (const char *display_name)
   process_on_globals_closures (display_wayland);
 
   /* Wait for initializing to complete. This means waiting for all
-   * asynchronous roundtrips that were triggered during initial roundtrip. */
+   * asynchronous roundtrips that were triggered during initial roundtrip.
+   */
   while (display_wayland->async_roundtrips != NULL)
     {
       if (wl_display_dispatch (display_wayland->wl_display) < 0)
@@ -635,6 +713,18 @@ _gdk_wayland_display_open (const char *display_name)
           g_object_unref (display);
           return NULL;
         }
+    }
+
+  /* Check that we got all the required globals */
+  if (display_wayland->compositor == NULL ||
+      display_wayland->shm == NULL ||
+      display_wayland->data_device_manager == NULL)
+    {
+      g_warning ("The Wayland compositor does not provide one or more of the required interfaces, "
+                 "not using Wayland display");
+      g_object_unref (display);
+
+      return NULL;
     }
 
   if (display_wayland->xdg_wm_base_id)
@@ -726,6 +816,11 @@ gdk_wayland_display_dispose (GObject *object)
   g_clear_pointer (&display_wayland->xdg_activation, xdg_activation_v1_destroy);
   g_clear_pointer (&display_wayland->fractional_scale, wp_fractional_scale_manager_v1_destroy);
   g_clear_pointer (&display_wayland->viewporter, wp_viewporter_destroy);
+  g_clear_pointer (&display_wayland->presentation, wp_presentation_destroy);
+  g_clear_pointer (&display_wayland->linux_dmabuf, zwp_linux_dmabuf_v1_destroy);
+  g_clear_pointer (&display_wayland->linux_dmabuf_feedback, zwp_linux_dmabuf_feedback_v1_destroy);
+  if (display_wayland->linux_dmabuf_formats)
+    munmap (display_wayland->linux_dmabuf_formats, display_wayland->linux_dmabuf_n_formats * 16);
 
   g_clear_pointer (&display_wayland->shm, wl_shm_destroy);
   g_clear_pointer (&display_wayland->wl_registry, wl_registry_destroy);
@@ -1176,7 +1271,7 @@ _gdk_wayland_display_load_cursor_theme (GdkWaylandDisplay *display_wayland)
   gdk_wayland_display_set_cursor_theme (GDK_DISPLAY (display_wayland), name, size);
   g_value_unset (&v);
 
-  gdk_profiler_end_mark (before, "wayland", "load cursor theme");
+  gdk_profiler_end_mark (before, "Wayland cursor theme load", NULL);
 
 }
 
@@ -1718,7 +1813,8 @@ static TranslationEntry translations[] = {
   { FALSE, "org.gnome.desktop.wm.preferences", "action-middle-click-titlebar", "gtk-titlebar-middle-click", G_TYPE_STRING, { .s = "none" } },
   { FALSE, "org.gnome.desktop.wm.preferences", "action-right-click-titlebar", "gtk-titlebar-right-click", G_TYPE_STRING, { .s = "menu" } },
   { FALSE, "org.gnome.desktop.a11y", "always-show-text-caret", "gtk-keynav-use-caret", G_TYPE_BOOLEAN, { .b = FALSE } },
-  { FALSE, "org.gnome.desktop.a11y.interface", "high-contrast", "high-contast", G_TYPE_NONE, { .b = FALSE } },
+  { FALSE, "org.gnome.desktop.a11y.interface", "high-contrast", "high-contrast", G_TYPE_NONE, { .b = FALSE } },
+  { FALSE, "org.gnome.desktop.a11y.interface", "show-status-shapes", "gtk-show-status-shapes", G_TYPE_BOOLEAN, { .b = FALSE } },
   /* Note, this setting doesn't exist, the portal and gsd fake it */
   { FALSE, "org.gnome.fontconfig", "serial", "gtk-fontconfig-timestamp", G_TYPE_NONE, { .i = 0 } },
 };
@@ -1769,13 +1865,6 @@ find_translation_entry_by_setting (const char *setting)
 }
 
 static void
-high_contrast_changed (GdkDisplay *display)
-{
-  gdk_display_setting_changed (display, "gtk-theme-name");
-  gdk_display_setting_changed (display, "gtk-icon-theme-name");
-}
-
-static void
 settings_changed (GSettings  *settings,
                   const char *key,
                   GdkDisplay *display)
@@ -1789,7 +1878,7 @@ settings_changed (GSettings  *settings,
       if (entry->type != G_TYPE_NONE)
         gdk_display_setting_changed (display, entry->setting);
       else if (strcmp (key, "high-contrast") == 0)
-        high_contrast_changed (display);
+        gdk_display_setting_changed (display, "gtk-theme-name");
       else
         update_xft_settings (display);
     }
@@ -1925,9 +2014,10 @@ init_settings (GdkDisplay *display)
 
       g_variant_get (ret, "(a{sa{sv}})", &iter);
 
-      if (g_variant_n_children (ret) == 0)
+      if (g_variant_iter_n_children (iter) == 0)
         {
           g_debug ("Received no portal settings");
+          g_clear_pointer (&iter, g_variant_iter_free);
           g_clear_pointer (&ret, g_variant_unref);
 
           goto fallback;
@@ -2243,8 +2333,6 @@ gdk_wayland_display_get_setting (GdkDisplay *display,
   return FALSE;
 }
 
-#ifdef G_ENABLE_DEBUG
-
 static const char *
 subpixel_to_string (int layout)
 {
@@ -2290,8 +2378,6 @@ transform_to_string (int transform)
     }
   return NULL;
 }
-
-#endif
 
 static void
 update_scale (GdkDisplay *display)
@@ -2363,15 +2449,49 @@ apply_monitor_change (GdkWaylandMonitor *monitor)
 {
   GDK_DEBUG (MISC, "monitor %d changed position %d %d, size %d %d",
                    monitor->id,
-                   monitor->x, monitor->y,
-                   monitor->width, monitor->height);
+                   monitor->output_geometry.x, monitor->output_geometry.y,
+                   monitor->output_geometry.width, monitor->output_geometry.height);
 
-  gdk_monitor_set_geometry (GDK_MONITOR (monitor),
-                            &(GdkRectangle) {
-                              monitor->x, monitor->y,
-                              monitor->width, monitor->height });
+  GdkRectangle logical_geometry;
+  gboolean needs_scaling = FALSE;
+  double scale;
+
+  if (monitor_has_xdg_output (monitor) &&
+      monitor->xdg_output_geometry.width != 0  &&
+      monitor->xdg_output_geometry.height != 0)
+    {
+      logical_geometry = monitor->xdg_output_geometry;
+      needs_scaling = logical_geometry.width == monitor->output_geometry.width &&
+                      logical_geometry.height == monitor->output_geometry.height;
+    }
+  else
+    {
+      logical_geometry = monitor->output_geometry;
+      needs_scaling = TRUE;
+    }
+
+  if (needs_scaling)
+    {
+      int scale_factor = gdk_monitor_get_scale_factor (GDK_MONITOR (monitor));
+
+      logical_geometry.y /= scale_factor;
+      logical_geometry.x /= scale_factor;
+      logical_geometry.width /= scale_factor;
+      logical_geometry.height /= scale_factor;
+
+      scale = scale_factor;
+    }
+  else
+    {
+      scale = MAX (monitor->output_geometry.width / (double) logical_geometry.width,
+                   monitor->output_geometry.height / (double) logical_geometry.height);
+    }
+
+  gdk_monitor_set_geometry (GDK_MONITOR (monitor), &logical_geometry);
   gdk_monitor_set_connector (GDK_MONITOR (monitor), monitor->name);
   gdk_monitor_set_description (GDK_MONITOR (monitor), monitor->description);
+  gdk_monitor_set_scale (GDK_MONITOR (monitor), scale);
+
   monitor->wl_output_done = FALSE;
   monitor->xdg_output_done = FALSE;
 
@@ -2389,8 +2509,8 @@ xdg_output_handle_logical_position (void                  *data,
   GDK_DEBUG (MISC, "handle logical position xdg-output %d, position %d %d",
                    monitor->id, x, y);
 
-  monitor->x = x;
-  monitor->y = y;
+  monitor->xdg_output_geometry.x = x;
+  monitor->xdg_output_geometry.y = y;
 }
 
 static void
@@ -2404,8 +2524,8 @@ xdg_output_handle_logical_size (void                  *data,
   GDK_DEBUG (MISC, "handle logical size xdg-output %d, size %d %d",
                    monitor->id, width, height);
 
-  monitor->width = width;
-  monitor->height = height;
+  monitor->xdg_output_geometry.width = width;
+  monitor->xdg_output_geometry.height = height;
 }
 
 static void
@@ -2491,8 +2611,8 @@ output_handle_geometry (void             *data,
                    make, model,
                    transform_to_string (transform));
 
-  monitor->x = x;
-  monitor->y = y;
+  monitor->output_geometry.x = x;
+  monitor->output_geometry.y = y;
 
   switch (transform)
     {
@@ -2536,27 +2656,11 @@ output_handle_scale (void             *data,
                      int32_t           scale)
 {
   GdkWaylandMonitor *monitor = (GdkWaylandMonitor *)data;
-  GdkRectangle previous_geometry;
-  int previous_scale;
-  int width;
-  int height;
 
   GDK_DEBUG (MISC, "handle scale output %d, scale %d", monitor->id, scale);
 
-  gdk_monitor_get_geometry (GDK_MONITOR (monitor), &previous_geometry);
-  previous_scale = gdk_monitor_get_scale_factor (GDK_MONITOR (monitor));
-
   /* Set the scale from wl_output protocol, regardless of xdg-output support */
   gdk_monitor_set_scale_factor (GDK_MONITOR (monitor), scale);
-
-  if (monitor_has_xdg_output (monitor))
-    return;
-
-  width = previous_geometry.width * previous_scale;
-  height = previous_geometry.height * previous_scale;
-
-  monitor->width = width / scale;
-  monitor->height = height / scale;
 
   if (should_update_monitor (monitor))
     apply_monitor_change (monitor);
@@ -2571,7 +2675,6 @@ output_handle_mode (void             *data,
                     int               refresh)
 {
   GdkWaylandMonitor *monitor = (GdkWaylandMonitor *)data;
-  int scale;
 
   GDK_DEBUG (MISC, "handle mode output %d, size %d %d, rate %d",
                    monitor->id, width, height, refresh);
@@ -2579,9 +2682,8 @@ output_handle_mode (void             *data,
   if ((flags & WL_OUTPUT_MODE_CURRENT) == 0)
     return;
 
-  scale = gdk_monitor_get_scale_factor (GDK_MONITOR (monitor));
-  monitor->width = width / scale;
-  monitor->height = height / scale;
+  monitor->output_geometry.width = width;
+  monitor->output_geometry.height = height;
   gdk_monitor_set_refresh_rate (GDK_MONITOR (monitor), refresh);
 
   if (should_update_monitor (monitor) || !monitor_has_xdg_output (monitor))

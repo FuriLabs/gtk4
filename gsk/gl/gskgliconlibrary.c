@@ -111,11 +111,7 @@ gsk_gl_icon_library_add (GskGLIconLibrary     *self,
   gdk_gl_context_push_debug_group_printf (gdk_gl_context_get_current (),
                                           "Uploading texture");
 
-  if (!gdk_gl_context_has_bgra (gdk_gl_context_get_current ())
-#if G_BYTE_ORDER == G_BIG_ENDIAN
-      || gdk_gl_context_get_use_es (gdk_gl_context_get_current ())
-#endif
-     )
+  if (gdk_gl_context_get_use_es (gdk_gl_context_get_current ()))
     {
       pixel_data = free_data = g_malloc (width * height * 4);
       gdk_memory_convert (pixel_data, width * 4,
@@ -215,6 +211,6 @@ gsk_gl_icon_library_add (GskGLIconLibrary     *self,
     {
       char message[64];
       g_snprintf (message, sizeof message, "Size %dx%d", width, height);
-      gdk_profiler_add_mark (start_time, GDK_PROFILER_CURRENT_TIME-start_time, "Upload Icon", message);
+      gdk_profiler_add_mark (start_time, GDK_PROFILER_CURRENT_TIME-start_time, "Upload icon", message);
     }
 }

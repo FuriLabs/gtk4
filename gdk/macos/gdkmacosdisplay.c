@@ -625,6 +625,7 @@ gdk_macos_display_init (GdkMacosDisplay *self)
   gdk_display_set_composited (GDK_DISPLAY (self), TRUE);
   gdk_display_set_input_shapes (GDK_DISPLAY (self), FALSE);
   gdk_display_set_rgba (GDK_DISPLAY (self), TRUE);
+  gdk_display_set_shadow_width (GDK_DISPLAY (self), FALSE);
 }
 
 GdkDisplay *
@@ -997,7 +998,9 @@ _gdk_macos_display_get_nsevent (GdkEvent *event)
     {
       const GdkToNSEventMap *map = iter->data;
 
-      if (map->gdk_event == event)
+      if (map->gdk_event->event_type == event->event_type &&
+          map->gdk_event->device == event->device &&
+          map->gdk_event->time == event->time)
         return map->nsevent;
     }
 
@@ -1005,7 +1008,7 @@ _gdk_macos_display_get_nsevent (GdkEvent *event)
 }
 
 NSEvent *
-_gdk_macos_display_get_last_nsevent ()
+_gdk_macos_display_get_last_nsevent (void)
 {
   const GdkToNSEventMap *map = g_queue_peek_tail (&event_map);
   if (map)

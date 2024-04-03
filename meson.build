@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.12.5',
+        version: '4.14.2',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -25,6 +25,7 @@ epoxy_req          = '>= 1.4'
 cloudproviders_req = '>= 0.3.1'
 xkbcommon_req      = '>= 0.2.0'
 sysprof_req        = '>= 3.38.0'
+vulkan_req         = '>= 1.3'
 
 fs = import('fs')
 gnome = import('gnome')
@@ -100,6 +101,7 @@ wayland_enabled  = get_option('wayland-backend')
 broadway_enabled = get_option('broadway-backend')
 macos_enabled    = get_option('macos-backend')
 win32_enabled    = get_option('win32-backend')
+vulkan_enabled   = get_option('vulkan')
 
 os_unix   = false
 os_linux  = false
@@ -121,6 +123,7 @@ os_unix = not os_win32
 
 if os_darwin
   wayland_enabled = false
+  vulkan_enabled = false
 else
   macos_enabled = false
 endif
@@ -165,17 +168,17 @@ check_headers = [
   'memory.h',
   'stdint.h',
   'stdlib.h',
-  'strings.h',
   'string.h',
+  'strings.h',
   'sys/mman.h',
   'sys/param.h',
   'sys/stat.h',
   'sys/sysinfo.h',
+  'sys/sysmacros.h',
   'sys/systeminfo.h',
   'sys/time.h',
   'sys/types.h',
   'unistd.h',
-  'gio/gdesktopappinfo.h'
 ]
 
 foreach h : check_headers
@@ -613,8 +616,10 @@ endif
 # Uses meson's custom vulkan dependency searching. Set the VULKAN_SDK env var
 # to use a custom path for the Vulkan SDK. Bugs that are found with it should
 # be reported upstream and fixed.
-vulkan_dep = dependency('vulkan', required: get_option('vulkan'))
-glslc = find_program('glslc', required: get_option('vulkan'))
+vulkan_dep = dependency('vulkan',
+                        version: vulkan_req,
+                        required: vulkan_enabled)
+glslc = find_program('glslc', required: vulkan_enabled)
 if vulkan_dep.found()
   have_vulkan = true
   vulkan_pkg_found = vulkan_dep.type_name() == 'pkgconfig'
@@ -622,6 +627,14 @@ else
   have_vulkan = false
   vulkan_pkg_found = false
 endif
+
+libdrm_dep = dependency('libdrm', required: os_linux)
+# We only care about drm_fourcc.h for all the fourccs,
+# but not about linking to libdrm
+libdrm_dep = libdrm_dep.partial_dependency(includes: true, compile_args: true)
+cdata.set('HAVE_DRM_FOURCC_H', libdrm_dep.found())
+
+cdata.set('HAVE_DMABUF', cc.has_header('linux/dma-buf.h'))
 
 cloudproviders_dep = dependency('cloudproviders',
   required: get_option('cloudproviders'),
@@ -647,23 +660,9 @@ if not get_option('sysprof').disabled()
     ],
   )
   cdata.set('HAVE_SYSPROF', libsysprof_capture_dep.found())
-  libsysprof_dep = dependency('sysprof-4',
-    required: false,
-    default_options: [
-      'agent=false',
-      'examples=false',
-      'gtk=false',
-      'tests=false',
-      'tools=false',
-      'libsysprof=true',
-      'sysprofd=none',
-      'help=false',
-    ],
-  )
   profiler_enabled = true
 else
   libsysprof_capture_dep = disabler()
-  libsysprof_dep = disabler()
   profiler_enabled = false
 endif
 
@@ -780,6 +779,27 @@ project_build_root = meson.current_build_dir()
 
 gen_visibility_macros = find_program('build-aux/meson/gen-visibility-macros.py')
 
+gen_profile_conf = find_program('build-aux/meson/gen-profile-conf.py')
+
+profile = get_option('profile')
+if profile == 'auto'
+  if gtk_minor_version.is_even()
+    profile = 'default'
+  else
+    profile = 'devel'
+  endif
+endif
+
+profile_conf_h = declare_dependency(
+  sources: custom_target('profile-conf',
+    command: [gen_profile_conf, meson.project_source_root(), profile],
+    capture: true,
+    output: 'profile_conf.h',
+    build_by_default: true,
+    build_always_stale: true,
+  )
+)
+
 subdir('gdk/version')
 subdir('gtk/css')
 subdir('gdk')
@@ -857,6 +877,18 @@ foreach backend: enabled_backends
     name: 'GTK',
     description: 'GTK Graphical UI Library',
     requires: ['gtk4', get_variable('@0@_public_deps'.format(backend), [])],
+  )
+  meson.override_dependency(pkg, libgtk_dep)
+endforeach
+
+foreach a11y_backend: gtk_a11y_backends
+  pkg = 'gtk4-@0@'.format(a11y_backend)
+  pkg_config.generate(
+    filebase: pkg,
+    unescaped_variables: common_pc_variables,
+    name: 'GTK',
+    description: gtk_a11y_backend_info[a11y_backend]['description'],
+    requires: ['gtk4', get_variable('@0@_public_deps'.format(a11y_backend), [])],
   )
   meson.override_dependency(pkg, libgtk_dep)
 endforeach

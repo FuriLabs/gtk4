@@ -79,6 +79,7 @@ static const struct {
   { "move",         "dnd-move" },
   { "no-drop",      "dnd-none" },
   { "dnd-ask",      "dnd-copy" }, /* not CSS, but we want to guarantee it anyway */
+  { "dnd-move",     "default" },
   { "not-allowed",  "crossed_circle" },
   { "grab",         "hand2" },
   { "grabbing",     "hand2" },
@@ -194,7 +195,7 @@ _gdk_wayland_cursor_get_buffer (GdkWaylandDisplay *display,
           if ((image->width % cursor_scale != 0) ||
               (image->height % cursor_scale != 0))
             {
-              g_warning (G_STRLOC " cursor image size (%dx%d) not an integer"
+              g_warning (G_STRLOC " cursor image size (%dx%d) not an integer "
                          "multiple of scale (%d)", image->width, image->height,
                          cursor_scale);
               cursor_scale = 1;

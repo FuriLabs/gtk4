@@ -67,6 +67,8 @@ content_files = [
   "macos.md",
 ]
 content_images = [
+  "../images/favicon.svg",
+  "../images/favicon-192x192.png",
   "images/gtk-logo.svg",
   "images/rotated-text.png",
   "images/default_cursor.png",
@@ -107,4 +109,5 @@ content_images = [
   "images/popup-flip.png",
   "images/popup-slide.png",
 ]
+content_base_url = "https://gitlab.gnome.org/GNOME/gtk/-/blob/main/docs/reference/gdk/"
 urlmap_file = "urlmap.js"

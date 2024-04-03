@@ -297,7 +297,7 @@ gdk_clipboard_read_local_async (GdkClipboard        *clipboard,
     {
       GOutputStream *output_stream;
       GIOStream *stream;
-      
+
       stream = gdk_pipe_io_stream_new ();
       output_stream = g_io_stream_get_output_stream (stream);
       gdk_clipboard_write_async (clipboard,
@@ -768,7 +768,7 @@ gdk_clipboard_read_value_internal (GdkClipboard        *clipboard,
   GdkContentFormats *formats;
   GValue *value;
   GTask *task;
- 
+
   task = g_task_new (clipboard, cancellable, callback, user_data);
   g_task_set_priority (task, io_priority);
   g_task_set_source_tag (task, source_tag);
@@ -947,7 +947,7 @@ gdk_clipboard_read_texture_finish (GdkClipboard  *clipboard,
   value = g_task_propagate_pointer (G_TASK (result), error);
   if (!value)
     return NULL;
-  
+
   return g_value_dup_object (value);
 }
 
@@ -1012,7 +1012,7 @@ gdk_clipboard_read_text_finish (GdkClipboard  *clipboard,
   value = g_task_propagate_pointer (G_TASK (result), error);
   if (!value)
     return NULL;
-  
+
   return g_value_dup_string (value);
 }
 
@@ -1111,7 +1111,7 @@ gdk_clipboard_write_async (GdkClipboard        *clipboard,
       GError *error = NULL;
 
       g_assert (gtype != G_TYPE_INVALID);
-      
+
       g_value_init (&value, gtype);
       if (gdk_content_provider_get_value (priv->content, &value, &error))
         {
@@ -1127,7 +1127,7 @@ gdk_clipboard_write_async (GdkClipboard        *clipboard,
         {
           g_task_return_error (task, error);
         }
-      
+
       g_value_unset (&value);
     }
   else
@@ -1149,7 +1149,7 @@ gdk_clipboard_write_finish (GdkClipboard  *clipboard,
   g_return_val_if_fail (g_task_is_valid (result, clipboard), FALSE);
   g_return_val_if_fail (g_task_get_source_tag (G_TASK (result)) == gdk_clipboard_write_async, FALSE);
 
-  return g_task_propagate_boolean (G_TASK (result), error); 
+  return g_task_propagate_boolean (G_TASK (result), error);
 }
 
 static gboolean
@@ -1249,8 +1249,8 @@ gdk_clipboard_set_content (GdkClipboard       *clipboard,
  * Sets the clipboard to contain the value collected from the given varargs.
  *
  * Values should be passed the same way they are passed to other value
- * collecting APIs, such as [`method@GObject.Object.set`] or
- * [`func@GObject.signal_emit`].
+ * collecting APIs, such as [method@GObject.Object.set] or
+ * [func@GObject.signal_emit].
  *
  * ```c
  * gdk_clipboard_set (clipboard, GTK_TYPE_STRING, "Hello World");
@@ -1264,7 +1264,7 @@ gdk_clipboard_set (GdkClipboard *clipboard,
                    ...)
 {
   va_list args;
-                          
+
   g_return_if_fail (GDK_IS_CLIPBOARD (clipboard));
 
   va_start (args, type);

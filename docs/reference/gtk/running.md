@@ -62,7 +62,7 @@ are only available when GTK has been configured with `-Ddebug=true`.
 `layout`
 : Layout managers
 
-`acccessibility`
+`accessibility`
 : Accessibility state changs
 
 A number of keys are influencing behavior instead of just logging:
@@ -126,8 +126,8 @@ available on the system.
 ### `GTK_MEDIA`
 
 Specifies what backend to load for [class@Gtk.MediaFile]. The possible values
-depend on what options GTK was built with, and can include 'gstreamer',
-'ffmpeg' and 'none'. If set to 'none', media playback will be unavailable.
+depend on what options GTK was built with, and can include 'gstreamer'
+and 'none'. If set to 'none', media playback will be unavailable.
 The special value 'help' can be used to obtain a list of all supported
 media backends.
 
@@ -170,14 +170,20 @@ This variable can be set to a list of debug options, which cause GDK to
 print out different types of debugging information. Some of these options
 are only available when GTK has been configured with `-Ddebug=true`.
 
-`cursor`
-: Information about cursor objects (only win32)
+`misc`
+: Miscellaneous information
+
+`events`
+: Information about events
+
+`dnd`
+: Information about drag-and-drop
+
+`input`
+: Information about input (mostly Windows)
 
 `eventloop`
 : Information about event loop operation (mostly macOS)
-
-`misc`
-: Miscellaneous information
 
 `frames`
 : Information about the frame clock
@@ -185,25 +191,25 @@ are only available when GTK has been configured with `-Ddebug=true`.
 `settings`
 : Information about xsettings
 
-`selection`
-: Information about selections
-
-`clipboard`
-: Information about clipboards
-
-`dnd`
-: Information about drag-and-drop
-
 `opengl`
 : Information about OpenGL
 
 `vulkan`
 : Information about Vulkan
 
-A number of options affect behavior instead of logging:
+`selection`
+: Information about selections
 
-`nograbs`
-: Turn off all pointer and keyboard grabs
+`clipboard`
+: Information about clipboards
+
+`dmabuf`
+: Information about dmabuf handling (Linux-only)
+
+`offload`
+: Information about subsurfaces and graphics offload (Wayland-only)
+
+A number of options affect behavior instead of logging:
 
 `portals`
 : Force the use of [portals](https://docs.flatpak.org/en/latest/portals.html)
@@ -214,14 +220,20 @@ A number of options affect behavior instead of logging:
 `gl-disable`
 : Disable OpenGL support
 
-`gl-fractional`
-: Enable fractional scaling for OpenGL. This is experimental
+`gl-no-fractional`
+: Disable fractional scaling for OpenGL.
 
-`gl-legacy`
-: Use a legacy OpenGL context
+`gl-debug`
+: Insert debugging information in OpenGL
 
-`gl-gles`
-: Use a GLES OpenGL context
+`gl-disable-gl`
+: Don't allow the use of OpenGL GL API. This forces GLES to be used
+
+`gl-disable-gles`
+: Don't allow the use of OpenGL GLES API. This forces GL to be used
+
+`gl-prefer-gl`
+: Prefer OpenGL over OpenGL ES. This was the default behavior before GTK 4.14.
 
 `gl-egl`
 : Use an EGL context on X11 or Windows
@@ -244,6 +256,12 @@ A number of options affect behavior instead of logging:
 `high-depth`
 : Use high bit depth rendering if possible
 
+`no-vsync`
+: Repaint instantly (uses 100% CPU with animations)
+
+`dmabuf-disable`
+: Disable dmabuf support
+
 The special value `all` can be used to turn on all debug options. The special
 value `help` can be used to obtain a list of all supported debug options.
 
@@ -256,46 +274,40 @@ are only available when GTK has been configured with `-Ddebug=true`.
 `renderer`
 : General renderer information
 
-`cairo`
-: cairo renderer information
-
 `opengl`
 : OpenGL renderer information
 
-`shaders`
-: Shaders
-
-`surface`
-: Surfaces
-
 `vulkan`
-: Vulkan renderer information
+: Check Vulkan errors
+
+`shaders`
+: Information about shaders
 
 `fallback`
-: Information about fallbacks
+: Information about fallback usage in renderers
 
 `glyphcache`
 : Information about glyph caching
 
+`verbose`
+: Print verbose output while rendering
+
 A number of options affect behavior instead of logging:
 
-`diff`
-: Show differences
-
 `geometry`
-: Show borders
+: Show borders (when using cairo)
 
 `full-redraw`
-: Force full redraws for every frame
+: Force full redraws
 
-`sync`
-: Sync after each frame
+`staging`
+: Use a staging image for texture upload (Vulkan only)
 
-`vulkan-staging-image`
-: Use a staging image for Vulkan texture upload
+`offload-disable`
+: Disable graphics offload to subsurfaces
 
-`vulkan-staging-buffer`
-: Use a staging buffer for Vulkan texture upload
+`cairo`
+: Overlay error pattern over cairo drawing (finds fallbacks)
 
 The special value `all` can be used to turn on all debug options. The special
 value `help` can be used to obtain a list of all supported debug options.
@@ -329,12 +341,68 @@ a `*`, which means: try all remaining backends. The special value
 backends. For more information about selecting backends,
 see the [func@Gdk.DisplayManager.get] function.
 
+### `GDK_GL_DISABLE`
+
+This variable can be set to a list of values, which cause GDK to
+disable extension features of the OpenGL support.
+Note that these features may already be disabled if the GL driver
+does not support them.
+
+`debug`
+: GL_KHR_debug
+
+`unpack-subimage`
+:GL_EXT_unpack_subimage
+
+`half-float`
+:GL_OES_vertex_half_float
+
+`sync`
+:GL_ARB_sync
+
+`base-instance`
+:GL_EXT_base_instance
+
 ### `GDK_VULKAN_DEVICE`
 
 This variable can be set to the index of a Vulkan device to override
 the default selection of the device that is used for Vulkan rendering.
 The special value `list` can be used to obtain a list of all Vulkan
 devices.
+
+### `GDK_VULKAN_DISABLE`
+
+This variable can be set to a list of values, which cause GDK to
+disable features of the Vulkan support.
+Note that these features may already be disabled if the Vulkan driver
+does not support them.
+
+`dmabuf`
+: Never import Dmabufs
+
+`ycbr`
+: Do not support Ycbcr textures
+
+`descriptor-indexing`
+: Force slow descriptor set layout codepath
+
+`dynamic-indexing`
+: Hardcode small number of buffer and texture arrays
+
+`nonuniform-indexing`
+: Split draw calls to ensure uniform texture accesses
+
+`semaphore-export`
+: Disable sync of exported dmabufs
+
+`semaphore-import`
+: Disable sync of imported dmabufs
+
+`incremental-present`
+: Do not send damage regions
+
+The special value `all` can be used to turn on all values. The special
+value `help` can be used to obtain a list of all supported values.
 
 ### `GSK_RENDERER`
 
@@ -357,29 +425,67 @@ using and the GDK backend supports them:
 `gl`
 : Selects the "gl" OpenGL renderer
 
+`ngl`
+: Selects the "ngl" OpenGL renderer
+
 `vulkan`
 : Selects the Vulkan renderer
 
-Note that on Windows, if one is running Nahimic 3 on a system with
-nVidia graphics, one needs to stop the "Nahimic service" or insert
-the GTK application into the Nahimic blacklist, as noted in
-https://www.nvidia.com/en-us/geforce/forums/game-ready-drivers/13/297952/nahimic-and-nvidia-drivers-conflict/2334568/, or use the cairo renderer (at the cost of being unable to use
-OpenGL features), or use GDK_DEBUG=gl-gles if you know that GLES
-support is enabled for the build.
 
-This is a known issue, as the above link indicates, and affects quite
-a number of applications--sadly, since this issue lies within the
-nVidia graphics driver and/or the Nahimic 3 code, we are not able
-to rememdy this on the GTK side; the best bet before trying the above
-workarounds is to try to update your graphics drivers and Nahimic
-installation.
+::: note
+    If you are running the Nahimic 3 service on a Windows system with
+    nVidia graphics, you need to perform one of the following:
+
+     - stop the "Nahimic service"
+     - insert the GTK application into the Nahimic blocklist, as noted in the
+       [nVidia forums](https://www.nvidia.com/en-us/geforce/forums/game-ready-drivers/13/297952/nahimic-and-nvidia-drivers-conflict/2334568/)
+     - use the cairo renderer (at the cost of being unable to use OpenGL features)
+     - use `GDK_DEBUG=gl-gles`, if you know that GLES support is enabled for the build.
+
+    This is a known issue, as the above link indicates, and affects quite
+    a number of applications—sadly, since this issue lies within the
+    nVidia graphics driver and/or the Nahimic 3 code, we are not able
+    to rememdy this on the GTK side; the best bet before trying the above
+    workarounds is to try to update your graphics drivers and Nahimic
+    installation.
+
+
+### `GSK_GPU_DISABLE`
+
+This variable can be set to a list of values, which cause GSK to
+disable certain optimizations of the "ngl" and "vulkan" renderer.
+
+`uber`
+: Don't use the uber shader
+
+`clear`
+: Use shaders instead of vkCmdClearAttachment()/glClear()
+
+`blit`
+: Use shaders instead of vkCmdBlit()/glBlitFramebuffer()
+
+`gradients`
+: Don't supersample gradients
+
+`mipmap`
+: Avoid creating mipmaps
+
+The special value `all` can be used to turn on all values. The special
+value `help` can be used to obtain a list of all supported values.
+
+### `GSK_CACHE_TIMEOUT`
+
+Overrides the timeout for cache GC in the "ngl" and "vulkan" renderers.
+The value can be -1 to disable GC entirely, 0 to force GC to happen
+before every frame, or a positive number to do GC in a timeout every
+n seconds. The default timeout is 15 seconds.
 
 ### `GSK_MAX_TEXTURE_SIZE`
 
-Limit texture size to the minimum of this value and the OpenGL limit
-for texture sizes. This can be used to debug issues with texture slicing
-on systems where the OpenGL texture size limit would otherwise make
-texture slicing difficult to test.
+Limit texture size to the minimum of this value and the OpenGL limit for
+texture sizes in the "gl" renderer. This can be used to debug issues with
+texture slicing on systems where the OpenGL texture size limit would
+otherwise make texture slicing difficult to test.
 
 ### `GTK_CSD`
 

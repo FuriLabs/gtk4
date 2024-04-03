@@ -117,9 +117,8 @@ gsk_gl_texture_library_real_compact (GskGLTextureLibrary *self,
                   g_hash_table_iter_remove (&iter);
                   dropped++;
                 }
-
-              if (periodic_scan)
-                  entry->accessed = FALSE;
+              else if (periodic_scan)
+                entry->accessed = FALSE;
             }
         }
 
@@ -140,7 +139,6 @@ gsk_gl_texture_library_real_compact (GskGLTextureLibrary *self,
       g_clear_pointer (&removed, g_ptr_array_unref);
     }
 
-#ifdef G_ENABLE_DEBUG
   if (GSK_DEBUG_CHECK (GLYPH_CACHE))
     {
       static gint64 last_message;
@@ -153,7 +151,6 @@ gsk_gl_texture_library_real_compact (GskGLTextureLibrary *self,
                              self->atlases->len);
         }
     }
-#endif
 
   return ret;
 }
@@ -442,7 +439,6 @@ gsk_gl_texture_library_pack (GskGLTextureLibrary *self,
 
       entry->texture = texture;
       entry->is_atlased = FALSE;
-      entry->accessed = TRUE;
       entry->area.x = padding / (float) (padding + width + padding);
       entry->area.y = padding / (float) (padding + height + padding);
       entry->area.x2 = (padding + width) / (float) (padding + width + padding);

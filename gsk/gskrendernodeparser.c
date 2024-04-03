@@ -23,12 +23,18 @@
 
 #include "gskrendernodeparserprivate.h"
 
+#include "gskpath.h"
+#include "gskpathbuilder.h"
 #include "gskroundedrectprivate.h"
 #include "gskrendernodeprivate.h"
+#include "gskstroke.h"
 #include "gsktransformprivate.h"
+#include "gskenumtypes.h"
+#include "gskprivate.h"
 
 #include "gdk/gdkrgbaprivate.h"
 #include "gdk/gdktextureprivate.h"
+#include "gdk/gdkmemoryformatprivate.h"
 #include <gtk/css/gtkcss.h>
 #include "gtk/css/gtkcssdataurlprivate.h"
 #include "gtk/css/gtkcssparserprivate.h"
@@ -41,12 +47,22 @@
 #include <cairo-script-interpreter.h>
 #endif
 
+#include <cairo-gobject.h>
+#include <pango/pangocairo.h>
+
+#ifdef HAVE_PANGOFT
+#include <pango/pangofc-fontmap.h>
+#endif
+
+#include <glib/gstdio.h>
+
 typedef struct _Context Context;
 
 struct _Context
 {
   GHashTable *named_nodes;
   GHashTable *named_textures;
+  PangoFontMap *fontmap;
 };
 
 typedef struct _Declaration Declaration;
@@ -70,6 +86,40 @@ context_finish (Context *context)
 {
   g_clear_pointer (&context->named_nodes, g_hash_table_unref);
   g_clear_pointer (&context->named_textures, g_hash_table_unref);
+  g_clear_object (&context->fontmap);
+}
+
+static gboolean
+parse_enum (GtkCssParser *parser,
+            GType         type,
+            gpointer      out_value)
+{
+  GEnumClass *class;
+  GEnumValue *v;
+  char *enum_name;
+
+  enum_name = gtk_css_parser_consume_ident (parser);
+  if (enum_name == NULL)
+    return FALSE;
+
+  class = g_type_class_ref (type);
+
+  v = g_enum_get_value_by_nick (class, enum_name);
+  if (v == NULL)
+    {
+      gtk_css_parser_error_value (parser, "Unknown value \"%s\" for enum \"%s\"",
+                                  enum_name, g_type_name (type));
+      g_free (enum_name);
+      g_type_class_unref (class);
+      return FALSE;
+    }
+
+  *(int*)out_value = v->value;
+
+  g_free (enum_name);
+  g_type_class_unref (class);
+
+  return TRUE;
 }
 
 static gboolean
@@ -706,7 +756,7 @@ parse_shadows (GtkCssParser *parser,
 static void
 clear_shadows (gpointer inout_shadows)
 {
-  g_array_set_size (*(GArray **) inout_shadows, 0);
+  g_array_set_size (inout_shadows, 0);
 }
 
 static const struct
@@ -839,20 +889,36 @@ parse_mask_mode (GtkCssParser *parser,
 }
 
 static PangoFont *
-font_from_string (const char *string)
+font_from_string (PangoFontMap *fontmap,
+                  const char   *string,
+                  gboolean      allow_fallback)
 {
   PangoFontDescription *desc;
-  PangoFontMap *font_map;
-  PangoContext *context;
+  PangoContext *ctx;
   PangoFont *font;
 
   desc = pango_font_description_from_string (string);
-  font_map = pango_cairo_font_map_get_default ();
-  context = pango_font_map_create_context (font_map);
-  font = pango_font_map_load_font (font_map, context, desc);
+  ctx = pango_font_map_create_context (fontmap);
+  font = pango_font_map_load_font (fontmap, ctx, desc);
+  g_object_unref (ctx);
+
+  if (font && !allow_fallback)
+    {
+      PangoFontDescription *desc2;
+      const char *family, *family2;
+
+      desc2 = pango_font_describe (font);
+
+      family = pango_font_description_get_family (desc);
+      family2 = pango_font_description_get_family (desc2);
+
+      if (g_strcmp0 (family, family2) != 0)
+        g_clear_object (&font);
+
+      pango_font_description_free (desc2);
+    }
 
   pango_font_description_free (desc);
-  g_object_unref (context);
 
   return font;
 }
@@ -921,30 +987,229 @@ create_ascii_glyphs (PangoFont *font)
   return result;
 }
 
+#ifdef HAVE_PANGOFT
+
+static void
+delete_file (gpointer data)
+{
+  char *path = data;
+
+  g_remove (path);
+  g_free (path);
+}
+
+static void
+ensure_fontmap (Context *context)
+{
+  FcConfig *config;
+  GPtrArray *files;
+
+  if (context->fontmap)
+    return;
+
+  context->fontmap = pango_cairo_font_map_new ();
+
+  config = FcInitLoadConfig ();
+  pango_fc_font_map_set_config (PANGO_FC_FONT_MAP (context->fontmap), config);
+  FcConfigDestroy (config);
+
+  files = g_ptr_array_new_with_free_func (delete_file);
+
+  g_object_set_data_full (G_OBJECT (context->fontmap), "font-files", files, (GDestroyNotify) g_ptr_array_unref);
+}
+
+static gboolean
+add_font_from_file (Context     *context,
+                    const char  *path,
+                    GError     **error)
+{
+  FcConfig *config;
+  GPtrArray *files;
+
+  ensure_fontmap (context);
+
+  if (!PANGO_IS_FC_FONT_MAP (context->fontmap))
+    {
+      g_set_error (error,
+                   GTK_CSS_PARSER_ERROR,
+                   GTK_CSS_PARSER_ERROR_FAILED,
+                   "Custom fonts are not implemented for %s", G_OBJECT_TYPE_NAME (context->fontmap));
+      return FALSE;
+    }
+
+  config = pango_fc_font_map_get_config (PANGO_FC_FONT_MAP (context->fontmap));
+
+  if (!FcConfigAppFontAddFile (config, (FcChar8 *) path))
+    {
+      g_set_error (error,
+                   GTK_CSS_PARSER_ERROR,
+                   GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                   "Failed to load font");
+      return FALSE;
+    }
+
+  files = (GPtrArray *) g_object_get_data (G_OBJECT (context->fontmap), "font-files");
+  g_ptr_array_add (files, g_strdup (path));
+
+  pango_fc_font_map_config_changed (PANGO_FC_FONT_MAP (context->fontmap));
+
+  return TRUE;
+}
+
+static gboolean
+add_font_from_bytes (Context  *context,
+                     GBytes   *bytes,
+                     GError  **error)
+{
+  GFile *file;
+  GIOStream *iostream;
+  GOutputStream *ostream;
+  gboolean result;
+
+  file = g_file_new_tmp ("gtk4-font-XXXXXX.ttf", (GFileIOStream **) &iostream, error);
+  if (!file)
+    return FALSE;
+
+  ostream = g_io_stream_get_output_stream (iostream);
+  if (g_output_stream_write_bytes (ostream, bytes, NULL, error) == -1)
+    {
+      g_object_unref (file);
+      g_object_unref (iostream);
+
+      return FALSE;
+    }
+
+  g_io_stream_close (iostream, NULL, NULL);
+  g_object_unref (iostream);
+
+  result = add_font_from_file (context, g_file_peek_path (file), error);
+
+  g_object_unref (file);
+
+  return result;
+}
+
+#else /* !HAVE_PANGOFT */
+
+static gboolean
+add_font_from_bytes (Context  *context,
+                     GBytes   *bytes,
+                     GError  **error)
+{
+  g_set_error (error,
+               GTK_CSS_PARSER_ERROR,
+               GTK_CSS_PARSER_ERROR_FAILED,
+               "Not implemented");
+  return FALSE;
+}
+
+#endif
+
 static gboolean
 parse_font (GtkCssParser *parser,
             Context      *context,
             gpointer      out_font)
 {
-  PangoFont *font;
-  char *s;
+  PangoFont *font = NULL;
+  char *font_name;
 
-  s = gtk_css_parser_consume_string (parser);
-  if (s == NULL)
+  font_name = gtk_css_parser_consume_string (parser);
+  if (font_name == NULL)
     return FALSE;
 
-  font = font_from_string (s);
-  if (font == NULL)
+  if (context->fontmap)
+    font = font_from_string (context->fontmap, font_name, FALSE);
+
+  if (gtk_css_parser_has_url (parser))
     {
-      gtk_css_parser_error_syntax (parser, "This font does not exist.");
-      return FALSE;
+      char *url;
+
+      if (font != NULL)
+        {
+          gtk_css_parser_error_value (parser, "A font with this name already exists.");
+          /* consume the url to avoid more errors */
+          url = gtk_css_parser_consume_url (parser);
+          g_free (url);
+        }
+      else
+        {
+          char *scheme;
+          GBytes *bytes;
+          GError *error = NULL;
+          GtkCssLocation start_location;
+          gboolean success = FALSE;
+
+          start_location = *gtk_css_parser_get_start_location (parser);
+          url = gtk_css_parser_consume_url (parser);
+
+          if (url != NULL)
+            {
+              scheme = g_uri_parse_scheme (url);
+              if (scheme && g_ascii_strcasecmp (scheme, "data") == 0)
+                {
+                  bytes = gtk_css_data_url_parse (url, NULL, &error);
+                }
+              else
+                {
+                  GFile *file;
+
+                  file = g_file_new_for_uri (url);
+                  bytes = g_file_load_bytes (file, NULL, NULL, &error);
+                  g_object_unref (file);
+                }
+
+              g_free (scheme);
+              g_free (url);
+              if (bytes != NULL)
+                {
+                  success = add_font_from_bytes (context, bytes, &error);
+                  g_bytes_unref (bytes);
+                }
+
+              if (!success)
+                {
+                  gtk_css_parser_emit_error (parser,
+                                             &start_location,
+                                             gtk_css_parser_get_end_location (parser),
+                                             error);
+                }
+            }
+
+          if (success)
+            {
+              font = font_from_string (context->fontmap, font_name, FALSE);
+              if (!font)
+                {
+                  gtk_css_parser_error (parser,
+                                        GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                                        &start_location,
+                                        gtk_css_parser_get_end_location (parser),
+                                        "The given url does not define a font named \"%s\"",
+                                        font_name);
+                }
+            }
+        }
+    }
+  else
+    {
+      if (!font)
+        font = font_from_string (pango_cairo_font_map_get_default (), font_name, TRUE);
+
+      if (!font)
+        gtk_css_parser_error_value (parser, "The font \"%s\" does not exist", font_name);
     }
 
-  *((PangoFont**)out_font) = font;
+  g_free (font_name);
 
-  g_free (s);
-
-  return TRUE;
+  if (font)
+    {
+      *((PangoFont**)out_font) = font;
+      return TRUE;
+    }
+  else
+    {
+      return FALSE;
+    }
 }
 
 static void
@@ -952,6 +1217,8 @@ clear_font (gpointer inout_font)
 {
   g_clear_object ((PangoFont **) inout_font);
 }
+
+#define GLYPH_NEEDS_WIDTH (1 << 15)
 
 static gboolean
 parse_glyphs (GtkCssParser *parser,
@@ -979,6 +1246,7 @@ parse_glyphs (GtkCssParser *parser,
                   gtk_css_parser_error_value (parser, "Unsupported character %d in string", i);
                 }
               gi.glyph = PANGO_GLYPH_INVALID_INPUT - MAX_ASCII_GLYPH + s[i];
+              *(unsigned int *) &gi.attr |= GLYPH_NEEDS_WIDTH;
               pango_glyph_string_set_size (glyph_string, glyph_string->num_glyphs + 1);
               glyph_string->glyphs[glyph_string->num_glyphs - 1] = gi;
             }
@@ -987,14 +1255,22 @@ parse_glyphs (GtkCssParser *parser,
         }
       else
         {
-          if (!gtk_css_parser_consume_integer (parser, &i) ||
-              !gtk_css_parser_consume_number (parser, &d))
+          if (!gtk_css_parser_consume_integer (parser, &i))
             {
               pango_glyph_string_free (glyph_string);
               return FALSE;
             }
           gi.glyph = i;
-          gi.geometry.width = (int) (d * PANGO_SCALE);
+
+          if (gtk_css_parser_has_number (parser))
+            {
+              gtk_css_parser_consume_number (parser, &d);
+              gi.geometry.width = (int) (d * PANGO_SCALE);
+            }
+          else
+            {
+              *(unsigned int *) &gi.attr |= GLYPH_NEEDS_WIDTH;
+            }
 
           if (gtk_css_parser_has_number (parser))
             {
@@ -1169,9 +1445,35 @@ create_default_texture (void)
 }
 
 static GskRenderNode *
+create_default_render_node_with_bounds (const graphene_rect_t *rect)
+{
+  return gsk_color_node_new (&GDK_RGBA("FF00CC"), rect);
+}
+
+static GskRenderNode *
 create_default_render_node (void)
 {
-  return gsk_color_node_new (&GDK_RGBA("FF00CC"), &GRAPHENE_RECT_INIT (0, 0, 50, 50));
+  return create_default_render_node_with_bounds (&GRAPHENE_RECT_INIT (0, 0, 50, 50));
+}
+
+static GskPath *
+create_default_path (void)
+{
+  GskPathBuilder *builder;
+  guint i;
+
+  builder = gsk_path_builder_new ();
+
+  gsk_path_builder_move_to (builder, 25, 0);
+  for (i = 1; i < 5; i++)
+    {
+      gsk_path_builder_line_to (builder,
+                                sin (i * G_PI * 0.8) * 25 + 25,
+                                -cos (i * G_PI * 0.8) * 25 + 25);
+    }
+  gsk_path_builder_close (builder);
+
+  return gsk_path_builder_free_to_path (builder);
 }
 
 static GskRenderNode *
@@ -1938,26 +2240,78 @@ unpack_glyphs (PangoFont        *font,
 
   for (i = 0; i < glyphs->num_glyphs; i++)
     {
-      PangoGlyph glyph = glyphs->glyphs[i].glyph;
+      PangoGlyphInfo *gi = &glyphs->glyphs[i];
 
-      if (glyph < PANGO_GLYPH_INVALID_INPUT - MAX_ASCII_GLYPH ||
-          glyph >= PANGO_GLYPH_INVALID_INPUT)
+      if (((*(unsigned int *) &gi->attr) & GLYPH_NEEDS_WIDTH) == 0)
         continue;
 
-      glyph = glyph - (PANGO_GLYPH_INVALID_INPUT - MAX_ASCII_GLYPH) - MIN_ASCII_GLYPH;
+      *(unsigned int *) &gi->attr &= ~GLYPH_NEEDS_WIDTH;
 
-      if (ascii == NULL)
+     if (gi->glyph >= PANGO_GLYPH_INVALID_INPUT - MAX_ASCII_GLYPH &&
+         gi->glyph < PANGO_GLYPH_INVALID_INPUT)
         {
-          ascii = create_ascii_glyphs (font);
-          if (ascii == NULL)
-            return FALSE;
-        }
+          PangoGlyph idx = gi->glyph - (PANGO_GLYPH_INVALID_INPUT - MAX_ASCII_GLYPH) - MIN_ASCII_GLYPH;
 
-      glyphs->glyphs[i].glyph = ascii->glyphs[glyph].glyph;
-      glyphs->glyphs[i].geometry.width = ascii->glyphs[glyph].geometry.width;
+          if (ascii == NULL)
+            {
+              ascii = create_ascii_glyphs (font);
+              if (ascii == NULL)
+                return FALSE;
+            }
+
+          gi->glyph = ascii->glyphs[idx].glyph;
+          gi->geometry.width = ascii->glyphs[idx].geometry.width;
+        }
+      else
+        {
+          PangoRectangle ink_rect;
+
+          pango_font_get_glyph_extents (font, gi->glyph, &ink_rect, NULL);
+
+          gi->geometry.width = ink_rect.width;
+        }
     }
 
   g_clear_pointer (&ascii, pango_glyph_string_free);
+
+  return TRUE;
+}
+
+static gboolean
+parse_hint_style (GtkCssParser *parser,
+                  Context      *context,
+                  gpointer      out)
+{
+  if (!parse_enum (parser, CAIRO_GOBJECT_TYPE_HINT_STYLE, out))
+    return FALSE;
+
+  if (*(cairo_hint_style_t *) out != CAIRO_HINT_STYLE_NONE &&
+      *(cairo_hint_style_t *) out != CAIRO_HINT_STYLE_SLIGHT &&
+      *(cairo_hint_style_t *) out != CAIRO_HINT_STYLE_FULL)
+    {
+      gtk_css_parser_error_value (parser, "Unsupported value for enum \"%s\"",
+                                  g_type_name (CAIRO_GOBJECT_TYPE_HINT_STYLE));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+parse_antialias (GtkCssParser *parser,
+                 Context      *context,
+                 gpointer      out)
+{
+  if (!parse_enum (parser, CAIRO_GOBJECT_TYPE_ANTIALIAS, out))
+    return FALSE;
+
+  if (*(cairo_antialias_t *) out != CAIRO_ANTIALIAS_NONE &&
+      *(cairo_antialias_t *) out != CAIRO_ANTIALIAS_GRAY)
+    {
+      gtk_css_parser_error_value (parser, "Unsupported value for enum \"%s\"",
+                                  g_type_name (CAIRO_GOBJECT_TYPE_ANTIALIAS));
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -1970,11 +2324,16 @@ parse_text_node (GtkCssParser *parser,
   graphene_point_t offset = GRAPHENE_POINT_INIT (0, 0);
   GdkRGBA color = GDK_RGBA("000000");
   PangoGlyphString *glyphs = NULL;
+  cairo_hint_style_t hint_style = CAIRO_HINT_STYLE_SLIGHT;
+  cairo_antialias_t antialias = CAIRO_ANTIALIAS_GRAY;
+  PangoFont *hinted;
   const Declaration declarations[] = {
     { "font", parse_font, clear_font, &font },
     { "offset", parse_point, NULL, &offset },
     { "color", parse_color, NULL, &color },
-    { "glyphs", parse_glyphs, clear_glyphs, &glyphs }
+    { "glyphs", parse_glyphs, clear_glyphs, &glyphs },
+    { "hint-style", parse_hint_style, NULL, &hint_style },
+    { "antialias", parse_antialias, NULL, &antialias },
   };
   GskRenderNode *result;
 
@@ -1982,9 +2341,13 @@ parse_text_node (GtkCssParser *parser,
 
   if (font == NULL)
     {
-      font = font_from_string ("Cantarell 11");
+      font = font_from_string (pango_cairo_font_map_get_default (), "Cantarell 15px", TRUE);
       g_assert (font);
     }
+
+  hinted = gsk_reload_font (font, 1.0, CAIRO_HINT_METRICS_OFF, hint_style, antialias);
+  g_object_unref (font);
+  font = hinted;
 
   if (!glyphs)
     {
@@ -1997,6 +2360,7 @@ parse_text_node (GtkCssParser *parser,
       for (i = 0; i < strlen (text); i++)
         {
           gi.glyph = PANGO_GLYPH_INVALID_INPUT - MAX_ASCII_GLYPH + text[i];
+          *(unsigned int *) &gi.attr |= GLYPH_NEEDS_WIDTH;
           glyphs->glyphs[i] = gi;
         }
     }
@@ -2097,6 +2461,197 @@ parse_rounded_clip_node (GtkCssParser *parser,
   return result;
 }
 
+static gboolean
+parse_path (GtkCssParser *parser,
+            Context      *context,
+            gpointer      out_path)
+{
+  GskPath *path;
+  char *str = NULL;
+
+  if (!parse_string (parser, context, &str))
+    return FALSE;
+
+  path = gsk_path_parse (str);
+  g_free (str);
+
+  if (path == NULL)
+    {
+      gtk_css_parser_error_value (parser, "Invalid path");
+      return FALSE;
+    }
+
+  *((GskPath **) out_path) = path;
+
+  return TRUE;
+}
+
+static void
+clear_path (gpointer inout_path)
+{
+  g_clear_pointer ((GskPath **) inout_path, gsk_path_unref);
+}
+
+static gboolean
+parse_dash (GtkCssParser *parser,
+            Context      *context,
+            gpointer      out_dash)
+{
+  GArray *dash;
+  double d;
+
+  /* because CSS does this, too */
+  if (gtk_css_parser_try_ident (parser, "none"))
+    {
+      *((GArray **) out_dash) = NULL;
+      return TRUE;
+    }
+
+  dash = g_array_new (FALSE, FALSE, sizeof (float));
+  while (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_SIGNLESS_NUMBER) ||
+         gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_SIGNLESS_INTEGER))
+    {
+      if (!gtk_css_parser_consume_number (parser, &d))
+        {
+          g_array_free (dash, TRUE);
+          return FALSE;
+        }
+
+      g_array_append_vals (dash, (float[1]) { d }, 1);
+    }
+
+  if (dash->len == 0)
+    {
+      gtk_css_parser_error_syntax (parser, "Empty dash array");
+      g_array_free (dash, TRUE);
+      return FALSE;
+    }
+
+  *((GArray **) out_dash) = dash;
+
+  return TRUE;
+}
+
+static void
+clear_dash (gpointer inout_array)
+{
+  g_clear_pointer ((GArray **) inout_array, g_array_unref);
+}
+
+static gboolean
+parse_fill_rule (GtkCssParser *parser,
+                 Context      *context,
+                 gpointer      out_rule)
+{
+  return parse_enum (parser, GSK_TYPE_FILL_RULE, out_rule);
+}
+
+static GskRenderNode *
+parse_fill_node (GtkCssParser *parser,
+                 Context      *context)
+{
+  GskRenderNode *child = NULL;
+  GskPath *path = NULL;
+  int rule = GSK_FILL_RULE_WINDING;
+  const Declaration declarations[] = {
+    { "child", parse_node, clear_node, &child },
+    { "path", parse_path, clear_path, &path },
+    { "fill-rule", parse_fill_rule, NULL, &rule },
+  };
+  GskRenderNode *result;
+
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+  if (path == NULL)
+    path = create_default_path ();
+  if (child == NULL)
+    {
+      graphene_rect_t bounds;
+      gsk_path_get_bounds (path, &bounds);
+      child = create_default_render_node_with_bounds (&bounds);
+    }
+
+  result = gsk_fill_node_new (child, path, rule);
+
+  gsk_path_unref (path);
+
+  gsk_render_node_unref (child);
+
+  return result;
+}
+
+static gboolean
+parse_line_cap (GtkCssParser *parser,
+                Context      *context,
+                gpointer      out)
+{
+  return parse_enum (parser, GSK_TYPE_LINE_CAP, out);
+}
+
+static gboolean
+parse_line_join (GtkCssParser *parser,
+                 Context      *context,
+                 gpointer      out)
+{
+  return parse_enum (parser, GSK_TYPE_LINE_JOIN, out);
+}
+
+static GskRenderNode *
+parse_stroke_node (GtkCssParser *parser,
+                   Context      *context)
+{
+  GskRenderNode *child = NULL;
+  GskPath *path = NULL;
+  double line_width = 1.0;
+  int line_cap = GSK_LINE_CAP_BUTT;
+  int line_join = GSK_LINE_JOIN_MITER;
+  double miter_limit = 4.0;
+  GArray *dash = NULL;
+  double dash_offset = 0.0;
+  GskStroke *stroke;
+
+  const Declaration declarations[] = {
+    { "child", parse_node, clear_node, &child },
+    { "path", parse_path, clear_path, &path },
+    { "line-width", parse_positive_double, NULL, &line_width },
+    { "line-cap", parse_line_cap, NULL, &line_cap },
+    { "line-join", parse_line_join, NULL, &line_join },
+    { "miter-limit", parse_positive_double, NULL, &miter_limit },
+    { "dash", parse_dash, clear_dash, &dash },
+    { "dash-offset", parse_double, NULL, &dash_offset}
+  };
+  GskRenderNode *result;
+
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+  if (path == NULL)
+    path = create_default_path ();
+
+  stroke = gsk_stroke_new (line_width);
+  gsk_stroke_set_line_cap (stroke, line_cap);
+  gsk_stroke_set_line_join (stroke, line_join);
+  gsk_stroke_set_miter_limit (stroke, miter_limit);
+  if (dash)
+    {
+      gsk_stroke_set_dash (stroke, (float *) dash->data, dash->len);
+      g_array_free (dash, TRUE);
+    }
+  gsk_stroke_set_dash_offset (stroke, dash_offset);
+
+  if (child == NULL)
+    {
+      graphene_rect_t bounds;
+      gsk_path_get_stroke_bounds (path, stroke, &bounds);
+      child = create_default_render_node_with_bounds (&bounds);
+    }
+
+  result = gsk_stroke_node_new (child, path, stroke);
+
+  gsk_path_unref (path);
+  gsk_stroke_free (stroke);
+  gsk_render_node_unref (child);
+
+  return result;
+}
+
 static GskRenderNode *
 parse_shadow_node (GtkCssParser *parser,
                    Context      *context)
@@ -2150,6 +2705,27 @@ parse_debug_node (GtkCssParser *parser,
   return result;
 }
 
+static GskRenderNode *
+parse_subsurface_node (GtkCssParser *parser,
+                       Context      *context)
+{
+  GskRenderNode *child = NULL;
+  const Declaration declarations[] = {
+    { "child", parse_node, clear_node, &child },
+  };
+  GskRenderNode *result;
+
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+  if (child == NULL)
+    child = create_default_render_node ();
+
+  result = gsk_subsurface_node_new (child, NULL);
+
+  gsk_render_node_unref (child);
+
+  return result;
+}
+
 static gboolean
 parse_node (GtkCssParser *parser,
             Context      *context,
@@ -2179,6 +2755,8 @@ parse_node (GtkCssParser *parser,
     { "repeating-linear-gradient", parse_repeating_linear_gradient_node },
     { "repeating-radial-gradient", parse_repeating_radial_gradient_node },
     { "rounded-clip", parse_rounded_clip_node },
+    { "fill", parse_fill_node },
+    { "stroke", parse_stroke_node },
     { "shadow", parse_shadow_node },
     { "text", parse_text_node },
     { "texture", parse_texture_node },
@@ -2186,6 +2764,7 @@ parse_node (GtkCssParser *parser,
     { "transform", parse_transform_node },
     { "glshader", parse_glshader_node },
     { "mask", parse_mask_node },
+    { "subsurface", parse_subsurface_node },
   };
   GskRenderNode **node_p = out_node;
   const GtkCssToken *token;
@@ -2322,6 +2901,7 @@ gsk_render_node_deserialize_from_bytes (GBytes            *bytes,
   parser = gtk_css_parser_new_for_bytes (bytes, NULL, gsk_render_node_parser_error,
                                          &error_func_pair, NULL);
   context_init (&context);
+
   root = parse_container_node (parser, &context);
 
   if (root && gsk_container_node_get_n_children (root) == 1)
@@ -2340,6 +2920,7 @@ gsk_render_node_deserialize_from_bytes (GBytes            *bytes,
 }
 
 
+
 typedef struct
 {
   int indentation_level;
@@ -2348,6 +2929,7 @@ typedef struct
   gsize named_node_counter;
   GHashTable *named_textures;
   gsize named_texture_counter;
+  GHashTable *serialized_fonts;
 } Printer;
 
 static void
@@ -2433,6 +3015,14 @@ printer_init_duplicates_for_node (Printer       *printer,
       printer_init_duplicates_for_node (printer, gsk_debug_node_get_child (node));
       break;
 
+    case GSK_FILL_NODE:
+      printer_init_duplicates_for_node (printer, gsk_fill_node_get_child (node));
+      break;
+
+    case GSK_STROKE_NODE:
+      printer_init_duplicates_for_node (printer, gsk_stroke_node_get_child (node));
+      break;
+
     case GSK_BLEND_NODE:
       printer_init_duplicates_for_node (printer, gsk_blend_node_get_bottom_child (node));
       printer_init_duplicates_for_node (printer, gsk_blend_node_get_top_child (node));
@@ -2470,6 +3060,10 @@ printer_init_duplicates_for_node (Printer       *printer,
       }
       break;
 
+    case GSK_SUBSURFACE_NODE:
+      printer_init_duplicates_for_node (printer, gsk_subsurface_node_get_child (node));
+      break;
+
     default:
     case GSK_NOT_A_RENDER_NODE:
       g_assert_not_reached ();
@@ -2488,6 +3082,7 @@ printer_init (Printer       *self,
   self->named_node_counter = 0;
   self->named_textures = g_hash_table_new_full (NULL, NULL, NULL, g_free);
   self->named_texture_counter = 0;
+  self->serialized_fonts = g_hash_table_new (g_str_hash, g_str_equal);
 
   printer_init_duplicates_for_node (self, node);
 }
@@ -2499,6 +3094,7 @@ printer_clear (Printer *self)
     g_string_free (self->str, TRUE);
   g_hash_table_unref (self->named_nodes);
   g_hash_table_unref (self->named_textures);
+  g_hash_table_unref (self->serialized_fonts);
 }
 
 #define IDENT_LEVEL 2 /* Spaces per level */
@@ -2658,7 +3254,7 @@ append_float_param (Printer    *p,
                     float       value,
                     float       default_value)
 {
-  /* Don't approximate-compare here, better be topo verbose */
+  /* Don't approximate-compare here, better be too verbose */
   if (value == default_value)
     return;
 
@@ -2724,6 +3320,33 @@ append_string_param (Printer    *p,
   _indent (p);
   g_string_append_printf (p->str, "%s: ", param_name);
   gtk_css_print_string (p->str, value, TRUE);
+  g_string_append_c (p->str, ';');
+  g_string_append_c (p->str, '\n');
+}
+
+static const char *
+enum_to_nick (GType type,
+              int   value)
+{
+  GEnumClass *class;
+  GEnumValue *v;
+
+  class = g_type_class_ref (type);
+  v = g_enum_get_value (class, value);
+  g_type_class_unref (class);
+
+  return v->value_nick;
+}
+
+static void
+append_enum_param (Printer    *p,
+                   const char *param_name,
+                   GType       type,
+                   int         value)
+{
+  _indent (p);
+  g_string_append_printf (p->str, "%s: ", param_name);
+  g_string_append (p->str, enum_to_nick (type, value));
   g_string_append_c (p->str, ';');
   g_string_append_c (p->str, '\n');
 }
@@ -2833,8 +3456,11 @@ append_escaping_newlines (GString    *str,
     len = strcspn (string, "\n");
     g_string_append_len (str, string, len);
     string += len;
-    g_string_append (str, "\\\n");
-    string++;
+    if (*string)
+      {
+        g_string_append (str, "\\\n");
+        string++;
+      }
   } while (*string);
 }
 
@@ -2912,45 +3538,20 @@ append_texture_param (Printer    *p,
       g_hash_table_insert (p->named_textures, texture, new_name);
     }
 
-  switch (gdk_texture_get_format (texture))
+  switch (gdk_memory_format_get_depth (gdk_texture_get_format (texture)))
     {
-    case GDK_MEMORY_B8G8R8A8_PREMULTIPLIED:
-    case GDK_MEMORY_A8R8G8B8_PREMULTIPLIED:
-    case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
-    case GDK_MEMORY_B8G8R8A8:
-    case GDK_MEMORY_A8R8G8B8:
-    case GDK_MEMORY_R8G8B8A8:
-    case GDK_MEMORY_A8B8G8R8:
-    case GDK_MEMORY_R8G8B8:
-    case GDK_MEMORY_B8G8R8:
-    case GDK_MEMORY_R16G16B16:
-    case GDK_MEMORY_R16G16B16A16_PREMULTIPLIED:
-    case GDK_MEMORY_R16G16B16A16:
-    case GDK_MEMORY_G8A8_PREMULTIPLIED:
-    case GDK_MEMORY_G8A8:
-    case GDK_MEMORY_G8:
-    case GDK_MEMORY_G16A16_PREMULTIPLIED:
-    case GDK_MEMORY_G16A16:
-    case GDK_MEMORY_G16:
-    case GDK_MEMORY_A8:
-    case GDK_MEMORY_A16:
+    case GDK_MEMORY_U8:
+    case GDK_MEMORY_U16:
       bytes = gdk_texture_save_to_png_bytes (texture);
       g_string_append (p->str, "url(\"data:image/png;base64,");
       break;
 
-    case GDK_MEMORY_R16G16B16_FLOAT:
-    case GDK_MEMORY_R16G16B16A16_FLOAT_PREMULTIPLIED:
-    case GDK_MEMORY_R16G16B16A16_FLOAT:
-    case GDK_MEMORY_A16_FLOAT:
-    case GDK_MEMORY_R32G32B32_FLOAT:
-    case GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED:
-    case GDK_MEMORY_R32G32B32A32_FLOAT:
-    case GDK_MEMORY_A32_FLOAT:
+    case GDK_MEMORY_FLOAT16:
+    case GDK_MEMORY_FLOAT32:
       bytes = gdk_texture_save_to_tiff_bytes (texture);
       g_string_append (p->str, "url(\"data:image/tiff;base64,");
       break;
 
-    case GDK_MEMORY_N_FORMATS:
     default:
       g_assert_not_reached ();
     }
@@ -2962,6 +3563,90 @@ append_texture_param (Printer    *p,
   g_string_append (p->str, "\");\n");
 
   g_bytes_unref (bytes);
+}
+
+static void
+gsk_text_node_serialize_font (GskRenderNode *node,
+                              Printer       *p)
+{
+  PangoFont *font = gsk_text_node_get_font (node);
+  PangoFontMap *fontmap = pango_font_get_font_map (font);
+  PangoFontDescription *desc;
+  char *s;
+
+  desc = pango_font_describe_with_absolute_size (font);
+  s = pango_font_description_to_string (desc);
+  g_string_append_printf (p->str, "\"%s\"", s);
+  g_free (s);
+  pango_font_description_free (desc);
+
+  /* Check if this is  a custom font that we created from a url */
+  if (!g_object_get_data (G_OBJECT (fontmap), "font-files"))
+    return;
+
+#ifdef HAVE_PANGOFT
+  {
+    FcPattern *pat;
+    FcResult res;
+    const char *file;
+    char *data;
+    gsize len;
+    char *b64;
+
+    pat = pango_fc_font_get_pattern (PANGO_FC_FONT (font));
+    res = FcPatternGetString (pat, FC_FILE, 0, (FcChar8 **)&file);
+    if (res != FcResultMatch)
+      return;
+
+    if (g_hash_table_contains (p->serialized_fonts, file))
+      return;
+
+    if (!g_file_get_contents (file, &data, &len, NULL))
+      return;
+
+    g_hash_table_add (p->serialized_fonts, (gpointer) file);
+
+    b64 = base64_encode_with_linebreaks ((const guchar *) data, len);
+
+    g_string_append (p->str, " url(\"data:font/ttf;base64,");
+    append_escaping_newlines (p->str, b64);
+    g_string_append (p->str, "\")");
+
+    g_free (b64);
+    g_free (data);
+  }
+#endif
+}
+
+static void
+gsk_text_node_serialize_font_options (GskRenderNode *node,
+                                      Printer       *p)
+{
+  PangoFont *font = gsk_text_node_get_font (node);
+  cairo_scaled_font_t *sf = pango_cairo_font_get_scaled_font (PANGO_CAIRO_FONT (font));
+  cairo_font_options_t *options;
+  cairo_hint_style_t hint_style;
+  cairo_antialias_t antialias;
+
+  options = cairo_font_options_create ();
+  cairo_scaled_font_get_font_options (sf, options);
+  hint_style = cairo_font_options_get_hint_style (options);
+  antialias = cairo_font_options_get_antialias (options);
+  cairo_font_options_destroy (options);
+
+  /* medium and full are identical in the absence of subpixel modes */
+  if (hint_style == CAIRO_HINT_STYLE_MEDIUM)
+    hint_style = CAIRO_HINT_STYLE_FULL;
+
+  if (hint_style == CAIRO_HINT_STYLE_NONE ||
+      hint_style == CAIRO_HINT_STYLE_FULL)
+    append_enum_param (p, "hint-style", CAIRO_GOBJECT_TYPE_HINT_STYLE, hint_style);
+
+  /* CAIRO_ANTIALIAS_NONE is the only value we ever emit here, since gray is the default,
+   * and we don't accept any other values.
+   */
+  if (antialias == CAIRO_ANTIALIAS_NONE)
+    append_enum_param (p, "antialias", CAIRO_GOBJECT_TYPE_ANTIALIAS, antialias);
 }
 
 void
@@ -3043,6 +3728,56 @@ gsk_text_node_serialize_glyphs (GskRenderNode *node,
   g_string_free (str, TRUE);
   if (ascii)
     pango_glyph_string_free (ascii);
+}
+
+static void
+append_path_param (Printer    *p,
+                   const char *param_name,
+                   GskPath    *path)
+{
+  char *str, *s;
+
+  _indent (p);
+  g_string_append (p->str, "path: \"\\\n");
+  str = gsk_path_to_string (path);
+  /* Put each command on a new line */
+  for (s = str; *s; s++)
+    {
+      if (*s == ' ' &&
+          (s[1] == 'M' || s[1] == 'C' || s[1] == 'Z' || s[1] == 'L'))
+        *s = '\n';
+    }
+  append_escaping_newlines (p->str, str);
+  g_string_append (p->str, "\";\n");
+  g_free (str);
+}
+
+static void
+append_dash_param (Printer     *p,
+                   const char  *param_name,
+                   const float *dash,
+                   gsize        n_dash)
+{
+  _indent (p);
+  g_string_append (p->str, "dash: ");
+
+  if (n_dash == 0)
+    {
+      g_string_append (p->str, "none");
+    }
+  else
+    {
+      gsize i;
+
+      string_append_double (p->str, dash[0]);
+      for (i = 1; i < n_dash; i++)
+        {
+          g_string_append_c (p->str, ' ');
+          string_append_double (p->str, dash[i]);
+        }
+    }
+
+  g_string_append (p->str, ";\n");
 }
 
 static void
@@ -3214,6 +3949,42 @@ render_node_print (Printer       *p,
         append_rounded_rect_param (p, "clip", gsk_rounded_clip_node_get_clip (node));
         append_node_param (p, "child", gsk_rounded_clip_node_get_child (node));
 
+        end_node (p);
+      }
+      break;
+
+    case GSK_FILL_NODE:
+      {
+        start_node (p, "fill", node_name);
+
+        append_node_param (p, "child", gsk_fill_node_get_child (node));
+        append_path_param (p, "path", gsk_fill_node_get_path (node));
+        append_enum_param (p, "fill-rule", GSK_TYPE_FILL_RULE, gsk_fill_node_get_fill_rule (node));
+
+        end_node (p);
+      }
+      break;
+
+    case GSK_STROKE_NODE:
+      {
+        const GskStroke *stroke;
+        const float *dash;
+        gsize n_dash;
+
+        start_node (p, "stroke", node_name);
+
+        append_node_param (p, "child", gsk_stroke_node_get_child (node));
+        append_path_param (p, "path", gsk_stroke_node_get_path (node));
+
+        stroke = gsk_stroke_node_get_stroke (node);
+        append_float_param (p, "line-width", gsk_stroke_get_line_width (stroke), 0.0f);
+        append_enum_param (p, "line-cap", GSK_TYPE_LINE_CAP, gsk_stroke_get_line_cap (stroke));
+        append_enum_param (p, "line-join", GSK_TYPE_LINE_JOIN, gsk_stroke_get_line_join (stroke));
+        append_float_param (p, "miter-limit", gsk_stroke_get_miter_limit (stroke), 4.0f);
+        dash = gsk_stroke_get_dash (stroke, &n_dash);
+        if (dash)
+          append_dash_param (p, "dash", dash, n_dash);
+        append_float_param (p, "dash-offset", gsk_stroke_get_dash_offset (stroke), 0.0f);
 
         end_node (p);
       }
@@ -3404,32 +4175,26 @@ render_node_print (Printer       *p,
       {
         const graphene_point_t *offset = gsk_text_node_get_offset (node);
         const GdkRGBA *color = gsk_text_node_get_color (node);
-        PangoFont *font = gsk_text_node_get_font (node);
-        PangoFontDescription *desc;
-        char *font_name;
 
         start_node (p, "text", node_name);
 
-        if (!gdk_rgba_equal (color, &GDK_RGBA("000000")))
+        if (!gdk_rgba_equal (color, &GDK_RGBA ("000000")))
           append_rgba_param (p, "color", color);
 
         _indent (p);
-        desc = pango_font_describe (font);
-        font_name = pango_font_description_to_string (desc);
-        g_string_append_printf (p->str, "font: \"%s\";\n", font_name);
-        g_free (font_name);
-        pango_font_description_free (desc);
+        g_string_append (p->str, "font: ");
+        gsk_text_node_serialize_font (node, p);
+        g_string_append (p->str, ";\n");
 
         _indent (p);
         g_string_append (p->str, "glyphs: ");
-
         gsk_text_node_serialize_glyphs (node, p->str);
-
-        g_string_append_c (p->str, ';');
-        g_string_append_c (p->str, '\n');
+        g_string_append (p->str, ";\n");
 
         if (!graphene_point_equal (offset, graphene_point_zero ()))
           append_point_param (p, "offset", offset);
+
+        gsk_text_node_serialize_font_options (node, p);
 
         end_node (p);
       }
@@ -3691,6 +4456,16 @@ render_node_print (Printer       *p,
               }
 #endif
           }
+
+        end_node (p);
+      }
+      break;
+
+    case GSK_SUBSURFACE_NODE:
+      {
+        start_node (p, "subsurface", node_name);
+
+        append_node_param (p, "child", gsk_subsurface_node_get_child (node));
 
         end_node (p);
       }

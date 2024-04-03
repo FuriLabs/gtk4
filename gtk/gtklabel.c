@@ -26,35 +26,36 @@
 
 #include "gtklabelprivate.h"
 
+#include "gtkaccessibletextprivate.h"
 #include "gtkbuildable.h"
+#include "gtkcsscolorvalueprivate.h"
+#include "gtkdragsourceprivate.h"
+#include "gtkdragicon.h"
 #include "gtkeventcontrollermotion.h"
 #include "gtkeventcontrollerfocus.h"
 #include "gtkfilelauncher.h"
 #include "gtkgesturedrag.h"
 #include "gtkgestureclick.h"
 #include "gtkgesturesingle.h"
+#include "gtkjoinedmenuprivate.h"
 #include "gtkmarshalers.h"
+#include "gtknative.h"
 #include "gtknotebook.h"
 #include "gtkpangoprivate.h"
+#include "gtkpopovermenu.h"
 #include "gtkprivate.h"
+#include "gtkrenderbackgroundprivate.h"
+#include "gtkrenderborderprivate.h"
+#include "gtkrenderlayoutprivate.h"
 #include "gtkshortcut.h"
 #include "gtkshortcutcontroller.h"
 #include "gtkshortcuttrigger.h"
 #include "gtksnapshot.h"
-#include "gtkrenderbackgroundprivate.h"
-#include "gtkrenderborderprivate.h"
-#include "gtkrenderlayoutprivate.h"
 #include "gtktextutilprivate.h"
 #include "gtktooltip.h"
 #include "gtktypebuiltins.h"
 #include "gtkurilauncher.h"
 #include "gtkwidgetprivate.h"
-#include "gtkpopovermenu.h"
-#include "gtknative.h"
-#include "gtkdragsourceprivate.h"
-#include "gtkdragicon.h"
-#include "gtkcsscolorvalueprivate.h"
-#include "gtkjoinedmenuprivate.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -71,7 +72,7 @@
  *
  * ![An example GtkLabel](label.png)
  *
- * # CSS nodes
+ * ## CSS nodes
  *
  * ```
  * label
@@ -92,7 +93,7 @@
  * carry the link or visited state depending on whether they have been
  * visited. In this case, label node also gets a .link style class.
  *
- * # GtkLabel as GtkBuildable
+ * ## GtkLabel as GtkBuildable
  *
  * The GtkLabel implementation of the GtkBuildable interface supports a
  * custom `<attributes>` element, which supports any number of `<attribute>`
@@ -101,6 +102,7 @@
  * values for this label.
  *
  * An example of a UI definition fragment specifying Pango attributes:
+ *
  * ```xml
  * <object class="GtkLabel">
  *   <attributes>
@@ -116,11 +118,11 @@
  * sense with translatable attributes. Use markup embedded in the translatable
  * content instead.
  *
- * # Accessibility
+ * ## Accessibility
  *
  * `GtkLabel` uses the %GTK_ACCESSIBLE_ROLE_LABEL role.
  *
- * # Mnemonics
+ * ## Mnemonics
  *
  * Labels may contain “mnemonics”. Mnemonics are underlined characters in the
  * label, used for keyboard navigation. Mnemonics are created by providing a
@@ -161,7 +163,7 @@
  * gtk_label_set_mnemonic_widget (GTK_LABEL (label), entry);
  * ```
  *
- * # Markup (styled text)
+ * ## Markup (styled text)
  *
  * To make it easy to format text in a label (changing colors,
  * fonts, etc.), label text can be provided in a simple
@@ -191,14 +193,14 @@
  * end_index for a [struct@Pango.Attribute] requires knowledge of the exact
  * string being displayed, so translations will cause problems.
  *
- * # Selectable labels
+ * ## Selectable labels
  *
  * Labels can be made selectable with [method@Gtk.Label.set_selectable].
  * Selectable labels allow the user to copy the label contents to
- * the clipboard. Only labels that contain useful-to-copy information
- * — such as error messages — should be made selectable.
+ * the clipboard. Only labels that contain useful-to-copy information—such
+ * as error messages—should be made selectable.
  *
- * # Text layout
+ * ## Text layout
  *
  * A label can contain any number of paragraphs, but will have
  * performance problems if it contains more than a small number.
@@ -221,7 +223,7 @@
  * is used as the natural width. Even if max-width-chars specified, wrapping
  * labels will be rewrapped to use all of the available width.
  *
- * # Links
+ * ## Links
  *
  * GTK supports markup for clickable hyperlinks in addition to regular Pango
  * markup. The markup for links is borrowed from HTML, using the `<a>` with
@@ -230,7 +232,7 @@
  * attribute is displayed as a tooltip on the link. The “class“ attribute is
  * used as style class on the CSS node for the link.
  *
- * An example looks like this:
+ * An example of inline links looks like this:
  *
  * ```c
  * const char *text =
@@ -428,18 +430,22 @@ static void gtk_label_update_active_link  (GtkWidget *widget,
                                            double     y);
 static void     gtk_label_setup_mnemonic    (GtkLabel          *self);
 
-static void     gtk_label_buildable_interface_init   (GtkBuildableIface  *iface);
 /* For selectable labels: */
 static void gtk_label_move_cursor        (GtkLabel        *self,
                                           GtkMovementStep  step,
                                           int              count,
                                           gboolean         extend_selection);
 
+static void     gtk_label_buildable_interface_init   (GtkBuildableIface  *iface);
 static GtkBuildableIface *buildable_parent_iface = NULL;
+
+static void     gtk_label_accessible_text_init (GtkAccessibleTextInterface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (GtkLabel, gtk_label, GTK_TYPE_WIDGET,
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
-                                                gtk_label_buildable_interface_init))
+                                                gtk_label_buildable_interface_init)
+                         G_IMPLEMENT_INTERFACE (GTK_TYPE_ACCESSIBLE_TEXT,
+                                                gtk_label_accessible_text_init))
 
 static void
 add_move_binding (GtkWidgetClass *widget_class,
@@ -1203,7 +1209,7 @@ my_pango_layout_get_width_for_height (PangoLayout *layout,
       else if (text_height > for_height)
         min = mid + 1;
       else
-        max = mid;
+        max = text_width;
     }
 
   return min * PANGO_SCALE;
@@ -1517,6 +1523,7 @@ gtk_label_dispose (GObject *object)
   GtkLabel *self = GTK_LABEL (object);
 
   gtk_label_set_mnemonic_widget (self, NULL);
+  gtk_label_clear_select_info (self);
 
   G_OBJECT_CLASS (gtk_label_parent_class)->dispose (object);
 }
@@ -3085,6 +3092,11 @@ gtk_label_set_label_internal (GtkLabel   *self,
 
   g_object_notify_by_pspec (G_OBJECT (self), label_props[PROP_LABEL]);
 
+  gtk_accessible_update_property (GTK_ACCESSIBLE (self),
+                                  GTK_ACCESSIBLE_PROPERTY_LABEL,
+                                  self->label,
+                                  -1);
+
   return TRUE;
 }
 
@@ -3325,7 +3337,7 @@ strip_ulines (const char *text,
   char *q;
   gboolean after_uline = FALSE;
 
-  new_text = malloc (strlen (text) + 1);
+  new_text = g_malloc (strlen (text) + 1);
 
   q = new_text;
   for (p = text; *p; p++)
@@ -5099,7 +5111,11 @@ gtk_label_select_region_index (GtkLabel *self,
             }
         }
 
+
       gtk_label_update_actions (self);
+
+      gtk_accessible_text_update_caret_position (GTK_ACCESSIBLE_TEXT (self));
+      gtk_accessible_text_update_selection_bound (GTK_ACCESSIBLE_TEXT (self));
 
       gtk_widget_queue_draw (GTK_WIDGET (self));
 
@@ -6045,3 +6061,135 @@ gtk_label_get_tabs (GtkLabel *self)
 
   return self->tabs ? pango_tab_array_copy (self->tabs) : NULL;
 }
+
+/* {{{ GtkAccessibleText implementation */
+
+static GBytes *
+gtk_label_accessible_text_get_contents (GtkAccessibleText *self,
+                                        unsigned int       start,
+                                        unsigned int       end)
+{
+  const char *text;
+  int len;
+  char *string;
+  gsize size;
+
+  text = gtk_label_get_text (GTK_LABEL (self));
+  len = g_utf8_strlen (text, -1);
+
+  start = CLAMP (start, 0, len);
+  end = CLAMP (end, 0, len);
+
+  if (end <= start)
+    {
+      string = g_strdup ("");
+      size = 1;
+    }
+  else
+    {
+      const char *p, *q;
+      p = g_utf8_offset_to_pointer (text, start);
+      q = g_utf8_offset_to_pointer (text, end);
+      size = q - p + 1;
+      string = g_strndup (p, q - p);
+    }
+
+  return g_bytes_new_take (string, size);
+}
+
+static GBytes *
+gtk_label_accessible_text_get_contents_at (GtkAccessibleText            *self,
+                                           unsigned int                  offset,
+                                           GtkAccessibleTextGranularity  granularity,
+                                           unsigned int                 *start,
+                                           unsigned int                 *end)
+{
+  PangoLayout *layout = gtk_label_get_layout (GTK_LABEL (self));
+  char *string = gtk_pango_get_string_at (layout, offset, granularity, start, end);
+
+  return g_bytes_new_take (string, strlen (string));
+}
+
+static unsigned
+gtk_label_accessible_text_get_caret_position (GtkAccessibleText *self)
+{
+  return _gtk_label_get_cursor_position (GTK_LABEL (self));
+}
+
+static gboolean
+gtk_label_accessible_text_get_selection (GtkAccessibleText       *self,
+                                         gsize                   *n_ranges,
+                                         GtkAccessibleTextRange **ranges)
+{
+  int start, end;
+
+  if (!gtk_label_get_selection_bounds (GTK_LABEL (self), &start, &end))
+    return FALSE;
+
+  *n_ranges = 1;
+  *ranges = g_new (GtkAccessibleTextRange, 1);
+  (*ranges)[0].start = start;
+  (*ranges)[0].length = end - start;
+
+  return TRUE;
+}
+
+static void
+gtk_label_accessible_text_get_default_attributes (GtkAccessibleText   *self,
+                                                  char              ***attribute_names,
+                                                  char              ***attribute_values)
+{
+  PangoLayout *layout = gtk_label_get_layout (GTK_LABEL (self));
+  char **names, **values;
+
+  gtk_pango_get_default_attributes (layout, &names, &values);
+
+  *attribute_names = names;
+  *attribute_values = values;
+}
+
+static gboolean
+gtk_label_accessible_text_get_attributes (GtkAccessibleText        *self,
+                                          unsigned int              offset,
+                                          gsize                    *n_ranges,
+                                          GtkAccessibleTextRange  **ranges,
+                                          char                   ***attribute_names,
+                                          char                   ***attribute_values)
+{
+  PangoLayout *layout = gtk_label_get_layout (GTK_LABEL (self));
+  unsigned int start, end;
+  char **names, **values;
+
+  gtk_pango_get_run_attributes (layout, offset, &names, &values, &start, &end);
+
+  *n_ranges = g_strv_length (names);
+  *ranges = g_new (GtkAccessibleTextRange, *n_ranges);
+
+  for (unsigned i = 0; i < *n_ranges; i++)
+    {
+      GtkAccessibleTextRange *range = &(*ranges)[i];
+
+      range->start = start;
+      range->length = end - start;
+    }
+
+  *attribute_names = names;
+  *attribute_values = values;
+
+  return TRUE;
+}
+
+static void
+gtk_label_accessible_text_init (GtkAccessibleTextInterface *iface)
+{
+  iface->get_contents = gtk_label_accessible_text_get_contents;
+  iface->get_contents_at = gtk_label_accessible_text_get_contents_at;
+  iface->get_caret_position = gtk_label_accessible_text_get_caret_position;
+  iface->get_selection = gtk_label_accessible_text_get_selection;
+  iface->get_attributes = gtk_label_accessible_text_get_attributes;
+  iface->get_default_attributes = gtk_label_accessible_text_get_default_attributes;
+}
+
+/* }}} */
+
+/* vim:set foldmethod=marker expandtab: */

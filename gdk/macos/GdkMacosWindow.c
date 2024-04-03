@@ -214,22 +214,6 @@ typedef NSString *CALayerContentsGravity;
     }
 }
 
--(void)setFrame:(NSRect)frame display:(BOOL)display
-{
-  NSRect contentRect = [self contentRectForFrameRect:frame];
-  GdkSurface *surface = GDK_SURFACE (gdk_surface);
-  gboolean maximized = (surface->state & GDK_TOPLEVEL_STATE_MAXIMIZED) != 0;
-
-  if (maximized && !inMaximizeTransition && !NSEqualRects (lastMaximizedFrame, frame))
-    {
-      gdk_synthesize_surface_state (surface, GDK_TOPLEVEL_STATE_MAXIMIZED, 0);
-      _gdk_surface_update_size (surface);
-    }
-
-  [super setFrame:frame display:display];
-  [[self contentView] setFrame:NSMakeRect (0, 0, contentRect.size.width, contentRect.size.height)];
-}
-
 -(id)initWithContentRect:(NSRect)contentRect
                styleMask:(NSWindowStyleMask)styleMask
                  backing:(NSBackingStoreType)backingType
@@ -312,23 +296,12 @@ typedef NSString *CALayerContentsGravity;
   GdkMonitor *monitor;
   GdkRectangle geometry;
   GdkRectangle workarea;
-  int shadow_top = 0;
-  int shadow_left = 0;
-  int shadow_right = 0;
-  int shadow_bottom = 0;
   GdkRectangle window_gdk;
   GdkPoint pointer_position;
   GdkPoint new_origin;
 
   if (!inManualMove)
     return NO;
-
-  /* Get our shadow so we can adjust the window position sans-shadow */
-  _gdk_macos_surface_get_shadow (gdk_surface,
-                                 &shadow_top,
-                                 &shadow_right,
-                                 &shadow_bottom,
-                                 &shadow_left);
 
   windowFrame = [self frame];
   currentLocation = [NSEvent mouseLocation];
@@ -355,20 +328,8 @@ typedef NSString *CALayerContentsGravity;
   window_gdk.width = windowFrame.size.width;
   window_gdk.height = windowFrame.size.height;
 
-  /* Subtract our shadowin from the window */
-  window_gdk.x += shadow_left;
-  window_gdk.y += shadow_top;
-  window_gdk.width = window_gdk.width - shadow_left - shadow_right;
-  window_gdk.height = window_gdk.height - shadow_top - shadow_bottom;
-
   /* Now place things on the monitor */
   _edge_snapping_motion (&self->snapping, &pointer_position, &window_gdk);
-
-  /* And add our shadow back to the frame */
-  window_gdk.x -= shadow_left;
-  window_gdk.y -= shadow_top;
-  window_gdk.width += shadow_left + shadow_right;
-  window_gdk.height += shadow_top + shadow_bottom;
 
   /* Convert to quartz coordinates */
   _gdk_macos_display_to_display_coords ([self gdkDisplay],
@@ -387,19 +348,23 @@ typedef NSString *CALayerContentsGravity;
 
 -(void)windowDidMove:(NSNotification *)notification
 {
+  if ([self isZoomed])
+    gdk_synthesize_surface_state (GDK_SURFACE (gdk_surface), 0, GDK_TOPLEVEL_STATE_MAXIMIZED);
+  else
+    gdk_synthesize_surface_state (GDK_SURFACE (gdk_surface), GDK_TOPLEVEL_STATE_MAXIMIZED, 0);
+
   _gdk_macos_surface_configure ([self gdkSurface]);
 }
 
 -(void)windowDidResize:(NSNotification *)notification
 {
-  _gdk_macos_surface_configure (gdk_surface);
+  [self windowDidMove: notification];
 
   /* If we're using server-side decorations, this notification is coming
    * in from a display-side change. We need to request a layout in
    * addition to the configure event.
    */
-  if (GDK_IS_MACOS_TOPLEVEL_SURFACE (gdk_surface) &&
-      GDK_MACOS_TOPLEVEL_SURFACE (gdk_surface)->decorated)
+  if (GDK_IS_MACOS_TOPLEVEL_SURFACE (gdk_surface))
     gdk_surface_request_layout (GDK_SURFACE (gdk_surface));
 }
 
@@ -414,7 +379,6 @@ typedef NSString *CALayerContentsGravity;
 
 -(void)beginManualMove
 {
-  gboolean maximized = GDK_SURFACE (gdk_surface)->state & GDK_TOPLEVEL_STATE_MAXIMIZED;
   NSPoint initialMoveLocation;
   GdkPoint point;
   GdkMonitor *monitor;
@@ -432,13 +396,6 @@ typedef NSString *CALayerContentsGravity;
   gdk_macos_monitor_get_workarea (monitor, &workarea);
 
   initialMoveLocation = [NSEvent mouseLocation];
-
-  if (maximized)
-    [self setFrame:NSMakeRect (initialMoveLocation.x - (int)lastUnmaximizedFrame.size.width/2,
-                               initialMoveLocation.y,
-                               lastUnmaximizedFrame.size.width,
-                               lastUnmaximizedFrame.size.height)
-           display:YES];
 
   _gdk_macos_display_from_display_coords ([self gdkDisplay],
                                           initialMoveLocation.x,
@@ -735,26 +692,16 @@ typedef NSString *CALayerContentsGravity;
 
 -(void)setStyleMask:(NSWindowStyleMask)styleMask
 {
-  gboolean was_fullscreen;
-  gboolean is_fullscreen;
   gboolean was_opaque;
   gboolean is_opaque;
 
-  was_fullscreen = (([self styleMask] & NSWindowStyleMaskFullScreen) != 0);
   was_opaque = (([self styleMask] & NSWindowStyleMaskTitled) != 0);
 
   [super setStyleMask:styleMask];
 
-  is_fullscreen = (([self styleMask] & NSWindowStyleMaskFullScreen) != 0);
   is_opaque = (([self styleMask] & NSWindowStyleMaskTitled) != 0);
 
-  if (was_fullscreen != is_fullscreen)
-    {
-      if (was_fullscreen)
-        [self setFrame:lastUnfullscreenFrame display:NO];
-
-      _gdk_macos_surface_update_fullscreen_state (gdk_surface);
-    }
+  _gdk_macos_surface_update_fullscreen_state (gdk_surface);
 
   if (was_opaque != is_opaque)
     {
@@ -767,58 +714,20 @@ typedef NSString *CALayerContentsGravity;
 
 -(NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen *)screen
 {
-  GdkMacosSurface *surface = gdk_surface;
   NSRect rect;
-  int shadow_top;
 
-  /* Allow the window to move up "shadow_top" more than normally allowed
-   * by the default impl. This makes it possible to move windows with
-   * client side shadow right up to the screen's menu bar. */
-  _gdk_macos_surface_get_shadow (surface, &shadow_top, NULL, NULL, NULL);
   rect = [super constrainFrameRect:frameRect toScreen:screen];
   if (frameRect.origin.y > rect.origin.y)
-    rect.origin.y = MIN (frameRect.origin.y, rect.origin.y + shadow_top);
+    rect.origin.y = MIN (frameRect.origin.y, rect.origin.y);
 
   return rect;
 }
 
+/* Implementing this method avoids new windows move around the screen. */
 -(NSRect)windowWillUseStandardFrame:(NSWindow *)nsWindow
                        defaultFrame:(NSRect)newFrame
 {
-  NSRect screenFrame = [[self screen] visibleFrame];
-  GdkMacosSurface *surface = gdk_surface;
-  gboolean maximized = GDK_SURFACE (surface)->state & GDK_TOPLEVEL_STATE_MAXIMIZED;
-
-  if (!maximized)
-    return screenFrame;
-  else
-    return lastUnmaximizedFrame;
-}
-
--(BOOL)windowShouldZoom:(NSWindow *)nsWindow
-                toFrame:(NSRect)newFrame
-{
-  GdkMacosSurface *surface = gdk_surface;
-  GdkToplevelState state = GDK_SURFACE (surface)->state;
-
-  if (state & GDK_TOPLEVEL_STATE_MAXIMIZED)
-    {
-      lastMaximizedFrame = newFrame;
-    }
-  else
-    {
-      lastUnmaximizedFrame = [nsWindow frame];
-      gdk_synthesize_surface_state (GDK_SURFACE (gdk_surface), 0, GDK_TOPLEVEL_STATE_MAXIMIZED);
-    }
-
-  inMaximizeTransition = YES;
-
-  return YES;
-}
-
--(void)windowDidEndLiveResize:(NSNotification *)aNotification
-{
-  inMaximizeTransition = NO;
+  return newFrame;
 }
 
 -(NSSize)window:(NSWindow *)window willUseFullScreenContentSize:(NSSize)proposedSize
@@ -829,7 +738,6 @@ typedef NSString *CALayerContentsGravity;
 -(void)windowWillEnterFullScreen:(NSNotification *)aNotification
 {
   inFullscreenTransition = YES;
-  lastUnfullscreenFrame = [self frame];
 }
 
 -(void)windowDidEnterFullScreen:(NSNotification *)aNotification
@@ -875,12 +783,21 @@ typedef NSString *CALayerContentsGravity;
 {
   NSWindowStyleMask style_mask = [self styleMask];
 
-  [self setHasShadow:decorated];
-
   if (decorated)
-    style_mask |= NSWindowStyleMaskTitled;
+    {
+      style_mask &= ~NSWindowStyleMaskFullSizeContentView;
+      [self setTitleVisibility:NSWindowTitleVisible];
+    }
   else
-    style_mask &= ~NSWindowStyleMaskTitled;
+    {
+      style_mask |= NSWindowStyleMaskFullSizeContentView;
+      [self setTitleVisibility:NSWindowTitleHidden];
+    }
+
+  [self setTitlebarAppearsTransparent:!decorated];
+  [[self standardWindowButton:NSWindowCloseButton] setHidden:!decorated];
+  [[self standardWindowButton:NSWindowMiniaturizeButton] setHidden:!decorated];
+  [[self standardWindowButton:NSWindowZoomButton] setHidden:!decorated];
 
   [self setStyleMask:style_mask];
 }

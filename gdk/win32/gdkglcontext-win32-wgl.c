@@ -117,6 +117,11 @@ gdk_win32_gl_context_wgl_end_frame (GdkDrawContext *draw_context,
 }
 
 static void
+gdk_win32_gl_context_wgl_empty_frame (GdkDrawContext *draw_context)
+{
+}
+
+static void
 gdk_win32_gl_context_wgl_begin_frame (GdkDrawContext *draw_context,
                                       GdkMemoryDepth  depth,
                                       cairo_region_t *update_area)
@@ -126,7 +131,7 @@ gdk_win32_gl_context_wgl_begin_frame (GdkDrawContext *draw_context,
   GDK_DRAW_CONTEXT_CLASS (gdk_win32_gl_context_wgl_parent_class)->begin_frame (draw_context, depth, update_area);
 }
 
-#define PIXEL_ATTRIBUTES 17
+#define PIXEL_ATTRIBUTES 21
 
 static int
 get_wgl_pfd (HDC                    hdc,
@@ -171,10 +176,19 @@ get_wgl_pfd (HDC                    hdc,
       pixelAttribs[i++] = WGL_ALPHA_BITS_ARB;
       pixelAttribs[i++] = 8;
 
+      pixelAttribs[i++] = WGL_DEPTH_BITS_ARB;
+      pixelAttribs[i++] = 0;
+
+      pixelAttribs[i++] = WGL_STENCIL_BITS_ARB;
+      pixelAttribs[i++] = 0;
+
+      pixelAttribs[i++] = WGL_ACCUM_BITS_ARB;
+      pixelAttribs[i++] = 0;
+
       /* end of "Update PIXEL_ATTRIBUTES above if any groups are added here!" */
 
       pixelAttribs[i++] = 0; /* end of pixelAttribs */
-      g_assert (i <= PIXEL_ATTRIBUTES);
+      g_assert (i == PIXEL_ATTRIBUTES);
 
       if (!wglMakeCurrent (display_win32->dummy_context_wgl.hdc,
                            display_win32->dummy_context_wgl.hglrc))
@@ -200,7 +214,7 @@ get_wgl_pfd (HDC                    hdc,
       pfd->iPixelType = PFD_TYPE_RGBA;
       pfd->cColorBits = GetDeviceCaps (hdc, BITSPIXEL);
       pfd->cAlphaBits = 8;
-      pfd->dwLayerMask = PFD_MAIN_PLANE;
+      pfd->iLayerType = PFD_MAIN_PLANE;
 
       best_pf = ChoosePixelFormat (hdc, pfd);
     }
@@ -335,7 +349,6 @@ gdk_win32_display_init_wgl (GdkDisplay  *display,
       return NULL;
     }
 
-#if G_ENABLE_DEBUG
   {
     int major, minor;
     gdk_gl_context_get_version (context, &major, &minor);
@@ -353,7 +366,6 @@ gdk_win32_display_init_wgl (GdkDisplay  *display,
                          display_win32->hasWglEXTSwapControl ? "yes" : "no",
                          display_win32->hasWglOMLSyncControl ? "yes" : "no"));
   }
-#endif
 
   wglMakeCurrent (NULL, NULL);
 
@@ -601,7 +613,7 @@ set_wgl_pixformat_for_hdc (GdkWin32Display *display_win32,
 {
   gboolean skip_acquire = FALSE;
   gboolean set_pixel_format_result = FALSE;
-  PIXELFORMATDESCRIPTOR pfd;
+  PIXELFORMATDESCRIPTOR pfd = {0};
 
   /* one is only allowed to call SetPixelFormat(), and so ChoosePixelFormat()
    * one single time per window HDC
@@ -673,9 +685,7 @@ gdk_win32_gl_context_wgl_realize (GdkGLContext *context,
    * A legacy context cannot be shared with core profile ones, so this means we
    * must stick to a legacy context if the shared context is a legacy context
    */
-  legacy_bit = (gdk_display_get_debug_flags (display) & GDK_DEBUG_GL_LEGACY)
-                 ? TRUE
-                 : share != NULL && gdk_gl_context_is_legacy (share);
+  legacy_bit = share != NULL && gdk_gl_context_is_legacy (share);
 
   if (surface != NULL)
     hdc = GDK_WIN32_SURFACE (surface)->hdc;
@@ -813,6 +823,8 @@ gdk_win32_gl_context_wgl_class_init (GdkWin32GLContextWGLClass *klass)
 
   draw_context_class->begin_frame = gdk_win32_gl_context_wgl_begin_frame;
   draw_context_class->end_frame = gdk_win32_gl_context_wgl_end_frame;
+  draw_context_class->empty_frame = gdk_win32_gl_context_wgl_empty_frame;
+
   gobject_class->dispose = gdk_win32_gl_context_wgl_dispose;
 }
 

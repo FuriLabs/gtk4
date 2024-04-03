@@ -29,40 +29,39 @@
 
 #include <string.h>
 
+#include <glib/gi18n-lib.h>
+
+#include "gtkaccessibletextprivate.h"
 #include "gtkadjustmentprivate.h"
 #include "gtkcsscolorvalueprivate.h"
+#include "gtkcssenumvalueprivate.h"
+#include "gtkcsslineheightvalueprivate.h"
 #include "gtkdebug.h"
 #include "gtkdragsourceprivate.h"
 #include "gtkdropcontrollermotion.h"
-#include <glib/gi18n-lib.h>
+#include "gtkemojichooser.h"
+#include "gtkimmulticontext.h"
+#include "gtkjoinedmenuprivate.h"
+#include "gtkmagnifierprivate.h"
 #include "gtkmain.h"
 #include "gtkmarshalers.h"
-#include "gtkrenderbackgroundprivate.h"
-#include "gtksettings.h"
-#include "gtktextiterprivate.h"
-#include "gtkimcontextprivate.h"
-#include "gtkimmulticontext.h"
-#include "gtkprivate.h"
-#include "gtktextutilprivate.h"
-#include "gtkwidgetprivate.h"
-#include "gtkwindow.h"
-#include "gtkscrollable.h"
-#include "gtktypebuiltins.h"
-#include "gtktextviewchildprivate.h"
-#include "gtktexthandleprivate.h"
-#include "gtkpopover.h"
-#include "gtkmagnifierprivate.h"
-#include "gtkemojichooser.h"
-#include "gtkpangoprivate.h"
 #include "gtknative.h"
-#include "gtkwidgetprivate.h"
-#include "gtkjoinedmenuprivate.h"
-#include "gtkcsslineheightvalueprivate.h"
-#include "gtkcssenumvalueprivate.h"
-#include "gtksnapshot.h"
+#include "gtkpangoprivate.h"
 #include "gtkrenderbackgroundprivate.h"
 #include "gtkrenderborderprivate.h"
-
+#include "gtkscrollable.h"
+#include "gtksettings.h"
+#include "gtksnapshot.h"
+#include "gtktextiterprivate.h"
+#include "gtktexthandleprivate.h"
+#include "gtktextviewchildprivate.h"
+#include "gtkpopover.h"
+#include "gtkprivate.h"
+#include "gtktextbufferprivate.h"
+#include "gtktextutilprivate.h"
+#include "gtktypebuiltins.h"
+#include "gtkwidgetprivate.h"
+#include "gtkwindow.h"
 
 /**
  * GtkTextView:
@@ -547,6 +546,15 @@ static void gtk_text_view_paste_done_handler     (GtkTextBuffer     *buffer,
                                                   gpointer           data);
 static void gtk_text_view_buffer_changed_handler (GtkTextBuffer     *buffer,
                                                   gpointer           data);
+static void gtk_text_view_insert_text_handler    (GtkTextBuffer     *buffer,
+                                                  GtkTextIter       *iter,
+                                                  char              *text,
+                                                  int                len,
+                                                  gpointer           data);
+static void gtk_text_view_delete_range_handler   (GtkTextBuffer     *buffer,
+                                                  GtkTextIter       *start,
+                                                  GtkTextIter       *end,
+                                                  gpointer           data);
 static void gtk_text_view_buffer_notify_redo     (GtkTextBuffer     *buffer,
                                                   GParamSpec        *pspec,
                                                   GtkTextView       *view);
@@ -680,9 +688,13 @@ static int            text_window_get_height      (GtkTextWindow     *win);
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
+static void     gtk_text_view_accessible_text_init (GtkAccessibleTextInterface *iface);
+
 G_DEFINE_TYPE_WITH_CODE (GtkTextView, gtk_text_view, GTK_TYPE_WIDGET,
                          G_ADD_PRIVATE (GtkTextView)
-                         G_IMPLEMENT_INTERFACE (GTK_TYPE_SCROLLABLE, NULL))
+                         G_IMPLEMENT_INTERFACE (GTK_TYPE_SCROLLABLE, NULL)
+                         G_IMPLEMENT_INTERFACE (GTK_TYPE_ACCESSIBLE_TEXT,
+                                                gtk_text_view_accessible_text_init))
 
 static GtkTextBuffer*
 get_buffer (GtkTextView *text_view)
@@ -818,6 +830,17 @@ add_move_binding (GtkWidgetClass *widget_class,
 }
 
 static void
+gtk_text_view_notify (GObject    *object,
+                      GParamSpec *pspec)
+{
+  if (pspec->name == I_("has-focus"))
+    gtk_text_view_check_cursor_blink (GTK_TEXT_VIEW (object));
+
+  if (G_OBJECT_CLASS (gtk_text_view_parent_class)->notify)
+    G_OBJECT_CLASS (gtk_text_view_parent_class)->notify (object, pspec);
+}
+
+static void
 gtk_text_view_class_init (GtkTextViewClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
@@ -829,6 +852,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
   gobject_class->get_property = gtk_text_view_get_property;
   gobject_class->finalize = gtk_text_view_finalize;
   gobject_class->dispose = gtk_text_view_dispose;
+  gobject_class->notify = gtk_text_view_notify;
 
   widget_class->realize = gtk_text_view_realize;
   widget_class->unrealize = gtk_text_view_unrealize;
@@ -2155,6 +2179,12 @@ gtk_text_view_set_buffer (GtkTextView   *text_view,
       g_signal_handlers_disconnect_by_func (priv->buffer,
                                             gtk_text_view_buffer_notify_undo,
                                             text_view);
+      g_signal_handlers_disconnect_by_func (priv->buffer,
+                                            gtk_text_view_insert_text_handler,
+                                            text_view);
+      g_signal_handlers_disconnect_by_func (priv->buffer,
+                                            gtk_text_view_delete_range_handler,
+                                            text_view);
 
       if (gtk_widget_get_realized (GTK_WIDGET (text_view)))
 	{
@@ -2210,6 +2240,12 @@ gtk_text_view_set_buffer (GtkTextView   *text_view,
                         text_view);
       g_signal_connect (priv->buffer, "notify",
                         G_CALLBACK (gtk_text_view_buffer_notify_redo),
+                        text_view);
+      g_signal_connect_after (priv->buffer, "insert-text",
+                              G_CALLBACK (gtk_text_view_insert_text_handler),
+                              text_view);
+      g_signal_connect (priv->buffer, "delete-range",
+                        G_CALLBACK (gtk_text_view_delete_range_handler),
                         text_view);
 
       can_undo = gtk_text_buffer_get_can_undo (buffer);
@@ -5739,6 +5775,8 @@ gtk_text_view_click_gesture_released (GtkGestureClick *gesture,
                                       double           y,
                                       GtkTextView     *text_view)
 {
+  GdkEvent *event =
+    gtk_event_controller_get_current_event (GTK_EVENT_CONTROLLER (gesture));
   GtkTextViewPrivate *priv = text_view->priv;
   GtkTextBuffer *buffer;
   GtkTextIter start, end;
@@ -5748,7 +5786,7 @@ gtk_text_view_click_gesture_released (GtkGestureClick *gesture,
 
   if (gtk_text_iter_compare (&start, &end) == 0 &&
       gtk_text_iter_can_insert (&start, priv->editable))
-    gtk_im_context_activate_osk (priv->im_context);
+    gtk_im_context_activate_osk (priv->im_context, event);
 }
 
 static void
@@ -6044,28 +6082,35 @@ gtk_text_view_remove (GtkTextView *text_view,
 static gboolean
 cursor_blinks (GtkTextView *text_view)
 {
-  GtkSettings *settings = gtk_widget_get_settings (GTK_WIDGET (text_view));
-  gboolean blink;
+  GtkRoot *root = gtk_widget_get_root (GTK_WIDGET (text_view));
 
 #ifdef DEBUG_VALIDATION_AND_SCROLLING
   return FALSE;
 #endif
 
-  g_object_get (settings, "gtk-cursor-blink", &blink, NULL);
-
-  if (!blink)
-    return FALSE;
-
-  if (text_view->priv->editable)
+  if (gtk_widget_get_mapped (GTK_WIDGET (text_view)) &&
+      gtk_window_is_active (GTK_WINDOW (root)) &&
+      gtk_widget_has_focus (GTK_WIDGET (text_view)))
     {
-      GtkTextMark *insert;
-      GtkTextIter iter;
+      GtkSettings *settings = gtk_widget_get_settings (GTK_WIDGET (text_view));
+      gboolean blink;
 
-      insert = gtk_text_buffer_get_insert (get_buffer (text_view));
-      gtk_text_buffer_get_iter_at_mark (get_buffer (text_view), &iter, insert);
+      g_object_get (settings, "gtk-cursor-blink", &blink, NULL);
 
-      if (gtk_text_iter_editable (&iter, text_view->priv->editable))
-	return blink;
+      if (!blink)
+        return FALSE;
+
+      if (text_view->priv->editable)
+        {
+          GtkTextMark *insert;
+          GtkTextIter iter;
+
+          insert = gtk_text_buffer_get_insert (get_buffer (text_view));
+          gtk_text_buffer_get_iter_at_mark (get_buffer (text_view), &iter, insert);
+
+          if (gtk_text_iter_editable (&iter, text_view->priv->editable))
+            return blink;
+        }
     }
 
   return FALSE;
@@ -7126,6 +7171,40 @@ gtk_text_view_buffer_changed_handler (GtkTextBuffer *buffer,
   GtkTextView *text_view = data;
 
   gtk_text_view_update_handles (text_view);
+}
+
+static void
+gtk_text_view_insert_text_handler (GtkTextBuffer *buffer,
+                                   GtkTextIter   *iter,
+                                   char          *text,
+                                   int            len,
+                                   gpointer       data)
+{
+  GtkTextView *text_view = data;
+  int position;
+  int length;
+
+  position = gtk_text_iter_get_offset (iter);
+  length = g_utf8_strlen (text, len);
+
+  gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (text_view),
+                                       GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_INSERT,
+                                       position - length,
+                                       position);
+}
+
+static void
+gtk_text_view_delete_range_handler (GtkTextBuffer *buffer,
+                                    GtkTextIter   *start,
+                                    GtkTextIter   *end,
+                                    gpointer       data)
+{
+  GtkTextView *text_view = data;
+
+  gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (text_view),
+                                       GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_REMOVE,
+                                       gtk_text_iter_get_offset (start),
+                                       gtk_text_iter_get_offset (end));
 }
 
 static void
@@ -8675,11 +8754,11 @@ gtk_text_view_retrieve_surrounding_handler (GtkIMContext  *context,
   gboolean flip;
 
   gtk_text_buffer_get_iter_at_mark (text_view->priv->buffer, &start,
-                                    gtk_text_buffer_get_insert (text_view->priv->buffer));
-  gtk_text_buffer_get_iter_at_mark (text_view->priv->buffer, &end,
                                     gtk_text_buffer_get_selection_bound (text_view->priv->buffer));
+  gtk_text_buffer_get_iter_at_mark (text_view->priv->buffer, &end,
+                                    gtk_text_buffer_get_insert (text_view->priv->buffer));
 
-  flip = gtk_text_iter_compare (&start, &end) < 0;
+  flip = gtk_text_iter_compare (&start, &end) > 0;
 
   gtk_text_iter_order (&start, &end);
 
@@ -8705,13 +8784,13 @@ gtk_text_view_retrieve_surrounding_handler (GtkIMContext  *context,
 
   if (flip)
     {
-      anchor_pos = strlen (pre);
-      cursor_pos = anchor_pos + strlen (sel);
+      cursor_pos = strlen (pre);
+      anchor_pos = cursor_pos + strlen (sel);
     }
   else
     {
-      cursor_pos = strlen (pre);
-      anchor_pos = cursor_pos + strlen (sel);
+      anchor_pos = strlen (pre);
+      cursor_pos = anchor_pos + strlen (sel);
     }
 
   text = g_strconcat (pre, sel, post, NULL);
@@ -8767,10 +8846,12 @@ gtk_text_view_mark_set_handler (GtkTextBuffer     *buffer,
       text_view->priv->virtual_cursor_x = -1;
       text_view->priv->virtual_cursor_y = -1;
       gtk_text_view_update_im_spot_location (text_view);
+      gtk_accessible_text_update_caret_position (GTK_ACCESSIBLE_TEXT (text_view));
       need_reset = TRUE;
     }
   else if (mark == gtk_text_buffer_get_selection_bound (buffer))
     {
+      gtk_accessible_text_update_selection_bound (GTK_ACCESSIBLE_TEXT (text_view));
       need_reset = TRUE;
     }
 
@@ -10301,3 +10382,320 @@ gtk_text_view_get_key_controller (GtkTextView *text_view)
 {
   return text_view->priv->key_controller;
 }
+
+/* {{{ GtkAccessibleText implementation */
+
+static GBytes *
+gtk_text_view_accessible_text_get_contents (GtkAccessibleText *self,
+                                            unsigned int       start,
+                                            unsigned int       end)
+{
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (self));
+  GtkTextIter start_iter, end_iter;
+  char *string;
+
+  gtk_text_buffer_get_iter_at_offset (buffer, &start_iter, start);
+  gtk_text_buffer_get_iter_at_offset (buffer, &end_iter, end == G_MAXUINT ? -1 : end);
+
+  string = gtk_text_buffer_get_text (buffer, &start_iter, &end_iter, FALSE);
+
+  return g_bytes_new_take (string, strlen (string) + 1);
+}
+
+static GBytes *
+gtk_text_view_accessible_text_get_contents_at (GtkAccessibleText            *self,
+                                               unsigned int                  offset,
+                                               GtkAccessibleTextGranularity  granularity,
+                                               unsigned int                 *start,
+                                               unsigned int                 *end)
+{
+  GtkTextViewPrivate *priv = GTK_TEXT_VIEW (self)->priv;
+  GtkTextLayout *text_layout = priv->layout;
+  GtkTextBuffer *text_buffer;
+  GtkTextIter iter;
+  GtkTextLine *line;
+  PangoLayout *line_layout;
+  char *string;
+  unsigned int line_start, line_end, line_offset;
+
+  text_buffer = gtk_text_layout_get_buffer (text_layout);
+
+  gtk_text_buffer_get_iter_at_offset (text_buffer, &iter, offset);
+  line = _gtk_text_iter_get_text_line (&iter);
+  line_offset = gtk_text_iter_get_offset (&iter) - gtk_text_iter_get_line_offset (&iter);
+
+  line_layout = gtk_text_layout_get_line_display (text_layout, line, FALSE)->layout;
+  string = gtk_pango_get_string_at (line_layout, offset - line_offset, granularity, &line_start, &line_end);
+
+  if (start != NULL)
+    *start = line_offset + line_start;
+  if (end != NULL)
+    *end = line_offset + line_end;
+
+  return g_bytes_new_take (string, strlen (string));
+}
+
+static unsigned int
+gtk_text_view_accessible_text_get_caret_position (GtkAccessibleText *self)
+{
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (self));
+  GtkTextMark *insert;
+  GtkTextIter iter;
+
+  insert = gtk_text_buffer_get_insert (buffer);
+  gtk_text_buffer_get_iter_at_mark (buffer, &iter, insert);
+
+  return gtk_text_iter_get_offset (&iter);
+}
+
+static gboolean
+gtk_text_view_accessible_text_get_selection (GtkAccessibleText       *self,
+                                             gsize                   *n_ranges,
+                                             GtkAccessibleTextRange **ranges)
+{
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (self));
+  GtkTextIter start_iter, end_iter;
+  int start, end;
+
+   if (!gtk_text_buffer_get_selection_bounds (buffer, &start_iter, &end_iter))
+     {
+       *n_ranges = 0;
+       return FALSE;
+     }
+
+  start = gtk_text_iter_get_offset (&start_iter);
+  end = gtk_text_iter_get_offset (&end_iter);
+
+  *n_ranges = 1;
+
+  *ranges = g_new (GtkAccessibleTextRange, 1);
+  (*ranges)[0].start = start;
+  (*ranges)[0].length = end - start;
+
+  return TRUE;
+}
+
+static gboolean
+gtk_text_view_accessible_text_get_attributes (GtkAccessibleText        *self,
+                                              unsigned int              offset,
+                                              gsize                    *n_ranges,
+                                              GtkAccessibleTextRange  **ranges,
+                                              char                   ***attribute_names,
+                                              char                   ***attribute_values)
+{
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (self));
+  GHashTable *attrs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  GHashTableIter iter;
+  gpointer key, value;
+  guint n_attrs, i;
+  int start, end;
+
+  gtk_text_buffer_add_run_attributes (buffer, offset, attrs, &start, &end);
+
+  n_attrs = g_hash_table_size (attrs);
+  if (n_attrs == 0)
+    {
+      g_hash_table_unref (attrs);
+      *n_ranges = 0;
+      *ranges = NULL;
+      *attribute_names = NULL;
+      *attribute_values = NULL;
+      return FALSE;
+    }
+
+  *n_ranges = n_attrs;
+  *ranges = g_new (GtkAccessibleTextRange, n_attrs);
+  *attribute_names = g_new (char *, n_attrs + 1);
+  *attribute_values = g_new (char *, n_attrs + 1);
+
+  i = 0;
+  g_hash_table_iter_init (&iter, attrs);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      ((*ranges)[i]).start = start;
+      ((*ranges)[i]).length = end - start;
+
+      (*attribute_names)[i] = g_strdup (key);
+      (*attribute_values)[i] = g_strdup (value);
+
+      i += 1;
+    }
+
+  (*attribute_names)[n_attrs] = NULL;
+  (*attribute_values)[n_attrs] = NULL;
+
+  return TRUE;
+}
+
+void
+gtk_text_view_add_default_attributes (GtkTextView *view,
+                                      GHashTable  *attributes)
+{
+  GtkTextAttributes *text_attrs;
+  PangoFontDescription *font;
+
+  text_attrs = gtk_text_view_get_default_attributes (view);
+
+  font = text_attrs->font;
+
+  if (font)
+    {
+      char **names, **values;
+
+      gtk_pango_get_font_attributes (font, &names, &values);
+
+      for (unsigned i = 0; names[i] != NULL; i++)
+        g_hash_table_insert (attributes,
+                             g_steal_pointer (&names[i]),
+                             g_steal_pointer (&values[i]));
+
+      g_free (names);
+      g_free (values);
+    }
+
+#define ADD_STR_ATTR(ht,name,value) \
+  g_hash_table_insert ((ht), g_strdup ((name)), g_strdup ((value)))
+
+#define ADD_BOOL_ATTR(ht,name,value) \
+  g_hash_table_insert ((ht), g_strdup ((name)), (value) ? g_strdup ("true") : g_strdup ("false"))
+
+#define ADD_COLOR_ATTR(ht,name,color) G_STMT_START { \
+  char *__value = g_strdup_printf ("%u,%u,%u", \
+                                   (guint) ((color)->red * 65535), \
+                                   (guint) ((color)->green * 65535), \
+                                   (guint) ((color)->blue * 65535)); \
+  g_hash_table_insert (ht, g_strdup (name), __value); \
+} G_STMT_END
+
+#define ADD_FLOAT_ATTR(ht,name,value) G_STMT_START { \
+  char *__value = g_strdup_printf ("%g", (value)); \
+  g_hash_table_insert (ht, g_strdup (name), __value); \
+} G_STMT_END
+
+#define ADD_INT_ATTR(ht,name,value) G_STMT_START { \
+  char *__value = g_strdup_printf ("%i", (value)); \
+  g_hash_table_insert (ht, g_strdup (name), __value); \
+} G_STMT_END
+
+  ADD_STR_ATTR (attributes, "justification", gtk_justification_to_string (text_attrs->justification));
+  ADD_STR_ATTR (attributes, "direction", gtk_text_direction_to_string (text_attrs->direction));
+  ADD_STR_ATTR (attributes, "wrap-mode", gtk_wrap_mode_to_string (text_attrs->wrap_mode));
+  ADD_STR_ATTR (attributes, "underline", pango_underline_to_string (text_attrs->appearance.underline));
+
+  ADD_BOOL_ATTR (attributes, "editable", text_attrs->editable);
+  ADD_BOOL_ATTR (attributes, "invisible", text_attrs->invisible);
+  ADD_BOOL_ATTR (attributes, "bg-full-height", text_attrs->bg_full_height);
+  ADD_BOOL_ATTR (attributes, "strikethrough", text_attrs->appearance.strikethrough);
+
+  ADD_COLOR_ATTR (attributes, "bg-color", text_attrs->appearance.bg_rgba);
+  ADD_COLOR_ATTR (attributes, "fg-color", text_attrs->appearance.fg_rgba);
+
+  ADD_FLOAT_ATTR (attributes, "scale", text_attrs->font_scale);
+
+  ADD_STR_ATTR (attributes, "language", (const char *) text_attrs->language);
+
+  ADD_INT_ATTR (attributes, "rise", text_attrs->appearance.rise);
+  ADD_INT_ATTR (attributes, "pixels-inside-wrap", text_attrs->pixels_inside_wrap);
+  ADD_INT_ATTR (attributes, "pixels-below-lines", text_attrs->pixels_below_lines);
+  ADD_INT_ATTR (attributes, "pixels-above-lines", text_attrs->pixels_above_lines);
+  ADD_INT_ATTR (attributes, "indent", text_attrs->indent);
+  ADD_INT_ATTR (attributes, "left-margin", text_attrs->left_margin);
+  ADD_INT_ATTR (attributes, "right-margin", text_attrs->right_margin);
+
+#undef ADD_STR_ATTR
+#undef ADD_BOOL_ATTR
+#undef ADD_COLOR_ATTR
+#undef ADD_FLOAT_ATTR
+#undef ADD_INT_ATTR
+
+  gtk_text_attributes_unref (text_attrs);
+}
+
+/*< private >
+ * gtk_text_view_get_attributes_run:
+ * @self: a text view
+ * @offset: the offset, in characters
+ * @include_defaults: whether the default attributes should be included
+ * @start: (out): the beginning of the run, in characters
+ * @end: (out): the end of the run, in characters
+ *
+ * Retrieves the text attributes at the given offset.
+ *
+ * The serialization format is private to GTK, but conforms to the AT-SPI
+ * text attributes for default attribute names.
+ *
+ * Returns: (transfer full) (element-type utf8,utf8): a dictionary of
+ *   text attributes
+ */
+GHashTable *
+gtk_text_view_get_attributes_run (GtkTextView *self,
+                                  int          offset,
+                                  gboolean     include_defaults,
+                                  int         *start,
+                                  int         *end)
+{
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer (self);
+  GHashTable *attrs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+  if (include_defaults)
+    gtk_text_view_add_default_attributes (self, attrs);
+
+  gtk_text_buffer_add_run_attributes (buffer, offset, attrs, start, end);
+
+  return attrs;
+}
+
+static void
+gtk_text_view_accessible_text_get_default_attributes (GtkAccessibleText   *self,
+                                                      char              ***attribute_names,
+                                                      char              ***attribute_values)
+{
+  GHashTable *attrs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  GHashTableIter iter;
+  gpointer key, value;
+  guint n_attrs, i;
+
+  gtk_text_view_add_default_attributes (GTK_TEXT_VIEW (self), attrs);
+
+  n_attrs = g_hash_table_size (attrs);
+  if (n_attrs == 0)
+    {
+      g_hash_table_unref (attrs);
+      *attribute_names = NULL;
+      *attribute_values = NULL;
+      return;
+    }
+
+  *attribute_names = g_new (char *, n_attrs + 1);
+  *attribute_values = g_new (char *, n_attrs + 1);
+
+  i = 0;
+  g_hash_table_iter_init (&iter, attrs);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      (*attribute_names)[i] = g_strdup (key);
+      (*attribute_values)[i] = g_strdup (value);
+
+      i += 1;
+    }
+
+  (*attribute_names)[n_attrs] = NULL;
+  (*attribute_values)[n_attrs] = NULL;
+
+  g_hash_table_unref (attrs);
+}
+
+static void
+gtk_text_view_accessible_text_init (GtkAccessibleTextInterface *iface)
+{
+  iface->get_contents = gtk_text_view_accessible_text_get_contents;
+  iface->get_contents_at = gtk_text_view_accessible_text_get_contents_at;
+  iface->get_caret_position = gtk_text_view_accessible_text_get_caret_position;
+  iface->get_selection = gtk_text_view_accessible_text_get_selection;
+  iface->get_attributes = gtk_text_view_accessible_text_get_attributes;
+  iface->get_default_attributes = gtk_text_view_accessible_text_get_default_attributes;
+}
+
+/* }}} */
+
+/* vim:set foldmethod=marker expandtab: */

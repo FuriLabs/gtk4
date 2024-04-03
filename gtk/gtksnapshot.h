@@ -87,6 +87,14 @@ void            gtk_snapshot_push_clip                  (GtkSnapshot            
 GDK_AVAILABLE_IN_ALL
 void            gtk_snapshot_push_rounded_clip          (GtkSnapshot            *snapshot,
                                                          const GskRoundedRect   *bounds);
+GDK_AVAILABLE_IN_4_14
+void            gtk_snapshot_push_fill                  (GtkSnapshot            *snapshot,
+                                                         GskPath                *path,
+                                                         GskFillRule             fill_rule);
+GDK_AVAILABLE_IN_4_14
+void            gtk_snapshot_push_stroke                (GtkSnapshot            *snapshot,
+                                                         GskPath                *path,
+                                                         const GskStroke        *stroke);
 GDK_AVAILABLE_IN_ALL
 void            gtk_snapshot_push_shadow                (GtkSnapshot            *snapshot,
                                                          const GskShadow        *shadow,
@@ -232,6 +240,16 @@ void            gtk_snapshot_append_layout              (GtkSnapshot            
                                                          PangoLayout            *layout,
                                                          const GdkRGBA          *color);
 
+GDK_AVAILABLE_IN_4_14
+void            gtk_snapshot_append_fill                (GtkSnapshot            *snapshot,
+                                                         GskPath                *path,
+                                                         GskFillRule             fill_rule,
+                                                         const GdkRGBA          *color);
+GDK_AVAILABLE_IN_4_14
+void            gtk_snapshot_append_stroke              (GtkSnapshot            *snapshot,
+                                                         GskPath                *path,
+                                                         const GskStroke        *stroke,
+                                                         const GdkRGBA          *color);
 
 G_END_DECLS
 

@@ -155,6 +155,7 @@ gtk_public_sources = files([
   'gtkaccelgroup.c',
   'gtkaccessible.c',
   'gtkaccessiblerange.c',
+  'gtkaccessibletext.c',
   'gtkactionable.c',
   'gtkactionbar.c',
   'gtkadjustment.c',
@@ -251,6 +252,7 @@ gtk_public_sources = files([
   'gtkgestureswipe.c',
   'gtkgesturezoom.c',
   'gtkglarea.c',
+  'gtkgraphicsoffload.c',
   'gtkgrid.c',
   'gtkgridlayout.c',
   'gtkgridview.c',
@@ -310,6 +312,7 @@ gtk_public_sources = files([
   'gtkpopover.c',
   'gtkpopovermenu.c',
   'gtkpopovermenubar.c',
+  'gtkprintdialog.c',
   'gtkprogressbar.c',
   'gtkpropertylookuplistmodel.c',
   'gtkrange.c',
@@ -415,6 +418,7 @@ gtk_public_headers = files([
   'gtkaccelgroup.h',
   'gtkaccessible.h',
   'gtkaccessiblerange.h',
+  'gtkaccessibletext.h',
   'gtkactionable.h',
   'gtkactionbar.h',
   'gtkadjustment.h',
@@ -501,6 +505,7 @@ gtk_public_headers = files([
   'gtkgestureswipe.h',
   'gtkgesturezoom.h',
   'gtkglarea.h',
+  'gtkgraphicsoffload.h',
   'gtkgrid.h',
   'gtkgridlayout.h',
   'gtkgridview.h',
@@ -549,6 +554,7 @@ gtk_public_headers = files([
   'gtkpopover.h',
   'gtkpopovermenu.h',
   'gtkpopovermenubar.h',
+  'gtkprintdialog.h',
   'gtkprogressbar.h',
   'gtkrange.h',
   'gtkrecentmanager.h',
@@ -966,6 +972,16 @@ else
   )
 endif
 
+gtkconfig_cdata = configuration_data()
+gtkconfig_cdata.set('GTK_ACCESSIBILITY_ATSPI', gtk_a11y_backends.contains('atspi'))
+
+gtkconfig = configure_file(
+  input: 'gtkconfig.h.meson',
+  output: 'gtkconfig.h',
+  configuration: gtkconfig_cdata,
+  install_dir: gtk_includedir / 'gtk-4.0/gtk',
+)
+
 gtkversion_cdata = configuration_data()
 gtkversion_cdata.set('GTK_MAJOR_VERSION', gtk_major_version)
 gtkversion_cdata.set('GTK_MINOR_VERSION', gtk_minor_version)
@@ -992,6 +1008,7 @@ gtk_gen_headers = [
   gtkmarshal_h,
   gtktypebuiltins_h,
   gtkprivatetypebuiltins_h,
+  gtkconfig,
   gtkversion,
 ]
 
@@ -1024,6 +1041,7 @@ gtk_deps = [
   epoxy_dep,
   libm,
   graphene_dep,
+  profile_conf_h,
 ]
 
 if x11_enabled
@@ -1146,7 +1164,7 @@ libgtk = shared_library('gtk-4',
   install: true,
 )
 
-gtk_dep_sources = [gtkversion, gtktypebuiltins_h]
+gtk_dep_sources = [gtkconfig, gtkversion, gtktypebuiltins_h]
 
 # Introspection
 if build_gir
@@ -1255,6 +1273,7 @@ if build_gir
     gtk_deprecated_sources,
     gtktypebuiltins_h,
     gtkversion,
+    gtkconfig,
   ]
 
   if os_unix

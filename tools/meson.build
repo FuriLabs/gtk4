@@ -23,6 +23,15 @@ if win32_enabled
 endif
 
 gtk_tools = [
+  ['gtk4-path-tool', ['gtk-path-tool.c',
+                      'gtk-path-tool-decompose.c',
+                      'gtk-path-tool-info.c',
+                      'gtk-path-tool-render.c',
+                      'gtk-path-tool-restrict.c',
+                      'gtk-path-tool-reverse.c',
+                      'gtk-path-tool-show.c',
+                      'gtk-path-tool-utils.c',
+                      'path-view.c'], [libgtk_dep]],
   ['gtk4-query-settings', ['gtk-query-settings.c'], [libgtk_dep]],
   ['gtk4-builder-tool', ['gtk-builder-tool.c',
                          'gtk-builder-tool-simplify.c',
@@ -32,10 +41,13 @@ gtk_tools = [
                          'gtk-builder-tool-preview.c',
                          'fake-scope.c'], [libgtk_dep] ],
   ['gtk4-rendernode-tool', ['gtk-rendernode-tool.c',
+                        'gtk-rendernode-tool-benchmark.c',
+                        'gtk-rendernode-tool-compare.c',
                         'gtk-rendernode-tool-info.c',
                         'gtk-rendernode-tool-render.c',
                         'gtk-rendernode-tool-show.c',
-                        'gtk-rendernode-tool-utils.c'], [libgtk_dep] ],
+                        'gtk-rendernode-tool-utils.c',
+                        '../testsuite/reftests/reftest-compare.c'], [libgtk_dep] ],
   ['gtk4-update-icon-cache', ['updateiconcache.c', '../gtk/gtkiconcachevalidator.c' ] + extra_update_icon_cache_objs, [ libgtk_dep ] ],
   ['gtk4-encode-symbolic-svg', ['encodesymbolic.c'], [ libgtk_static_dep ] ],
 ]

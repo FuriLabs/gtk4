@@ -195,11 +195,11 @@ static const GdkDebugKey gtk_debug_keys[] = {
   { "builder", GTK_DEBUG_BUILDER, "Trace GtkBuilder operation" },
   { "builder-objects", GTK_DEBUG_BUILDER_OBJECTS, "Log unused GtkBuilder objects" },
   { "no-css-cache", GTK_DEBUG_NO_CSS_CACHE, "Disable style property cache" },
-  { "interactive", GTK_DEBUG_INTERACTIVE, "Enable the GTK inspector", TRUE },
+  { "interactive", GTK_DEBUG_INTERACTIVE, "Enable the GTK inspector" },
   { "snapshot", GTK_DEBUG_SNAPSHOT, "Generate debug render nodes" },
   { "accessibility", GTK_DEBUG_A11Y, "Information about accessibility state changes" },
   { "iconfallback", GTK_DEBUG_ICONFALLBACK, "Information about icon fallback" },
-  { "invert-text-dir", GTK_DEBUG_INVERT_TEXT_DIR, "Invert the default text direction", TRUE },
+  { "invert-text-dir", GTK_DEBUG_INVERT_TEXT_DIR, "Invert the default text direction" },
 };
 
 /* This checks to see if the process is running suid or sgid
@@ -247,7 +247,7 @@ static gboolean do_setlocale = TRUE;
 /**
  * gtk_disable_setlocale:
  *
- * Prevents [id@gtk_init] and [id@gtk_init_check] from automatically calling
+ * Prevents [func@Gtk.init] and [func@Gtk.init_check] from automatically calling
  * `setlocale (LC_ALL, "")`.
  *
  * You would want to use this function if you wanted to set the locale for
@@ -549,7 +549,7 @@ do_post_parse_initialization (void)
   gsk_render_node_init_types ();
   _gtk_ensure_resources ();
 
-  gdk_profiler_end_mark (before, "basic initialization", NULL);
+  gdk_profiler_end_mark (before, "Basic initialization", NULL);
 
   gtk_initialized = TRUE;
 
@@ -559,13 +559,13 @@ do_post_parse_initialization (void)
 #endif
   gtk_im_modules_init ();
   gtk_media_file_extension_init ();
-  gdk_profiler_end_mark (before, "init modules", NULL);
+  gdk_profiler_end_mark (before, "Init modules", NULL);
 
   before = GDK_PROFILER_CURRENT_TIME;
   display_manager = gdk_display_manager_get ();
   if (gdk_display_manager_get_default_display (display_manager) != NULL)
     default_display_notify_cb (display_manager);
-  gdk_profiler_end_mark (before, "create display", NULL);
+  gdk_profiler_end_mark (before, "Create display", NULL);
 
   g_signal_connect (display_manager, "notify::default-display",
                     G_CALLBACK (default_display_notify_cb),
@@ -679,7 +679,7 @@ check_sizeof_GtkWindow (size_t sizeof_GtkWindow)
 
 /* In GTK 2.0 the GtkWindow struct actually is the same size in
  * gcc-compiled code on Win32 whether compiled with -fnative-struct or
- * not. Unfortunately this wan’t noticed until after GTK 2.0.1. So,
+ * not. Unfortunately this wasn’t noticed until after GTK 2.0.1. So,
  * from GTK 2.0.2 on, check some other struct, too, where the use of
  * -fnative-struct still matters. GtkBox is one such.
  */
@@ -1198,8 +1198,8 @@ gtk_synthesize_crossing_events (GtkRoot         *toplevel,
     {
       widget = gtk_widget_stack_get (&target_array, i);
 
-      if (i < gtk_widget_stack_get_size (&target_array) - 1)
-        crossing.new_descendent = gtk_widget_stack_get (&target_array, i + 1);
+      if (i > 0)
+        crossing.new_descendent = gtk_widget_stack_get (&target_array, i - 1);
       else
         crossing.new_descendent = NULL;
 
@@ -1219,9 +1219,10 @@ gtk_synthesize_crossing_events (GtkRoot         *toplevel,
         }
       else
         {
-          crossing.old_descendent = old_target ? crossing.new_descendent : NULL;
+          crossing.old_descendent = (old_target && ancestor) ? crossing.new_descendent : NULL;
         }
 
+      check_crossing_invariants (widget, &crossing);
       translate_coordinates (surface_x, surface_y, &x, &y, widget);
       gtk_widget_handle_crossing (widget, &crossing, x, y);
       if (crossing_type == GTK_CROSSING_POINTER)
@@ -1552,7 +1553,7 @@ is_transient_for (GtkWindow *child,
   return FALSE;
 }
 
-void
+gboolean
 gtk_main_do_event (GdkEvent *event)
 {
   GtkWidget *event_widget;
@@ -1561,9 +1562,10 @@ gtk_main_do_event (GdkEvent *event)
   GtkWindowGroup *window_group;
   GdkEvent *rewritten_event = NULL;
   GList *tmp_list;
+  gboolean handled_event = FALSE;
 
   if (gtk_inspector_handle_event (event))
-    return;
+    return FALSE;
 
   /* Find the widget which got the event. We store the widget
    * in the user_data field of GdkSurface's. Ignore the event
@@ -1571,7 +1573,7 @@ gtk_main_do_event (GdkEvent *event)
    */
   event_widget = gtk_get_event_widget (event);
   if (!event_widget)
-    return;
+    return FALSE;
 
   target_widget = event_widget;
 
@@ -1649,6 +1651,7 @@ gtk_main_do_event (GdkEvent *event)
           if (GTK_IS_WINDOW (target_widget) &&
               !gtk_window_emit_close_request (GTK_WINDOW (target_widget)))
             gtk_window_destroy (GTK_WINDOW (target_widget));
+          handled_event = TRUE;
         }
       break;
 
@@ -1656,7 +1659,7 @@ gtk_main_do_event (GdkEvent *event)
       {
         GtkWidget *root = GTK_WIDGET (gtk_widget_get_root (target_widget));
         if (!_gtk_widget_captured_event (root, event, root))
-          gtk_widget_event (root, event, root);
+          handled_event = gtk_widget_event (root, event, root);
       }
       break;
 
@@ -1681,7 +1684,7 @@ gtk_main_do_event (GdkEvent *event)
     case GDK_PAD_STRIP:
     case GDK_PAD_GROUP_MODE:
     case GDK_GRAB_BROKEN:
-      gtk_propagate_event (grab_widget, event);
+      handled_event = gtk_propagate_event (grab_widget, event);
       break;
 
     case GDK_ENTER_NOTIFY:
@@ -1689,6 +1692,7 @@ gtk_main_do_event (GdkEvent *event)
     case GDK_DRAG_ENTER:
     case GDK_DRAG_LEAVE:
       /* Crossing event propagation happens during picking */
+      handled_event = TRUE;
       break;
 
     case GDK_DRAG_MOTION:
@@ -1696,7 +1700,7 @@ gtk_main_do_event (GdkEvent *event)
       {
         GdkDrop *drop = gdk_dnd_event_get_drop (event);
         gtk_drop_begin_event (drop, gdk_event_get_event_type (event));
-        gtk_propagate_event (target_widget, event);
+        handled_event = gtk_propagate_event (grab_widget, event);
         gtk_drop_end_event (drop);
       }
       break;
@@ -1718,6 +1722,7 @@ gtk_main_do_event (GdkEvent *event)
 
   if (rewritten_event)
     gdk_event_unref (rewritten_event);
+  return handled_event;
 }
 
 static GtkWindowGroup *

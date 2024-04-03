@@ -95,11 +95,9 @@ struct _GdkFrameTimings
   gint64 refresh_interval;
   gint64 predicted_presentation_time;
 
-#ifdef G_ENABLE_DEBUG
   gint64 layout_start_time;
   gint64 paint_start_time;
   gint64 frame_end_time;
-#endif /* G_ENABLE_DEBUG */
 
   guint complete : 1;
   guint slept_before : 1;
@@ -108,7 +106,8 @@ struct _GdkFrameTimings
 void _gdk_frame_clock_inhibit_freeze (GdkFrameClock *clock);
 void _gdk_frame_clock_uninhibit_freeze (GdkFrameClock *clock);
 
-void _gdk_frame_clock_begin_frame         (GdkFrameClock   *clock);
+void _gdk_frame_clock_begin_frame         (GdkFrameClock   *clock,
+                                           gint64           monotonic_time);
 void _gdk_frame_clock_debug_print_timings (GdkFrameClock   *clock,
                                            GdkFrameTimings *timings);
 void _gdk_frame_clock_add_timings_to_profiler (GdkFrameClock *frame_clock,

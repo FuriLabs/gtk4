@@ -30,6 +30,7 @@
 
 #include "gsk/gskrendernodeprivate.h"
 #include "gsk/gskroundedrectprivate.h"
+#include "gsk/gskstrokeprivate.h"
 
 #include "gtk/gskpangoprivate.h"
 
@@ -106,6 +107,14 @@ struct _GtkSnapshotState {
       GskRoundedRect bounds;
     } rounded_clip;
     struct {
+      GskPath *path;
+      GskFillRule fill_rule;
+    } fill;
+    struct {
+      GskPath *path;
+      GskStroke stroke;
+    } stroke;
+    struct {
       gsize n_shadows;
       GskShadow *shadows;
       GskShadow a_shadow; /* Used if n_shadows == 1 */
@@ -125,6 +134,9 @@ struct _GtkSnapshotState {
       GskMaskMode mask_mode;
       GskRenderNode *mask_node;
     } mask;
+    struct {
+      GdkSubsurface *subsurface;
+    } subsurface;
   } data;
 };
 
@@ -735,12 +747,18 @@ gtk_graphene_rect_scale_affine (const graphene_rect_t *rect,
     graphene_rect_normalize (res);
 }
 
+typedef enum {
+  ENSURE_POSITIVE_SCALE = (1 << 0),
+  ENSURE_UNIFORM_SCALE = (1 << 1),
+} GtkEnsureFlags;
+
 static void
-gtk_snapshot_ensure_affine (GtkSnapshot *snapshot,
-                            float       *scale_x,
-                            float       *scale_y,
-                            float       *dx,
-                            float       *dy)
+gtk_snapshot_ensure_affine_with_flags (GtkSnapshot    *snapshot,
+                                       GtkEnsureFlags  flags,
+                                       float          *scale_x,
+                                       float          *scale_y,
+                                       float          *dx,
+                                       float          *dy)
 {
   const GtkSnapshotState *state = gtk_snapshot_get_current_state (snapshot);
 
@@ -753,7 +771,8 @@ gtk_snapshot_ensure_affine (GtkSnapshot *snapshot,
   else if (gsk_transform_get_category (state->transform) == GSK_TRANSFORM_CATEGORY_2D_AFFINE)
     {
       gsk_transform_to_affine (state->transform, scale_x, scale_y, dx, dy);
-      if (*scale_x < 0.0 || *scale_y < 0.0)
+      if (((flags & ENSURE_POSITIVE_SCALE) && (*scale_x < 0.0 || *scale_y < 0.0)) ||
+          ((flags & ENSURE_UNIFORM_SCALE) && (*scale_x != *scale_y)))
         {
           gtk_snapshot_autopush_transform (snapshot);
           state = gtk_snapshot_get_current_state (snapshot);
@@ -764,6 +783,19 @@ gtk_snapshot_ensure_affine (GtkSnapshot *snapshot,
     {
       gsk_transform_to_affine (state->transform, scale_x, scale_y, dx, dy);
     }
+}
+
+static void
+gtk_snapshot_ensure_affine (GtkSnapshot *snapshot,
+                            float       *scale_x,
+                            float       *scale_y,
+                            float       *dx,
+                            float       *dy)
+{
+  gtk_snapshot_ensure_affine_with_flags (snapshot,
+                                         ENSURE_POSITIVE_SCALE,
+                                         scale_x, scale_y,
+                                         dx, dy);
 }
 
 static void
@@ -1121,6 +1153,178 @@ gtk_snapshot_push_rounded_clip (GtkSnapshot          *snapshot,
 }
 
 static GskRenderNode *
+gtk_snapshot_collect_fill (GtkSnapshot      *snapshot,
+                           GtkSnapshotState *state,
+                           GskRenderNode   **nodes,
+                           guint             n_nodes)
+{
+  GskRenderNode *node, *fill_node;
+
+  node = gtk_snapshot_collect_default (snapshot, state, nodes, n_nodes);
+  if (node == NULL)
+    return NULL;
+
+  fill_node = gsk_fill_node_new (node,
+                                 state->data.fill.path,
+                                 state->data.fill.fill_rule);
+
+  if (fill_node->bounds.size.width == 0 ||
+      fill_node->bounds.size.height == 0)
+    {
+      gsk_render_node_unref (node);
+      gsk_render_node_unref (fill_node);
+      return NULL;
+    }
+
+  gsk_render_node_unref (node);
+
+  return fill_node;
+}
+
+static void
+gtk_snapshot_clear_fill (GtkSnapshotState *state)
+{
+  gsk_path_unref (state->data.fill.path);
+}
+
+/**
+ * gtk_snapshot_push_fill:
+ * @snapshot: a `GtkSnapshot`
+ * @path: The path describing the area to fill
+ * @fill_rule: The fill rule to use
+ *
+ * Fills the area given by @path and @fill_rule with an image and discards everything
+ * outside of it.
+ *
+ * The image is recorded until the next call to [method@Gtk.Snapshot.pop].
+ *
+ * If you want to fill the path with a color, [method@Gtk.Snapshot.append_fill]
+ * may be more convenient.
+ *
+ * Since: 4.14
+ */
+void
+gtk_snapshot_push_fill (GtkSnapshot *snapshot,
+                        GskPath     *path,
+                        GskFillRule  fill_rule)
+{
+  GtkSnapshotState *state;
+
+  gtk_snapshot_ensure_identity (snapshot);
+
+  state = gtk_snapshot_push_state (snapshot,
+                                   gtk_snapshot_get_current_state (snapshot)->transform,
+                                   gtk_snapshot_collect_fill,
+                                   gtk_snapshot_clear_fill);
+
+  state->data.fill.path = gsk_path_ref (path);
+  state->data.fill.fill_rule = fill_rule;
+}
+
+/**
+ * gtk_snapshot_append_fill:
+ * @snapshot: a `GtkSnapshot`
+ * @path: The path describing the area to fill
+ * @fill_rule: The fill rule to use
+ * @color: the color to fill the path with
+ *
+ * A convenience method to fill a path with a color.
+ *
+ * See [method@Gtk.Snapshot.push_fill] if you need
+ * to fill a path with more complex content than
+ * a color.
+ *
+ * Since: 4.14
+ */
+void
+gtk_snapshot_append_fill (GtkSnapshot   *snapshot,
+                          GskPath       *path,
+                          GskFillRule    fill_rule,
+                          const GdkRGBA *color)
+{
+  graphene_rect_t bounds;
+
+  gsk_path_get_bounds (path, &bounds);
+  gtk_snapshot_push_fill (snapshot, path, fill_rule);
+  gtk_snapshot_append_color (snapshot, color, &bounds);
+  gtk_snapshot_pop (snapshot);
+}
+
+static GskRenderNode *
+gtk_snapshot_collect_stroke (GtkSnapshot      *snapshot,
+                             GtkSnapshotState *state,
+                             GskRenderNode   **nodes,
+                             guint             n_nodes)
+{
+  GskRenderNode *node, *stroke_node;
+
+  node = gtk_snapshot_collect_default (snapshot, state, nodes, n_nodes);
+  if (node == NULL)
+    return NULL;
+
+  stroke_node = gsk_stroke_node_new (node,
+                                     state->data.stroke.path,
+                                     &state->data.stroke.stroke);
+
+  if (stroke_node->bounds.size.width == 0 ||
+      stroke_node->bounds.size.height == 0)
+    {
+      gsk_render_node_unref (node);
+      gsk_render_node_unref (stroke_node);
+      return NULL;
+    }
+
+  gsk_render_node_unref (node);
+
+  return stroke_node;
+}
+
+static void
+gtk_snapshot_clear_stroke (GtkSnapshotState *state)
+{
+  gsk_path_unref (state->data.stroke.path);
+  gsk_stroke_clear (&state->data.stroke.stroke);
+}
+
+/**
+ * gtk_snapshot_push_stroke:
+ * @snapshot: a #GtkSnapshot
+ * @path: The path to stroke
+ * @stroke: The stroke attributes
+ *
+ * Strokes the given @path with the attributes given by @stroke and
+ * an image.
+ *
+ * The image is recorded until the next call to [method@Gtk.Snapshot.pop].
+ *
+ * Note that the strokes are subject to the same transformation as
+ * everything else, so uneven scaling will cause horizontal and vertical
+ * strokes to have different widths.
+ *
+ * If you want to stroke the path with a color, [method@Gtk.Snapshot.append_stroke]
+ * may be more convenient.
+ *
+ * Since: 4.14
+ */
+void
+gtk_snapshot_push_stroke (GtkSnapshot     *snapshot,
+                          GskPath         *path,
+                          const GskStroke *stroke)
+{
+  GtkSnapshotState *state;
+
+  gtk_snapshot_ensure_identity (snapshot);
+
+  state = gtk_snapshot_push_state (snapshot,
+                                   gtk_snapshot_get_current_state (snapshot)->transform,
+                                   gtk_snapshot_collect_stroke,
+                                   gtk_snapshot_clear_stroke);
+
+  state->data.stroke.path = gsk_path_ref (path);
+  state->data.stroke.stroke = GSK_STROKE_INIT_COPY (stroke);
+}
+
+static GskRenderNode *
 gtk_snapshot_collect_shadow (GtkSnapshot      *snapshot,
                              GtkSnapshotState *state,
                              GskRenderNode   **nodes,
@@ -1141,6 +1345,35 @@ gtk_snapshot_collect_shadow (GtkSnapshot      *snapshot,
   gsk_render_node_unref (node);
 
   return shadow_node;
+}
+
+/**
+ * gtk_snapshot_append_stroke:
+ * @snapshot: a `GtkSnapshot`
+ * @path: The path describing the area to fill
+ * @stroke: The stroke attributes
+ * @color: the color to fill the path with
+ *
+ * A convenience method to stroke a path with a color.
+ *
+ * See [method@Gtk.Snapshot.push_stroke] if you need
+ * to stroke a path with more complex content than
+ * a color.
+ *
+ * Since: 4.14
+ */
+void
+gtk_snapshot_append_stroke (GtkSnapshot     *snapshot,
+                            GskPath         *path,
+                            const GskStroke *stroke,
+                            const GdkRGBA   *color)
+{
+  graphene_rect_t bounds;
+
+  gsk_path_get_stroke_bounds (path, stroke, &bounds);
+  gtk_snapshot_push_stroke (snapshot, path, stroke);
+  gtk_snapshot_append_color (snapshot, color, &bounds);
+  gtk_snapshot_pop (snapshot);
 }
 
 static void
@@ -1164,11 +1397,19 @@ gtk_snapshot_push_shadow (GtkSnapshot     *snapshot,
                           const GskShadow *shadow,
                           gsize            n_shadows)
 {
-  const GtkSnapshotState *current_state = gtk_snapshot_get_current_state (snapshot);
   GtkSnapshotState *state;
+  GskTransform *transform;
+  float scale_x, scale_y, dx, dy;
+  gsize i;
+
+  gtk_snapshot_ensure_affine_with_flags (snapshot,
+                                         ENSURE_POSITIVE_SCALE | ENSURE_UNIFORM_SCALE,
+                                         &scale_x, &scale_y,
+                                         &dx, &dy);
+  transform = gsk_transform_scale (gsk_transform_translate (NULL, &GRAPHENE_POINT_INIT (dx, dy)), scale_x, scale_y);
 
   state = gtk_snapshot_push_state (snapshot,
-                                   current_state->transform,
+                                   transform,
                                    gtk_snapshot_collect_shadow,
                                    gtk_snapshot_clear_shadow);
 
@@ -1177,13 +1418,23 @@ gtk_snapshot_push_shadow (GtkSnapshot     *snapshot,
     {
       state->data.shadow.shadows = NULL;
       memcpy (&state->data.shadow.a_shadow, shadow, sizeof (GskShadow));
+      state->data.shadow.a_shadow.dx *= scale_x;
+      state->data.shadow.a_shadow.dy *= scale_y;
+      state->data.shadow.a_shadow.radius *= scale_x;
     }
   else
     {
       state->data.shadow.shadows = g_malloc (sizeof (GskShadow) * n_shadows);
       memcpy (state->data.shadow.shadows, shadow, sizeof (GskShadow) * n_shadows);
+      for (i = 0; i < n_shadows; i++)
+        {
+          state->data.shadow.shadows[i].dx *= scale_x;
+          state->data.shadow.shadows[i].dy *= scale_y;
+          state->data.shadow.shadows[i].radius *= scale_x;
+        }
     }
 
+  gsk_transform_unref (transform);
 }
 
 static GskRenderNode *
@@ -2186,7 +2437,10 @@ gtk_snapshot_append_linear_gradient (GtkSnapshot            *snapshot,
   g_return_if_fail (stops != NULL);
   g_return_if_fail (n_stops > 1);
 
-  gtk_snapshot_ensure_affine (snapshot, &scale_x, &scale_y, &dx, &dy);
+  gtk_snapshot_ensure_affine_with_flags (snapshot,
+                                         ENSURE_POSITIVE_SCALE | ENSURE_UNIFORM_SCALE,
+                                         &scale_x, &scale_y,
+                                         &dx, &dy);
   gtk_graphene_rect_scale_affine (bounds, scale_x, scale_y, dx, dy, &real_bounds);
 
   first_color = &stops[0].color;
@@ -2620,4 +2874,43 @@ gtk_snapshot_append_outset_shadow (GtkSnapshot          *snapshot,
 
 
   gtk_snapshot_append_node_internal (snapshot, node);
+}
+
+static GskRenderNode *
+gtk_snapshot_collect_subsurface (GtkSnapshot      *snapshot,
+                                 GtkSnapshotState *state,
+                                 GskRenderNode   **nodes,
+                                 guint             n_nodes)
+{
+  GskRenderNode *node, *subsurface_node;
+
+  node = gtk_snapshot_collect_default (snapshot, state, nodes, n_nodes);
+  if (node == NULL)
+    return NULL;
+
+  subsurface_node = gsk_subsurface_node_new (node, state->data.subsurface.subsurface);
+  gsk_render_node_unref (node);
+
+  return subsurface_node;
+}
+
+static void
+gtk_snapshot_clear_subsurface (GtkSnapshotState *state)
+{
+  g_object_unref (state->data.subsurface.subsurface);
+}
+
+void
+gtk_snapshot_push_subsurface (GtkSnapshot   *snapshot,
+                              GdkSubsurface *subsurface)
+{
+  const GtkSnapshotState *current_state = gtk_snapshot_get_current_state (snapshot);
+  GtkSnapshotState *state;
+
+  state = gtk_snapshot_push_state (snapshot,
+                                   current_state->transform,
+                                   gtk_snapshot_collect_subsurface,
+                                   gtk_snapshot_clear_subsurface);
+
+  state->data.subsurface.subsurface = g_object_ref (subsurface);
 }

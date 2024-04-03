@@ -119,11 +119,7 @@ gsk_gl_glyph_library_init_atlas (GskGLTextureLibrary *self,
 
   memset (pixel_data, 255, sizeof pixel_data);
 
-  if (!gdk_gl_context_has_bgra (gdk_gl_context_get_current ())
-#if G_BYTE_ORDER == G_BIG_ENDIAN
-      || gdk_gl_context_get_use_es (gdk_gl_context_get_current ())
-#endif
-     )
+  if (gdk_gl_context_get_use_es (gdk_gl_context_get_current ()))
     {
       gl_format = GL_RGBA;
       gl_type = GL_UNSIGNED_BYTE;
@@ -280,7 +276,7 @@ gsk_gl_glyph_library_upload_glyph (GskGLGlyphLibrary     *self,
 
   g_assert (texture_id > 0);
 
-  if (G_UNLIKELY (!gdk_gl_context_has_bgra (gdk_gl_context_get_current ())))
+  if (gdk_gl_context_get_use_es (gdk_gl_context_get_current ()))
     {
       pixel_data = free_data = g_malloc (width * height * 4);
       gdk_memory_convert (pixel_data, width * 4,
@@ -380,7 +376,7 @@ gsk_gl_glyph_library_upload_glyph (GskGLGlyphLibrary     *self,
     {
       char message[64];
       g_snprintf (message, sizeof message, "Size %dx%d", width, height);
-      gdk_profiler_add_mark (start_time, GDK_PROFILER_CURRENT_TIME-start_time, "Upload Glyph", message);
+      gdk_profiler_add_mark (start_time, GDK_PROFILER_CURRENT_TIME-start_time, "Upload glyph", message);
     }
 }
 

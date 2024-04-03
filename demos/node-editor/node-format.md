@@ -147,6 +147,19 @@ Creates a node like `gsk_cross_fade_node_new()` with the given properties.
 
 Creates a node like `gsk_debug_node_new()` with the given properties.
 
+### fill
+
+| property  | syntax          | default                | printed     |
+| --------- | --------------- | ---------------------- | ----------- |
+| child     | `<node>`        | *see below*            | always      |
+| path      | `<string>`      | ""                     | always      |
+| fill-rule | `<fill-rule>`   | winding                | always      |
+
+Creates a node like `gsk_fill_node_new()` with the given properties.
+
+The default child node is the default color node, but created with the
+bounds of the path.
+
 ### glshader
 
 | property   | syntax             | default                | printed     |
@@ -289,28 +302,63 @@ Creates a node like `gsk_rounded_clip_node_new()` with the given properties.
 
 Creates a node like `gsk_shadow_node_new()` with the given properties.
 
+### stroke
+
+| property    | syntax             | default           | printed     |
+| ----------- | ------------------ | ----------------- | ----------- |
+| child       | `<node>`           | *see below*       | always      |
+| path        | `<string>`         | ""                | always      |
+| line-width  | `<number>`         | 0                 | non-default |
+| line-cap    | `<line-cap>`       | butt              | always      |
+| line-join   | `<line-join>`      | miter             | always      |
+| miter-limit | `<number>`         | 4                 | non-default |
+| dash        | `<number>{+}|none` | none              | non-default |
+| dash-offset | `<number>`         | 0                 | non-default |
+
+Creates a node like `gsk_stroke_node_new()` with the given properties.
+
+The default child node is the default color node, but created with the
+stroke bounds of the path.
+
 ### text
 
-| property | syntax           | default                | printed     |
-| -------- | ---------------- | ---------------------- | ----------- |
-| color    | `<color>`        | black                  | non-default |
-| font     | `<string>`       | "Cantarell 11"         | always      |
-| glyphs   | `<glyphs>`       | "Hello"                | always      |
-| offset   | `<point>`        | 0 0                    | non-default |
+| property     | syntax              | default             | printed     |
+| ------------ | ------------------- | ------------------- | ----------- |
+| color        | `<color>`           | black               | non-default |
+| font         | `<string>` `<url>`? | "Cantarell 15px"    | always      |
+| glyphs       | `<glyphs>`          | "Hello"             | always      |
+| offset       | `<point>`           | 0 0                 | non-default |
+| hint-style   | `<hint style>`      | slight              | non-default |
+| antialias    | `<antialias>`       | gray                | non-default |
 
 Creates a node like `gsk_text_node_new()` with the given properties.
+
+If a url is specified for the font, it must point to a font file for the
+font that is specified in the string. It can be either a data url containing
+a base64-encoded font file, or a regular url that points to a font file.
+
+Glyphs can be specified as an ASCII string, or as a comma-separated list of
+their glyph IDs. Optionally, the advance width, x and y offsets and flags can
+be specified as well, like this: 40 10 0 0 color.
 
 If the given font does not exist or the given glyphs are invalid for the given
 font, an error node will be returned.
 
+Possible values for hint-style are none, slight or full.
+Possible value for antialias are none or gray.
+
 ### texture
 
-| property | syntax           | default                | printed     |
-| -------- | ---------------- | ---------------------- | ----------- |
-| bounds   | `<rect>`         | 50                     | always      |
-| texture  | `<url>`          | *see below*            | always      |
+| property | syntax              | default                | printed     |
+| -------- | ------------------- | ---------------------- | ----------- |
+| bounds   | `<rect>`            | 50                     | always      |
+| texture  | `<string>`?`<url>`? | *see below*            | always      |
 
 Creates a node like `gsk_texture_node_new()` with the given properties.
+
+If a string is specified for the texture, it will be used as a name for the text.
+Textures can be reused by specifying the name of a previously used texture. In
+that case, the url can be omitted.
 
 The default texture is a 10x10 checkerboard with the top left and bottom right
 5x5 being in the color #FF00CC and the other part being transparent. A possible

@@ -402,7 +402,11 @@ entry {
     margin-bottom: 2px;
   }
 
-  progress > trough > progress {
+  > progress > trough {
+    min-height: 2px;
+  }
+
+  > progress > trough > progress {
     background-color: transparent;
     background-image: none;
     border-radius: 0;
@@ -410,7 +414,6 @@ entry {
     border-color: $selected_bg_color;
     border-style: solid;
     box-shadow: none;
-
   }
 
    // linked entries
@@ -2482,10 +2485,6 @@ switch {
     transition: $button_transition;
   }
 
-  @if $contrast != 'high' {
-    > image { color: transparent; } /* only show i / o for the accessible theme */
-  }
-
   &:hover > slider {
     @include button(hover);
   }
@@ -3343,6 +3342,9 @@ columnview {
 
 treeexpander {
   border-spacing: 4px;
+  indent {
+    -gtk-icon-size: 8px;
+  }
 }
 
 /********************************************************

@@ -23,7 +23,9 @@
 
 #include "gtktextprivate.h"
 
+#include "gtkaccessibletextprivate.h"
 #include "gtkactionable.h"
+#include "gtkactionmuxerprivate.h"
 #include "gtkadjustment.h"
 #include "gtkbox.h"
 #include "gtkbutton.h"
@@ -42,22 +44,22 @@
 #include "gtkgestureclick.h"
 #include "gtkgesturesingle.h"
 #include "gtkimageprivate.h"
-#include "gtkimcontextprivate.h"
 #include "gtkimcontextsimple.h"
 #include "gtkimmulticontext.h"
-#include <glib/gi18n-lib.h>
+#include "gtkjoinedmenuprivate.h"
 #include "gtklabel.h"
 #include "gtkmagnifierprivate.h"
 #include "gtkmain.h"
 #include "gtkmarshalers.h"
+#include "gtknative.h"
 #include "gtkpangoprivate.h"
 #include "gtkpopovermenu.h"
 #include "gtkprivate.h"
-#include "gtksettings.h"
-#include "gtksnapshot.h"
 #include "gtkrenderbackgroundprivate.h"
 #include "gtkrenderborderprivate.h"
 #include "gtkrenderlayoutprivate.h"
+#include "gtksettings.h"
+#include "gtksnapshot.h"
 #include "gtktexthandleprivate.h"
 #include "gtktexthistoryprivate.h"
 #include "gtktextutilprivate.h"
@@ -65,13 +67,13 @@
 #include "gtktypebuiltins.h"
 #include "gtkwidgetprivate.h"
 #include "gtkwindow.h"
-#include "gtknative.h"
-#include "gtkactionmuxerprivate.h"
-#include "gtkjoinedmenuprivate.h"
-#include "deprecated/gtkrender.h"
 
-#include <cairo-gobject.h>
+#include "deprecated/gtkrender.h"
+#include "a11y/gtkatspipangoprivate.h"
+
 #include <string.h>
+#include <cairo-gobject.h>
+#include <glib/gi18n-lib.h>
 
 /**
  * GtkText:
@@ -706,9 +708,14 @@ static const GtkTextHistoryFuncs history_funcs = {
   gtk_text_history_select_cb,
 };
 
+static void     gtk_text_accessible_text_init (GtkAccessibleTextInterface *iface);
+
 G_DEFINE_TYPE_WITH_CODE (GtkText, gtk_text, GTK_TYPE_WIDGET,
                          G_ADD_PRIVATE (GtkText)
-                         G_IMPLEMENT_INTERFACE (GTK_TYPE_EDITABLE, gtk_text_editable_init))
+                         G_IMPLEMENT_INTERFACE (GTK_TYPE_EDITABLE, gtk_text_editable_init)
+                         G_IMPLEMENT_INTERFACE (GTK_TYPE_ACCESSIBLE_TEXT,
+                                                gtk_text_accessible_text_init))
+
 
 static void
 add_move_binding (GtkWidgetClass *widget_class,
@@ -2919,11 +2926,13 @@ gtk_text_click_gesture_released (GtkGestureClick *gesture,
                                  GtkText         *self)
 {
   GtkTextPrivate *priv = gtk_text_get_instance_private (self);
+  GdkEvent *event =
+    gtk_event_controller_get_current_event (GTK_EVENT_CONTROLLER (gesture));
 
   if (n_press == 1 &&
       !priv->in_drag &&
       priv->current_pos == priv->selection_bound)
-    gtk_im_context_activate_osk (priv->im_context);
+    gtk_im_context_activate_osk (priv->im_context, event);
 }
 
 static char *
@@ -3440,6 +3449,11 @@ gtk_text_insert_text (GtkText    *self,
   if (n_inserted != n_chars)
     gtk_widget_error_bell (GTK_WIDGET (self));
 
+  gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (self),
+                                       GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_INSERT,
+                                       *position,
+                                       *position + n_inserted);
+
   *position += n_inserted;
 
   update_placeholder_visibility (self);
@@ -3454,8 +3468,16 @@ gtk_text_delete_text (GtkText *self,
 {
   GtkTextPrivate *priv = gtk_text_get_instance_private (self);
 
+  if (end_pos < 0)
+    end_pos = gtk_entry_buffer_get_length (get_buffer (self));
+
   if (start_pos == end_pos)
     return;
+
+  gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (self),
+                                       GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_REMOVE,
+                                       start_pos,
+                                       end_pos);
 
   if (priv->change_count == 0)
     gtk_text_history_begin_irreversible_action (priv->history);
@@ -3481,6 +3503,9 @@ gtk_text_delete_selection (GtkText *self)
   int end_pos = MAX (priv->selection_bound, priv->current_pos);
 
   gtk_editable_delete_text (GTK_EDITABLE (self), start_pos, end_pos);
+  gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (self),
+                                       GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_REMOVE,
+                                       start_pos, end_pos);
 }
 
 static void
@@ -3501,6 +3526,9 @@ gtk_text_set_selection_bounds (GtkText *self,
   gtk_text_set_positions (self, MIN (end, length), MIN (start, length));
 
   gtk_text_update_primary_selection (self);
+
+  gtk_accessible_text_update_caret_position (GTK_ACCESSIBLE_TEXT (self));
+  gtk_accessible_text_update_selection_bound (GTK_ACCESSIBLE_TEXT (self));
 }
 
 static gboolean
@@ -3982,6 +4010,10 @@ gtk_text_insert_at_cursor (GtkText    *self,
       begin_change (self);
       gtk_text_reset_im_context (self);
       gtk_editable_insert_text (GTK_EDITABLE (self), str, -1, &pos);
+      gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (self),
+                                           GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_INSERT,
+                                           pos,
+                                           pos + g_utf8_strlen (str, -1));
       gtk_text_set_selection_bounds (self, pos, pos);
       end_change (self);
     }
@@ -4056,7 +4088,6 @@ gtk_text_delete_from_cursor (GtkText       *self,
         gtk_editable_delete_text (GTK_EDITABLE (self), 0, priv->current_pos);
       else
         gtk_editable_delete_text (GTK_EDITABLE (self), priv->current_pos, -1);
-
       break;
 
     case GTK_DELETE_DISPLAY_LINES:
@@ -4136,8 +4167,12 @@ gtk_text_backspace (GtkText *self)
               int pos = priv->current_pos;
 
               gtk_editable_insert_text (GTK_EDITABLE (self), normalized_text,
-                                    g_utf8_offset_to_pointer (normalized_text, len - 1) - normalized_text,
-                                    &pos);
+                                        g_utf8_offset_to_pointer (normalized_text, len - 1) - normalized_text,
+                                        &pos);
+              gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (self),
+                                                   GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_INSERT,
+                                                   pos,
+                                                   pos + len);
               gtk_text_set_selection_bounds (self, pos, pos);
             }
 
@@ -4423,6 +4458,9 @@ gtk_text_enter_text (GtkText    *self,
 
   tmp_pos = priv->current_pos;
   gtk_editable_insert_text (GTK_EDITABLE (self), str, strlen (str), &tmp_pos);
+  gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (self),
+                                       GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_INSERT,
+                                       tmp_pos, tmp_pos + g_utf8_strlen (str, -1));
   gtk_text_set_selection_bounds (self, tmp_pos, tmp_pos);
 
   end_change (self);
@@ -5386,6 +5424,9 @@ paste_received (GObject      *clipboard,
 
   pos = priv->current_pos;
   gtk_editable_insert_text (GTK_EDITABLE (self), text, length, &pos);
+  gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (self),
+                                       GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_INSERT,
+                                       pos, pos + length);
   gtk_text_set_selection_bounds (self, pos, pos);
   end_change (self);
 
@@ -5617,8 +5658,14 @@ gtk_text_set_text (GtkText     *self,
   begin_change (self);
   g_object_freeze_notify (G_OBJECT (self));
   gtk_editable_delete_text (GTK_EDITABLE (self), 0, -1);
+  gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (self),
+                                       GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_REMOVE,
+                                       0, G_MAXUINT);
   tmp_pos = 0;
   gtk_editable_insert_text (GTK_EDITABLE (self), text, strlen (text), &tmp_pos);
+  gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (self),
+                                       GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_INSERT,
+                                       tmp_pos, tmp_pos + g_utf8_strlen (text, -1));
   g_object_thaw_notify (G_OBJECT (self));
   end_change (self);
 
@@ -6417,6 +6464,9 @@ gtk_text_drag_drop (GtkDropTarget *dest,
       drop_position > priv->current_pos)
     {
       gtk_editable_insert_text (GTK_EDITABLE (self), str, length, &drop_position);
+      gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (self),
+                                           GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_INSERT,
+                                           drop_position, drop_position + length);
     }
   else
     {
@@ -6426,6 +6476,9 @@ gtk_text_drag_drop (GtkDropTarget *dest,
       gtk_text_delete_selection (self);
       pos = MIN (priv->selection_bound, priv->current_pos);
       gtk_editable_insert_text (GTK_EDITABLE (self), str, length, &pos);
+      gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (self),
+                                           GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_INSERT,
+                                           pos, pos + length);
       end_change (self);
     }
 
@@ -7001,6 +7054,9 @@ emoji_picked (GtkEmojiChooser *chooser,
 
   pos = priv->current_pos;
   gtk_editable_insert_text (GTK_EDITABLE (self), text, -1, &pos);
+  gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (self),
+                                       GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_INSERT,
+                                       pos, pos + 1);
   gtk_text_set_selection_bounds (self, pos, pos);
   end_change (self);
 }
@@ -7328,6 +7384,9 @@ gtk_text_history_insert_cb (gpointer    funcs_data,
   int location = begin;
 
   gtk_editable_insert_text (GTK_EDITABLE (text), str, len, &location);
+  gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (text),
+                                       GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_INSERT,
+                                       location, location + len);
 }
 
 static void
@@ -7378,3 +7437,133 @@ gtk_text_update_history (GtkText *self)
                                 priv->visible &&
                                 priv->editable);
 }
+
+/* {{{ GtkAccessibleText implementation */
+
+static GBytes *
+gtk_text_accessible_text_get_contents (GtkAccessibleText *self,
+                                       unsigned int       start,
+                                       unsigned int       end)
+{
+  const char *text;
+  int len;
+  char *string;
+  gsize size;
+
+  text = gtk_editable_get_text (GTK_EDITABLE (self));
+  len = g_utf8_strlen (text, -1);
+
+  start = CLAMP (start, 0, len);
+  end = CLAMP (end, 0, len);
+
+  if (end <= start)
+    {
+      string = g_strdup ("");
+      size = 1;
+    }
+  else
+    {
+      const char *p, *q;
+      p = g_utf8_offset_to_pointer (text, start);
+      q = g_utf8_offset_to_pointer (text, end);
+      size = q - p + 1;
+      string = g_strndup (p, q - p);
+    }
+
+  return g_bytes_new_take (string, size);
+}
+
+static GBytes *
+gtk_text_accessible_text_get_contents_at (GtkAccessibleText            *self,
+                                          unsigned int                  offset,
+                                          GtkAccessibleTextGranularity  granularity,
+                                          unsigned int                 *start,
+                                          unsigned int                 *end)
+{
+  PangoLayout *layout = gtk_text_get_layout (GTK_TEXT (self));
+  char *string = gtk_pango_get_string_at (layout, offset, granularity, start, end);
+
+  return g_bytes_new_take (string, strlen (string));
+}
+
+static unsigned int
+gtk_text_accessible_text_get_caret_position (GtkAccessibleText *self)
+{
+  return gtk_editable_get_position (GTK_EDITABLE (self));
+}
+
+static gboolean
+gtk_text_accessible_text_get_selection (GtkAccessibleText       *self,
+                                        gsize                   *n_ranges,
+                                        GtkAccessibleTextRange **ranges)
+{
+  int start, end;
+
+  if (!gtk_editable_get_selection_bounds (GTK_EDITABLE (self), &start, &end))
+    return FALSE;
+
+  *n_ranges = 1;
+  *ranges = g_new (GtkAccessibleTextRange, 1);
+  (*ranges)[0].start = start;
+  (*ranges)[0].length = end - start;
+
+  return TRUE;
+}
+
+static gboolean
+gtk_text_accessible_text_get_attributes (GtkAccessibleText        *self,
+                                         unsigned int              offset,
+                                         gsize                    *n_ranges,
+                                         GtkAccessibleTextRange  **ranges,
+                                         char                   ***attribute_names,
+                                         char                   ***attribute_values)
+{
+  PangoLayout *layout = gtk_text_get_layout (GTK_TEXT (self));
+  unsigned int start, end;
+  char **names, **values;
+
+  gtk_pango_get_run_attributes (layout, offset, &names, &values, &start, &end);
+
+  *n_ranges = g_strv_length (names);
+  *ranges = g_new (GtkAccessibleTextRange, *n_ranges);
+
+  for (unsigned i = 0; i < *n_ranges; i++)
+    {
+      GtkAccessibleTextRange *range = &(*ranges)[i];
+
+      range->start = start;
+      range->length = end - start;
+    }
+
+  *attribute_names = names;
+  *attribute_values = values;
+
+  return TRUE;
+}
+
+static void
+gtk_text_accessible_text_get_default_attributes (GtkAccessibleText   *self,
+                                                 char              ***attribute_names,
+                                                 char              ***attribute_values)
+{
+  PangoLayout *layout = gtk_text_get_layout (GTK_TEXT (self));
+  char **names, **values;
+
+  gtk_pango_get_default_attributes (layout, &names, &values);
+
+  *attribute_names = names;
+  *attribute_values = values;
+}
+
+static void
+gtk_text_accessible_text_init (GtkAccessibleTextInterface *iface)
+{
+  iface->get_contents = gtk_text_accessible_text_get_contents;
+  iface->get_contents_at = gtk_text_accessible_text_get_contents_at;
+  iface->get_caret_position = gtk_text_accessible_text_get_caret_position;
+  iface->get_selection = gtk_text_accessible_text_get_selection;
+  iface->get_attributes = gtk_text_accessible_text_get_attributes;
+  iface->get_default_attributes = gtk_text_accessible_text_get_default_attributes;
+}
+
+/* vim:set foldmethod=marker expandtab: */

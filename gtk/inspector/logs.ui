@@ -89,6 +89,18 @@
                 <signal name="toggled" handler="flag_toggled"/>
               </object>
             </child>
+            <child>
+              <object class="GtkCheckButton" id="dmabuf">
+                <property name="label">Dmabuf</property>
+                <signal name="toggled" handler="flag_toggled"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="offload">
+                <property name="label">Offload</property>
+                <signal name="toggled" handler="flag_toggled"/>
+              </object>
+            </child>
           </object>
         </child>
         <child>
@@ -117,12 +129,6 @@
               </object>
             </child>
             <child>
-              <object class="GtkCheckButton" id="opengl_gsk">
-                <property name="label">OpenGL</property>
-                <signal name="toggled" handler="flag_toggled"/>
-              </object>
-            </child>
-            <child>
               <object class="GtkCheckButton" id="vulkan_gsk">
                 <property name="label">Vulkan</property>
                 <signal name="toggled" handler="flag_toggled"/>
@@ -135,14 +141,14 @@
               </object>
             </child>
             <child>
-              <object class="GtkCheckButton" id="surface">
-                <property name="label">Surface</property>
+              <object class="GtkCheckButton" id="glyphcache">
+                <property name="label">Glyph Cache</property>
                 <signal name="toggled" handler="flag_toggled"/>
               </object>
             </child>
             <child>
-              <object class="GtkCheckButton" id="glyphcache">
-                <property name="label">Glyph Cache</property>
+              <object class="GtkCheckButton" id="verbose">
+                <property name="label">Verbose</property>
                 <signal name="toggled" handler="flag_toggled"/>
               </object>
             </child>

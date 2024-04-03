@@ -4,7 +4,7 @@ Slug: gtk-resources
 ## Opening a bug or feature request
 
 If you encounter a bug, misfeature, or missing feature in GTK, please
-file a bug report on our [GitLab project](https://gitlab.gnome.org/GNOME/gtk/issues/new).
+file a bug report on our [GitLab project](https://gitlab.gnome.org/GNOME/gtk/issues/).
 You should also file issues if the documentation is out of date with the
 existing API, or unclear.
 
@@ -31,10 +31,11 @@ for GTK, available on GitLab.
 
 If you want to discuss your approach before or after working on it,
 good ways to contact the GTK developers, apart from GitLab issues,
-are
+are:
 
-- the #gtk IRC channel on irc.gnome.org
 - the gtk tag on the [GNOME Discourse instance](https://discourse.gnome.org/tag/gtk)
+- the `#gtk:gnome.org` Matrix room
+- the `#gtk` IRC channel on `irc.libera.chat`
 
 You should not send patches by email, as they will inevitably get lost,
 or forgotten. Always open a merge request.

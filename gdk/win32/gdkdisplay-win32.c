@@ -1064,6 +1064,7 @@ gdk_win32_display_check_composited (GdkWin32Display *display)
     }
 
   gdk_display_set_composited (GDK_DISPLAY (display), composited);
+  gdk_display_set_shadow_width (GDK_DISPLAY (display), composited);
 }
 
 static void
@@ -1201,7 +1202,7 @@ gdk_win32_display_init_gl (GdkDisplay  *display,
    * Disable defaulting to EGL as EGL is used more as a compatibility layer
    * on Windows rather than being a native citizen on Windows
    */
-  if (gdk_display_get_debug_flags (display) & (GDK_DEBUG_GL_EGL|GDK_DEBUG_GL_GLES))
+  if (gdk_display_get_debug_flags (display) & (GDK_DEBUG_GL_EGL|GDK_DEBUG_GL_DISABLE_GL))
     {
       init_gl_hdc = GetDC (display_win32->hwnd);
 

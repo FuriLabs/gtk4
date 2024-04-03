@@ -96,9 +96,10 @@ struct _GtkIMContextClass
 
   /*< private >*/
   void (* activate_osk) (GtkIMContext *context);
+  gboolean (* activate_osk_with_event) (GtkIMContext *context,
+                                        GdkEvent     *event);
 
   /* Padding for future expansion */
-  void (*_gtk_reserved1) (void);
   void (*_gtk_reserved2) (void);
   void (*_gtk_reserved3) (void);
   void (*_gtk_reserved4) (void);
@@ -167,6 +168,10 @@ GDK_AVAILABLE_IN_ALL
 gboolean gtk_im_context_delete_surrounding  (GtkIMContext       *context,
 					     int                 offset,
 					     int                 n_chars);
+
+GDK_AVAILABLE_IN_4_14
+gboolean gtk_im_context_activate_osk (GtkIMContext *context,
+                                      GdkEvent     *event);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkIMContext, g_object_unref)
 

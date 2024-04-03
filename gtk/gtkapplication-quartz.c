@@ -48,6 +48,7 @@ typedef struct
 
   GtkActionMuxer *muxer;
   GMenu *combined;
+  GMenuModel *standard_app_menu;
 
   GSList *inhibitors;
   int quit_inhibit;
@@ -151,6 +152,29 @@ static GActionEntry gtk_application_impl_quartz_actions[] = {
 };
 
 static void
+gtk_application_impl_quartz_set_app_menu (GtkApplicationImpl *impl,
+                                          GMenuModel         *app_menu)
+{
+  GtkApplicationImplQuartz *quartz = (GtkApplicationImplQuartz *) impl;
+
+  /* If there are any items at all, then the first one is the app menu */
+  if (g_menu_model_get_n_items (G_MENU_MODEL (quartz->combined)))
+    g_menu_remove (quartz->combined, 0);
+
+  if (app_menu)
+    g_menu_prepend_submenu (quartz->combined, "Application", app_menu);
+  else
+    {
+      GMenu *empty;
+
+      /* We must preserve the rule that index 0 is the app menu */
+      empty = g_menu_new ();
+      g_menu_prepend_submenu (quartz->combined, "Application", G_MENU_MODEL (empty));
+      g_object_unref (empty);
+    }
+}
+
+static void
 gtk_application_impl_quartz_startup (GtkApplicationImpl *impl,
                                      gboolean            register_session)
 {
@@ -184,6 +208,23 @@ gtk_application_impl_quartz_startup (GtkApplicationImpl *impl,
   g_object_unref (gtkinternal);
 
   /* now setup the menu */
+  if (quartz->standard_app_menu == NULL)
+    {
+      GtkBuilder *builder;
+
+      /* If the user didn't fill in their own menu yet, add ours.
+       *
+       * The fact that we do this here ensures that we will always have the
+       * app menu at index 0 in 'combined'.
+       */
+      builder = gtk_builder_new_from_resource ("/org/gtk/libgtk/ui/gtkapplication-quartz.ui");
+      quartz->standard_app_menu = G_MENU_MODEL (g_object_ref (gtk_builder_get_object (builder, "app-menu")));
+      g_object_unref (builder);
+    }
+
+  gtk_application_impl_quartz_set_app_menu (impl, quartz->standard_app_menu);
+
+  /* This may or may not add an item to 'combined' */
   gtk_application_impl_set_menubar (impl, gtk_application_get_menubar (impl->application));
 
   /* OK.  Now put it in the menu. */
@@ -254,30 +295,12 @@ gtk_application_impl_quartz_set_menubar (GtkApplicationImpl *impl,
 {
   GtkApplicationImplQuartz *quartz = (GtkApplicationImplQuartz *) impl;
 
-  /* If we have the menubar, it is a section at index '0' */
-  if (g_menu_model_get_n_items (G_MENU_MODEL (quartz->combined)))
-    g_menu_remove (quartz->combined, 0);
+  /* If we have the menubar, it is a section at index '1' */
+  if (g_menu_model_get_n_items (G_MENU_MODEL (quartz->combined)) > 1)
+    g_menu_remove (quartz->combined, 1);
 
   if (menubar)
     g_menu_append_section (quartz->combined, NULL, menubar);
-  else
-    {
-      // Ensure that we will always have one menu.
-      char app_menu_key[] = "APP_MENU";
-      GMenuModel *app_menu = g_object_get_data (G_OBJECT (impl), app_menu_key);
-      if (app_menu == NULL)
-        {
-          GtkBuilder *builder;
-
-          // If the user didn't fill in their own menu yet, add ours.
-          builder = gtk_builder_new_from_resource ("/org/gtk/libgtk/ui/gtkapplication-quartz.ui");
-          app_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "app-menu"));
-          g_object_set_data_full (G_OBJECT (impl), app_menu_key, g_object_ref (app_menu), g_object_unref);
-          g_object_unref (builder);
-        }
-
-      g_menu_append_submenu (quartz->combined, "Application", app_menu);
-    }
 }
 
 static guint
@@ -346,6 +369,7 @@ gtk_application_impl_quartz_finalize (GObject *object)
   GtkApplicationImplQuartz *quartz = (GtkApplicationImplQuartz *) object;
 
   g_clear_object (&quartz->combined);
+  g_clear_object (&quartz->standard_app_menu);
 
   G_OBJECT_CLASS (gtk_application_impl_quartz_parent_class)->finalize (object);
 }
@@ -358,6 +382,7 @@ gtk_application_impl_quartz_class_init (GtkApplicationImplClass *class)
   class->startup = gtk_application_impl_quartz_startup;
   class->shutdown = gtk_application_impl_quartz_shutdown;
   class->active_window_changed = gtk_application_impl_quartz_active_window_changed;
+  class->set_app_menu = gtk_application_impl_quartz_set_app_menu;
   class->set_menubar = gtk_application_impl_quartz_set_menubar;
   class->inhibit = gtk_application_impl_quartz_inhibit;
   class->uninhibit = gtk_application_impl_quartz_uninhibit;

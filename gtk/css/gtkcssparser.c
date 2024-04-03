@@ -186,7 +186,6 @@ gtk_css_parser_resolve_url (GtkCssParser *self,
       g_free (scheme);
       return file;
     }
-  g_free (scheme);
 
   if (self->directory == NULL)
     return NULL;
@@ -956,6 +955,14 @@ gtk_css_parser_parse_url_arg (GtkCssParser *parser,
     return 0;
   
   return 1;
+}
+
+gboolean
+gtk_css_parser_has_url (GtkCssParser *self)
+{
+  return gtk_css_parser_has_token (self, GTK_CSS_TOKEN_URL)
+      || gtk_css_parser_has_token (self, GTK_CSS_TOKEN_BAD_URL)
+      || gtk_css_parser_has_function (self, "url");
 }
 
 /**

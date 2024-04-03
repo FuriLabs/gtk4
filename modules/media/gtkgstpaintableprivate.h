@@ -17,10 +17,10 @@
  * Authors: Benjamin Otte <otte@gnome.org>
  */
 
-#ifndef __GTK_GST_PAINTABLE_H__
-#define __GTK_GST_PAINTABLE_H__
+#pragma once
 
 #include <gdk/gdk.h>
+#include <graphene.h>
 
 G_BEGIN_DECLS
 
@@ -36,8 +36,7 @@ void            gtk_gst_paintable_unrealize             (GtkGstPaintable        
                                                          GdkSurface             *surface);
 void            gtk_gst_paintable_queue_set_texture     (GtkGstPaintable        *self,
                                                          GdkTexture             *texture,
-                                                         double                  pixel_aspect_ratio);
+                                                         double                  pixel_aspect_ratio,
+                                                         const graphene_rect_t  *viewport);
 
 G_END_DECLS
-
-#endif /* __GTK_GST_PAINTABLE_H__ */

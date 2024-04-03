@@ -1,7 +1,5 @@
-Title: Compiling the GTK Libraries
+Title: Building GTK
 Slug: gtk-building
-
-## Building GTK
 
 Before we get into the details of how to compile GTK, we should
 mention that in many cases, binary packages of GTK prebuilt for
@@ -40,13 +38,13 @@ can run the build, using Ninja:
 
 ```
 cd builddir
-ninja
-ninja install
+meson compile
+meson install
 ```
 
 If you don't have permission to write to the directory you are
 installing in, you may have to change to root temporarily before
-running `ninja install`.
+running `meson install`.
 
 Several environment variables are useful to pass to set before
 running *meson*. `CPPFLAGS` contains options to pass to the C
@@ -114,10 +112,10 @@ responsible for controlling the debugging features of GTK with
 
 ## Dependencies
 
-Before you can compile the GTK widget toolkit, you need to have
-various other tools and libraries installed on your
-system. Dependencies of GTK have their own build systems, so
-you will need to refer to their own installation instructions.
+Before you can compile GTK, you need to have various other tools and
+libraries installed on your system. Dependencies of GTK have their own
+build systems, so you will need to refer to their own installation
+instructions.
 
 A particular important tool used by GTK to find its dependencies
 is `pkg-config`.
@@ -158,8 +156,8 @@ Other libraries are maintained separately.
   the development environment for these libraries that your
   operating system vendor provides.
 - The [fontconfig](https://www.freedesktop.org/wiki/Software/fontconfig/)
-  library provides Pango with a standard way of locating
-  fonts and matching them against font names.
+  library provides Pango with a standard way of locating fonts and matching
+  them against font names.
 - [Cairo](https://www.cairographics.org) is a graphics library that
   supports vector graphics and image compositing. Both Pango and GTK
   use Cairo for drawing. Note that we also need the auxiliary cairo-gobject
@@ -222,13 +220,12 @@ meson configure builddir
 
 ### `x11-backend`, `win32-backend`, `broadway-backend`, `wayland-backend` and `macos-backend`
 
-Enable specific backends for GDK.  If none of these options
-are given, the Wayland backend will be enabled by default,
-if the platform is Linux; the X11 backend will also be enabled
-by default, unless the platform is Windows, in which case the
-default is win32, or the platform is macOS, in which case the
-default is macOS. If any backend is explicitly enabled or disabled,
-no other platform will be enabled automatically.
+Enable specific backends for GDK.  If none of these options are given, the
+Wayland backend will be enabled by default, if the platform is Linux; the
+X11 backend will also be enabled by default, unless the platform is Windows,
+in which case the default is win32, or the platform is macOS, in which case
+the default is macOS. If any backend is explicitly enabled or disabled, no
+other platform will be enabled automatically.
 
 ### `vulkan`
 
@@ -236,7 +233,7 @@ By default, GTK will try to build with support for the Vulkan graphics
 API in addition to cairo and OpenGL. This option can be used to explicitly
 control whether Vulkan should be used.
 
-### `media-gstreamer` and `media-ffmpeg`
+### `media-gstreamer`
 
 By default, GTK will try to build the gstreamer backend for
 media playback support. These options can be used to explicitly

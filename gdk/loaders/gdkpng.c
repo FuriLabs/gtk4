@@ -304,7 +304,7 @@ gdk_load_png (GBytes  *bytes,
     {
       gint64 end = GDK_PROFILER_CURRENT_TIME;
       if (end - before > 500000)
-        gdk_profiler_add_mark (before, end - before, "png load", NULL);
+        gdk_profiler_add_mark (before, end - before, "Load png", NULL);
     }
 
   return texture;
@@ -335,6 +335,7 @@ gdk_save_png (GdkTexture *texture)
     case GDK_MEMORY_B8G8R8A8_PREMULTIPLIED:
     case GDK_MEMORY_A8R8G8B8_PREMULTIPLIED:
     case GDK_MEMORY_R8G8B8A8_PREMULTIPLIED:
+    case GDK_MEMORY_A8B8G8R8_PREMULTIPLIED:
     case GDK_MEMORY_B8G8R8A8:
     case GDK_MEMORY_A8R8G8B8:
     case GDK_MEMORY_R8G8B8A8:
@@ -346,6 +347,10 @@ gdk_save_png (GdkTexture *texture)
 
     case GDK_MEMORY_R8G8B8:
     case GDK_MEMORY_B8G8R8:
+    case GDK_MEMORY_R8G8B8X8:
+    case GDK_MEMORY_X8R8G8B8:
+    case GDK_MEMORY_B8G8R8X8:
+    case GDK_MEMORY_X8B8G8R8:
       format = GDK_MEMORY_R8G8B8;
       png_format = PNG_COLOR_TYPE_RGB;
       depth = 8;
@@ -413,6 +418,9 @@ gdk_save_png (GdkTexture *texture)
                                    png_free_callback);
   if (!png)
     return NULL;
+
+  /* 2^31-1 is the maximum size for PNG files */
+  png_set_user_limits (png, (1u << 31) - 1, (1u << 31) - 1);
 
   info = png_create_info_struct (png);
   if (!info)

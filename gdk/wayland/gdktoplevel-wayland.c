@@ -34,6 +34,7 @@
 #include "gdktoplevelprivate.h"
 #include "gdkdevice-wayland-private.h"
 
+#include <wayland/presentation-time-client-protocol.h>
 #include <wayland/xdg-shell-unstable-v6-client-protocol.h>
 #include <wayland/xdg-foreign-unstable-v2-client-protocol.h>
 
@@ -121,6 +122,8 @@ struct _GdkWaylandToplevel
   size_t idle_inhibitor_refcount;
 
   struct wl_output *initial_fullscreen_output;
+
+  struct wp_presentation_feedback *feedback;
 
   struct {
     GdkToplevelState unset_flags;
@@ -458,6 +461,49 @@ gdk_wayland_toplevel_compute_size (GdkSurface *surface)
   return FALSE;
 }
 
+static gboolean
+has_per_edge_tiling_info (GdkToplevelState state)
+{
+  return state & (GDK_TOPLEVEL_STATE_TOP_TILED |
+                  GDK_TOPLEVEL_STATE_RIGHT_TILED |
+                  GDK_TOPLEVEL_STATE_BOTTOM_TILED |
+                  GDK_TOPLEVEL_STATE_LEFT_TILED);
+}
+
+static GdkToplevelState
+infer_edge_constraints (GdkToplevelState state)
+{
+  if (state & (GDK_TOPLEVEL_STATE_MAXIMIZED | GDK_TOPLEVEL_STATE_FULLSCREEN))
+    return state;
+
+  if (!(state & GDK_TOPLEVEL_STATE_TILED) || !has_per_edge_tiling_info (state))
+    return state |
+           GDK_TOPLEVEL_STATE_TOP_RESIZABLE |
+           GDK_TOPLEVEL_STATE_RIGHT_RESIZABLE |
+           GDK_TOPLEVEL_STATE_BOTTOM_RESIZABLE |
+           GDK_TOPLEVEL_STATE_LEFT_RESIZABLE;
+
+  if (!(state & GDK_TOPLEVEL_STATE_TOP_TILED))
+    state |= GDK_TOPLEVEL_STATE_TOP_RESIZABLE;
+  if (!(state & GDK_TOPLEVEL_STATE_RIGHT_TILED))
+    state |= GDK_TOPLEVEL_STATE_RIGHT_RESIZABLE;
+  if (!(state & GDK_TOPLEVEL_STATE_BOTTOM_TILED))
+    state |= GDK_TOPLEVEL_STATE_BOTTOM_RESIZABLE;
+  if (!(state & GDK_TOPLEVEL_STATE_LEFT_TILED))
+    state |= GDK_TOPLEVEL_STATE_LEFT_RESIZABLE;
+
+  return state;
+}
+
+static gboolean
+supports_native_edge_constraints (GdkWaylandToplevel*toplevel)
+{
+  struct gtk_surface1 *gtk_surface = toplevel->display_server.gtk_surface;
+  if (!gtk_surface)
+    return FALSE;
+  return gtk_surface1_get_version (gtk_surface) >= GTK_SURFACE1_CONFIGURE_EDGES_SINCE_VERSION;
+}
+
 static void
 gdk_wayland_toplevel_handle_configure (GdkWaylandSurface *wayland_surface)
 {
@@ -474,6 +520,9 @@ gdk_wayland_toplevel_handle_configure (GdkWaylandSurface *wayland_surface)
 
   new_state = wayland_toplevel->pending.state;
   wayland_toplevel->pending.state = 0;
+
+  if (!supports_native_edge_constraints (wayland_toplevel))
+    new_state = infer_edge_constraints (new_state);
 
   is_resizing = wayland_toplevel->pending.is_resizing;
   wayland_toplevel->pending.is_resizing = FALSE;
@@ -830,7 +879,7 @@ gdk_wayland_surface_create_xdg_toplevel (GdkWaylandToplevel *wayland_toplevel)
   maybe_set_gtk_surface_dbus_properties (wayland_toplevel);
   maybe_set_gtk_surface_modal (wayland_toplevel);
 
-  gdk_profiler_add_mark (GDK_PROFILER_CURRENT_TIME, 0, "wayland", "surface commit");
+  gdk_profiler_add_mark (GDK_PROFILER_CURRENT_TIME, 0, "Wayland surface commit", NULL);
   wl_surface_commit (wayland_surface->display_server.wl_surface);
 }
 
@@ -1904,7 +1953,9 @@ gdk_wayland_toplevel_show_window_menu (GdkToplevel *toplevel,
   wl_seat = gdk_wayland_seat_get_wl_seat (seat);
   gdk_event_get_position (event, &x, &y);
 
-  serial = _gdk_wayland_seat_get_implicit_grab_serial (seat, event);
+  serial = _gdk_wayland_seat_get_implicit_grab_serial (seat,
+                                                       gdk_event_get_device (event),
+                                                       gdk_event_get_event_sequence (event));
 
   switch (display_wayland->shell_variant)
     {
@@ -1971,8 +2022,10 @@ gdk_wayland_toplevel_titlebar_gesture (GdkToplevel        *toplevel,
     return FALSE;
 
   seat = gdk_display_get_default_seat (surface->display);
-  wl_seat = gdk_wayland_seat_get_wl_seat (seat);
+  if (!seat)
+    return FALSE;
 
+  wl_seat = gdk_wayland_seat_get_wl_seat (seat);
   serial = _gdk_wayland_seat_get_last_implicit_grab_serial (GDK_WAYLAND_SEAT (seat), NULL);
 
   gtk_surface1_titlebar_gesture (wayland_toplevel->display_server.gtk_surface,
@@ -1986,13 +2039,7 @@ gdk_wayland_toplevel_titlebar_gesture (GdkToplevel        *toplevel,
 static gboolean
 gdk_wayland_toplevel_supports_edge_constraints (GdkToplevel *toplevel)
 {
-  GdkWaylandToplevel *wayland_toplevel = GDK_WAYLAND_TOPLEVEL (toplevel);
-  struct gtk_surface1 *gtk_surface = wayland_toplevel->display_server.gtk_surface;
-
-  if (!gtk_surface)
-    return FALSE;
-
-  return gtk_surface1_get_version (gtk_surface) >= GTK_SURFACE1_CONFIGURE_EDGES_SINCE_VERSION;
+  return TRUE;
 }
 
 static void
@@ -2153,15 +2200,14 @@ gdk_wayland_toplevel_focus (GdkToplevel *toplevel,
   GdkWaylandSurface *wayland_surface = GDK_WAYLAND_SURFACE (toplevel);
   GdkDisplay *display = gdk_surface_get_display (surface);
   GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (display);
+  GdkWaylandSeat *seat =
+    GDK_WAYLAND_SEAT (gdk_display_get_default_seat (display));
   gchar *startup_id = NULL;
 
   startup_id = g_steal_pointer (&display_wayland->startup_notification_id);
 
-  if (display_wayland->xdg_activation)
+  if (seat && display_wayland->xdg_activation)
     {
-      GdkWaylandSeat *seat =
-        GDK_WAYLAND_SEAT (gdk_display_get_default_seat (display));
-
       /* If the focus request does not have a startup ID associated, get a
        * new token to activate the window.
        */
@@ -2664,7 +2710,7 @@ gdk_wayland_toplevel_set_transient_for_exported (GdkToplevel *toplevel,
   g_return_val_if_fail (GDK_IS_WAYLAND_TOPLEVEL (toplevel), FALSE);
   g_return_val_if_fail (GDK_IS_WAYLAND_DISPLAY (display), FALSE);
 
-  if (!display_wayland->xdg_importer)
+  if (!display_wayland->xdg_importer && !display_wayland->xdg_importer_v2)
     {
       g_warning ("Server is missing xdg_foreign support");
       return FALSE;

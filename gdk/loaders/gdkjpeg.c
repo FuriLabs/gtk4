@@ -237,7 +237,7 @@ gdk_load_jpeg (GBytes  *input_bytes,
 
   g_bytes_unref (bytes);
 
-  gdk_profiler_end_mark (before, "jpeg load", NULL);
+  gdk_profiler_end_mark (before, "Load jpeg", NULL);
  
   return texture;
 }
@@ -252,7 +252,7 @@ gdk_save_jpeg (GdkTexture *texture)
   gulong size = 0;
   guchar *input = NULL;
   GdkTextureDownloader downloader;
-  GBytes *texbytes;
+  GBytes *texbytes = NULL;
   const guchar *texdata;
   gsize texstride;
   guchar *row;

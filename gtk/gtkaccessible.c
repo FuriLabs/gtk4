@@ -751,6 +751,41 @@ gtk_accessible_reset_relation (GtkAccessible         *self,
   g_object_unref (context);
 }
 
+/**
+ * gtk_accessible_announce:
+ * @self: a `GtkAccessible`
+ * @message: the string to announce
+ * @priority: the priority of the announcement
+ *
+ * Requests the user's screen reader to announce the given message.
+ *
+ * This kind of notification is useful for messages that
+ * either have only a visual representation or that are not
+ * exposed visually at all, e.g. a notification about a
+ * successful operation.
+ *
+ * Also, by using this API, you can ensure that the message
+ * does not interrupts the user's current screen reader output.
+ *
+ * Since: 4.14
+ */
+void
+gtk_accessible_announce (GtkAccessible                     *self,
+                         const char                        *message,
+                         GtkAccessibleAnnouncementPriority  priority)
+{
+  GtkATContext *context;
+
+  g_return_if_fail (GTK_IS_ACCESSIBLE (self));
+
+  context = gtk_accessible_get_at_context (self);
+  if (context == NULL)
+    return;
+
+  gtk_at_context_announce (context, message, priority);
+  g_object_unref (context);
+}
+
 static const char *role_names[] = {
   [GTK_ACCESSIBLE_ROLE_ALERT] = NC_("accessibility", "alert"),
   [GTK_ACCESSIBLE_ROLE_ALERT_DIALOG] = NC_("accessibility", "alert dialog"),
@@ -832,6 +867,11 @@ static const char *role_names[] = {
   [GTK_ACCESSIBLE_ROLE_WINDOW] = NC_("accessibility", "window"),
   [GTK_ACCESSIBLE_ROLE_TOGGLE_BUTTON] = NC_("accessibility", "toggle button"),
   [GTK_ACCESSIBLE_ROLE_APPLICATION] = NC_("accessibility", "application"),
+  [GTK_ACCESSIBLE_ROLE_PARAGRAPH] = NC_("accessibility", "paragraph"),
+  [GTK_ACCESSIBLE_ROLE_BLOCK_QUOTE] = NC_("accessibility", "block quote"),
+  [GTK_ACCESSIBLE_ROLE_ARTICLE] = NC_("accessibility", "article"),
+  [GTK_ACCESSIBLE_ROLE_COMMENT] = NC_("accessibility", "comment"),
+  [GTK_ACCESSIBLE_ROLE_TERMINAL] = NC_("accessibility", "terminal"),
 };
 
 /*< private >
@@ -885,6 +925,7 @@ static struct {
   { GTK_ACCESSIBLE_ROLE_RANGE, GTK_ACCESSIBLE_ROLE_SLIDER },
   { GTK_ACCESSIBLE_ROLE_RANGE, GTK_ACCESSIBLE_ROLE_SPIN_BUTTON },
   { GTK_ACCESSIBLE_ROLE_SECTION, GTK_ACCESSIBLE_ROLE_ALERT },
+  { GTK_ACCESSIBLE_ROLE_SECTION, GTK_ACCESSIBLE_ROLE_BLOCK_QUOTE },
   { GTK_ACCESSIBLE_ROLE_SECTION, GTK_ACCESSIBLE_ROLE_CAPTION },
   { GTK_ACCESSIBLE_ROLE_SECTION, GTK_ACCESSIBLE_ROLE_CELL },
   { GTK_ACCESSIBLE_ROLE_SECTION, GTK_ACCESSIBLE_ROLE_GROUP },
@@ -896,6 +937,7 @@ static struct {
   { GTK_ACCESSIBLE_ROLE_SECTION, GTK_ACCESSIBLE_ROLE_MARQUEE },
   { GTK_ACCESSIBLE_ROLE_SECTION, GTK_ACCESSIBLE_ROLE_MATH },
   { GTK_ACCESSIBLE_ROLE_SECTION, GTK_ACCESSIBLE_ROLE_NOTE },
+  { GTK_ACCESSIBLE_ROLE_SECTION, GTK_ACCESSIBLE_ROLE_PARAGRAPH },
   { GTK_ACCESSIBLE_ROLE_SECTION, GTK_ACCESSIBLE_ROLE_STATUS },
   { GTK_ACCESSIBLE_ROLE_SECTION, GTK_ACCESSIBLE_ROLE_TABLE },
   { GTK_ACCESSIBLE_ROLE_SECTION, GTK_ACCESSIBLE_ROLE_TAB_PANEL },
@@ -946,6 +988,9 @@ static struct {
   { GTK_ACCESSIBLE_ROLE_ALERT, GTK_ACCESSIBLE_ROLE_ALERT_DIALOG },
   { GTK_ACCESSIBLE_ROLE_STATUS, GTK_ACCESSIBLE_ROLE_TIMER },
   { GTK_ACCESSIBLE_ROLE_DIALOG, GTK_ACCESSIBLE_ROLE_ALERT_DIALOG },
+  { GTK_ACCESSIBLE_ROLE_DOCUMENT, GTK_ACCESSIBLE_ROLE_ARTICLE },
+  { GTK_ACCESSIBLE_ROLE_ARTICLE, GTK_ACCESSIBLE_ROLE_COMMENT },
+  { GTK_ACCESSIBLE_ROLE_TERMINAL, GTK_ACCESSIBLE_ROLE_WIDGET },
 };
 
 gboolean
@@ -1042,6 +1087,7 @@ gtk_accessible_platform_changed (GtkAccessible               *self,
 
       if (parent != NULL)
         {
+          g_clear_object (&context);
           context = gtk_accessible_get_at_context (parent);
           g_object_unref (parent);
         }
@@ -1140,6 +1186,96 @@ gtk_accessible_get_bounds (GtkAccessible *self,
 
   return GTK_ACCESSIBLE_GET_IFACE (self)->get_bounds (self, x, y, width, height);
 }
+
+struct _GtkAccessibleList
+{
+  GList *objects;
+};
+
+/**
+ * gtk_accessible_list_new_from_list:
+ * @list: (element-type GtkAccessible): a reference to a `GList` containing a list of accessible values
+ *
+ * Allocates a new `GtkAccessibleList`, doing a shallow copy of the
+ * passed list of `GtkAccessible` instances.
+ *
+ * Returns: (transfer full): the list of accessible instances
+ *
+ * Since: 4.14
+ */
+GtkAccessibleList *
+gtk_accessible_list_new_from_list (GList *list)
+{
+  GtkAccessibleList *accessible_list = g_new (GtkAccessibleList, 1);
+
+  accessible_list->objects = g_list_copy (list);
+
+  return accessible_list;
+}
+
+/**
+ * gtk_accessible_list_new_from_array:
+ * @accessibles: (array length=n_accessibles): array of GtkAccessible
+ * @n_accessibles: length of @accessibles array
+ *
+ * Allocates a new list of accessible instances.
+ *
+ * Returns: (transfer full): the newly created list of accessible instances
+ *
+ * Since: 4.14
+ */
+GtkAccessibleList *
+gtk_accessible_list_new_from_array (GtkAccessible **accessibles,
+                                    gsize           n_accessibles)
+{
+  GtkAccessibleList *accessible_list;
+  GList *list = NULL;
+
+  g_return_val_if_fail (accessibles == NULL || n_accessibles == 0, NULL);
+
+  accessible_list = g_new (GtkAccessibleList, 1);
+
+  for (gsize i = 0; i < n_accessibles; i++)
+    {
+      list = g_list_prepend (list, accessibles[i]);
+    }
+
+  accessible_list->objects = g_list_reverse (list);
+
+  return accessible_list;
+}
+
+static void
+gtk_accessible_list_free (GtkAccessibleList *accessible_list)
+{
+  g_free (accessible_list->objects);
+  g_free (accessible_list);
+}
+
+static GtkAccessibleList *
+gtk_accessible_list_copy (GtkAccessibleList *accessible_list)
+{
+  return gtk_accessible_list_new_from_list (accessible_list->objects);
+}
+
+/**
+ * gtk_accessible_list_get_objects:
+ *
+ * Gets the list of objects this boxed type holds
+ *
+ * Returns: (transfer container) (element-type GtkAccessible): a shallow copy of the objects
+ *
+ * Since: 4.14
+ */
+GList *
+gtk_accessible_list_get_objects (GtkAccessibleList *accessible_list)
+{
+  return g_list_copy (accessible_list->objects);
+}
+
+G_DEFINE_BOXED_TYPE (GtkAccessibleList, gtk_accessible_list,
+                     gtk_accessible_list_copy,
+                     gtk_accessible_list_free)
 
 /*< private >
  * gtk_accessible_should_present:

@@ -52,6 +52,11 @@
 
 #include <gst/gl/gstglfuncs.h>
 
+#ifdef HAVE_GSTREAMER_DRM
+#include <gdk/gdkdmabuffourccprivate.h>
+#include <gst/allocators/gstdmabuf.h>
+#endif
+
 enum {
   PROP_0,
   PROP_PAINTABLE,
@@ -71,7 +76,11 @@ static GstStaticPadTemplate gtk_gst_sink_template =
 GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS ("video/x-raw(" GST_CAPS_FEATURE_MEMORY_GL_MEMORY "), "
+    GST_STATIC_CAPS (
+#ifdef HAVE_GSTREAMER_DRM
+                     GST_VIDEO_DMA_DRM_CAPS_MAKE "; "
+#endif
+                     "video/x-raw(" GST_CAPS_FEATURE_MEMORY_GL_MEMORY "), "
                      "format = (string) RGBA, "
                      "width = " GST_VIDEO_SIZE_RANGE ", "
                      "height = " GST_VIDEO_SIZE_RANGE ", "
@@ -116,6 +125,42 @@ gtk_gst_sink_get_times (GstBaseSink  *bsink,
     }
 }
 
+#ifdef HAVE_GSTREAMER_DRM
+static void
+add_drm_formats_and_modifiers (GstCaps          *caps,
+                               GdkDmabufFormats *dmabuf_formats)
+{
+  GValue dmabuf_list = G_VALUE_INIT;
+  size_t i;
+
+  g_value_init (&dmabuf_list, GST_TYPE_LIST);
+
+  for (i = 0; i < gdk_dmabuf_formats_get_n_formats (dmabuf_formats); i++)
+    {
+      GValue value = G_VALUE_INIT;
+      gchar *drm_format_string;
+      guint32 fmt;
+      guint64 mod;
+
+      gdk_dmabuf_formats_get_format (dmabuf_formats, i, &fmt, &mod);
+
+      if (mod == DRM_FORMAT_MOD_INVALID)
+        continue;
+
+      drm_format_string = gst_video_dma_drm_fourcc_to_string (fmt, mod);
+      if (!drm_format_string)
+        continue;
+
+      g_value_init (&value, G_TYPE_STRING);
+      g_value_take_string (&value, drm_format_string);
+      gst_value_list_append_and_take_value (&dmabuf_list, &value);
+    }
+
+    gst_structure_take_value (gst_caps_get_structure (caps, 0), "drm-format",
+        &dmabuf_list);
+}
+#endif
+
 static GstCaps *
 gtk_gst_sink_get_caps (GstBaseSink *bsink,
                        GstCaps     *filter)
@@ -127,6 +172,15 @@ gtk_gst_sink_get_caps (GstBaseSink *bsink,
   if (self->gst_context)
     {
       tmp = gst_pad_get_pad_template_caps (GST_BASE_SINK_PAD (bsink));
+#ifdef HAVE_GSTREAMER_DRM
+      {
+        GdkDisplay *display = gdk_gl_context_get_display (self->gdk_context);
+        GdkDmabufFormats *formats = gdk_display_get_dmabuf_formats (display);
+
+        tmp = gst_caps_make_writable (tmp);
+        add_drm_formats_and_modifiers (tmp, formats);
+      }
+#endif
     }
   else
     {
@@ -159,8 +213,24 @@ gtk_gst_sink_set_caps (GstBaseSink *bsink,
 
   GST_DEBUG_OBJECT (self, "set caps with %" GST_PTR_FORMAT, caps);
 
-  if (!gst_video_info_from_caps (&self->v_info, caps))
-    return FALSE;
+#ifdef HAVE_GSTREAMER_DRM
+  if (gst_video_is_dma_drm_caps (caps)) {
+    if (!gst_video_info_dma_drm_from_caps (&self->drm_info, caps))
+      return FALSE;
+
+    if (!gst_video_info_dma_drm_to_video_info (&self->drm_info, &self->v_info))
+      return FALSE;
+
+    GST_INFO_OBJECT (self, "using DMABuf, passthrough possible");
+  } else {
+    gst_video_info_dma_drm_init (&self->drm_info);
+#endif
+
+    if (!gst_video_info_from_caps (&self->v_info, caps))
+      return FALSE;
+#ifdef HAVE_GSTREAMER_DRM
+  }
+#endif
 
   return TRUE;
 }
@@ -201,6 +271,14 @@ gtk_gst_sink_propose_allocation (GstBaseSink *bsink,
       GST_DEBUG_OBJECT (bsink, "no caps specified");
       return FALSE;
     }
+
+#ifdef HAVE_GSTREAMER_DRM
+  if (gst_caps_features_contains (gst_caps_get_features (caps, 0), GST_CAPS_FEATURE_MEMORY_DMABUF))
+    {
+      gst_query_add_allocation_meta (query, GST_VIDEO_META_API_TYPE, 0);
+      return TRUE;
+    }
+#endif
 
   if (!gst_caps_features_contains (gst_caps_get_features (caps, 0), GST_CAPS_FEATURE_MEMORY_GL_MEMORY))
     return FALSE;
@@ -246,26 +324,30 @@ gtk_gst_sink_propose_allocation (GstBaseSink *bsink,
 }
 
 static GdkMemoryFormat
-gtk_gst_memory_format_from_video (GstVideoFormat format)
+gtk_gst_memory_format_from_video_info (GstVideoInfo *info)
 {
-  switch ((guint) format)
+#define IS_PREMULTIPLIED(_info) (GST_VIDEO_INFO_FLAGS (_info) & GST_VIDEO_FLAG_PREMULTIPLIED_ALPHA)
+  switch ((guint) GST_VIDEO_INFO_FORMAT (info))
   {
     case GST_VIDEO_FORMAT_BGRA:
-      return GDK_MEMORY_B8G8R8A8;
+      return IS_PREMULTIPLIED (info) ? GDK_MEMORY_B8G8R8A8_PREMULTIPLIED : GDK_MEMORY_B8G8R8A8;
     case GST_VIDEO_FORMAT_ARGB:
-      return GDK_MEMORY_A8R8G8B8;
+      return IS_PREMULTIPLIED (info) ? GDK_MEMORY_A8R8G8B8_PREMULTIPLIED : GDK_MEMORY_A8R8G8B8;
     case GST_VIDEO_FORMAT_RGBA:
-      return GDK_MEMORY_R8G8B8A8;
+      return IS_PREMULTIPLIED (info) ? GDK_MEMORY_R8G8B8A8_PREMULTIPLIED : GDK_MEMORY_R8G8B8A8;
     case GST_VIDEO_FORMAT_ABGR:
-      return GDK_MEMORY_A8B8G8R8;
+      return IS_PREMULTIPLIED (info) ? GDK_MEMORY_A8B8G8R8_PREMULTIPLIED : GDK_MEMORY_A8B8G8R8;
     case GST_VIDEO_FORMAT_RGB:
       return GDK_MEMORY_R8G8B8;
     case GST_VIDEO_FORMAT_BGR:
       return GDK_MEMORY_B8G8R8;
     default:
-      g_assert_not_reached ();
-      return GDK_MEMORY_A8R8G8B8;
+      if (GST_VIDEO_INFO_HAS_ALPHA (info))
+        return IS_PREMULTIPLIED (info) ? GDK_MEMORY_R8G8B8A8_PREMULTIPLIED : GDK_MEMORY_R8G8B8A8;
+      else
+        return GDK_MEMORY_R8G8B8;
   }
+#undef IS_PREMULTIPLIED
 }
 
 static void
@@ -276,13 +358,78 @@ video_frame_free (GstVideoFrame *frame)
 }
 
 static GdkTexture *
-gtk_gst_sink_texture_from_buffer (GtkGstSink *self,
-                                  GstBuffer  *buffer,
-                                  double     *pixel_aspect_ratio)
+gtk_gst_sink_texture_from_buffer (GtkGstSink      *self,
+                                  GstBuffer       *buffer,
+                                  double          *pixel_aspect_ratio,
+                                  graphene_rect_t *viewport)
 {
   GstVideoFrame *frame = g_new (GstVideoFrame, 1);
   GdkTexture *texture;
 
+  viewport->origin.x = 0;
+  viewport->origin.y = 0;
+  viewport->size.width = GST_VIDEO_INFO_WIDTH (&self->v_info);
+  viewport->size.height = GST_VIDEO_INFO_HEIGHT (&self->v_info);
+
+#ifdef HAVE_GSTREAMER_DRM
+  if (gst_is_dmabuf_memory (gst_buffer_peek_memory (buffer, 0)))
+    {
+      g_autoptr (GdkDmabufTextureBuilder) builder = NULL;
+      const GstVideoMeta *vmeta = gst_buffer_get_video_meta (buffer);
+      GError *error = NULL;
+      int i;
+
+      /* We don't map dmabufs */
+      g_clear_pointer (&frame, g_free);
+
+      g_return_val_if_fail (vmeta, NULL);
+      g_return_val_if_fail (self->gdk_context, NULL);
+      g_return_val_if_fail (self->drm_info.drm_fourcc != DRM_FORMAT_INVALID, NULL);
+
+      builder = gdk_dmabuf_texture_builder_new ();
+      gdk_dmabuf_texture_builder_set_display (builder, gdk_gl_context_get_display (self->gdk_context));
+      gdk_dmabuf_texture_builder_set_fourcc (builder, self->drm_info.drm_fourcc);
+      gdk_dmabuf_texture_builder_set_modifier (builder, self->drm_info.drm_modifier);
+      gdk_dmabuf_texture_builder_set_width (builder, vmeta->width);
+      gdk_dmabuf_texture_builder_set_height (builder, vmeta->height);
+      gdk_dmabuf_texture_builder_set_n_planes (builder, vmeta->n_planes);
+
+      for (i = 0; i < vmeta->n_planes; i++)
+        {
+          GstMemory *mem;
+          guint mem_idx, length;
+          gsize skip;
+
+          if (!gst_buffer_find_memory (buffer,
+                                       vmeta->offset[i],
+                                       1,
+                                       &mem_idx,
+                                       &length,
+                                       &skip))
+            {
+              GST_ERROR_OBJECT (self, "Buffer data is bogus");
+              return NULL;
+            }
+
+          mem = gst_buffer_peek_memory (buffer, mem_idx);
+
+          gdk_dmabuf_texture_builder_set_fd (builder, i, gst_dmabuf_memory_get_fd (mem));
+          gdk_dmabuf_texture_builder_set_offset (builder, i, mem->offset + skip);
+          gdk_dmabuf_texture_builder_set_stride (builder, i, vmeta->stride[i]);
+        }
+
+      texture = gdk_dmabuf_texture_builder_build (builder,
+                                                  (GDestroyNotify) gst_buffer_unref,
+                                                  gst_buffer_ref (buffer),
+                                                  &error);
+      if (!texture)
+        GST_ERROR_OBJECT (self, "Failed to create dmabuf texture: %s", error->message);
+
+      *pixel_aspect_ratio = ((double) GST_VIDEO_INFO_PAR_N (&self->v_info) /
+                             (double) GST_VIDEO_INFO_PAR_D (&self->v_info));
+    }
+  else
+#endif
   if (self->gdk_context &&
       gst_video_frame_map (frame, &self->v_info, buffer, GST_MAP_READ | GST_MAP_GL))
     {
@@ -301,6 +448,7 @@ gtk_gst_sink_texture_from_buffer (GtkGstSink *self,
        */
       builder = gdk_gl_texture_builder_new ();
       gdk_gl_texture_builder_set_context (builder, self->gdk_context);
+      gdk_gl_texture_builder_set_format (builder, gtk_gst_memory_format_from_video_info (&frame->info));
       gdk_gl_texture_builder_set_id (builder, *(guint *) frame->data[0]);
       gdk_gl_texture_builder_set_width (builder, frame->info.width);
       gdk_gl_texture_builder_set_height (builder, frame->info.height);
@@ -324,7 +472,7 @@ gtk_gst_sink_texture_from_buffer (GtkGstSink *self,
                                           frame);
       texture = gdk_memory_texture_new (frame->info.width,
                                         frame->info.height,
-                                        gtk_gst_memory_format_from_video (GST_VIDEO_FRAME_FORMAT (frame)),
+                                        gtk_gst_memory_format_from_video_info (&frame->info),
                                         bytes,
                                         frame->info.stride[0]);
       g_bytes_unref (bytes);
@@ -348,6 +496,7 @@ gtk_gst_sink_show_frame (GstVideoSink *vsink,
   GtkGstSink *self;
   GdkTexture *texture;
   double pixel_aspect_ratio;
+  graphene_rect_t viewport;
 
   GST_TRACE ("rendering buffer:%p", buf);
 
@@ -355,10 +504,10 @@ gtk_gst_sink_show_frame (GstVideoSink *vsink,
 
   GST_OBJECT_LOCK (self);
 
-  texture = gtk_gst_sink_texture_from_buffer (self, buf, &pixel_aspect_ratio);
+  texture = gtk_gst_sink_texture_from_buffer (self, buf, &pixel_aspect_ratio, &viewport);
   if (texture)
     {
-      gtk_gst_paintable_queue_set_texture (self->paintable, texture, pixel_aspect_ratio);
+      gtk_gst_paintable_queue_set_texture (self->paintable, texture, pixel_aspect_ratio, &viewport);
       g_object_unref (texture);
     }
 

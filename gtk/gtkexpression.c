@@ -89,7 +89,7 @@
  * ## GtkExpression in GObject properties
  *
  * In order to use a `GtkExpression` as a `GObject` property, you must use the
- * [id@gtk_param_spec_expression] when creating a `GParamSpec` to install in the
+ * [func@Gtk.param_spec_expression] when creating a `GParamSpec` to install in the
  * `GObject` class being defined; for instance:
  *
  * ```c
@@ -103,8 +103,8 @@
  * ```
  *
  * When implementing the `GObjectClass.set_property` and `GObjectClass.get_property`
- * virtual functions, you must use [id@gtk_value_get_expression], to retrieve the
- * stored `GtkExpression` from the `GValue` container, and [id@gtk_value_set_expression],
+ * virtual functions, you must use [func@Gtk.value_get_expression], to retrieve the
+ * stored `GtkExpression` from the `GValue` container, and [func@Gtk.value_set_expression],
  * to store the `GtkExpression` into the `GValue`; for instance:
  *
  * ```c
@@ -127,7 +127,7 @@
  *
  * To create a property expression, use the `<lookup>` element. It can have a `type`
  * attribute to specify the object type, and a `name` attribute to specify the property
- * to look up. The content of `<lookup>` can either be an element specfiying the expression
+ * to look up. The content of `<lookup>` can either be an element specifying the expression
  * to use the object, or a string that specifies the name of the object to use.
  *
  * Example:
@@ -135,6 +135,11 @@
  * ```xml
  *   <lookup name='search'>string_filter</lookup>
  * ```
+ *
+ * Since the `<lookup>` element creates an expression and its element content can
+ * itself be an expression, this means that `<lookup>` tags can also be nested.
+ * This is a common idiom when dealing with `GtkListItem`s. See
+ * [class@Gtk.BuilderListItemFactory] for an example of this technique.
  *
  * To create a constant expression, use the `<constant>` element. If the type attribute
  * is specified, the element content is interpreted as a value of that type. Otherwise,
@@ -145,9 +150,10 @@
  *   <constant type='gchararray'>Hello, world</constant>
  * ```
  *
- * To create a closure expression, use the `<closure>` element. The `type` and `function`
- * attributes specify what function to use for the closure, the content of the element
- * contains the expressions for the parameters. For instance:
+ * To create a closure expression, use the `<closure>` element. The `function`
+ * attribute specifies what function to use for the closure, and the `type`
+ * attribute specifies its return type. The content of the element contains the
+ * expressions for the parameters. For instance:
  *
  * ```xml
  *   <closure type='gchararray' function='combine_args_somehow'>
@@ -155,8 +161,63 @@
  *     <lookup type='GFile' name='size'>myfile</lookup>
  *   </closure>
  * ```
+ *
+ * To create a property binding, use the `<binding>` element in place of where a
+ * `<property>` tag would ordinarily be used. The `name` and `object` attributes are
+ * supported. The `name` attribute is required, and pertains to the applicable property
+ * name. The `object` attribute is optional. If provided, it will use the specified object
+ * as the `this` object when the expression is evaluated. Here is an example in which the
+ * `label` property of a `GtkLabel` is bound to the `string` property of another arbitrary
+ * object:
+ *
+ * ```xml
+ *   <object class='GtkLabel'>
+ *     <binding name='label'>
+ *       <lookup name='string'>some_other_object</lookup>
+ *     </binding>
+ *   </object>
+ * ```
  */
 
+typedef struct _WeakRefGuard WeakRefGuard;
+
+struct _WeakRefGuard
+{
+  gatomicrefcount ref_count;
+  gpointer data;
+};
+
+static WeakRefGuard *
+weak_ref_guard_new (gpointer data)
+{
+  WeakRefGuard *guard;
+
+  guard = g_new0 (WeakRefGuard, 1);
+  g_atomic_ref_count_init (&guard->ref_count);
+  guard->data = data;
+
+  return guard;
+}
+
+static WeakRefGuard *
+weak_ref_guard_ref (WeakRefGuard *guard)
+{
+  g_atomic_ref_count_inc (&guard->ref_count);
+  return guard;
+}
+
+static void
+weak_ref_guard_unref (WeakRefGuard *guard)
+{
+  /* Always clear data pointer after first unref so that it
+   * cannot be accessed unless both the expression/watch is
+   * valid _and_ the weak ref is still active.
+   */
+  guard->data = NULL;
+
+  if (g_atomic_ref_count_dec (&guard->ref_count))
+    g_free (guard);
+}
 
 typedef struct _GtkExpressionClass GtkExpressionClass;
 typedef struct _GtkExpressionSubWatch GtkExpressionSubWatch;
@@ -225,7 +286,8 @@ struct _GtkExpressionTypeInfo
 struct _GtkExpressionWatch
 {
   GtkExpression         *expression;
-  GObject               *this;
+  WeakRefGuard          *guard;
+  GWeakRef               this_wr;
   GDestroyNotify         user_destroy;
   GtkExpressionNotify    notify;
   gpointer               user_data;
@@ -898,7 +960,8 @@ struct _GtkObjectExpression
 {
   GtkExpression parent;
 
-  GObject *object;
+  WeakRefGuard *guard;
+  GWeakRef object_wr;
   GSList *watches;
 };
 
@@ -912,26 +975,50 @@ static void
 gtk_object_expression_weak_ref_cb (gpointer  data,
                                    GObject  *object)
 {
-  GtkObjectExpression *self = (GtkObjectExpression *) data;
-  GSList *l;
+  WeakRefGuard *guard = data;
+  GtkObjectExpression *self = guard->data;
 
-  self->object = NULL;
-
-  for (l = self->watches; l; l = l->next)
+  if (self != NULL)
     {
-      GtkObjectExpressionWatch *owatch = l->data;
+      GSList *iter = self->watches;
 
-      owatch->notify (owatch->user_data);
+      while (iter)
+        {
+          GtkObjectExpressionWatch *owatch = iter->data;
+          iter = iter->next;
+          owatch->notify (owatch->user_data);
+        }
     }
+
+  weak_ref_guard_unref (guard);
 }
 
 static void
 gtk_object_expression_finalize (GtkExpression *expr)
 {
   GtkObjectExpression *self = (GtkObjectExpression *) expr;
+  GObject *object;
 
-  if (self->object)
-    g_object_weak_unref (self->object, gtk_object_expression_weak_ref_cb, self);
+  object = g_weak_ref_get (&self->object_wr);
+
+  if (object != NULL)
+    {
+      g_object_weak_unref (object, gtk_object_expression_weak_ref_cb, self->guard);
+      weak_ref_guard_unref (self->guard);
+      g_object_unref (object);
+    }
+  else
+    {
+      /* @object has been disposed. Which means that either our
+       * gtk_object_expression_weak_ref_cb has been called or we
+       * can expect it to be called shortly after this. No need to
+       * call g_object_weak_unref() or unref the handle which will
+       * be unref'ed by that callback.
+       */
+    }
+
+  g_clear_pointer (&self->guard, weak_ref_guard_unref);
+  g_weak_ref_clear (&self->object_wr);
 
   g_assert (self->watches == NULL);
 
@@ -950,12 +1037,14 @@ gtk_object_expression_evaluate (GtkExpression *expr,
                                 GValue        *value)
 {
   GtkObjectExpression *self = (GtkObjectExpression *) expr;
+  GObject *object;
 
-  if (self->object == NULL)
+  object = g_weak_ref_get (&self->object_wr);
+  if (object == NULL)
     return FALSE;
 
   g_value_init (value, gtk_expression_get_value_type (expr));
-  g_value_set_object (value, self->object);
+  g_value_take_object (value, object);
   return TRUE;
 }
 
@@ -1028,10 +1117,14 @@ gtk_object_expression_new (GObject *object)
   g_return_val_if_fail (G_IS_OBJECT (object), NULL);
 
   result = gtk_expression_alloc (GTK_TYPE_OBJECT_EXPRESSION, G_OBJECT_TYPE (object));
-  self = (GtkObjectExpression *) result;
 
-  self->object = object;
-  g_object_weak_ref (object, gtk_object_expression_weak_ref_cb, self);
+  self = (GtkObjectExpression *) result;
+  g_weak_ref_init (&self->object_wr, object);
+  self->guard = weak_ref_guard_new (self);
+
+  g_object_weak_ref (object,
+                     gtk_object_expression_weak_ref_cb,
+                     weak_ref_guard_ref (self->guard));
 
   return result;
 }
@@ -1048,10 +1141,17 @@ GObject *
 gtk_object_expression_get_object (GtkExpression *expression)
 {
   GtkObjectExpression *self = (GtkObjectExpression *) expression;
+  GObject *object;
 
   g_return_val_if_fail (G_TYPE_CHECK_INSTANCE_TYPE (expression, GTK_TYPE_OBJECT_EXPRESSION), NULL);
 
-  return self->object;
+  object = g_weak_ref_get (&self->object_wr);
+
+  /* Return a borrowed instance */
+  if (object != NULL)
+    g_object_unref (object);
+
+  return object;
 }
 
 /* }}} */
@@ -1847,12 +1947,19 @@ static void
 gtk_expression_watch_this_cb (gpointer data,
                               GObject *this)
 {
-  GtkExpressionWatch *watch = data;
+  WeakRefGuard *guard = data;
+  GtkExpressionWatch *watch = guard->data;
 
-  watch->this = NULL;
+  if (watch != NULL)
+    {
+      g_weak_ref_set (&watch->this_wr, NULL);
 
-  watch->notify (watch->user_data);
-  gtk_expression_watch_unwatch (watch);
+      watch->notify (watch->user_data);
+
+      gtk_expression_watch_unwatch (watch);
+    }
+
+  weak_ref_guard_unref (guard);
 }
 
 static void
@@ -1906,9 +2013,12 @@ gtk_expression_watch (GtkExpression       *self,
   watch = g_atomic_rc_box_alloc0 (sizeof (GtkExpressionWatch) + gtk_expression_watch_size (self));
 
   watch->expression = gtk_expression_ref (self);
-  watch->this = this_;
+  watch->guard = weak_ref_guard_new (watch);
+  g_weak_ref_init (&watch->this_wr, this_);
   if (this_)
-    g_object_weak_ref (this_, gtk_expression_watch_this_cb, watch);
+    g_object_weak_ref (this_,
+                       gtk_expression_watch_this_cb,
+                       weak_ref_guard_ref (watch->guard));
   watch->notify = notify;
   watch->user_data = user_data;
   watch->user_destroy = user_destroy;
@@ -1942,6 +2052,10 @@ gtk_expression_watch_finalize (gpointer data)
   GtkExpressionWatch *watch G_GNUC_UNUSED = data;
 
   g_assert (!gtk_expression_watch_is_watching (data));
+
+  weak_ref_guard_unref (watch->guard);
+
+  g_weak_ref_clear (&watch->this_wr);
 }
 
 /**
@@ -1971,16 +2085,26 @@ gtk_expression_watch_unref (GtkExpressionWatch *watch)
 void
 gtk_expression_watch_unwatch (GtkExpressionWatch *watch)
 {
+  GObject *this;
+
   if (!gtk_expression_watch_is_watching (watch))
     return;
 
   gtk_expression_subwatch_finish (watch->expression, (GtkExpressionSubWatch *) watch->sub);
 
-  if (watch->this)
-    g_object_weak_unref (watch->this, gtk_expression_watch_this_cb, watch);
+  this = g_weak_ref_get (&watch->this_wr);
+
+  if (this)
+    {
+      g_object_weak_unref (this, gtk_expression_watch_this_cb, watch->guard);
+      weak_ref_guard_unref (watch->guard);
+      g_weak_ref_set (&watch->this_wr, NULL);
+    }
 
   if (watch->user_destroy)
     watch->user_destroy (watch->user_data);
+
+  g_clear_object (&this);
 
   g_clear_pointer (&watch->expression, gtk_expression_unref);
 
@@ -2004,17 +2128,24 @@ gboolean
 gtk_expression_watch_evaluate (GtkExpressionWatch *watch,
                                GValue             *value)
 {
+  GObject *this;
+  gboolean ret;
+
   g_return_val_if_fail (watch != NULL, FALSE);
 
   if (!gtk_expression_watch_is_watching (watch))
     return FALSE;
 
-  return gtk_expression_evaluate (watch->expression, watch->this, value);
+  this = g_weak_ref_get (&watch->this_wr);
+  ret = gtk_expression_evaluate (watch->expression, this, value);
+  g_clear_object (&this);
+
+  return ret;
 }
 
 typedef struct {
   GtkExpressionWatch *watch;
-  GObject *target;
+  GWeakRef target_wr;
   GParamSpec *pspec;
 } GtkExpressionBind;
 
@@ -2024,34 +2155,39 @@ invalidate_binds (gpointer unused,
 {
   GSList *l, *binds;
 
-  binds = g_object_get_data (object, "gtk-expression-binds");
-  for (l = binds; l; l = l->next)
+  l = binds = g_object_get_data (object, "gtk-expression-binds");
+  while (l)
     {
       GtkExpressionBind *bind = l->data;
+
+      l = l->next;
 
       /* This guarantees we neither try to update bindings
        * (which would wreck havoc because the object is
        * dispose()ing itself) nor try to destroy bindings
        * anymore, so destruction can be done in free_binds().
        */
-      bind->target = NULL;
+      g_weak_ref_set (&bind->target_wr, NULL);
     }
 }
 
 static void
 free_binds (gpointer data)
 {
-  GSList *l;
+  GSList *l = data;
 
-  for (l = data; l; l = l->next)
+  while (l)
     {
       GtkExpressionBind *bind = l->data;
 
-      g_assert (bind->target == NULL);
+      l = l->next;
+
       if (bind->watch)
         gtk_expression_watch_unwatch (bind->watch);
+      g_weak_ref_clear (&bind->target_wr);
       g_free (bind);
     }
+
   g_slist_free (data);
 }
 
@@ -2059,17 +2195,21 @@ static void
 gtk_expression_bind_free (gpointer data)
 {
   GtkExpressionBind *bind = data;
+  GObject *target = g_weak_ref_get (&bind->target_wr);
 
-  if (bind->target)
+  g_weak_ref_set (&bind->target_wr, NULL);
+
+  if (target)
     {
       GSList *binds;
-      binds = g_object_steal_data (bind->target, "gtk-expression-binds");
+      binds = g_object_steal_data (target, "gtk-expression-binds");
       binds = g_slist_remove (binds, bind);
       if (binds)
-        g_object_set_data_full (bind->target, "gtk-expression-binds", binds, free_binds);
+        g_object_set_data_full (target, "gtk-expression-binds", binds, free_binds);
       else
-        g_object_weak_unref (bind->target, invalidate_binds, NULL);
+        g_object_weak_unref (target, invalidate_binds, NULL);
 
+      g_object_unref (target);
       g_free (bind);
     }
   else
@@ -2091,14 +2231,19 @@ gtk_expression_bind_notify (gpointer data)
 {
   GValue value = G_VALUE_INIT;
   GtkExpressionBind *bind = data;
+  GObject *target = g_weak_ref_get (&bind->target_wr);
 
-  if (bind->target == NULL)
+  if (target == NULL)
     return;
 
   if (!gtk_expression_watch_evaluate (bind->watch, &value))
-    return;
+    {
+      g_object_unref (target);
+      return;
+    }
 
-  g_object_set_property (bind->target, bind->pspec->name, &value);
+  g_object_set_property (target, bind->pspec->name, &value);
+  g_object_unref (target);
   g_value_unset (&value);
 }
 
@@ -2158,7 +2303,7 @@ gtk_expression_bind (GtkExpression *self,
   binds = g_object_steal_data (target, "gtk-expression-binds");
   if (binds == NULL)
     g_object_weak_ref (target, invalidate_binds, NULL);
-  bind->target = target;
+  g_weak_ref_init (&bind->target_wr, target);
   bind->pspec = pspec;
   bind->watch = gtk_expression_watch (self,
                                       this_,

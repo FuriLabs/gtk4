@@ -2740,6 +2740,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_icon_view_unselect_path@Base 4.0.0
  gtk_icon_view_unset_model_drag_dest@Base 4.0.0
  gtk_icon_view_unset_model_drag_source@Base 4.0.0
+ gtk_im_context_activate_osk@Base 4.14.1
  gtk_im_context_delete_surrounding@Base 4.0.0
  gtk_im_context_filter_key@Base 4.0.0
  gtk_im_context_filter_keypress@Base 4.0.0

@@ -1,3 +1,9 @@
+gtk4 (4.14.2+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Wed, 03 Apr 2024 15:20:17 +0200
+
 gtk4 (4.12.5+ds-6) unstable; urgency=medium
 
   * d/control, d/rules: Reinstate colord integration on 32-bit

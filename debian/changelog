@@ -3,6 +3,8 @@ gtk4 (4.14.2+ds-1) UNRELEASED; urgency=medium
   * New upstream release
   * Update the packaging to no refer to the ffmpeg experimental backend
     which has been removed upstream now
+  * debian/rules:
+    - update for the new convert-emoji syntax
 
   [ Jeremy Bícha ]
   * New upstream release

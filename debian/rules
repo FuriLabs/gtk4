@@ -160,8 +160,9 @@ rebuild-emoji:
 	set -eu; for input in debian/missing-sources/emojibase/packages/data/??/data.raw.json; do \
 		lang="$$(echo "$$input" | sed -ne 's,^.*/\([a-z][a-z]\)/data.raw.json$$,\1,p')"; \
 		output="gtk/emoji/$$lang.data"; \
+		inputen="debian/missing-sources/emojibase/packages/data/en/data.raw.json"; \
 		test -f "$$output" || continue; \
-		debian/convert-emoji "$$input" "$$output"; \
+		debian/convert-emoji "$$inputen" "$$input" "$$output"; \
 	done
 
 override_dh_auto_configure: debian/control

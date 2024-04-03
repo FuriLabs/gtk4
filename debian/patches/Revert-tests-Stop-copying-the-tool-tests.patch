@@ -30,11 +30,10 @@ which we also had to revert dropping (in a separate patch)
  delete mode 100755 testsuite/tools/validate
  create mode 100755 testsuite/tools/validate.in
 
-diff --git a/testsuite/tools/enumerate b/testsuite/tools/enumerate
-deleted file mode 100755
-index 8abd9d6..0000000
---- a/testsuite/tools/enumerate
-+++ /dev/null
+Index: gtk4-4.14.1+ds/testsuite/tools/enumerate
+===================================================================
+--- gtk4-4.14.1+ds.orig/testsuite/tools/enumerate	2024-03-20 16:43:24.270166749 +0100
++++ /dev/null	1970-01-01 00:00:00.000000000 +0000
 @@ -1,37 +0,0 @@
 -#! /bin/bash
 -
@@ -73,11 +72,10 @@ index 8abd9d6..0000000
 -
 -  I=$((I+1))
 -done
-diff --git a/testsuite/tools/enumerate.in b/testsuite/tools/enumerate.in
-new file mode 100755
-index 0000000..8abd9d6
---- /dev/null
-+++ b/testsuite/tools/enumerate.in
+Index: gtk4-4.14.1+ds/testsuite/tools/enumerate.in
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ gtk4-4.14.1+ds/testsuite/tools/enumerate.in	2024-03-20 16:43:24.258167070 +0100
 @@ -0,0 +1,37 @@
 +#! /bin/bash
 +
@@ -116,11 +114,11 @@ index 0000000..8abd9d6
 +
 +  I=$((I+1))
 +done
-diff --git a/testsuite/tools/meson.build b/testsuite/tools/meson.build
-index 239e1b0..e19a819 100644
---- a/testsuite/tools/meson.build
-+++ b/testsuite/tools/meson.build
-@@ -3,8 +3,12 @@ if bash.found()
+Index: gtk4-4.14.1+ds/testsuite/tools/meson.build
+===================================================================
+--- gtk4-4.14.1+ds.orig/testsuite/tools/meson.build	2024-03-20 16:43:24.270166749 +0100
++++ gtk4-4.14.1+ds/testsuite/tools/meson.build	2024-03-20 16:43:24.258167070 +0100
+@@ -3,8 +3,12 @@
    test_env = environment()
  
    foreach t : ['simplify', 'simplify-3to4', 'validate', 'enumerate', 'settings']
@@ -135,11 +133,10 @@ index 239e1b0..e19a819 100644
        workdir: meson.current_build_dir(),
        protocol: 'tap',
        env: [
-diff --git a/testsuite/tools/settings b/testsuite/tools/settings
-deleted file mode 100755
-index 3c5ce69..0000000
---- a/testsuite/tools/settings
-+++ /dev/null
+Index: gtk4-4.14.1+ds/testsuite/tools/settings
+===================================================================
+--- gtk4-4.14.1+ds.orig/testsuite/tools/settings	2024-03-20 16:43:24.270166749 +0100
++++ /dev/null	1970-01-01 00:00:00.000000000 +0000
 @@ -1,20 +0,0 @@
 -#! /bin/bash
 -
@@ -153,7 +150,7 @@ index 3c5ce69..0000000
 -name=gtk-query-settings
 -result=$TEST_RESULT_DIR/$name.out
 -$GTK_QUERY_SETTINGS 2>/dev/null >$result
--EXPECTED=50
+-EXPECTED=51
 -SEEN=$(wc -l $result | cut -f1 -d' ')
 -
 -if [ $SEEN -eq $EXPECTED ]; then
@@ -161,11 +158,10 @@ index 3c5ce69..0000000
 -else
 -  echo "not ok 1 $name. Expected: $EXPECTED. Seen: $SEEN"
 -fi
-diff --git a/testsuite/tools/settings.in b/testsuite/tools/settings.in
-new file mode 100755
-index 0000000..3c5ce69
---- /dev/null
-+++ b/testsuite/tools/settings.in
+Index: gtk4-4.14.1+ds/testsuite/tools/settings.in
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ gtk4-4.14.1+ds/testsuite/tools/settings.in	2024-03-20 16:43:24.258167070 +0100
 @@ -0,0 +1,20 @@
 +#! /bin/bash
 +
@@ -179,7 +175,7 @@ index 0000000..3c5ce69
 +name=gtk-query-settings
 +result=$TEST_RESULT_DIR/$name.out
 +$GTK_QUERY_SETTINGS 2>/dev/null >$result
-+EXPECTED=50
++EXPECTED=51
 +SEEN=$(wc -l $result | cut -f1 -d' ')
 +
 +if [ $SEEN -eq $EXPECTED ]; then
@@ -187,11 +183,10 @@ index 0000000..3c5ce69
 +else
 +  echo "not ok 1 $name. Expected: $EXPECTED. Seen: $SEEN"
 +fi
-diff --git a/testsuite/tools/simplify b/testsuite/tools/simplify
-deleted file mode 100755
-index 12b4cea..0000000
---- a/testsuite/tools/simplify
-+++ /dev/null
+Index: gtk4-4.14.1+ds/testsuite/tools/simplify
+===================================================================
+--- gtk4-4.14.1+ds.orig/testsuite/tools/simplify	2024-03-20 16:43:24.270166749 +0100
++++ /dev/null	1970-01-01 00:00:00.000000000 +0000
 @@ -1,47 +0,0 @@
 -#! /bin/bash
 -
@@ -240,11 +235,10 @@ index 12b4cea..0000000
 -
 -  I=$((I+1))
 -done
-diff --git a/testsuite/tools/simplify-3to4 b/testsuite/tools/simplify-3to4
-deleted file mode 100755
-index 0a97f1a..0000000
---- a/testsuite/tools/simplify-3to4
-+++ /dev/null
+Index: gtk4-4.14.1+ds/testsuite/tools/simplify-3to4
+===================================================================
+--- gtk4-4.14.1+ds.orig/testsuite/tools/simplify-3to4	2024-03-20 16:43:24.270166749 +0100
++++ /dev/null	1970-01-01 00:00:00.000000000 +0000
 @@ -1,47 +0,0 @@
 -#! /bin/bash
 -
@@ -293,11 +287,10 @@ index 0a97f1a..0000000
 -
 -  I=$((I+1))
 -done
-diff --git a/testsuite/tools/simplify-3to4.in b/testsuite/tools/simplify-3to4.in
-new file mode 100755
-index 0000000..0a97f1a
---- /dev/null
-+++ b/testsuite/tools/simplify-3to4.in
+Index: gtk4-4.14.1+ds/testsuite/tools/simplify-3to4.in
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ gtk4-4.14.1+ds/testsuite/tools/simplify-3to4.in	2024-03-20 16:43:24.258167070 +0100
 @@ -0,0 +1,47 @@
 +#! /bin/bash
 +
@@ -346,11 +339,10 @@ index 0000000..0a97f1a
 +
 +  I=$((I+1))
 +done
-diff --git a/testsuite/tools/simplify.in b/testsuite/tools/simplify.in
-new file mode 100755
-index 0000000..12b4cea
---- /dev/null
-+++ b/testsuite/tools/simplify.in
+Index: gtk4-4.14.1+ds/testsuite/tools/simplify.in
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ gtk4-4.14.1+ds/testsuite/tools/simplify.in	2024-03-20 16:43:24.258167070 +0100
 @@ -0,0 +1,47 @@
 +#! /bin/bash
 +
@@ -399,17 +391,19 @@ index 0000000..12b4cea
 +
 +  I=$((I+1))
 +done
-diff --git a/testsuite/tools/validate b/testsuite/tools/validate
-deleted file mode 100755
-index 414a505..0000000
---- a/testsuite/tools/validate
-+++ /dev/null
-@@ -1,37 +0,0 @@
+Index: gtk4-4.14.1+ds/testsuite/tools/validate
+===================================================================
+--- gtk4-4.14.1+ds.orig/testsuite/tools/validate	2024-03-20 16:43:24.270166749 +0100
++++ /dev/null	1970-01-01 00:00:00.000000000 +0000
+@@ -1,40 +0,0 @@
 -#! /bin/bash
 -
 -GTK_BUILDER_TOOL=${GTK_BUILDER_TOOL:-gtk4-builder-tool}
 -TEST_DATA_DIR=${G_TEST_SRCDIR:-.}/validate-data
 -TEST_RESULT_DIR=${TEST_RESULT_DIR:-/tmp}/validate
+-
+-# https://gitlab.freedesktop.org/mesa/mesa/-/issues/10293
+-export LIBGL_ALWAYS_SOFTWARE=true
 -
 -mkdir -p "$TEST_RESULT_DIR"
 -
@@ -442,12 +436,11 @@ index 414a505..0000000
 -
 -  I=$((I+1))
 -done
-diff --git a/testsuite/tools/validate.in b/testsuite/tools/validate.in
-new file mode 100755
-index 0000000..414a505
---- /dev/null
-+++ b/testsuite/tools/validate.in
-@@ -0,0 +1,37 @@
+Index: gtk4-4.14.1+ds/testsuite/tools/validate.in
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ gtk4-4.14.1+ds/testsuite/tools/validate.in	2024-03-20 16:43:46.361582680 +0100
+@@ -0,0 +1,40 @@
 +#! /bin/bash
 +
 +GTK_BUILDER_TOOL=${GTK_BUILDER_TOOL:-gtk4-builder-tool}
@@ -455,6 +448,9 @@ index 0000000..414a505
 +TEST_RESULT_DIR=${TEST_RESULT_DIR:-/tmp}/validate
 +
 +mkdir -p "$TEST_RESULT_DIR"
++
++# https://gitlab.freedesktop.org/mesa/mesa/-/issues/10293
++export LIBGL_ALWAYS_SOFTWARE=true
 +
 +shopt -s nullglob
 +TESTS=( "$TEST_DATA_DIR"/*.ui )

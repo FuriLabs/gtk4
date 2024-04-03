@@ -8,13 +8,13 @@ Forwarded: not-needed
  modules/media/meson.build | 3 +++
  1 file changed, 3 insertions(+)
 
-diff --git a/modules/media/meson.build b/modules/media/meson.build
-index 74364e6..556098f 100644
---- a/modules/media/meson.build
-+++ b/modules/media/meson.build
-@@ -39,6 +39,9 @@ if ffmpeg_found
-   )
- endif
+Index: gtk4/modules/media/meson.build
+===================================================================
+--- gtk4.orig/modules/media/meson.build	2024-02-27 12:22:04.429024981 +0100
++++ gtk4/modules/media/meson.build	2024-02-27 12:22:04.425025042 +0100
+@@ -5,6 +5,9 @@
+ extra_c_args = ['-DGTK_COMPILATION']
+ extra_c_args += common_cflags
  
 +subproject('gstreamer-player-1.0',
 +           required: get_option('media-gstreamer'),

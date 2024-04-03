@@ -27,11 +27,11 @@ Applied-upstream: no, upstream want reftests to be a strict pass/fail with ident
  testsuite/reftests/image-compare.c |  2 +-
  3 files changed, 113 insertions(+), 7 deletions(-)
 
-diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index e26b16c..873e5ce 100644
---- a/testsuite/gsk/compare-render.c
-+++ b/testsuite/gsk/compare-render.c
-@@ -102,6 +102,37 @@ get_output_file (const char *file,
+Index: gtk4-4.14.1+ds/testsuite/gsk/compare-render.c
+===================================================================
+--- gtk4-4.14.1+ds.orig/testsuite/gsk/compare-render.c	2024-03-21 14:24:08.961300477 +0100
++++ gtk4-4.14.1+ds/testsuite/gsk/compare-render.c	2024-03-21 14:24:16.929203666 +0100
+@@ -111,6 +111,37 @@
    return result;
  }
  
@@ -69,41 +69,17 @@ index e26b16c..873e5ce 100644
  static void
  save_image (GdkTexture *texture,
              const char *test_name,
-@@ -290,11 +321,20 @@ main (int argc, char **argv)
-                                            &max_diff, &pixels_changed, &pixels);
-   if (diff_texture)
-     {
-+      guint64 tolerated_diff = 0;
-+      guint64 tolerated_pixels = 0;
-+
-       g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
-                pixels_changed, pixels, max_diff);
-       save_image (diff_texture, node_file, ".diff.png");
-       g_object_unref (diff_texture);
--      success = FALSE;
-+
-+      load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
-+
-+      if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
-+        g_print ("not right, but close enough?\n");
-+      else
-+        success = FALSE;
-     }
- 
-   g_clear_object (&reference_texture);
-@@ -328,11 +368,20 @@ main (int argc, char **argv)
- 
+@@ -384,10 +415,18 @@
+                                                &max_diff, &pixels_changed, &pixels);
        if (diff_texture)
          {
 +          guint64 tolerated_diff = 0;
 +          guint64 tolerated_pixels = 0;
 +
            g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
-                    pixels_changed, pixels, max_diff);
-           save_image (diff_texture, node_file, "-flipped.diff.png");
-           g_object_unref (diff_texture);
+                    pixels_changed, pixels, max_diff); 
+           save_image (diff_texture, node_file, ".diff.png");
 -          success = FALSE;
-+
 +          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
 +
 +          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
@@ -112,8 +88,29 @@ index e26b16c..873e5ce 100644
 +            success = FALSE;
          }
  
-       g_clear_object (&rendered_texture);
-@@ -404,11 +453,20 @@ main (int argc, char **argv)
+       g_clear_object (&diff_texture);
+@@ -423,10 +462,19 @@
+ 
+       if (diff_texture)
+         {
++          guint64 tolerated_diff = 0;
++          guint64 tolerated_pixels = 0;
+           g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
+                    pixels_changed, pixels, max_diff);
+           save_image (diff_texture, node_file, "-flipped.diff.png");
+-          success = FALSE;
++
++          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
++
++          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
++            g_print ("not right, but close enough?\n");
++          else
++            success = FALSE;
++
+         }
+ 
+       g_clear_object (&diff_texture);
+@@ -492,10 +540,19 @@
  
        if (diff_texture)
          {
@@ -123,7 +120,6 @@ index e26b16c..873e5ce 100644
            g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
                     pixels_changed, pixels, max_diff);
            save_image (diff_texture, node_file, "-repeated.diff.png");
-           g_object_unref (diff_texture);
 -          success = FALSE;
 +
 +          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
@@ -134,8 +130,8 @@ index e26b16c..873e5ce 100644
 +            success = FALSE;
          }
  
-       g_clear_object (&rendered_texture);
-@@ -444,11 +502,20 @@ main (int argc, char **argv)
+       g_clear_object (&diff_texture);
+@@ -532,10 +589,19 @@
  
        if (diff_texture)
          {
@@ -145,7 +141,6 @@ index e26b16c..873e5ce 100644
            g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
                     pixels_changed, pixels, max_diff);
            save_image (diff_texture, node_file, "-rotated.diff.png");
-           g_object_unref (diff_texture);
 -          success = FALSE;
 +
 +          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
@@ -156,8 +151,8 @@ index e26b16c..873e5ce 100644
 +            success = FALSE;
          }
  
-       g_clear_object (&rendered_texture);
-@@ -493,11 +560,20 @@ main (int argc, char **argv)
+       g_clear_object (&diff_texture);
+@@ -592,10 +658,19 @@
  
        if (diff_texture)
          {
@@ -167,7 +162,6 @@ index e26b16c..873e5ce 100644
            g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
                     pixels_changed, pixels, max_diff);
            save_image (diff_texture, node_file, "-masked.diff.png");
-           g_object_unref (diff_texture);
 -          success = FALSE;
 +
 +          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
@@ -178,12 +172,77 @@ index e26b16c..873e5ce 100644
 +            success = FALSE;
          }
  
-       g_clear_object (&rendered_texture);
-diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
-index 046751d..5945aa8 100644
---- a/testsuite/reftests/gtk-reftest.c
-+++ b/testsuite/reftests/gtk-reftest.c
-@@ -302,6 +302,12 @@ save_image (GdkTexture *texture,
+       g_clear_object (&diff_texture);
+@@ -636,10 +711,19 @@
+ 
+       if (diff_texture)
+         {
++          guint64 tolerated_diff = 0;
++          guint64 tolerated_pixels = 0;
++
+           g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
+                    pixels_changed, pixels, max_diff);
+           save_image (diff_texture, node_file, "-replayed.diff.png");
+-          success = FALSE;
++
++          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
++
++          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
++            g_print ("not right, but close enough?\n");
++          else
++            success = FALSE;
+         }
+ 
+       g_clear_object (&diff_texture);
+@@ -694,8 +778,17 @@
+ 
+       if (diff_texture)
+         {
++          guint64 tolerated_diff = 0;
++          guint64 tolerated_pixels = 0;
++
+           save_image (diff_texture, node_file, "-clipped.diff.png");
+-          success = FALSE;
++
++          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
++
++          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
++            g_print ("not right, but close enough?\n");
++          else
++            success = FALSE;
+         }
+ 
+       g_clear_object (&diff_texture);
+@@ -733,12 +826,22 @@
+ 
+       save_image (reference_texture, node_file, "-colorflipped.ref.png");
+ 
+-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
++      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
++                                               &max_diff, &pixels_changed, &pixels);
+ 
+       if (diff_texture)
+         {
++          guint64 tolerated_diff = 0;
++          guint64 tolerated_pixels = 0;
++
+           save_image (diff_texture, node_file, "-colorflipped.diff.png");
+-          success = FALSE;
++
++          load_test_settings (node_file, &tolerated_diff, &tolerated_pixels);
++
++          if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
++            g_print ("not right, but close enough?\n");
++          else
++            success = FALSE;
+         }
+ 
+       g_clear_object (&diff_texture);
+Index: gtk4-4.14.1+ds/testsuite/reftests/gtk-reftest.c
+===================================================================
+--- gtk4-4.14.1+ds.orig/testsuite/reftests/gtk-reftest.c	2024-03-21 14:24:08.961300477 +0100
++++ gtk4-4.14.1+ds/testsuite/reftests/gtk-reftest.c	2024-03-21 14:24:08.957300525 +0100
+@@ -302,6 +302,12 @@
    g_free (filename);
  }
  
@@ -196,7 +255,7 @@ index 046751d..5945aa8 100644
  static void
  save_node (GskRenderNode *node,
             const char    *test_name,
-@@ -383,13 +389,37 @@ test_ui_file (GFile *file)
+@@ -383,13 +389,37 @@
  
    if (diff_image)
      {
@@ -235,11 +294,11 @@ index 046751d..5945aa8 100644
      }
  
    remove_extra_css (provider);
-diff --git a/testsuite/reftests/image-compare.c b/testsuite/reftests/image-compare.c
-index dd9c26c..e68a161 100644
---- a/testsuite/reftests/image-compare.c
-+++ b/testsuite/reftests/image-compare.c
-@@ -51,7 +51,7 @@ main (int argc, char **argv)
+Index: gtk4-4.14.1+ds/testsuite/reftests/image-compare.c
+===================================================================
+--- gtk4-4.14.1+ds.orig/testsuite/reftests/image-compare.c	2024-03-21 14:24:08.961300477 +0100
++++ gtk4-4.14.1+ds/testsuite/reftests/image-compare.c	2024-03-21 14:24:08.957300525 +0100
+@@ -51,7 +51,7 @@
        exit (1);
      }
  

@@ -235,11 +235,21 @@ xfail_reftests = \
 	sizegroups-evolution-identity-page \
 	$(NULL)
 
+# ignore some of the gsk compare suites, upstream said those are going
+# to give slightly different results depending on the renderers and the
+# software rendering stack and are meant to be used in CI in a well
+# defined environment and not really suitable for distros
+# https://gitlab.gnome.org/GNOME/gtk/-/issues/6383
 skipped_suites = \
 	failing \
 	flaky \
 	wayland_failing \
 	wayland_gles_failing \
+	gsk-compare-broadway \
+	gsk-compare-gl \
+	gsk-compare-cairo \
+	gsk-compare-ngl \
+	gsk-compare-vulkan \
 	$(NULL)
 
 # https://bugs.debian.org/1050312

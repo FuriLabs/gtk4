@@ -4,6 +4,8 @@ gtk4 (4.14.2+ds-1) UNRELEASED; urgency=medium
   * Update the packaging to no refer to the ffmpeg experimental backend
     which has been removed upstream now
   * debian/rules:
+    - skip the gsk compare suites those seem to be giving inconsistant
+      results depending on the rendering stack
     - update for the new convert-emoji syntax
 
   [ Nathan Pratta Teodosio ]

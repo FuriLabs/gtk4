@@ -1,6 +1,14 @@
-gtk4 (4.14.2+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.14.2+ds-1) experimental; urgency=medium
 
-  * New upstream release
+  * New upstream release. Upload to experimental but the tests situation
+    is not ideal. Skip some of testsuites to allow building since it seems
+    the gsk tests can hit rounding differences depending of the renderer
+    in use an the software rendering stack version and build options.
+    We saw tests issue also on Ubuntu for s390x and 32 bits architectures
+    but I'm not applying workaround for those in Debian yet because they
+    are somehow wrong (especially on 32 bits which seems to have real
+    upstream issues) and to see if we get the same errors on the Debian
+    builders.
   * Update the packaging to no refer to the ffmpeg experimental backend
     which has been removed upstream now
   * debian/rules:
@@ -16,7 +24,7 @@ gtk4 (4.14.2+ds-1) UNRELEASED; urgency=medium
   [ Jeremy Bícha ]
   * New upstream release
 
- -- Sebastien Bacher <seb128@ubuntu.com>  Tue, 27 Feb 2024 12:03:26 +0100
+ -- Sebastien Bacher <seb128@ubuntu.com>  Thu, 04 Apr 2024 18:09:08 +0200
 
 gtk4 (4.12.5+ds-6) unstable; urgency=medium
 

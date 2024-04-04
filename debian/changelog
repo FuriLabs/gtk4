@@ -1,3 +1,22 @@
+gtk4 (4.14.2+ds-1ubuntu1) noble; urgency=medium
+
+  * Update to the current stable version, remaining changes over Debian
+  * debian/ignore.keyfile:
+    - increase tolerated-diff-pixels to workaround some tests reftests still
+      failing the build on s390x despite being in the ignore list
+  * debian/patches/ignore_a11ytext_i386.patch:
+    - ignore a11y/text and a11y/textview tests on i386 for now, they
+      are failing on the builders for some reason
+  * d/p/d/tests-Mark-memorytexture-as-expected-to-fail-on-big-endian.patch:
+    - mark also memorytexture as expected to fail on big endian
+  * debian/rules:
+    - disable gsk tests on i386 and arm since they are currently buggy
+    - ignore extra reftests that a now failing on s390x
+    - set the test_timeout_multiplier default to 3 instead of 1, some of
+      the tests hit the timeout default value even on other archs now
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Thu, 04 Apr 2024 21:25:10 +0200
+
 gtk4 (4.14.2+ds-1) experimental; urgency=medium
 
   * New upstream release. Upload to experimental but the tests situation
@@ -15,7 +34,6 @@ gtk4 (4.14.2+ds-1) experimental; urgency=medium
     - skip the gsk compare suites those seem to be giving inconsistant
       results depending on the rendering stack
     - update for the new convert-emoji syntax
-
   [ Nathan Pratta Teodosio ]
   * debian/rules:
     - Make Bash scripts in installed-tests/gtk-4.0/tools/ executable

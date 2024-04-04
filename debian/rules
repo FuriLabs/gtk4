@@ -309,6 +309,11 @@ override_dh_fixperms:
 	dh_fixperms -Xusr/libexec/installed-tests
 ifneq ($(filter %-tests,$(built_binaries)),)
 	chmod --recursive --changes a+rX,u+w,og-w debian/*-tests/usr/libexec/installed-tests
+	chmod +x debian/*-tests/usr/libexec/installed-tests/gtk-4.0/tools/simplify \
+	         debian/*-tests/usr/libexec/installed-tests/gtk-4.0/tools/settings \
+	         debian/*-tests/usr/libexec/installed-tests/gtk-4.0/tools/enumerate \
+	         debian/*-tests/usr/libexec/installed-tests/gtk-4.0/tools/simplify-3to4 \
+	         debian/*-tests/usr/libexec/installed-tests/gtk-4.0/tools/validate
 endif
 
 override_dh_missing:

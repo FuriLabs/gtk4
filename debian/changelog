@@ -6,6 +6,11 @@ gtk4 (4.14.2+ds-1) UNRELEASED; urgency=medium
   * debian/rules:
     - update for the new convert-emoji syntax
 
+  [ Nathan Pratta Teodosio ]
+  * debian/rules:
+    - Make Bash scripts in installed-tests/gtk-4.0/tools/ executable
+      to fix autopkgtests.
+
   [ Jeremy Bícha ]
   * New upstream release
 

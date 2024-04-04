@@ -254,6 +254,15 @@ skipped_suites = \
 	gsk-compare-vulkan \
 	$(NULL)
 
+# skip gsk on 32 bits for now since they are buggy but those architectures
+# aren't supported upstream
+# https://gitlab.gnome.org/GNOME/gtk/-/issues/6395
+ifneq ($(filter arm i386,$(DEB_HOST_ARCH_CPU)),)
+skipped_suites += \
+	gtk:gsk \
+	$(NULL)
+endif
+
 # https://bugs.debian.org/1050312
 ifeq (i386,$(DEB_HOST_ARCH_CPU))
 ignore_reftests += \

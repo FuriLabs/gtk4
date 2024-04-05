@@ -11,3 +11,5 @@ debian/gstreamer-player-Use-GtkName-Prefix-to-avoid-issues-if-ac.patch
 debian/tests-Mark-gltexture-as-expected-to-fail-on-big-endian-ma.patch
 debian/tests-Allow-longer-for-a-dialog-to-open.patch
 nodeparser-Adjust-test-for-pango-1.52.0.patch
+# workaround i386 issue
+debian/ignore_a11ytext_i386.patch

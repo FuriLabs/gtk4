@@ -309,6 +309,12 @@ ifeq (big,$(DEB_HOST_ARCH_ENDIAN))
 	center-center-300x300-picture-in-100x200-overlay \
 	center-center-300x300-picture-in-200x100 \
 	center-center-300x300-picture-in-200x100-overlay \
+	css-match-class \
+	css-match-name \
+	css-match-type \
+	icon-vfuncs \
+	image-load-from-file \
+	linear-gradient-transition-to-other \
 	$(NULL)
 endif
 

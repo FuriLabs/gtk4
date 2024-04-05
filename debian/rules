@@ -257,7 +257,7 @@ skipped_suites = \
 # skip gsk on 32 bits for now since they are buggy but those architectures
 # aren't supported upstream
 # https://gitlab.gnome.org/GNOME/gtk/-/issues/6395
-ifneq ($(filter arm i386,$(DEB_HOST_ARCH_CPU)),)
+ifeq ($(DEB_BUILD_ARCH_BITS),32)
 skipped_suites += \
 	gtk:gsk \
 	$(NULL)

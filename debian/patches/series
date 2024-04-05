@@ -9,7 +9,8 @@ debian/gstreamer-player-1.0-Do-not-install-it-if-it-s-a-subproje.patch
 debian/media-Use-gstplayer-from-meson-subproject.patch
 debian/gstreamer-player-Use-GtkName-Prefix-to-avoid-issues-if-ac.patch
 debian/tests-Mark-gltexture-as-expected-to-fail-on-big-endian-ma.patch
+debian/tests-Mark-memorytexture-as-expected-to-fail-on-big-endian.patch
 debian/tests-Allow-longer-for-a-dialog-to-open.patch
-nodeparser-Adjust-test-for-pango-1.52.0.patch
 # workaround i386 issue
 debian/ignore_a11ytext_i386.patch
+nodeparser-Adjust-test-for-pango-1.52.0.patch

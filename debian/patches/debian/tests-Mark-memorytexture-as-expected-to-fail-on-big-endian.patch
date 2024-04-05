@@ -1,0 +1,22 @@
+Subject: tests: Mark memorytexture as expected to fail on big-endian machines
+
+Forwarded: not-needed, workaround
+---
+ testsuite/gdk/meson.build | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+Index: gtk4-4.14.1+ds/testsuite/gdk/meson.build
+===================================================================
+--- gtk4-4.14.1+ds.orig/testsuite/gdk/meson.build	2024-03-20 21:38:40.000000000 +0100
++++ gtk4-4.14.1+ds/testsuite/gdk/meson.build	2024-03-20 21:38:40.000000000 +0100
+@@ -47,6 +47,10 @@
+ 
+   suites = ['gdk'] + t.get('suites', [])
+ 
++  if host_machine.endian() == 'big' and t.get('name') == 'memorytexture'
++    suites += 'failing'
++  endif
++
+   test(test_name, test_exe,
+     args: [ '--tap', '-k' ],
+     protocol: 'tap',

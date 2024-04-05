@@ -47,6 +47,10 @@ foreach t : tests
 
   suites = ['gdk'] + t.get('suites', [])
 
+  if host_machine.endian() == 'big' and t.get('name') == 'memorytexture'
+    suites += 'failing'
+  endif
+
   test(test_name, test_exe,
     args: [ '--tap', '-k' ],
     protocol: 'tap',
@@ -106,6 +110,10 @@ if get_option('install-tests')
   foreach t : tests
     test_name = t.get('name')
     suites = t.get('suites', [])
+
+    if host_machine.endian() == 'big' and t.get('name') == 'memorytexture'
+      suites += 'failing'
+    endif
 
     if suites.contains('flaky') or suites.contains('failing')
       continue

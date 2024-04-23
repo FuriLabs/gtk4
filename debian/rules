@@ -68,6 +68,8 @@ debian/%: debian/%.in
 configure_flags_deb = \
 	-Dauto_features=enabled \
 	-Dbroadway-backend=true \
+	-Dprint-cpdb=enabled \
+	-Dprint-cups=disabled \
 	-Dx11-backend=true \
 	${NULL}
 

@@ -1,8 +1,8 @@
-gtk4 (4.14.4+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.14.4+ds-1) experimental; urgency=medium
 
   * New upstream release
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 03 May 2024 15:06:25 -0400
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 03 May 2024 18:03:37 -0400
 
 gtk4 (4.14.3+ds-1) experimental; urgency=medium
 

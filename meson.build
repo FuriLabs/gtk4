@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.14.3',
+        version: '4.14.4',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -201,6 +201,7 @@ check_functions = [
   'posix_fallocate',
   'sincos',
   'sincosf',
+  'memmem',
 ]
 
 foreach func : check_functions
@@ -208,6 +209,7 @@ foreach func : check_functions
                      args: '-D_GNU_SOURCE',
                      prefix:
                        '#include <stdlib.h>\n' +
+                       '#include <string.h>\n' +
                        '#include <unistd.h>\n' +
                        '#include <sys/mman.h>\n' +
                        '#include <fcntl.h>\n' +

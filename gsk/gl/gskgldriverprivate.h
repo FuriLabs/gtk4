@@ -25,6 +25,13 @@
 #include "gskgltypesprivate.h"
 #include "gskgltextureprivate.h"
 
+#include <cairo.h>
+
+#ifdef CAIRO_HAS_SCRIPT_SURFACE
+#include <cairo-script.h>
+#endif
+
+
 G_BEGIN_DECLS
 
 enum {
@@ -111,6 +118,13 @@ struct _GskGLDriver
 
   GArray *autorelease_framebuffers;
   GPtrArray *render_targets;
+
+#ifdef CAIRO_HAS_SCRIPT_SURFACE
+  cairo_device_t *script_device;
+
+  unsigned char *last_cairo_script_content;
+  unsigned int last_cairo_script_size;
+#endif
 
 #define GSK_GL_NO_UNIFORMS
 #define GSK_GL_ADD_UNIFORM(pos, KEY, name)

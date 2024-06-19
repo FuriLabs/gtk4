@@ -420,6 +420,7 @@ pixbuf_dep        = dependency('gdk-pixbuf-2.0', version: gdk_pixbuf_req,
 png_dep           = dependency('libpng', 'png')
 tiff_dep          = dependency('libtiff-4', 'tiff')
 jpeg_dep          = dependency('libjpeg', 'jpeg')
+zlib_dep          = dependency('zlib')
 
 epoxy_dep         = dependency('epoxy', version: epoxy_req)
 xkbdep            = dependency('xkbcommon', version: xkbcommon_req, required: wayland_enabled)

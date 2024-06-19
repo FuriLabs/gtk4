@@ -210,6 +210,7 @@ gdk_deps = [
   vulkan_dep,
   png_dep,
   tiff_dep,
+  zlib_dep,
   jpeg_dep,
 ]
 

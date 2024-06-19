@@ -118,6 +118,15 @@ static guint
 gsk_gl_driver_collect_unused_textures (GskGLDriver *self,
                                        gint64       watermark)
 {
+  // Very large textures are more likely to not be reused, and obviously
+  // take up more space. We'll allow anything below 256x256 to stick around
+  // for 120 additional frames. This is a quick and simple tradeoff solution
+  // to ensure we don't burn stupid amounts of bandwidth reuploading the same
+  // textures over and over again, while also trying to avoid burning too much
+  // VRAM. In the future, a more intelligent heuristic would be nice (maybe
+  // something based off memory pressure, a more intelligent LRU, time instead
+  // of frames, etc).
+  static const size_t FAST_EVICTION_PIXELS_THRESHOLD = 256 * 256;
   GHashTableIter iter;
   gpointer k, v;
   guint old_size;
@@ -135,7 +144,7 @@ gsk_gl_driver_collect_unused_textures (GskGLDriver *self,
       if (t->user || t->permanent)
         continue;
 
-      if (t->last_used_in_frame <= watermark)
+      if (t->last_used_in_frame + (t->width * t->height < FAST_EVICTION_PIXELS_THRESHOLD ? 120 : 0) <= watermark)
         {
           g_hash_table_iter_steal (&iter);
 
@@ -602,7 +611,7 @@ gsk_gl_driver_begin_frame (GskGLDriver       *self,
    * of the following frame instead of the end so that we reduce chances
    * we block on any resources while delivering our frames.
    */
-  gsk_gl_driver_collect_unused_textures (self, last_frame_id - 300);
+  gsk_gl_driver_collect_unused_textures (self, last_frame_id - 20);
 }
 
 /**

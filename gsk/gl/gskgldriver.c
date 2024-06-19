@@ -48,6 +48,11 @@
 #include <gdk/gdkdmabuftextureprivate.h>
 
 
+#include <cairo.h>
+#ifdef CAIRO_HAS_SCRIPT_SURFACE
+#include <cairo-script.h>
+#endif
+
 G_DEFINE_TYPE (GskGLDriver, gsk_gl_driver, G_TYPE_OBJECT)
 
 static guint
@@ -311,6 +316,14 @@ G_GNUC_END_IGNORE_DEPRECATIONS
   g_clear_object (&self->command_queue);
   g_clear_object (&self->shared_command_queue);
 
+#ifdef CAIRO_HAS_SCRIPT_SURFACE
+  if (self->last_cairo_script_content != NULL)
+    g_free (self->last_cairo_script_content);
+
+  if (self->script_device != NULL)
+    cairo_device_destroy (self->script_device);
+#endif
+
   G_OBJECT_CLASS (gsk_gl_driver_parent_class)->dispose (object);
 }
 
@@ -336,6 +349,12 @@ gsk_gl_driver_init (GskGLDriver *self)
   self->shader_cache = g_hash_table_new_full (NULL, NULL, NULL, remove_program);
   self->texture_pool = g_array_new (FALSE, FALSE, sizeof (guint));
   self->render_targets = g_ptr_array_new ();
+
+#ifdef CAIRO_HAS_SCRIPT_SURFACE
+  self->script_device = NULL;
+  self->last_cairo_script_content = NULL;
+  self->last_cairo_script_size = 0;
+#endif
 }
 
 static gboolean

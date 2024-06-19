@@ -53,6 +53,10 @@
 #include "ninesliceprivate.h"
 #include "fp16private.h"
 
+#ifdef CAIRO_HAS_SCRIPT_SURFACE
+#include <zlib.h>
+#endif
+
 #define ORTHO_NEAR_PLANE   -10000
 #define ORTHO_FAR_PLANE     10000
 #define MAX_GRADIENT_STOPS  6
@@ -1176,6 +1180,34 @@ gsk_gl_render_job_end_draw (GskGLRenderJob *job)
   job->current_program = NULL;
 }
 
+#ifdef CAIRO_HAS_SCRIPT_SURFACE
+
+static cairo_status_t
+gsk_gl_cairo_script_write_cb (void *closure,
+                              const unsigned char *data,
+                              unsigned int length)
+{
+  GskGLDriver *driver = closure;
+
+  // jesus: allocating in the hot path? tsk tsk
+  driver->last_cairo_script_content = g_realloc (driver->last_cairo_script_content, driver->last_cairo_script_size + length);
+  memcpy (driver->last_cairo_script_content + driver->last_cairo_script_size, data, length);
+  driver->last_cairo_script_size += length;
+
+  return CAIRO_STATUS_SUCCESS;
+}
+
+static unsigned long
+gsk_gl_get_crc32 (void *buffer, size_t size)
+{
+  uLong crc = crc32 (0L, Z_NULL, 0);
+  crc = crc32 (crc, (const Bytef *) buffer, size);
+
+  return crc;
+}
+
+#endif
+
 static inline void
 gsk_gl_render_job_visit_as_fallback (GskGLRenderJob      *job,
                                      const GskRenderNode *node)
@@ -1189,28 +1221,61 @@ gsk_gl_render_job_visit_as_fallback (GskGLRenderJob      *job,
   cairo_surface_t *rendered_surface;
   cairo_t *cr;
   int texture_id;
+#ifdef CAIRO_HAS_SCRIPT_SURFACE
+  GskTextureKey key;
+  cairo_device_t *script_device = job->driver->script_device;
+#endif
 
   if (surface_width <= 0 || surface_height <= 0)
     return;
 
-  /* We first draw the recording surface on an image surface,
-   * just because the scaleY(-1) later otherwise screws up the
-   * rendering... */
+#ifdef CAIRO_HAS_SCRIPT_SURFACE
+  if (script_device == NULL)
+    script_device = cairo_script_create_for_stream (gsk_gl_cairo_script_write_cb, job->driver);
+
+  /* We first draw the recording surface on a script surface. This allows
+   * us to calculate a hash of the rendered content, which we can use to
+   * try and find a matching texture in the cache. If we find a match, we
+   * can skip the rendering step and just use the cached texture (happy path).
+   * If not... well, tough titties, slow path galore.
+   */
   {
-    rendered_surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-                                                   surface_width,
-                                                   surface_height);
+    rendered_surface = cairo_script_surface_create (script_device,
+                                                    CAIRO_CONTENT_COLOR_ALPHA,
+                                                    surface_width,
+                                                    surface_height);
 
     cairo_surface_set_device_scale (rendered_surface, fabsf (scale_x), fabsf (scale_y));
     cr = cairo_create (rendered_surface);
 
-    cairo_save (cr);
-    cairo_translate (cr, - node->bounds.origin.x, - node->bounds.origin.y);
-    /* Render nodes don't modify state, so casting away the const is fine here */
+    // So that we don't include the "/target get /s <surface_id> exch def pop" line in the hash,
+    // which breaks our caching because surface ids are monotonically increasing, we'll ensure the
+    // surface is selected manually, and then we'll clear the script buffer by settings its size to 0.
+    // We can "select" it by just running any operation on it, like a 1x1 rect. Riveting stuff.
+    cairo_rectangle (cr, 0, 0, 1, 1);
+    cairo_fill (cr);
+    job->driver->last_cairo_script_size = 0;
+
+    // And now we "paint" whatever this thing is.
     gsk_render_node_draw_fallback ((GskRenderNode *)node, cr);
-    cairo_restore (cr);
     cairo_destroy (cr);
+
+    if (job->driver->last_cairo_script_size)
+    {
+      // Ugly cast is ugly.
+      key.pointer = (gconstpointer) (gsk_gl_get_crc32 (job->driver->last_cairo_script_content,
+                                                 job->driver->last_cairo_script_size));
+      key.pointer_is_child = FALSE;
+      key.scale_x = scale_x;
+      key.scale_y = scale_y;
+
+      texture_id = gsk_gl_driver_lookup_texture (job->driver, &key, NULL);
+
+      if (texture_id != 0)
+        goto done;
+    }
   }
+#endif
 
   surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
                                         surface_width,
@@ -1218,13 +1283,16 @@ gsk_gl_render_job_visit_as_fallback (GskGLRenderJob      *job,
   cairo_surface_set_device_scale (surface, fabsf (scale_x), fabsf (scale_y));
   cr = cairo_create (surface);
 
-  /* We draw upside down here, so it matches what GL does. */
+  /* We draw upside down here, so it matches what GL does.
+   * jesus: there used to be a comment complaining about the -1 scale factor
+   * breaking rendering, but uhh it looks fine to me? figure out what I broke
+   */
+
   cairo_save (cr);
   cairo_scale (cr, scale_x < 0 ? -1 : 1, scale_y < 0 ? 1 : -1);
   cairo_translate (cr, scale_x < 0 ? - surface_width / fabsf (scale_x) : 0,
                        scale_y < 0 ? 0 : - surface_height / fabsf (scale_y));
-  cairo_set_source_surface (cr, rendered_surface, 0, 0);
-  cairo_rectangle (cr, 0, 0, surface_width / fabsf (scale_x), surface_height / fabsf (scale_y));
+  gsk_render_node_draw_fallback ((GskRenderNode *)node, cr);
   cairo_fill (cr);
   cairo_restore (cr);
   cairo_destroy (cr);
@@ -1242,6 +1310,10 @@ gsk_gl_render_job_visit_as_fallback (GskGLRenderJob      *job,
   g_object_unref (texture);
   cairo_surface_destroy (surface);
   cairo_surface_destroy (rendered_surface);
+
+#ifdef CAIRO_HAS_SCRIPT_SURFACE
+  gsk_gl_driver_cache_texture (job->driver, &key, texture_id);
+#endif
 
 done:
   if (scale_x < 0 || scale_y < 0)

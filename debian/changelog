@@ -1,8 +1,8 @@
-gtk4 (4.14.4+ds-3) UNRELEASED; urgency=medium
+gtk4 (4.14.4+ds-3) experimental; urgency=medium
 
   * Extra workarounds for tests issues in the new version
   * debian/ignore.keyfile:
-    - increase tolerated-diff-pixels to workaround some tests reftests still
+    - increase tolerated-diff-pixels to workaround some reftests still
       failing the build on s390x despite being in the ignore list
   * debian/patches/ignore_a11ytext_i386.patch:
     - ignore a11y/text and a11y/textview tests on i386 for now, they
@@ -11,13 +11,9 @@ gtk4 (4.14.4+ds-3) UNRELEASED; urgency=medium
     - mark also memorytexture as expected to fail on big endian
   * debian/rules:
     - disable gsk tests on i386 and arm since they are currently buggy
-    - ignore extra reftests that a now failing on s390x
-    - set the test_timeout_multiplier default to 3 instead of 1, some of
-      the tests hit the timeout default value even on other archs now
+    - ignore extra reftests that are now failing on s390x
 
- -- Sebastien Bacher <seb128@ubuntu.com>  Thu, 04 Apr 2024 21:25:10 +0200
-
- -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 14 Jul 2024 09:57:39 -0400
+ -- Sebastien Bacher <seb128@ubuntu.com>  Sun, 14 Jul 2024 10:04:09 -0400
 
 gtk4 (4.14.4+ds-2) experimental; urgency=medium
 

@@ -1,3 +1,9 @@
+gtk4 (4.14.4+ds-2) experimental; urgency=medium
+
+  * Increase general build test timeout. Thanks to Matthias Geiger.
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 14 Jul 2024 07:54:18 -0400
+
 gtk4 (4.14.4+ds-1) experimental; urgency=medium
 
   * New upstream release

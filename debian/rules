@@ -188,7 +188,7 @@ ifneq ($(filter %-udeb,$(built_binaries)),)
 endif
 
 test_backends = x11
-test_timeout_multiplier = 1
+test_timeout_multiplier = 3
 
 ifeq (linux,$(DEB_HOST_ARCH_OS))
 	test_backends += wayland

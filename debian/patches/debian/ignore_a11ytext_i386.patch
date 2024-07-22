@@ -1,11 +1,20 @@
-# Description: ignore a11y/text and texview tests on i386 for now
-# those are failing on the builders for some reason
-# Upstream: https://gitlab.gnome.org/GNOME/gtk/-/issues/6490
-Index: gtk4-4.13.8+ds/testsuite/a11y/meson.build
-===================================================================
---- gtk4-4.13.8+ds.orig/testsuite/a11y/meson.build	2024-03-07 09:46:16.424680512 +0100
-+++ gtk4-4.13.8+ds/testsuite/a11y/meson.build	2024-03-07 10:13:14.419699019 +0100
-@@ -112,6 +112,14 @@
+From: Sebastien Bacher <seb128@ubuntu.com>
+Date: Fri, 5 Apr 2024 10:15:38 +0200
+Subject: Ignore a11y/text and textview tests on i386 for now
+
+Those are failing on the builders for some reason.
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/6490
+Forwarded: not-needed, workaround
+---
+ testsuite/a11y/meson.build | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/testsuite/a11y/meson.build b/testsuite/a11y/meson.build
+index 21fc5c5..93cdc1f 100644
+--- a/testsuite/a11y/meson.build
++++ b/testsuite/a11y/meson.build
+@@ -112,6 +112,14 @@ foreach t : internal_tests
      test_timeout = 90
    endif
  

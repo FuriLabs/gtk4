@@ -1,3 +1,5 @@
+From: Sebastien Bacher <seb128@ubuntu.com>
+Date: Fri, 5 Apr 2024 16:09:34 +0200
 Subject: tests: Mark memorytexture as expected to fail on big-endian machines
 
 Forwarded: not-needed, workaround
@@ -5,11 +7,11 @@ Forwarded: not-needed, workaround
  testsuite/gdk/meson.build | 4 ++++
  1 file changed, 4 insertions(+)
 
-Index: gtk4-4.14.1+ds/testsuite/gdk/meson.build
-===================================================================
---- gtk4-4.14.1+ds.orig/testsuite/gdk/meson.build	2024-03-20 21:38:40.000000000 +0100
-+++ gtk4-4.14.1+ds/testsuite/gdk/meson.build	2024-03-20 21:38:40.000000000 +0100
-@@ -47,6 +47,10 @@
+diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
+index f6fcc46..96c682b 100644
+--- a/testsuite/gdk/meson.build
++++ b/testsuite/gdk/meson.build
+@@ -47,6 +47,10 @@ foreach t : tests
  
    suites = ['gdk'] + t.get('suites', [])
  

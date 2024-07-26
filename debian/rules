@@ -263,6 +263,12 @@ skipped_suites += \
 	$(NULL)
 endif
 
+# Skip label-reftest on riscv and mips since the diff is benign
+ifneq ($(filter mips% riscv64,$(DEB_HOST_ARCH_CPU)),)
+# https://bugs.debian.org/1077178
+ignore_reftests += label-shadows
+endif
+
 # https://bugs.debian.org/1050312
 ifeq (i386,$(DEB_HOST_ARCH_CPU))
 ignore_reftests += \

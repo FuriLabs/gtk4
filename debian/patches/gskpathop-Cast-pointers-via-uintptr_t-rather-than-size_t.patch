@@ -1,0 +1,45 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Fri, 26 Jul 2024 20:31:30 +0100
+Subject: gskpathop: Cast pointers via uintptr_t rather than size_t
+
+size_t (and equivalently gsize) can differ in size from uintptr_t on
+rare platforms. The type that is guaranteed to be able to represent all
+bits in a pointer is (u)intptr_t, so let's use that.
+
+Signed-off-by: Simon McVittie <smcv@debian.org>
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7510
+Bug-Debian: https://bugs.debian.org/1077192
+---
+ gsk/gskpathopprivate.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/gsk/gskpathopprivate.h b/gsk/gskpathopprivate.h
+index db1801c..720a793 100644
+--- a/gsk/gskpathopprivate.h
++++ b/gsk/gskpathopprivate.h
+@@ -64,21 +64,21 @@ gsk_pathop_encode (GskPathOperation        op,
+                    const graphene_point_t *pts)
+ {
+   /* g_assert (op & GSK_PATHOP_OPERATION_MASK == op); */
+-  g_assert ((GPOINTER_TO_SIZE (pts) & GSK_PATHOP_OPERATION_MASK) == 0);
++  g_assert ((((uintptr_t) pts) & GSK_PATHOP_OPERATION_MASK) == 0);
+ 
+-  return GSIZE_TO_POINTER (GPOINTER_TO_SIZE (pts) | op);
++  return (gskpathop) (((uintptr_t) pts) | op);
+ }
+ 
+ static inline const graphene_point_t *
+ gsk_pathop_points (gskpathop pop)
+ {
+-  return GSIZE_TO_POINTER (GPOINTER_TO_SIZE (pop) & ~GSK_PATHOP_OPERATION_MASK);
++  return (const graphene_point_t *) (((uintptr_t) pop) & ~GSK_PATHOP_OPERATION_MASK);
+ }
+ 
+ static inline
+ GskPathOperation gsk_pathop_op (gskpathop pop)
+ {
+-  return GPOINTER_TO_SIZE (pop) & GSK_PATHOP_OPERATION_MASK;
++  return ((uintptr_t) pop) & GSK_PATHOP_OPERATION_MASK;
+ }
+ 
+ static inline gboolean

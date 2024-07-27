@@ -13,3 +13,5 @@ debian/tests-Mark-memorytexture-as-expected-to-fail-on-big-endian.patch
 debian/tests-Allow-longer-for-a-dialog-to-open.patch
 nodeparser-Adjust-test-for-pango-1.52.0.patch
 tests-Fix-signature-of-GtkTestATContext-update-selection-.patch
+gskpathop-Cast-pointers-via-uintptr_t-rather-than-size_t.patch
+gskpathop-Introduce-a-type-to-represent-an-aligned-graphe.patch

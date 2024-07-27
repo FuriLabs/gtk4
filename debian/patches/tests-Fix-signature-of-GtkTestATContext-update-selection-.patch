@@ -1,0 +1,45 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Sat, 27 Jul 2024 00:58:53 +0100
+Subject: tests: Fix signature of GtkTestATContext::update-selection-bound
+ handlers
+
+The signal is declared in GtkTestATContext with 0 parameters, but these
+handlers were written as if the signal had one `guint` parameter.
+On some architectures this accidentally works as intended, but on
+others (reproduced on i386 and riscv64) the test tries to use arbitrary
+stack contents as the `TestData *` and crashes when it tries to
+dereference the resulting non-pointer.
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/6490
+Signed-off-by: Simon McVittie <smcv@debian.org>
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7504
+Bug-Debian: https://bugs.debian.org/1077181
+---
+ testsuite/a11y/text.c     | 1 -
+ testsuite/a11y/textview.c | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/testsuite/a11y/text.c b/testsuite/a11y/text.c
+index 454e18c..ef5a713 100644
+--- a/testsuite/a11y/text.c
++++ b/testsuite/a11y/text.c
+@@ -45,7 +45,6 @@ update_caret_pos (GtkATContext *context,
+ 
+ static void
+ update_selection_bound (GtkATContext *context,
+-                        guint         selection_bound,
+                         gpointer      data)
+ {
+   TestData *td = data;
+diff --git a/testsuite/a11y/textview.c b/testsuite/a11y/textview.c
+index 5eb0d40..d0a8fff 100644
+--- a/testsuite/a11y/textview.c
++++ b/testsuite/a11y/textview.c
+@@ -72,7 +72,6 @@ update_caret_pos (GtkATContext *context,
+ 
+ static void
+ update_selection_bound (GtkATContext *context,
+-                        guint         selection_bound,
+                         gpointer      data)
+ {
+   TestData *td = data;

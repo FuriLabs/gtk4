@@ -245,6 +245,7 @@ xfail_reftests = \
 skipped_suites = \
 	failing \
 	flaky \
+	headless \
 	wayland_failing \
 	wayland_gles_failing \
 	gsk-compare-broadway \

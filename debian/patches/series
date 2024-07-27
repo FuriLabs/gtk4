@@ -1,6 +1,5 @@
 Revert-tests-Stop-copying-the-tool-tests.patch
 Revert-build-Drop-the-install-tests-option.patch
-tests-mark-headless-tests-as-flaky.patch
 debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
 debian/reftests-Allow-minor-differences-to-be-tolerated.patch
 debian/Disable-inscription-markup.ui-reftest.patch

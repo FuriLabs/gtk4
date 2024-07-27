@@ -1,0 +1,78 @@
+From: Chun-wei Fan <fanchunwei@src.gnome.org>
+Date: Sat, 25 May 2024 10:53:41 +0800
+Subject: gdkvulkancontext.c: Use pointers to hash VkShaderModule
+
+VkShaderModule's may or may not be pointers depending on the target
+platform, so use pointers to hash those handles to be safe, and retrieve
+them from hashes accordingly.
+
+Fixes build on 32-bit Windows at least.
+
+Origin: upstream, 4.14.5, commit:757e35cf672c58c90b3d955d7726db711213ba47
+---
+ gdk/gdkvulkancontext.c | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/gdk/gdkvulkancontext.c b/gdk/gdkvulkancontext.c
+index cfb5f01..1842c6b 100644
+--- a/gdk/gdkvulkancontext.c
++++ b/gdk/gdkvulkancontext.c
+@@ -1820,8 +1820,9 @@ gdk_display_unref_vulkan (GdkDisplay *display)
+     {
+       g_free (key);
+       vkDestroyShaderModule (display->vk_device,
+-                             value,
++                             *((VkShaderModule *)value),
+                              NULL);
++      g_free (value);
+     }
+   g_hash_table_unref (display->vk_shader_modules);
+ 
+@@ -1949,13 +1950,13 @@ VkShaderModule
+ gdk_display_get_vk_shader_module (GdkDisplay *self,
+                                   const char *resource_name)
+ {
+-  VkShaderModule shader;
++  VkShaderModule *shader;
+   GError *error = NULL;
+   GBytes *bytes;
+ 
+   shader = g_hash_table_lookup (self->vk_shader_modules, resource_name);
+   if (shader)
+-    return shader;
++    return *shader;
+ 
+   bytes = g_resources_lookup_data (resource_name, 0, &error);
+   if (bytes == NULL)
+@@ -1965,6 +1966,7 @@ gdk_display_get_vk_shader_module (GdkDisplay *self,
+       return VK_NULL_HANDLE;
+     }
+ 
++  shader = g_new0 (VkShaderModule, 1);
+   if (GDK_VK_CHECK (vkCreateShaderModule, self->vk_device,
+                                           &(VkShaderModuleCreateInfo) {
+                                               .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+@@ -1972,18 +1974,20 @@ gdk_display_get_vk_shader_module (GdkDisplay *self,
+                                               .pCode = (uint32_t *) g_bytes_get_data (bytes, NULL),
+                                           },
+                                           NULL,
+-                                          &shader) == VK_SUCCESS)
++                                          shader) == VK_SUCCESS)
+     {
+       g_hash_table_insert (self->vk_shader_modules, g_strdup (resource_name), shader);
+     }
+   else
+     {
+-      shader = VK_NULL_HANDLE;
++      g_free (shader);
++
++      return VK_NULL_HANDLE;
+     }
+ 
+   g_bytes_unref (bytes);
+ 
+-  return shader;
++  return *shader;
+ }
+ 
+ #else /* GDK_RENDERING_VULKAN */

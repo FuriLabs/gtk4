@@ -1,0 +1,34 @@
+From: Chun-wei Fan <fanchunwei@src.gnome.org>
+Date: Mon, 27 May 2024 18:55:08 +0800
+Subject: gskvulkanmemory.c: Use VK_NULL_HANDLE for VkDeviceMemory
+
+...rather than NULL, so that things will build fine on non-LLP, non-64-bit
+systems.
+
+Origin: upstream, 4.14.5, commit:1029238d59bf9bdffd46466003c18bd60304fe7c
+---
+ gsk/gpu/gskvulkanmemory.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gsk/gpu/gskvulkanmemory.c b/gsk/gpu/gskvulkanmemory.c
+index 4e6672c..45dbf03 100644
+--- a/gsk/gpu/gskvulkanmemory.c
++++ b/gsk/gpu/gskvulkanmemory.c
+@@ -178,7 +178,7 @@ gsk_vulkan_buddy_allocator_alloc (GskVulkanAllocator  *allocator,
+       if (self->cache.vk_memory)
+         {
+           *alloc = self->cache;
+-          self->cache.vk_memory = NULL;
++          self->cache.vk_memory = VK_NULL_HANDLE;
+         }
+       else
+         {
+@@ -240,7 +240,7 @@ restart:
+           alloc->size <<= 1;
+           if (slot == 0)
+             {
+-              if (self->cache.vk_memory == NULL)
++              if (self->cache.vk_memory == VK_NULL_HANDLE)
+                 self->cache = *alloc;
+               else
+                 gsk_vulkan_free (self->allocator, alloc);

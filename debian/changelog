@@ -1,3 +1,57 @@
+gtk4 (4.14.4+ds-4) experimental; urgency=medium
+
+  [ Matthias Geiger ]
+  * d/rules: Skip label-shadows reftest on mips64el and riscv64.
+    The rendering differences are minor enough to not reflect a real problem
+    for applications.
+    (Closes: #1077178)
+
+  [ Simon McVittie ]
+  * d/patches: Improve patch metadata
+  * d/patches: Rearrange patch series, closest-to-upstream first.
+    No functional change.
+  * d/p/tests-Fix-signature-of-GtkTestATContext-update-selection-.patch:
+    Add patch to fix a11y/text, a11y/textview tests instead of skipping them
+    (Closes: #1077181)
+  * d/p/gskpathop-Introduce-a-type-to-represent-an-aligned-graphe.patch:
+    Align GskPath points to an 8-byte boundary where necessary
+    (Closes: #1077192, #1077288)
+  * d/rules: Skip headless test suite explicitly, rather than via a patch.
+    It's equally easy to skip these tests this way, and less delta vs.
+    upstream in our patch series makes it easier to manage.
+  * d/rules: Reduce test suites specifically skipped on big-endian.
+    We now skip these test suites unconditionally on all architectures,
+    because upstream say they are very sensitive to small behaviour
+    changes in the GL driver. Given that, there's no need to skip them a
+    second time on big-endian systems.
+  * d/p/gskvulkanmemory.c-Use-VK_NULL_HANDLE-for-VkDeviceMemory.patch,
+    d/p/gdkvulkancontext.c-Use-pointers-to-hash-VkShaderModule.patch,
+    d/p/gskvulkandevice.c-Put-Vk-Pipeline-RenderPass-in-structure.patch:
+    Add patches from upstream 4.14.x branch to fix build on i386.
+    The Vulkan renderer in the previous i386 package built successfully with
+    gcc 13, but probably didn't actually work. gcc 14 is stricter about
+    implicit integer/pointer conversions, so it failed to build.
+  * d/rules: Build with -ffloat-store on i386.
+    Some of the tests (and more in 4.15.x) fail if this is not done,
+    because i387 excess precision results in numeric values being
+    calculated differently. Because few GTK developers run it on i386
+    (and in particular, upstream do not), running the test suite and not
+    skipping more of it than strictly necessary is important, because
+    that's the only mechanism available to discover whether the library
+    has regressed on less-used architectures.
+    (Closes: #1077289)
+  * d/p/gdk-Check-some-assertions-on-our-architectures.patch:
+    Check some assertions for the GTK upstream maintainers.
+    This has no runtime impact, but will fail the build if some reasonable
+    assumptions turn out to be untrue.
+  * d/control: Depend on libgles2.
+    This is used by default since 4.14. It isn't strictly mandatory because
+    another backend can be chosen via environment variables, but the
+    failure mode if it is missing is very bad (applications crash) so it
+    seems proportionate to make it a Depends. (Closes: #1077287)
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 28 Jul 2024 19:24:05 +0100
+
 gtk4 (4.14.4+ds-3) experimental; urgency=medium
 
   * Extra workarounds for tests issues in the new version

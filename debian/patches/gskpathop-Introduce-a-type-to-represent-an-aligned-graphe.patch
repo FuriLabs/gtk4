@@ -41,6 +41,7 @@ Signed-off-by: Simon McVittie <smcv@debian.org>
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7510
 Bug-Debian: https://bugs.debian.org/1077192
 Bug-Debian: https://bugs.debian.org/1077288
+Applied-upstream: 4.15.4, commit:214f5a6f980c96011c30d78e3972a3665c8d14ed
 ---
  gsk/gskcontour.c                    | 55 +++++++++++++++++++++++--------------
  gsk/gskcontourprivate.h             |  2 +-

@@ -1,6 +1,8 @@
 gtk4 (4.14.4+ds-5) UNRELEASED; urgency=medium
 
   * d/rules: Add bug reference for #1077289
+  * d/changelog: Previous release only mitigated #1077178 rather than
+    fixing it
 
  -- Simon McVittie <smcv@debian.org>  Sun, 28 Jul 2024 20:42:19 +0100
 
@@ -9,8 +11,7 @@ gtk4 (4.14.4+ds-4) experimental; urgency=medium
   [ Matthias Geiger ]
   * d/rules: Skip label-shadows reftest on mips64el and riscv64.
     The rendering differences are minor enough to not reflect a real problem
-    for applications.
-    (Closes: #1077178)
+    for applications. (Mitigates: #1077178)
 
   [ Simon McVittie ]
   * d/patches: Improve patch metadata

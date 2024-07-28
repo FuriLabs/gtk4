@@ -14,6 +14,7 @@ Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/6490
 Signed-off-by: Simon McVittie <smcv@debian.org>
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7504
 Bug-Debian: https://bugs.debian.org/1077181
+Applied-upstream: 4.15.4, commit:a8bb71383a7c3f5aff1dc55b73e3637bbde30c53
 ---
  testsuite/a11y/text.c     | 1 -
  testsuite/a11y/textview.c | 1 -

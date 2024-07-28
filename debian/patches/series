@@ -16,3 +16,4 @@ debian/tests-Mark-gltexture-as-expected-to-fail-on-big-endian-ma.patch
 debian/tests-Mark-memorytexture-as-expected-to-fail-on-big-endian.patch
 debian/tests-Allow-longer-for-a-dialog-to-open.patch
 nodeparser-Adjust-test-for-pango-1.52.0.patch
+gdk-Check-some-assertions-on-our-architectures.patch

@@ -142,6 +142,7 @@ configure_flags_udeb = \
 	-Dx11-backend=true \
 	$(NULL)
 
+# https://bugs.debian.org/1077289
 ifeq (i386,$(DEB_HOST_ARCH_CPU))
 DEB_CFLAGS_MAINT_APPEND = -ffloat-store
 endif

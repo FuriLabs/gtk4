@@ -142,6 +142,10 @@ configure_flags_udeb = \
 	-Dx11-backend=true \
 	$(NULL)
 
+ifeq (i386,$(DEB_HOST_ARCH_CPU))
+DEB_CFLAGS_MAINT_APPEND = -ffloat-store
+endif
+
 %:
 	dh $@ --buildsystem=meson $(dh_options)
 

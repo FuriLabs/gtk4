@@ -255,15 +255,6 @@ skipped_suites = \
 	gsk-compare-vulkan \
 	$(NULL)
 
-# skip gsk on 32 bits for now since they are buggy but those architectures
-# aren't supported upstream
-# https://gitlab.gnome.org/GNOME/gtk/-/issues/6395
-ifeq ($(DEB_BUILD_ARCH_BITS),32)
-skipped_suites += \
-	gtk:gsk \
-	$(NULL)
-endif
-
 # Skip label-reftest on riscv and mips since the diff is benign
 ifneq ($(filter mips% riscv64,$(DEB_HOST_ARCH_CPU)),)
 # https://bugs.debian.org/1077178

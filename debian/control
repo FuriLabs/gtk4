@@ -91,6 +91,7 @@ Depends: adwaita-icon-theme,
          shared-mime-info,
          ${misc:Depends},
          ${shlibs:Depends},
+         libgles2,
          libgtk-4-common (>= ${source:Version})
 Provides: ${gtk:Provides}
 Recommends: libgtk-4-bin,

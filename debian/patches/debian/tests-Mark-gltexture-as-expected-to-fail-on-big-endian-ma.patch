@@ -7,11 +7,11 @@ Forwarded: not-needed, workaround
  testsuite/gdk/meson.build | 4 ++++
  1 file changed, 4 insertions(+)
 
-Index: gtk4-4.14.1+ds/testsuite/gdk/meson.build
-===================================================================
---- gtk4-4.14.1+ds.orig/testsuite/gdk/meson.build	2024-03-20 17:00:36.058661277 +0100
-+++ gtk4-4.14.1+ds/testsuite/gdk/meson.build	2024-03-20 17:00:36.054661336 +0100
-@@ -85,6 +85,10 @@
+diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
+index f9f4619..f6fcc46 100644
+--- a/testsuite/gdk/meson.build
++++ b/testsuite/gdk/meson.build
+@@ -85,6 +85,10 @@ foreach t : internal_tests
  
    suites = ['gdk'] + t.get('suites', [])
  

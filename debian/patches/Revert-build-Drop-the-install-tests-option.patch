@@ -21,11 +21,11 @@ This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
  testsuite/tools/meson.build      | 36 ++++++++++++++++---
  12 files changed, 353 insertions(+), 43 deletions(-)
 
-Index: gtk4/meson.build
-===================================================================
---- gtk4.orig/meson.build	2024-04-03 21:33:15.873221430 +0200
-+++ gtk4/meson.build	2024-04-03 21:33:15.865221542 +0200
-@@ -953,6 +953,7 @@
+diff --git a/meson.build b/meson.build
+index 38062bf..3d66662 100644
+--- a/meson.build
++++ b/meson.build
+@@ -955,6 +955,7 @@ summary('Documentation', get_option('documentation'), section: 'Build')
  summary('Man pages', get_option('man-pages'), section: 'Build')
  summary('Testsuite', get_option('build-testsuite'), section: 'Build')
  summary('Tests', get_option('build-tests'), section: 'Build')
@@ -33,11 +33,11 @@ Index: gtk4/meson.build
  summary('Demos', get_option('build-demos'), section: 'Build')
  summary('Examples', get_option('build-examples'), section: 'Build')
  
-Index: gtk4/meson_options.txt
-===================================================================
---- gtk4.orig/meson_options.txt	2024-04-03 21:33:15.873221430 +0200
-+++ gtk4/meson_options.txt	2024-04-03 21:33:15.865221542 +0200
-@@ -153,3 +153,8 @@
+diff --git a/meson_options.txt b/meson_options.txt
+index 07823a4..eaa6864 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -153,3 +153,8 @@ option('build-tests',
         type: 'boolean',
         value: true,
         description : 'Build tests')
@@ -46,10 +46,10 @@ Index: gtk4/meson_options.txt
 +       type: 'boolean',
 +       value: false,
 +       description : 'Install tests')
-Index: gtk4/testsuite/a11y/meson.build
-===================================================================
---- gtk4.orig/testsuite/a11y/meson.build	2024-04-03 21:33:15.873221430 +0200
-+++ gtk4/testsuite/a11y/meson.build	2024-04-03 21:33:15.865221542 +0200
+diff --git a/testsuite/a11y/meson.build b/testsuite/a11y/meson.build
+index 4fe5030..21fc5c5 100644
+--- a/testsuite/a11y/meson.build
++++ b/testsuite/a11y/meson.build
 @@ -1,3 +1,6 @@
 +testexecdir = join_paths(installed_test_bindir, 'gtk')
 +testdatadir = join_paths(installed_test_datadir, 'gtk')
@@ -57,7 +57,7 @@ Index: gtk4/testsuite/a11y/meson.build
  # Available keys for each test:
  #
  #  - 'name': the test name; used for the test and to determine the base
-@@ -69,11 +72,12 @@
+@@ -69,11 +72,12 @@ foreach t : tests
    test_extra_suites = t.get('suites', [])
    test_timeout = 60
  
@@ -72,11 +72,11 @@ Index: gtk4/testsuite/a11y/meson.build
    )
  
    if test_extra_suites.contains('slow')
-Index: gtk4/testsuite/css/change/meson.build
-===================================================================
---- gtk4.orig/testsuite/css/change/meson.build	2024-04-03 21:33:15.873221430 +0200
-+++ gtk4/testsuite/css/change/meson.build	2024-04-03 21:33:15.865221542 +0200
-@@ -6,10 +6,17 @@
+diff --git a/testsuite/css/change/meson.build b/testsuite/css/change/meson.build
+index f78d27e..e0ef9d4 100644
+--- a/testsuite/css/change/meson.build
++++ b/testsuite/css/change/meson.build
+@@ -6,10 +6,17 @@ changetest_env.set('G_TEST_BUILDDIR', meson.current_build_dir())
  changetest_env.set('GSETTINGS_BACKEND', 'memory')
  changetest_env.set('G_ENABLE_DIAGNOSTIC', '0')
  
@@ -96,7 +96,7 @@ Index: gtk4/testsuite/css/change/meson.build
  )
  
  test('change', test_change,
-@@ -18,3 +25,22 @@
+@@ -18,3 +25,22 @@ test('change', test_change,
    env: changetest_env,
    suite: 'css',
  )
@@ -119,11 +119,11 @@ Index: gtk4/testsuite/css/change/meson.build
 +  install_data(test_data, install_dir: testexecdir)
 +
 +endif
-Index: gtk4/testsuite/css/meson.build
-===================================================================
---- gtk4.orig/testsuite/css/meson.build	2024-04-03 21:33:15.873221430 +0200
-+++ gtk4/testsuite/css/meson.build	2024-04-03 21:33:15.865221542 +0200
-@@ -12,10 +12,14 @@
+diff --git a/testsuite/css/meson.build b/testsuite/css/meson.build
+index 746b042..c3ed717 100644
+--- a/testsuite/css/meson.build
++++ b/testsuite/css/meson.build
+@@ -12,10 +12,14 @@ subdir('nodes')
  subdir('style')
  subdir('change')
  
@@ -140,7 +140,7 @@ Index: gtk4/testsuite/css/meson.build
  )
  
  test('api', test_api,
-@@ -25,11 +29,12 @@
+@@ -25,11 +29,12 @@ test('api', test_api,
    suite: 'css',
  )
  
@@ -155,7 +155,7 @@ Index: gtk4/testsuite/css/meson.build
  )
  
  test('data', test_data,
-@@ -39,10 +44,11 @@
+@@ -39,10 +44,11 @@ test('data', test_data,
    suite: 'css',
  )
  
@@ -169,7 +169,7 @@ Index: gtk4/testsuite/css/meson.build
  )
  
  test('transition', transition,
-@@ -52,6 +58,24 @@
+@@ -52,6 +58,24 @@ test('transition', transition,
       suite: 'css'
  )
  
@@ -194,11 +194,11 @@ Index: gtk4/testsuite/css/meson.build
  if false and get_option ('profiler')
  
    adwaita_env = csstest_env
-Index: gtk4/testsuite/css/nodes/meson.build
-===================================================================
---- gtk4.orig/testsuite/css/nodes/meson.build	2024-04-03 21:33:15.873221430 +0200
-+++ gtk4/testsuite/css/nodes/meson.build	2024-04-03 21:33:15.865221542 +0200
-@@ -6,15 +6,81 @@
+diff --git a/testsuite/css/nodes/meson.build b/testsuite/css/nodes/meson.build
+index f682cdb..a7cb3e2 100644
+--- a/testsuite/css/nodes/meson.build
++++ b/testsuite/css/nodes/meson.build
+@@ -6,15 +6,81 @@ nodetest_env.set('G_TEST_BUILDDIR', meson.current_build_dir())
  nodetest_env.set('GSETTINGS_BACKEND', 'memory')
  nodetest_env.set('G_ENABLE_DIAGNOSTIC', '0')
  
@@ -285,10 +285,10 @@ Index: gtk4/testsuite/css/nodes/meson.build
 +
 +  install_data(test_data, install_dir: testexecdir)
 +endif
-Index: gtk4/testsuite/css/parser/meson.build
-===================================================================
---- gtk4.orig/testsuite/css/parser/meson.build	2024-04-03 21:33:15.873221430 +0200
-+++ gtk4/testsuite/css/parser/meson.build	2024-04-03 21:33:15.869221485 +0200
+diff --git a/testsuite/css/parser/meson.build b/testsuite/css/parser/meson.build
+index b05efb7..bfb9936 100644
+--- a/testsuite/css/parser/meson.build
++++ b/testsuite/css/parser/meson.build
 @@ -1,8 +1,11 @@
 -test_parser = executable('test-css-parser',
 -  sources: ['test-css-parser.c', '../../testutils.c'],
@@ -306,7 +306,7 @@ Index: gtk4/testsuite/css/parser/meson.build
  
  test_data = [
    'animation-crash-3.12.css',
-@@ -623,3 +626,15 @@
+@@ -623,3 +626,15 @@ foreach testname : test_data
           suite: 'css')
    endif
  endforeach
@@ -322,11 +322,11 @@ Index: gtk4/testsuite/css/parser/meson.build
 +  install_data(test_data, install_dir: testexecdir)
 +
 +endif
-Index: gtk4/testsuite/css/style/meson.build
-===================================================================
---- gtk4.orig/testsuite/css/style/meson.build	2024-04-03 21:33:15.873221430 +0200
-+++ gtk4/testsuite/css/style/meson.build	2024-04-03 21:33:15.869221485 +0200
-@@ -6,21 +6,73 @@
+diff --git a/testsuite/css/style/meson.build b/testsuite/css/style/meson.build
+index 7fc4036..52c962c 100644
+--- a/testsuite/css/style/meson.build
++++ b/testsuite/css/style/meson.build
+@@ -6,21 +6,73 @@ styletest_env.set('G_TEST_BUILDDIR', meson.current_build_dir())
  styletest_env.set('GSETTINGS_BACKEND', 'memory')
  styletest_env.set('G_ENABLE_DIAGNOSTIC', '0')
  
@@ -403,10 +403,10 @@ Index: gtk4/testsuite/css/style/meson.build
 +
 +  install_data(test_data, install_dir: testexecdir)
 +endif
-Index: gtk4/testsuite/gdk/meson.build
-===================================================================
---- gtk4.orig/testsuite/gdk/meson.build	2024-04-03 21:33:15.873221430 +0200
-+++ gtk4/testsuite/gdk/meson.build	2024-04-03 21:33:15.869221485 +0200
+diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
+index 1ce3e0f..f9f4619 100644
+--- a/testsuite/gdk/meson.build
++++ b/testsuite/gdk/meson.build
 @@ -1,10 +1,13 @@
 +testexecdir = join_paths(installed_test_bindir, 'gdk')
 +testdatadir = join_paths(installed_test_datadir, 'gdk')
@@ -427,7 +427,7 @@ Index: gtk4/testsuite/gdk/meson.build
  
  tests = [
    { 'name': 'array' },
-@@ -38,7 +41,8 @@
+@@ -38,7 +41,8 @@ foreach t : tests
      sources: '@0@.c'.format(test_name),
      c_args: common_cflags,
      dependencies: libgtk_dep,
@@ -437,7 +437,7 @@ Index: gtk4/testsuite/gdk/meson.build
    )
  
    suites = ['gdk'] + t.get('suites', [])
-@@ -75,7 +79,8 @@
+@@ -75,7 +79,8 @@ foreach t : internal_tests
      sources: '@0@.c'.format(test_name),
      c_args: common_cflags + ['-DGTK_COMPILATION'],
      dependencies: libgtk_static_dep,
@@ -447,7 +447,7 @@ Index: gtk4/testsuite/gdk/meson.build
    )
  
    suites = ['gdk'] + t.get('suites', [])
-@@ -91,3 +96,28 @@
+@@ -91,3 +96,28 @@ foreach t : internal_tests
      suite: suites,
    )
  endforeach
@@ -476,10 +476,10 @@ Index: gtk4/testsuite/gdk/meson.build
 +  install_subdir('clipboard-data', install_dir: testexecdir)
 +  install_subdir('image-data', install_dir: testexecdir)
 +endif
-Index: gtk4/testsuite/gsk/meson.build
-===================================================================
---- gtk4.orig/testsuite/gsk/meson.build	2024-04-03 21:33:15.873221430 +0200
-+++ gtk4/testsuite/gsk/meson.build	2024-04-03 21:33:15.869221485 +0200
+diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
+index 6001761..1768691 100644
+--- a/testsuite/gsk/meson.build
++++ b/testsuite/gsk/meson.build
 @@ -1,12 +1,22 @@
 -compare_render = executable('compare-render',
 +testexecdir = join_paths(installed_test_bindir, 'gsk')
@@ -505,7 +505,7 @@ Index: gtk4/testsuite/gsk/meson.build
  )
  
  compare_render_tests = [
-@@ -514,8 +524,10 @@
+@@ -517,8 +527,10 @@ foreach t : tests
    test_extra_suites = t.get(2, [])
  
    test_exe = executable(test_name, test_srcs,
@@ -517,7 +517,7 @@ Index: gtk4/testsuite/gsk/meson.build
    )
  
    test(test_name, test_exe,
-@@ -547,10 +559,11 @@
+@@ -550,10 +562,11 @@ foreach t : internal_tests
    test_srcs = ['@0@.c'.format(test_name)] + t.get(1, [])
    test_extra_suites = t.get(2, [])
  
@@ -532,10 +532,10 @@ Index: gtk4/testsuite/gsk/meson.build
    )
  
    test(test_name, test_exe,
-Index: gtk4/testsuite/gtk/meson.build
-===================================================================
---- gtk4.orig/testsuite/gtk/meson.build	2024-04-03 21:33:15.873221430 +0200
-+++ gtk4/testsuite/gtk/meson.build	2024-04-03 21:33:15.869221485 +0200
+diff --git a/testsuite/gtk/meson.build b/testsuite/gtk/meson.build
+index 744738d..a6c4731 100644
+--- a/testsuite/gtk/meson.build
++++ b/testsuite/gtk/meson.build
 @@ -1,3 +1,6 @@
 +testexecdir = join_paths(installed_test_bindir, 'gtk')
 +testdatadir = join_paths(installed_test_datadir, 'gtk')
@@ -543,7 +543,7 @@ Index: gtk4/testsuite/gtk/meson.build
  gtk_tests_export_dynamic_ldflag = []
  
  if cc.get_id() != 'msvc'
-@@ -172,6 +175,8 @@
+@@ -172,6 +175,8 @@ foreach t : tests
      c_args: test_cargs + test_extra_cargs,
      link_args: test_extra_ldflags,
      dependencies: libgtk_dep,
@@ -552,7 +552,7 @@ Index: gtk4/testsuite/gtk/meson.build
    )
  
    if test_extra_suites.contains('slow')
-@@ -200,6 +205,8 @@
+@@ -200,6 +205,8 @@ foreach t : internal_tests
      c_args: test_cargs + test_extra_cargs + ['-DGTK_COMPILATION'],
      link_args: test_extra_ldflags,
      dependencies: libgtk_static_dep,
@@ -561,7 +561,7 @@ Index: gtk4/testsuite/gtk/meson.build
    )
  
    if test_extra_suites.contains('slow')
-@@ -218,8 +225,10 @@
+@@ -218,8 +225,10 @@ endforeach
  # FIXME: if objc autotestkeywords_CPPFLAGS += -DHAVE_OBJC=1 -x objective-c++
  if add_languages('cpp', required: false, native: false)
    test_exe = executable('autotestkeywords',
@@ -573,7 +573,7 @@ Index: gtk4/testsuite/gtk/meson.build
    )
    test('c++ keywords', test_exe,
      args: [ '--tap', '-k' ],
-@@ -227,6 +236,16 @@
+@@ -227,6 +236,16 @@ if add_languages('cpp', required: false, native: false)
      env: test_env,
      suite: 'gtk',
    )
@@ -590,7 +590,7 @@ Index: gtk4/testsuite/gtk/meson.build
  endif
  
  
-@@ -252,10 +271,13 @@
+@@ -252,10 +271,13 @@ focus_chain_tests = [
    #[ 'widget-factory3', 'tab-backward' ],
  ]
  
@@ -605,7 +605,7 @@ Index: gtk4/testsuite/gtk/meson.build
  )
  
  foreach test : focus_chain_tests
-@@ -278,6 +300,30 @@
+@@ -278,6 +300,30 @@ test('potfiles', make_pot,
       workdir: meson.project_source_root(),
       suite: ['gtk', 'translations' ])
  
@@ -636,10 +636,10 @@ Index: gtk4/testsuite/gtk/meson.build
  if false and get_option ('profiler')
  
    performance_env = test_env
-Index: gtk4/testsuite/tools/meson.build
-===================================================================
---- gtk4.orig/testsuite/tools/meson.build	2024-04-03 21:33:15.873221430 +0200
-+++ gtk4/testsuite/tools/meson.build	2024-04-03 21:33:15.869221485 +0200
+diff --git a/testsuite/tools/meson.build b/testsuite/tools/meson.build
+index e19a819..54ede78 100644
+--- a/testsuite/tools/meson.build
++++ b/testsuite/tools/meson.build
 @@ -1,12 +1,23 @@
 +testexecdir = join_paths(installed_test_bindir, 'tools')
 +testdatadir = join_paths(installed_test_datadir, 'tools')
@@ -668,7 +668,7 @@ Index: gtk4/testsuite/tools/meson.build
      test(t, bash,
        args: t,
        workdir: meson.current_build_dir(),
-@@ -23,3 +34,20 @@
+@@ -23,3 +34,20 @@ if bash.found()
      )
    endforeach
  endif

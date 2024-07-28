@@ -22,16 +22,16 @@ Signed-off-by: Simon McVittie <smcv@debian.org>
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/3195
 Applied-upstream: no, upstream want reftests to be a strict pass/fail with identical results required
 ---
- testsuite/gsk/compare-render.c     | 86 +++++++++++++++++++++++++++++++++++---
- testsuite/reftests/gtk-reftest.c   | 32 +++++++++++++-
- testsuite/reftests/image-compare.c |  2 +-
- 3 files changed, 113 insertions(+), 7 deletions(-)
+ testsuite/gsk/compare-render.c     | 121 ++++++++++++++++++++++++++++++++++---
+ testsuite/reftests/gtk-reftest.c   |  32 +++++++++-
+ testsuite/reftests/image-compare.c |   2 +-
+ 3 files changed, 144 insertions(+), 11 deletions(-)
 
-Index: gtk4-4.14.1+ds/testsuite/gsk/compare-render.c
-===================================================================
---- gtk4-4.14.1+ds.orig/testsuite/gsk/compare-render.c	2024-03-21 14:24:08.961300477 +0100
-+++ gtk4-4.14.1+ds/testsuite/gsk/compare-render.c	2024-03-21 14:24:16.929203666 +0100
-@@ -111,6 +111,37 @@
+diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
+index 6bd6f28..6e8efad 100644
+--- a/testsuite/gsk/compare-render.c
++++ b/testsuite/gsk/compare-render.c
+@@ -111,6 +111,37 @@ get_output_file (const char *file,
    return result;
  }
  
@@ -69,7 +69,7 @@ Index: gtk4-4.14.1+ds/testsuite/gsk/compare-render.c
  static void
  save_image (GdkTexture *texture,
              const char *test_name,
-@@ -384,10 +415,18 @@
+@@ -384,10 +415,18 @@ main (int argc, char **argv)
                                                 &max_diff, &pixels_changed, &pixels);
        if (diff_texture)
          {
@@ -89,7 +89,7 @@ Index: gtk4-4.14.1+ds/testsuite/gsk/compare-render.c
          }
  
        g_clear_object (&diff_texture);
-@@ -423,10 +462,19 @@
+@@ -423,10 +462,19 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -110,7 +110,7 @@ Index: gtk4-4.14.1+ds/testsuite/gsk/compare-render.c
          }
  
        g_clear_object (&diff_texture);
-@@ -492,10 +540,19 @@
+@@ -492,10 +540,19 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -131,7 +131,7 @@ Index: gtk4-4.14.1+ds/testsuite/gsk/compare-render.c
          }
  
        g_clear_object (&diff_texture);
-@@ -532,10 +589,19 @@
+@@ -532,10 +589,19 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -152,7 +152,7 @@ Index: gtk4-4.14.1+ds/testsuite/gsk/compare-render.c
          }
  
        g_clear_object (&diff_texture);
-@@ -592,10 +658,19 @@
+@@ -592,10 +658,19 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -173,7 +173,7 @@ Index: gtk4-4.14.1+ds/testsuite/gsk/compare-render.c
          }
  
        g_clear_object (&diff_texture);
-@@ -636,10 +711,19 @@
+@@ -636,10 +711,19 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -194,7 +194,7 @@ Index: gtk4-4.14.1+ds/testsuite/gsk/compare-render.c
          }
  
        g_clear_object (&diff_texture);
-@@ -694,8 +778,17 @@
+@@ -694,8 +778,17 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -213,7 +213,7 @@ Index: gtk4-4.14.1+ds/testsuite/gsk/compare-render.c
          }
  
        g_clear_object (&diff_texture);
-@@ -733,12 +826,22 @@
+@@ -733,12 +826,22 @@ skip_clip:
  
        save_image (reference_texture, node_file, "-colorflipped.ref.png");
  
@@ -238,11 +238,11 @@ Index: gtk4-4.14.1+ds/testsuite/gsk/compare-render.c
          }
  
        g_clear_object (&diff_texture);
-Index: gtk4-4.14.1+ds/testsuite/reftests/gtk-reftest.c
-===================================================================
---- gtk4-4.14.1+ds.orig/testsuite/reftests/gtk-reftest.c	2024-03-21 14:24:08.961300477 +0100
-+++ gtk4-4.14.1+ds/testsuite/reftests/gtk-reftest.c	2024-03-21 14:24:08.957300525 +0100
-@@ -302,6 +302,12 @@
+diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
+index 046751d..5945aa8 100644
+--- a/testsuite/reftests/gtk-reftest.c
++++ b/testsuite/reftests/gtk-reftest.c
+@@ -302,6 +302,12 @@ save_image (GdkTexture *texture,
    g_free (filename);
  }
  
@@ -255,7 +255,7 @@ Index: gtk4-4.14.1+ds/testsuite/reftests/gtk-reftest.c
  static void
  save_node (GskRenderNode *node,
             const char    *test_name,
-@@ -383,13 +389,37 @@
+@@ -383,13 +389,37 @@ test_ui_file (GFile *file)
  
    if (diff_image)
      {
@@ -294,11 +294,11 @@ Index: gtk4-4.14.1+ds/testsuite/reftests/gtk-reftest.c
      }
  
    remove_extra_css (provider);
-Index: gtk4-4.14.1+ds/testsuite/reftests/image-compare.c
-===================================================================
---- gtk4-4.14.1+ds.orig/testsuite/reftests/image-compare.c	2024-03-21 14:24:08.961300477 +0100
-+++ gtk4-4.14.1+ds/testsuite/reftests/image-compare.c	2024-03-21 14:24:08.957300525 +0100
-@@ -51,7 +51,7 @@
+diff --git a/testsuite/reftests/image-compare.c b/testsuite/reftests/image-compare.c
+index dd9c26c..e68a161 100644
+--- a/testsuite/reftests/image-compare.c
++++ b/testsuite/reftests/image-compare.c
+@@ -51,7 +51,7 @@ main (int argc, char **argv)
        exit (1);
      }
  

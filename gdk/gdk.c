@@ -43,6 +43,29 @@
 
 #include <fribidi.h>
 
+/* Testing that something the GTK developers want to do in future can
+ * work on all Debian architectures */
+typedef union {
+  float values[4];
+  struct {
+    float red, green, blue, alpha;
+  };
+  struct {
+    float r, g, b, a;
+  };
+} FutureGdkColor;
+
+G_STATIC_ASSERT (sizeof (FutureGdkColor) == sizeof (float) * 4);
+
+G_STATIC_ASSERT (G_STRUCT_OFFSET (FutureGdkColor, red) == G_STRUCT_OFFSET (FutureGdkColor, r));
+G_STATIC_ASSERT (G_STRUCT_OFFSET (FutureGdkColor, green) == G_STRUCT_OFFSET (FutureGdkColor, g));
+G_STATIC_ASSERT (G_STRUCT_OFFSET (FutureGdkColor, blue) == G_STRUCT_OFFSET (FutureGdkColor, b));
+G_STATIC_ASSERT (G_STRUCT_OFFSET (FutureGdkColor, alpha) == G_STRUCT_OFFSET (FutureGdkColor, a));
+
+G_STATIC_ASSERT (G_STRUCT_OFFSET (FutureGdkColor, red) == G_STRUCT_OFFSET (FutureGdkColor, values[0]));
+G_STATIC_ASSERT (G_STRUCT_OFFSET (FutureGdkColor, green) == G_STRUCT_OFFSET (FutureGdkColor, values[1]));
+G_STATIC_ASSERT (G_STRUCT_OFFSET (FutureGdkColor, blue) == G_STRUCT_OFFSET (FutureGdkColor, values[2]));
+G_STATIC_ASSERT (G_STRUCT_OFFSET (FutureGdkColor, alpha) == G_STRUCT_OFFSET (FutureGdkColor, values[3]));
 
 /**
  * GDK_WINDOWING_X11:

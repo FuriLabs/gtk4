@@ -2,6 +2,7 @@ gtk4 (4.14.4+ds-6) unstable; urgency=medium
 
   [ Jeremy Bícha ]
   * Add patch to fix build tests on the 31st day of the month
+    (Closes: #1077675)
 
   [ Simon McVittie ]
   * Add a missing item to the previous changelog entry

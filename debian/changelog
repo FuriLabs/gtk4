@@ -1,10 +1,14 @@
-gtk4 (4.14.4+ds-5) UNRELEASED; urgency=medium
+gtk4 (4.14.4+ds-5) unstable; urgency=medium
 
+  [ Simon McVittie ]
   * d/rules: Add bug reference for #1077289
   * d/changelog: Previous release only mitigated #1077178 rather than
     fixing it
 
- -- Simon McVittie <smcv@debian.org>  Sun, 28 Jul 2024 20:42:19 +0100
+  [ Jeremy Bícha ]
+  * Release to unstable (Closes: #1072395)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 31 Jul 2024 14:30:30 -0400
 
 gtk4 (4.14.4+ds-4) experimental; urgency=medium
 

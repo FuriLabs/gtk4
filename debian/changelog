@@ -1,9 +1,19 @@
+gtk4 (4.14.4+ds-6) UNRELEASED; urgency=medium
+
+  * Add a missing item to the previous changelog entry
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 31 Jul 2024 20:59:04 +0100
+
 gtk4 (4.14.4+ds-5) unstable; urgency=medium
 
   [ Simon McVittie ]
   * d/rules: Add bug reference for #1077289
   * d/changelog: Previous release only mitigated #1077178 rather than
     fixing it
+  * d/rules: Use softpipe instead of llvmpipe on powerpc, sparc64.
+    Most tests crash with a LLVM assertion failure on these -ports
+    architectures. Maybe llvmpipe is broken on these architectures,
+    and if so, maybe softpipe will have better success?
 
   [ Jeremy Bícha ]
   * Release to unstable (Closes: #1072395)

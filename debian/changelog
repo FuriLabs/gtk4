@@ -1,3 +1,13 @@
+gtk4 (4.14.4+ds-7) unstable; urgency=medium
+
+  * d/rules: Append to CFLAGS for i386 the same way we append to LDFLAGS.
+    Using DEB_CFLAGS_MAINT_APPEND here worked a few days ago, but does not
+    seem to work now, possibly affected by the changes in dpkg 1.22.10.
+    (Closes: #1077690)
+  * d/changelog: Mention #1077675 in previous changelog entry
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 31 Jul 2024 23:27:57 +0100
+
 gtk4 (4.14.4+ds-6) unstable; urgency=medium
 
   [ Jeremy Bícha ]

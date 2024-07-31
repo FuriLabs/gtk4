@@ -1,8 +1,12 @@
-gtk4 (4.14.4+ds-6) UNRELEASED; urgency=medium
+gtk4 (4.14.4+ds-6) unstable; urgency=medium
 
+  [ Jeremy Bícha ]
+  * Add patch to fix build tests on the 31st day of the month
+
+  [ Simon McVittie ]
   * Add a missing item to the previous changelog entry
 
- -- Simon McVittie <smcv@debian.org>  Wed, 31 Jul 2024 20:59:04 +0100
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 31 Jul 2024 16:18:23 -0400
 
 gtk4 (4.14.4+ds-5) unstable; urgency=medium
 

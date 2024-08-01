@@ -1,3 +1,9 @@
+gtk4 (4.14.4+ds-9) UNRELEASED; urgency=medium
+
+  * Mention #1077757 in previous changelog entry
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 01 Aug 2024 17:57:17 +0100
+
 gtk4 (4.14.4+ds-8) unstable; urgency=medium
 
   * d/p/debian/tests-Mark-memorytexture-as-expected-to-fail-on-big-endian.patch:

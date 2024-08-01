@@ -1,4 +1,4 @@
-gtk4 (4.14.4+ds-8) UNRELEASED; urgency=medium
+gtk4 (4.14.4+ds-8) unstable; urgency=medium
 
   * d/p/debian/tests-Mark-memorytexture-as-expected-to-fail-on-big-endian.patch:
     Update patch to also not install its .test file on big-endian
@@ -9,7 +9,7 @@ gtk4 (4.14.4+ds-8) UNRELEASED; urgency=medium
   * d/rules: Export DEB_*_MAINT_APPEND instead of appending to CFLAGS,
     LDFLAGS (see #1077732 for a request to document the intended pattern)
 
- -- Simon McVittie <smcv@debian.org>  Thu, 01 Aug 2024 15:16:18 +0100
+ -- Simon McVittie <smcv@debian.org>  Thu, 01 Aug 2024 15:28:56 +0100
 
 gtk4 (4.14.4+ds-7) unstable; urgency=medium
 

@@ -5,7 +5,7 @@ gtk4 (4.14.4+ds-8) unstable; urgency=medium
     architectures.
     This seems the easiest way to avoid running it as an autopkgtest,
     which we know won't work, for the same reasons it doesn't work
-    at build-time.
+    at build-time. (Mitigates: #1077757)
   * d/rules: Export DEB_*_MAINT_APPEND instead of appending to CFLAGS,
     LDFLAGS (see #1077732 for a request to document the intended pattern)
 

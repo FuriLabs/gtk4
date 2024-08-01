@@ -1,17 +1,23 @@
 #!/usr/bin/make -f
 
-include /usr/share/dpkg/default.mk
 include /usr/share/dpkg/pkg-info.mk
+
+# Ensure the build aborts when there are still references to undefined symbols
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,-z,defs
+
+# Make the linker work a bit harder so dynamic loading can be done faster
+DEB_LDFLAGS_MAINT_APPEND += -Wl,-O1
+
+# https://bugs.debian.org/1077289
+ifeq (i386,$(DEB_HOST_ARCH_CPU))
+export DEB_CFLAGS_MAINT_APPEND = -ffloat-store
+endif
+
+include /usr/share/dpkg/default.mk
 
 dh_options =
 built_binaries := $(shell dh_listpackages)
 all_binaries := $(shell sed -ne 's/^Package: *//p' < debian/control)
-
-# Ensure the build aborts when there are still references to undefined symbols
-LDFLAGS += -Wl,-z,defs
-
-# Make the linker work a bit harder so dynamic loading can be done faster
-LDFLAGS += -Wl,-O1
 
 export APIVER := 4
 export SONAME := 1
@@ -141,11 +147,6 @@ configure_flags_udeb = \
 	-Dwayland-backend=false \
 	-Dx11-backend=true \
 	$(NULL)
-
-# https://bugs.debian.org/1077289
-ifeq (i386,$(DEB_HOST_ARCH_CPU))
-CFLAGS += -ffloat-store
-endif
 
 %:
 	dh $@ --buildsystem=meson $(dh_options)

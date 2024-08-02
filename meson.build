@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.14.4',
+        version: '4.15.4',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -13,12 +13,12 @@ project('gtk', 'c',
 # keep these numbers in sync with wrap files where there exist
 glib_req           = '>= 2.76.0'
 introspection_req  = '>= 1.76.0' # keep this in sync with glib
-pango_req          = '>= 1.50.0' # keep this in sync with .gitlab-ci/test-msys.sh
+pango_req          = '>= 1.52.0' # keep this in sync with .gitlab-ci/test-msys.sh
 harfbuzz_req       = '>= 2.6.0'
 fribidi_req        = '>= 1.0.6'
-cairo_req          = '>= 1.14.0'
+cairo_req          = '>= 1.18.0'
 gdk_pixbuf_req     = '>= 2.30.0'
-wayland_proto_req  = '>= 1.31'
+wayland_proto_req  = '>= 1.36'
 wayland_req        = '>= 1.21.0'
 graphene_req       = '>= 1.10.0'
 epoxy_req          = '>= 1.4'
@@ -58,6 +58,11 @@ gtk_interface_age = gtk_minor_version.is_odd() ? 0 : gtk_micro_version
 add_project_arguments('-DGTK_VERSION="@0@"'.format(meson.project_version()), language: 'c')
 
 add_project_arguments('-D_GNU_SOURCE', language: 'c')
+
+if host_machine.system() == 'windows'
+  add_project_arguments(['-DUNICODE',
+                         '-D_UNICODE'], language: 'c')
+endif
 
 # Use debug/optimization flags to determine whether to enable debug or disable
 # cast checks
@@ -394,6 +399,7 @@ fribidi_dep    = dependency('fribidi', version: fribidi_req,
                             default_options: ['docs=false'])
 harfbuzz_dep   = dependency('harfbuzz', version: harfbuzz_req,
                             default_options: ['coretext=enabled'])
+hb_subset_dep  = dependency('harfbuzz-subset', version: harfbuzz_req)
 
 # Require PangoFT2 if on X11 or wayland
 pangoft_dep    = dependency('pangoft2', version: pango_req,
@@ -491,8 +497,6 @@ if wayland_enabled
                               default_options: ['documentation=false'])
   wlprotocolsdep = dependency('wayland-protocols', version: wayland_proto_req)
   wlegldep       = dependency('wayland-egl')
-
-  wlproto_dir = wlprotocolsdep.get_variable('pkgdatadir')
 
   wayland_pkgs = [
     'wayland-client @0@'.format(wayland_req),
@@ -622,7 +626,7 @@ vulkan_dep = dependency('vulkan',
                         version: vulkan_req,
                         required: vulkan_enabled)
 glslc = find_program('glslc', required: vulkan_enabled)
-if vulkan_dep.found()
+if vulkan_dep.found() and glslc.found()
   have_vulkan = true
   vulkan_pkg_found = vulkan_dep.type_name() == 'pkgconfig'
 else

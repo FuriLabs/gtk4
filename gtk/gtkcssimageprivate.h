@@ -26,6 +26,8 @@
 #include "gtk/css/gtkcsstokenizerprivate.h"
 #include "gtk/css/gtkcssparserprivate.h"
 #include "gtk/gtkcsstypesprivate.h"
+#include "gtk/gtkcssvariablesetprivate.h"
+#include "gtk/gtkcssvalueprivate.h"
 #include "gtk/gtksnapshot.h"
 #include "gtk/gtkstyleprovider.h"
 
@@ -60,9 +62,7 @@ struct _GtkCssImageClass
   /* create "computed value" in CSS terms, returns a new reference */
   GtkCssImage *(* compute)                         (GtkCssImage                *image,
                                                     guint                       property_id,
-                                                    GtkStyleProvider           *provider,
-                                                    GtkCssStyle                *style,
-                                                    GtkCssStyle                *parent_style);
+                                                    GtkCssComputeContext       *context);
   /* compare two images for equality */
   gboolean     (* equal)                           (GtkCssImage                *image1,
                                                     GtkCssImage                *image2);
@@ -91,6 +91,10 @@ struct _GtkCssImageClass
   void         (* print)                           (GtkCssImage                *image,
                                                     GString                    *string);
   gboolean     (* is_computed)                     (GtkCssImage                *image);
+  gboolean     (* contains_current_color)          (GtkCssImage                *image);
+  GtkCssImage *( * resolve)                        (GtkCssImage                *image,
+                                                    GtkCssComputeContext       *context,
+                                                    GtkCssValue                *current_color);
 };
 
 GType          _gtk_css_image_get_type             (void) G_GNUC_CONST;
@@ -104,9 +108,7 @@ double         _gtk_css_image_get_aspect_ratio     (GtkCssImage                *
 
 GtkCssImage *  _gtk_css_image_compute              (GtkCssImage                *image,
                                                     guint                       property_id,
-                                                    GtkStyleProvider           *provider,
-                                                    GtkCssStyle                *style,
-                                                    GtkCssStyle                *parent_style);
+                                                    GtkCssComputeContext       *context);
 gboolean       _gtk_css_image_equal                (GtkCssImage                *image1,
                                                     GtkCssImage                *image2) G_GNUC_PURE;
 GtkCssImage *  _gtk_css_image_transition           (GtkCssImage                *start,
@@ -114,10 +116,6 @@ GtkCssImage *  _gtk_css_image_transition           (GtkCssImage                *
                                                     guint                       property_id,
                                                     double                      progress);
 
-void           _gtk_css_image_draw                 (GtkCssImage                *image,
-                                                    cairo_t                    *cr,
-                                                    double                      width,
-                                                    double                      height);
 void           gtk_css_image_snapshot              (GtkCssImage                *image,
                                                     GtkSnapshot                *snapshot,
                                                     double                      width,
@@ -144,6 +142,11 @@ cairo_surface_t *
                                                     int                         surface_height);
 gboolean       gtk_css_image_is_computed           (GtkCssImage                *image) G_GNUC_PURE;
 
+gboolean       gtk_css_image_contains_current_color (GtkCssImage *image) G_GNUC_PURE;
+
+GtkCssImage *  gtk_css_image_resolve                (GtkCssImage          *image,
+                                                     GtkCssComputeContext *context,
+                                                     GtkCssValue          *current_color);
 
 G_END_DECLS
 

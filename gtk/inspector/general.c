@@ -37,6 +37,7 @@
 
 #include "gdk/gdkdebugprivate.h"
 #include "gdk/gdkdisplayprivate.h"
+#include "gdk/gdkmonitorprivate.h"
 
 #include "profile_conf.h"
 
@@ -66,6 +67,7 @@
 #include <epoxy/egl.h>
 #include <xkbcommon/xkbcommon.h>
 #include "wayland/gdkdisplay-wayland.h"
+#include "wayland/gdkwaylandcolor-private.h"
 #endif
 
 #ifdef GDK_WINDOWING_BROADWAY
@@ -693,6 +695,9 @@ add_wayland_protocols (GdkDisplay          *display,
       append_wayland_protocol_row (gen, (struct wl_proxy *)d->fractional_scale);
       append_wayland_protocol_row (gen, (struct wl_proxy *)d->viewporter);
       append_wayland_protocol_row (gen, (struct wl_proxy *)d->presentation);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->single_pixel_buffer);
+      if (d->color)
+        append_wayland_protocol_row (gen, gdk_wayland_color_get_color_manager (d->color));
     }
 }
 #endif
@@ -798,6 +803,10 @@ add_monitor (GtkInspectorGeneral *gen,
                            gdk_monitor_get_width_mm (monitor),
                            gdk_monitor_get_height_mm (monitor));
   add_label_row (gen, list, "Size", value, 10);
+  g_free (value);
+
+  value = g_strdup_printf ("%.1f dpi", gdk_monitor_get_dpi (monitor));
+  add_label_row (gen, list, "Resolution", value, 10);
   g_free (value);
 
   if (gdk_monitor_get_refresh_rate (monitor) != 0)

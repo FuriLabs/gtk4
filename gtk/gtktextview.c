@@ -68,11 +68,48 @@
  *
  * A widget that displays the contents of a [class@Gtk.TextBuffer].
  *
- * ![An example GtkTextview](multiline-text.png)
+ * ![An example GtkTextView](multiline-text.png)
  *
  * You may wish to begin by reading the [conceptual overview](section-text-widget.html),
  * which gives an overview of all the objects and data types related to the
  * text widget and how they work together.
+ *
+ * ## Shortcuts and Gestures
+ *
+ * `GtkTextView` supports the following keyboard shortcuts:
+ *
+ * - <kbd>Shift</kbd>+<kbd>F10</kbd> or <kbd>Menu</kbd> opens the context menu.
+ * - <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes the last modification.
+ * - <kbd>Ctrl</kbd>+<kbd>Y</kbd> or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>
+ *   redoes the last undone modification.
+ *
+ * Additionally, the following signals have default keybindings:
+ *
+ * - [signal@Gtk.TextView::backspace]
+ * - [signal@Gtk.TextView::copy-clipboard]
+ * - [signal@Gtk.TextView::cut-clipboard]
+ * - [signal@Gtk.TextView::delete-from-cursor]
+ * - [signal@Gtk.TextView::insert-emoji]
+ * - [signal@Gtk.TextView::move-cursor]
+ * - [signal@Gtk.TextView::paste-clipboard]
+ * - [signal@Gtk.TextView::select-all]
+ * - [signal@Gtk.TextView::toggle-cursor-visible]
+ * - [signal@Gtk.TextView::toggle-overwrite]
+ *
+ * ## Actions
+ *
+ * `GtkTextView` defines a set of built-in actions:
+ *
+ * - `clipboard.copy` copies the contents to the clipboard.
+ * - `clipboard.cut` copies the contents to the clipboard and deletes it from
+ *   the widget.
+ * - `clipboard.paste` inserts the contents of the clipboard into the widget.
+ * - `menu.popup` opens the context menu.
+ * - `misc.insert-emoji` opens the Emoji chooser.
+ * - `selection.delete` deletes the current selection.
+ * - `selection.select-all` selects all of the widgets content.
+ * - `text.redo` redoes the last change to the contents.
+ * - `text.undo` undoes the last change to the contents.
  *
  * ## CSS nodes
  *
@@ -303,6 +340,8 @@ struct _GtkTextViewPrivate
   guint vscroll_policy : 1;
   guint cursor_handle_dragged : 1;
   guint selection_handle_dragged : 1;
+
+  guint selection_style_changed : 1;
 };
 
 struct _GtkTextPendingScroll
@@ -841,6 +880,19 @@ gtk_text_view_notify (GObject    *object,
 }
 
 static void
+selection_style_changed_cb (GtkCssNode        *node,
+                            GtkCssStyleChange *change,
+                            GtkTextView       *self)
+{
+  if (gtk_css_style_change_affects (change, GTK_CSS_AFFECTS_REDRAW))
+    {
+      GtkTextViewPrivate *priv = self->priv;
+      priv->selection_style_changed = TRUE;
+      gtk_widget_queue_draw (GTK_WIDGET (self));
+    }
+}
+
+static void
 gtk_text_view_class_init (GtkTextViewClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
@@ -883,7 +935,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
    */
 
   /**
-   * GtkTextview:pixels-above-lines: (attributes org.gtk.Property.get=gtk_text_view_get_pixels_above_lines org.gtk.Property.set=gtk_text_view_set_pixels_above_lines)
+   * GtkTextView:pixels-above-lines: (attributes org.gtk.Property.get=gtk_text_view_get_pixels_above_lines org.gtk.Property.set=gtk_text_view_set_pixels_above_lines)
    *
    * Pixels of blank space above paragraphs.
    */
@@ -894,7 +946,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
   /**
-   * GtkTextview:pixels-below-lines: (attributes org.gtk.Property.get=gtk_text_view_get_pixels_below_lines org.gtk.Property.set=gtk_text_view_set_pixels_below_lines)
+   * GtkTextView:pixels-below-lines: (attributes org.gtk.Property.get=gtk_text_view_get_pixels_below_lines org.gtk.Property.set=gtk_text_view_set_pixels_below_lines)
    *
    * Pixels of blank space below paragraphs.
    */
@@ -905,7 +957,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
   /**
-   * GtkTextview:pixels-inside-wrap: (attributes org.gtk.Property.get=gtk_text_view_get_pixels_inside_wrap org.gtk.Property.set=gtk_text_view_set_pixels_inside_wrap)
+   * GtkTextView:pixels-inside-wrap: (attributes org.gtk.Property.get=gtk_text_view_get_pixels_inside_wrap org.gtk.Property.set=gtk_text_view_set_pixels_inside_wrap)
    *
    * Pixels of blank space between wrapped lines in a paragraph.
    */
@@ -916,7 +968,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
   /**
-   * GtkTextview:editable: (attributes org.gtk.Property.get=gtk_text_view_get_editable org.gtk.Property.set=gtk_text_view_set_editable)
+   * GtkTextView:editable: (attributes org.gtk.Property.get=gtk_text_view_get_editable org.gtk.Property.set=gtk_text_view_set_editable)
    *
    * Whether the text can be modified by the user.
    */
@@ -927,7 +979,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
   /**
-   * GtkTextview:wrap-mode: (attributes org.gtk.Property.get=gtk_text_view_get_wrap_mode org.gtk.Property.set=gtk_text_view_set_wrap_mode)
+   * GtkTextView:wrap-mode: (attributes org.gtk.Property.get=gtk_text_view_get_wrap_mode org.gtk.Property.set=gtk_text_view_set_wrap_mode)
    *
    * Whether to wrap lines never, at word boundaries, or at character boundaries.
    */
@@ -939,7 +991,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                                       GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
   /**
-   * GtkTextview:justification: (attributes org.gtk.Property.get=gtk_text_view_get_justification org.gtk.Property.set=gtk_text_view_set_justification)
+   * GtkTextView:justification: (attributes org.gtk.Property.get=gtk_text_view_get_justification org.gtk.Property.set=gtk_text_view_set_justification)
    *
    * Left, right, or center justification.
    */
@@ -1035,7 +1087,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
   /**
-   * GtkTextview:tabs: (attributes org.gtk.Property.get=gtk_text_view_get_tabs org.gtk.Property.set=gtk_text_view_set_tabs)
+   * GtkTextView:tabs: (attributes org.gtk.Property.get=gtk_text_view_get_tabs org.gtk.Property.set=gtk_text_view_set_tabs)
    *
    * Custom tabs for this text.
    */
@@ -1726,7 +1778,51 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
   add_move_binding (widget_class, GDK_KEY_KP_Page_Down, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_HORIZONTAL_PAGES, 1);
 
+#ifdef __APPLE__
+  add_move_binding (widget_class, GDK_KEY_Right, GDK_ALT_MASK,
+                    GTK_MOVEMENT_WORDS, 1);
+
+  add_move_binding (widget_class, GDK_KEY_Left, GDK_ALT_MASK,
+                    GTK_MOVEMENT_WORDS, -1);
+
+  add_move_binding (widget_class, GDK_KEY_KP_Right, GDK_ALT_MASK,
+                    GTK_MOVEMENT_WORDS, 1);
+
+  add_move_binding (widget_class, GDK_KEY_KP_Left, GDK_ALT_MASK,
+                    GTK_MOVEMENT_WORDS, -1);
+
+  add_move_binding (widget_class, GDK_KEY_Right, GDK_ALT_MASK,
+                    GTK_MOVEMENT_DISPLAY_LINE_ENDS, 1);
+
+  add_move_binding (widget_class, GDK_KEY_Left, GDK_ALT_MASK,
+                    GTK_MOVEMENT_DISPLAY_LINE_ENDS, -1);
+
+  add_move_binding (widget_class, GDK_KEY_KP_Right, GDK_ALT_MASK,
+                    GTK_MOVEMENT_DISPLAY_LINE_ENDS, 1);
+
+  add_move_binding (widget_class, GDK_KEY_KP_Left, GDK_ALT_MASK,
+                    GTK_MOVEMENT_DISPLAY_LINE_ENDS, -1);
+
+  add_move_binding (widget_class, GDK_KEY_Up, GDK_META_MASK,
+                    GTK_MOVEMENT_BUFFER_ENDS, -1);
+
+  add_move_binding (widget_class, GDK_KEY_Down, GDK_META_MASK,
+                    GTK_MOVEMENT_BUFFER_ENDS, 1);
+
+  add_move_binding (widget_class, GDK_KEY_KP_Up, GDK_META_MASK,
+                    GTK_MOVEMENT_BUFFER_ENDS, -1);
+
+  add_move_binding (widget_class, GDK_KEY_KP_Down, GDK_META_MASK,
+                    GTK_MOVEMENT_BUFFER_ENDS, 1);
+#endif
+
   /* Select all */
+#ifdef __APPLE__
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_a, GDK_META_MASK,
+                                       "select-all",
+                                       "(b)", TRUE);
+#else
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_a, GDK_CONTROL_MASK,
                                        "select-all",
@@ -1736,8 +1832,15 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                        GDK_KEY_slash, GDK_CONTROL_MASK,
                                        "select-all",
                                        "(b)", TRUE);
+#endif
 
   /* Unselect all */
+#ifdef __APPLE__
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_a, GDK_SHIFT_MASK | GDK_META_MASK,
+                                       "select-all",
+                                       "(b)", FALSE);
+#else
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_backslash, GDK_CONTROL_MASK,
                                        "select-all",
@@ -1747,6 +1850,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                        GDK_KEY_a, GDK_SHIFT_MASK | GDK_CONTROL_MASK,
                                        "select-all",
                                        "(b)", FALSE);
+#endif
 
   /* Deleting text */
   gtk_widget_class_add_binding_signal (widget_class,
@@ -1785,6 +1889,17 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                        "delete-from-cursor",
                                        "(ii)", GTK_DELETE_WORD_ENDS, -1);
 
+#ifdef __APPLE__
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_Delete, GDK_ALT_MASK,
+                                       "delete-from-cursor",
+                                       "(ii)", GTK_DELETE_WORD_ENDS, 1);
+
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_BackSpace, GDK_ALT_MASK,
+                                       "delete-from-cursor",
+                                       "(ii)", GTK_DELETE_WORD_ENDS, -1);
+#else
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_Delete, GDK_SHIFT_MASK | GDK_CONTROL_MASK,
                                        "delete-from-cursor",
@@ -1799,9 +1914,23 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                        GDK_KEY_BackSpace, GDK_SHIFT_MASK | GDK_CONTROL_MASK,
                                        "delete-from-cursor",
                                        "(ii)", GTK_DELETE_PARAGRAPH_ENDS, -1);
+#endif
 
   /* Cut/copy/paste */
-
+#ifdef __APPLE__
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_x, GDK_META_MASK,
+                                       "cut-clipboard",
+                                       NULL);
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_c, GDK_META_MASK,
+                                       "copy-clipboard",
+                                       NULL);
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_v, GDK_META_MASK,
+                                       "paste-clipboard",
+                                       NULL);
+#else
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_x, GDK_CONTROL_MASK,
                                        "cut-clipboard",
@@ -1840,8 +1969,17 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                        GDK_KEY_Insert, GDK_SHIFT_MASK,
                                        "paste-clipboard",
                                        NULL);
+#endif
 
   /* Undo/Redo */
+#ifdef __APPLE__
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_z, GDK_META_MASK,
+                                       "text.undo", NULL);
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_z, GDK_META_MASK | GDK_SHIFT_MASK,
+                                       "text.redo", NULL);
+#else
   gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_z, GDK_CONTROL_MASK,
                                        "text.undo", NULL);
@@ -1851,6 +1989,7 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
   gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_z, GDK_CONTROL_MASK | GDK_SHIFT_MASK,
                                        "text.redo", NULL);
+#endif
 
   /* Overwrite */
   gtk_widget_class_add_binding_signal (widget_class,
@@ -2041,6 +2180,8 @@ gtk_text_view_init (GtkTextView *text_view)
   gtk_css_node_set_state (priv->selection_node,
                           gtk_css_node_get_state (priv->text_window->css_node) & ~GTK_STATE_FLAG_DROP_ACTIVE);
   gtk_css_node_set_visible (priv->selection_node, FALSE);
+  g_signal_connect (priv->selection_node, "style-changed",
+                    G_CALLBACK (selection_style_changed_cb), text_view);
   g_object_unref (priv->selection_node);
 
   gtk_widget_action_set_enabled (GTK_WIDGET (text_view), "text.can-redo", FALSE);
@@ -5922,9 +6063,12 @@ gtk_text_view_paint (GtkWidget   *widget,
                               gtk_widget_get_width (widget),
                               gtk_widget_get_height (widget)
                             },
+                            priv->selection_style_changed,
                             priv->cursor_alpha);
 
   gtk_snapshot_restore (snapshot);
+
+  priv->selection_style_changed = FALSE;
 }
 
 static void
@@ -7836,7 +7980,6 @@ gtk_text_view_set_attributes_from_style (GtkTextView        *text_view,
 {
   GtkCssStyle *style;
   const GdkRGBA black = { 0, };
-  const GdkRGBA *color;
   const GdkRGBA *decoration_color;
   GtkTextDecorationLine decoration_line;
   GtkTextDecorationStyle decoration_style;
@@ -7846,12 +7989,10 @@ gtk_text_view_set_attributes_from_style (GtkTextView        *text_view,
   if (!values->appearance.fg_rgba)
     values->appearance.fg_rgba = gdk_rgba_copy (&black);
 
-  style = gtk_css_node_get_style (gtk_widget_get_css_node (GTK_WIDGET (text_view)));
+  style = gtk_css_node_get_style (gtk_widget_get_css_node (GTK_WIDGET (text_view)));;
 
-  color = gtk_css_color_value_get_rgba (style->background->background_color);
-  *values->appearance.bg_rgba = *color;
-  color = gtk_css_color_value_get_rgba (style->core->color);
-  *values->appearance.fg_rgba = *color;
+  *values->appearance.bg_rgba = *gtk_css_color_value_get_rgba (style->used->background_color);
+  *values->appearance.fg_rgba = *gtk_css_color_value_get_rgba (style->used->color);
 
   if (values->font)
     pango_font_description_free (values->font);
@@ -7862,9 +8003,7 @@ gtk_text_view_set_attributes_from_style (GtkTextView        *text_view,
 
   decoration_line = _gtk_css_text_decoration_line_value_get (style->font_variant->text_decoration_line);
   decoration_style = _gtk_css_text_decoration_style_value_get (style->font_variant->text_decoration_style);
-  decoration_color = gtk_css_color_value_get_rgba (style->font_variant->text_decoration_color
-                                                   ? style->font_variant->text_decoration_color
-                                                   : style->core->color);
+  decoration_color = gtk_css_color_value_get_rgba (style->used->text_decoration_color);
 
   if (decoration_line & GTK_CSS_TEXT_DECORATION_LINE_UNDERLINE)
     {
@@ -7922,10 +8061,9 @@ gtk_text_view_set_attributes_from_style (GtkTextView        *text_view,
     }
 
   /* letter-spacing */
-  values->letter_spacing = _gtk_css_number_value_get (style->font->letter_spacing, 100) * PANGO_SCALE;
+  values->letter_spacing = gtk_css_number_value_get (style->font->letter_spacing, 100) * PANGO_SCALE;
 
   /* line-height */
-
   values->line_height = gtk_css_line_height_value_get (style->font->line_height);
   values->line_height_is_absolute = FALSE;
   if (values->line_height != 0.0)
@@ -10058,6 +10196,8 @@ gtk_text_view_set_input_purpose (GtkTextView     *text_view,
  * @text_view: a `GtkTextView`
  *
  * Gets the `input-purpose` of the `GtkTextView`.
+ *
+ * Returns: the input purpose
  */
 GtkInputPurpose
 gtk_text_view_get_input_purpose (GtkTextView *text_view)
@@ -10106,6 +10246,8 @@ gtk_text_view_set_input_hints (GtkTextView   *text_view,
  * @text_view: a `GtkTextView`
  *
  * Gets the `input-hints` of the `GtkTextView`.
+ *
+ * Returns: the input hints
  */
 GtkInputHints
 gtk_text_view_get_input_hints (GtkTextView *text_view)
@@ -10685,6 +10827,77 @@ gtk_text_view_accessible_text_get_default_attributes (GtkAccessibleText   *self,
   g_hash_table_unref (attrs);
 }
 
+static gboolean
+gtk_text_view_accessible_text_get_extents (GtkAccessibleText *self,
+                                           unsigned int       start,
+                                           unsigned int       end,
+                                           graphene_rect_t   *extents)
+{
+  GtkTextBuffer *buffer;
+  GtkTextIter start_iter, end_iter;
+  cairo_region_t *region;
+  GdkRectangle rect;
+
+  buffer = get_buffer (GTK_TEXT_VIEW (self));
+  gtk_text_buffer_get_iter_at_offset (buffer, &start_iter, start);
+  gtk_text_buffer_get_iter_at_offset (buffer, &end_iter, end);
+
+  region = cairo_region_create ();
+  do
+    {
+      gtk_text_view_get_iter_location (GTK_TEXT_VIEW (self), &start_iter, &rect);
+      cairo_region_union_rectangle (region, &rect);
+
+      gtk_text_iter_forward_to_line_end (&start_iter);
+      gtk_text_iter_order (&start_iter, &end_iter);
+
+      gtk_text_view_get_iter_location (GTK_TEXT_VIEW (self), &end_iter, &rect);
+      cairo_region_union_rectangle (region, &rect);
+
+      gtk_text_iter_forward_line (&start_iter);
+    }
+  while (gtk_text_iter_compare (&start_iter, &end_iter) < 0);
+
+  cairo_region_get_extents (region, &rect);
+  cairo_region_destroy (region);
+
+  gtk_text_view_buffer_to_window_coords (GTK_TEXT_VIEW (self),
+                                         GTK_TEXT_WINDOW_TEXT,
+                                         rect.x, rect.y,
+                                         &rect.x, &rect.y);
+  _text_window_to_widget_coords (GTK_TEXT_VIEW (self), &rect.x, &rect.y);
+
+  extents->origin.x = rect.x;
+  extents->origin.y = rect.y;
+  extents->size.width = rect.width;
+  extents->size.height = rect.height;
+
+  return TRUE;
+}
+
+static gboolean
+gtk_text_view_accessible_text_get_offset (GtkAccessibleText      *self,
+                                          const graphene_point_t *point,
+                                          unsigned int           *offset)
+{
+  GtkTextView *text_view = GTK_TEXT_VIEW (self);
+  int x, y;
+  GtkTextIter iter;
+
+  x = point->x;
+  y = point->y;
+
+  _widget_to_text_surface_coords (text_view, &x, &y);
+  gtk_text_view_window_to_buffer_coords (text_view, GTK_TEXT_WINDOW_TEXT, x, y, &x, &y);
+
+  if (!gtk_text_view_get_iter_at_location (text_view, &iter, x, y))
+    return FALSE;
+
+  *offset = gtk_text_iter_get_offset (&iter);
+
+  return TRUE;
+}
+
 static void
 gtk_text_view_accessible_text_init (GtkAccessibleTextInterface *iface)
 {
@@ -10694,6 +10907,8 @@ gtk_text_view_accessible_text_init (GtkAccessibleTextInterface *iface)
   iface->get_selection = gtk_text_view_accessible_text_get_selection;
   iface->get_attributes = gtk_text_view_accessible_text_get_attributes;
   iface->get_default_attributes = gtk_text_view_accessible_text_get_default_attributes;
+  iface->get_extents = gtk_text_view_accessible_text_get_extents;
+  iface->get_offset = gtk_text_view_accessible_text_get_offset;
 }
 
 /* }}} */

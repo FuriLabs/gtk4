@@ -21,7 +21,7 @@ color_equal (const float *color1,
              const float *color2)
 {
   return gdk_rgba_equal (&(GdkRGBA) { color1[0], color1[1], color1[2], color1[3] },
-                         &(GdkRGBA) { color1[0], color1[1], color1[2], color1[3] });
+                         &(GdkRGBA) { color2[0], color2[1], color2[2], color2[3] });
 }
 
 static void
@@ -84,6 +84,7 @@ static const GskGpuShaderOpClass GSK_GPU_BORDER_OP_CLASS = {
     gsk_gpu_border_op_gl_command
   },
   "gskgpuborder",
+  gsk_gpu_border_n_textures,
   sizeof (GskGpuBorderInstance),
 #ifdef GDK_RENDERING_VULKAN
   &gsk_gpu_border_info,
@@ -96,19 +97,22 @@ static const GskGpuShaderOpClass GSK_GPU_BORDER_OP_CLASS = {
 void
 gsk_gpu_border_op (GskGpuFrame            *frame,
                    GskGpuShaderClip        clip,
+                   GskGpuColorStates       color_states,
                    const GskRoundedRect   *outline,
                    const graphene_point_t *offset,
                    const graphene_point_t *inside_offset,
                    const float             widths[4],
-                   const GdkRGBA           colors[4])
+                   const float             colors[4][4])
 {
   GskGpuBorderInstance *instance;
   guint i;
 
   gsk_gpu_shader_op_alloc (frame,
                            &GSK_GPU_BORDER_OP_CLASS,
+                           color_states,
                            0,
                            clip,
+                           NULL,
                            NULL,
                            &instance);
 
@@ -117,7 +121,7 @@ gsk_gpu_border_op (GskGpuFrame            *frame,
   for (i = 0; i < 4; i++)
     {
       instance->border_widths[i] = widths[i];
-      gsk_gpu_rgba_to_float (&colors[i], &instance->border_colors[4 * i]);
+      gsk_gpu_color_to_float (colors[i], &instance->border_colors[4 * i]);
     }
   instance->offset[0] = inside_offset->x;
   instance->offset[1] = inside_offset->y;

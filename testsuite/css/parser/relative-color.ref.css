@@ -1,0 +1,60 @@
+a {
+  color: color(srgb 0.784314 0.784314 0.0784314);
+}
+
+b {
+  color: oklab(1 0.1 0.2);
+}
+
+c {
+  background-color: hsl(from currentcolor calc(h + 60) s l / alpha);
+  color: rgb(255,0,0);
+}
+
+e {
+  color: color(srgb 0.721569 0.52549 0.392157 / 0.5);
+}
+
+f {
+  color: color(srgb 0.117647 0.156863 0.392157);
+}
+
+g {
+  color: color(from currentcolor srgb r g 0.39215686274509803 / 50%);
+}
+
+h {
+  color: color(srgb 1 1 1);
+}
+
+i {
+  color: color(srgb 1 1 1);
+}
+
+j {
+  color: color(srgb-linear 1 1 1);
+}
+
+k {
+  color: color(srgb 1 1 1);
+}
+
+l {
+  color: color(srgb 1 1 1);
+}
+
+m {
+  color: color(srgb 0 0 0);
+}
+
+n {
+  color: oklch(1 0.4 0);
+}
+
+o {
+  color: oklab(1 -0.4 -0.4);
+}
+
+p {
+  color: oklab(1 0.4 0.4);
+}

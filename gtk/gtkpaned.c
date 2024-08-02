@@ -74,6 +74,17 @@
  * The application can set the position of the slider as if it were set
  * by the user, by calling [method@Gtk.Paned.set_position].
  *
+ * # Shortcuts and Gestures
+ *
+ * The following signals have default keybindings:
+ *
+ * - [signal@Gtk.Paned::accept-position]
+ * - [signal@Gtk.Paned::cancel-position]
+ * - [signal@Gtk.Paned::cycle-child-focus]
+ * - [signal@Gtk.Paned::cycle-handle-focus]
+ * - [signal@Gtk.Paned::move-handle]
+ * - [signal@Gtk.Paned::toggle-handle-focus]
+ *
  * # CSS nodes
  *
  * ```
@@ -558,6 +569,8 @@ gtk_paned_class_init (GtkPanedClass *class)
    * This is a [keybinding signal](class.SignalAction.html).
    *
    * The default binding is <kbd>F6</kbd>.
+   *
+   * Returns: whether the behavior was cycled
    */
   signals [CYCLE_CHILD_FOCUS] =
     g_signal_new (I_("cycle-child-focus"),
@@ -582,6 +595,8 @@ gtk_paned_class_init (GtkPanedClass *class)
    * This is a [keybinding signal](class.SignalAction.html).
    *
    * The default binding is <kbd>Tab</kbd>.
+   *
+   * Return: whether handle focus was toggled
    */
   signals [TOGGLE_HANDLE_FOCUS] =
     g_signal_new (I_("toggle-handle-focus"),
@@ -603,6 +618,15 @@ gtk_paned_class_init (GtkPanedClass *class)
    * Emitted to move the handle with key bindings.
    *
    * This is a [keybinding signal](class.SignalAction.html).
+   *
+   * The default bindings for this signal are
+   * <kbd>Ctrl</kbd>+<kbd>←</kbd>, <kbd>←</kbd>,
+   * <kbd>Ctrl</kbd>+<kbd>→</kbd>, <kbd>→</kbd>,
+   * <kbd>Ctrl</kbd>+<kbd>↑</kbd>, <kbd>↑</kbd>,
+   * <kbd>Ctrl</kbd>+<kbd>↓</kbd>, <kbd>↓</kbd>,
+   * <kbd>PgUp</kbd>, <kbd>PgDn</kbd>, <kbd>Home</kbd>, <kbd>End</kbd>.
+   *
+   * Returns: whether the handle was moved
    */
   signals[MOVE_HANDLE] =
     g_signal_new (I_("move-handle"),
@@ -628,6 +652,8 @@ gtk_paned_class_init (GtkPanedClass *class)
    * This is a [keybinding signal](class.SignalAction.html).
    *
    * The default binding for this signal is <kbd>F8</kbd>.
+   *
+   * Returns: whether the behavior was cycled
    */
   signals [CYCLE_HANDLE_FOCUS] =
     g_signal_new (I_("cycle-handle-focus"),
@@ -653,6 +679,8 @@ gtk_paned_class_init (GtkPanedClass *class)
    *
    * The default binding for this signal is <kbd>Return</kbd> or
    * <kbd>Space</kbd>.
+   *
+   * Returns: whether the position was accepted
    */
   signals [ACCEPT_POSITION] =
     g_signal_new (I_("accept-position"),
@@ -679,6 +707,8 @@ gtk_paned_class_init (GtkPanedClass *class)
    * This is a [keybinding signal](class.SignalAction.html).
    *
    * The default binding for this signal is <kbd>Escape</kbd>.
+   *
+   * Returns: whether the position was canceled
    */
   signals [CANCEL_POSITION] =
     g_signal_new (I_("cancel-position"),

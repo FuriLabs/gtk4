@@ -104,6 +104,31 @@
  * </object>
  * ```
  *
+ * # Shortcuts and Gestures
+ *
+ * `GtkNotebook` supports the following keyboard shortcuts:
+ *
+ * - <kbd>Shift</kbd>+<kbd>F10</kbd> or <kbd>Menu</kbd> opens the context menu.
+ * - <kbd>Home</kbd> moves the focus to the first tab.
+ * - <kbd>End</kbd> moves the focus to the last tab.
+ *
+ * Additionally, the following signals have default keybindings:
+ *
+ * - [signal@Gtk.Notebook::change-current-page]
+ * - [signal@Gtk.Notebook::focus-tab]
+ * - [signal@Gtk.Notebook::move-focus-out]
+ * - [signal@Gtk.Notebook::reorder-tab]
+ * - [signal@Gtk.Notebook::select-page]
+ *
+ * Tabs support drag-and-drop between notebooks sharing the same `group-name`,
+ * or to new windows by handling the `::create-window` signal.
+ *
+ * # Actions
+ *
+ * `GtkNotebook` defines a set of built-in actions:
+ *
+ * - `menu.popup` opens the tabs context menu.
+ *
  * # CSS nodes
  *
  * ```
@@ -1201,6 +1226,16 @@ gtk_notebook_class_init (GtkNotebookClass *class)
   g_signal_set_va_marshaller (notebook_signals[SWITCH_PAGE],
                               G_TYPE_FROM_CLASS (gobject_class),
                               _gtk_marshal_VOID__OBJECT_UINTv);
+
+  /**
+   * GtkNotebook::focus-tab:
+   * @notebook: the notebook
+   * @tab: the notebook tab
+   *
+   * Emitted when a tab should be focused.
+   *
+   * Returns: whether the tab has been focused
+   */
   notebook_signals[FOCUS_TAB] =
     g_signal_new (I_("focus-tab"),
                   G_TYPE_FROM_CLASS (gobject_class),
@@ -1213,6 +1248,18 @@ gtk_notebook_class_init (GtkNotebookClass *class)
   g_signal_set_va_marshaller (notebook_signals[FOCUS_TAB],
                               G_TYPE_FROM_CLASS (gobject_class),
                               _gtk_marshal_BOOLEAN__ENUMv);
+
+  /**
+   * GtkNotebook::select-page:
+   * @notebook: the notebook
+   * @move_focus: whether to move focus
+   *
+   * Emitted when a page should be selected.
+   *
+   * The default binding for this signal is <kbd>␣</kbd>.
+   *
+   * Returns: whether the page was selected
+   */
   notebook_signals[SELECT_PAGE] =
     g_signal_new (I_("select-page"),
                   G_TYPE_FROM_CLASS (gobject_class),
@@ -1225,6 +1272,21 @@ gtk_notebook_class_init (GtkNotebookClass *class)
   g_signal_set_va_marshaller (notebook_signals[SELECT_PAGE],
                               G_TYPE_FROM_CLASS (gobject_class),
                               _gtk_marshal_BOOLEAN__BOOLEANv);
+
+  /**
+   * GtkNotebook::change-current-page:
+   * @notebook: the notebook
+   * @page: the page index
+   *
+   * Emitted when the current page should be changed.
+   *
+   * The default bindings for this signal are
+   * <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>PgUp</kbd>,
+   * <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>PgDn</kbd>,
+   * <kbd>Ctrl</kbd>+<kbd>PgUp</kbd> and <kbd>Ctrl</kbd>+<kbd>PgDn</kbd>.
+   *
+   * Returns: whether the page was changed
+   */
   notebook_signals[CHANGE_CURRENT_PAGE] =
     g_signal_new (I_("change-current-page"),
                   G_TYPE_FROM_CLASS (gobject_class),
@@ -1237,6 +1299,20 @@ gtk_notebook_class_init (GtkNotebookClass *class)
   g_signal_set_va_marshaller (notebook_signals[CHANGE_CURRENT_PAGE],
                               G_TYPE_FROM_CLASS (gobject_class),
                               _gtk_marshal_BOOLEAN__INTv);
+
+  /**
+   * GtkNotebook::move-focus-out:
+   * @notebook: the notebook
+   * @direction: the direction to move the focus
+   *
+   * Emitted when focus was moved out.
+   *
+   * The default bindings for this signal are
+   * <kbd>Ctrl</kbd>+<kbd>Tab</kbd>,
+   * <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd>,
+   * <kbd>Ctrl</kbd>+<kbd>←</kbd>, <kbd>Ctrl</kbd>+<kbd>→</kbd>,
+   * <kbd>Ctrl</kbd>+<kbd>↑</kbd> and <kbd>Ctrl</kbd>+<kbd>↓</kbd>.
+   */
   notebook_signals[MOVE_FOCUS_OUT] =
     g_signal_new (I_("move-focus-out"),
                   G_TYPE_FROM_CLASS (gobject_class),
@@ -1246,6 +1322,23 @@ gtk_notebook_class_init (GtkNotebookClass *class)
                   NULL,
                   G_TYPE_NONE, 1,
                   GTK_TYPE_DIRECTION_TYPE);
+
+  /**
+   * GtkNotebook::reorder-tab:
+   * @notebook: the notebook
+   * @direction: the direction to move the tab
+   * @move_to_last: whether to move to the last position
+   *
+   * Emitted when the tab should be reordered.
+   *
+   * The default bindings for this signal are
+   * <kbd>Alt</kbd>+<kbd>Home</kbd>, <kbd>Alt</kbd>+<kbd>End</kbd>,
+   * <kbd>Alt</kbd>+<kbd>PgUp</kbd>, <kbd>Alt</kbd>+<kbd>PgDn</kbd>,
+   * <kbd>Alt</kbd>+<kbd>←</kbd>, <kbd>Alt</kbd>+<kbd>→</kbd>,
+   * <kbd>Alt</kbd>+<kbd>↑</kbd> and <kbd>Alt</kbd>+<kbd>↓</kbd>.
+   *
+   * Returns: whether the tab was moved.
+   */
   notebook_signals[REORDER_TAB] =
     g_signal_new (I_("reorder-tab"),
                   G_TYPE_FROM_CLASS (gobject_class),

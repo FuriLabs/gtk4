@@ -533,16 +533,13 @@ deserialize_not_found (GdkContentDeserializer *deserializer)
  * @type: the GType to deserialize from
  * @io_priority: the I/O priority of the operation
  * @cancellable: (nullable): optional `GCancellable` object
- * @callback: (scope async): callback to call when the operation is done
- * @user_data: (closure): data to pass to the callback function
+ * @callback: (scope async) (closure user_data): callback to call when the operation is done
+ * @user_data: data to pass to the callback function
  *
  * Read content from the given input stream and deserialize it, asynchronously.
  *
  * The default I/O priority is %G_PRIORITY_DEFAULT (i.e. 0), and lower numbers
  * indicate a higher priority.
- *
- * When the operation is finished, @callback will be called. You must then
- * call [func@Gdk.content_deserialize_finish] to get the result of the operation.
  */
 void
 gdk_content_deserialize_async (GInputStream        *stream,

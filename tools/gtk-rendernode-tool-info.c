@@ -116,11 +116,13 @@ count_nodes (GskRenderNode *node,
       break;
 
     case GSK_GL_SHADER_NODE:
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       for (unsigned int i = 0; i < gsk_gl_shader_node_get_n_children (node); i++)
         {
           count_nodes (gsk_gl_shader_node_get_child (node, i), counts, &dd);
           d = MAX (d, dd);
         }
+G_GNUC_END_IGNORE_DEPRECATIONS
       break;
 
     case GSK_TEXTURE_SCALE_NODE:
@@ -175,7 +177,7 @@ file_info (const char *filename)
   unsigned int total = 0;
   unsigned int namelen = 0;
   unsigned int depth = 0;
-  graphene_rect_t bounds;
+  graphene_rect_t bounds, opaque;
 
   node = load_node_file (filename);
 
@@ -188,18 +190,28 @@ file_info (const char *filename)
         namelen = MAX (namelen, strlen (get_node_name (i)));
     }
 
-  g_print (_("Number of nodes: %u\n"), total);
+  g_print ("%s %u\n", _("Number of nodes:"), total);
   for (unsigned int i = 0; i < G_N_ELEMENTS (counts); i++)
     {
       if (counts[i] > 0)
         g_print ("  %*s: %u\n", namelen, get_node_name (i), counts[i]);
     }
 
-  g_print (_("Depth: %u\n"), depth);
+  g_print ("%s %u\n", _("Depth:"), depth);
 
   gsk_render_node_get_bounds (node, &bounds);
-  g_print (_("Bounds: %g x %g\n"), bounds.size.width, bounds.size.height);
-  g_print (_("Origin: %g %g\n"), bounds.origin.x, bounds.origin.y);
+  g_print ("%s %g x %g\n", _("Bounds:"), bounds.size.width, bounds.size.height);
+  g_print ("%s %g %g\n", _("Origin:"), bounds.origin.x, bounds.origin.y);
+  if (gsk_render_node_get_opaque_rect (node, &opaque))
+    {
+      g_print ("%s %g %g, %g x %g (%.0f%%)\n",
+               _("Opaque part:"),
+               opaque.origin.x, opaque.origin.y,
+               opaque.size.width, opaque.size.height,
+               100 * (opaque.size.width * opaque.size.height) / (bounds.size.width * bounds.size.height));
+    }
+  else
+    g_print ("%s none\n", _("Opaque part:"));
 
   gsk_render_node_unref (node);
 }

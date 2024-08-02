@@ -122,13 +122,15 @@ gdk_win32_gl_context_wgl_empty_frame (GdkDrawContext *draw_context)
 }
 
 static void
-gdk_win32_gl_context_wgl_begin_frame (GdkDrawContext *draw_context,
-                                      GdkMemoryDepth  depth,
-                                      cairo_region_t *update_area)
+gdk_win32_gl_context_wgl_begin_frame (GdkDrawContext  *draw_context,
+                                      GdkMemoryDepth   depth,
+                                      cairo_region_t  *update_area,
+                                      GdkColorState  **out_color_state,
+                                      GdkMemoryDepth  *out_depth)
 {
   gdk_win32_surface_handle_queued_move_resize (draw_context);
 
-  GDK_DRAW_CONTEXT_CLASS (gdk_win32_gl_context_wgl_parent_class)->begin_frame (draw_context, depth, update_area);
+  GDK_DRAW_CONTEXT_CLASS (gdk_win32_gl_context_wgl_parent_class)->begin_frame (draw_context, depth, update_area, out_color_state, out_depth);
 }
 
 #define PIXEL_ATTRIBUTES 21
@@ -142,8 +144,7 @@ get_wgl_pfd (HDC                    hdc,
 
   pfd->nSize = sizeof (PIXELFORMATDESCRIPTOR);
 
-  if (display_win32 != NULL &&
-      display_win32->hasWglARBPixelFormat)
+  if (display_win32->hasWglARBPixelFormat)
     {
       UINT num_formats;
       int colorbits = GetDeviceCaps (hdc, BITSPIXEL);
@@ -176,14 +177,17 @@ get_wgl_pfd (HDC                    hdc,
       pixelAttribs[i++] = WGL_ALPHA_BITS_ARB;
       pixelAttribs[i++] = 8;
 
-      pixelAttribs[i++] = WGL_DEPTH_BITS_ARB;
-      pixelAttribs[i++] = 0;
-
       pixelAttribs[i++] = WGL_STENCIL_BITS_ARB;
       pixelAttribs[i++] = 0;
 
       pixelAttribs[i++] = WGL_ACCUM_BITS_ARB;
       pixelAttribs[i++] = 0;
+
+      if (!display_win32->force_enable_depth_bits)
+        {
+          pixelAttribs[i++] = WGL_DEPTH_BITS_ARB;
+          pixelAttribs[i++] = 0;
+        }
 
       /* end of "Update PIXEL_ATTRIBUTES above if any groups are added here!" */
 
@@ -215,8 +219,20 @@ get_wgl_pfd (HDC                    hdc,
       pfd->cColorBits = GetDeviceCaps (hdc, BITSPIXEL);
       pfd->cAlphaBits = 8;
       pfd->iLayerType = PFD_MAIN_PLANE;
+      pfd->cAccumBits = 0;
+      pfd->cStencilBits = 0;
+
+      if (!display_win32->force_enable_depth_bits)
+        pfd->cDepthBits = 0;
 
       best_pf = ChoosePixelFormat (hdc, pfd);
+
+      /* try again if driver enforces depth buffers */
+      if (best_pf == 0 && !display_win32->force_enable_depth_bits)
+        {
+          display_win32->force_enable_depth_bits = TRUE;
+          get_wgl_pfd (hdc, pfd, display_win32);
+        }
     }
 
   return best_pf;
@@ -234,7 +250,7 @@ gdk_init_dummy_wgl_context (GdkWin32Display *display_win32)
 
   memset (&pfd, 0, sizeof (PIXELFORMATDESCRIPTOR));
 
-  best_idx = get_wgl_pfd (display_win32->dummy_context_wgl.hdc, &pfd, NULL);
+  best_idx = get_wgl_pfd (display_win32->dummy_context_wgl.hdc, &pfd, display_win32);
 
   if (best_idx != 0)
     set_pixel_format_result = SetPixelFormat (display_win32->dummy_context_wgl.hdc,
@@ -267,9 +283,9 @@ create_dummy_gl_window (void)
 {
   WNDCLASS wclass = { 0, };
   ATOM klass;
-  HWND hwnd;
+  HWND hwnd = NULL;
 
-  wclass.lpszClassName = "GdkGLDummyWindow";
+  wclass.lpszClassName = L"GdkGLDummyWindow";
   wclass.lpfnWndProc = DefWindowProc;
   wclass.hInstance = this_module ();
   wclass.style = CS_OWNDC;

@@ -1472,11 +1472,17 @@ gtk_tree_view_class_init (GtkTreeViewClass *class)
   gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_space, GDK_CONTROL_MASK, "toggle-cursor-row", NULL);
   gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_KP_Space, GDK_CONTROL_MASK, "toggle-cursor-row", NULL);
 
+
+#ifdef __APPLE__
+  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_a, GDK_META_MASK, "select-all", NULL);
+  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_A, GDK_META_MASK | GDK_SHIFT_MASK, "unselect-all", NULL);
+#else
   gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_a, GDK_CONTROL_MASK, "select-all", NULL);
   gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_slash, GDK_CONTROL_MASK, "select-all", NULL);
 
   gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_A, GDK_CONTROL_MASK | GDK_SHIFT_MASK, "unselect-all", NULL);
   gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_backslash, GDK_CONTROL_MASK, "unselect-all", NULL);
+#endif
 
   gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_space, GDK_SHIFT_MASK, "select-cursor-row", "(b)", TRUE);
   gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_KP_Space, GDK_SHIFT_MASK, "select-cursor-row", "(b)", TRUE);
@@ -2691,8 +2697,8 @@ gtk_tree_view_get_expander_size (GtkTreeView *tree_view)
   gtk_style_context_add_class (context, "expander");
 
   style = gtk_style_context_lookup_style (context);
-  min_width = _gtk_css_number_value_get (style->size->min_width, 100);
-  min_height = _gtk_css_number_value_get (style->size->min_height, 100);
+  min_width = gtk_css_number_value_get (style->size->min_width, 100);
+  min_height = gtk_css_number_value_get (style->size->min_height, 100);
 
   gtk_style_context_restore (context);
 
@@ -2712,6 +2718,9 @@ get_current_selection_modifiers (GtkEventController *controller,
 
   state = gtk_event_controller_get_current_event_state (controller);
   *modify = (state & GDK_CONTROL_MASK) != 0;
+#ifdef __APPLE__
+  *modify = *modify | ((state & GDK_META_MASK) != 0);
+#endif
   *extend = (state & GDK_SHIFT_MASK) != 0;
 }
 
@@ -4197,20 +4206,20 @@ gtk_tree_view_snapshot_grid_line (GtkTreeView            *tree_view,
       surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 2, 1);
       data = cairo_image_surface_get_data (surface);
       /* just color the first pixel... */
-      data[0] = round (grid_line_color->blue  * 255);
-      data[1] = round (grid_line_color->green * 255);
-      data[2] = round (grid_line_color->red   * 255);
-      data[3] = round (grid_line_color->alpha * 255);
+      data[0] = round (CLAMP (grid_line_color->blue,  0, 1)  * 255);
+      data[1] = round (CLAMP (grid_line_color->green, 0, 1) * 255);
+      data[2] = round (CLAMP (grid_line_color->red,   0, 1)   * 255);
+      data[3] = round (CLAMP (grid_line_color->alpha, 0, 1) * 255);
 
       priv->horizontal_grid_line_texture = gdk_texture_new_for_surface (surface);
       cairo_surface_destroy (surface);
 
       surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 1, 2);
       data = cairo_image_surface_get_data (surface);
-      data[0] = round (grid_line_color->blue  * 255);
-      data[1] = round (grid_line_color->green * 255);
-      data[2] = round (grid_line_color->red   * 255);
-      data[3] = round (grid_line_color->alpha * 255);
+      data[0] = round (CLAMP (grid_line_color->blue,  0, 1)  * 255);
+      data[1] = round (CLAMP (grid_line_color->green, 0, 1) * 255);
+      data[2] = round (CLAMP (grid_line_color->red,   0, 1)   * 255);
+      data[3] = round (CLAMP (grid_line_color->alpha, 0, 1) * 255);
 
       priv->vertical_grid_line_texture = gdk_texture_new_for_surface (surface);
       cairo_surface_destroy (surface);
@@ -4272,20 +4281,20 @@ gtk_tree_view_snapshot_tree_line (GtkTreeView            *tree_view,
       surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 2, 1);
       data = cairo_image_surface_get_data (surface);
       /* just color the first pixel... */
-      data[0] = round (tree_line_color->blue  * 255);
-      data[1] = round (tree_line_color->green * 255);
-      data[2] = round (tree_line_color->red   * 255);
-      data[3] = round (tree_line_color->alpha * 255);
+      data[0] = round (CLAMP (tree_line_color->blue,  0, 1) * 255);
+      data[1] = round (CLAMP (tree_line_color->green, 0, 1) * 255);
+      data[2] = round (CLAMP (tree_line_color->red,   0, 1) * 255);
+      data[3] = round (CLAMP (tree_line_color->alpha, 0, 1) * 255);
 
       priv->horizontal_tree_line_texture = gdk_texture_new_for_surface (surface);
       cairo_surface_destroy (surface);
 
       surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 1, 2);
       data = cairo_image_surface_get_data (surface);
-      data[0] = round (tree_line_color->blue  * 255);
-      data[1] = round (tree_line_color->green * 255);
-      data[2] = round (tree_line_color->red   * 255);
-      data[3] = round (tree_line_color->alpha * 255);
+      data[0] = round (CLAMP (tree_line_color->blue,  0, 1) * 255);
+      data[1] = round (CLAMP (tree_line_color->green, 0, 1) * 255);
+      data[2] = round (CLAMP (tree_line_color->red,   0, 1) * 255);
+      data[3] = round (CLAMP (tree_line_color->alpha, 0, 1) * 255);
 
       priv->vertical_tree_line_texture = gdk_texture_new_for_surface (surface);
       cairo_surface_destroy (surface);
@@ -5521,7 +5530,7 @@ get_separator_height (GtkTreeView *tree_view)
   gtk_style_context_add_class (context, "separator");
 
   style = gtk_style_context_lookup_style (context);
-  d = _gtk_css_number_value_get (style->size->min_height, 100);
+  d = gtk_css_number_value_get (style->size->min_height, 100);
 
   if (d < 1)
     min_size = ceil (d);
@@ -11111,8 +11120,8 @@ gtk_tree_view_get_expander_column (GtkTreeView *tree_view)
 /**
  * gtk_tree_view_set_column_drag_function:
  * @tree_view: A `GtkTreeView`.
- * @func: (nullable): A function to determine which columns are reorderable
- * @user_data: (closure): User data to be passed to @func
+ * @func: (nullable) (scope notified) (closure user_data) (destroy destroy): A function to determine which columns are reorderable
+ * @user_data: User data to be passed to @func
  * @destroy: (nullable): Destroy notifier for @user_data
  *
  * Sets a user function for determining where a column may be dropped when
@@ -13816,7 +13825,11 @@ gtk_tree_view_search_key_pressed (GtkEventControllerKey *key,
 {
   GtkTreeViewPrivate *priv = gtk_tree_view_get_instance_private (tree_view);
   GtkWidget *widget = priv->search_entry;
-  GdkModifierType default_accel;
+#ifdef __APPLE__
+  GdkModifierType default_accel = GDK_META_MASK;
+#else
+  GdkModifierType default_accel = GDK_CONTROL_MASK;
+#endif
   gboolean retval = FALSE;
 
   g_return_val_if_fail (GTK_IS_WIDGET (widget), FALSE);
@@ -13829,8 +13842,6 @@ gtk_tree_view_search_key_pressed (GtkEventControllerKey *key,
       gtk_tree_view_search_popover_hide (priv->search_popover, tree_view);
       return TRUE;
     }
-
-  default_accel = GDK_CONTROL_MASK;
 
   /* select previous matching iter */
   if (keyval == GDK_KEY_Up || keyval == GDK_KEY_KP_Up)

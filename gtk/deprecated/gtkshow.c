@@ -92,14 +92,13 @@ window_handle_exported (GtkWindow  *window,
  * @uri: the uri to show
  * @timestamp: timestamp from the event that triggered this call, or %GDK_CURRENT_TIME
  * @cancellable: (nullable): a `GCancellable` to cancel the launch
- * @callback: (scope async): a callback to call when the action is complete
- * @user_data: (closure callback): data to pass to @callback
+ * @callback: (scope async) (closure user_data): a callback to call when the action is complete
+ * @user_data: data to pass to @callback
  *
  * This function launches the default application for showing
  * a given uri.
  *
  * The @callback will be called when the launch is completed.
- * It should call gtk_show_uri_full_finish() to obtain the result.
  *
  * This is the recommended call to be used as it passes information
  * necessary for sandbox helpers to parent their dialogs properly.
@@ -153,8 +152,8 @@ gtk_show_uri_full (GtkWindow           *parent,
  * Returns: %TRUE if the URI was shown successfully.
  *   Otherwise, %FALSE is returned and @error is set
  *
- * Deprecated: 4.10: Use [method@Gtk.FileLauncher.launch_finish] or
- *   [method@Gtk.UriLauncher.launch_finish] instead
+ * Deprecated: 4.10: Use [method@Gtk.FileLauncher.launch] or
+ *   [method@Gtk.UriLauncher.launch] instead
  */
 gboolean
 gtk_show_uri_full_finish (GtkWindow     *parent,

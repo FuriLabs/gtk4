@@ -52,4 +52,15 @@ gtk_accessible_text_get_attributes_run (GtkAccessibleText        *self,
                                         char                   ***attribute_names,
                                         char                   ***attribute_values);
 
+gboolean
+gtk_accessible_text_get_extents (GtkAccessibleText *self,
+                                 unsigned int       start,
+                                 unsigned int       end,
+                                 graphene_rect_t   *extents);
+
+gboolean
+gtk_accessible_text_get_offset (GtkAccessibleText      *self,
+                                const graphene_point_t *point,
+                                unsigned int           *offset);
+
 G_END_DECLS

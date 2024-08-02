@@ -65,11 +65,9 @@ gtk_css_image_real_get_aspect_ratio (GtkCssImage *image)
 }
 
 static GtkCssImage *
-gtk_css_image_real_compute (GtkCssImage      *image,
-                            guint             property_id,
-                            GtkStyleProvider *provider,
-                            GtkCssStyle      *style,
-                            GtkCssStyle      *parent_style)
+gtk_css_image_real_compute (GtkCssImage          *image,
+                            guint                 property_id,
+                            GtkCssComputeContext *context)
 {
   return g_object_ref (image);
 }
@@ -122,6 +120,20 @@ gtk_css_image_real_is_computed (GtkCssImage *image)
   return FALSE;
 }
 
+static gboolean
+gtk_css_image_real_contains_current_color (GtkCssImage *image)
+{
+  return FALSE;
+}
+
+static GtkCssImage *
+gtk_css_image_real_resolve (GtkCssImage          *image,
+                            GtkCssComputeContext *context,
+                            GtkCssValue          *current_color)
+{
+  return g_object_ref (image);
+}
+
 static void
 _gtk_css_image_class_init (GtkCssImageClass *klass)
 {
@@ -135,6 +147,8 @@ _gtk_css_image_class_init (GtkCssImageClass *klass)
   klass->is_dynamic = gtk_css_image_real_is_dynamic;
   klass->get_dynamic_image = gtk_css_image_real_get_dynamic_image;
   klass->is_computed = gtk_css_image_real_is_computed;
+  klass->contains_current_color = gtk_css_image_real_contains_current_color;
+  klass->resolve = gtk_css_image_real_resolve;
 }
 
 static void
@@ -173,21 +187,19 @@ _gtk_css_image_get_aspect_ratio (GtkCssImage *image)
 }
 
 GtkCssImage *
-_gtk_css_image_compute (GtkCssImage      *image,
-                        guint             property_id,
-                        GtkStyleProvider *provider,
-                        GtkCssStyle      *style,
-                        GtkCssStyle      *parent_style)
+_gtk_css_image_compute (GtkCssImage          *image,
+                        guint                 property_id,
+                        GtkCssComputeContext *context)
 {
   GtkCssImageClass *klass;
 
   gtk_internal_return_val_if_fail (GTK_IS_CSS_IMAGE (image), NULL);
-  gtk_internal_return_val_if_fail (GTK_IS_CSS_STYLE (style), NULL);
-  gtk_internal_return_val_if_fail (parent_style == NULL || GTK_IS_CSS_STYLE (parent_style), NULL);
+  gtk_internal_return_val_if_fail (GTK_IS_CSS_STYLE (context->style), NULL);
+  gtk_internal_return_val_if_fail (context->parent_style == NULL || GTK_IS_CSS_STYLE (context->parent_style), NULL);
 
   klass = GTK_CSS_IMAGE_GET_CLASS (image);
 
-  return klass->compute (image, property_id, provider, style, parent_style);
+  return klass->compute (image, property_id, context);
 }
 
 GtkCssImage *
@@ -243,11 +255,11 @@ _gtk_css_image_equal (GtkCssImage *image1,
   return klass->equal (image1, image2);
 }
 
-void
-_gtk_css_image_draw (GtkCssImage        *image,
-                     cairo_t            *cr,
-                     double              width,
-                     double              height)
+static void
+gtk_css_image_draw (GtkCssImage *image,
+                    cairo_t     *cr,
+                    double       width,
+                    double       height)
 {
   GtkSnapshot *snapshot;
   GskRenderNode *node;
@@ -501,7 +513,7 @@ _gtk_css_image_get_surface (GtkCssImage     *image,
                                          surface_height);
 
   cr = cairo_create (result);
-  _gtk_css_image_draw (image, cr, surface_width, surface_height);
+  gtk_css_image_draw (image, cr, surface_width, surface_height);
   cairo_destroy (cr);
 
   return result;
@@ -591,4 +603,22 @@ gtk_css_image_is_computed (GtkCssImage *image)
   GtkCssImageClass *klass = GTK_CSS_IMAGE_GET_CLASS (image);
 
   return klass->is_computed (image);
+}
+
+gboolean
+gtk_css_image_contains_current_color (GtkCssImage *image)
+{
+  GtkCssImageClass *klass = GTK_CSS_IMAGE_GET_CLASS (image);
+
+  return klass->contains_current_color (image);
+}
+
+GtkCssImage *
+gtk_css_image_resolve (GtkCssImage          *image,
+                       GtkCssComputeContext *context,
+                       GtkCssValue          *current_color)
+{
+  GtkCssImageClass *klass = GTK_CSS_IMAGE_GET_CLASS (image);
+
+  return klass->resolve (image, context, current_color);
 }

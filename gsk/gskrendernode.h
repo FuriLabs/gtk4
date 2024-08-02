@@ -122,6 +122,10 @@ GDK_AVAILABLE_IN_ALL
 void                    gsk_render_node_get_bounds              (GskRenderNode   *node,
                                                                  graphene_rect_t *bounds);
 
+GDK_AVAILABLE_IN_4_16
+gboolean                gsk_render_node_get_opaque_rect         (GskRenderNode   *self,
+                                                                 graphene_rect_t *out_opaque);
+
 GDK_AVAILABLE_IN_ALL
 void                    gsk_render_node_draw                    (GskRenderNode *node,
                                                                  cairo_t       *cr);
@@ -196,7 +200,7 @@ typedef struct _GskCrossFadeNode                GskCrossFadeNode;
 typedef struct _GskTextNode                     GskTextNode;
 typedef struct _GskBlurNode                     GskBlurNode;
 typedef struct _GskMaskNode                     GskMaskNode;
-typedef struct _GskGLShaderNode                 GskGLShaderNode;
+typedef struct _GskGLShaderNode                 GskGLShaderNode GDK_DEPRECATED_TYPE_IN_4_16_FOR(GtkGLArea);
 typedef struct _GskSubsurfaceNode               GskSubsurfaceNode;
 
 GDK_AVAILABLE_IN_ALL
@@ -574,23 +578,27 @@ GskRenderNode *        gsk_mask_node_get_mask                   (const GskRender
 GDK_AVAILABLE_IN_4_10
 GskMaskMode            gsk_mask_node_get_mask_mode              (const GskRenderNode      *node);
 
-GDK_AVAILABLE_IN_ALL
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
+GDK_DEPRECATED_IN_4_16_FOR(GtkGLArea)
 GType                   gsk_gl_shader_node_get_type             (void) G_GNUC_CONST;
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_16_FOR(GtkGLArea)
 GskRenderNode *         gsk_gl_shader_node_new                  (GskGLShader              *shader,
                                                                  const graphene_rect_t    *bounds,
                                                                  GBytes                   *args,
                                                                  GskRenderNode           **children,
                                                                  guint                     n_children);
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_16_FOR(GtkGLArea)
 guint                   gsk_gl_shader_node_get_n_children       (const GskRenderNode      *node) G_GNUC_PURE;
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_16_FOR(GtkGLArea)
 GskRenderNode *         gsk_gl_shader_node_get_child            (const GskRenderNode      *node,
                                                                  guint                     idx) G_GNUC_PURE;
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_16_FOR(GtkGLArea)
 GBytes *                gsk_gl_shader_node_get_args             (const GskRenderNode      *node) G_GNUC_PURE;
-GDK_AVAILABLE_IN_ALL
+GDK_DEPRECATED_IN_4_16_FOR(GtkGLArea)
 GskGLShader *           gsk_gl_shader_node_get_shader           (const GskRenderNode      *node) G_GNUC_PURE;
+
+G_GNUC_END_IGNORE_DEPRECATIONS
 
 GDK_AVAILABLE_IN_4_14
 GType                   gsk_subsurface_node_get_type            (void) G_GNUC_CONST;

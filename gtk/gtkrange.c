@@ -62,6 +62,12 @@
  * Apart from signals for monitoring the parameters of the adjustment,
  * `GtkRange` provides properties and methods for setting a
  * “fill level” on range widgets. See [method@Gtk.Range.set_fill_level].
+ *
+ * # Shortcuts and Gestures
+ *
+ * The `GtkRange` slider is draggable. Holding the <kbd>Shift</kbd> key while
+ * dragging, or initiating the drag with a long-press will enable the
+ * fine-tuning mode.
  */
 
 
@@ -1701,7 +1707,7 @@ gtk_range_render_trough (GtkGizmo    *gizmo,
     {
       GtkCssBoxes boxes;
       gtk_css_boxes_init (&boxes, GTK_WIDGET (gizmo));
-      gtk_snapshot_push_rounded_clip(snapshot, gtk_css_boxes_get_padding_box (&boxes));
+      gtk_snapshot_push_rounded_clip (snapshot, gtk_css_boxes_get_border_box (&boxes));
       gtk_widget_snapshot_child (GTK_WIDGET (gizmo), priv->highlight_widget, snapshot);
       gtk_snapshot_pop (snapshot);
     }

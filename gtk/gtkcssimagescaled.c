@@ -97,11 +97,9 @@ gtk_css_image_scaled_dispose (GObject *object)
 
 
 static GtkCssImage *
-gtk_css_image_scaled_compute (GtkCssImage      *image,
-                              guint             property_id,
-                              GtkStyleProvider *provider,
-                              GtkCssStyle      *style,
-                              GtkCssStyle      *parent_style)
+gtk_css_image_scaled_compute (GtkCssImage          *image,
+                              guint                 property_id,
+                              GtkCssComputeContext *context)
 {
   GtkCssImageScaled *scaled = GTK_CSS_IMAGE_SCALED (image);
   int scale;
@@ -109,7 +107,7 @@ gtk_css_image_scaled_compute (GtkCssImage      *image,
   int i;
   int best;
 
-  scale = gtk_style_provider_get_scale (provider);
+  scale = gtk_style_provider_get_scale (context->provider);
   scale = MAX(scale, 1);
 
   best = 0;
@@ -135,9 +133,7 @@ gtk_css_image_scaled_compute (GtkCssImage      *image,
 
   res->images[0] = _gtk_css_image_compute (scaled->images[best],
                                            property_id,
-                                           provider,
-                                           style,
-                                           parent_style);
+                                           context);
   res->scales[0] = scaled->scales[best];
 
   return GTK_CSS_IMAGE (res);
@@ -212,6 +208,46 @@ gtk_css_image_scaled_is_computed (GtkCssImage *image)
          gtk_css_image_is_computed (self->images[0]);
 }
 
+static gboolean
+gtk_css_image_scaled_contains_current_color (GtkCssImage *image)
+{
+  GtkCssImageScaled *self = GTK_CSS_IMAGE_SCALED (image);
+
+  for (guint i = 0; i < self->n_images; i++)
+    {
+      if (gtk_css_image_contains_current_color (self->images[i]))
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static GtkCssImage *
+gtk_css_image_scaled_resolve (GtkCssImage          *image,
+                              GtkCssComputeContext *context,
+                              GtkCssValue          *current_color)
+{
+  GtkCssImageScaled *self = GTK_CSS_IMAGE_SCALED (image);
+  GtkCssImageScaled *res;
+
+  if (!gtk_css_image_scaled_contains_current_color (image))
+    return g_object_ref (image);
+
+  res = g_object_new (GTK_TYPE_CSS_IMAGE_SCALED, NULL);
+
+  res->n_images = self->n_images;
+  res->images = g_new (GtkCssImage *, self->n_images);
+  res->scales = g_new (int, self->n_images);
+
+  for (guint i = 0; i < self->n_images; i++)
+    {
+      res->images[i] = gtk_css_image_resolve (self->images[i], context, current_color);
+      res->scales[i] = self->scales[i];
+    }
+
+  return GTK_CSS_IMAGE (res);
+}
+
 static void
 _gtk_css_image_scaled_class_init (GtkCssImageScaledClass *klass)
 {
@@ -226,6 +262,8 @@ _gtk_css_image_scaled_class_init (GtkCssImageScaledClass *klass)
   image_class->compute = gtk_css_image_scaled_compute;
   image_class->print = gtk_css_image_scaled_print;
   image_class->is_computed = gtk_css_image_scaled_is_computed;
+  image_class->contains_current_color = gtk_css_image_scaled_contains_current_color;
+  image_class->resolve = gtk_css_image_scaled_resolve;
 
   object_class->dispose = gtk_css_image_scaled_dispose;
 }

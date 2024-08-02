@@ -47,7 +47,7 @@
  * and is destroyed when the drag ends.
  *
  * To set up a drag icon and associate it with an ongoing drag operation,
- * use [func@Gtk.DragIcon.get_for_drag] to get the icon for a drag. You can
+ * use [ctor@Gtk.DragIcon.get_for_drag] to get the icon for a drag. You can
  * then use it like any other widget and use [method@Gtk.DragIcon.set_child]
  * to set whatever widget should be used for the drag icon.
  *
@@ -400,7 +400,7 @@ gtk_drag_icon_init (GtkDragIcon *self)
 }
 
 /**
- * gtk_drag_icon_get_for_drag:
+ * gtk_drag_icon_get_for_drag: (constructor)
  * @drag: a `GdkDrag`
  *
  * Gets the `GtkDragIcon` in use with @drag.

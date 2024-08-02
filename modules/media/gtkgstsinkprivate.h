@@ -56,7 +56,7 @@ struct _GtkGstSink
   GstGLDisplay *       gst_display;
   GstGLContext *       gst_gdk_context;
   GstGLContext *       gst_context;
-  GdkDmabufFormats *   dmabuf_formats;
+  GdkColorState *      color_state;
 };
 
 struct _GtkGstSinkClass

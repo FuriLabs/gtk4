@@ -47,13 +47,15 @@
 G_DEFINE_TYPE (GdkWaylandGLContext, gdk_wayland_gl_context, GDK_TYPE_GL_CONTEXT)
 
 static void
-gdk_wayland_gl_context_begin_frame (GdkDrawContext *draw_context,
-                                    GdkMemoryDepth  depth,
-                                    cairo_region_t *region)
+gdk_wayland_gl_context_begin_frame (GdkDrawContext  *draw_context,
+                                    GdkMemoryDepth   depth,
+                                    cairo_region_t  *region,
+                                    GdkColorState  **out_color_state,
+                                    GdkMemoryDepth  *out_depth)
 {
   gdk_wayland_surface_ensure_wl_egl_window (gdk_draw_context_get_surface (draw_context));
 
-  GDK_DRAW_CONTEXT_CLASS (gdk_wayland_gl_context_parent_class)->begin_frame (draw_context, depth, region);
+  GDK_DRAW_CONTEXT_CLASS (gdk_wayland_gl_context_parent_class)->begin_frame (draw_context, depth, region, out_color_state, out_depth);
 }
 
 static void
@@ -88,14 +90,7 @@ gdk_wayland_gl_context_empty_frame (GdkDrawContext *draw_context)
 {
   GdkSurface *surface = gdk_draw_context_get_surface (draw_context);
 
-  if (gdk_wayland_surface_needs_commit (surface))
-    {
-      gdk_wayland_surface_sync (surface);
-      gdk_wayland_surface_request_frame (surface);
-
-      gdk_wayland_surface_commit (surface);
-      gdk_wayland_surface_notify_committed (surface);
-    }
+  gdk_wayland_surface_handle_empty_frame (surface);
 }
 
 static void

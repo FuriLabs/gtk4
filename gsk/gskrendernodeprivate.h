@@ -32,8 +32,9 @@ struct _GskRenderNode
 
   graphene_rect_t bounds;
 
-  guint preferred_depth : 2;
+  guint preferred_depth : GDK_MEMORY_DEPTH_BITS;
   guint offscreen_for_opacity : 1;
+  guint fully_opaque : 1;
 };
 
 typedef struct
@@ -48,14 +49,17 @@ struct _GskRenderNodeClass
 
   GskRenderNodeType node_type;
 
-  void            (* finalize)    (GskRenderNode  *node);
-  void            (* draw)        (GskRenderNode  *node,
-                                   cairo_t        *cr);
-  gboolean        (* can_diff)    (const GskRenderNode  *node1,
-                                   const GskRenderNode  *node2);
-  void            (* diff)        (GskRenderNode  *node1,
-                                   GskRenderNode  *node2,
-                                   GskDiffData    *data);
+  void          (* finalize)                            (GskRenderNode               *node);
+  void          (* draw)                                (GskRenderNode               *node,
+                                                         cairo_t                     *cr,
+                                                         GdkColorState               *ccs);
+  gboolean      (* can_diff)                            (const GskRenderNode         *node1,
+                                                         const GskRenderNode         *node2);
+  void          (* diff)                                (GskRenderNode               *node1,
+                                                         GskRenderNode               *node2,
+                                                         GskDiffData                 *data);
+  gboolean      (* get_opaque_rect)                     (GskRenderNode               *node,
+                                                         graphene_rect_t             *out_opaque);
 };
 
 void            gsk_render_node_init_types              (void);
@@ -79,6 +83,12 @@ void            gsk_render_node_diff_impossible         (GskRenderNode          
 void            gsk_container_node_diff_with            (GskRenderNode               *container,
                                                          GskRenderNode               *other,
                                                          GskDiffData                 *data);
+void            gsk_render_node_draw_ccs                (GskRenderNode               *node,
+                                                         cairo_t                     *cr,
+                                                         GdkColorState               *ccs);
+void            gsk_render_node_draw_with_color_state   (GskRenderNode               *node,
+                                                         cairo_t                     *cr,
+                                                         GdkColorState               *color_state);
 void            gsk_render_node_draw_fallback           (GskRenderNode               *node,
                                                          cairo_t                     *cr);
 

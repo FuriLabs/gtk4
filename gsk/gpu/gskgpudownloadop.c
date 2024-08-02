@@ -7,11 +7,15 @@
 #include "gskgpuimageprivate.h"
 #include "gskgpuprintprivate.h"
 #ifdef GDK_RENDERING_VULKAN
+#include "gskgpucacheprivate.h"
 #include "gskvulkanbufferprivate.h"
 #include "gskvulkanframeprivate.h"
 #include "gskvulkanimageprivate.h"
 #endif
 
+#include <glib/gstdio.h>
+
+#include "gdk/gdkdmabuftexturebuilderprivate.h"
 #include "gdk/gdkdmabuftextureprivate.h"
 #include "gdk/gdkglcontextprivate.h"
 
@@ -142,12 +146,13 @@ gsk_gpu_download_op_vk_command (GskGpuOp              *op,
     self->texture = gsk_vulkan_image_to_dmabuf_texture (GSK_VULKAN_IMAGE (self->image));
   if (self->texture)
     {
-      GskVulkanDevice *device = GSK_VULKAN_DEVICE (gsk_gpu_frame_get_device (frame));
-      VkDevice vk_device = gsk_vulkan_device_get_vk_device (device);
+      GskGpuDevice *device = gsk_gpu_frame_get_device (frame);
+      GskGpuCache *cache = gsk_gpu_device_get_cache (device);
+      VkDevice vk_device = gsk_vulkan_device_get_vk_device (GSK_VULKAN_DEVICE (device));
 
-      gsk_gpu_device_cache_texture_image (GSK_GPU_DEVICE (device), self->texture, gsk_gpu_frame_get_timestamp (frame), self->image);
+      gsk_gpu_cache_cache_texture_image (cache, self->texture, self->image, NULL);
 
-      if (gsk_vulkan_device_has_feature (device, GDK_VULKAN_FEATURE_SEMAPHORE_EXPORT))
+      if (gsk_vulkan_device_has_feature (GSK_VULKAN_DEVICE (device), GDK_VULKAN_FEATURE_SEMAPHORE_EXPORT))
         {
           GSK_VK_CHECK (vkCreateSemaphore, vk_device,
                                            &(VkSemaphoreCreateInfo) {
@@ -249,12 +254,35 @@ gsk_gl_texture_data_free (gpointer user_data)
 
   gdk_gl_context_make_current (data->context);
 
-  g_clear_pointer (&data->sync, glDeleteSync);
+  /* can't use g_clear_pointer() on glDeleteSync(), see MR !7294 */
+  if (data->sync)
+    {
+      glDeleteSync (data->sync);
+      data->sync = NULL;
+    }
+
   glDeleteTextures (1, &data->texture_id);
   g_object_unref (data->context);
 
   g_free (data);
 }
+
+#ifdef HAVE_DMABUF
+typedef struct
+{
+  GdkDmabuf dmabuf;
+} Texture;
+
+static void
+release_dmabuf_texture (gpointer data)
+{
+  Texture *texture = data;
+
+  for (unsigned int i = 0; i < texture->dmabuf.n_planes; i++)
+    g_close (texture->dmabuf.planes[i].fd, NULL);
+  g_free (texture);
+}
+#endif
 
 static GskGpuOp *
 gsk_gpu_download_op_gl_command (GskGpuOp          *op,
@@ -265,12 +293,44 @@ gsk_gpu_download_op_gl_command (GskGpuOp          *op,
   GdkGLTextureBuilder *builder;
   GskGLTextureData *data;
   GdkGLContext *context;
+  guint texture_id;
 
   context = GDK_GL_CONTEXT (gsk_gpu_frame_get_context (frame));
+  texture_id = gsk_gl_image_steal_texture (GSK_GL_IMAGE (self->image));
+
+#ifdef HAVE_DMABUF
+  if (self->allow_dmabuf)
+    {
+      Texture *texture;
+
+      texture = g_new0 (Texture, 1);
+
+      if (gdk_gl_context_export_dmabuf (context, texture_id, &texture->dmabuf))
+        {
+          GdkDmabufTextureBuilder *db;
+
+          db = gdk_dmabuf_texture_builder_new ();
+          gdk_dmabuf_texture_builder_set_display (db, gdk_gl_context_get_display (context));
+          gdk_dmabuf_texture_builder_set_dmabuf (db, &texture->dmabuf);
+          gdk_dmabuf_texture_builder_set_premultiplied (db, gdk_memory_format_get_premultiplied (gsk_gpu_image_get_format (self->image)));
+          gdk_dmabuf_texture_builder_set_width (db, gsk_gpu_image_get_width (self->image));
+          gdk_dmabuf_texture_builder_set_height (db, gsk_gpu_image_get_height (self->image));
+
+          self->texture = gdk_dmabuf_texture_builder_build (db, release_dmabuf_texture, texture, NULL);
+
+          g_object_unref (db);
+
+          if (self->texture)
+            return op->next;
+        }
+
+      g_free (texture);
+    }
+#endif
 
   data = g_new (GskGLTextureData, 1);
   data->context = g_object_ref (context);
-  data->texture_id = gsk_gl_image_steal_texture (GSK_GL_IMAGE (self->image));
+  data->texture_id = texture_id;
 
   if (gdk_gl_context_has_feature (context, GDK_GL_FEATURE_SYNC))
     data->sync = glFenceSync (GL_SYNC_GPU_COMMANDS_COMPLETE, 0);

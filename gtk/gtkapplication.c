@@ -108,8 +108,8 @@
  *
  * ## See Also
  *
- * [HowDoI: Using GtkApplication](https://wiki.gnome.org/HowDoI/GtkApplication),
- * [Getting Started with GTK: Basics](getting_started.html#basics)
+ * - [Using GtkApplication](https://developer.gnome.org/documentation/tutorials/application.html)
+ * - [Getting Started with GTK: Basics](getting_started.html#basics)
  */
 
 enum {
@@ -228,7 +228,11 @@ gtk_application_load_resources (GtkApplication *application)
     path = g_strconcat (base_path, optional_slash, "gtk/help-overlay.ui", NULL);
     if (g_resources_get_info (path, G_RESOURCE_LOOKUP_FLAGS_NONE, NULL, NULL, NULL))
       {
+#ifdef __APPLE__
+        const char * const accels[] = { "<Meta>question", NULL };
+#else
         const char * const accels[] = { "<Control>question", NULL };
+#endif
 
         priv->help_overlay_path = path;
         gtk_application_set_accels_for_action (application, "win.show-help-overlay", accels);

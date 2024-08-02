@@ -20,6 +20,7 @@
 
 #include "gdkgltextureprivate.h"
 
+#include "gdkcolorstateprivate.h"
 #include "gdkdisplayprivate.h"
 #include "gdkglcontextprivate.h"
 #include "gdkmemoryformatprivate.h"
@@ -136,6 +137,7 @@ typedef struct _Download Download;
 struct _Download
 {
   GdkMemoryFormat format;
+  GdkColorState *color_state;
   guchar *data;
   gsize stride;
 };
@@ -151,7 +153,7 @@ gdk_gl_texture_find_format (GdkGLContext    *context,
 
   for (format = 0; format < GDK_MEMORY_N_FORMATS; format++)
     {
-      GLint q_internal_format;
+      GLint q_internal_format, q_internal_srgb_format;
       GLenum q_format, q_type;
       GLint q_swizzle[4];
 
@@ -164,6 +166,7 @@ gdk_gl_texture_find_format (GdkGLContext    *context,
       gdk_memory_format_gl_format (format,
                                    gdk_gl_context_get_use_es (context),
                                    &q_internal_format,
+                                   &q_internal_srgb_format,
                                    &q_format,
                                    &q_type,
                                    q_swizzle);
@@ -187,7 +190,7 @@ gdk_gl_texture_do_download (GdkGLTexture *self,
   GdkMemoryFormat format;
   gsize expected_stride;
   Download *download = download_;
-  GLint gl_internal_format;
+  GLint gl_internal_format, gl_internal_srgb_format;
   GLenum gl_format, gl_type;
   GLint gl_swizzle[4];
 
@@ -199,7 +202,7 @@ gdk_gl_texture_do_download (GdkGLTexture *self,
     {
       gdk_memory_format_gl_format (format,
                                    gdk_gl_context_get_use_es (context),
-                                   &gl_internal_format,
+                                   &gl_internal_format, &gl_internal_srgb_format,
                                    &gl_format, &gl_type, gl_swizzle);
       if (download->stride == expected_stride &&
           download->format == format)
@@ -209,6 +212,14 @@ gdk_gl_texture_do_download (GdkGLTexture *self,
                          gl_format,
                          gl_type,
                          download->data);
+
+          gdk_memory_convert_color_state (download->data,
+                                          download->stride,
+                                          download->format,
+                                          download->color_state,
+                                          texture->color_state,
+                                          texture->width,
+                                          texture->height);
         }
       else
         {
@@ -225,14 +236,15 @@ gdk_gl_texture_do_download (GdkGLTexture *self,
           gdk_memory_convert (download->data,
                               download->stride,
                               download->format,
+                              download->color_state,
                               pixels,
                               stride,
                               format,
+                              texture->color_state,
                               texture->width,
                               texture->height);
 
           g_free (pixels);
-
         }
     }
   else
@@ -256,25 +268,25 @@ gdk_gl_texture_do_download (GdkGLTexture *self,
             }
           else
             {
-              actual_format = gdk_memory_depth_get_format (gdk_memory_format_get_depth (format));
+              actual_format = gdk_memory_depth_get_format (gdk_memory_format_get_depth (format, FALSE));
               if (gdk_memory_format_alpha (format) == GDK_MEMORY_ALPHA_STRAIGHT)
                 actual_format = gdk_memory_format_get_straight (actual_format);
 
               gdk_memory_format_gl_format (actual_format,
                                            gdk_gl_context_get_use_es (context),
-                                           &gl_internal_format,
+                                           &gl_internal_format, &gl_internal_srgb_format,
                                            &gl_read_format, &gl_read_type, gl_swizzle);
             }
         }
       else
         {
-          actual_format = gdk_memory_depth_get_format (gdk_memory_format_get_depth (format));
+          actual_format = gdk_memory_depth_get_format (gdk_memory_format_get_depth (format, FALSE));
           if (gdk_memory_format_alpha (format) == GDK_MEMORY_ALPHA_STRAIGHT)
             actual_format = gdk_memory_format_get_straight (actual_format);
 
           gdk_memory_format_gl_format (actual_format,
                                        gdk_gl_context_get_use_es (context),
-                                       &gl_internal_format,
+                                       &gl_internal_format, &gl_internal_srgb_format,
                                        &gl_read_format, &gl_read_type, gl_swizzle);
         }
 
@@ -286,6 +298,14 @@ gdk_gl_texture_do_download (GdkGLTexture *self,
                         gl_read_format,
                         gl_read_type,
                         download->data);
+
+          gdk_memory_convert_color_state (download->data,
+                                          download->stride,
+                                          download->format,
+                                          download->color_state,
+                                          texture->color_state,
+                                          texture->width,
+                                          texture->height);
         }
       else
         {
@@ -377,9 +397,11 @@ gdk_gl_texture_do_download (GdkGLTexture *self,
           gdk_memory_convert (download->data,
                               download->stride,
                               download->format,
+                              download->color_state,
                               pixels,
                               stride,
                               actual_format,
+                              texture->color_state,
                               texture->width,
                               texture->height);
 
@@ -393,6 +415,7 @@ gdk_gl_texture_do_download (GdkGLTexture *self,
 static void
 gdk_gl_texture_download (GdkTexture      *texture,
                          GdkMemoryFormat  format,
+                         GdkColorState   *color_state,
                          guchar          *data,
                          gsize            stride)
 {
@@ -401,11 +424,12 @@ gdk_gl_texture_download (GdkTexture      *texture,
 
   if (self->saved)
     {
-      gdk_texture_do_download (self->saved, format, data, stride);
+      gdk_texture_do_download (self->saved, format, color_state, data, stride);
       return;
     }
 
   download.format = format;
+  download.color_state = color_state;
   download.data = data;
   download.stride = stride;
 
@@ -471,8 +495,7 @@ gdk_gl_texture_release (GdkGLTexture *self)
   g_return_if_fail (self->saved == NULL);
 
   texture = GDK_TEXTURE (self);
-  self->saved = GDK_TEXTURE (gdk_memory_texture_from_texture (texture,
-                                                              gdk_texture_get_format (texture)));
+  self->saved = GDK_TEXTURE (gdk_memory_texture_from_texture (texture));
 
   drop_gl_resources (self);
 }
@@ -488,6 +511,7 @@ gdk_gl_texture_new_from_builder (GdkGLTextureBuilder *builder,
   self = g_object_new (GDK_TYPE_GL_TEXTURE,
                        "width", gdk_gl_texture_builder_get_width (builder),
                        "height", gdk_gl_texture_builder_get_height (builder),
+                       "color-state", gdk_gl_texture_builder_get_color_state (builder),
                        NULL);
 
   self->context = g_object_ref (gdk_gl_texture_builder_get_context (builder));
@@ -682,6 +706,7 @@ gdk_gl_texture_new (GdkGLContext   *context,
   self = g_object_new (GDK_TYPE_GL_TEXTURE,
                        "width", width,
                        "height", height,
+                       "color-state", GDK_COLOR_STATE_SRGB,
                        NULL);
 
   self->context = g_object_ref (context);

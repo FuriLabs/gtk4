@@ -116,13 +116,14 @@ void       gdk_wayland_display_system_bell (GdkDisplay *display,
 
 struct wl_buffer *_gdk_wayland_cursor_get_buffer (GdkWaylandDisplay *display,
                                                   GdkCursor         *cursor,
-                                                  guint              desired_scale,
+                                                  double             desired_scale,
+                                                  gboolean           use_viewporter,
                                                   guint              image_index,
                                                   int               *hotspot_x,
                                                   int               *hotspot_y,
                                                   int               *w,
                                                   int               *h,
-                                                  int               *scale);
+                                                  double            *scale);
 guint      _gdk_wayland_cursor_get_next_image_index (GdkWaylandDisplay *display,
                                                      GdkCursor         *cursor,
                                                      guint              scale,
@@ -130,7 +131,7 @@ guint      _gdk_wayland_cursor_get_next_image_index (GdkWaylandDisplay *display,
                                                      guint             *next_image_delay);
 
 void            gdk_wayland_surface_sync                   (GdkSurface           *surface);
-gboolean        gdk_wayland_surface_needs_commit           (GdkSurface           *surface);
+void            gdk_wayland_surface_handle_empty_frame     (GdkSurface           *surface);
 void            gdk_wayland_surface_commit                 (GdkSurface           *surface);
 void            gdk_wayland_surface_notify_committed       (GdkSurface           *surface);
 void            gdk_wayland_surface_request_frame          (GdkSurface           *surface);

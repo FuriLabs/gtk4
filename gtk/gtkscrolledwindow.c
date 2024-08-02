@@ -105,6 +105,12 @@
  * can be turned off with the [property@Gtk.ScrolledWindow:overlay-scrolling]
  * property.
  *
+ * # Shortcuts and Gestures
+ *
+ * The following signals have default keybindings:
+ *
+ * - [signal@Gtk.ScrolledWindow::scroll-child]
+ *
  * # CSS nodes
  *
  * `GtkScrolledWindow` has a main CSS node with name scrolledwindow.
@@ -582,7 +588,7 @@ gtk_scrolled_window_class_init (GtkScrolledWindowClass *class)
   class->move_focus_out = gtk_scrolled_window_move_focus_out;
 
   /**
-   * GtkScrolleWindow:hadjustment: (attributes org.gtk.Property.get=gtk_scrolled_window_get_hadjustment org.gtk.Property.set=gtk_scrolled_window_set_hadjustment)
+   * GtkScrolledWindow:hadjustment: (attributes org.gtk.Property.get=gtk_scrolled_window_get_hadjustment org.gtk.Property.set=gtk_scrolled_window_set_hadjustment)
    *
    * The `GtkAdjustment` for the horizontal position.
    */
@@ -592,7 +598,7 @@ gtk_scrolled_window_class_init (GtkScrolledWindowClass *class)
                            GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT|G_PARAM_EXPLICIT_NOTIFY);
 
   /**
-   * GtkScrolleWindow:vadjustment: (attributes org.gtk.Property.get=gtk_scrolled_window_get_vadjustment org.gtk.Property.set=gtk_scrolled_window_set_vadjustment)
+   * GtkScrolledWindow:vadjustment: (attributes org.gtk.Property.get=gtk_scrolled_window_get_vadjustment org.gtk.Property.set=gtk_scrolled_window_set_vadjustment)
    *
    * The `GtkAdjustment` for the vertical position.
    */
@@ -776,6 +782,8 @@ gtk_scrolled_window_class_init (GtkScrolledWindowClass *class)
    *
    * The horizontal or vertical adjustment is updated which triggers a
    * signal that the scrolled window’s child may listen to and scroll itself.
+   *
+   * Returns: whether the scroll happened
    */
   signals[SCROLL_CHILD] =
     g_signal_new (I_("scroll-child"),
@@ -803,8 +811,8 @@ gtk_scrolled_window_class_init (GtkScrolledWindowClass *class)
    * This is a [keybinding signal](class.SignalAction.html).
    *
    * The default bindings for this signal are
-   * `Ctrl + Tab` to move forward and `Ctrl + Shift + Tab` to
-   * move backward.
+   * <kbd>Ctrl</kbd>+<kbd>Tab</kbd> to move forward and
+   * <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd>` to move backward.
    */
   signals[MOVE_FOCUS_OUT] =
     g_signal_new (I_("move-focus-out"),

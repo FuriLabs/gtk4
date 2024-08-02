@@ -10,6 +10,7 @@ tests = [
   { 'name': 'array' },
   { 'name': 'cairo' },
   { 'name': 'clipboard', 'parallel': false, 'suites': 'flaky' },
+  { 'name': 'colorstate' },
   { 'name': 'contentformats' },
   { 'name': 'contentserializer' },
   { 'name': 'cursor' },
@@ -57,10 +58,13 @@ foreach t : tests
 endforeach
 
 internal_tests = [
+  { 'name': 'colorstate-internal' },
+  { 'name': 'dihedral' },
   { 'name': 'image' },
   { 'name': 'texture' },
   { 'name': 'gltexture' },
   { 'name': 'subsurface' },
+  { 'name': 'memoryformat' },
 ]
 
 if os_linux

@@ -24,6 +24,8 @@
 #include <glib/gi18n-lib.h>
 #include "gdktexture.h"
 #include "gdktexturedownloaderprivate.h"
+#include "gdkmemorytexturebuilder.h"
+#include "gdkcolorstateprivate.h"
 
 #include "gdkprofilerprivate.h"
 
@@ -77,31 +79,6 @@ output_message_handler (j_common_ptr cinfo)
 /* {{{ Format conversion */
 
 static void
-convert_grayscale_to_rgb (guchar *data,
-                          int     width,
-                          int     height,
-                          int     stride)
-{
-  gsize x, y;
-  guchar *dest, *src;
-
-  for (y = 0; y < height; y++)
-    {
-      src = data + width;
-      dest = data + 3 * width;
-      for (x = 0; x < width; x++)
-        {
-          dest -= 3;
-          src -= 1;
-          dest[0] = *src;
-          dest[1] = *src;
-          dest[2] = *src;
-        }
-      data += stride;
-    }
-}
-
-static void
 convert_cmyk_to_rgba (guchar *data,
                       int     width,
                       int     height,
@@ -131,7 +108,7 @@ convert_cmyk_to_rgba (guchar *data,
     }
 }
 
- /* }}} */
+/* }}} */
 /* {{{ Public API */
 
 GdkTexture *
@@ -144,8 +121,10 @@ gdk_load_jpeg (GBytes  *input_bytes,
   unsigned char *data = NULL;
   unsigned char *row[1];
   GBytes *bytes;
+  GdkMemoryTextureBuilder *builder;
   GdkTexture *texture;
   GdkMemoryFormat format;
+  GdkColorState *color_state;
   G_GNUC_UNUSED guint64 before = GDK_PROFILER_CURRENT_TIME;
 
   info.err = jpeg_std_error (&jerr.pub);
@@ -175,9 +154,15 @@ gdk_load_jpeg (GBytes  *input_bytes,
   width = info.output_width;
   height = info.output_height;
 
+  color_state = GDK_COLOR_STATE_SRGB;
+
   switch ((int)info.out_color_space)
     {
     case JCS_GRAYSCALE:
+      stride = width;
+      data = g_try_malloc_n (stride, height);
+      format = GDK_MEMORY_G8;
+      break;
     case JCS_RGB:
       stride = 3 * width;
       data = g_try_malloc_n (stride, height);
@@ -211,34 +196,31 @@ gdk_load_jpeg (GBytes  *input_bytes,
        jpeg_read_scanlines (&info, row, 1);
     }
 
-  switch ((int)info.out_color_space)
-    {
-    case JCS_GRAYSCALE:
-      convert_grayscale_to_rgb (data, width, height, stride);
-      format = GDK_MEMORY_R8G8B8;
-      break;
-    case JCS_RGB:
-      break;
-    case JCS_CMYK:
-      convert_cmyk_to_rgba (data, width, height, stride);
-      break;
-    default:
-      g_assert_not_reached ();
-    }
+  if (info.out_color_space == JCS_CMYK)
+    convert_cmyk_to_rgba (data, width, height, stride);
 
   jpeg_finish_decompress (&info);
   jpeg_destroy_decompress (&info);
 
   bytes = g_bytes_new_take (data, stride * height);
 
-  texture = gdk_memory_texture_new (width, height,
-                                    format,
-                                    bytes, stride);
+  builder = gdk_memory_texture_builder_new ();
 
+  gdk_memory_texture_builder_set_bytes (builder, bytes);
+  gdk_memory_texture_builder_set_stride (builder, stride);
+  gdk_memory_texture_builder_set_width (builder, width);
+  gdk_memory_texture_builder_set_height (builder, height);
+  gdk_memory_texture_builder_set_format (builder, format);
+  gdk_memory_texture_builder_set_color_state (builder, color_state);
+
+  texture = gdk_memory_texture_builder_build (builder);
+
+  gdk_color_state_unref (color_state);
+  g_object_unref (builder);
   g_bytes_unref (bytes);
 
   gdk_profiler_end_mark (before, "Load jpeg", NULL);
- 
+
   return texture;
 }
 
@@ -292,6 +274,7 @@ gdk_save_jpeg (GdkTexture *texture)
 
   gdk_texture_downloader_init (&downloader, texture);
   gdk_texture_downloader_set_format (&downloader, GDK_MEMORY_R8G8B8);
+  gdk_texture_downloader_set_color_state (&downloader, GDK_COLOR_STATE_SRGB);
   texbytes = gdk_texture_downloader_download_bytes (&downloader, &texstride);
   gdk_texture_downloader_finish (&downloader);
   texdata = g_bytes_get_data (texbytes, NULL);

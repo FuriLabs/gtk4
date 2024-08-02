@@ -127,7 +127,7 @@ gsk_gl_glyph_library_init_atlas (GskGLTextureLibrary *self,
   else
     {
       gl_format = GL_BGRA;
-      gl_type = GL_UNSIGNED_BYTE;
+      gl_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
   glBindTexture (GL_TEXTURE_2D, atlas->texture_id);
 
@@ -281,9 +281,11 @@ gsk_gl_glyph_library_upload_glyph (GskGLGlyphLibrary     *self,
       pixel_data = free_data = g_malloc (width * height * 4);
       gdk_memory_convert (pixel_data, width * 4,
                           GDK_MEMORY_R8G8B8A8_PREMULTIPLIED,
+                          GDK_COLOR_STATE_SRGB,
                           cairo_image_surface_get_data (surface),
                           stride,
                           GDK_MEMORY_DEFAULT,
+                          GDK_COLOR_STATE_SRGB,
                           width, height);
       stride = width * 4;
       gl_format = GL_RGBA;
@@ -293,7 +295,7 @@ gsk_gl_glyph_library_upload_glyph (GskGLGlyphLibrary     *self,
     {
       pixel_data = cairo_image_surface_get_data (surface);
       gl_format = GL_BGRA;
-      gl_type = GL_UNSIGNED_BYTE;
+      gl_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
   glPixelStorei (GL_UNPACK_ROW_LENGTH, stride / 4);
@@ -408,7 +410,7 @@ gsk_gl_glyph_library_add (GskGLGlyphLibrary      *self,
   width = (int) ceil (ink_rect.width * key->scale / 1024.0);
   height = (int) ceil (ink_rect.height * key->scale / 1024.0);
 
-  GSK_DEBUG (GLYPH_CACHE, "font %p glyph %u: %u x %u pixels", key->font, key->glyph, width, height);
+  GSK_DEBUG (CACHE, "font %p glyph %u: %u x %u pixels", key->font, key->glyph, width, height);
 
   value = gsk_gl_texture_library_pack (tl,
                                        key,

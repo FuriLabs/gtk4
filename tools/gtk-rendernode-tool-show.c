@@ -57,16 +57,20 @@ show_file (const char *filename,
            gboolean    decorated)
 {
   GskRenderNode *node;
+  graphene_rect_t node_bounds;
   GdkPaintable *paintable;
   GtkWidget *sw;
+  GtkWidget *handle;
   GtkWidget *window;
   gboolean done = FALSE;
   GtkSnapshot *snapshot;
   GtkWidget *picture;
 
   node = load_node_file (filename);
+  gsk_render_node_get_bounds (node, &node_bounds);
 
   snapshot = gtk_snapshot_new ();
+  gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (- node_bounds.origin.x, - node_bounds.origin.y));
   gtk_snapshot_append_node (snapshot, node);
   paintable = gtk_snapshot_free_to_paintable (snapshot, NULL);
 
@@ -79,10 +83,16 @@ show_file (const char *filename,
   gtk_scrolled_window_set_propagate_natural_height (GTK_SCROLLED_WINDOW (sw), TRUE);
   gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (sw), picture);
 
+  handle = gtk_window_handle_new ();
+  gtk_window_handle_set_child (GTK_WINDOW_HANDLE (handle), sw);
+
   window = gtk_window_new ();
   gtk_window_set_decorated (GTK_WINDOW (window), decorated);
+  gtk_window_set_resizable (GTK_WINDOW (window), decorated);
+  if (!decorated)
+    gtk_widget_remove_css_class (window, "background");
   set_window_title (GTK_WINDOW (window), filename);
-  gtk_window_set_child (GTK_WINDOW (window), sw);
+  gtk_window_set_child (GTK_WINDOW (window), handle);
 
   gtk_window_present (GTK_WINDOW (window));
   g_signal_connect (window, "destroy", G_CALLBACK (quit_cb), &done);

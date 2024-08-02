@@ -3,19 +3,20 @@
 #include "gskgpuframeprivate.h"
 
 #include "gskgpubufferprivate.h"
+#include "gskgpucacheprivate.h"
 #include "gskgpudeviceprivate.h"
 #include "gskgpudownloadopprivate.h"
 #include "gskgpuimageprivate.h"
 #include "gskgpunodeprocessorprivate.h"
 #include "gskgpuopprivate.h"
 #include "gskgpurendererprivate.h"
-#include "gskgpurenderpassopprivate.h"
 #include "gskgpuuploadopprivate.h"
 
 #include "gskdebugprivate.h"
 #include "gskrendererprivate.h"
 
 #include "gdk/gdkdmabufdownloaderprivate.h"
+#include "gdk/gdkdrawcontextprivate.h"
 #include "gdk/gdktexturedownloaderprivate.h"
 
 #define DEFAULT_VERTEX_BUFFER_SIZE 128 * 1024
@@ -36,6 +37,7 @@ struct _GskGpuFramePrivate
   GskGpuRenderer *renderer;
   GskGpuDevice *device;
   GskGpuOptimizations optimizations;
+  gsize texture_vertex_size;
   gint64 timestamp;
 
   GskGpuOps ops;
@@ -76,6 +78,22 @@ gsk_gpu_frame_default_cleanup (GskGpuFrame *self)
 }
 
 static void
+gsk_gpu_frame_default_begin (GskGpuFrame          *self,
+                             GdkDrawContext       *context,
+                             GdkMemoryDepth        depth,
+                             const cairo_region_t *region)
+{
+  gdk_draw_context_begin_frame_full (context, depth, region);
+}
+
+static void
+gsk_gpu_frame_default_end (GskGpuFrame    *self,
+                           GdkDrawContext *context)
+{
+  gdk_draw_context_end_frame (context);
+}
+
+static void
 gsk_gpu_frame_cleanup (GskGpuFrame *self)
 {
   GSK_GPU_FRAME_GET_CLASS (self)->cleanup (self);
@@ -89,8 +107,6 @@ gsk_gpu_frame_default_upload_texture (GskGpuFrame *self,
   GskGpuImage *image;
 
   image = gsk_gpu_upload_texture_op_try (self, with_mipmap, texture);
-  if (image)
-    g_object_ref (image);
 
   return image;
 }
@@ -128,6 +144,8 @@ gsk_gpu_frame_class_init (GskGpuFrameClass *klass)
 
   klass->setup = gsk_gpu_frame_default_setup;
   klass->cleanup = gsk_gpu_frame_default_cleanup;
+  klass->begin = gsk_gpu_frame_default_begin;
+  klass->end = gsk_gpu_frame_default_end;
   klass->upload_texture = gsk_gpu_frame_default_upload_texture;
 
   object_class->dispose = gsk_gpu_frame_dispose;
@@ -156,6 +174,44 @@ gsk_gpu_frame_setup (GskGpuFrame         *self,
   priv->optimizations = optimizations;
 
   GSK_GPU_FRAME_GET_CLASS (self)->setup (self);
+}
+
+/*
+ * gsk_gpu_frame_set_texture_vertex_size:
+ * @self: the frame
+ * @texture_vertex_size: bytes to reserve in the vertex data per
+ *   texture rendered
+ *
+ * Some renderers want to attach vertex data for textures, usually
+ * for supporting bindless textures. This is the number of bytes
+ * reserved per texture.
+ *
+ * GskGpuFrameClass::write_texture_vertex_data() is used to write that
+ * data.
+ **/
+void
+gsk_gpu_frame_set_texture_vertex_size (GskGpuFrame *self,
+                                       gsize        texture_vertex_size)
+{
+  GskGpuFramePrivate *priv = gsk_gpu_frame_get_instance_private (self);
+
+  priv->texture_vertex_size = texture_vertex_size;
+}
+
+void
+gsk_gpu_frame_begin (GskGpuFrame          *self,
+                     GdkDrawContext       *context,
+                     GdkMemoryDepth        depth,
+                     const cairo_region_t *region)
+{
+  GSK_GPU_FRAME_GET_CLASS (self)->begin (self, context, depth, region);
+}
+
+void
+gsk_gpu_frame_end (GskGpuFrame    *self,
+                   GdkDrawContext *context)
+{
+  GSK_GPU_FRAME_GET_CLASS (self)->end (self, context);
 }
 
 GskGpuDevice *
@@ -412,15 +468,9 @@ gsk_gpu_frame_upload_texture (GskGpuFrame  *self,
   image = GSK_GPU_FRAME_GET_CLASS (self)->upload_texture (self, with_mipmap, texture);
 
   if (image)
-    gsk_gpu_device_cache_texture_image (priv->device, texture, priv->timestamp, image);
+    gsk_gpu_cache_cache_texture_image (gsk_gpu_device_get_cache (priv->device), texture, image, NULL);
 
   return image;
-}
-
-GskGpuDescriptors *
-gsk_gpu_frame_create_descriptors (GskGpuFrame *self)
-{
-  return GSK_GPU_FRAME_GET_CLASS (self)->create_descriptors (self);
 }
 
 static GskGpuBuffer *
@@ -441,6 +491,15 @@ static inline gsize
 round_up (gsize number, gsize divisor)
 {
   return (number + divisor - 1) / divisor * divisor;
+}
+
+gsize
+gsk_gpu_frame_get_texture_vertex_size (GskGpuFrame *self,
+                                       gsize        n_textures)
+{
+  GskGpuFramePrivate *priv = gsk_gpu_frame_get_instance_private (self);
+
+  return priv->texture_vertex_size * n_textures;
 }
 
 gsize
@@ -502,6 +561,16 @@ gsk_gpu_frame_ensure_storage_buffer (GskGpuFrame *self)
   priv->storage_buffer_data = gsk_gpu_buffer_map (priv->storage_buffer);
 }
 
+void
+gsk_gpu_frame_write_texture_vertex_data (GskGpuFrame    *self,
+                                         guchar         *data,
+                                         GskGpuImage   **images,
+                                         GskGpuSampler  *samplers,
+                                         gsize           n_images)
+{
+  GSK_GPU_FRAME_GET_CLASS (self)->write_texture_vertex_data (self, data, images, samplers, n_images);
+}
+
 GskGpuBuffer *
 gsk_gpu_frame_write_storage_buffer (GskGpuFrame  *self,
                                     const guchar *data,
@@ -559,40 +628,20 @@ copy_texture (gpointer    user_data,
 }
 
 static void
-gsk_gpu_frame_record_rect (GskGpuFrame                 *self,
-                           GskGpuImage                 *target,
-                           const cairo_rectangle_int_t *clip,
-                           GskRenderNode               *node,
-                           const graphene_rect_t       *viewport)
-{
-  gsk_gpu_render_pass_begin_op (self,
-                                target,
-                                clip,
-                                GSK_RENDER_PASS_PRESENT);
-
-  gsk_gpu_node_processor_process (self,
-                                  target,
-                                  clip,
-                                  node,
-                                  viewport);
-
-  gsk_gpu_render_pass_end_op (self,
-                              target,
-                              GSK_RENDER_PASS_PRESENT);
-}
-
-static void
 gsk_gpu_frame_record (GskGpuFrame            *self,
                       gint64                  timestamp,
                       GskGpuImage            *target,
+                      GdkColorState          *target_color_state,
                       const cairo_region_t   *clip,
                       GskRenderNode          *node,
                       const graphene_rect_t  *viewport,
                       GdkTexture            **texture)
 {
   GskGpuFramePrivate *priv = gsk_gpu_frame_get_instance_private (self);
+  GskRenderPassType pass_type = texture ? GSK_RENDER_PASS_EXPORT : GSK_RENDER_PASS_PRESENT;
 
   priv->timestamp = timestamp;
+  gsk_gpu_cache_set_time (gsk_gpu_device_get_cache (priv->device), timestamp);
 
   if (clip)
     {
@@ -603,20 +652,22 @@ gsk_gpu_frame_record (GskGpuFrame            *self,
           cairo_rectangle_int_t rect;
 
           cairo_region_get_rectangle (clip, i, &rect);
-          gsk_gpu_frame_record_rect (self, target, &rect, node, viewport);
+          gsk_gpu_node_processor_process  (self, target, target_color_state, &rect, node, viewport, pass_type);
         }
     }
   else
     {
-      gsk_gpu_frame_record_rect (self,
-                                 target,
-                                 &(cairo_rectangle_int_t) {
-                                     0, 0,
-                                     gsk_gpu_image_get_width (target),
-                                     gsk_gpu_image_get_height (target)
-                                 },
-                                 node,
-                                 viewport);
+      gsk_gpu_node_processor_process (self,
+                                      target,
+                                      target_color_state,
+                                      &(cairo_rectangle_int_t) {
+                                          0, 0,
+                                          gsk_gpu_image_get_width (target),
+                                          gsk_gpu_image_get_height (target)
+                                      },
+                                      node,
+                                      viewport,
+                                      pass_type);
     }
 
   if (texture)
@@ -624,7 +675,8 @@ gsk_gpu_frame_record (GskGpuFrame            *self,
 }
 
 static void
-gsk_gpu_frame_submit (GskGpuFrame *self)
+gsk_gpu_frame_submit (GskGpuFrame       *self,
+                      GskRenderPassType  pass_type)
 {
   GskGpuFramePrivate *priv = gsk_gpu_frame_get_instance_private (self);
 
@@ -648,6 +700,7 @@ gsk_gpu_frame_submit (GskGpuFrame *self)
     }
 
   GSK_GPU_FRAME_GET_CLASS (self)->submit (self,
+                                          pass_type,
                                           priv->vertex_buffer,
                                           priv->first_op);
 }
@@ -656,16 +709,19 @@ void
 gsk_gpu_frame_render (GskGpuFrame            *self,
                       gint64                  timestamp,
                       GskGpuImage            *target,
+                      GdkColorState          *target_color_state,
                       const cairo_region_t   *region,
                       GskRenderNode          *node,
                       const graphene_rect_t  *viewport,
                       GdkTexture            **texture)
 {
+  GskRenderPassType pass_type = texture ? GSK_RENDER_PASS_EXPORT : GSK_RENDER_PASS_PRESENT;
+
   gsk_gpu_frame_cleanup (self);
 
-  gsk_gpu_frame_record (self, timestamp, target, region, node, viewport, texture);
+  gsk_gpu_frame_record (self, timestamp, target, target_color_state, region, node, viewport, texture);
 
-  gsk_gpu_frame_submit (self);
+  gsk_gpu_frame_submit (self, pass_type);
 }
 
 typedef struct _Download Download;
@@ -673,6 +729,7 @@ typedef struct _Download Download;
 struct _Download
 {
   GdkMemoryFormat format;
+  GdkColorState *color_state;
   guchar *data;
   gsize stride;
 };
@@ -686,6 +743,7 @@ do_download (gpointer    user_data,
 
   gdk_texture_downloader_init (&downloader, texture);
   gdk_texture_downloader_set_format (&downloader, download->format);
+  gdk_texture_downloader_set_color_state (&downloader, download->color_state);
   gdk_texture_downloader_download_into (&downloader, download->data, download->stride);
   gdk_texture_downloader_finish (&downloader);
 
@@ -697,13 +755,17 @@ gsk_gpu_frame_download_texture (GskGpuFrame     *self,
                                 gint64           timestamp,
                                 GdkTexture      *texture,
                                 GdkMemoryFormat  format,
+                                GdkColorState   *color_state,
                                 guchar          *data,
                                 gsize            stride)
 {
   GskGpuFramePrivate *priv = gsk_gpu_frame_get_instance_private (self);
   GskGpuImage *image;
 
-  image = gsk_gpu_device_lookup_texture_image (priv->device, texture, timestamp);
+  priv->timestamp = timestamp;
+  gsk_gpu_cache_set_time (gsk_gpu_device_get_cache (priv->device), timestamp);
+
+  image = gsk_gpu_cache_lookup_texture_image (gsk_gpu_device_get_cache (priv->device), texture, NULL);
   if (image == NULL)
     image = gsk_gpu_frame_upload_texture (self, FALSE, texture);
   if (image == NULL)
@@ -714,18 +776,17 @@ gsk_gpu_frame_download_texture (GskGpuFrame     *self,
 
   gsk_gpu_frame_cleanup (self);
 
-  priv->timestamp = timestamp;
-
   gsk_gpu_download_op (self,
                        image,
                        FALSE,
                        do_download,
                        g_memdup (&(Download) {
                            .format = format,
+                           .color_state = color_state,
                            .data = data,
                            .stride = stride
                        }, sizeof (Download)));
 
-  gsk_gpu_frame_submit (self);
+  gsk_gpu_frame_submit (self, GSK_RENDER_PASS_EXPORT);
   g_object_unref (image);
 }

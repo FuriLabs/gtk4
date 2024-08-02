@@ -1776,11 +1776,6 @@ _gdk_x11_display_is_root_window (GdkDisplay *display,
   return GDK_SCREEN_XROOTWIN (display_x11->screen) == xroot_window;
 }
 
-struct XPointerUngrabInfo {
-  GdkDisplay *display;
-  guint32 time;
-};
-
 static void
 device_grab_update_callback (GdkDisplay *display,
                              gpointer    data,
@@ -2998,7 +2993,7 @@ gdk_x11_display_init_gl_backend (GdkX11Display  *self,
     }
 
   if (!eglGetConfigAttrib (gdk_display_get_egl_display (display),
-                           gdk_display_get_egl_config (display),
+                           gdk_display_get_egl_config (display, GDK_MEMORY_U8),
                            EGL_NATIVE_VISUAL_ID,
                            &visualid))
     {
@@ -3078,7 +3073,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 
   display_class->get_monitors = gdk_x11_display_get_monitors;
   display_class->get_setting = gdk_x11_display_get_setting;
-  display_class->set_cursor_theme = gdk_x11_display_set_cursor_theme;
+  display_class->set_cursor_theme = _gdk_x11_display_set_cursor_theme;
 
   class->xevent = gdk_event_source_xevent;
 

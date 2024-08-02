@@ -72,10 +72,12 @@ struct _GdkSurfacePrivate
   gpointer egl_native_window;
 #ifdef HAVE_EGL
   EGLSurface egl_surface;
-  gboolean egl_surface_high_depth;
+  GdkMemoryDepth egl_surface_depth;
 #endif
 
   gpointer widget;
+
+  GdkColorState *color_state;
 };
 
 enum {
@@ -475,6 +477,8 @@ gdk_surface_event_marshallerv (GClosure *closure,
 static void
 gdk_surface_init (GdkSurface *surface)
 {
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (surface);
+
   /* 0-initialization is good for all other fields. */
 
   surface->state = 0;
@@ -488,6 +492,8 @@ gdk_surface_init (GdkSurface *surface)
                                                  NULL, g_object_unref);
 
   surface->subsurfaces = g_ptr_array_new ();
+
+  priv->color_state = gdk_color_state_ref (gdk_color_state_get_srgb ());
 }
 
 static double
@@ -745,6 +751,7 @@ static void
 gdk_surface_finalize (GObject *object)
 {
   GdkSurface *surface = GDK_SURFACE (object);
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (surface);
 
   g_clear_handle_id (&surface->request_motion_id, g_source_remove);
 
@@ -772,6 +779,8 @@ gdk_surface_finalize (GObject *object)
   g_assert (surface->subsurfaces->len == 0);
 
   g_ptr_array_unref (surface->subsurfaces);
+
+  g_clear_pointer (&priv->color_state, gdk_color_state_unref);
 
   G_OBJECT_CLASS (gdk_surface_parent_class)->finalize (object);
 }
@@ -1139,18 +1148,18 @@ gdk_surface_get_egl_surface (GdkSurface *self)
   return priv->egl_surface;
 }
 
-void
-gdk_surface_ensure_egl_surface (GdkSurface *self,
-                                gboolean    high_depth)
+GdkMemoryDepth
+gdk_surface_ensure_egl_surface (GdkSurface     *self,
+                                GdkMemoryDepth  depth)
 {
   GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
   GdkDisplay *display = gdk_surface_get_display (self);
 
-  g_return_if_fail (priv->egl_native_window != NULL);
+  g_return_val_if_fail (priv->egl_native_window != NULL, depth);
 
-  if (priv->egl_surface_high_depth != high_depth &&
+  if (priv->egl_surface_depth != depth &&
       priv->egl_surface != NULL &&
-      gdk_display_get_egl_config_high_depth (display) != gdk_display_get_egl_config (display))
+      gdk_display_get_egl_config (display, priv->egl_surface_depth) != gdk_display_get_egl_config (display, depth))
     {
       gdk_gl_context_clear_current_if_surface (self);
       eglDestroySurface (gdk_display_get_egl_display (display), priv->egl_surface);
@@ -1159,14 +1168,43 @@ gdk_surface_ensure_egl_surface (GdkSurface *self,
 
   if (priv->egl_surface == NULL)
     {
+      EGLint attribs[4];
+      int i;
+
+      i = 0;
+      if (depth == GDK_MEMORY_U8_SRGB && display->have_egl_gl_colorspace)
+        {
+          attribs[i++] = EGL_GL_COLORSPACE_KHR;
+          attribs[i++] = EGL_GL_COLORSPACE_SRGB_KHR;
+          self->is_srgb = TRUE;
+        }
+      g_assert (i < G_N_ELEMENTS (attribs));
+      attribs[i++] = EGL_NONE;
+
       priv->egl_surface = eglCreateWindowSurface (gdk_display_get_egl_display (display),
-                                                  high_depth ? gdk_display_get_egl_config_high_depth (display)
-                                                             : gdk_display_get_egl_config (display),
+                                                  gdk_display_get_egl_config (display, depth),
                                                   (EGLNativeWindowType) priv->egl_native_window,
-                                                  NULL);
-      priv->egl_surface_high_depth = high_depth;
+                                                  attribs);
+      if (priv->egl_surface == EGL_NO_SURFACE)
+        {
+          /* just assume the error is no srgb support and try again without */
+          self->is_srgb = FALSE;
+          priv->egl_surface = eglCreateWindowSurface (gdk_display_get_egl_display (display),
+                                                      gdk_display_get_egl_config (display, depth),
+                                                      (EGLNativeWindowType) priv->egl_native_window,
+                                                      NULL);
+        }
+      priv->egl_surface_depth = depth;
     }
+
+  return priv->egl_surface_depth;
 #endif
+}
+
+gboolean
+gdk_surface_get_gl_is_srgb (GdkSurface *self)
+{
+  return self->is_srgb;
 }
 
 GdkGLContext *
@@ -3075,4 +3113,27 @@ gdk_surface_get_subsurface (GdkSurface *surface,
                             gsize       idx)
 {
   return g_ptr_array_index (surface->subsurfaces, idx);
+}
+
+GdkColorState *
+gdk_surface_get_color_state (GdkSurface *surface)
+{
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (surface);
+
+  return priv->color_state;
+}
+
+void
+gdk_surface_set_color_state (GdkSurface    *surface,
+                             GdkColorState *color_state)
+{
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (surface);
+
+  if (gdk_color_state_equal (priv->color_state, color_state))
+    return;
+
+  gdk_color_state_unref (priv->color_state);
+  priv->color_state = gdk_color_state_ref (color_state);
+
+  gdk_surface_invalidate_rect (surface, NULL);
 }

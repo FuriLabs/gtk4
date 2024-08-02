@@ -152,6 +152,13 @@ enum {
 
 static GParamSpec *properties[LAST_PROP] = { NULL, };
 
+/**
+ * gdk_gl_error_quark:
+ *
+ * Registers an error quark for [class@Gdk.GLContext] errors.
+ *
+ * Returns: the error quark
+ **/
 G_DEFINE_QUARK (gdk-gl-error-quark, gdk_gl_error)
 
 G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (GdkGLContext, gdk_gl_context, GDK_TYPE_DRAW_CONTEXT)
@@ -322,7 +329,7 @@ gdk_gl_context_create_egl_context (GdkGLContext *context,
   if (display->have_egl_no_config_context)
     egl_config = NULL;
   else
-    egl_config = gdk_display_get_egl_config (display);
+    egl_config = gdk_display_get_egl_config (display, GDK_MEMORY_U8);
 
   if (debug_bit)
     flags |= EGL_CONTEXT_OPENGL_DEBUG_BIT_KHR;
@@ -602,24 +609,41 @@ gdk_gl_context_get_scale (GdkGLContext *self)
 }
 
 static void
-gdk_gl_context_real_begin_frame (GdkDrawContext *draw_context,
-                                 GdkMemoryDepth  depth,
-                                 cairo_region_t *region)
+gdk_gl_context_real_begin_frame (GdkDrawContext  *draw_context,
+                                 GdkMemoryDepth   depth,
+                                 cairo_region_t  *region,
+                                 GdkColorState  **out_color_state,
+                                 GdkMemoryDepth  *out_depth)
 {
   GdkGLContext *context = GDK_GL_CONTEXT (draw_context);
   G_GNUC_UNUSED GdkGLContextPrivate *priv = gdk_gl_context_get_instance_private (context);
-  GdkSurface *surface;
+  GdkSurface *surface = gdk_draw_context_get_surface (draw_context);
+  GdkColorState *color_state;
   cairo_region_t *damage;
   double scale;
   int ww, wh;
   int i;
 
-  surface = gdk_draw_context_get_surface (draw_context);
+  color_state = gdk_surface_get_color_state (surface);
   scale = gdk_gl_context_get_scale (context);
+
+  depth = gdk_memory_depth_merge (depth, gdk_color_state_get_depth (color_state));
+
+  g_assert (depth != GDK_MEMORY_U8_SRGB || gdk_color_state_get_no_srgb_tf (color_state) != NULL);
 
 #ifdef HAVE_EGL
   if (priv->egl_context)
-    gdk_surface_ensure_egl_surface (surface, depth != GDK_MEMORY_U8);
+    *out_depth = gdk_surface_ensure_egl_surface (surface, depth);
+  else
+    *out_depth = GDK_MEMORY_U8;
+
+  if (*out_depth == GDK_MEMORY_U8_SRGB)
+    *out_color_state = gdk_color_state_get_no_srgb_tf (color_state);
+  else
+    *out_color_state = color_state;
+#else
+  *out_color_state = gdk_color_state_get_srgb ();
+  *out_depth = GDK_MEMORY_U8;
 #endif
 
   damage = GDK_GL_CONTEXT_GET_CLASS (context)->get_damage (context);
@@ -1954,8 +1978,6 @@ gdk_gl_context_get_glsl_version_string (GdkGLContext *self)
         return "#version 320 es";
       else if (gdk_gl_version_greater_equal (&priv->gl_version, &GDK_GL_VERSION_INIT (3, 1)))
         return "#version 310 es";
-      else if (gdk_gl_version_greater_equal (&priv->gl_version, &GDK_GL_VERSION_INIT (3, 0)))
-        return "#version 300 es";
       else if (gdk_gl_version_greater_equal (&priv->gl_version, &GDK_GL_VERSION_INIT (3, 0)))
         return "#version 300 es";
       else

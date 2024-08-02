@@ -24,6 +24,7 @@
 #include "gtk/css/gtkcssparserprivate.h"
 #include "gtkcsstypesprivate.h"
 #include "gtkcssvalueprivate.h"
+#include "gtkcsscolorprivate.h"
 
 G_BEGIN_DECLS
 
@@ -36,14 +37,28 @@ typedef enum /*< skip >*/ {
   GTK_CSS_PARSE_TIME = (1 << 5)
 } GtkCssNumberParseFlags;
 
+typedef struct
+{
+  /* Context needed when parsing numbers */
+  GtkCssValue *color;
+  GtkCssColorSpace color_space;
+  gboolean legacy_rgb_scale; /* r, g, b must be scaled to 255 */
+} GtkCssNumberParseContext;
+
+#define GTK_CSS_PARSE_DIMENSION (GTK_CSS_PARSE_LENGTH|GTK_CSS_PARSE_ANGLE|GTK_CSS_PARSE_TIME)
+
 GtkCssValue *   gtk_css_dimension_value_new         (double                  value,
                                                      GtkCssUnit              unit);
 
-GtkCssValue *   _gtk_css_number_value_new           (double                  value,
+GtkCssValue *   gtk_css_number_value_new            (double                  value,
                                                      GtkCssUnit              unit);
 gboolean        gtk_css_number_value_can_parse      (GtkCssParser           *parser);
-GtkCssValue *   _gtk_css_number_value_parse         (GtkCssParser           *parser,
+GtkCssValue *   gtk_css_number_value_parse          (GtkCssParser           *parser,
                                                      GtkCssNumberParseFlags  flags);
+
+GtkCssValue *   gtk_css_number_value_parse_with_context (GtkCssParser             *parser,
+                                                         GtkCssNumberParseFlags    flags,
+                                                         GtkCssNumberParseContext *context);
 
 GtkCssDimension gtk_css_number_value_get_dimension  (const GtkCssValue      *value) G_GNUC_PURE;
 gboolean        gtk_css_number_value_has_percent    (const GtkCssValue      *value) G_GNUC_PURE;
@@ -53,10 +68,29 @@ GtkCssValue *   gtk_css_number_value_add            (GtkCssValue            *val
                                                      GtkCssValue            *value2);
 GtkCssValue *   gtk_css_number_value_try_add        (GtkCssValue            *value1,
                                                      GtkCssValue            *value2);
-double          _gtk_css_number_value_get           (const GtkCssValue      *number,
+double          gtk_css_number_value_get            (const GtkCssValue      *number,
+                                                     double                  one_hundred_percent) G_GNUC_PURE;
+double          gtk_css_number_value_get_canonical  (GtkCssValue            *number,
                                                      double                  one_hundred_percent) G_GNUC_PURE;
 
 gboolean        gtk_css_dimension_value_is_zero     (const GtkCssValue      *value) G_GNUC_PURE;
+
+GtkCssValue *   gtk_css_number_value_new_color_component (GtkCssValue      *color,
+                                                          GtkCssColorSpace  color_space,
+                                                          gboolean          legacy_srgb,
+                                                          guint             coord);
+
+enum {
+  ROUND_NEAREST,
+  ROUND_UP,
+  ROUND_DOWN,
+  ROUND_TO_ZERO,
+};
+
+GtkCssValue *   gtk_css_math_value_new              (guint                    type,
+                                                     guint                    mode,
+                                                     GtkCssValue            **values,
+                                                     guint                    n_values);
 
 G_END_DECLS
 

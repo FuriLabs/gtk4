@@ -1699,7 +1699,7 @@ gtk_icon_theme_set_theme_name (GtkIconTheme *self,
  *
  * Gets the current icon theme name.
  *
- * Returns (transfer full): the current icon theme name,
+ * Returns: (transfer full): the current icon theme name,
  */
 char *
 gtk_icon_theme_get_theme_name (GtkIconTheme *self)
@@ -2433,8 +2433,8 @@ load_icon_thread (GTask        *task,
  * gtk_icon_theme_lookup_icon:
  * @self: a `GtkIconTheme`
  * @icon_name: the name of the icon to lookup
- * @fallbacks: (nullable) (array zero-terminated=1):
- * @size: desired icon size.
+ * @fallbacks: (nullable) (array zero-terminated=1): fallback names
+ * @size: desired icon size, in application pixels
  * @scale: the window scale this will be displayed on
  * @direction: text direction the icon will be displayed in
  * @flags: flags modifying the behavior of the icon lookup
@@ -2526,40 +2526,18 @@ gtk_icon_theme_lookup_icon (GtkIconTheme       *self,
   return icon;
 }
 
-/* Error quark */
+/**
+ * gtk_icon_theme_error_quark:
+ *
+ * Registers an error quark for [class@Gtk.IconTheme] errors.
+ *
+ * Returns: the error quark
+ **/
 GQuark
 gtk_icon_theme_error_quark (void)
 {
   return g_quark_from_static_string ("gtk-icon-theme-error-quark");
 }
-
-void
-gtk_icon_theme_lookup_symbolic_colors (GtkCssStyle *style,
-                                       GdkRGBA      color_out[4])
-{
-  GtkCssValue *palette, *color;
-  const char *names[4] = {
-    [GTK_SYMBOLIC_COLOR_ERROR] = "error",
-    [GTK_SYMBOLIC_COLOR_WARNING] = "warning",
-    [GTK_SYMBOLIC_COLOR_SUCCESS] = "success"
-  };
-  const GdkRGBA *lookup;
-  gsize i;
-
-  color = style->core->color;
-  palette = style->core->icon_palette;
-  color_out[GTK_SYMBOLIC_COLOR_FOREGROUND] = *gtk_css_color_value_get_rgba (color);
-
-  for (i = 1; i < 4; i++)
-    {
-      lookup = gtk_css_palette_value_get_color (palette, names[i]);
-      if (lookup)
-        color_out[i] = *lookup;
-      else
-        color_out[i] = color_out[GTK_SYMBOLIC_COLOR_FOREGROUND];
-    }
-}
-
 
 /**
  * gtk_icon_theme_has_icon:
@@ -4003,7 +3981,7 @@ icon_symbolic_paintable_init (GtkSymbolicPaintableInterface *iface)
 /**
  * gtk_icon_paintable_new_for_file:
  * @file: a `GFile`
- * @size: desired icon size
+ * @size: desired icon size, in application pixels
  * @scale: the desired scale
  *
  * Creates a `GtkIconPaintable` for a file with a given size and scale.
@@ -4047,7 +4025,7 @@ gtk_icon_paintable_new_for_file (GFile *file,
  * gtk_icon_theme_lookup_by_gicon:
  * @self: a `GtkIconTheme`
  * @icon: the `GIcon` to look up
- * @size: desired icon size
+ * @size: desired icon size, in application pixels
  * @scale: the desired scale
  * @direction: text direction the icon will be displayed in
  * @flags: flags modifying the behavior of the icon lookup

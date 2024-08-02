@@ -2425,14 +2425,16 @@ draw_page (GtkDrawingArea *da,
     }
 
   style = gtk_css_node_get_style (dialog->page_layout_paper_node);
-  color = *gtk_css_color_value_get_rgba (style->core->color);
+  color = *gtk_css_color_value_get_rgba (style->used->color);
 
   pos_x = (width - w) / 2;
   pos_y = (height - h) / 2 - 10;
   cairo_translate (cr, pos_x, pos_y);
 
   snapshot = gtk_snapshot_new ();
-  gtk_css_boxes_init_border_box (&boxes, style, 1, 1, w, h);
+  gtk_css_boxes_init_border_box (&boxes,
+                                 gtk_css_node_get_style (dialog->page_layout_paper_node),
+                                 1, 1, w, h);
   gtk_css_style_snapshot_background (&boxes, snapshot);
   gtk_css_style_snapshot_border (&boxes, snapshot);
 
@@ -3221,7 +3223,7 @@ gtk_print_unix_dialog_set_settings (GtkPrintUnixDialog *dialog,
 }
 
 /**
- * gtk_print_unix_dialog_get_settings: (attributes org.gtk.Method.set_property=print-settings)
+ * gtk_print_unix_dialog_get_settings: (attributes org.gtk.Method.get_property=print-settings)
  * @dialog: a `GtkPrintUnixDialog`
  *
  * Gets a new `GtkPrintSettings` object that represents the

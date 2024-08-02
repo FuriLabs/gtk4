@@ -117,10 +117,11 @@ release-build:
     EXTRA_MESON_FLAGS: "--buildtype=release"
   script:
     - .gitlab-ci/show-info-linux.sh
-    - export PATH="$HOME/.local/bin:$PATH"
+    - mkdir _install
+    - export PATH="$HOME/.local/bin:${CI_PROJECT_DIR}/_install/bin:$PATH"
+    - .gitlab-ci/install-meson-project.sh --prefix ${CI_PROJECT_DIR}/_install https://gitlab.gnome.org/jadahl/catch.git main
     - meson subprojects download
     - meson subprojects update --reset
-    - mkdir _install
     - meson setup
             --prefix=${CI_PROJECT_DIR}/_install
             ${COMMON_MESON_FLAGS}
@@ -445,10 +446,10 @@ reference:
             --force-fallback-for=gdk-pixbuf,pango
             -Dintrospection=enabled
             -Ddocumentation=true
-            -Dgtk_doc=true
+            -Dman-pages=true
             -Dgdk-pixbuf:gtk_doc=true
-            -Dpango:gtk_doc=true
-            -Dbuild-demos=false
+            -Dpango:documentation=true
+            -Dbuild-demos=true
             -Dbuild-examples=false
             -Dbuild-tests=false
             -Dbuild-testsuite=false
@@ -460,6 +461,7 @@ reference:
     - mv _build/docs/reference/gdk/gdk4-wayland/ _reference/gdk4-wayland/
     - mv _build/docs/reference/gsk/gsk4/ _reference/gsk4/
     - mv _build/docs/reference/gtk/gtk4/ _reference/gtk4/
+    - mv _build/docs/reference/gtk/*.html _reference/gtk4/
     - mv _build/subprojects/pango/docs/Pango/ _reference/Pango/
     - mv _build/subprojects/pango/docs/PangoCairo/ _reference/PangoCairo/
     - mv _build/subprojects/pango/docs/PangoFc/ _reference/PangoFc/

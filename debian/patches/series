@@ -1,8 +1,3 @@
-gskvulkanmemory.c-Use-VK_NULL_HANDLE-for-VkDeviceMemory.patch
-gdkvulkancontext.c-Use-pointers-to-hash-VkShaderModule.patch
-gskvulkandevice.c-Put-Vk-Pipeline-RenderPass-in-structure.patch
-tests-Fix-signature-of-GtkTestATContext-update-selection-.patch
-gskpathop-Introduce-a-type-to-represent-an-aligned-graphe.patch
 Revert-tests-Stop-copying-the-tool-tests.patch
 Revert-build-Drop-the-install-tests-option.patch
 debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch

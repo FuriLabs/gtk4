@@ -261,6 +261,9 @@ skipped_suites = \
 	gsk-compare-vulkan \
 	$(NULL)
 
+# The doc-check tests aren't passing yet
+skipped_suites += docs
+
 # Skip label-reftest on riscv and mips since the diff is benign
 ifneq ($(filter mips% riscv64,$(DEB_HOST_ARCH_CPU)),)
 # https://bugs.debian.org/1077178

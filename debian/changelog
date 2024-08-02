@@ -1,8 +1,12 @@
-gtk4 (4.14.4+ds-9) UNRELEASED; urgency=medium
+gtk4 (4.15.4+ds-1) UNRELEASED; urgency=medium
 
+  [ Simon McVittie ]
   * Mention #1077757 in previous changelog entry
 
- -- Simon McVittie <smcv@debian.org>  Thu, 01 Aug 2024 17:57:17 +0100
+  [ Jeremy Bícha ]
+  * New upstream release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 02 Aug 2024 08:03:57 -0400
 
 gtk4 (4.14.4+ds-8) unstable; urgency=medium
 

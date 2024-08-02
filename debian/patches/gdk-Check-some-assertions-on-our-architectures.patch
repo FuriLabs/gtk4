@@ -7,14 +7,14 @@ in future.
 
 Forwarded: not-needed
 ---
- gdk/gdk.c | 23 +++++++++++++++++++++++
- 1 file changed, 23 insertions(+)
+ gdk/gdk.c | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
 
 diff --git a/gdk/gdk.c b/gdk/gdk.c
-index 548d838..42f6e7b 100644
+index 5f99d6c..be2574f 100644
 --- a/gdk/gdk.c
 +++ b/gdk/gdk.c
-@@ -43,6 +43,29 @@
+@@ -43,6 +43,30 @@
  
  #include <fribidi.h>
  
@@ -41,6 +41,7 @@ index 548d838..42f6e7b 100644
 +G_STATIC_ASSERT (G_STRUCT_OFFSET (FutureGdkColor, green) == G_STRUCT_OFFSET (FutureGdkColor, values[1]));
 +G_STATIC_ASSERT (G_STRUCT_OFFSET (FutureGdkColor, blue) == G_STRUCT_OFFSET (FutureGdkColor, values[2]));
 +G_STATIC_ASSERT (G_STRUCT_OFFSET (FutureGdkColor, alpha) == G_STRUCT_OFFSET (FutureGdkColor, values[3]));
- 
- /**
-  * GDK_WINDOWING_X11:
++
+ /* GTK has a general architectural assumption that gsize is pointer-sized
+  * (equivalent to uintptr_t), making it non-portable to architectures like
+  * CHERI where that isn't true. If a future release relaxes that

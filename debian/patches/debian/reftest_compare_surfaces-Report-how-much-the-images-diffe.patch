@@ -15,11 +15,12 @@ Applied-upstream: no, upstream want reftests to be a strict pass/fail with ident
  testsuite/reftests/gtk-reftest.c     |  9 ++++++++-
  testsuite/reftests/reftest-compare.c | 28 +++++++++++++++++++++++++---
  testsuite/reftests/reftest-compare.h |  6 +++++-
+ tools/gtk-image-tool-compare.c       |  6 +++++-
  tools/gtk-rendernode-tool-compare.c  |  7 +++++--
- 6 files changed, 77 insertions(+), 15 deletions(-)
+ 7 files changed, 82 insertions(+), 16 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index 4738414..6bd6f28 100644
+index 47a2f1f..caca1d1 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
 @@ -318,6 +318,9 @@ main (int argc, char **argv)
@@ -32,7 +33,7 @@ index 4738414..6bd6f28 100644
  
    (g_test_init) (&argc, &argv, NULL);
  
-@@ -377,9 +380,12 @@ main (int argc, char **argv)
+@@ -380,9 +383,12 @@ main (int argc, char **argv)
          }
  
        /* Now compare the two */
@@ -46,7 +47,7 @@ index 4738414..6bd6f28 100644
            save_image (diff_texture, node_file, ".diff.png");
            success = FALSE;
          }
-@@ -412,10 +418,13 @@ main (int argc, char **argv)
+@@ -415,10 +421,13 @@ main (int argc, char **argv)
  
        save_image (reference_texture, node_file, "-flipped.ref.png");
  
@@ -61,7 +62,7 @@ index 4738414..6bd6f28 100644
            save_image (diff_texture, node_file, "-flipped.diff.png");
            success = FALSE;
          }
-@@ -478,10 +487,13 @@ main (int argc, char **argv)
+@@ -481,10 +490,13 @@ main (int argc, char **argv)
  
        save_image (reference_texture, node_file, "-repeated.ref.png");
  
@@ -76,7 +77,7 @@ index 4738414..6bd6f28 100644
            save_image (diff_texture, node_file, "-repeated.diff.png");
            success = FALSE;
          }
-@@ -515,10 +527,13 @@ main (int argc, char **argv)
+@@ -518,10 +530,13 @@ main (int argc, char **argv)
  
        save_image (reference_texture, node_file, "-rotated.ref.png");
  
@@ -91,7 +92,7 @@ index 4738414..6bd6f28 100644
            save_image (diff_texture, node_file, "-rotated.diff.png");
            success = FALSE;
          }
-@@ -572,10 +587,13 @@ main (int argc, char **argv)
+@@ -575,10 +590,13 @@ main (int argc, char **argv)
  
        save_image (reference_texture, node_file, "-masked.ref.png");
  
@@ -106,7 +107,7 @@ index 4738414..6bd6f28 100644
            save_image (diff_texture, node_file, "-masked.diff.png");
            success = FALSE;
          }
-@@ -613,10 +631,13 @@ main (int argc, char **argv)
+@@ -616,10 +634,13 @@ main (int argc, char **argv)
        g_assert_nonnull (rendered_texture);
        g_assert_nonnull (rendered_texture2);
  
@@ -121,7 +122,7 @@ index 4738414..6bd6f28 100644
            save_image (diff_texture, node_file, "-replayed.diff.png");
            success = FALSE;
          }
-@@ -668,7 +689,8 @@ main (int argc, char **argv)
+@@ -671,7 +692,8 @@ main (int argc, char **argv)
  
        save_image (reference_texture, node_file, "-clipped.ref.png");
  
@@ -283,6 +284,30 @@ index b91a12f..0eb4936 100644
  
  G_END_DECLS
 +
+diff --git a/tools/gtk-image-tool-compare.c b/tools/gtk-image-tool-compare.c
+index 79de789..cd58f8e 100644
+--- a/tools/gtk-image-tool-compare.c
++++ b/tools/gtk-image-tool-compare.c
+@@ -49,6 +49,9 @@ do_compare (int          *argc,
+   GdkTexture *texture[2];
+   GdkTexture *diff;
+   GError *error = NULL;
++  guint max_diff = 0;
++  guint pixels_changed = 0;
++  guint pixels = 0;
+ 
+   g_set_prgname ("gtk4-image-tool compare");
+   context = g_option_context_new (NULL);
+@@ -87,7 +90,8 @@ do_compare (int          *argc,
+         }
+     }
+ 
+-  diff = reftest_compare_textures (texture[0], texture[1]);
++  diff = reftest_compare_textures (texture[0], texture[1],
++                                   &max_diff, &pixels_changed, &pixels);
+ 
+   if (opt_filename && diff)
+     {
 diff --git a/tools/gtk-rendernode-tool-compare.c b/tools/gtk-rendernode-tool-compare.c
 index 36ab0c7..94dcc42 100644
 --- a/tools/gtk-rendernode-tool-compare.c

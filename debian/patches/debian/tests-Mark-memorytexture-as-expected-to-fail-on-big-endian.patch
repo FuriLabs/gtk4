@@ -8,10 +8,10 @@ Forwarded: not-needed, workaround
  1 file changed, 8 insertions(+)
 
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index f6fcc46..f607ebb 100644
+index 6917e0b..2bb83fa 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
-@@ -47,6 +47,10 @@ foreach t : tests
+@@ -48,6 +48,10 @@ foreach t : tests
  
    suites = ['gdk'] + t.get('suites', [])
  
@@ -22,7 +22,7 @@ index f6fcc46..f607ebb 100644
    test(test_name, test_exe,
      args: [ '--tap', '-k' ],
      protocol: 'tap',
-@@ -107,6 +111,10 @@ if get_option('install-tests')
+@@ -111,6 +115,10 @@ if get_option('install-tests')
      test_name = t.get('name')
      suites = t.get('suites', [])
  

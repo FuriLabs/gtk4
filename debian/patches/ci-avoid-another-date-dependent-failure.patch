@@ -14,10 +14,10 @@ Comment: included in gtk main after 4.15.4
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/testsuite/gtk/notify.c b/testsuite/gtk/notify.c
-index 01ee5f1..a7444d9 100644
+index 3e8f3ab..7ed5b92 100644
 --- a/testsuite/gtk/notify.c
 +++ b/testsuite/gtk/notify.c
-@@ -571,8 +571,8 @@ test_type (gconstpointer data)
+@@ -580,8 +580,8 @@ G_GNUC_END_IGNORE_DEPRECATIONS
        /* avoid day 30 and 31, since they don't exist in February */
        instance = g_object_new (type,
                                 "year", 1984,

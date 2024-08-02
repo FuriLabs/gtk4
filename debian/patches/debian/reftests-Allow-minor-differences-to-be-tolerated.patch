@@ -28,7 +28,7 @@ Applied-upstream: no, upstream want reftests to be a strict pass/fail with ident
  3 files changed, 144 insertions(+), 11 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index 6bd6f28..6e8efad 100644
+index caca1d1..813401c 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
 @@ -111,6 +111,37 @@ get_output_file (const char *file,
@@ -69,7 +69,7 @@ index 6bd6f28..6e8efad 100644
  static void
  save_image (GdkTexture *texture,
              const char *test_name,
-@@ -384,10 +415,18 @@ main (int argc, char **argv)
+@@ -387,10 +418,18 @@ main (int argc, char **argv)
                                                 &max_diff, &pixels_changed, &pixels);
        if (diff_texture)
          {
@@ -89,7 +89,7 @@ index 6bd6f28..6e8efad 100644
          }
  
        g_clear_object (&diff_texture);
-@@ -423,10 +462,19 @@ main (int argc, char **argv)
+@@ -426,10 +465,19 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -110,7 +110,7 @@ index 6bd6f28..6e8efad 100644
          }
  
        g_clear_object (&diff_texture);
-@@ -492,10 +540,19 @@ main (int argc, char **argv)
+@@ -495,10 +543,19 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -131,7 +131,7 @@ index 6bd6f28..6e8efad 100644
          }
  
        g_clear_object (&diff_texture);
-@@ -532,10 +589,19 @@ main (int argc, char **argv)
+@@ -535,10 +592,19 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -152,7 +152,7 @@ index 6bd6f28..6e8efad 100644
          }
  
        g_clear_object (&diff_texture);
-@@ -592,10 +658,19 @@ main (int argc, char **argv)
+@@ -595,10 +661,19 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -173,7 +173,7 @@ index 6bd6f28..6e8efad 100644
          }
  
        g_clear_object (&diff_texture);
-@@ -636,10 +711,19 @@ main (int argc, char **argv)
+@@ -639,10 +714,19 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -194,7 +194,7 @@ index 6bd6f28..6e8efad 100644
          }
  
        g_clear_object (&diff_texture);
-@@ -694,8 +778,17 @@ main (int argc, char **argv)
+@@ -697,8 +781,17 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -213,7 +213,7 @@ index 6bd6f28..6e8efad 100644
          }
  
        g_clear_object (&diff_texture);
-@@ -733,12 +826,22 @@ skip_clip:
+@@ -736,12 +829,22 @@ skip_clip:
  
        save_image (reference_texture, node_file, "-colorflipped.ref.png");
  

@@ -163,7 +163,7 @@ index 19c78cf..0000000
 -fi
 diff --git a/testsuite/tools/settings.in b/testsuite/tools/settings.in
 new file mode 100644
-index 0000000..8a31757
+index 0000000..19c78cf
 --- /dev/null
 +++ b/testsuite/tools/settings.in
 @@ -0,0 +1,20 @@

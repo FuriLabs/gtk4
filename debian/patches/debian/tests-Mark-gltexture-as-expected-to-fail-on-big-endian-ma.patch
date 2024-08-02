@@ -8,10 +8,10 @@ Forwarded: not-needed, workaround
  1 file changed, 4 insertions(+)
 
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index 4e79187..6917e0b 100644
+index 6923461..999c3fc 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
-@@ -89,6 +89,10 @@ foreach t : internal_tests
+@@ -90,6 +90,10 @@ foreach t : internal_tests
  
    suites = ['gdk'] + t.get('suites', [])
  

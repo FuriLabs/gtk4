@@ -58,7 +58,7 @@ use a GtkLabel.
 If you have a need for custom drawing that fits into the current
 (dark or light) theme, e.g. for rendering a graph, you can still
 get the current style foreground color, using
-[method@Gtk.Widget.get_style_color].
+[method@Gtk.Widget.get_color].
 
 ## Local stylesheets are going away
 
@@ -72,6 +72,103 @@ added.
 GTK 5 will no longer provide this functionality. The recommendations
 is to use a global stylesheet (i.e. gtk_style_context_add_provider_for_display())
 and rely on style classes to make your CSS apply only where desired.
+
+## Non-standard CSS extensions are going away
+
+GTK's CSS machinery has a some non-standard extensions around colors:
+named colors with \@define-color and color functions: lighter(), darker(),
+shade(), alpha(), mix().
+
+GTK now implements equivalent functionality from the CSS specs.
+
+### \@define-color is going away
+
+\@define-color should be replaced by custom properties in the :root scope.
+
+Instead of
+
+```
+@define-color fg_color #2e3436
+
+...
+
+box {
+  color: @fg_color;
+}
+```
+
+use
+
+```
+:root {
+  --fg-color: #2e3436;
+}
+
+...
+
+box {
+  color: var(--fg-color);
+}
+```
+
+For more information about custom CSS properties and variables, see the
+[CSS Custom Properties for Cascading Variables](https://www.w3.org/TR/css-variables-1/)
+spec.
+
+### Color expressions are going away
+
+The color functions can all be replaced by combinations of calc() and color-mix().
+
+ligher(c) and darker(c) are just shade(c, 1.3) or shade(c, 0.7), respectively, and
+thus can be handled the same way as shade in the examples below.
+
+Replace
+
+```
+a {
+  color: mix(red, green, 0.8);
+}
+
+b {
+  color: alpha(green, 0.6);
+}
+
+c {
+  color: shade(red, 1.3);
+}
+
+d {
+  color: shade(red, 0.7);
+}
+```
+
+with
+
+```
+a {
+  color: color-mix(in srgb, red, green 80%);
+}
+
+b {
+  color: rgb(from green, r g b / calc(alpha * 0.6));
+}
+
+c {
+  color: hsl(from red, h calc(s * 1.3) calc(l * 1.3));
+}
+
+d {
+  color: hsl(from red, h calc(s * 0.7) calc(l * 0.7));
+}
+```
+
+Variations of these replacements are possible.
+
+Note that GTK has historically computed mix() and shade() values in the SRGB and HSL
+colorspaces, but using OKLAB instead might yield slightly better results.
+
+For more information about color-mix(), see the
+[CSS Color](https://drafts.csswg.org/css-color-5) spec.
 
 ## Chooser interfaces are going away
 

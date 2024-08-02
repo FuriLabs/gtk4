@@ -97,7 +97,7 @@ gtk_accessible_role_to_atspi_role (GtkAccessibleRole role)
       return ATSPI_ROLE_FORM;
 
     case GTK_ACCESSIBLE_ROLE_GENERIC:
-      return ATSPI_ROLE_FILLER;
+      return ATSPI_ROLE_PANEL;
 
     case GTK_ACCESSIBLE_ROLE_GRID:
       return ATSPI_ROLE_TABLE;
@@ -106,7 +106,7 @@ gtk_accessible_role_to_atspi_role (GtkAccessibleRole role)
       return ATSPI_ROLE_TABLE_CELL;
 
     case GTK_ACCESSIBLE_ROLE_GROUP:
-      return ATSPI_ROLE_PANEL;
+      return ATSPI_ROLE_GROUPING;
 
     case GTK_ACCESSIBLE_ROLE_HEADING:
       return ATSPI_ROLE_HEADING;
@@ -366,4 +366,113 @@ gtk_at_spi_emit_children_changed (GDBusConnection         *connection,
                                  "ChildrenChanged",
                                  g_variant_new ("(siiv@(so))", change, idx, 0, child_ref, sender_ref),
                                  NULL);
+}
+
+
+void
+gtk_at_spi_translate_coordinates_to_accessible (GtkAccessible  *accessible,
+                                                AtspiCoordType  coordtype,
+                                                int             xi,
+                                                int             yi,
+                                                int            *xo,
+                                                int            *yo)
+{
+  GtkAccessible *parent;
+  int x, y, width, height;
+
+  if (coordtype == ATSPI_COORD_TYPE_SCREEN)
+    {
+      *xo = 0;
+      *yo = 0;
+      return;
+    }
+
+  if (!gtk_accessible_get_bounds (accessible, &x, &y, &width, &height))
+    {
+      *xo = xi;
+      *yo = yi;
+      return;
+    }
+
+  /* Transform coords to our parent, we will need that in any case */
+  *xo = xi - x;
+  *yo = yi - y;
+
+  /* If that's what the caller requested, we're done */
+  if (coordtype == ATSPI_COORD_TYPE_PARENT)
+    return;
+
+  if (coordtype == ATSPI_COORD_TYPE_WINDOW)
+    {
+      parent = gtk_accessible_get_accessible_parent (accessible);
+      while (parent != NULL)
+        {
+          g_object_unref (parent);
+
+          if (gtk_accessible_get_bounds (parent, &x, &y, &width, &height))
+            {
+              *xo = *xo - x;
+              *yo = *yo - y;
+              parent = gtk_accessible_get_accessible_parent (parent);
+            }
+          else
+            break;
+        }
+    }
+  else
+    g_assert_not_reached ();
+}
+
+void
+gtk_at_spi_translate_coordinates_from_accessible (GtkAccessible *accessible,
+                                                  AtspiCoordType     coordtype,
+                                                  int                xi,
+                                                  int                yi,
+                                                  int               *xo,
+                                                  int               *yo)
+{
+  GtkAccessible *parent;
+  int x, y, width, height;
+
+  if (coordtype == ATSPI_COORD_TYPE_SCREEN)
+    {
+      *xo = 0;
+      *yo = 0;
+      return;
+    }
+
+  if (!gtk_accessible_get_bounds (accessible, &x, &y, &width, &height))
+    {
+      *xo = xi;
+      *yo = yi;
+      return;
+    }
+
+  /* Transform coords to our parent, we will need that in any case */
+  *xo = xi + x;
+  *yo = yi + y;
+
+  /* If that's what the caller requested, we're done */
+  if (coordtype == ATSPI_COORD_TYPE_PARENT)
+    return;
+
+  if (coordtype == ATSPI_COORD_TYPE_WINDOW)
+    {
+      parent = gtk_accessible_get_accessible_parent (accessible);
+      while (parent != NULL)
+        {
+          g_object_unref (parent);
+
+          if (gtk_accessible_get_bounds (parent, &x, &y, &width, &height))
+            {
+              *xo = *xo + x;
+              *yo = *yo + y;
+              parent = gtk_accessible_get_accessible_parent (parent);
+            }
+          else
+            break;
+        }
+    }
+  else
+    g_assert_not_reached ();
 }

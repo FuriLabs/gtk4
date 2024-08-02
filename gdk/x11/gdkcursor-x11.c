@@ -274,11 +274,22 @@ gdk_x11_cursor_create_for_name (GdkDisplay  *display,
  * will have to be handled by the application (GTK applications can learn
  * about cursor theme changes by listening for change notification
  * for the corresponding `GtkSetting`).
+ *
+ * Deprecated: 4.16: Use the cursor-related properties of
+ *   [GtkSettings](../gtk4/class.Settings.html) to set the cursor theme
  */
 void
 gdk_x11_display_set_cursor_theme (GdkDisplay  *display,
                                   const char *theme,
                                   const int    size)
+{
+  _gdk_x11_display_set_cursor_theme (display, theme, size);
+}
+
+void
+_gdk_x11_display_set_cursor_theme (GdkDisplay  *display,
+                                   const char *theme,
+                                   const int    size)
 {
 #if defined(HAVE_XCURSOR) && defined(HAVE_XFIXES) && XFIXES_MAJOR >= 2
   GdkX11Screen *x11_screen;
@@ -370,11 +381,33 @@ gdk_x11_display_get_xcursor (GdkDisplay *display,
 
   if (gdk_cursor_get_name (cursor))
     xcursor = gdk_x11_cursor_create_for_name (display, gdk_cursor_get_name (cursor));
-  else
+  else if (gdk_cursor_get_texture (cursor))
     xcursor = gdk_x11_cursor_create_for_texture (display,
                                                  gdk_cursor_get_texture (cursor),
                                                  gdk_cursor_get_hotspot_x (cursor),
                                                  gdk_cursor_get_hotspot_y (cursor));
+  else
+    {
+      int size;
+      GdkTexture *texture;
+      int width, height;
+      int hotspot_x, hotspot_y;
+
+      size = XcursorGetDefaultSize (GDK_DISPLAY_XDISPLAY (display));
+
+      texture = gdk_cursor_get_texture_for_size  (cursor, size, 1,
+                                                  &width, &height,
+                                                  &hotspot_x, &hotspot_y);
+
+      if (texture)
+        {
+          xcursor = gdk_x11_cursor_create_for_texture (display,
+                                                       texture,
+                                                       hotspot_x,
+                                                       hotspot_y);
+          g_object_unref (texture);
+        }
+    }
 
   if (xcursor != None)
     {

@@ -74,6 +74,8 @@ typedef cairo_rectangle_int_t         GdkRectangle;
 
 /* Forward declarations of commonly used types */
 typedef struct _GdkRGBA               GdkRGBA;
+typedef struct _GdkCicpParams         GdkCicpParams;
+typedef struct _GdkColorState         GdkColorState;
 typedef struct _GdkContentFormats     GdkContentFormats;
 typedef struct _GdkContentProvider    GdkContentProvider;
 typedef struct _GdkCursor             GdkCursor;
@@ -99,7 +101,7 @@ typedef struct _GdkVulkanContext      GdkVulkanContext;
 typedef struct _GdkDmabufFormats      GdkDmabufFormats;
 typedef struct _GdkDmabufTexture      GdkDmabufTexture;
 
-/*
+/*<private>
  * GDK_DECLARE_INTERNAL_TYPE:
  * @ModuleObjName: The name of the new type, in camel case (like GtkWidget)
  * @module_obj_name: The name of the new type in lowercase, with words

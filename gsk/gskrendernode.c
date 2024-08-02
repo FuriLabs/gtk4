@@ -42,12 +42,22 @@
 #include "gskrendererprivate.h"
 #include "gskrendernodeparserprivate.h"
 
+#include "gdk/gdkcairoprivate.h"
+#include "gdk/gdkcolorstateprivate.h"
+
 #include <graphene-gobject.h>
 
 #include <math.h>
 
 #include <gobject/gvaluecollector.h>
 
+/**
+ * gsk_serialization_error_quark:
+ *
+ * Registers an error quark for [class@Gsk.RenderNode] errors.
+ *
+ * Returns: the error quark
+ **/
 G_DEFINE_QUARK (gsk-serialization-error-quark, gsk_serialization_error)
 
 #define GSK_RENDER_NODE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GSK_TYPE_RENDER_NODE, GskRenderNodeClass))
@@ -138,12 +148,6 @@ gsk_render_node_finalize (GskRenderNode *self)
   g_type_free_instance ((GTypeInstance *) self);
 }
 
-static void
-gsk_render_node_real_draw (GskRenderNode *node,
-                           cairo_t       *cr)
-{
-}
-
 static gboolean
 gsk_render_node_real_can_diff (const GskRenderNode *node1,
                                const GskRenderNode *node2)
@@ -159,20 +163,28 @@ gsk_render_node_real_diff (GskRenderNode  *node1,
   gsk_render_node_diff_impossible (node1, node2, data);
 }
 
+static gboolean
+gsk_render_node_real_get_opaque_rect (GskRenderNode   *node,
+                                      graphene_rect_t *out_opaque)
+{
+  return FALSE;
+}
+
 static void
 gsk_render_node_class_init (GskRenderNodeClass *klass)
 {
   klass->node_type = GSK_NOT_A_RENDER_NODE;
   klass->finalize = gsk_render_node_finalize;
-  klass->draw = gsk_render_node_real_draw;
   klass->can_diff = gsk_render_node_real_can_diff;
   klass->diff = gsk_render_node_real_diff;
+  klass->get_opaque_rect = gsk_render_node_real_get_opaque_rect;
 }
 
 static void
 gsk_render_node_init (GskRenderNode *self)
 {
   g_atomic_ref_count_init (&self->ref_count);
+  self->preferred_depth = GDK_N_DEPTHS; /* illegal value */
 }
 
 GType
@@ -362,6 +374,68 @@ gsk_render_node_get_bounds (GskRenderNode   *node,
   graphene_rect_init_from_rect (bounds, &node->bounds);
 }
 
+void
+gsk_render_node_draw_ccs (GskRenderNode *node,
+                          cairo_t       *cr,
+                          GdkColorState *ccs)
+{
+  /* Check that the calling function did pass a correct color state */
+  g_assert (ccs == gdk_color_state_get_rendering_color_state (ccs));
+
+  cairo_save (cr);
+
+  GSK_RENDER_NODE_GET_CLASS (node)->draw (node, cr, ccs);
+
+  if (GSK_DEBUG_CHECK (GEOMETRY))
+    {
+      cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+      cairo_rectangle (cr, node->bounds.origin.x - 1, node->bounds.origin.y - 1,
+                       node->bounds.size.width + 2, node->bounds.size.height + 2);
+      cairo_set_line_width (cr, 2);
+      cairo_set_source_rgba (cr, 0, 0, 0, 0.5);
+      cairo_stroke (cr);
+    }
+
+  cairo_restore (cr);
+
+  if (cairo_status (cr))
+    {
+      g_warning ("drawing failure for render node %s: %s",
+                 g_type_name_from_instance ((GTypeInstance *) node),
+                 cairo_status_to_string (cairo_status (cr)));
+    }
+}
+
+void
+gsk_render_node_draw_with_color_state (GskRenderNode *node,
+                                       cairo_t       *cr,
+                                       GdkColorState *color_state)
+{
+  GdkColorState *ccs;
+
+  ccs = gdk_color_state_get_rendering_color_state (color_state);
+
+  if (gdk_color_state_equal (color_state, ccs))
+    {
+      gsk_render_node_draw_ccs (node, cr, ccs);
+    }
+  else
+    {
+      cairo_save (cr);
+      gdk_cairo_rect (cr, &node->bounds);
+      cairo_clip (cr);
+      cairo_push_group (cr);
+
+      gsk_render_node_draw_ccs (node, cr, ccs);
+      gdk_cairo_surface_convert_color_state (cairo_get_group_target (cr),
+                                             ccs,
+                                             color_state);
+      cairo_pop_group_to_source (cr);
+      cairo_paint (cr);
+      cairo_restore (cr);
+    }
+}
+
 /**
  * gsk_render_node_draw:
  * @node: a `GskRenderNode`
@@ -384,28 +458,7 @@ gsk_render_node_draw (GskRenderNode *node,
   g_return_if_fail (cr != NULL);
   g_return_if_fail (cairo_status (cr) == CAIRO_STATUS_SUCCESS);
 
-  cairo_save (cr);
-
-  GSK_RENDER_NODE_GET_CLASS (node)->draw (node, cr);
-
-  if (GSK_DEBUG_CHECK (GEOMETRY))
-    {
-      cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-      cairo_rectangle (cr, node->bounds.origin.x - 1, node->bounds.origin.y - 1,
-                       node->bounds.size.width + 2, node->bounds.size.height + 2);
-      cairo_set_line_width (cr, 2);
-      cairo_set_source_rgba (cr, 0, 0, 0, 0.5);
-      cairo_stroke (cr);
-    }
-
-  cairo_restore (cr);
-
-  if (cairo_status (cr))
-    {
-      g_warning ("drawing failure for render node %s: %s",
-                 g_type_name_from_instance ((GTypeInstance *) node),
-                 cairo_status_to_string (cairo_status (cr)));
-    }
+  gsk_render_node_draw_with_color_state (node, cr, GDK_COLOR_STATE_SRGB);
 }
 
 /*
@@ -560,6 +613,41 @@ gsk_render_node_diff (GskRenderNode  *node1,
 }
 
 /**
+ * gsk_render_node_get_opaque_rect:
+ * @self: a `GskRenderNode`
+ * @out_opaque: (out): 
+ *
+ * Gets an opaque rectangle inside the node that GTK can determine to
+ * be fully opaque.
+ *
+ * There is no guarantee that this is indeed the largest opaque rectangle or
+ * that regions outside the rectangle are not opaque. This function is a best
+ * effort with that goal.
+ *
+ * The rectangle will be fully contained in the bounds of the node.
+ *
+ * Returns: %TRUE if part or all of the rendernode is opaque, %FALSE if no
+ *   opaque region could be found.
+ *
+ * Since: 4.16
+ **/
+gboolean
+gsk_render_node_get_opaque_rect (GskRenderNode   *self,
+                                 graphene_rect_t *out_opaque)
+{
+  g_return_val_if_fail (GSK_IS_RENDER_NODE (self), FALSE);
+  g_return_val_if_fail (out_opaque != NULL, FALSE);
+
+  if (self->fully_opaque)
+    {
+      *out_opaque = self->bounds;
+      return TRUE;
+    }
+
+  return GSK_RENDER_NODE_GET_CLASS (self)->get_opaque_rect (self, out_opaque);
+}
+
+/**
  * gsk_render_node_write_to_file:
  * @node: a `GskRenderNode`
  * @filename: (type filename): the file to save it to.
@@ -600,8 +688,8 @@ gsk_render_node_write_to_file (GskRenderNode *node,
 /**
  * gsk_render_node_deserialize:
  * @bytes: the bytes containing the data
- * @error_func: (nullable) (scope call): Callback on parsing errors
- * @user_data: (closure error_func): user_data for @error_func
+ * @error_func: (nullable) (scope call) (closure user_data): Callback on parsing errors
+ * @user_data: user_data for @error_func
  *
  * Loads data previously created via [method@Gsk.RenderNode.serialize].
  *

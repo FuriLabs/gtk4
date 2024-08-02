@@ -11,6 +11,7 @@
 #endif
 
 #include <gtk/gtkaccessible.h>
+#include <graphene.h>
 
 G_BEGIN_DECLS
 
@@ -255,6 +256,40 @@ struct _GtkAccessibleTextInterface
   void (* get_default_attributes) (GtkAccessibleText *self,
                                    char ***attribute_names,
                                    char ***attribute_values);
+
+  /**
+   * GtkAccessibleTextInterface::get_extents:
+   * @self: the accessible object
+   * @start: the start offset, in characters
+   * @end: the end offset, in characters,
+   * @extents (out caller-allocates): return location for the extents
+   *
+   * Obtains the extents of a range of text, in widget coordinates.
+   *
+   * Returns: true if the extents were filled in, false otherwise
+   *
+   * Since: 4.16
+   */
+  gboolean (* get_extents) (GtkAccessibleText *self,
+                            unsigned int       start,
+                            unsigned int       end,
+                            graphene_rect_t   *extents);
+
+  /**
+   * GtkAccessibleTextInterface::get_offset:
+   * @self: the accessible object
+   * @point: a point in widget coordinates of @self
+   * @offset: (out): return location for the text offset at @point
+   *
+   * Gets the text offset at a given point.
+   *
+   * Returns: true if the offset was set, false otherwise
+   *
+   * Since: 4.16
+   */
+  gboolean (* get_offset) (GtkAccessibleText      *self,
+                           const graphene_point_t *point,
+                           unsigned int           *offset);
 };
 
 GDK_AVAILABLE_IN_4_14

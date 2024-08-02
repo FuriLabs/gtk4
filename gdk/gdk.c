@@ -43,6 +43,14 @@
 
 #include <fribidi.h>
 
+/* GTK has a general architectural assumption that gsize is pointer-sized
+ * (equivalent to uintptr_t), making it non-portable to architectures like
+ * CHERI where that isn't true. If a future release relaxes that
+ * assumption, changes will be needed in numerous places.
+ * See also https://gitlab.gnome.org/GNOME/glib/-/issues/2842 for the
+ * equivalent in GLib, which would be a prerequisite. */
+G_STATIC_ASSERT (sizeof (gsize) == sizeof (void *));
+G_STATIC_ASSERT (G_ALIGNOF (gsize) == G_ALIGNOF (void *));
 
 /**
  * GDK_WINDOWING_X11:
@@ -120,8 +128,11 @@ static const GdkDebugKey gdk_debug_keys[] = {
   { "dmabuf",          GDK_DEBUG_DMABUF, "Information about dmabuf buffers" },
   { "offload",         GDK_DEBUG_OFFLOAD, "Information about subsurfaces and graphics offload" },
 
+  { "linear",          GDK_DEBUG_LINEAR, "Enable linear rendering" },
+  { "hdr",             GDK_DEBUG_HDR, "Force HDR rendering" },
   { "portals",         GDK_DEBUG_PORTALS, "Force use of portals" },
   { "no-portals",      GDK_DEBUG_NO_PORTALS, "Disable use of portals" },
+  { "force-offload",   GDK_DEBUG_FORCE_OFFLOAD, "Force graphics offload for all textures" },
   { "gl-disable",      GDK_DEBUG_GL_DISABLE, "Disable OpenGL support" },
   { "gl-no-fractional", GDK_DEBUG_GL_NO_FRACTIONAL, "Disable fractional scaling for OpenGL" },
   { "gl-debug",        GDK_DEBUG_GL_DEBUG, "Insert debugging information in OpenGL" },
@@ -132,7 +143,6 @@ static const GdkDebugKey gdk_debug_keys[] = {
   { "gl-glx",          GDK_DEBUG_GL_GLX, "Use GLX on X11" },
   { "gl-wgl",          GDK_DEBUG_GL_WGL, "Use WGL on Windows" },
   { "vulkan-disable",  GDK_DEBUG_VULKAN_DISABLE, "Disable Vulkan support" },
-  { "vulkan-validate", GDK_DEBUG_VULKAN_VALIDATE, "Load the Vulkan validation layer" },
   { "default-settings",GDK_DEBUG_DEFAULT_SETTINGS, "Force default values for xsettings" },
   { "high-depth",      GDK_DEBUG_HIGH_DEPTH, "Use high bit depth rendering if possible" },
   { "no-vsync",        GDK_DEBUG_NO_VSYNC, "Repaint instantly (uses 100% CPU with animations)" },

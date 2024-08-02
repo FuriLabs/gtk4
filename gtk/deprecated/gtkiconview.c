@@ -410,6 +410,11 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
 						     -1, G_MAXINT, -1,
 						     GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
+  /**
+   * GtkIconView:model:
+   *
+   * The model of the icon view.
+   */
   g_object_class_install_property (gobject_class,
                                    PROP_MODEL,
                                    g_param_spec_object ("model", NULL, NULL,
@@ -516,6 +521,12 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
 							 FALSE,
 							 G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
 
+    /**
+     * GtkIconView:tooltip-column:
+     *
+     * The column of the icon view model which is being used for displaying
+     * tooltips on it's rows.
+     */
     g_object_class_install_property (gobject_class,
                                      PROP_TOOLTIP_COLUMN,
                                      g_param_spec_int ("tooltip-column", NULL, NULL,
@@ -712,6 +723,8 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    * programmatically.
    *
    * The default bindings for this signal are Space, Return and Enter.
+   *
+   * Returns: whether the item was activated
    */
   icon_view_signals[ACTIVATE_CURSOR_ITEM] =
     g_signal_new (I_("activate-cursor-item"),
@@ -747,6 +760,8 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
    * - PageUp/PageDown which move by "pages"
    * All of these will extend the selection when combined with
    * the Shift modifier.
+   *
+   * Returns: whether the cursor was moved
    */
   icon_view_signals[MOVE_CURSOR] =
     g_signal_new (I_("move-cursor"),
@@ -765,6 +780,17 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
                               _gtk_marshal_BOOLEAN__ENUM_INT_BOOLEAN_BOOLEANv);
 
   /* Key bindings */
+
+#ifdef __APPLE__
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_a, GDK_META_MASK,
+				       "select-all",
+                                       NULL);
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_a, GDK_META_MASK | GDK_SHIFT_MASK,
+				       "unselect-all",
+                                       NULL);
+#else
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_a, GDK_CONTROL_MASK,
 				       "select-all",
@@ -773,6 +799,8 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
                                        GDK_KEY_a, GDK_CONTROL_MASK | GDK_SHIFT_MASK,
 				       "unselect-all",
                                        NULL);
+#endif
+
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_space, GDK_CONTROL_MASK,
 				       "toggle-cursor-item",
@@ -2047,7 +2075,11 @@ gtk_icon_view_button_press (GtkGestureClick *gesture,
   if (button == GDK_BUTTON_PRIMARY)
     {
       GdkModifierType extend_mod_mask = GDK_SHIFT_MASK;
+#ifdef __APPLE__
+      GdkModifierType modify_mod_mask = GDK_META_MASK;
+#else
       GdkModifierType modify_mod_mask = GDK_CONTROL_MASK;
+#endif
 
       state = gdk_event_get_modifier_state (event);
 

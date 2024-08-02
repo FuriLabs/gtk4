@@ -70,6 +70,15 @@
  * the mark. It can be translated with the usual ”translatable” and
  * “context” attributes.
  *
+ * # Shortcuts and Gestures
+ *
+ * `GtkPopoverMenu` supports the following keyboard shortcuts:
+ *
+ * - Arrow keys, <kbd>+</kbd> and <kbd>-</kbd> will increment or decrement
+ *   by step, or by page when combined with <kbd>Ctrl</kbd>.
+ * - <kbd>PgUp</kbd> and <kbd>PgDn</kbd> will increment or decrement by page.
+ * - <kbd>Home</kbd> and <kbd>End</kbd> will set the minimum or maximum value.
+ *
  * # CSS nodes
  *
  * ```
@@ -2093,8 +2102,9 @@ gtk_scale_buildable_custom_finished (GtkBuildable *buildable,
 /**
  * gtk_scale_set_format_value_func:
  * @scale: a `GtkScale`
- * @func: (nullable): function that formats the value
- * @user_data: (closure): user data to pass to @func
+ * @func: (nullable) (scope notified) (closure user_data) (destroy destroy_notify): function
+ *   that formats the value
+ * @user_data: user data to pass to @func
  * @destroy_notify: (nullable): destroy function for @user_data
  *
  * @func allows you to change how the scale value is displayed.

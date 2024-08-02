@@ -21,32 +21,32 @@
 #include "gtk/css/gtkcsstokenizerprivate.h"
 #include "gtk/css/gtkcssparserprivate.h"
 #include "gtkcssvalueprivate.h"
+#include "gtkcsscolorprivate.h"
 
 G_BEGIN_DECLS
 
-
 GtkCssValue *   gtk_css_color_value_new_transparent     (void) G_GNUC_PURE;
 GtkCssValue *   gtk_css_color_value_new_white           (void) G_GNUC_PURE;
-GtkCssValue *   _gtk_css_color_value_new_literal        (const GdkRGBA  *color) G_GNUC_PURE;
-GtkCssValue *   _gtk_css_color_value_new_name           (const char     *name) G_GNUC_PURE;
-GtkCssValue *   _gtk_css_color_value_new_shade          (GtkCssValue    *color,
-                                                         double          factor) G_GNUC_PURE;
-GtkCssValue *   _gtk_css_color_value_new_alpha          (GtkCssValue    *color,
-                                                         double          factor) G_GNUC_PURE;
-GtkCssValue *   _gtk_css_color_value_new_mix            (GtkCssValue    *color1,
-                                                         GtkCssValue    *color2,
-                                                         double          factor) G_GNUC_PURE;
-GtkCssValue *   _gtk_css_color_value_new_current_color  (void) G_GNUC_PURE;
+GtkCssValue *   gtk_css_color_value_new_current_color   (void) G_GNUC_PURE;
+GtkCssValue *   gtk_css_color_value_new_name            (const char     *name) G_GNUC_PURE;
 
 gboolean        gtk_css_color_value_can_parse           (GtkCssParser   *parser);
-GtkCssValue *   _gtk_css_color_value_parse              (GtkCssParser   *parser);
+GtkCssValue *   gtk_css_color_value_parse               (GtkCssParser   *parser);
 
-GtkCssValue *   _gtk_css_color_value_resolve            (GtkCssValue      *color,
-                                                         GtkStyleProvider *provider,
-                                                         GtkCssValue      *current,
-                                                         GSList           *cycle_list);
 const GdkRGBA * gtk_css_color_value_get_rgba            (const GtkCssValue *color) G_GNUC_CONST;
 
+GtkCssValue *   gtk_css_color_value_new_color           (GtkCssColorSpace color_space,
+                                                         gboolean         serialize_as_rgb,
+                                                         const float      values[4],
+                                                         gboolean         missing[4]) G_GNUC_PURE;
+
+const GtkCssColor *
+                gtk_css_color_value_get_color           (const GtkCssValue *color) G_GNUC_CONST;
+
+float           gtk_css_color_value_get_coord           (const GtkCssValue *color,
+                                                         GtkCssColorSpace   color_space,
+                                                         gboolean           legacy_srgb,
+                                                         guint              coord);
 
 G_END_DECLS
 

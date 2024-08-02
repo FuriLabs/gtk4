@@ -72,6 +72,40 @@
  *
  * ![An example GtkLabel](label.png)
  *
+ * ## Shortcuts and Gestures
+ *
+ * `GtkLabel` supports the following keyboard shortcuts, when the cursor is
+ * visible:
+ *
+ * - <kbd>Shift</kbd>+<kbd>F10</kbd> or <kbd>Menu</kbd> opens the context menu.
+ * - <kbd>Ctrl</kbd>+<kbd>A</kbd> or <kbd>Ctrl</kbd>+<kbd>&sol;</kbd>
+ *   selects all.
+ * - <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> or
+ *   <kbd>Ctrl</kbd>+<kbd>&bsol;</kbd> unselects all.
+ *
+ * Additionally, the following signals have default keybindings:
+ *
+ * - [signal@Gtk.Label::activate-current-link]
+ * - [signal@Gtk.Label::copy-clipboard]
+ * - [signal@Gtk.Label::move-cursor]
+ *
+ * ## Actions
+ *
+ * `GtkLabel` defines a set of built-in actions:
+ *
+ * - `clipboard.copy` copies the text to the clipboard.
+ * - `clipboard.cut` doesn't do anything, since text in labels can't be deleted.
+ * - `clipboard.paste` doesn't do anything, since text in labels can't be
+ *   edited.
+ * - `link.open` opens the link, when activated on a link inside the label.
+ * - `link.copy` copies the link to the clipboard, when activated on a link
+ *   inside the label.
+ * - `menu.popup` opens the context menu.
+ * - `selection.delete` doesn't do anything, since text in labels can't be
+ *   deleted.
+ * - `selection.select-all` selects all of the text, if the label allows
+ *   selection.
+ *
  * ## CSS nodes
  *
  * ```
@@ -420,6 +454,7 @@ static void gtk_label_do_popup                   (GtkLabel      *self,
                                                   double         y);
 static void gtk_label_ensure_select_info  (GtkLabel *self);
 static void gtk_label_clear_select_info   (GtkLabel *self);
+static void gtk_label_clear_provider_info (GtkLabel *self);
 static void gtk_label_clear_layout        (GtkLabel *self);
 static void gtk_label_ensure_layout       (GtkLabel *self);
 static void gtk_label_select_region_index (GtkLabel *self,
@@ -838,13 +873,24 @@ gtk_label_update_layout_attributes (GtkLabel      *self,
               g_slist_free (attributes);
             }
 
-          link_color = gtk_css_color_value_get_rgba (style->core->color);
-          attr = pango_attr_foreground_new (link_color->red * 65535,
-                                            link_color->green * 65535,
-                                            link_color->blue * 65535);
+          link_color = gtk_css_color_value_get_rgba (style->used->color);
+
+          attr = pango_attr_foreground_new (CLAMP (link_color->red * 65535. + 0.5, 0, 65535),
+                                            CLAMP (link_color->green * 65535. + 0.5, 0, 65535),
+                                            CLAMP (link_color->blue * 65535. + 0.5, 0, 65535));
+
           attr->start_index = link->start;
           attr->end_index = link->end;
           pango_attr_list_insert (attrs, attr);
+
+          if (link_color->alpha < 0.999)
+            {
+              attr = pango_attr_foreground_alpha_new (CLAMP (link_color->alpha * 65535. + 0.5, 0, 65535));
+
+              attr->start_index = link->start;
+              attr->end_index = link->end;
+              pango_attr_list_insert (attrs, attr);
+            }
 
           pango_attr_list_unref (link_attrs);
         }
@@ -1524,6 +1570,7 @@ gtk_label_dispose (GObject *object)
 
   gtk_label_set_mnemonic_widget (self, NULL);
   gtk_label_clear_select_info (self);
+  gtk_label_clear_provider_info (self);
 
   G_OBJECT_CLASS (gtk_label_parent_class)->dispose (object);
 }
@@ -1562,7 +1609,7 @@ gtk_label_finalize (GObject *object)
   g_clear_pointer (&self->attrs, pango_attr_list_unref);
   g_clear_pointer (&self->markup_attrs, pango_attr_list_unref);
 
-  if (self->select_info)
+  if (self->select_info && self->select_info->provider)
     g_object_unref (self->select_info->provider);
 
   gtk_label_clear_links (self);
@@ -2224,6 +2271,13 @@ gtk_label_copy_clipboard (GtkLabel *self)
 }
 
 static void
+gtk_label_direction_changed (GtkWidget        *widget,
+                             GtkTextDirection  previous_direction)
+{
+  gtk_label_clear_layout (GTK_LABEL (widget));
+}
+
+static void
 gtk_label_class_init (GtkLabelClass *class)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (class);
@@ -2247,6 +2301,7 @@ gtk_label_class_init (GtkLabelClass *class)
   widget_class->focus = gtk_label_focus;
   widget_class->get_request_mode = gtk_label_get_request_mode;
   widget_class->measure = gtk_label_measure;
+  widget_class->direction_changed = gtk_label_direction_changed;
 
   class->move_cursor = gtk_label_move_cursor;
   class->copy_clipboard = gtk_label_copy_clipboard;
@@ -2270,8 +2325,8 @@ gtk_label_class_init (GtkLabelClass *class)
    * programmatically.
    *
    * The default bindings for this signal come in two variants,
-   * the variant with the Shift modifier extends the selection,
-   * the variant without the Shift modifier does not.
+   * the variant with the <kbd>Shift</kbd> modifier extends the selection,
+   * the variant without the <kbd>Shift</kbd> modifier does not.
    * There are too many key combinations to list them all here.
    *
    * - <kbd>←</kbd>, <kbd>→</kbd>, <kbd>↑</kbd>, <kbd>↓</kbd>
@@ -2693,6 +2748,12 @@ gtk_label_class_init (GtkLabelClass *class)
                     GTK_MOVEMENT_WORDS, -1);
 
   /* select all */
+#ifdef __APPLE__
+  gtk_widget_class_add_binding (widget_class,
+                                GDK_KEY_a, GDK_META_MASK,
+                                (GtkShortcutFunc) gtk_label_select_all,
+                                NULL);
+#else
   gtk_widget_class_add_binding (widget_class,
                                 GDK_KEY_a, GDK_CONTROL_MASK,
                                 (GtkShortcutFunc) gtk_label_select_all,
@@ -2701,8 +2762,15 @@ gtk_label_class_init (GtkLabelClass *class)
                                 GDK_KEY_slash, GDK_CONTROL_MASK,
                                 (GtkShortcutFunc) gtk_label_select_all,
                                 NULL);
+#endif
 
   /* unselect all */
+#ifdef __APPLE__
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_a, GDK_SHIFT_MASK | GDK_META_MASK,
+                                       "move-cursor",
+                                       "(iib)", GTK_MOVEMENT_PARAGRAPH_ENDS, 0, FALSE);
+#else
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_a, GDK_SHIFT_MASK | GDK_CONTROL_MASK,
                                        "move-cursor",
@@ -2712,6 +2780,7 @@ gtk_label_class_init (GtkLabelClass *class)
                                        GDK_KEY_backslash, GDK_CONTROL_MASK,
                                        "move-cursor",
                                        "(iib)", GTK_MOVEMENT_PARAGRAPH_ENDS, 0, FALSE);
+#endif
 
   add_move_binding (widget_class, GDK_KEY_f, GDK_ALT_MASK,
                     GTK_MOVEMENT_WORDS, 1);
@@ -2743,11 +2812,56 @@ gtk_label_class_init (GtkLabelClass *class)
   add_move_binding (widget_class, GDK_KEY_KP_End, GDK_CONTROL_MASK,
                     GTK_MOVEMENT_BUFFER_ENDS, 1);
 
+#ifdef __APPLE__
+  add_move_binding (widget_class, GDK_KEY_Right, GDK_ALT_MASK,
+                    GTK_MOVEMENT_WORDS, 1);
+
+  add_move_binding (widget_class, GDK_KEY_Left, GDK_ALT_MASK,
+                    GTK_MOVEMENT_WORDS, -1);
+
+  add_move_binding (widget_class, GDK_KEY_KP_Right, GDK_ALT_MASK,
+                    GTK_MOVEMENT_WORDS, 1);
+
+  add_move_binding (widget_class, GDK_KEY_KP_Left, GDK_ALT_MASK,
+                    GTK_MOVEMENT_WORDS, -1);
+
+  add_move_binding (widget_class, GDK_KEY_Right, GDK_ALT_MASK,
+                    GTK_MOVEMENT_DISPLAY_LINE_ENDS, 1);
+
+  add_move_binding (widget_class, GDK_KEY_Left, GDK_ALT_MASK,
+                    GTK_MOVEMENT_DISPLAY_LINE_ENDS, -1);
+
+  add_move_binding (widget_class, GDK_KEY_KP_Right, GDK_ALT_MASK,
+                    GTK_MOVEMENT_DISPLAY_LINE_ENDS, 1);
+
+  add_move_binding (widget_class, GDK_KEY_KP_Left, GDK_ALT_MASK,
+                    GTK_MOVEMENT_DISPLAY_LINE_ENDS, -1);
+
+  add_move_binding (widget_class, GDK_KEY_Up, GDK_META_MASK,
+                    GTK_MOVEMENT_BUFFER_ENDS, -1);
+
+  add_move_binding (widget_class, GDK_KEY_Down, GDK_META_MASK,
+                    GTK_MOVEMENT_BUFFER_ENDS, 1);
+
+  add_move_binding (widget_class, GDK_KEY_KP_Up, GDK_META_MASK,
+                    GTK_MOVEMENT_BUFFER_ENDS, -1);
+
+  add_move_binding (widget_class, GDK_KEY_KP_Down, GDK_META_MASK,
+                    GTK_MOVEMENT_BUFFER_ENDS, 1);
+#endif
+
   /* copy */
+#ifdef __APPLE__
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_c, GDK_META_MASK,
+                                       "copy-clipboard",
+                                       NULL);
+#else
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_c, GDK_CONTROL_MASK,
                                        "copy-clipboard",
                                        NULL);
+#endif
 
   gtk_widget_class_add_binding_signal (widget_class,
                                        GDK_KEY_Return, 0,
@@ -3099,6 +3213,11 @@ gtk_label_set_text_internal (GtkLabel *self,
   g_free (self->text);
   self->text = str;
 
+  gtk_accessible_update_property (GTK_ACCESSIBLE (self),
+                                  GTK_ACCESSIBLE_PROPERTY_LABEL,
+                                  self->text,
+                                  -1);
+
   gtk_label_select_region_index (self, 0, 0);
 }
 
@@ -3113,11 +3232,6 @@ gtk_label_set_label_internal (GtkLabel   *self,
   self->label = g_strdup (str ? str : "");
 
   g_object_notify_by_pspec (G_OBJECT (self), label_props[PROP_LABEL]);
-
-  gtk_accessible_update_property (GTK_ACCESSIBLE (self),
-                                  GTK_ACCESSIBLE_PROPERTY_LABEL,
-                                  self->label,
-                                  -1);
 
   return TRUE;
 }
@@ -3422,6 +3536,29 @@ finish_text (UriParserData *pdata)
 }
 
 static void
+link_style_changed_cb (GtkCssNode        *node,
+                       GtkCssStyleChange *change,
+                       GtkLabel          *self)
+{
+  if (gtk_css_style_change_affects (change,
+                                    GTK_CSS_AFFECTS_CONTENT |
+                                    GTK_CSS_AFFECTS_TEXT_ATTRS))
+    {
+      gtk_label_ensure_layout (self);
+      gtk_widget_queue_draw (GTK_WIDGET (self));
+    }
+}
+
+static void
+selection_style_changed_cb (GtkCssNode        *node,
+                            GtkCssStyleChange *change,
+                            GtkLabel          *self)
+{
+  if (gtk_css_style_change_affects (change, GTK_CSS_AFFECTS_REDRAW))
+    gtk_widget_queue_draw (GTK_WIDGET (self));
+}
+
+static void
 start_element_handler (GMarkupParseContext  *context,
                        const char           *element_name,
                        const char          **attribute_names,
@@ -3509,6 +3646,7 @@ start_element_handler (GMarkupParseContext  *context,
       gtk_css_node_set_parent (link.cssnode, widget_node);
       if (class)
         gtk_css_node_add_class (link.cssnode, g_quark_from_string (class));
+      g_signal_connect (link.cssnode, "style-changed", G_CALLBACK (link_style_changed_cb), self);
 
       state = gtk_css_node_get_state (widget_node);
       if (visited)
@@ -4947,7 +5085,7 @@ gtk_label_clear_select_info (GtkLabel *self)
       gtk_widget_remove_controller (GTK_WIDGET (self), self->select_info->motion_controller);
       gtk_widget_remove_controller (GTK_WIDGET (self), self->select_info->focus_controller);
       GTK_LABEL_CONTENT (self->select_info->provider)->label = NULL;
-      g_object_unref (self->select_info->provider);
+      g_clear_object (&self->select_info->provider);
 
       g_free (self->select_info);
       self->select_info = NULL;
@@ -4956,6 +5094,15 @@ gtk_label_clear_select_info (GtkLabel *self)
 
       gtk_widget_set_focusable (GTK_WIDGET (self), FALSE);
     }
+}
+
+static void
+gtk_label_clear_provider_info (GtkLabel *self)
+{
+  if (self->select_info == NULL)
+    return;
+
+  GTK_LABEL_CONTENT (self->select_info->provider)->label = NULL;
 }
 
 /**
@@ -5118,6 +5265,8 @@ gtk_label_select_region_index (GtkLabel *self,
               gtk_css_node_set_name (self->select_info->selection_node, g_quark_from_static_string ("selection"));
               gtk_css_node_set_parent (self->select_info->selection_node, widget_node);
               gtk_css_node_set_state (self->select_info->selection_node, gtk_css_node_get_state (widget_node));
+              g_signal_connect (self->select_info->selection_node, "style-changed",
+                                G_CALLBACK (selection_style_changed_cb), self);
               g_object_unref (self->select_info->selection_node);
             }
         }
@@ -6201,6 +6350,55 @@ gtk_label_accessible_text_get_attributes (GtkAccessibleText        *self,
   return TRUE;
 }
 
+static gboolean
+gtk_label_accessible_text_get_extents (GtkAccessibleText *self,
+                                       unsigned int       start,
+                                       unsigned int       end,
+                                       graphene_rect_t   *extents)
+{
+  GtkLabel *label = GTK_LABEL (self);
+  PangoLayout *layout;
+  const char *text;
+  float lx, ly;
+  cairo_region_t *range_clip;
+  cairo_rectangle_int_t clip_rect;
+  int range[2];
+
+  layout = label->layout;
+  text = label->text;
+  get_layout_location (label, &lx, &ly);
+
+  range[0] = g_utf8_pointer_to_offset (text, text + start);
+  range[1] = g_utf8_pointer_to_offset (text, text + end);
+
+  range_clip = gdk_pango_layout_get_clip_region (layout, lx, ly, range, 1);
+  cairo_region_get_extents (range_clip, &clip_rect);
+  cairo_region_destroy (range_clip);
+
+  extents->origin.x = clip_rect.x;
+  extents->origin.y = clip_rect.y;
+  extents->size.width = clip_rect.width;
+  extents->size.height = clip_rect.height;
+
+  return TRUE;
+}
+
+static gboolean
+gtk_label_accessible_text_get_offset (GtkAccessibleText      *self,
+                                      const graphene_point_t *point,
+                                      unsigned int           *offset)
+{
+  GtkLabel *label = GTK_LABEL (self);
+  int index;
+
+  if (!get_layout_index (label, roundf (point->x), roundf (point->y), &index))
+    return FALSE;
+
+  *offset = (unsigned int) g_utf8_pointer_to_offset (label->text, label->text + index);
+
+  return TRUE;
+}
+
 static void
 gtk_label_accessible_text_init (GtkAccessibleTextInterface *iface)
 {
@@ -6210,8 +6408,11 @@ gtk_label_accessible_text_init (GtkAccessibleTextInterface *iface)
   iface->get_selection = gtk_label_accessible_text_get_selection;
   iface->get_attributes = gtk_label_accessible_text_get_attributes;
   iface->get_default_attributes = gtk_label_accessible_text_get_default_attributes;
+  iface->get_extents = gtk_label_accessible_text_get_extents;
+  iface->get_offset = gtk_label_accessible_text_get_offset;
 }
 
 /* }}} */
 
 /* vim:set foldmethod=marker expandtab: */
+

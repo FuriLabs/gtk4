@@ -18,15 +18,16 @@
 #pragma once
 
 #include "gdkdisplay.h"
-#include "gdksurface.h"
+
 #include "gdkcursor.h"
-#include "gdkmonitor.h"
 #include "gdkdebugprivate.h"
-#include "gdksurfaceprivate.h"
-#include "gdkkeysprivate.h"
 #include "gdkdeviceprivate.h"
-#include "gdkdmabufprivate.h"
 #include "gdkdmabufdownloaderprivate.h"
+#include "gdkdmabufprivate.h"
+#include "gdkkeysprivate.h"
+#include "gdkmemoryformatprivate.h"
+#include "gdkmonitor.h"
+#include "gdksurfaceprivate.h"
 
 #ifdef GDK_RENDERING_VULKAN
 #include <vulkan/vulkan.h>
@@ -44,12 +45,9 @@ typedef struct _GdkDisplayClass GdkDisplayClass;
 typedef enum {
   GDK_VULKAN_FEATURE_DMABUF                     = 1 << 0,
   GDK_VULKAN_FEATURE_YCBCR                      = 1 << 1,
-  GDK_VULKAN_FEATURE_DESCRIPTOR_INDEXING        = 1 << 2,
-  GDK_VULKAN_FEATURE_DYNAMIC_INDEXING           = 1 << 3,
-  GDK_VULKAN_FEATURE_NONUNIFORM_INDEXING        = 1 << 4,
-  GDK_VULKAN_FEATURE_SEMAPHORE_EXPORT           = 1 << 5,
-  GDK_VULKAN_FEATURE_SEMAPHORE_IMPORT           = 1 << 6,
-  GDK_VULKAN_FEATURE_INCREMENTAL_PRESENT        = 1 << 7,
+  GDK_VULKAN_FEATURE_SEMAPHORE_EXPORT           = 1 << 2,
+  GDK_VULKAN_FEATURE_SEMAPHORE_IMPORT           = 1 << 3,
+  GDK_VULKAN_FEATURE_INCREMENTAL_PRESENT        = 1 << 4,
 } GdkVulkanFeatures;
 
 /* Tracks information about the device grab on this display */
@@ -130,6 +128,7 @@ struct _GdkDisplay
   guint have_egl_pixel_format_float : 1;
   guint have_egl_dma_buf_import : 1;
   guint have_egl_dma_buf_export : 1;
+  guint have_egl_gl_colorspace : 1;
 
   GdkDmabufFormats *dmabuf_formats;
   GdkDmabufDownloader *dmabuf_downloaders[4];
@@ -247,9 +246,8 @@ gboolean            gdk_display_init_egl              (GdkDisplay       *display
                                                        gboolean          allow_any,
                                                        GError          **error);
 gpointer            gdk_display_get_egl_display       (GdkDisplay       *display);
-gpointer            gdk_display_get_egl_config        (GdkDisplay       *display);
-gpointer            gdk_display_get_egl_config_high_depth
-                                                      (GdkDisplay       *display);
+gpointer            gdk_display_get_egl_config        (GdkDisplay       *display,
+                                                       GdkMemoryDepth    depth);
 
 void                gdk_display_set_rgba              (GdkDisplay       *display,
                                                        gboolean          rgba);

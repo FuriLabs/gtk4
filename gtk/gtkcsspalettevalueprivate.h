@@ -30,7 +30,7 @@ GtkCssValue *   gtk_css_palette_value_new_default       (void);
 
 GtkCssValue *   gtk_css_palette_value_parse             (GtkCssParser        *parser);
 
-const GdkRGBA * gtk_css_palette_value_get_color         (GtkCssValue         *value,
+GtkCssValue *   gtk_css_palette_value_get_color         (GtkCssValue         *value,
                                                          const char          *color_name);
 
 G_END_DECLS

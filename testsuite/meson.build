@@ -2,6 +2,12 @@ gtk_libexecdir = join_paths(gtk_prefix, get_option('libexecdir'))
 installed_test_bindir = join_paths(gtk_libexecdir, 'installed-tests', 'gtk-4.0')
 installed_test_datadir = join_paths(gtk_datadir, 'installed-tests', 'gtk-4.0')
 
+test_wrappers = []
+catch = find_program('catch', required: false)
+if catch.found()
+  test_wrappers += [ catch ]
+endif
+
 common_env = [
   'GIO_USE_VOLUME_MONITOR=unix',
   'GIO_USE_VFS=local',
@@ -10,6 +16,7 @@ common_env = [
   'G_ENABLE_DIAGNOSTIC=0',
   'GSETTINGS_SCHEMA_DIR=@0@'.format(gtk_schema_build_dir),
   'GDK_DEBUG=default-settings',
+  'GTK_DEBUG=css',
 ]
 exclude_unstable = ['flaky', 'failing']
 
@@ -55,12 +62,14 @@ foreach setup : setups
       env: env + ['TEST_OUTPUT_SUBDIR=@0@'.format(name)],
       exclude_suites: exclude_unstable + exclude,
       is_default: setup.get('is_default', false),
+      exe_wrapper: test_wrappers,
     )
 
     add_test_setup(
       '@0@_unstable'.format(name),
       env: env + ['TEST_OUTPUT_SUBDIR=@0@_unstable'.format(name)],
       exclude_suites: exclude,
+      exe_wrapper: test_wrappers,
     )
   endif
 endforeach

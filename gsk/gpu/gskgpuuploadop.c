@@ -12,6 +12,7 @@
 #include "gskvulkanimageprivate.h"
 #endif
 
+#include "gdk/gdkcolorstateprivate.h"
 #include "gdk/gdkglcontextprivate.h"
 #include "gsk/gskdebugprivate.h"
 
@@ -248,6 +249,7 @@ gsk_gpu_upload_texture_op_draw (GskGpuOp *op,
 
   downloader = gdk_texture_downloader_new (self->texture);
   gdk_texture_downloader_set_format (downloader, gsk_gpu_image_get_format (self->image));
+  gdk_texture_downloader_set_color_state (downloader, gdk_texture_get_color_state (self->texture));
   gdk_texture_downloader_download_into (downloader, data, stride);
   gdk_texture_downloader_free (downloader);
 }
@@ -300,10 +302,15 @@ gsk_gpu_upload_texture_op_try (GskGpuFrame *frame,
 {
   GskGpuUploadTextureOp *self;
   GskGpuImage *image;
+  GdkMemoryFormat format;
+
+  format = gdk_texture_get_format (texture);
 
   image = gsk_gpu_device_create_upload_image (gsk_gpu_frame_get_device (frame),
                                               with_mipmap,
-                                              gdk_texture_get_format (texture),
+                                              format,
+                                              gdk_memory_format_alpha (format) != GDK_MEMORY_ALPHA_PREMULTIPLIED &&
+                                              gdk_color_state_get_no_srgb_tf (gdk_texture_get_color_state (texture)) != NULL,
                                               gdk_texture_get_width (texture),
                                               gdk_texture_get_height (texture));
   if (image == NULL)
@@ -338,7 +345,7 @@ gsk_gpu_upload_texture_op_try (GskGpuFrame *frame,
   self->texture = g_object_ref (texture);
   self->image = image;
 
-  return self->image;
+  return g_object_ref (self->image);
 }
 
 typedef struct _GskGpuUploadCairoOp GskGpuUploadCairoOp;
@@ -470,6 +477,7 @@ gsk_gpu_upload_cairo_op (GskGpuFrame           *frame,
   self->image = gsk_gpu_device_create_upload_image (gsk_gpu_frame_get_device (frame),
                                                     FALSE,
                                                     GDK_MEMORY_DEFAULT,
+                                                    gdk_color_state_get_no_srgb_tf (GDK_COLOR_STATE_SRGB) != NULL,
                                                     ceil (graphene_vec2_get_x (scale) * viewport->size.width),
                                                     ceil (graphene_vec2_get_y (scale) * viewport->size.height));
   self->viewport = *viewport;

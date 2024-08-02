@@ -7,8 +7,10 @@ G_BEGIN_DECLS
 
 void                    gsk_gpu_node_processor_process                  (GskGpuFrame                    *frame,
                                                                          GskGpuImage                    *target,
+                                                                         GdkColorState                  *target_color_state,
                                                                          const cairo_rectangle_int_t    *clip,
                                                                          GskRenderNode                  *node,
-                                                                         const graphene_rect_t          *viewport);
+                                                                         const graphene_rect_t          *viewport,
+                                                                         GskRenderPassType               pass_type);
 
 G_END_DECLS

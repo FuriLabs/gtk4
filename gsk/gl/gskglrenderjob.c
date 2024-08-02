@@ -2445,8 +2445,8 @@ gsk_gl_render_job_visit_blurred_outset_shadow_node (GskGLRenderJob      *job,
                                                     const GskRenderNode *node)
 {
   const GskRoundedRect *outline = gsk_outset_shadow_node_get_outline (node);
-  float scale_x = job->scale_x;
-  float scale_y = job->scale_y;
+  float scale_x = fabsf (job->scale_x);
+  float scale_y = fabsf (job->scale_y);
   float blur_radius = gsk_outset_shadow_node_get_blur_radius (node);
   float blur_extra = blur_radius * 2.0f; /* 2.0 = shader radius_multiplier */
   float half_blur_extra = blur_extra / 2.0f;
@@ -2577,8 +2577,8 @@ gsk_gl_render_job_visit_blurred_outset_shadow_node (GskGLRenderJob      *job,
                                            &offscreen,
                                            texture_width,
                                            texture_height,
-                                           blur_radius * fabsf (scale_x),
-                                           blur_radius * fabsf (scale_y));
+                                           blur_radius * scale_x,
+                                           blur_radius * scale_y);
 
       gsk_gl_shadow_library_insert (job->driver->shadows_library,
                                     &scaled_outline,
@@ -3413,6 +3413,8 @@ gsk_gl_render_job_visit_mask_node (GskGLRenderJob      *job,
   if (!gsk_gl_render_job_visit_node_with_offscreen (job, mask, &mask_offscreen))
     {
       gsk_gl_render_job_pop_modelview (job);
+      if (gsk_mask_node_get_mask_mode (node) == GSK_MASK_MODE_INVERTED_ALPHA)
+        gsk_gl_render_job_visit_node (job, source);
       return;
     }
 
@@ -3499,6 +3501,7 @@ static inline void
 gsk_gl_render_job_visit_gl_shader_node (GskGLRenderJob      *job,
                                         const GskRenderNode *node)
 {
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   GError *error = NULL;
   GskGLShader *shader;
   GskGLProgram *program;
@@ -3610,6 +3613,7 @@ gsk_gl_render_job_visit_gl_shader_node (GskGLRenderJob      *job,
           gsk_gl_render_job_end_draw (job);
         }
     }
+G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 static void
@@ -4013,7 +4017,7 @@ gsk_gl_render_job_visit_subsurface_node (GskGLRenderJob      *job,
               /* Clear the area so we can see through */
               GskGLCommandBatch *batch;
               guint16 color[4];
-              rgba_to_half (&(GdkRGBA){0,0,0,0}, color);
+              rgba_to_half (&GDK_RGBA_TRANSPARENT, color);
 
               batch = gsk_gl_command_queue_get_batch (job->command_queue);
               batch->draw.blend = 0;

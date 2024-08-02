@@ -175,7 +175,8 @@ gtk_cell_renderer_spinner_class_init (GtkCellRendererSpinnerClass *klass)
   cell_class->get_preferred_height = gtk_cell_renderer_spinner_get_preferred_height;
   cell_class->snapshot = gtk_cell_renderer_spinner_snapshot;
 
-  /* GtkCellRendererSpinner:active:
+  /**
+   * GtkCellRendererSpinner:active:
    *
    * Whether the spinner is active (ie. shown) in the cell
    */
@@ -253,7 +254,7 @@ gtk_cell_renderer_spinner_update_size (GtkCellRendererSpinner *cell,
   node = gtk_style_context_get_node (context);
   gtk_icon_size_set_style_classes (node, priv->icon_size);
   style = gtk_css_node_get_style (node);
-  priv->size = _gtk_css_number_value_get (style->icon->icon_size, 100);
+  priv->size = gtk_css_number_value_get (style->icon->icon_size, 100);
 
   gtk_style_context_restore (context);
 }

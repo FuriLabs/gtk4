@@ -530,6 +530,15 @@ handle_accessible_method (GDBusConnection       *connection,
       g_variant_builder_open (&builder, G_VARIANT_TYPE ("a{ss}"));
       g_variant_builder_add (&builder, "{ss}", "toolkit", "GTK");
 
+      if (gtk_at_context_has_accessible_property (GTK_AT_CONTEXT (self), GTK_ACCESSIBLE_PROPERTY_LEVEL))
+        {
+          GtkAccessibleValue *value = gtk_at_context_get_accessible_property (GTK_AT_CONTEXT (self),
+                                                                              GTK_ACCESSIBLE_PROPERTY_LEVEL);
+          char *level = g_strdup_printf ("%d", gtk_int_accessible_value_get (value));
+          g_variant_builder_add (&builder, "{ss}", "level", level);
+          g_free (level);
+        }
+
       if (gtk_at_context_has_accessible_property (GTK_AT_CONTEXT (self), GTK_ACCESSIBLE_PROPERTY_PLACEHOLDER))
         {
           GtkAccessibleValue *value;
@@ -720,6 +729,16 @@ handle_accessible_get_property (GDBusConnection       *connection,
     res = get_parent_context_ref (accessible);
   else if (g_strcmp0 (property_name, "ChildCount") == 0)
     res = g_variant_new_int32 (gtk_at_spi_context_get_child_count (self));
+  else if (g_strcmp0 (property_name, "HelpText") == 0)
+    {
+      if (gtk_at_context_has_accessible_property (GTK_AT_CONTEXT (self), GTK_ACCESSIBLE_PROPERTY_HELP_TEXT))
+        {
+          GtkAccessibleValue *value = gtk_at_context_get_accessible_property (GTK_AT_CONTEXT (self), GTK_ACCESSIBLE_PROPERTY_HELP_TEXT);
+          res = g_variant_new_string (gtk_string_accessible_value_get (value));
+        }
+      else
+        res = g_variant_new_string ("");
+    }
   else
     g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
                  "Unknown property '%s'", property_name);
@@ -1136,7 +1155,7 @@ gtk_at_spi_context_state_change (GtkATContext                *ctx,
     }
 
   if (changed_properties & GTK_ACCESSIBLE_PROPERTY_CHANGE_DESCRIPTION)
-  {
+    {
       char *label = gtk_at_context_get_description (GTK_AT_CONTEXT (self));
       GVariant *v = g_variant_new_take_string (label);
       emit_property_changed (self, "accessible-description", v);
@@ -1148,6 +1167,14 @@ gtk_at_spi_context_state_change (GtkATContext                *ctx,
       emit_property_changed (self,
                              "accessible-value",
                              g_variant_new_double (gtk_number_accessible_value_get (value)));
+    }
+
+  if (changed_properties & GTK_ACCESSIBLE_PROPERTY_CHANGE_HELP_TEXT)
+    {
+      value = gtk_accessible_attribute_set_get_value (properties, GTK_ACCESSIBLE_PROPERTY_HELP_TEXT);
+      emit_property_changed (self,
+                             "accessible-help-text",
+                             g_variant_new_string (gtk_string_accessible_value_get (value)));
     }
 }
 
@@ -1239,10 +1266,13 @@ gtk_at_spi_context_child_change (GtkATContext             *ctx,
     }
 
   if (change & GTK_ACCESSIBLE_CHILD_CHANGE_ADDED)
+  {
+    gtk_at_context_realize (child_context);
     emit_children_changed (self,
                            GTK_AT_SPI_CONTEXT (child_context),
                            idx,
                            GTK_ACCESSIBLE_CHILD_STATE_ADDED);
+  }
   else if (change & GTK_ACCESSIBLE_CHILD_CHANGE_REMOVED)
     emit_children_changed (self,
                            GTK_AT_SPI_CONTEXT (child_context),

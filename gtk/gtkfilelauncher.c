@@ -37,8 +37,6 @@
  * right away.
  *
  * The operation is started with the [method@Gtk.FileLauncher.launch] function.
- * This API follows the GIO async pattern, and the result can be obtained by
- * calling [method@Gtk.FileLauncher.launch_finish].
  *
  * To launch uris that don't represent files, use [class@Gtk.UriLauncher].
  *
@@ -457,16 +455,13 @@ G_GNUC_END_IGNORE_DEPRECATIONS
  * @self: a `GtkFileLauncher`
  * @parent: (nullable): the parent `GtkWindow`
  * @cancellable: (nullable): a `GCancellable` to cancel the operation
- * @callback: (scope async): a callback to call when the operation is complete
- * @user_data: (closure callback): data to pass to @callback
+ * @callback: (scope async) (closure user_data): a callback to call when the
+ *   operation is complete
+ * @user_data: data to pass to @callback
  *
  * Launch an application to open the file.
  *
  * This may present an app chooser dialog to the user.
- *
- * The @callback will be called when the operation is completed.
- * It should call [method@Gtk.FileLauncher.launch_finish] to obtain
- * the result.
  *
  * Since: 4.10
  */
@@ -550,17 +545,14 @@ gtk_file_launcher_launch_finish (GtkFileLauncher  *self,
  * @self: a `GtkFileLauncher`
  * @parent: (nullable): the parent `GtkWindow`
  * @cancellable: (nullable): a `GCancellable` to cancel the operation
- * @callback: (scope async): a callback to call when the operation is complete
- * @user_data: (closure callback): data to pass to @callback
+ * @callback: (scope async) (closure user_data): a callback to call when the
+ *   operation is complete
+ * @user_data: data to pass to @callback
  *
  * Launch a file manager to show the file in its parent directory.
  *
  * This is only supported native files. It will fail if @file
  * is e.g. a http:// uri.
- *
- * The @callback will be called when the operation is completed.
- * It should call [method@Gtk.FileLauncher.open_containing_folder_finish]
- * to obtain the result.
  *
  * Since: 4.10
  */

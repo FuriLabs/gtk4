@@ -36,9 +36,7 @@
  * should be modal.
  *
  * The dialog is shown with the [method@Gtk.ColorDialog.choose_rgba]
- * function. This API follows the GIO async pattern, and the
- * result can be obtained by calling
- * [method@Gtk.ColorDialog.choose_rgba_finish].
+ * function.
  *
  * See [class@Gtk.ColorDialogButton] for a convenient control
  * that uses `GtkColorDialog` and presents the results.
@@ -430,15 +428,12 @@ G_GNUC_END_IGNORE_DEPRECATIONS
  * @parent: (nullable): the parent `GtkWindow`
  * @initial_color: (nullable): the color to select initially
  * @cancellable: (nullable): a `GCancellable` to cancel the operation
- * @callback: (scope async): a callback to call when the operation is complete
- * @user_data: (closure callback): data to pass to @callback
+ * @callback: (scope async) (closure user_data): a callback to call when the
+ *   operation is complete
+ * @user_data: data to pass to @callback
  *
  * This function initiates a color choice operation by
  * presenting a color chooser dialog to the user.
- *
- * The @callback will be called when the dialog is dismissed.
- * It should call [method@Gtk.ColorDialog.choose_rgba_finish]
- * to obtain the result.
  *
  * Since: 4.10
  */

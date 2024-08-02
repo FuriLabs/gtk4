@@ -5,19 +5,18 @@
 
 #include "gdk/gdkmemoryformatprivate.h"
 
-#define GSK_GPU_PATTERN_STACK_SIZE 16
-
-typedef struct _GskGLDescriptors        GskGLDescriptors;
 typedef struct _GskGpuBuffer            GskGpuBuffer;
-typedef struct _GskGpuDescriptors       GskGpuDescriptors;
+typedef struct _GskGpuCache             GskGpuCache;
+typedef guint32                         GskGpuColorStates;
 typedef struct _GskGpuDevice            GskGpuDevice;
 typedef struct _GskGpuFrame             GskGpuFrame;
 typedef struct _GskGpuImage             GskGpuImage;
 typedef struct _GskGpuOp                GskGpuOp;
 typedef struct _GskGpuOpClass           GskGpuOpClass;
+typedef guint32                         GskGpuShaderFlags;
+typedef struct _GskGpuShaderImage       GskGpuShaderImage;
 typedef struct _GskGpuShaderOp          GskGpuShaderOp;
 typedef struct _GskGpuShaderOpClass     GskGpuShaderOpClass;
-typedef struct _GskVulkanDescriptors    GskVulkanDescriptors;
 typedef struct _GskVulkanSemaphores     GskVulkanSemaphores;
 
 typedef enum {
@@ -29,6 +28,7 @@ typedef enum {
   GSK_GPU_IMAGE_MIPMAP         = (1 << 5),
   GSK_GPU_IMAGE_FILTERABLE     = (1 << 6),
   GSK_GPU_IMAGE_RENDERABLE     = (1 << 7),
+  GSK_GPU_IMAGE_SRGB           = (1 << 8),
 } GskGpuImageFlags;
 
 typedef enum {
@@ -46,12 +46,23 @@ typedef enum {
   GSK_GPU_SHADER_CLIP_RECT,
   GSK_GPU_SHADER_CLIP_ROUNDED
 } GskGpuShaderClip;
+#define GSK_GPU_SHADER_CLIP_SHIFT 2
+#define GSK_GPU_SHADER_CLIP_MASK ((1 << GSK_GPU_SHADER_CLIP_SHIFT) - 1)
 
 typedef enum {
+  GSK_GPU_BLEND_NONE,
   GSK_GPU_BLEND_OVER,
   GSK_GPU_BLEND_ADD,
   GSK_GPU_BLEND_CLEAR
 } GskGpuBlend;
+
+/* We only need this for the final VkImageLayout, but don't tell anyone */
+typedef enum
+{
+  GSK_RENDER_PASS_OFFSCREEN,
+  GSK_RENDER_PASS_PRESENT,
+  GSK_RENDER_PASS_EXPORT
+} GskRenderPassType;
 
 typedef enum {
   GSK_GPU_PATTERN_DONE,
@@ -112,11 +123,12 @@ G_STATIC_ASSERT (GSK_GPU_PATTERN_BLEND_SATURATION == GSK_GPU_PATTERN_BLEND_DEFAU
 G_STATIC_ASSERT (GSK_GPU_PATTERN_BLEND_LUMINOSITY == GSK_GPU_PATTERN_BLEND_DEFAULT + GSK_BLEND_MODE_LUMINOSITY);
 
 typedef enum {
-  GSK_GPU_OPTIMIZE_UBER                 = 1 <<  0,
-  GSK_GPU_OPTIMIZE_CLEAR                = 1 <<  1,
-  GSK_GPU_OPTIMIZE_MERGE                = 1 <<  2,
-  GSK_GPU_OPTIMIZE_BLIT                 = 1 <<  3,
-  GSK_GPU_OPTIMIZE_GRADIENTS            = 1 <<  4,
-  GSK_GPU_OPTIMIZE_MIPMAP               = 1 <<  5,
+  GSK_GPU_OPTIMIZE_CLEAR                = 1 <<  0,
+  GSK_GPU_OPTIMIZE_MERGE                = 1 <<  1,
+  GSK_GPU_OPTIMIZE_BLIT                 = 1 <<  2,
+  GSK_GPU_OPTIMIZE_GRADIENTS            = 1 <<  3,
+  GSK_GPU_OPTIMIZE_MIPMAP               = 1 <<  4,
+  GSK_GPU_OPTIMIZE_TO_IMAGE             = 1 <<  5,
+  GSK_GPU_OPTIMIZE_OCCLUSION_CULLING    = 1 <<  6,
 } GskGpuOptimizations;
 

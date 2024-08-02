@@ -2,8 +2,9 @@
 
 #include "gskgpuprintprivate.h"
 
-#include "gskgpudescriptorsprivate.h"
+#include "gskgpucolorstatesprivate.h"
 #include "gskgpuimageprivate.h"
+#include "gskgpushaderflagsprivate.h"
 
 void
 gsk_gpu_print_indent (GString *string,
@@ -13,9 +14,11 @@ gsk_gpu_print_indent (GString *string,
 }
 
 void
-gsk_gpu_print_shader_info (GString          *string,
-                           GskGpuShaderClip  clip)
+gsk_gpu_print_shader_flags (GString           *string,
+                            GskGpuShaderFlags  flags)
 {
+  GskGpuShaderClip clip = gsk_gpu_shader_flags_get_clip (flags);
+
   switch (clip)
     {
       case GSK_GPU_SHADER_CLIP_NONE:
@@ -31,6 +34,22 @@ gsk_gpu_print_shader_info (GString          *string,
         g_assert_not_reached ();
         break;
     }
+}
+
+void
+gsk_gpu_print_color_states (GString           *string,
+                            GskGpuColorStates  color_states)
+{
+  if (gsk_gpu_color_states_get_alt (color_states) == gsk_gpu_color_states_get_output (color_states))
+    g_string_append_printf (string, "any %s -> %s ",
+                            gsk_gpu_color_states_is_alt_premultiplied (color_states) ? "(p)" : "",
+                            gsk_gpu_color_states_is_output_premultiplied (color_states) ? "(p)" : "");
+  else
+    g_string_append_printf (string, "%s%s -> %s%s ",
+                            gdk_color_state_get_name (gsk_gpu_color_states_get_alt (color_states)),
+                            gsk_gpu_color_states_is_alt_premultiplied (color_states) ? "(p)" : "",
+                            gdk_color_state_get_name (gsk_gpu_color_states_get_output (color_states)),
+                            gsk_gpu_color_states_is_output_premultiplied (color_states) ? "(p)" : "");
 }
 
 void
@@ -140,17 +159,10 @@ void
 gsk_gpu_print_image (GString     *string,
                      GskGpuImage *image)
 {
-  g_string_append_printf (string, "%zux%zu ",
+  g_string_append_printf (string, "%zux%zu %s%s ",
                           gsk_gpu_image_get_width (image),
-                          gsk_gpu_image_get_height (image));
-}
-
-void
-gsk_gpu_print_image_descriptor (GString           *string,
-                                GskGpuDescriptors *desc,
-                                guint32            descriptor)
-{
-  gsize id = gsk_gpu_descriptors_find_image (desc, descriptor);
-  gsk_gpu_print_image (string, gsk_gpu_descriptors_get_image (desc, id));
+                          gsk_gpu_image_get_height (image),
+                          gsk_gpu_image_get_flags (image) & GSK_GPU_IMAGE_SRGB ? "S" : "",
+                          gdk_memory_format_get_name (gsk_gpu_image_get_format (image)));
 }
 

@@ -38,7 +38,6 @@ gdk_win32_vulkan_context_create_surface (GdkVulkanContext *context,
 {
   GdkSurface *window = gdk_draw_context_get_surface (GDK_DRAW_CONTEXT (context));
   GdkDisplay *display = gdk_draw_context_get_display (GDK_DRAW_CONTEXT (context));
-  GdkWin32Surface *win32_surface = GDK_WIN32_SURFACE (window);
   VkWin32SurfaceCreateInfoKHR info;
   VkResult result;
 
@@ -65,13 +64,15 @@ gdk_win32_vulkan_context_create_surface (GdkVulkanContext *context,
 }
 
 static void
-gdk_win32_vulkan_context_begin_frame (GdkDrawContext *draw_context,
-                                      GdkMemoryDepth  depth,
-                                      cairo_region_t *update_area)
+gdk_win32_vulkan_context_begin_frame (GdkDrawContext  *draw_context,
+                                      GdkMemoryDepth   depth,
+                                      cairo_region_t  *update_area,
+                                      GdkColorState  **out_color_state,
+                                      GdkMemoryDepth  *out_depth)
 {
   gdk_win32_surface_handle_queued_move_resize (draw_context);
 
-  GDK_DRAW_CONTEXT_CLASS (gdk_win32_vulkan_context_parent_class)->begin_frame (draw_context, depth, update_area);
+  GDK_DRAW_CONTEXT_CLASS (gdk_win32_vulkan_context_parent_class)->begin_frame (draw_context, depth, update_area, out_color_state, out_depth);
 }
 
 static void

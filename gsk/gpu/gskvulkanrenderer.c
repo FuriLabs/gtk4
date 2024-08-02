@@ -75,6 +75,7 @@ gsk_vulkan_renderer_update_images_cb (GdkVulkanContext  *context,
       self->targets[i] = gsk_vulkan_image_new_for_swapchain (device,
                                                              gdk_vulkan_context_get_image (context, i),
                                                              gdk_vulkan_context_get_image_format (context),
+                                                             gdk_vulkan_context_get_memory_format (context),
                                                              width, height);
     }
 }
@@ -100,15 +101,6 @@ gsk_vulkan_renderer_create_context (GskGpuRenderer       *renderer,
   gsk_vulkan_renderer_update_images_cb (context, self);
 
   *supported = -1;
-
-  /* Shader compilation takes too long when texture() and get_float() calls
-   * use if/else ladders to avoid non-uniform indexing.
-   * This is true when we use the Vulkan 1.0 shaders, but works with the Vulkan 1.2
-   * shaders.
-   */
-  if (!gdk_display_has_vulkan_feature (display, GDK_VULKAN_FEATURE_DYNAMIC_INDEXING) ||
-      !gdk_display_has_vulkan_feature (display, GDK_VULKAN_FEATURE_NONUNIFORM_INDEXING))
-    *supported &= ~GSK_GPU_OPTIMIZE_UBER;
 
   return GDK_DRAW_CONTEXT (context);
 }

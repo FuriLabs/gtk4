@@ -1,3 +1,5 @@
+#define GSK_N_TEXTURES 0
+
 #include "common.glsl"
 
 /* blur radius (aka in_blur_direction) 0 is NOT supported and MUST be caught before */
@@ -51,7 +53,7 @@ run (out vec2 pos)
 
   _pos = pos;
   _shadow_outline = outline;
-  _color = in_color;
+  _color = output_color_from_alt (in_color);
   _sigma = GSK_GLOBAL_SCALE * 0.5 * in_blur_radius;
 }
 
@@ -109,14 +111,25 @@ blur_corner (vec2 p,
   if (min (r.x, r.y) <= 0.0)
     return 0.0;
 
+  p /= _sigma;
+  r /= _sigma;
+
+  if (min (p.x, p.y) <= -2.95 ||
+      max (p.x - r.x, p.y - r.y) >= 2.95)
+    return 0.0;
+
   float result = 0.0;
-  float step = 1.0;
-  for (float y = 0.5 * step; y <= r.y; y += step)
+  float start = max (p.y - 3.0, 0.0);
+  float end = min (p.y + 3.0, r.y);
+  float step = (end - start) / 7.0;
+  float y = start;
+  for (int i = 0; i < 8; i++)
     {
       float x = r.x - ellipse_x (r, r.y - y);
-      result -= gauss (p.y - y, _sigma.y) * erf_range (vec2 (- p.x, x - p.x), _sigma.x);
-  }
-  return result;
+      result -= gauss (p.y - y, 1.0) * erf_range (vec2 (- p.x, x - p.x), 1.0);
+      y += step;
+    }
+  return step * result;
 }
 
 float
@@ -154,7 +167,7 @@ run (out vec4 color,
   if (VARIATION_INSET)
     blur_alpha = 1.0 - blur_alpha;
 
-  color = clip_alpha * _color * blur_alpha;
+  color = output_color_alpha (_color, clip_alpha * blur_alpha);
   position = _pos;
 }
 

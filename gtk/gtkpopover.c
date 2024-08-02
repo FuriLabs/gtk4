@@ -67,6 +67,17 @@
  * </section>
  * ```
  *
+ * # Shortcuts and Gestures
+ *
+ * `GtkPopover` supports the following keyboard shortcuts:
+ *
+ * - <kbd>Escape</kbd> closes the popover.
+ * - <kbd>Alt</kbd> makes the mnemonics visible.
+ *
+ * The following signals have default keybindings:
+ *
+ * - [signal@Gtk.Popover::activate-default]
+ *
  * # CSS nodes
  *
  * ```
@@ -377,6 +388,7 @@ update_popover_layout (GtkPopover     *popover,
   GdkRectangle final_rect;
   gboolean flipped_x;
   gboolean flipped_y;
+  gboolean attachment_point_changed;
   GdkPopup *popup = GDK_POPUP (priv->surface);
   GtkPositionType position;
 
@@ -400,6 +412,9 @@ update_popover_layout (GtkPopover     *popover,
                          gdk_popup_get_rect_anchor (popup)) &&
     did_flip_vertically (gdk_popup_layout_get_surface_anchor (layout),
                          gdk_popup_get_surface_anchor (popup));
+
+  attachment_point_changed = final_rect.x != priv->final_rect.x ||
+                             final_rect.y != priv->final_rect.y;
 
   priv->final_rect = final_rect;
 
@@ -426,7 +441,8 @@ update_popover_layout (GtkPopover     *popover,
 
   if (priv->final_position != position ||
       priv->final_rect.width != width ||
-      priv->final_rect.height != height)
+      priv->final_rect.height != height ||
+      attachment_point_changed)
     {
       gtk_widget_queue_allocate (GTK_WIDGET (popover));
       g_clear_pointer (&priv->arrow_render_node, gsk_render_node_unref);
@@ -491,7 +507,7 @@ create_popup_layout (GtkPopover *popover)
   compute_surface_pointing_to (popover, &rect);
 
   style = gtk_css_node_get_style (gtk_widget_get_css_node (GTK_WIDGET (priv->contents_widget)));
-  gtk_css_shadow_value_get_extents (style->background->box_shadow, &shadow_width);
+  gtk_css_shadow_value_get_extents (style->used->box_shadow, &shadow_width);
 
   switch (priv->position)
     {
@@ -693,6 +709,18 @@ gtk_popover_native_layout (GtkNative *native,
   GtkPopover *popover = GTK_POPOVER (native);
   GtkPopoverPrivate *priv = gtk_popover_get_instance_private (popover);
   GtkWidget *widget = GTK_WIDGET (popover);
+  int min_height_for_width, min_width_for_height;
+
+  gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL, width,
+                      &min_height_for_width, NULL, NULL, NULL);
+  gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL, height,
+                      &min_width_for_height, NULL, NULL, NULL);
+
+  if (width < min_width_for_height || height < min_height_for_width)
+    {
+      gtk_popover_popdown (popover);
+      return;
+    }
 
   update_popover_layout (popover, gdk_popup_layout_ref (priv->layout), width, height);
 
@@ -1246,11 +1274,11 @@ gtk_popover_get_gap_coords (GtkPopover *popover,
 
   style = gtk_css_node_get_style (gtk_widget_get_css_node (priv->contents_widget));
   border_radius = round (get_border_radius (widget));
-  border_top = _gtk_css_number_value_get (style->border->border_top_width, 100);
-  border_right = _gtk_css_number_value_get (style->border->border_right_width, 100);
-  border_bottom = _gtk_css_number_value_get (style->border->border_bottom_width, 100);
+  border_top = gtk_css_number_value_get (style->border->border_top_width, 100);
+  border_right = gtk_css_number_value_get (style->border->border_right_width, 100);
+  border_bottom = gtk_css_number_value_get (style->border->border_bottom_width, 100);
 
-  gtk_css_shadow_value_get_extents (style->background->box_shadow, &shadow_width);
+  gtk_css_shadow_value_get_extents (style->used->box_shadow, &shadow_width);
 
   if (pos == GTK_POS_BOTTOM)
     {
@@ -1327,10 +1355,10 @@ get_border (GtkCssNode *node,
 
   style = gtk_css_node_get_style (node);
 
-  border->top = _gtk_css_number_value_get (style->border->border_top_width, 100);
-  border->right = _gtk_css_number_value_get (style->border->border_right_width, 100);
-  border->bottom = _gtk_css_number_value_get (style->border->border_bottom_width, 100);
-  border->left = _gtk_css_number_value_get (style->border->border_left_width, 100);
+  border->top = gtk_css_number_value_get (style->border->border_top_width, 100);
+  border->right = gtk_css_number_value_get (style->border->border_right_width, 100);
+  border->bottom = gtk_css_number_value_get (style->border->border_bottom_width, 100);
+  border->left = gtk_css_number_value_get (style->border->border_left_width, 100);
 }
 
 static void
@@ -1424,7 +1452,7 @@ gtk_popover_update_shape (GtkPopover *popover)
       content_css_node =
         gtk_widget_get_css_node (GTK_WIDGET (priv->contents_widget));
       style = gtk_css_node_get_style (content_css_node);
-      gtk_css_shadow_value_get_extents (style->background->box_shadow, &shadow_width);
+      gtk_css_shadow_value_get_extents (style->used->box_shadow, &shadow_width);
 
       input_rect.x = shadow_width.left;
       input_rect.y = shadow_width.top;
@@ -1487,11 +1515,19 @@ gtk_popover_measure (GtkWidget      *widget,
   GtkCssStyle *style;
   GtkBorder shadow_width;
 
-  if (for_size >= 0 && (POS_IS_VERTICAL (priv->position) == (orientation == GTK_ORIENTATION_HORIZONTAL)))
-    for_size -= tail_height;
-
   style = gtk_css_node_get_style (gtk_widget_get_css_node (GTK_WIDGET (priv->contents_widget)));
-  gtk_css_shadow_value_get_extents (style->background->box_shadow, &shadow_width);
+  gtk_css_shadow_value_get_extents (style->used->box_shadow, &shadow_width);
+
+  if (for_size >= 0)
+    {
+      if ((POS_IS_VERTICAL (priv->position) == (orientation == GTK_ORIENTATION_HORIZONTAL)))
+        for_size -= tail_height;
+
+      if (orientation == GTK_ORIENTATION_HORIZONTAL)
+        for_size -= shadow_width.top + shadow_width.bottom;
+      else
+        for_size -= shadow_width.left + shadow_width.right;
+    }
 
   gtk_widget_measure (priv->contents_widget,
                       orientation, for_size,
@@ -1534,7 +1570,7 @@ gtk_popover_size_allocate (GtkWidget *widget,
   GtkBorder shadow_width;
 
   style = gtk_css_node_get_style (gtk_widget_get_css_node (GTK_WIDGET (priv->contents_widget)));
-  gtk_css_shadow_value_get_extents (style->background->box_shadow, &shadow_width);
+  gtk_css_shadow_value_get_extents (style->used->box_shadow, &shadow_width);
 
   switch (priv->final_position)
     {
@@ -1627,7 +1663,7 @@ create_arrow_render_node (GtkPopover *popover)
     {
       const GdkRGBA *border_color;
 
-      border_color = gtk_css_color_value_get_rgba (style->border->border_left_color ? style->border->border_left_color : style->core->color);
+      border_color = gtk_css_color_value_get_rgba (style->used->border_left_color);
 
       gtk_popover_apply_tail_path (popover, cr);
       gdk_cairo_set_source_rgba (cr, border_color);
@@ -1960,6 +1996,8 @@ gtk_popover_class_init (GtkPopoverClass *klass)
    * Emitted whend the user activates the default widget.
    *
    * This is a [keybinding signal](class.SignalAction.html).
+   *
+   * The default binding for this signal is <kbd>Enter</kbd>.
    */
   signals[ACTIVATE_DEFAULT] =
     g_signal_new (I_("activate-default"),

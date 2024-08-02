@@ -58,6 +58,13 @@
  * To learn more about the list widget framework, see the
  * [overview](section-list-widget.html).
  *
+ * # Actions
+ *
+ * `GtkGridView` defines a set of built-in actions:
+ *
+ * - `list.activate-item` activates the item at given position by emitting the
+ *   the [signal@Gtk.GridView::activate] signal.
+ *
  * # CSS nodes
  *
  * ```
@@ -1109,6 +1116,8 @@ gtk_grid_view_class_init (GtkGridViewClass *klass)
    * GtkGridView:factory: (attributes org.gtk.Property.get=gtk_grid_view_get_factory org.gtk.Property.set=gtk_grid_view_set_factory)
    *
    * Factory for populating list items.
+   *
+   * The factory must be for configuring [class@Gtk.ListItem] objects.
    */
   properties[PROP_FACTORY] =
     g_param_spec_object ("factory", NULL, NULL,
@@ -1574,7 +1583,8 @@ gtk_grid_view_get_tab_behavior (GtkGridView *self)
 /**
  * gtk_grid_view_scroll_to:
  * @self: The gridview to scroll in
- * @pos: position of the item
+ * @pos: position of the item. Must be less than the number of
+ *   items in the view.
  * @flags: actions to perform
  * @scroll: (nullable) (transfer full): details of how to perform
  *   the scroll operation or %NULL to scroll into view
@@ -1594,6 +1604,7 @@ gtk_grid_view_scroll_to (GtkGridView        *self,
                          GtkScrollInfo      *scroll)
 {
   g_return_if_fail (GTK_IS_GRID_VIEW (self));
+  g_return_if_fail (pos < gtk_list_base_get_n_items (GTK_LIST_BASE (self)));
 
   gtk_list_base_scroll_to (GTK_LIST_BASE (self), pos, flags, scroll);
 }

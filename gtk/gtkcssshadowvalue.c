@@ -26,9 +26,11 @@
 #include "gtkcsscolorvalueprivate.h"
 #include "gtksnapshotprivate.h"
 #include "gtkpangoprivate.h"
+#include "gtkcssnodeprivate.h"
 
 #include "gsk/gskcairoblurprivate.h"
 #include "gsk/gskroundedrectprivate.h"
+#include "gdk/gdkrgbaprivate.h"
 
 #include <math.h>
 
@@ -58,21 +60,21 @@ shadow_value_for_transition (ShadowValue *result,
                              gboolean     inset)
 {
   result->inset = inset;
-  result->hoffset = _gtk_css_number_value_new (0, GTK_CSS_PX);
-  result->voffset = _gtk_css_number_value_new (0, GTK_CSS_PX);
-  result->radius = _gtk_css_number_value_new (0, GTK_CSS_PX);
-  result->spread = _gtk_css_number_value_new (0, GTK_CSS_PX);
+  result->hoffset = gtk_css_number_value_new (0, GTK_CSS_PX);
+  result->voffset = gtk_css_number_value_new (0, GTK_CSS_PX);
+  result->radius = gtk_css_number_value_new (0, GTK_CSS_PX);
+  result->spread = gtk_css_number_value_new (0, GTK_CSS_PX);
   result->color = gtk_css_color_value_new_transparent ();
 }
 
 static void
 shadow_value_unref (const ShadowValue *shadow)
 {
-  _gtk_css_value_unref (shadow->hoffset);
-  _gtk_css_value_unref (shadow->voffset);
-  _gtk_css_value_unref (shadow->spread);
-  _gtk_css_value_unref (shadow->radius);
-  _gtk_css_value_unref (shadow->color);
+  gtk_css_value_unref (shadow->hoffset);
+  gtk_css_value_unref (shadow->voffset);
+  gtk_css_value_unref (shadow->spread);
+  gtk_css_value_unref (shadow->radius);
+  gtk_css_value_unref (shadow->color);
 }
 
 static gboolean
@@ -87,11 +89,11 @@ shadow_value_transition (const ShadowValue *start,
     return FALSE;
 
   result->inset = start->inset;
-  result->hoffset = _gtk_css_value_transition (start->hoffset, end->hoffset, property_id, progress);
-  result->voffset = _gtk_css_value_transition (start->voffset, end->voffset, property_id, progress);
-  result->radius = _gtk_css_value_transition (start->radius, end->radius, property_id, progress);
-  result->spread = _gtk_css_value_transition (start->spread, end->spread, property_id, progress);
-  result->color = _gtk_css_value_transition (start->color, end->color, property_id, progress);
+  result->hoffset = gtk_css_value_transition (start->hoffset, end->hoffset, property_id, progress);
+  result->voffset = gtk_css_value_transition (start->voffset, end->voffset, property_id, progress);
+  result->radius = gtk_css_value_transition (start->radius, end->radius, property_id, progress);
+  result->spread = gtk_css_value_transition (start->spread, end->spread, property_id, progress);
+  result->color = gtk_css_value_transition (start->color, end->color, property_id, progress);
 
   return TRUE;
 }
@@ -112,11 +114,9 @@ gtk_css_value_shadow_free (GtkCssValue *value)
 }
 
 static GtkCssValue *
-gtk_css_value_shadow_compute (GtkCssValue      *value,
-                              guint             property_id,
-                              GtkStyleProvider *provider,
-                              GtkCssStyle      *style,
-                              GtkCssStyle      *parent_style)
+gtk_css_value_shadow_compute (GtkCssValue          *value,
+                              guint                 property_id,
+                              GtkCssComputeContext *context)
 {
   guint i;
   ShadowValue *shadows;
@@ -127,11 +127,39 @@ gtk_css_value_shadow_compute (GtkCssValue      *value,
     {
       const ShadowValue *shadow = &value->shadows[i];
 
-      shadows[i].hoffset = _gtk_css_value_compute (shadow->hoffset, property_id, provider, style, parent_style);
-      shadows[i].voffset = _gtk_css_value_compute (shadow->voffset, property_id, provider, style, parent_style);
-      shadows[i].radius = _gtk_css_value_compute (shadow->radius, property_id, provider, style, parent_style);
-      shadows[i].spread = _gtk_css_value_compute (shadow->spread, property_id, provider, style, parent_style),
-      shadows[i].color = _gtk_css_value_compute (shadow->color, property_id, provider, style, parent_style);
+      shadows[i].hoffset = gtk_css_value_compute (shadow->hoffset, property_id, context);
+      shadows[i].voffset = gtk_css_value_compute (shadow->voffset, property_id, context);
+      shadows[i].radius = gtk_css_value_compute (shadow->radius, property_id, context);
+      shadows[i].spread = gtk_css_value_compute (shadow->spread, property_id, context),
+      shadows[i].color = gtk_css_value_compute (shadow->color, property_id, context);
+      shadows[i].inset = shadow->inset;
+    }
+
+  return gtk_css_shadow_value_new (shadows, value->n_shadows, value->is_filter);
+}
+
+static GtkCssValue *
+gtk_css_value_shadow_resolve (GtkCssValue          *value,
+                              GtkCssComputeContext *context,
+                              GtkCssValue          *current_color)
+{
+  guint i;
+  ShadowValue *shadows;
+
+  if (!gtk_css_value_contains_current_color (value))
+    return gtk_css_value_ref (value);
+
+  shadows = g_alloca (sizeof (ShadowValue) * value->n_shadows);
+
+  for (i = 0; i < value->n_shadows; i++)
+    {
+      const ShadowValue *shadow = &value->shadows[i];
+
+      shadows[i].hoffset = gtk_css_value_ref (shadow->hoffset);
+      shadows[i].voffset = gtk_css_value_ref (shadow->voffset);
+      shadows[i].radius = gtk_css_value_ref (shadow->radius);
+      shadows[i].spread = gtk_css_value_ref (shadow->spread);
+      shadows[i].color = gtk_css_value_resolve (shadow->color, context, current_color);
       shadows[i].inset = shadow->inset;
     }
 
@@ -153,11 +181,11 @@ gtk_css_value_shadow_equal (const GtkCssValue *value1,
       const ShadowValue *shadow2 = &value2->shadows[i];
 
       if (shadow1->inset != shadow2->inset ||
-          !_gtk_css_value_equal (shadow1->hoffset, shadow2->hoffset) ||
-          !_gtk_css_value_equal (shadow1->voffset, shadow2->voffset) ||
-          !_gtk_css_value_equal (shadow1->radius, shadow2->radius) ||
-          !_gtk_css_value_equal (shadow1->spread, shadow2->spread) ||
-          !_gtk_css_value_equal (shadow1->color, shadow2->color))
+          !gtk_css_value_equal (shadow1->hoffset, shadow2->hoffset) ||
+          !gtk_css_value_equal (shadow1->voffset, shadow2->voffset) ||
+          !gtk_css_value_equal (shadow1->radius, shadow2->radius) ||
+          !gtk_css_value_equal (shadow1->spread, shadow2->spread) ||
+          !gtk_css_value_equal (shadow1->color, shadow2->color))
         return FALSE;
     }
 
@@ -251,24 +279,24 @@ gtk_css_value_shadow_print (const GtkCssValue *value,
       if (i > 0)
         g_string_append (string, ", ");
 
-      _gtk_css_value_print (shadow->hoffset, string);
+      gtk_css_value_print (shadow->hoffset, string);
       g_string_append_c (string, ' ');
-      _gtk_css_value_print (shadow->voffset, string);
+      gtk_css_value_print (shadow->voffset, string);
       g_string_append_c (string, ' ');
-      if (_gtk_css_number_value_get (shadow->radius, 100) != 0 ||
-          _gtk_css_number_value_get (shadow->spread, 100) != 0)
+      if (gtk_css_number_value_get (shadow->radius, 100) != 0 ||
+          gtk_css_number_value_get (shadow->spread, 100) != 0)
         {
-          _gtk_css_value_print (shadow->radius, string);
+          gtk_css_value_print (shadow->radius, string);
           g_string_append_c (string, ' ');
         }
 
-      if (_gtk_css_number_value_get (shadow->spread, 100) != 0)
+      if (gtk_css_number_value_get (shadow->spread, 100) != 0)
         {
-          _gtk_css_value_print (shadow->spread, string);
+          gtk_css_value_print (shadow->spread, string);
           g_string_append_c (string, ' ');
         }
 
-      _gtk_css_value_print (shadow->color, string);
+      gtk_css_value_print (shadow->color, string);
 
       if (shadow->inset)
         g_string_append (string, " inset");
@@ -279,19 +307,20 @@ static const GtkCssValueClass GTK_CSS_VALUE_SHADOW = {
   "GtkCssShadowValue",
   gtk_css_value_shadow_free,
   gtk_css_value_shadow_compute,
+  gtk_css_value_shadow_resolve,
   gtk_css_value_shadow_equal,
   gtk_css_value_shadow_transition,
   NULL,
   NULL,
-  gtk_css_value_shadow_print
+  gtk_css_value_shadow_print,
 };
 
-static GtkCssValue shadow_none_singleton = { &GTK_CSS_VALUE_SHADOW, 1, TRUE, FALSE, 0 };
+static GtkCssValue shadow_none_singleton = { &GTK_CSS_VALUE_SHADOW, 1, 1, 0, 0, 0, 0 };
 
 GtkCssValue *
 gtk_css_shadow_value_new_none (void)
 {
-  return _gtk_css_value_ref (&shadow_none_singleton);
+  return gtk_css_value_ref (&shadow_none_singleton);
 }
 
 static GtkCssValue *
@@ -305,7 +334,7 @@ gtk_css_shadow_value_new (ShadowValue *shadows,
   if (n_shadows == 0)
     return gtk_css_shadow_value_new_none ();
 
-  retval = _gtk_css_value_alloc (&GTK_CSS_VALUE_SHADOW, sizeof (GtkCssValue) + sizeof (ShadowValue) * (n_shadows - 1));
+  retval = gtk_css_value_alloc (&GTK_CSS_VALUE_SHADOW, sizeof (GtkCssValue) + sizeof (ShadowValue) * (n_shadows - 1));
   retval->n_shadows = n_shadows;
   retval->is_filter = is_filter;
 
@@ -316,15 +345,18 @@ gtk_css_shadow_value_new (ShadowValue *shadows,
     {
       const ShadowValue *shadow = &retval->shadows[i];
 
-      if (!gtk_css_value_is_computed (shadow->hoffset) ||
-          !gtk_css_value_is_computed (shadow->voffset) ||
-          !gtk_css_value_is_computed (shadow->spread) ||
-          !gtk_css_value_is_computed (shadow->radius) ||
-          !gtk_css_value_is_computed (shadow->color))
+      if (retval->is_computed &&
+          (!gtk_css_value_is_computed (shadow->hoffset) ||
+           !gtk_css_value_is_computed (shadow->voffset) ||
+           !gtk_css_value_is_computed (shadow->spread) ||
+           !gtk_css_value_is_computed (shadow->radius) ||
+           !gtk_css_value_is_computed (shadow->color)))
         {
           retval->is_computed = FALSE;
-          break;
         }
+
+      if (gtk_css_value_contains_current_color (shadow->color))
+        retval->contains_current_color = TRUE;
     }
 
   return retval;
@@ -336,10 +368,10 @@ gtk_css_shadow_value_new_filter (const GtkCssValue *other)
   ShadowValue value;
 
   value.inset = FALSE;
-  value.hoffset = _gtk_css_number_value_new (0, GTK_CSS_PX);
-  value.voffset = _gtk_css_number_value_new (0, GTK_CSS_PX);
-  value.radius = _gtk_css_number_value_new (0, GTK_CSS_PX);
-  value.spread = _gtk_css_number_value_new (0, GTK_CSS_PX);
+  value.hoffset = gtk_css_number_value_new (0, GTK_CSS_PX);
+  value.voffset = gtk_css_number_value_new (0, GTK_CSS_PX);
+  value.radius = gtk_css_number_value_new (0, GTK_CSS_PX);
+  value.spread = gtk_css_number_value_new (0, GTK_CSS_PX);
   value.color = gtk_css_value_ref (other->shadows[0].color);
 
   return gtk_css_shadow_value_new (&value, 1, TRUE);
@@ -386,36 +418,36 @@ parse_lengths (GtkCssParser *parser,
 {
   GtkCssValue **values = option_data;
 
-  values[HOFFSET] = _gtk_css_number_value_parse (parser,
-                                                 GTK_CSS_PARSE_LENGTH);
+  values[HOFFSET] = gtk_css_number_value_parse (parser,
+                                                GTK_CSS_PARSE_LENGTH);
   if (values[HOFFSET] == NULL)
     return FALSE;
 
-  values[VOFFSET] = _gtk_css_number_value_parse (parser,
-                                                 GTK_CSS_PARSE_LENGTH);
+  values[VOFFSET] = gtk_css_number_value_parse (parser,
+                                                GTK_CSS_PARSE_LENGTH);
   if (values[VOFFSET] == NULL)
     return FALSE;
 
   if (gtk_css_number_value_can_parse (parser))
     {
-      values[RADIUS] = _gtk_css_number_value_parse (parser,
-                                                    GTK_CSS_PARSE_LENGTH
-                                                    | GTK_CSS_POSITIVE_ONLY);
+      values[RADIUS] = gtk_css_number_value_parse (parser,
+                                                   GTK_CSS_PARSE_LENGTH
+                                                   | GTK_CSS_POSITIVE_ONLY);
       if (values[RADIUS] == NULL)
         return FALSE;
     }
   else
-    values[RADIUS] = _gtk_css_number_value_new (0.0, GTK_CSS_PX);
+    values[RADIUS] = gtk_css_number_value_new (0.0, GTK_CSS_PX);
 
   if (box_shadow_mode && gtk_css_number_value_can_parse (parser))
     {
-      values[SPREAD] = _gtk_css_number_value_parse (parser,
-                                                    GTK_CSS_PARSE_LENGTH);
+      values[SPREAD] = gtk_css_number_value_parse (parser,
+                                                   GTK_CSS_PARSE_LENGTH);
       if (values[SPREAD] == NULL)
         return FALSE;
     }
   else
-    values[SPREAD] = _gtk_css_number_value_new (0.0, GTK_CSS_PX);
+    values[SPREAD] = gtk_css_number_value_new (0.0, GTK_CSS_PX);
 
   return TRUE;
 }
@@ -427,7 +459,7 @@ parse_color (GtkCssParser *parser,
 {
   GtkCssValue **color = option_data;
   
-  *color = _gtk_css_color_value_parse (parser);
+  *color = gtk_css_color_value_parse (parser);
   if (*color == NULL)
     return FALSE;
 
@@ -460,7 +492,7 @@ gtk_css_shadow_value_parse_one (GtkCssParser *parser,
     }
 
   if (color == NULL)
-    color = _gtk_css_color_value_new_current_color ();
+    color = gtk_css_color_value_new_current_color ();
 
   result->hoffset = values[HOFFSET];
   result->voffset = values[VOFFSET];
@@ -540,13 +572,13 @@ gtk_css_shadow_value_get_extents (const GtkCssValue *value,
       const ShadowValue *shadow = &value->shadows[i];
       double hoffset, voffset, spread, radius, clip_radius;
 
-      spread = _gtk_css_number_value_get (shadow->spread, 0);
-      radius = _gtk_css_number_value_get (shadow->radius, 0);
+      spread = gtk_css_number_value_get (shadow->spread, 0);
+      radius = gtk_css_number_value_get (shadow->radius, 0);
       if (!value->is_filter)
         radius = radius / 2.0;
       clip_radius = gsk_cairo_blur_compute_pixels (radius);
-      hoffset = _gtk_css_number_value_get (shadow->hoffset, 0);
-      voffset = _gtk_css_number_value_get (shadow->voffset, 0);
+      hoffset = gtk_css_number_value_get (shadow->hoffset, 0);
+      voffset = gtk_css_number_value_get (shadow->voffset, 0);
 
       border->top    = MAX (border->top, ceil (clip_radius + spread - voffset));
       border->right  = MAX (border->right, ceil (clip_radius + spread + hoffset));
@@ -579,10 +611,10 @@ gtk_css_shadow_value_snapshot_outset (const GtkCssValue    *value,
       if (gdk_rgba_is_clear (color))
         continue;
 
-      dx = _gtk_css_number_value_get (shadow->hoffset, 0);
-      dy = _gtk_css_number_value_get (shadow->voffset, 0);
-      spread = _gtk_css_number_value_get (shadow->spread, 0);
-      radius = _gtk_css_number_value_get (shadow->radius, 0);
+      dx = gtk_css_number_value_get (shadow->hoffset, 0);
+      dy = gtk_css_number_value_get (shadow->voffset, 0);
+      spread = gtk_css_number_value_get (shadow->spread, 0);
+      radius = gtk_css_number_value_get (shadow->radius, 0);
       if (value->is_filter)
         radius = 2 * radius;
 
@@ -614,10 +646,10 @@ gtk_css_shadow_value_snapshot_inset (const GtkCssValue    *value,
       if (gdk_rgba_is_clear (color))
         continue;
 
-      dx = _gtk_css_number_value_get (shadow->hoffset, 0);
-      dy = _gtk_css_number_value_get (shadow->voffset, 0);
-      spread = _gtk_css_number_value_get (shadow->spread, 0);
-      radius = _gtk_css_number_value_get (shadow->radius, 0);
+      dx = gtk_css_number_value_get (shadow->hoffset, 0);
+      dy = gtk_css_number_value_get (shadow->voffset, 0);
+      spread = gtk_css_number_value_get (shadow->spread, 0);
+      radius = gtk_css_number_value_get (shadow->radius, 0);
       if (value->is_filter)
         radius = 2 * radius;
 
@@ -712,60 +744,36 @@ gboolean
 gtk_css_shadow_value_push_snapshot (const GtkCssValue *value,
                                     GtkSnapshot       *snapshot)
 {
-  gboolean need_shadow = FALSE;
+  GskShadow *shadows;
   guint i;
+
+  if (gtk_css_shadow_value_is_clear (value))
+    return FALSE;
+
+  shadows = g_newa (GskShadow, value->n_shadows);
 
   for (i = 0; i < value->n_shadows; i++)
     {
       const ShadowValue *shadow = &value->shadows[i];
 
-      if (!gdk_rgba_is_clear (gtk_css_color_value_get_rgba (shadow->color)))
-        {
-          need_shadow = TRUE;
-          break;
-        }
+      shadows[i].color = *gtk_css_color_value_get_rgba (shadow->color);
+
+      shadows[i].dx = gtk_css_number_value_get (shadow->hoffset, 0);
+      shadows[i].dy = gtk_css_number_value_get (shadow->voffset, 0);
+      shadows[i].radius = gtk_css_number_value_get (shadow->radius, 0);
+      if (value->is_filter)
+        shadows[i].radius *= 2;
     }
 
-  if (need_shadow)
-    {
-      GskShadow *shadows = g_newa (GskShadow, value->n_shadows);
+  gtk_snapshot_push_shadow (snapshot, shadows, value->n_shadows);
 
-      for (i = 0; i < value->n_shadows; i++)
-        {
-          const ShadowValue *shadow = &value->shadows[i];
-
-          shadows[i].dx = _gtk_css_number_value_get (shadow->hoffset, 0);
-          shadows[i].dy = _gtk_css_number_value_get (shadow->voffset, 0);
-          shadows[i].color = *gtk_css_color_value_get_rgba (shadow->color);
-          shadows[i].radius = _gtk_css_number_value_get (shadow->radius, 0);
-          if (value->is_filter)
-            shadows[i].radius *= 2;
-        }
-
-      gtk_snapshot_push_shadow (snapshot, shadows, value->n_shadows);
-    }
-
-  return need_shadow;
+  return TRUE;
 }
 
 void
 gtk_css_shadow_value_pop_snapshot (const GtkCssValue *value,
                                    GtkSnapshot       *snapshot)
 {
-  gboolean need_shadow = FALSE;
-  guint i;
-
-  for (i = 0; i < value->n_shadows; i++)
-    {
-      const ShadowValue *shadow = &value->shadows[i];
-
-      if (!gdk_rgba_is_clear (gtk_css_color_value_get_rgba (shadow->color)))
-        {
-          need_shadow = TRUE;
-          break;
-        }
-    }
-
-  if (need_shadow)
+  if (!gtk_css_shadow_value_is_clear (value))
     gtk_snapshot_pop (snapshot);
 }

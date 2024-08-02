@@ -98,9 +98,9 @@ gdk_rgba_free (GdkRGBA *rgba)
  * Returns: %TRUE if the @rgba is clear
  */
 gboolean
-gdk_rgba_is_clear (const GdkRGBA *rgba)
+(gdk_rgba_is_clear) (const GdkRGBA *rgba)
 {
-  return rgba->alpha < ((float) 0x00ff / (float) 0xffff);
+  return _gdk_rgba_is_clear (rgba);
 }
 
 /**
@@ -115,9 +115,9 @@ gdk_rgba_is_clear (const GdkRGBA *rgba)
  * Returns: %TRUE if the @rgba is opaque
  */
 gboolean
-gdk_rgba_is_opaque (const GdkRGBA *rgba)
+(gdk_rgba_is_opaque) (const GdkRGBA *rgba)
 {
-  return rgba->alpha > ((float)0xff00 / (float)0xffff);
+  return _gdk_rgba_is_opaque (rgba);
 }
 
 #define SKIP_WHITESPACES(s) while (*(s) == ' ') (s)++;
@@ -368,21 +368,10 @@ gdk_rgba_hash (gconstpointer p)
  * Returns: %TRUE if the two colors compare equal
  */
 gboolean
-gdk_rgba_equal (gconstpointer p1,
-                gconstpointer p2)
+(gdk_rgba_equal) (gconstpointer p1,
+                  gconstpointer p2)
 {
-  const GdkRGBA *rgba1, *rgba2;
-
-  rgba1 = p1;
-  rgba2 = p2;
-
-  if (rgba1->red == rgba2->red &&
-      rgba1->green == rgba2->green &&
-      rgba1->blue == rgba2->blue &&
-      rgba1->alpha == rgba2->alpha)
-    return TRUE;
-
-  return FALSE;
+  return _gdk_rgba_equal (p1, p2);
 }
 
 /**
@@ -408,9 +397,17 @@ gdk_rgba_equal (gconstpointer p1,
 char *
 gdk_rgba_to_string (const GdkRGBA *rgba)
 {
+  return g_string_free (gdk_rgba_print (rgba, g_string_new ("")), FALSE);
+}
+
+GString *
+gdk_rgba_print (const GdkRGBA *rgba,
+                GString       *string)
+{
   if (rgba->alpha > 0.999)
     {
-      return g_strdup_printf ("rgb(%d,%d,%d)",
+      g_string_append_printf (string,
+                              "rgb(%d,%d,%d)",
                               (int)(0.5 + CLAMP (rgba->red, 0., 1.) * 255.),
                               (int)(0.5 + CLAMP (rgba->green, 0., 1.) * 255.),
                               (int)(0.5 + CLAMP (rgba->blue, 0., 1.) * 255.));
@@ -421,12 +418,15 @@ gdk_rgba_to_string (const GdkRGBA *rgba)
 
       g_ascii_formatd (alpha, G_ASCII_DTOSTR_BUF_SIZE, "%g", CLAMP (rgba->alpha, 0, 1));
 
-      return g_strdup_printf ("rgba(%d,%d,%d,%s)",
+      g_string_append_printf (string,
+                              "rgba(%d,%d,%d,%s)",
                               (int)(0.5 + CLAMP (rgba->red, 0., 1.) * 255.),
                               (int)(0.5 + CLAMP (rgba->green, 0., 1.) * 255.),
                               (int)(0.5 + CLAMP (rgba->blue, 0., 1.) * 255.),
                               alpha);
     }
+
+  return string;
 }
 
 static gboolean

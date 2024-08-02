@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <glib.h>
 
 #ifdef HAVE_MEMFD_CREATE
 #include <sys/mman.h>
@@ -69,13 +70,10 @@ create_tmpfile_cloexec(char *tmpname)
 
 #ifdef HAVE_MKOSTEMP
 	fd = mkostemp(tmpname, O_CLOEXEC);
-	if (fd >= 0)
-		unlink(tmpname);
 #else
 	fd = mkstemp(tmpname);
 	if (fd >= 0) {
 		fd = set_cloexec_or_close(fd);
-		unlink(tmpname);
 	}
 #endif
 
@@ -115,7 +113,7 @@ os_create_anonymous_file(off_t size)
 {
 	static const char template[] = "/wayland-cursor-shared-XXXXXX";
 	const char *path;
-	char *name;
+	char *name = NULL;
 	int fd;
 	int ret;
 
@@ -134,11 +132,12 @@ os_create_anonymous_file(off_t size)
 	{
 		path = getenv("XDG_RUNTIME_DIR");
 		if (!path) {
+                        g_warning ("os_create_anonymous_file(): XDG_RUNTIME_DIR is not set");
 			errno = ENOENT;
 			return -1;
 		}
 
-		name = malloc(strlen(path) + sizeof(template));
+		name = alloca(strlen(path) + sizeof(template));
 		if (!name)
 			return -1;
 
@@ -147,26 +146,29 @@ os_create_anonymous_file(off_t size)
 
 		fd = create_tmpfile_cloexec(name);
 
-		free(name);
-
-		if (fd < 0)
+		if (fd < 0) {
+                        g_warning ("os_create_anonymous_file(): create_tmpfile_cloexec(\"%s\") failed", name);
 			return -1;
+                }
 	}
 
 #ifdef HAVE_POSIX_FALLOCATE
 	ret = posix_fallocate(fd, 0, size);
-	if (ret != 0) {
-		close(fd);
-		errno = ret;
-		return -1;
-	}
-#else
+        if (ret == 0) {
+                goto allocated;
+        }
+#endif
+
 	ret = ftruncate(fd, size);
 	if (ret < 0) {
+                g_warning ("os_create_anonymous_file(): ftruncate() failed");
 		close(fd);
 		return -1;
 	}
-#endif
+
+allocated:
+        if (fd >= 0 && name)
+                unlink (name);
 
 	return fd;
 }

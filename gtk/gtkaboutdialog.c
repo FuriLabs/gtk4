@@ -101,6 +101,12 @@
  *                        NULL);
  * ```
  *
+ * ## Shortcuts and Gestures
+ *
+ * `GtkAboutDialog` supports the following keyboard shortcuts:
+ *
+ * - <kbd>Escape</kbd> closes the window.
+ *
  * ## CSS nodes
  *
  * `GtkAboutDialog` has a single CSS node with the name `window` and style
@@ -201,6 +207,10 @@ struct _GtkAboutDialog
   guint hovering_over_link : 1;
   guint wrap_license : 1;
   guint in_child_changed : 1;
+
+  GSList *link_tags;
+
+  guint update_links_cb_id;
 };
 
 struct _GtkAboutDialogClass
@@ -707,6 +717,52 @@ update_credits_button_visibility (GtkAboutDialog *about)
 }
 
 static void
+update_links_cb (GtkAboutDialog *about)
+{
+  GtkCssStyle *style;
+  GdkRGBA link_color, visited_link_color;
+  GSList *l;
+
+  style = gtk_css_node_get_style (about->link_node);
+  link_color = *gtk_css_color_value_get_rgba (style->used->color);
+
+  style = gtk_css_node_get_style (about->visited_link_node);
+  visited_link_color = *gtk_css_color_value_get_rgba (style->used->color);
+
+  for (l = about->link_tags; l != NULL; l = l->next)
+    {
+      GtkTextTag *tag = l->data;
+      GdkRGBA color;
+      const char *uri = g_object_get_data (G_OBJECT (tag), "uri");
+
+      if (uri && g_ptr_array_find_with_equal_func (about->visited_links, uri, (GCompareFunc)strcmp, NULL))
+        color = visited_link_color;
+      else
+        color = link_color;
+
+      g_object_set (G_OBJECT (tag), "foreground-rgba", &color, NULL);
+    }
+
+  about->update_links_cb_id = 0;
+}
+
+static void
+link_style_changed_cb (GtkCssNode        *node,
+                       GtkCssStyleChange *change,
+                       GtkAboutDialog    *about)
+{
+  if (gtk_css_style_change_affects (change, GTK_CSS_AFFECTS_REDRAW))
+    {
+      /* If we access the node right here, we'll end up with infinite recursion */
+      if (about->link_tags && !about->update_links_cb_id)
+        {
+          about->update_links_cb_id =
+            g_idle_add_once ((GSourceOnceFunc) update_links_cb, about);
+        }
+    }
+}
+
+static void
 gtk_about_dialog_init (GtkAboutDialog *about)
 {
   GtkCssNode *node;
@@ -748,12 +804,16 @@ gtk_about_dialog_init (GtkAboutDialog *about)
   gtk_css_node_set_name (about->link_node, g_quark_from_static_string ("link"));
   gtk_css_node_set_parent (about->link_node, node);
   gtk_css_node_set_state (about->link_node, state | GTK_STATE_FLAG_LINK);
+  g_signal_connect (about->link_node, "style-changed",
+                    G_CALLBACK (link_style_changed_cb), about);
   g_object_unref (about->link_node);
 
   about->visited_link_node = gtk_css_node_new ();
   gtk_css_node_set_name (about->visited_link_node, g_quark_from_static_string ("link"));
   gtk_css_node_set_parent (about->visited_link_node, node);
-  gtk_css_node_set_state (about->visited_link_node, state | GTK_STATE_FLAG_VISITED);
+  gtk_css_node_set_state (about->visited_link_node, state | GTK_STATE_FLAG_LINK);
+  g_signal_connect (about->visited_link_node, "style-changed",
+                    G_CALLBACK (link_style_changed_cb), about);
   g_object_unref (about->visited_link_node);
 }
 
@@ -787,6 +847,10 @@ gtk_about_dialog_finalize (GObject *object)
 
   g_slist_free_full (about->credit_sections, destroy_credit_section);
   g_ptr_array_unref (about->visited_links);
+
+  g_slist_free (about->link_tags);
+
+  g_clear_handle_id (&about->update_links_cb_id, g_source_remove);
 
   G_OBJECT_CLASS (gtk_about_dialog_parent_class)->finalize (object);
 }
@@ -1129,7 +1193,7 @@ gtk_about_dialog_set_copyright (GtkAboutDialog *about,
 }
 
 /**
- * gtk_about_dialog_get_comments: (attributes org.gtk.Method.set_property=comments)
+ * gtk_about_dialog_get_comments: (attributes org.gtk.Method.get_property=comments)
  * @about: a `GtkAboutDialog`
  *
  * Returns the comments string.
@@ -1696,12 +1760,12 @@ follow_if_link (GtkAboutDialog *about,
 
       if (uri && !g_ptr_array_find_with_equal_func (about->visited_links, uri, (GCompareFunc)strcmp, NULL))
         {
-          GdkRGBA visited_link_color;
+          const GdkRGBA *visited_link_color;
           GtkCssStyle *style;
 
           style = gtk_css_node_get_style (about->visited_link_node);
-          visited_link_color = *gtk_css_color_value_get_rgba (style->core->color);
-          g_object_set (G_OBJECT (tag), "foreground-rgba", &visited_link_color, NULL);
+          visited_link_color = gtk_css_color_value_get_rgba (style->used->color);
+          g_object_set (G_OBJECT (tag), "foreground-rgba", visited_link_color, NULL);
 
           g_ptr_array_add (about->visited_links, g_strdup (uri));
         }
@@ -1836,17 +1900,18 @@ text_buffer_new (GtkAboutDialog  *about,
   char **p;
   char *q0, *q1, *q2, *r1, *r2;
   GtkTextBuffer *buffer;
-  GdkRGBA color;
-  GdkRGBA link_color;
-  GdkRGBA visited_link_color;
+  const GdkRGBA *color;
+  const GdkRGBA *link_color;
+  const GdkRGBA *visited_link_color;
   GtkTextIter start_iter, end_iter;
   GtkTextTag *tag;
   GtkCssStyle *style;
 
   style = gtk_css_node_get_style (about->link_node);
-  link_color = *gtk_css_color_value_get_rgba (style->core->color);
+  link_color = gtk_css_color_value_get_rgba (style->used->color);
+
   style = gtk_css_node_get_style (about->visited_link_node);
-  visited_link_color = *gtk_css_color_value_get_rgba (style->core->color);
+  visited_link_color = gtk_css_color_value_get_rgba (style->used->color);
 
   buffer = gtk_text_buffer_new (NULL);
 
@@ -1907,9 +1972,12 @@ text_buffer_new (GtkAboutDialog  *about,
                 color = link_color;
 
               tag = gtk_text_buffer_create_tag (buffer, NULL,
-                                                "foreground-rgba", &color,
+                                                "foreground-rgba", color,
                                                 "underline", PANGO_UNDERLINE_SINGLE,
                                                 NULL);
+
+              about->link_tags = g_slist_prepend (about->link_tags, tag);
+
               if (strcmp (link_type, "email") == 0)
                 {
                   char *escaped;

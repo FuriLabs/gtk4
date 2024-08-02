@@ -132,7 +132,7 @@ gtk_text_util_create_drag_icon (GtkWidget *widget,
   snapshot = gtk_snapshot_new ();
 
   style = gtk_css_node_get_style (gtk_widget_get_css_node (widget));
-  color = gtk_css_color_value_get_rgba (style->core->color);
+  color = gtk_css_color_value_get_rgba (style->used->color);
 
   display = gtk_widget_get_display (widget);
 
@@ -179,8 +179,8 @@ set_attributes_from_style (GtkWidget         *widget,
 
   style = gtk_css_node_get_style (gtk_widget_get_css_node (widget));
 
-  *values->appearance.bg_rgba = *gtk_css_color_value_get_rgba (style->background->background_color);
-  *values->appearance.fg_rgba = *gtk_css_color_value_get_rgba (style->core->color);
+  *values->appearance.bg_rgba = *gtk_css_color_value_get_rgba (style->used->background_color);
+  *values->appearance.fg_rgba = *gtk_css_color_value_get_rgba (style->used->color);
 
   if (values->font)
     pango_font_description_free (values->font);
@@ -286,7 +286,7 @@ gtk_text_util_create_rich_drag_icon (GtkWidget     *widget,
       gtk_css_style_snapshot_background (&boxes, snapshot);
     }
 
-  gtk_text_layout_snapshot (layout, widget, snapshot, &(GdkRectangle) { 0, 0, layout_width, layout_height }, 1.0);
+  gtk_text_layout_snapshot (layout, widget, snapshot, &(GdkRectangle) { 0, 0, layout_width, layout_height }, FALSE, 1.0);
 
   g_object_unref (layout);
   g_object_unref (new_buffer);

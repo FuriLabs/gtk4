@@ -54,18 +54,24 @@ shm_pool_create(struct wl_shm *shm, int size)
 	struct shm_pool *pool;
 
 	pool = malloc(sizeof *pool);
-	if (!pool)
+	if (!pool) {
+                g_warning ("malloc() failed");
 		return NULL;
+        }
 
 	pool->fd = os_create_anonymous_file (size);
-	if (pool->fd < 0)
+	if (pool->fd < 0) {
+                g_warning ("os_create_anonymous_file() failed");
 		goto err_free;
+        }
 
 	pool->data = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED,
 			  pool->fd, 0);
 
-	if (pool->data == MAP_FAILED)
+	if (pool->data == MAP_FAILED) {
+                g_warning ("mmap() failed: %s", strerror (errno));
 		goto err_close;
+        }
 
 	pool->pool = wl_shm_create_pool(shm, pool->fd, size);
 	pool->size = size;
@@ -349,8 +355,10 @@ wl_cursor_theme_create(const char *path, int size, struct wl_shm *shm)
 	struct wl_cursor_theme *theme;
 
 	theme = malloc(sizeof *theme);
-	if (!theme)
+	if (!theme) {
+                g_warning ("malloc() failed");
 		return NULL;
+        }
 
 	theme->path = strdup (path);
 	theme->size = size;
@@ -359,6 +367,7 @@ wl_cursor_theme_create(const char *path, int size, struct wl_shm *shm)
 
 	theme->pool = shm_pool_create(shm, size * size * 4);
 	if (!theme->pool) {
+                g_warning ("shm_pool_create() failed");
                 free (theme->path);
                 free (theme);
 		return NULL;

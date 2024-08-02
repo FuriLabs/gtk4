@@ -515,14 +515,12 @@ gdk_clipboard_get_content (GdkClipboard *clipboard)
  * @clipboard: a `GdkClipboard`
  * @io_priority: the I/O priority of the request
  * @cancellable: (nullable): optional `GCancellable` object
- * @callback: (scope async): callback to call when the request is satisfied
- * @user_data: (closure): the data to pass to callback function
+ * @callback: (scope async) (closure user_data): callback to call when the request is satisfied
+ * @user_data:: the data to pass to callback function
  *
  * Asynchronously instructs the @clipboard to store its contents remotely.
  *
  * If the clipboard is not local, this function does nothing but report success.
- *
- * The @callback must call [method@Gdk.Clipboard.store_finish].
  *
  * The purpose of this call is to preserve clipboard contents beyond the
  * lifetime of an application, so this function is typically called on
@@ -632,14 +630,11 @@ gdk_clipboard_read_internal (GdkClipboard        *clipboard,
  * @mime_types: (array zero-terminated=1): a %NULL-terminated array of mime types to choose from
  * @io_priority: the I/O priority of the request
  * @cancellable: (nullable): optional `GCancellable` object
- * @callback: (scope async): callback to call when the request is satisfied
- * @user_data: (closure): the data to pass to callback function
+ * @callback: (scope async) (closure user_data): callback to call when the request is satisfied
+ * @user_data: the data to pass to callback function
  *
  * Asynchronously requests an input stream to read the @clipboard's
  * contents from.
- *
- * When the operation is finished @callback will be called. You must then
- * call [method@Gdk.Clipboard.read_finish] to get the result of the operation.
  *
  * The clipboard will choose the most suitable mime type from the given list
  * to fulfill the request, preferring the ones listed first.
@@ -828,14 +823,11 @@ gdk_clipboard_read_value_internal (GdkClipboard        *clipboard,
  * @type: a `GType` to read
  * @io_priority: the I/O priority of the request
  * @cancellable: (nullable): optional `GCancellable` object
- * @callback: (scope async): callback to call when the request is satisfied
- * @user_data: (closure): the data to pass to callback function
+ * @callback: (scope async) (closure user_data): callback to call when the request is satisfied
+ * @user_data: the data to pass to callback function
  *
  * Asynchronously request the @clipboard contents converted to the given
  * @type.
- *
- * When the operation is finished @callback will be called. You must then call
- * [method@Gdk.Clipboard.read_value_finish] to get the resulting `GValue`.
  *
  * For local clipboard contents that are available in the given `GType`,
  * the value will be copied directly. Otherwise, GDK will try to use
@@ -890,13 +882,10 @@ gdk_clipboard_read_value_finish (GdkClipboard  *clipboard,
  * gdk_clipboard_read_texture_async:
  * @clipboard: a `GdkClipboard`
  * @cancellable: (nullable): optional `GCancellable` object, %NULL to ignore.
- * @callback: (scope async): callback to call when the request is satisfied
- * @user_data: (closure): the data to pass to callback function
+ * @callback: (scope async) (closure user_data): callback to call when the request is satisfied
+ * @user_data: the data to pass to callback function
  *
  * Asynchronously request the @clipboard contents converted to a `GdkPixbuf`.
- *
- * When the operation is finished @callback will be called. You must then
- * call [method@Gdk.Clipboard.read_texture_finish] to get the result.
  *
  * This is a simple wrapper around [method@Gdk.Clipboard.read_value_async].
  * Use that function or [method@Gdk.Clipboard.read_async] directly if you
@@ -955,13 +944,10 @@ gdk_clipboard_read_texture_finish (GdkClipboard  *clipboard,
  * gdk_clipboard_read_text_async:
  * @clipboard: a `GdkClipboard`
  * @cancellable: (nullable): optional `GCancellable` object
- * @callback: (scope async): callback to call when the request is satisfied
- * @user_data: (closure): the data to pass to callback function
+ * @callback: (scope async) (closure user_data): callback to call when the request is satisfied
+ * @user_data: the data to pass to callback function
  *
  * Asynchronously request the @clipboard contents converted to a string.
- *
- * When the operation is finished @callback will be called. You must then
- * call [method@Gdk.Clipboard.read_text_finish] to get the result.
  *
  * This is a simple wrapper around [method@Gdk.Clipboard.read_value_async].
  * Use that function or [method@Gdk.Clipboard.read_async] directly if you

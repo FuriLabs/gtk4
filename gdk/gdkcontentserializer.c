@@ -539,16 +539,13 @@ serialize_not_found (GdkContentSerializer *serializer)
  * @value: the content to serialize
  * @io_priority: the I/O priority of the operation
  * @cancellable: (nullable): optional `GCancellable` object
- * @callback: (scope async): callback to call when the operation is done
- * @user_data: (closure): data to pass to the callback function
+ * @callback: (scope async) (closure): callback to call when the operation is done
+ * @user_data: data to pass to the callback function
  *
  * Serialize content and write it to the given output stream, asynchronously.
  *
  * The default I/O priority is %G_PRIORITY_DEFAULT (i.e. 0), and lower numbers
  * indicate a higher priority.
- *
- * When the operation is finished, @callback will be called. You must then
- * call [func@Gdk.content_serialize_finish] to get the result of the operation.
  */
 void
 gdk_content_serialize_async (GOutputStream       *stream,

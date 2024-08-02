@@ -18,18 +18,20 @@
 #include "gdk/gdktextureprivate.h"
 #include "gdk/gdktexturedownloaderprivate.h"
 #include "gdk/gdkdrawcontextprivate.h"
+#include "gdk/gdkcolorstateprivate.h"
 
 #include <graphene.h>
 
 #define GSK_GPU_MAX_FRAMES 4
 
 static const GdkDebugKey gsk_gpu_optimization_keys[] = {
-  { "uber", GSK_GPU_OPTIMIZE_UBER, "Don't use the uber shader" },
-  { "clear", GSK_GPU_OPTIMIZE_CLEAR, "Use shaders instead of vkCmdClearAttachment()/glClear()" },
-  { "merge", GSK_GPU_OPTIMIZE_MERGE, "Use one vkCmdDraw()/glDrawArrays() per operation" },
-  { "blit", GSK_GPU_OPTIMIZE_BLIT, "Use shaders instead of vkCmdBlit()/glBlitFramebuffer()" },
-  { "gradients", GSK_GPU_OPTIMIZE_GRADIENTS, "Don't supersample gradients" },
-  { "mipmap", GSK_GPU_OPTIMIZE_MIPMAP, "Avoid creating mipmaps" },
+  { "clear",     GSK_GPU_OPTIMIZE_CLEAR,             "Use shaders instead of vkCmdClearAttachment()/glClear()" },
+  { "merge",     GSK_GPU_OPTIMIZE_MERGE,             "Use one vkCmdDraw()/glDrawArrays() per operation" },
+  { "blit",      GSK_GPU_OPTIMIZE_BLIT,              "Use shaders instead of vkCmdBlit()/glBlitFramebuffer()" },
+  { "gradients", GSK_GPU_OPTIMIZE_GRADIENTS,         "Don't supersample gradients" },
+  { "mipmap",    GSK_GPU_OPTIMIZE_MIPMAP,            "Avoid creating mipmaps" },
+  { "to-image",  GSK_GPU_OPTIMIZE_TO_IMAGE,          "Don't fast-path creation of images for nodes" },
+  { "occlusion", GSK_GPU_OPTIMIZE_OCCLUSION_CULLING, "Disable occlusion culling via opaque node tracking" },
 };
 
 typedef struct _GskGpuRendererPrivate GskGpuRendererPrivate;
@@ -105,6 +107,7 @@ static void
 gsk_gpu_renderer_dmabuf_downloader_download (GdkDmabufDownloader *downloader,
                                              GdkDmabufTexture    *texture,
                                              GdkMemoryFormat      format,
+                                             GdkColorState       *color_state,
                                              guchar              *data,
                                              gsize                stride)
 {
@@ -119,6 +122,7 @@ gsk_gpu_renderer_dmabuf_downloader_download (GdkDmabufDownloader *downloader,
                                   g_get_monotonic_time (),
                                   GDK_TEXTURE (texture),
                                   format,
+                                  color_state,
                                   data,
                                   stride);
 
@@ -255,6 +259,7 @@ gsk_gpu_renderer_fallback_render_texture (GskGpuRenderer        *self,
   gsize x, y, size, bpp, stride;
   GdkMemoryFormat format;
   GdkMemoryDepth depth;
+  GdkColorState *color_state;
   GBytes *bytes;
   guchar *data;
   GdkTexture *texture;
@@ -294,10 +299,16 @@ gsk_gpu_renderer_fallback_render_texture (GskGpuRenderer        *self,
                                                           MIN (image_width, width - x),
                                                           MIN (image_height, height - y));
 
+          if (gsk_gpu_image_get_flags (image) & GSK_GPU_IMAGE_SRGB)
+            color_state = GDK_COLOR_STATE_SRGB_LINEAR;
+          else
+            color_state = GDK_COLOR_STATE_SRGB;
+
           frame = gsk_gpu_renderer_create_frame (self);
           gsk_gpu_frame_render (frame,
                                 g_get_monotonic_time (),
                                 image,
+                                color_state,
                                 NULL,
                                 root,
                                 &GRAPHENE_RECT_INIT (rounded_viewport->origin.x + x,
@@ -317,6 +328,9 @@ gsk_gpu_renderer_fallback_render_texture (GskGpuRenderer        *self,
           gdk_texture_downloader_finish (&downloader);
           g_object_unref (texture);
           g_clear_object (&image);
+
+          /* Let's GC like a madman, we draw oversized stuff and don't want to OOM */
+          gsk_gpu_device_maybe_gc (priv->device);
         }
     }
 
@@ -337,6 +351,7 @@ gsk_gpu_renderer_render_texture (GskRenderer           *renderer,
   GskGpuImage *image;
   GdkTexture *texture;
   graphene_rect_t rounded_viewport;
+  GdkColorState *color_state;
 
   gsk_gpu_device_maybe_gc (priv->device);
 
@@ -354,12 +369,18 @@ gsk_gpu_renderer_render_texture (GskRenderer           *renderer,
   if (image == NULL)
     return gsk_gpu_renderer_fallback_render_texture (self, root, &rounded_viewport);
 
+  if (gsk_gpu_image_get_flags (image) & GSK_GPU_IMAGE_SRGB)
+    color_state = GDK_COLOR_STATE_SRGB_LINEAR;
+  else
+    color_state = GDK_COLOR_STATE_SRGB;
+
   frame = gsk_gpu_renderer_create_frame (self);
 
   texture = NULL;
   gsk_gpu_frame_render (frame,
                         g_get_monotonic_time (),
                         image,
+                        color_state,
                         NULL,
                         root,
                         &rounded_viewport,
@@ -387,6 +408,7 @@ gsk_gpu_renderer_render (GskRenderer          *renderer,
   GskGpuImage *backbuffer;
   cairo_region_t *render_region;
   double scale;
+  GdkMemoryDepth depth;
 
   if (cairo_region_is_empty (region))
     {
@@ -394,23 +416,24 @@ gsk_gpu_renderer_render (GskRenderer          *renderer,
       return;
     }
 
-  gdk_draw_context_begin_frame_full (priv->context,
-                                     gsk_render_node_get_preferred_depth (root),
-                                     region);
-
   gsk_gpu_device_maybe_gc (priv->device);
+
+  depth = gsk_render_node_get_preferred_depth (root);
+  frame = gsk_gpu_renderer_get_frame (self);
+  scale = gsk_gpu_renderer_get_scale (self);
+
+  gsk_gpu_frame_begin (frame, priv->context, depth, region);
 
   gsk_gpu_renderer_make_current (self);
 
   backbuffer = GSK_GPU_RENDERER_GET_CLASS (self)->get_backbuffer (self);
 
-  frame = gsk_gpu_renderer_get_frame (self);
   render_region = get_render_region (self);
-  scale = gsk_gpu_renderer_get_scale (self);
 
   gsk_gpu_frame_render (frame,
                         g_get_monotonic_time (),
                         backbuffer,
+                        gdk_draw_context_get_color_state (priv->context),
                         render_region,
                         root,
                         &GRAPHENE_RECT_INIT (
@@ -420,9 +443,9 @@ gsk_gpu_renderer_render (GskRenderer          *renderer,
                         ),
                         NULL);
 
-  gsk_gpu_device_queue_gc (priv->device);
+  gsk_gpu_frame_end (frame, priv->context);
 
-  gdk_draw_context_end_frame (priv->context);
+  gsk_gpu_device_queue_gc (priv->device);
 
   g_clear_pointer (&render_region, cairo_region_destroy);
 }

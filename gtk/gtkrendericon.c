@@ -21,6 +21,7 @@
 
 #include "gtkrendericonprivate.h"
 
+#include "gtkcsscolorvalueprivate.h"
 #include "gtkcssfiltervalueprivate.h"
 #include "gtkcssimagevalueprivate.h"
 #include "gtkcssshadowvalueprivate.h"
@@ -34,22 +35,22 @@
 #include <math.h>
 
 void
-gtk_css_style_snapshot_icon (GtkCssStyle            *style,
-                             GtkSnapshot            *snapshot,
-                             double                  width,
-                             double                  height)
+gtk_css_style_snapshot_icon (GtkCssStyle *style,
+                             GtkSnapshot *snapshot,
+                             double       width,
+                             double       height)
 {
   GskTransform *transform;
   GtkCssImage *image;
   gboolean has_shadow;
 
-  g_return_if_fail (GTK_IS_CSS_STYLE (style));
+  g_return_if_fail (style != NULL);
   g_return_if_fail (snapshot != NULL);
 
   if (width == 0.0 || height == 0.0)
     return;
 
-  image = _gtk_css_image_value_get_image (style->other->icon_source);
+  image = _gtk_css_image_value_get_image (style->used->icon_source);
   if (image == NULL)
     return;
 
@@ -59,7 +60,7 @@ gtk_css_style_snapshot_icon (GtkCssStyle            *style,
 
   gtk_css_filter_value_push_snapshot (style->other->icon_filter, snapshot);
 
-  has_shadow = gtk_css_shadow_value_push_snapshot (style->icon->icon_shadow, snapshot);
+  has_shadow = gtk_css_shadow_value_push_snapshot (style->used->icon_shadow, snapshot);
 
   if (transform == NULL)
     {
@@ -101,7 +102,7 @@ gtk_css_style_snapshot_icon_paintable (GtkCssStyle  *style,
   gboolean is_symbolic_paintable;
   GdkRGBA colors[4];
 
-  g_return_if_fail (GTK_IS_CSS_STYLE (style));
+  g_return_if_fail (style != NULL);
   g_return_if_fail (snapshot != NULL);
   g_return_if_fail (GDK_IS_PAINTABLE (paintable));
   g_return_if_fail (width > 0);
@@ -111,12 +112,12 @@ gtk_css_style_snapshot_icon_paintable (GtkCssStyle  *style,
 
   gtk_css_filter_value_push_snapshot (style->other->icon_filter, snapshot);
 
-  has_shadow = gtk_css_shadow_value_push_snapshot (style->icon->icon_shadow, snapshot);
+  has_shadow = gtk_css_shadow_value_push_snapshot (style->used->icon_shadow, snapshot);
 
   is_symbolic_paintable = GTK_IS_SYMBOLIC_PAINTABLE (paintable);
   if (is_symbolic_paintable)
     {
-      gtk_icon_theme_lookup_symbolic_colors (style, colors);
+      gtk_css_style_lookup_symbolic_colors (style, colors);
 
       if (gdk_rgba_is_clear (&colors[0]))
         goto transparent;

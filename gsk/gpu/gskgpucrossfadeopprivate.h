@@ -8,15 +8,13 @@ G_BEGIN_DECLS
 
 void                    gsk_gpu_cross_fade_op                           (GskGpuFrame                    *frame,
                                                                          GskGpuShaderClip                clip,
-                                                                         GskGpuDescriptors              *desc,
+                                                                         GskGpuColorStates               color_states,
                                                                          const graphene_rect_t          *rect,
                                                                          const graphene_point_t         *offset,
                                                                          float                           opacity,
                                                                          float                           progress,
-                                                                         guint32                         start_descriptor,
-                                                                         const graphene_rect_t          *start_rect,
-                                                                         guint32                         end_descriptor,
-                                                                         const graphene_rect_t          *end_rect);
+                                                                         const GskGpuShaderImage        *start,
+                                                                         const GskGpuShaderImage        *end);
 
 
 G_END_DECLS

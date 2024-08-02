@@ -426,6 +426,59 @@ gtk_accessible_text_get_attributes_run (GtkAccessibleText        *self,
   return TRUE;
 }
 
+/*< private >
+ * gtk_accessible_text_get_extents:
+ * @self: a `GtkAccessibleText`
+ * @start: start offset, in characters
+ * @end: end offset, in characters
+ * @extents: (out caller-allocates): return location for the extents
+ *
+ * Obtains the extents of a range of text, in widget coordinates.
+ *
+ * Returns: true if the extents were filled in, false otherwise
+ *
+ * Since: 4.16
+ */
+gboolean
+gtk_accessible_text_get_extents (GtkAccessibleText *self,
+                                 unsigned int       start,
+                                 unsigned int       end,
+                                 graphene_rect_t   *extents)
+{
+  g_return_val_if_fail (GTK_IS_ACCESSIBLE_TEXT (self), FALSE);
+  g_return_val_if_fail (start <= end, FALSE);
+  g_return_val_if_fail (extents != NULL, FALSE);
+
+  if (GTK_ACCESSIBLE_TEXT_GET_IFACE (self)->get_extents != NULL)
+    return GTK_ACCESSIBLE_TEXT_GET_IFACE (self)->get_extents (self, start, end, extents);
+
+  return FALSE;
+}
+
+/*< private >
+ * gtk_accessible_get_text_offset:
+ * @self: a `GtkAccessibleText`
+ * @point: a point in widget coordinates
+ * @offset: (out): return location for the text offset at @point
+ *
+ * Determines the text offset at the given position in the
+ * widget.
+ *
+ * Returns: true if the offset was set, and false otherwise
+ */
+gboolean
+gtk_accessible_text_get_offset (GtkAccessibleText      *self,
+                                const graphene_point_t *point,
+                                unsigned int           *offset)
+{
+  g_return_val_if_fail (GTK_IS_ACCESSIBLE_TEXT (self), FALSE);
+
+  if (GTK_ACCESSIBLE_TEXT_GET_IFACE (self)->get_offset != NULL)
+    return GTK_ACCESSIBLE_TEXT_GET_IFACE (self)->get_offset (self, point, offset);
+
+  return FALSE;
+}
+
 /**
  * gtk_accessible_text_update_caret_position:
  * @self: the accessible object

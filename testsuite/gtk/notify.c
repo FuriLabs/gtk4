@@ -549,11 +549,20 @@ test_type (gconstpointer data)
                                NULL);
       gdk_content_formats_unref (formats);
     }
+  else if (g_type_is_a (type, GDK_TYPE_TEXTURE))
+    {
+      static const guint8 pixels[4] = { 0xff, 0x00, 0x00, 0xff };
+      GBytes *bytes = g_bytes_new_static (pixels, sizeof (pixels));
+      instance = (GObject *) gdk_memory_texture_new (1, 1, GDK_MEMORY_DEFAULT, bytes, 4);
+      g_bytes_unref (bytes);
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+    }
   else if (g_type_is_a (type, GSK_TYPE_GL_SHADER))
     {
       GBytes *bytes = g_bytes_new_static ("", 0);
       instance = g_object_new (type, "source", bytes, NULL);
       g_bytes_unref (bytes);
+G_GNUC_END_IGNORE_DEPRECATIONS
     }
   else if (g_type_is_a (type, GTK_TYPE_FILTER_LIST_MODEL) ||
            g_type_is_a (type, GTK_TYPE_NO_SELECTION) ||

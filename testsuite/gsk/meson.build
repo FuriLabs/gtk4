@@ -53,6 +53,7 @@ compare_render_tests = [
   'cross-fade-in-opacity',
   'cross-fade-in-rotate',
   'css-background',
+  'dihedral',
   'empty-blend',
   'empty-blur',
   'empty-border',
@@ -63,6 +64,7 @@ compare_render_tests = [
   'empty-container',
   'empty-cross-fade',
   'empty-debug',
+  'empty-glshader',
   'empty-inset-shadow',
   'empty-linear-gradient',
   'empty-mask',
@@ -97,8 +99,11 @@ compare_render_tests = [
   'linear-gradient-3d-nocairo',
   'linear-gradient-nonorthogonal-scale-nogl',
   'linear-gradient-with-64-colorstops',
+  'lots-of-offscreens-nogl',
   'mask',
   'mask-clipped-inverted-alpha',
+  'mask-empty-mask',
+  'mask-empty-source',
   'mask-modes',
   'mask-modes-in-opacity',
   'mask-modes-with-alpha',
@@ -114,6 +119,10 @@ compare_render_tests = [
   'opacity-colormatrix-combinations',
   'opacity-overdraw',
   'opacity-overlapping-children',
+  'outset-shadow-corner-blur',
+  'outset-shadow-corner-blur-huge-nocairo-nogl',
+  'outset-shadow-corner-blur-normal',
+  'outset-shadow-corner-blur-tiny',
   'outset_shadow_offset_both',
   'outset_shadow_offset_x',
   'outset_shadow_offset_y',
@@ -169,6 +178,7 @@ compare_render_tests = [
   'text-mixed-color-nocairo',
   'text-mixed-color-colrv1',
   'texture-coords',
+  'texture-offscreen-mipmap-nogl',
   'texture-scale-filters-nocairo',
   'texture-scale-magnify-10000x',
   'texture-scale-magnify-rotate',
@@ -225,8 +235,8 @@ compare_xfails = {
   'ngl': {
     # the gradients are prone to rounding errors which become
     # more pronounced in small clips, it seems
-    'radial-gradient-with-64-colorstops': ['clipped', 'colorflipped'],
-    'conic-gradient-with-64-colorstops': ['clipped', 'colorflipped'],
+    'radial-gradient-with-64-colorstops': ['plain','flipped','rotated','repeated','masked','replayed','clipped','colorflipped'],
+    'conic-gradient-with-64-colorstops': ['plain','flipped','rotated','repeated','masked','replayed','clipped','colorflipped'],
     'blur-child-bounds-oversize-nogl': ['clipped'], # 6450
     'rounded-clip-with-huge-bounds-nogl': ['plain','flipped','rotated','repeated','masked','replayed','clipped','colorflipped'], # 6532
     'big-checkerboard': ['clipped'], # 6444
@@ -393,6 +403,7 @@ node_parser_tests = [
   'node-names-everywhere.errors',
   'node-names-everywhere.node',
   'node-names-everywhere.ref.node',
+  'occlusion-wrong-rect-contains',
   'radial-gradient.node',
   'radial-gradient.ref.node',
   'repeating-linear-gradient.node',
@@ -452,7 +463,8 @@ foreach test : node_parser_tests
         'GSK_RENDERER=opengl',
         'GTK_A11Y=test',
         'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
-        'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir())
+        'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
+        'FONTCONFIG_FILE=@0@/fonts/fonts.conf'.format(meson.current_source_dir()),
       ],
       protocol: 'exitcode',
       suite: [ 'gsk', 'gsk-nodeparser' ]
@@ -479,6 +491,9 @@ if os_linux
     'clipped.node',
     'not-clipped.node',
     'complex-clip.node',
+    'background.node',
+    'background2.node',
+    'bad-transform.node',
   ]
 
   foreach test : offload_tests
@@ -488,10 +503,10 @@ if os_linux
           join_paths(meson.current_source_dir(), 'offload', test)
         ],
         env: [
-          'GSK_RENDERER=opengl',
           'GTK_A11Y=test',
           'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
-          'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir())
+          'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
+          'GDK_DEBUG=force-offload',
         ],
         protocol: 'exitcode',
         suite: ['gsk', 'offload'],
@@ -504,6 +519,7 @@ tests = [
   [ 'normalize', [ 'normalize.c', '../reftests/reftest-compare.c' ] ],
   [ 'transform' ],
   [ 'shader' ],
+  [ 'opaque' ],
   [ 'path', [ 'path-utils.c' ], [ 'flaky'] ],
   [ 'path-special-cases' ],
   [ 'scaling' ],

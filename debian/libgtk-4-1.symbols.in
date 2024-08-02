@@ -29,6 +29,18 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_cairo_region_create_from_surface@Base 4.0.0
  gdk_cairo_set_source_pixbuf@Base 4.0.0
  gdk_cairo_set_source_rgba@Base 4.0.0
+ gdk_cicp_params_build_color_state@Base 4.15.4
+ gdk_cicp_params_get_color_primaries@Base 4.15.4
+ gdk_cicp_params_get_matrix_coefficients@Base 4.15.4
+ gdk_cicp_params_get_range@Base 4.15.4
+ gdk_cicp_params_get_transfer_function@Base 4.15.4
+ gdk_cicp_params_get_type@Base 4.15.4
+ gdk_cicp_params_new@Base 4.15.4
+ gdk_cicp_params_set_color_primaries@Base 4.15.4
+ gdk_cicp_params_set_matrix_coefficients@Base 4.15.4
+ gdk_cicp_params_set_range@Base 4.15.4
+ gdk_cicp_params_set_transfer_function@Base 4.15.4
+ gdk_cicp_range_get_type@Base 4.15.4
  gdk_clipboard_get_content@Base 4.0.0
  gdk_clipboard_get_display@Base 4.0.0
  gdk_clipboard_get_formats@Base 4.0.0
@@ -50,6 +62,15 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_clipboard_set_value@Base 4.0.0
  gdk_clipboard_store_async@Base 4.0.0
  gdk_clipboard_store_finish@Base 4.0.0
+ gdk_color_state_create_cicp_params@Base 4.15.4
+ gdk_color_state_equal@Base 4.15.4
+ gdk_color_state_get_rec2100_linear@Base 4.15.4
+ gdk_color_state_get_rec2100_pq@Base 4.15.4
+ gdk_color_state_get_srgb@Base 4.15.4
+ gdk_color_state_get_srgb_linear@Base 4.15.4
+ gdk_color_state_get_type@Base 4.15.4
+ gdk_color_state_ref@Base 4.15.4
+ gdk_color_state_unref@Base 4.15.4
  gdk_content_deserialize_async@Base 4.0.0
  gdk_content_deserialize_finish@Base 4.0.0
  gdk_content_deserializer_get_cancellable@Base 4.0.0
@@ -131,6 +152,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_cursor_get_name@Base 4.0.0
  gdk_cursor_get_texture@Base 4.0.0
  gdk_cursor_get_type@Base 4.0.0
+ gdk_cursor_new_from_callback@Base 4.15.4
  gdk_cursor_new_from_name@Base 4.0.0
  gdk_cursor_new_from_texture@Base 4.0.0
  gdk_delete_event_get_type@Base 4.0.0
@@ -212,6 +234,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_dmabuf_formats_ref@Base 4.13.5
  gdk_dmabuf_formats_unref@Base 4.13.5
  gdk_dmabuf_texture_builder_build@Base 4.13.5
+ gdk_dmabuf_texture_builder_get_color_state@Base 4.15.4
  gdk_dmabuf_texture_builder_get_display@Base 4.13.5
  gdk_dmabuf_texture_builder_get_fd@Base 4.13.5
  gdk_dmabuf_texture_builder_get_fourcc@Base 4.13.5
@@ -226,6 +249,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_dmabuf_texture_builder_get_update_texture@Base 4.13.5
  gdk_dmabuf_texture_builder_get_width@Base 4.13.5
  gdk_dmabuf_texture_builder_new@Base 4.13.5
+ gdk_dmabuf_texture_builder_set_color_state@Base 4.15.4
  gdk_dmabuf_texture_builder_set_display@Base 4.13.5
  gdk_dmabuf_texture_builder_set_fd@Base 4.13.5
  gdk_dmabuf_texture_builder_set_fourcc@Base 4.13.5
@@ -357,6 +381,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_gl_error_get_type@Base 4.0.0
  gdk_gl_error_quark@Base 4.0.0
  gdk_gl_texture_builder_build@Base 4.12.0
+ gdk_gl_texture_builder_get_color_state@Base 4.15.4
  gdk_gl_texture_builder_get_context@Base 4.12.0
  gdk_gl_texture_builder_get_format@Base 4.12.0
  gdk_gl_texture_builder_get_has_mipmap@Base 4.12.0
@@ -368,6 +393,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_gl_texture_builder_get_update_texture@Base 4.12.0
  gdk_gl_texture_builder_get_width@Base 4.12.0
  gdk_gl_texture_builder_new@Base 4.12.0
+ gdk_gl_texture_builder_set_color_state@Base 4.15.4
  gdk_gl_texture_builder_set_context@Base 4.12.0
  gdk_gl_texture_builder_set_format@Base 4.12.0
  gdk_gl_texture_builder_set_has_mipmap@Base 4.12.0
@@ -405,6 +431,25 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_keyval_to_unicode@Base 4.0.0
  gdk_keyval_to_upper@Base 4.0.0
  gdk_memory_format_get_type@Base 4.0.0
+ gdk_memory_texture_builder_build@Base 4.15.4
+ gdk_memory_texture_builder_get_bytes@Base 4.15.4
+ gdk_memory_texture_builder_get_color_state@Base 4.15.4
+ gdk_memory_texture_builder_get_format@Base 4.15.4
+ gdk_memory_texture_builder_get_height@Base 4.15.4
+ gdk_memory_texture_builder_get_stride@Base 4.15.4
+ gdk_memory_texture_builder_get_type@Base 4.15.4
+ gdk_memory_texture_builder_get_update_region@Base 4.15.4
+ gdk_memory_texture_builder_get_update_texture@Base 4.15.4
+ gdk_memory_texture_builder_get_width@Base 4.15.4
+ gdk_memory_texture_builder_new@Base 4.15.4
+ gdk_memory_texture_builder_set_bytes@Base 4.15.4
+ gdk_memory_texture_builder_set_color_state@Base 4.15.4
+ gdk_memory_texture_builder_set_format@Base 4.15.4
+ gdk_memory_texture_builder_set_height@Base 4.15.4
+ gdk_memory_texture_builder_set_stride@Base 4.15.4
+ gdk_memory_texture_builder_set_update_region@Base 4.15.4
+ gdk_memory_texture_builder_set_update_texture@Base 4.15.4
+ gdk_memory_texture_builder_set_width@Base 4.15.4
  gdk_memory_texture_get_type@Base 4.0.0
  gdk_memory_texture_new@Base 4.0.0
  gdk_modifier_type_get_type@Base 4.0.0
@@ -538,14 +583,17 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_texture_downloader_download_bytes@Base 4.10.0
  gdk_texture_downloader_download_into@Base 4.10.0
  gdk_texture_downloader_free@Base 4.10.0
+ gdk_texture_downloader_get_color_state@Base 4.15.4
  gdk_texture_downloader_get_format@Base 4.10.0
  gdk_texture_downloader_get_texture@Base 4.10.0
  gdk_texture_downloader_get_type@Base 4.10.0
  gdk_texture_downloader_new@Base 4.10.0
+ gdk_texture_downloader_set_color_state@Base 4.15.4
  gdk_texture_downloader_set_format@Base 4.10.0
  gdk_texture_downloader_set_texture@Base 4.10.0
  gdk_texture_error_get_type@Base 4.6.0
  gdk_texture_error_quark@Base 4.6.0
+ gdk_texture_get_color_state@Base 4.15.4
  gdk_texture_get_format@Base 4.10.0
  gdk_texture_get_height@Base 4.0.0
  gdk_texture_get_type@Base 4.0.0
@@ -924,6 +972,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_render_node_draw@Base 4.0.0
  gsk_render_node_get_bounds@Base 4.0.0
  gsk_render_node_get_node_type@Base 4.0.0
+ gsk_render_node_get_opaque_rect@Base 4.15.4
  gsk_render_node_get_type@Base 4.0.0
  gsk_render_node_ref@Base 4.0.0
  gsk_render_node_serialize@Base 4.0.0
@@ -1901,12 +1950,14 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_css_provider_load_named@Base 4.0.0
  gtk_css_provider_new@Base 4.0.0
  gtk_css_provider_to_string@Base 4.0.0
+ gtk_css_section_get_bytes@Base 4.15.4
  gtk_css_section_get_end_location@Base 4.0.0
  gtk_css_section_get_file@Base 4.0.0
  gtk_css_section_get_parent@Base 4.0.0
  gtk_css_section_get_start_location@Base 4.0.0
  gtk_css_section_get_type@Base 4.0.0
  gtk_css_section_new@Base 4.0.0
+ gtk_css_section_new_with_bytes@Base 4.15.4
  gtk_css_section_print@Base 4.0.0
  gtk_css_section_ref@Base 4.0.0
  gtk_css_section_to_string@Base 4.0.0
@@ -2468,6 +2519,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_font_dialog_set_modal@Base 4.9.2
  gtk_font_dialog_set_title@Base 4.9.2
  gtk_font_level_get_type@Base 4.9.2
+ gtk_font_rendering_get_type@Base 4.15.4
  gtk_frame_get_child@Base 4.0.0
  gtk_frame_get_label@Base 4.0.0
  gtk_frame_get_label_align@Base 4.0.0
@@ -2566,10 +2618,12 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_gl_area_set_required_version@Base 4.0.0
  gtk_gl_area_set_use_es@Base 4.0.0
  gtk_graphics_offload_enabled_get_type@Base 4.13.5
+ gtk_graphics_offload_get_black_background@Base 4.15.4
  gtk_graphics_offload_get_child@Base 4.13.5
  gtk_graphics_offload_get_enabled@Base 4.13.5
  gtk_graphics_offload_get_type@Base 4.13.5
  gtk_graphics_offload_new@Base 4.13.5
+ gtk_graphics_offload_set_black_background@Base 4.15.4
  gtk_graphics_offload_set_child@Base 4.13.5
  gtk_graphics_offload_set_enabled@Base 4.13.5
  gtk_grid_attach@Base 4.0.0

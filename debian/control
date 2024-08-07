@@ -302,6 +302,8 @@ Architecture: any
 Multi-Arch: foreign
 Depends: ${misc:Depends},
          ${shlibs:Depends}
+Breaks: libgtk-4-bin (<< 4.15)
+Replaces: libgtk-4-bin (<< 4.15)
 Description: icon theme caching utility
  gtk-update-icon-cache creates mmap()able cache files for icon themes.
  .

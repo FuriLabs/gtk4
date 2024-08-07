@@ -13,3 +13,4 @@ debian/tests-Allow-longer-for-a-dialog-to-open.patch
 nodeparser-Adjust-test-for-pango-1.52.0.patch
 gdk-Check-some-assertions-on-our-architectures.patch
 ci-avoid-another-date-dependent-failure.patch
+testsuite-add-more-files-to-test_data.patch

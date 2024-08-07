@@ -1,0 +1,62 @@
+From: =?utf-8?q?Jeremy_B=C3=ADcha?= <jeremy.bicha@canonical.com>
+Date: Tue, 6 Aug 2024 20:22:59 -0400
+Subject: testsuite: add more files to test_data
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7569
+---
+ testsuite/css/parser/meson.build | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/testsuite/css/parser/meson.build b/testsuite/css/parser/meson.build
+index e393302..22a43e7 100644
+--- a/testsuite/css/parser/meson.build
++++ b/testsuite/css/parser/meson.build
+@@ -133,6 +133,7 @@ test_data = [
+   'at-valid-16.errors',
+   'at-valid-16.ref.css',
+   'at-valid-17.css',
++  'at-valid-17.errors',
+   'at-valid-18.css',
+   'at-valid-18.ref.css',
+   'background-blend-mode.css',
+@@ -152,6 +153,7 @@ test_data = [
+   'background-repeat.css',
+   'background-repeat.ref.css',
+   'background-shorthand.css',
++  'background-shorthand.errors',
+   'background-shorthand.ref.css',
+   'background-shorthand-single.css',
+   'background-shorthand-single.ref.css',
+@@ -212,6 +214,7 @@ test_data = [
+   'close-at-end-of-file.errors',
+   'close-at-end-of-file.ref.css',
+   'color.css',
++  'color.errors',
+   'color.ref.css',
+   'colors-errors.css',
+   'colors-errors.errors',
+@@ -234,6 +237,8 @@ test_data = [
+   'css-21-malformed-statements.errors',
+   'css-21-malformed-statements.ref.css',
+   'currentcolor-everywhere.css',
++  'currentcolor-everywhere.ref.css',
++  'currentcolor-everywhere.errors',
+   'dash-backslash-eof-is-identifier.ref.css',
+   'dash-backslash-eof-is-identifier.css',
+   'dash-backslash-eof-is-identifier.errors',
+@@ -291,6 +296,7 @@ test_data = [
+   'declarations-valid-08.css',
+   'declarations-valid-08.ref.css',
+   'declarations-valid-09.css',
++  'declarations-valid-09.errors',
+   'declarations-valid-09.ref.css',
+   'declarations-valid-10.css',
+   'declarations-valid-10.ref.css',
+@@ -498,6 +504,7 @@ test_data = [
+   'selector-original.css',
+   'selector-original.ref.css',
+   'shadow.css',
++  'shadow.errors',
+   'shadow.ref.css',
+   'shadow-ordering.css',
+   'shadow-ordering.ref.css',

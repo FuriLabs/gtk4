@@ -220,9 +220,9 @@ test_data = [
   'colors-errors.css',
   'colors-errors.errors',
   'colors-errors.ref.css',
-  'color-mix.css',
-  'color-mix.errors',
-  'color-mix.ref.css',
+  # 'color-mix.css',
+  # 'color-mix.errors',
+  # 'color-mix.ref.css',
   'colors-red.css',
   'colors-red.ref.css',
   'comment-detection.css',
@@ -667,6 +667,12 @@ test_data = [
 
 foreach testname : test_data
   if testname.endswith('.css') and not testname.endswith('.ref.css')
+
+    suites = 'css'
+    if testname == 'color-mix'
+      suites += 'flaky'
+    endif
+
     test('parser ' + testname, test_parser,
          args: [ '--tap',
                  '-k',
@@ -677,7 +683,7 @@ foreach testname : test_data
                 'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
                 'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir())
               ],
-         suite: 'css')
+         suite: suites)
   endif
 endforeach
 

@@ -1,18 +1,21 @@
-gtk4 (4.15.4+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.15.4+ds-1) experimental; urgency=medium
 
   [ Jeremy Bícha ]
   * New upstream release
   * debian/libgtk-4-1.symbols.in: Add new symbols
-  * libgtk-4-bin: Install gtk4-image-tool
-  * Add the doc-check tests to skipped_suites since they don't pass yet
   * Bump minimum cairo to 1.18 & wayland-protocols to 1.36
+  * libgtk-4-bin: Install gtk4-image-tool
+  * Fix installing update-icon-caches manpage
+  * Add patch to fix css parser autopkgtest
+  * Add patch to skip broken color-mix test
+  * Add the doc-check tests to skipped_suites since they don't pass yet
   * Remove 5 patches applied in new release
-  * Refresh patches
+  * autopkgtest: Set GTK_DEBUG=css as was done upstream
 
   [ Simon McVittie ]
-  * Mention #1077757 in previous changelog entry
+  * Take over gtk-update-icon-cache from src:gtk+3.0
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 02 Aug 2024 09:47:39 -0400
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 07 Aug 2024 12:09:56 -0400
 
 gtk4 (4.14.4+ds-8) unstable; urgency=medium
 

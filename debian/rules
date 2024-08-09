@@ -264,6 +264,14 @@ skipped_suites = \
 # The doc-check tests aren't passing yet
 skipped_suites += docs
 
+# skip gtk/css on s390x until this can be fixed better
+# https://gitlab.gnome.org/GNOME/gtk/-/issues/6907
+ifneq ($(filter s390x,$(DEB_HOST_ARCH_CPU)),)
+skipped_suites += \
+       gtk:css \
+       $(NULL)
+endif
+
 # Skip label-reftest on riscv and mips since the diff is benign
 ifneq ($(filter mips% riscv64,$(DEB_HOST_ARCH_CPU)),)
 # https://bugs.debian.org/1077178

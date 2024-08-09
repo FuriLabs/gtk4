@@ -29,6 +29,7 @@ Features: test-name=installed-tests-x11
 Classes: desktop, x11
 Depends: dbus-daemon (>= 1.8), fonts-noto-core, gnome-desktop-testing (>= 2018.1-1~), gtk-4-tests, locales | locales-all, xauth, xvfb
 Restrictions: allow-stderr
+Architecture: !s390x
 
 Test-Command: env GDK_BACKEND=wayland debian/tests/installed-tests
 Features: test-name=installed-tests-wayland
@@ -36,6 +37,7 @@ Classes: desktop, wayland, linux-only
 Depends: dbus-daemon (>= 1.8), fonts-noto-core, gnome-desktop-testing (>= 2018.1-1~), gtk-4-tests, locales | locales-all, weston
 # Architecture: linux-any
 Restrictions: allow-stderr
+Architecture: !s390x
 
 Test-Command: env GDK_BACKEND=x11 debian/tests/installed-tests-flaky
 Features: test-name=installed-tests-flaky-x11

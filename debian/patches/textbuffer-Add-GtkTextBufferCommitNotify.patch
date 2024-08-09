@@ -1,0 +1,409 @@
+From: Christian Hergert <chergert@redhat.com>
+Date: Mon, 29 Jul 2024 14:13:10 -0700
+Subject: textbuffer: Add GtkTextBufferCommitNotify
+
+Add a new function callback called GtkTetBufferCommitNotify to be notified
+of changes to a GtkTextBuffer without being involved in a signal chain.
+
+This is necessary for some situations because signal handlers may modify
+the parameters as they proceed down to default handler. As such, the signal
+is unsuitable for applications heavily utilizing plug-ins such as Builder
+due to non-deterministic signal connection ordering.
+
+This technique has been used in Builder for the better part of a decade
+and now would also vastly help in situations like libspelling where you
+also want to know about changes to the buffer right before they are
+committed to the b-tree.
+
+Fixes: #6133
+(cherry picked from commit e83616666401d6d3c031d78d89acd2057bcd111c)
+
+Origin: upstream, after 4.15.4
+---
+ gtk/gtkenums.h      |  23 ++++++
+ gtk/gtktextbuffer.c | 203 +++++++++++++++++++++++++++++++++++++++++++++++++++-
+ gtk/gtktextbuffer.h |  58 +++++++++++++++
+ 3 files changed, 282 insertions(+), 2 deletions(-)
+
+diff --git a/gtk/gtkenums.h b/gtk/gtkenums.h
+index eed63be..e0ee0e8 100644
+--- a/gtk/gtkenums.h
++++ b/gtk/gtkenums.h
+@@ -1880,4 +1880,27 @@ typedef enum {
+   GTK_FONT_RENDERING_MANUAL,
+ } GtkFontRendering;
+ 
++/**
++ * GtkTextBufferNotifyFlags:
++ * @GTK_TEXT_BUFFER_NOTIFY_BEFORE_INSERT: Be notified before text
++ *   is inserted into the underlying buffer.
++ * @GTK_TEXT_BUFFER_NOTIFY_AFTER_INSERT: Be notified after text
++ *   has been inserted into the underlying buffer.
++ * @GTK_TEXT_BUFFER_NOTIFY_BEFORE_DELETE: Be notified before text
++ *   is deleted from the underlying buffer.
++ * @GTK_TEXT_BUFFER_NOTIFY_AFTER_DELETE: Be notified after text
++ *   has been deleted from the underlying buffer.
++ *
++ * Values for [callback@Gtk.TextBufferCommitNotify] to denote the
++ * point of the notification.
++ *
++ * Since: 4.16
++ */
++typedef enum {
++  GTK_TEXT_BUFFER_NOTIFY_BEFORE_INSERT = 1 << 0,
++  GTK_TEXT_BUFFER_NOTIFY_AFTER_INSERT  = 1 << 1,
++  GTK_TEXT_BUFFER_NOTIFY_BEFORE_DELETE = 1 << 2,
++  GTK_TEXT_BUFFER_NOTIFY_AFTER_DELETE  = 1 << 3,
++} GtkTextBufferNotifyFlags;
++
+ G_END_DECLS
+diff --git a/gtk/gtktextbuffer.c b/gtk/gtktextbuffer.c
+index 16f8e7b..7a62c36 100644
+--- a/gtk/gtktextbuffer.c
++++ b/gtk/gtktextbuffer.c
+@@ -68,6 +68,9 @@ struct _GtkTextBufferPrivate
+ 
+   GtkTextHistory *history;
+ 
++  GArray *commit_funcs;
++  guint last_commit_handler;
++
+   guint user_action_count;
+ 
+   /* Whether the buffer has been modified since last save */
+@@ -75,6 +78,7 @@ struct _GtkTextBufferPrivate
+   guint has_selection : 1;
+   guint can_undo : 1;
+   guint can_redo : 1;
++  guint in_commit_notify : 1;
+ };
+ 
+ typedef struct _ClipboardRequest ClipboardRequest;
+@@ -87,6 +91,15 @@ struct _ClipboardRequest
+   guint replace_selection : 1;
+ };
+ 
++typedef struct _CommitFunc
++{
++  GtkTextBufferCommitNotify callback;
++  gpointer user_data;
++  GDestroyNotify user_data_destroy;
++  GtkTextBufferNotifyFlags flags;
++  guint handler_id;
++} CommitFunc;
++
+ enum {
+   INSERT_TEXT,
+   INSERT_PAINTABLE,
+@@ -151,6 +164,10 @@ static void gtk_text_buffer_real_mark_set              (GtkTextBuffer     *buffe
+                                                         GtkTextMark       *mark);
+ static void gtk_text_buffer_real_undo                  (GtkTextBuffer     *buffer);
+ static void gtk_text_buffer_real_redo                  (GtkTextBuffer     *buffer);
++static void gtk_text_buffer_commit_notify              (GtkTextBuffer     *buffer,
++                                                        GtkTextBufferNotifyFlags flags,
++                                                        guint              position,
++                                                        guint              length);
+ 
+ static GtkTextBTree* get_btree (GtkTextBuffer *buffer);
+ static void          free_log_attr_cache (GtkTextLogAttrCache *cache);
+@@ -1081,6 +1098,8 @@ gtk_text_buffer_finalize (GObject *object)
+ 
+   remove_all_selection_clipboards (buffer);
+ 
++  g_clear_pointer (&buffer->priv->commit_funcs, g_array_unref);
++
+   g_clear_object (&buffer->priv->history);
+ 
+   if (priv->tag_table)
+@@ -1198,7 +1217,29 @@ gtk_text_buffer_real_insert_text (GtkTextBuffer *buffer,
+                                   text,
+                                   len);
+ 
+-  _gtk_text_btree_insert (iter, text, len);
++  if (buffer->priv->commit_funcs == NULL)
++    {
++      _gtk_text_btree_insert (iter, text, len);
++    }
++  else
++    {
++      guint position;
++      guint n_chars;
++
++      if (len < 0)
++        len = strlen (text);
++
++      position = gtk_text_iter_get_offset (iter);
++      n_chars = g_utf8_strlen (text, len);
++
++      gtk_text_buffer_commit_notify (buffer,
++                                     GTK_TEXT_BUFFER_NOTIFY_BEFORE_INSERT,
++                                     position, n_chars);
++      _gtk_text_btree_insert (iter, text, len);
++      gtk_text_buffer_commit_notify (buffer,
++                                     GTK_TEXT_BUFFER_NOTIFY_AFTER_INSERT,
++                                     position, n_chars);
++    }
+ 
+   g_signal_emit (buffer, signals[CHANGED], 0);
+   g_object_notify_by_pspec (G_OBJECT (buffer), text_buffer_props[PROP_CURSOR_POSITION]);
+@@ -1211,6 +1252,7 @@ gtk_text_buffer_emit_insert (GtkTextBuffer *buffer,
+                              int            len)
+ {
+   g_return_if_fail (GTK_IS_TEXT_BUFFER (buffer));
++  g_return_if_fail (buffer->priv->in_commit_notify == FALSE);
+   g_return_if_fail (iter != NULL);
+   g_return_if_fail (text != NULL);
+ 
+@@ -1955,7 +1997,36 @@ gtk_text_buffer_real_delete_range (GtkTextBuffer *buffer,
+       g_free (text);
+     }
+ 
+-  _gtk_text_btree_delete (start, end);
++
++
++  if (buffer->priv->commit_funcs == NULL)
++    {
++      _gtk_text_btree_delete (start, end);
++    }
++  else
++    {
++      guint off1 = gtk_text_iter_get_offset (start);
++      guint off2 = gtk_text_iter_get_offset (end);
++
++      if (off2 < off1)
++        {
++          guint tmp = off1;
++          off1 = off2;
++          off2 = tmp;
++        }
++
++      buffer->priv->in_commit_notify = TRUE;
++
++      gtk_text_buffer_commit_notify (buffer,
++                                     GTK_TEXT_BUFFER_NOTIFY_BEFORE_DELETE,
++                                     off1, off2 - off1);
++      _gtk_text_btree_delete (start, end);
++      gtk_text_buffer_commit_notify (buffer,
++                                     GTK_TEXT_BUFFER_NOTIFY_AFTER_DELETE,
++                                     off1, 0);
++
++      buffer->priv->in_commit_notify = FALSE;
++    }
+ 
+   /* may have deleted the selection... */
+   update_selection_clipboards (buffer);
+@@ -1979,6 +2050,7 @@ gtk_text_buffer_emit_delete (GtkTextBuffer *buffer,
+   g_return_if_fail (GTK_IS_TEXT_BUFFER (buffer));
+   g_return_if_fail (start != NULL);
+   g_return_if_fail (end != NULL);
++  g_return_if_fail (buffer->priv->in_commit_notify == FALSE);
+ 
+   if (gtk_text_iter_equal (start, end))
+     return;
+@@ -5720,3 +5792,130 @@ gtk_text_buffer_add_run_attributes (GtkTextBuffer *buffer,
+ 
+   g_slist_free (tags);
+ }
++
++static void
++clear_commit_func (gpointer data)
++{
++  CommitFunc *func = data;
++
++  if (func->user_data_destroy)
++    func->user_data_destroy (func->user_data);
++}
++
++/**
++ * gtk_text_buffer_add_commit_notify:
++ * @buffer: a [type@Gtk.TextBuffer]
++ * @flags: which notifications should be dispatched to @callback
++ * @commit_notify: (scope async) (closure user_data) (destroy destroy): a
++ *   [callback@Gtk.TextBufferCommitNotify] to call for commit notifications
++ * @user_data: closure data for @commit_notify
++ * @destroy: a callback to free @user_data when @commit_notify is removed
++ *
++ * Adds a [callback@Gtk.TextBufferCommitNotify] to be called when a change
++ * is to be made to the [type@Gtk.TextBuffer].
++ *
++ * Functions are explicitly forbidden from making changes to the
++ * [type@Gtk.TextBuffer] from this callback. It is intended for tracking
++ * changes to the buffer only.
++ *
++ * It may be advantageous to use [callback@Gtk.TextBufferCommitNotify] over
++ * connecting to the [signal@Gtk.TextBuffer::insert-text] or
++ * [signal@Gtk.TextBuffer::delete-range] signals to avoid ordering issues with
++ * other signal handlers which may further modify the [type@Gtk.TextBuffer].
++ *
++ * Returns: a handler id which may be used to remove the commit notify
++ *   callback using [method@Gtk.TextBuffer.remove_commit_notify].
++ *
++ * Since: 4.16
++ */
++guint
++gtk_text_buffer_add_commit_notify (GtkTextBuffer             *buffer,
++                                   GtkTextBufferNotifyFlags   flags,
++                                   GtkTextBufferCommitNotify  commit_notify,
++                                   gpointer                   user_data,
++                                   GDestroyNotify             destroy)
++{
++  CommitFunc func;
++
++  g_return_val_if_fail (GTK_IS_TEXT_BUFFER (buffer), 0);
++  g_return_val_if_fail (buffer->priv->in_commit_notify == FALSE, 0);
++
++  func.callback = commit_notify;
++  func.user_data = user_data;
++  func.user_data_destroy = destroy;
++  func.handler_id = ++buffer->priv->last_commit_handler;
++  func.flags = flags;
++
++  if (buffer->priv->commit_funcs == NULL)
++    {
++      buffer->priv->commit_funcs = g_array_new (FALSE, FALSE, sizeof (CommitFunc));
++      g_array_set_clear_func (buffer->priv->commit_funcs, clear_commit_func);
++    }
++
++  g_array_append_val (buffer->priv->commit_funcs, func);
++
++  return func.handler_id;
++}
++
++/**
++ * gtk_text_buffer_remove_commit_notify:
++ * @buffer: a `GtkTextBuffer`
++ * @commit_notify_handler: the notify handler identifier returned from
++ *   [method@Gtk.TextBuffer.add_commit_notify].
++ *
++ * Removes the `GtkTextBufferCommitNotify` handler previously registered
++ * with [method@Gtk.TextBuffer.add_commit_notify].
++ *
++ * This may result in the `user_data_destroy` being called that was passed when registering
++ * the commit notify functions.
++ *
++ * Since: 4.16
++ */
++void
++gtk_text_buffer_remove_commit_notify (GtkTextBuffer *buffer,
++                                      guint          commit_notify_handler)
++{
++  g_return_if_fail (GTK_IS_TEXT_BUFFER (buffer));
++  g_return_if_fail (commit_notify_handler > 0);
++  g_return_if_fail (buffer->priv->in_commit_notify == FALSE);
++
++  if (buffer->priv->commit_funcs != NULL)
++    {
++      for (guint i = 0; i < buffer->priv->commit_funcs->len; i++)
++        {
++          const CommitFunc *func = &g_array_index (buffer->priv->commit_funcs, CommitFunc, i);
++
++          if (func->handler_id == commit_notify_handler)
++            {
++              g_array_remove_index (buffer->priv->commit_funcs, i);
++
++              if (buffer->priv->commit_funcs->len == 0)
++                g_clear_pointer (&buffer->priv->commit_funcs, g_array_unref);
++
++              return;
++            }
++        }
++    }
++
++  g_warning ("No such GtkTextBufferCommitNotify matching %u",
++             commit_notify_handler);
++}
++
++static void
++gtk_text_buffer_commit_notify (GtkTextBuffer            *buffer,
++                               GtkTextBufferNotifyFlags  flags,
++                               guint                     position,
++                               guint                     length)
++{
++  buffer->priv->in_commit_notify = TRUE;
++
++  for (guint i = 0; i < buffer->priv->commit_funcs->len; i++)
++    {
++      const CommitFunc *func = &g_array_index (buffer->priv->commit_funcs, CommitFunc, i);
++
++      if (func->flags & flags)
++        func->callback (buffer, flags, position, length, func->user_data);
++    }
++
++  buffer->priv->in_commit_notify = FALSE;
++}
+diff --git a/gtk/gtktextbuffer.h b/gtk/gtktextbuffer.h
+index f6d2613..2c07b4b 100644
+--- a/gtk/gtktextbuffer.h
++++ b/gtk/gtktextbuffer.h
+@@ -53,6 +53,55 @@ struct _GtkTextBuffer
+   GtkTextBufferPrivate *priv;
+ };
+ 
++/**
++ * GtkTextBufferCommitNotify:
++ * @buffer: the text buffer being notified
++ * @flags: the type of commit notification
++ * @position: the position of the text operation
++ * @length: the length of the text operation in characters
++ * @user_data: (closure): user data passed to the callback
++ *
++ * A notification callback used by [method@Gtk.TextBuffer.add_commit_notify].
++ *
++ * You may not modify the [class@Gtk.TextBuffer] from a
++ * [callback@Gtk.TextBufferCommitNotify] callback and that is enforced
++ * by the [class@Gtk.TextBuffer] API.
++ *
++ * [callback@Gtk.TextBufferCommitNotify] may be used to be notified about
++ * changes to the underlying buffer right before-or-after the changes are
++ * committed to the underlying B-Tree. This is useful if you want to observe
++ * changes to the buffer without other signal handlers potentially modifying
++ * state on the way to the default signal handler.
++ *
++ * When @flags is `GTK_TEXT_BUFFER_NOTIFY_BEFORE_INSERT`, `position` is set to
++ * the offset in characters from the start of the buffer where the insertion
++ * will occur. `length` is set to the number of characters to be inserted.  You
++ * may not yet retrieve the text until it has been inserted. You may access the
++ * text from `GTK_TEXT_BUFFER_NOTIFY_AFTER_INSERT` using
++ * [method@Gtk.TextBuffer.get_slice].
++ *
++ * When @flags is `GTK_TEXT_BUFFER_NOTIFY_AFTER_INSERT`, `position` is set to
++ * offset in characters where the insertion occurred and `length` is set
++ * to the number of characters inserted.
++ *
++ * When @flags is `GTK_TEXT_BUFFER_NOTIFY_BEFORE_DELETE`, `position` is set to
++ * offset in characters where the deletion will occur and `length` is set
++ * to the number of characters that will be removed. You may still retrieve
++ * the text from this handler using `position` and `length`.
++ *
++ * When @flags is `GTK_TEXT_BUFFER_NOTIFY_AFTER_DELETE`, `length` is set to
++ * zero to denote that the delete-range has already been committed to the
++ * underlying B-Tree. You may no longer retrieve the text that has been
++ * deleted from the [class@Gtk.TextBuffer].
++ *
++ * Since: 4.16
++ */
++typedef void (*GtkTextBufferCommitNotify) (GtkTextBuffer            *buffer,
++                                           GtkTextBufferNotifyFlags  flags,
++                                           guint                     position,
++                                           guint                     length,
++                                           gpointer                  user_data);
++
+ /**
+  * GtkTextBufferClass:
+  * @parent_class: The object class structure needs to be the first.
+@@ -459,6 +508,15 @@ GDK_AVAILABLE_IN_ALL
+ void            gtk_text_buffer_begin_user_action         (GtkTextBuffer *buffer);
+ GDK_AVAILABLE_IN_ALL
+ void            gtk_text_buffer_end_user_action           (GtkTextBuffer *buffer);
++GDK_AVAILABLE_IN_4_16
++guint           gtk_text_buffer_add_commit_notify         (GtkTextBuffer             *buffer,
++                                                           GtkTextBufferNotifyFlags   flags,
++                                                           GtkTextBufferCommitNotify  commit_notify,
++                                                           gpointer                   user_data,
++                                                           GDestroyNotify             destroy);
++GDK_AVAILABLE_IN_4_16
++void            gtk_text_buffer_remove_commit_notify      (GtkTextBuffer             *buffer,
++                                                           guint                      commit_notify_handler);
+ 
+ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkTextBuffer, g_object_unref)
+ 

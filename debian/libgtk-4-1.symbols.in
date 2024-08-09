@@ -4359,6 +4359,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_test_list_all_types@Base 4.0.0
  gtk_test_register_all_types@Base 4.0.0
  gtk_test_widget_wait_for_draw@Base 4.0.0
+ gtk_text_buffer_add_commit_notify@Base 4.15.4+ds-3~
  gtk_text_buffer_add_mark@Base 4.0.0
  gtk_text_buffer_add_selection_clipboard@Base 4.0.0
  gtk_text_buffer_apply_tag@Base 4.0.0
@@ -4418,10 +4419,12 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_text_buffer_move_mark@Base 4.0.0
  gtk_text_buffer_move_mark_by_name@Base 4.0.0
  gtk_text_buffer_new@Base 4.0.0
+ gtk_text_buffer_notify_flags_get_type@Base 4.15.4+ds-3~
  gtk_text_buffer_paste_clipboard@Base 4.0.0
  gtk_text_buffer_place_cursor@Base 4.0.0
  gtk_text_buffer_redo@Base 4.0.0
  gtk_text_buffer_remove_all_tags@Base 4.0.0
+ gtk_text_buffer_remove_commit_notify@Base 4.15.4+ds-3~
  gtk_text_buffer_remove_selection_clipboard@Base 4.0.0
  gtk_text_buffer_remove_tag@Base 4.0.0
  gtk_text_buffer_remove_tag_by_name@Base 4.0.0

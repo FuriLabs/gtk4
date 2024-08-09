@@ -1,9 +1,10 @@
-gtk4 (4.15.4+ds-3) UNRELEASED; urgency=medium
+gtk4 (4.15.4+ds-2ubuntu1) oracular; urgency=medium
 
   * Cherry-pick patch required by libspelling 0.3
   * debian/libgtk-4-1.symbols.in: Add new symbols
+  * Temporarily skip css tests on s390x
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 08 Aug 2024 21:49:46 -0400
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 09 Aug 2024 11:44:03 -0400
 
 gtk4 (4.15.4+ds-2) experimental; urgency=medium
 

@@ -7,6 +7,8 @@ so lets flip the switch back. You can still set
 USE_POINTER_VIEWPORT in the environment to try this code.
 
 (cherry picked from commit 3d802177be2f2e5fb95fdb988108dd1b048c5579)
+
+Origin: upstream, after 4.15.4
 ---
  gdk/wayland/gdkdevice-wayland.c | 8 ++++----
  1 file changed, 4 insertions(+), 4 deletions(-)

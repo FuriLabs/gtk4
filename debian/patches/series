@@ -17,3 +17,4 @@ testsuite-add-more-files-to-test_data.patch
 testsuite-skip-color-mix.patch
 textbuffer-Add-GtkTextBufferCommitNotify.patch
 wayland-No-viewporter-for-cursors.patch
+vulkan-Don-t-try-srgb-for-the-atlas.patch

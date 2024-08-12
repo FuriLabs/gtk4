@@ -5,20 +5,20 @@ Subject: media: Use gstplayer from meson subproject
 Origin: https://gitlab.gnome.org/3v1n0/gtk/-/commits/gst-player-subproject
 Forwarded: not-needed
 ---
- modules/media/meson.build | 3 +++
+ meson.build | 3 +++
  1 file changed, 3 insertions(+)
 
-diff --git a/modules/media/meson.build b/modules/media/meson.build
-index d18f582..0e3140a 100644
---- a/modules/media/meson.build
-+++ b/modules/media/meson.build
-@@ -5,6 +5,9 @@ media_backends = []
- extra_c_args = ['-DGTK_COMPILATION']
- extra_c_args += common_cflags
- 
+diff --git a/meson.build b/meson.build
+index 95cd481..25fd797 100644
+--- a/meson.build
++++ b/meson.build
+@@ -426,6 +426,9 @@ iso_codes_dep     = dependency('iso-codes', required: false)
+ gi_dep            = dependency('gobject-introspection-1.0', version: introspection_req,
+                                required: get_option('introspection').enabled() and
+                                          get_option('build-tests'))
 +subproject('gstreamer-player-1.0',
 +           required: get_option('media-gstreamer'),
 +           default_options: 'default_library=static')
- gstplayer_dep = dependency('gstreamer-player-1.0', version: '>= 1.12.3',
-                            required: get_option('media-gstreamer'))
- gstgl_dep = dependency('gstreamer-gl-1.0', version: '>= 1.12.3',
+ gstplayer_dep     = dependency('gstreamer-player-1.0', version: gstreamer_req,
+                                required: get_option('media-gstreamer'))
+ gstgl_dep         = dependency('gstreamer-gl-1.0', version: gstreamer_req,

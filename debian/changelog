@@ -1,9 +1,10 @@
-gtk4 (4.15.4+ds-3) UNRELEASED; urgency=medium
+gtk4 (4.15.5+ds-1) UNRELEASED; urgency=medium
 
   * Cherry-pick patch required by libspelling 0.3
   * debian/libgtk-4-1.symbols.in: Add new symbols
+  * New upstream release
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 08 Aug 2024 21:49:46 -0400
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 12 Aug 2024 09:25:52 -0400
 
 gtk4 (4.15.4+ds-2) experimental; urgency=medium
 

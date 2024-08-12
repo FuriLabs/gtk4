@@ -15,6 +15,3 @@ gdk-Check-some-assertions-on-our-architectures.patch
 ci-avoid-another-date-dependent-failure.patch
 testsuite-add-more-files-to-test_data.patch
 testsuite-skip-color-mix.patch
-textbuffer-Add-GtkTextBufferCommitNotify.patch
-wayland-No-viewporter-for-cursors.patch
-vulkan-Don-t-try-srgb-for-the-atlas.patch

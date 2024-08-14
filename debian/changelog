@@ -1,6 +1,7 @@
 gtk4 (4.15.5+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release
+    - Fix large mouse cursor when using scaling (LP: #2076652)
   * debian/libgtk-4-1.symbols.in: Add new symbols
   * Remove 2 patches applied in new release
   * Refresh patches

@@ -380,7 +380,6 @@ confinc = include_directories('.')
 gdkinc = include_directories('gdk')
 gskinc = include_directories('gsk')
 gtkinc = include_directories('gtk')
-testinc = include_directories('tests')
 
 # Dependencies
 glib_dep       = dependency('glib-2.0', version: glib_req)
@@ -827,12 +826,6 @@ if get_option('build-demos')
   subdir('demos')
 endif
 subdir('tools')
-if get_option('build-tests')
-  subdir('tests')
-endif
-if get_option('build-testsuite')
-  subdir('testsuite')
-endif
 if get_option('build-examples')
   subdir('examples')
 endif
@@ -968,9 +961,6 @@ summary('Optimization', get_option('optimization'), section: 'Build')
 summary('Introspection', build_gir, section: 'Build')
 summary('Documentation', get_option('documentation'), section: 'Build')
 summary('Man pages', get_option('man-pages'), section: 'Build')
-summary('Testsuite', get_option('build-testsuite'), section: 'Build')
-summary('Tests', get_option('build-tests'), section: 'Build')
-summary('Install tests', get_option('install-tests'), section: 'Build')
 summary('Demos', get_option('build-demos'), section: 'Build')
 summary('Examples', get_option('build-examples'), section: 'Build')
 

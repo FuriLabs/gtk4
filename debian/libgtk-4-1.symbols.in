@@ -1,6 +1,5 @@
 libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
 * Build-Depends-Package: libgtk-4-dev
- (optional)_gtk_resource_data@Base @DEB_VERSION_UPSTREAM@
  gdk_anchor_hints_get_type@Base 4.0.0
  gdk_app_launch_context_get_display@Base 4.0.0
  gdk_app_launch_context_get_type@Base 4.0.0
@@ -641,7 +640,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  (arch=linux-any)gdk_wayland_toplevel_set_application_id@Base 4.0.0
  (arch=linux-any)gdk_wayland_toplevel_set_transient_for_exported@Base 4.0.0
  (arch=linux-any)gdk_wayland_toplevel_unexport_handle@Base 4.0.0
- gdk_wayland_vulkan_context_get_type@Base 4.13.5
  gdk_x11_app_launch_context_get_type@Base 4.0.0
  gdk_x11_cairo_context_get_type@Base 4.0.0
  gdk_x11_device_get_id@Base 4.0.0
@@ -710,7 +708,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_x11_surface_set_urgency_hint@Base 4.0.0
  gdk_x11_surface_set_user_time@Base 4.0.0
  gdk_x11_surface_set_utf8_property@Base 4.0.0
- gdk_x11_vulkan_context_get_type@Base 4.13.5
  gsk_blend_mode_get_type@Base 4.0.0
  gsk_blend_node_get_blend_mode@Base 4.0.0
  gsk_blend_node_get_bottom_child@Base 4.0.0

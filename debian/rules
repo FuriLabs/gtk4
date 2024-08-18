@@ -96,7 +96,7 @@ configure_flags_deb += -Dman-pages=false
 endif
 
 ifeq (linux,$(DEB_HOST_ARCH_OS))
-configure_flags_deb += -Dwayland-backend=true
+configure_flags_deb += -Dwayland-backend=true -Dvulkan=disabled
 else
 configure_flags_deb += -Dvulkan=disabled
 configure_flags_deb += -Dwayland-backend=false

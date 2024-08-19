@@ -1,3 +1,21 @@
+gtk4 (4.15.5+ds-1) experimental; urgency=medium
+
+  [ Jeremy Bícha ]
+  * New upstream release
+    - Fix large mouse cursor when using scaling (LP: #2076652)
+  * debian/libgtk-4-1.symbols.in: Add new symbols
+  * Remove 2 patches applied in new release
+  * Refresh patches
+
+  [ Nathan Pratta Teodosio ]
+  * Add patch to disable vulkan in memorytexture, scaling & dmabufformats tests
+    (LP: #2077313)
+
+  [ Marco Trevisan (Treviño) ]
+  * Update gstreamer subproject patches
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 19 Aug 2024 14:24:57 -0400
+
 gtk4 (4.15.4+ds-2ubuntu1) oracular; urgency=medium
 
   * Cherry-pick patch required by libspelling 0.3

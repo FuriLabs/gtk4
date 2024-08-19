@@ -46,7 +46,8 @@ Forwarded: not-needed
  .../gstreamer-player-1.0/gst/player/gstplayer.c    |  668 +++++-----
  .../gstreamer-player-1.0/gst/player/gstplayer.h    |  328 ++---
  .../gst/player/player-prelude.h                    |   20 +-
- 40 files changed, 2859 insertions(+), 2859 deletions(-)
+ subprojects/gstreamer-player-1.0/meson.build       |    2 +-
+ 41 files changed, 2860 insertions(+), 2860 deletions(-)
 
 diff --git a/modules/media/gtkgstmediafile.c b/modules/media/gtkgstmediafile.c
 index 5487bb0..8e956b7 100644
@@ -3157,7 +3158,7 @@ index 4c9bc86..3422cc6 100644
 -#endif /* __GST_PLAY_VISUALIZATION_H__ */
 +#endif /* __GTL_GST_PLAY_VISUALIZATION_H__ */
 diff --git a/subprojects/gstreamer-player-1.0/gst/play/gstplay.c b/subprojects/gstreamer-player-1.0/gst/play/gstplay.c
-index f99bbe1..24b3e44 100644
+index 820fd72..62d67b8 100644
 --- a/subprojects/gstreamer-player-1.0/gst/play/gstplay.c
 +++ b/subprojects/gstreamer-player-1.0/gst/play/gstplay.c
 @@ -23,10 +23,10 @@
@@ -3384,7 +3385,7 @@ index f99bbe1..24b3e44 100644
  
    va_start (varargs, firstfield);
    gst_structure_set_valist (message_data, firstfield, varargs);
-@@ -341,15 +341,15 @@ config_quark_initialize (void)
+@@ -341,18 +341,18 @@ config_quark_initialize (void)
  }
  
  static void
@@ -3392,6 +3393,11 @@ index f99bbe1..24b3e44 100644
 +gtk_gst_play_class_init (GtkGstPlayClass * klass)
  {
    GObjectClass *gobject_class = (GObjectClass *) klass;
+ 
+-  GST_DEBUG_CATEGORY_INIT (gst_play_debug, "gst-play", 0, "GstPlay");
+-  gst_play_error_quark ();
++  GST_DEBUG_CATEGORY_INIT (gtk_gst_play_debug, "gtk-gst-play", 0, "GtkGstPlay");
++  gtk_gst_play_error_quark ();
  
 -  gobject_class->set_property = gst_play_set_property;
 -  gobject_class->get_property = gst_play_get_property;
@@ -3406,7 +3412,7 @@ index f99bbe1..24b3e44 100644
  
    param_specs[PROP_VIDEO_RENDERER] =
        g_param_spec_object ("video-renderer",
-@@ -440,9 +440,9 @@ gst_play_class_init (GstPlayClass * klass)
+@@ -443,9 +443,9 @@ gst_play_class_init (GstPlayClass * klass)
  }
  
  static void
@@ -3418,7 +3424,7 @@ index f99bbe1..24b3e44 100644
  
    GST_TRACE_OBJECT (self, "Stopping main thread");
  
-@@ -470,9 +470,9 @@ gst_play_dispose (GObject * object)
+@@ -473,9 +473,9 @@ gst_play_dispose (GObject * object)
  }
  
  static void
@@ -3430,7 +3436,7 @@ index f99bbe1..24b3e44 100644
  
    GST_TRACE_OBJECT (self, "Finalizing");
  
-@@ -501,29 +501,29 @@ gst_play_finalize (GObject * object)
+@@ -504,29 +504,29 @@ gst_play_finalize (GObject * object)
  }
  
  static void
@@ -3467,7 +3473,7 @@ index f99bbe1..24b3e44 100644
  
    g_mutex_lock (&self->lock);
  
-@@ -531,8 +531,8 @@ gst_play_set_uri_internal (gpointer user_data)
+@@ -534,8 +534,8 @@ gst_play_set_uri_internal (gpointer user_data)
  
    g_object_set (self->playbin, "uri", self->uri, NULL);
  
@@ -3478,7 +3484,7 @@ index f99bbe1..24b3e44 100644
  
    g_object_set (self->playbin, "suburi", NULL, NULL);
  
-@@ -542,17 +542,17 @@ gst_play_set_uri_internal (gpointer user_data)
+@@ -545,17 +545,17 @@ gst_play_set_uri_internal (gpointer user_data)
  }
  
  static gboolean
@@ -3500,7 +3506,7 @@ index f99bbe1..24b3e44 100644
    g_mutex_lock (&self->lock);
  
    GST_DEBUG_OBJECT (self, "Changing SUBURI to '%s'",
-@@ -564,19 +564,19 @@ gst_play_set_suburi_internal (gpointer user_data)
+@@ -567,19 +567,19 @@ gst_play_set_suburi_internal (gpointer user_data)
  
    /* restore state and position */
    if (position != GST_CLOCK_TIME_NONE)
@@ -3525,7 +3531,7 @@ index f99bbe1..24b3e44 100644
  
    /* If there is no seek being dispatch to the main context currently do that,
     * otherwise we just updated the rate so that it will be taken by
-@@ -587,20 +587,20 @@ gst_play_set_rate_internal (GstPlay * self)
+@@ -590,20 +590,20 @@ gst_play_set_rate_internal (GstPlay * self)
      if (!self->seek_pending) {
        self->seek_source = g_idle_source_new ();
        g_source_set_callback (self->seek_source,
@@ -3549,7 +3555,7 @@ index f99bbe1..24b3e44 100644
    }
  
    if (video_sink) {
-@@ -611,10 +611,10 @@ gst_play_set_playbin_video_sink (GstPlay * self)
+@@ -614,10 +614,10 @@ gst_play_set_playbin_video_sink (GstPlay * self)
  }
  
  static void
@@ -3562,7 +3568,7 @@ index f99bbe1..24b3e44 100644
  
    switch (prop_id) {
      case PROP_VIDEO_RENDERER:
-@@ -622,12 +622,12 @@ gst_play_set_property (GObject * object, guint prop_id,
+@@ -625,12 +625,12 @@ gst_play_set_property (GObject * object, guint prop_id,
        g_clear_object (&self->video_renderer);
        self->video_renderer = g_value_dup_object (value);
  
@@ -3579,7 +3585,7 @@ index f99bbe1..24b3e44 100644
        }
        g_mutex_unlock (&self->lock);
        break;
-@@ -645,7 +645,7 @@ gst_play_set_property (GObject * object, guint prop_id,
+@@ -648,7 +648,7 @@ gst_play_set_property (GObject * object, guint prop_id,
        g_mutex_unlock (&self->lock);
  
        g_main_context_invoke_full (self->context, G_PRIORITY_DEFAULT,
@@ -3588,7 +3594,7 @@ index f99bbe1..24b3e44 100644
        break;
      }
      case PROP_SUBURI:{
-@@ -657,7 +657,7 @@ gst_play_set_property (GObject * object, guint prop_id,
+@@ -660,7 +660,7 @@ gst_play_set_property (GObject * object, guint prop_id,
        g_mutex_unlock (&self->lock);
  
        g_main_context_invoke_full (self->context, G_PRIORITY_DEFAULT,
@@ -3597,7 +3603,7 @@ index f99bbe1..24b3e44 100644
        break;
      }
      case PROP_VOLUME:
-@@ -668,7 +668,7 @@ gst_play_set_property (GObject * object, guint prop_id,
+@@ -671,7 +671,7 @@ gst_play_set_property (GObject * object, guint prop_id,
        g_mutex_lock (&self->lock);
        self->rate = g_value_get_double (value);
        GST_DEBUG_OBJECT (self, "Set rate=%lf", g_value_get_double (value));
@@ -3606,7 +3612,7 @@ index f99bbe1..24b3e44 100644
        g_mutex_unlock (&self->lock);
        break;
      case PROP_MUTE:
-@@ -700,10 +700,10 @@ gst_play_set_property (GObject * object, guint prop_id,
+@@ -703,10 +703,10 @@ gst_play_set_property (GObject * object, guint prop_id,
  }
  
  static void
@@ -3619,7 +3625,7 @@ index f99bbe1..24b3e44 100644
  
    switch (prop_id) {
      case PROP_URI:
-@@ -733,23 +733,23 @@ gst_play_get_property (GObject * object, guint prop_id,
+@@ -736,23 +736,23 @@ gst_play_get_property (GObject * object, guint prop_id,
        break;
      }
      case PROP_MEDIA_INFO:{
@@ -3648,7 +3654,7 @@ index f99bbe1..24b3e44 100644
        g_value_take_object (value, subtitle_info);
        break;
      }
-@@ -799,7 +799,7 @@ gst_play_get_property (GObject * object, guint prop_id,
+@@ -802,7 +802,7 @@ gst_play_get_property (GObject * object, guint prop_id,
  static gboolean
  main_loop_running_cb (gpointer user_data)
  {
@@ -3657,7 +3663,7 @@ index f99bbe1..24b3e44 100644
  
    GST_TRACE_OBJECT (self, "Main loop running now");
  
-@@ -811,30 +811,30 @@ main_loop_running_cb (gpointer user_data)
+@@ -814,30 +814,30 @@ main_loop_running_cb (gpointer user_data)
  }
  
  static void
@@ -3696,7 +3702,7 @@ index f99bbe1..24b3e44 100644
    }
  
    return G_SOURCE_CONTINUE;
-@@ -846,7 +846,7 @@ tick_cb (gpointer user_data)
+@@ -849,7 +849,7 @@ tick_cb (gpointer user_data)
   * and different.
   */
  static gboolean
@@ -3705,7 +3711,7 @@ index f99bbe1..24b3e44 100644
  {
    gint64 current_position;
    *position = self->cached_position;
-@@ -865,7 +865,7 @@ query_position (GstPlay * self, GstClockTime * position)
+@@ -868,7 +868,7 @@ query_position (GstPlay * self, GstClockTime * position)
  }
  
  static void
@@ -3714,7 +3720,7 @@ index f99bbe1..24b3e44 100644
  {
    guint position_update_interval_ms;
  
-@@ -873,7 +873,7 @@ add_tick_source (GstPlay * self)
+@@ -876,7 +876,7 @@ add_tick_source (GstPlay * self)
      return;
  
    position_update_interval_ms =
@@ -3723,7 +3729,7 @@ index f99bbe1..24b3e44 100644
    if (!position_update_interval_ms)
      return;
  
-@@ -883,7 +883,7 @@ add_tick_source (GstPlay * self)
+@@ -886,7 +886,7 @@ add_tick_source (GstPlay * self)
  }
  
  static void
@@ -3732,7 +3738,7 @@ index f99bbe1..24b3e44 100644
  {
    if (!self->tick_source)
      return;
-@@ -896,7 +896,7 @@ remove_tick_source (GstPlay * self)
+@@ -899,7 +899,7 @@ remove_tick_source (GstPlay * self)
  static gboolean
  ready_timeout_cb (gpointer user_data)
  {
@@ -3741,7 +3747,7 @@ index f99bbe1..24b3e44 100644
  
    if (self->target_state <= GST_STATE_READY) {
      GST_DEBUG_OBJECT (self, "Setting pipeline to NULL state");
-@@ -909,7 +909,7 @@ ready_timeout_cb (gpointer user_data)
+@@ -912,7 +912,7 @@ ready_timeout_cb (gpointer user_data)
  }
  
  static void
@@ -3750,7 +3756,7 @@ index f99bbe1..24b3e44 100644
  {
    if (self->ready_timeout_source)
      return;
-@@ -921,7 +921,7 @@ add_ready_timeout_source (GstPlay * self)
+@@ -924,7 +924,7 @@ add_ready_timeout_source (GstPlay * self)
  }
  
  static void
@@ -3759,7 +3765,7 @@ index f99bbe1..24b3e44 100644
  {
    if (!self->ready_timeout_source)
      return;
-@@ -933,14 +933,14 @@ remove_ready_timeout_source (GstPlay * self)
+@@ -936,14 +936,14 @@ remove_ready_timeout_source (GstPlay * self)
  
  
  static void
@@ -3778,7 +3784,7 @@ index f99bbe1..24b3e44 100644
  
    g_error_free (err);
  
-@@ -952,7 +952,7 @@ on_error (GstPlay * self, GError * err, const GstStructure * details)
+@@ -955,7 +955,7 @@ on_error (GstPlay * self, GError * err, const GstStructure * details)
    self->is_live = FALSE;
    self->is_eos = FALSE;
    gst_element_set_state (self->playbin, GST_STATE_NULL);
@@ -3787,7 +3793,7 @@ index f99bbe1..24b3e44 100644
    self->buffering_percent = 100;
  
    g_mutex_lock (&self->lock);
-@@ -974,7 +974,7 @@ on_error (GstPlay * self, GError * err, const GstStructure * details)
+@@ -977,7 +977,7 @@ on_error (GstPlay * self, GError * err, const GstStructure * details)
  }
  
  static void
@@ -3796,7 +3802,7 @@ index f99bbe1..24b3e44 100644
  {
    gchar *full_name;
  
-@@ -989,7 +989,7 @@ dump_dot_file (GstPlay * self, const gchar * name)
+@@ -992,7 +992,7 @@ dump_dot_file (GstPlay * self, const gchar * name)
  static void
  error_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
  {
@@ -3805,7 +3811,7 @@ index f99bbe1..24b3e44 100644
    GError *err, *play_err;
    gchar *name, *debug, *message, *full_message;
    const GstStructure *details = NULL;
-@@ -1016,7 +1016,7 @@ error_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
+@@ -1019,7 +1019,7 @@ error_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
      GST_ERROR_OBJECT (self, "Additional debug info: %s", debug);
  
    play_err =
@@ -3814,7 +3820,7 @@ index f99bbe1..24b3e44 100644
    on_error (self, play_err, details);
  
    g_clear_error (&err);
-@@ -1029,7 +1029,7 @@ error_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
+@@ -1032,7 +1032,7 @@ error_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
  static void
  warning_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
  {
@@ -3823,7 +3829,7 @@ index f99bbe1..24b3e44 100644
    GError *err, *play_err;
    gchar *name, *debug, *message, *full_message;
    const GstStructure *details = NULL;
-@@ -1056,19 +1056,19 @@ warning_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
+@@ -1059,19 +1059,19 @@ warning_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
      GST_WARNING_OBJECT (self, "Additional debug info: %s", debug);
  
    play_err =
@@ -3849,7 +3855,7 @@ index f99bbe1..24b3e44 100644
    }
  
    g_clear_error (&play_err);
-@@ -1083,16 +1083,16 @@ static void
+@@ -1086,16 +1086,16 @@ static void
  eos_cb (G_GNUC_UNUSED GstBus * bus, G_GNUC_UNUSED GstMessage * msg,
      gpointer user_data)
  {
@@ -3869,7 +3875,7 @@ index f99bbe1..24b3e44 100644
    self->buffering_percent = 100;
    self->is_eos = TRUE;
  }
-@@ -1100,7 +1100,7 @@ eos_cb (G_GNUC_UNUSED GstBus * bus, G_GNUC_UNUSED GstMessage * msg,
+@@ -1103,7 +1103,7 @@ eos_cb (G_GNUC_UNUSED GstBus * bus, G_GNUC_UNUSED GstMessage * msg,
  static void
  buffering_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
  {
@@ -3878,7 +3884,7 @@ index f99bbe1..24b3e44 100644
    gint percent;
  
    if (self->target_state < GST_STATE_PAUSED)
-@@ -1118,19 +1118,19 @@ buffering_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
+@@ -1121,19 +1121,19 @@ buffering_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
      state_ret = gst_element_set_state (self->playbin, GST_STATE_PAUSED);
  
      if (state_ret == GST_STATE_CHANGE_FAILURE) {
@@ -3902,7 +3908,7 @@ index f99bbe1..24b3e44 100644
    }
  
    g_mutex_lock (&self->lock);
-@@ -1149,13 +1149,13 @@ buffering_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
+@@ -1152,13 +1152,13 @@ buffering_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
      state_ret = gst_element_set_state (self->playbin, GST_STATE_PLAYING);
      /* Application state change is happening when the state change happened */
      if (state_ret == GST_STATE_CHANGE_FAILURE)
@@ -3918,7 +3924,7 @@ index f99bbe1..24b3e44 100644
    } else {
      g_mutex_unlock (&self->lock);
    }
-@@ -1165,7 +1165,7 @@ static void
+@@ -1168,7 +1168,7 @@ static void
  clock_lost_cb (G_GNUC_UNUSED GstBus * bus, G_GNUC_UNUSED GstMessage * msg,
      gpointer user_data)
  {
@@ -3927,7 +3933,7 @@ index f99bbe1..24b3e44 100644
    GstStateChangeReturn state_ret;
  
    GST_DEBUG_OBJECT (self, "Clock lost");
-@@ -1175,14 +1175,14 @@ clock_lost_cb (G_GNUC_UNUSED GstBus * bus, G_GNUC_UNUSED GstMessage * msg,
+@@ -1178,14 +1178,14 @@ clock_lost_cb (G_GNUC_UNUSED GstBus * bus, G_GNUC_UNUSED GstMessage * msg,
        state_ret = gst_element_set_state (self->playbin, GST_STATE_PLAYING);
  
      if (state_ret == GST_STATE_CHANGE_FAILURE)
@@ -3944,7 +3950,7 @@ index f99bbe1..24b3e44 100644
  {
    GstElement *video_sink;
    GstPad *video_sink_pad;
-@@ -1218,22 +1218,22 @@ check_video_dimensions_changed (GstPlay * self)
+@@ -1221,22 +1221,22 @@ check_video_dimensions_changed (GstPlay * self)
    gst_object_unref (video_sink);
  
  out:
@@ -3972,7 +3978,7 @@ index f99bbe1..24b3e44 100644
  {
    gboolean updated = FALSE;
  
-@@ -1251,9 +1251,9 @@ on_duration_changed (GstPlay * self, GstClockTime duration)
+@@ -1254,9 +1254,9 @@ on_duration_changed (GstPlay * self, GstClockTime duration)
    }
    g_mutex_unlock (&self->lock);
  
@@ -3985,7 +3991,7 @@ index f99bbe1..24b3e44 100644
  
    if (updated) {
      on_media_info_updated (self);
-@@ -1261,18 +1261,18 @@ on_duration_changed (GstPlay * self, GstClockTime duration)
+@@ -1264,18 +1264,18 @@ on_duration_changed (GstPlay * self, GstClockTime duration)
  }
  
  static void
@@ -4009,7 +4015,7 @@ index f99bbe1..24b3e44 100644
    GstState old_state, new_state, pending_state;
  
    gst_message_parse_state_changed (msg, &old_state, &new_state, &pending_state);
-@@ -1304,7 +1304,7 @@ state_changed_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
+@@ -1307,7 +1307,7 @@ state_changed_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
        g_mutex_lock (&self->lock);
        if (self->media_info)
          g_object_unref (self->media_info);
@@ -4018,7 +4024,7 @@ index f99bbe1..24b3e44 100644
        g_mutex_unlock (&self->lock);
        on_media_info_updated (self);
  
-@@ -1345,7 +1345,7 @@ state_changed_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
+@@ -1348,7 +1348,7 @@ state_changed_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
            self->last_seek_time = GST_CLOCK_TIME_NONE;
          } else if (self->seek_source) {
            GST_DEBUG_OBJECT (self, "Seek finished but new seek is pending");
@@ -4027,7 +4033,7 @@ index f99bbe1..24b3e44 100644
          } else {
            GST_DEBUG_OBJECT (self, "Seek finished");
            on_seek_done (self);
-@@ -1354,7 +1354,7 @@ state_changed_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
+@@ -1357,7 +1357,7 @@ state_changed_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
  
        if (self->seek_position != GST_CLOCK_TIME_NONE) {
          GST_DEBUG_OBJECT (self, "Seeking now that we reached PAUSED state");
@@ -4036,7 +4042,7 @@ index f99bbe1..24b3e44 100644
          g_mutex_unlock (&self->lock);
        } else if (!self->seek_pending) {
          g_mutex_unlock (&self->lock);
-@@ -1367,31 +1367,31 @@ state_changed_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
+@@ -1370,31 +1370,31 @@ state_changed_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
  
            state_ret = gst_element_set_state (self->playbin, GST_STATE_PLAYING);
            if (state_ret == GST_STATE_CHANGE_FAILURE)
@@ -4076,7 +4082,7 @@ index f99bbe1..24b3e44 100644
      }
    }
  }
-@@ -1400,7 +1400,7 @@ static void
+@@ -1403,7 +1403,7 @@ static void
  duration_changed_cb (G_GNUC_UNUSED GstBus * bus, G_GNUC_UNUSED GstMessage * msg,
      gpointer user_data)
  {
@@ -4085,7 +4091,7 @@ index f99bbe1..24b3e44 100644
    gint64 duration = GST_CLOCK_TIME_NONE;
  
    if (gst_element_query_duration (self->playbin, GST_FORMAT_TIME, &duration)) {
-@@ -1412,7 +1412,7 @@ static void
+@@ -1415,7 +1415,7 @@ static void
  latency_cb (G_GNUC_UNUSED GstBus * bus, G_GNUC_UNUSED GstMessage * msg,
      gpointer user_data)
  {
@@ -4094,7 +4100,7 @@ index f99bbe1..24b3e44 100644
  
    GST_DEBUG_OBJECT (self, "Latency changed");
  
-@@ -1423,7 +1423,7 @@ static void
+@@ -1426,7 +1426,7 @@ static void
  request_state_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
      gpointer user_data)
  {
@@ -4103,7 +4109,7 @@ index f99bbe1..24b3e44 100644
    GstState state;
    GstStateChangeReturn state_ret;
  
-@@ -1435,13 +1435,13 @@ request_state_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
+@@ -1438,13 +1438,13 @@ request_state_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
    self->target_state = state;
    state_ret = gst_element_set_state (self->playbin, state);
    if (state_ret == GST_STATE_CHANGE_FAILURE)
@@ -4119,7 +4125,7 @@ index f99bbe1..24b3e44 100644
  {
    g_free (info->title);
    info->title = get_from_tags (self, info, get_title);
-@@ -1460,7 +1460,7 @@ media_info_update (GstPlay * self, GstPlayMediaInfo * info)
+@@ -1463,7 +1463,7 @@ media_info_update (GstPlay * self, GstPlayMediaInfo * info)
  static void
  tags_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
  {
@@ -4128,7 +4134,7 @@ index f99bbe1..24b3e44 100644
    GstTagList *tags = NULL;
  
    gst_message_parse_tag (msg, &tags);
-@@ -1492,7 +1492,7 @@ tags_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
+@@ -1495,7 +1495,7 @@ tags_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
  static void
  element_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
  {
@@ -4137,7 +4143,7 @@ index f99bbe1..24b3e44 100644
    const GstStructure *s;
  
    s = gst_message_get_structure (msg);
-@@ -1531,7 +1531,7 @@ element_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
+@@ -1534,7 +1534,7 @@ element_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
        /* Remember target state and restore after setting the URI */
        target_state = self->target_state;
  
@@ -4146,7 +4152,7 @@ index f99bbe1..24b3e44 100644
  
        g_mutex_lock (&self->lock);
        g_free (self->redirect_uri);
-@@ -1540,16 +1540,16 @@ element_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
+@@ -1543,16 +1543,16 @@ element_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg, gpointer user_data)
        g_mutex_unlock (&self->lock);
  
        if (target_state == GST_STATE_PAUSED)
@@ -4166,7 +4172,7 @@ index f99bbe1..24b3e44 100644
  {
    if (self->collection && self->collection == collection)
      return FALSE;
-@@ -1561,7 +1561,7 @@ update_stream_collection (GstPlay * self, GstStreamCollection * collection)
+@@ -1564,7 +1564,7 @@ update_stream_collection (GstPlay * self, GstStreamCollection * collection)
        (GstObject *) collection);
    if (self->media_info) {
      gst_object_unref (self->media_info);
@@ -4175,7 +4181,7 @@ index f99bbe1..24b3e44 100644
    }
  
    self->stream_notify_id =
-@@ -1575,7 +1575,7 @@ static void
+@@ -1578,7 +1578,7 @@ static void
  stream_collection_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
      gpointer user_data)
  {
@@ -4184,7 +4190,7 @@ index f99bbe1..24b3e44 100644
    GstStreamCollection *collection = NULL;
    gboolean updated = FALSE;
  
-@@ -1597,7 +1597,7 @@ static void
+@@ -1600,7 +1600,7 @@ static void
  streams_selected_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
      gpointer user_data)
  {
@@ -4193,7 +4199,7 @@ index f99bbe1..24b3e44 100644
    GstStreamCollection *collection = NULL;
    gboolean updated = FALSE;
    guint i, len;
-@@ -1655,7 +1655,7 @@ streams_selected_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
+@@ -1658,7 +1658,7 @@ streams_selected_cb (G_GNUC_UNUSED GstBus * bus, GstMessage * msg,
  }
  
  static void
@@ -4202,7 +4208,7 @@ index f99bbe1..24b3e44 100644
  {
    gint flags;
  
-@@ -1667,7 +1667,7 @@ play_set_flag (GstPlay * self, gint pos)
+@@ -1670,7 +1670,7 @@ play_set_flag (GstPlay * self, gint pos)
  }
  
  static void
@@ -4211,7 +4217,7 @@ index f99bbe1..24b3e44 100644
  {
    gint flags;
  
-@@ -1685,22 +1685,22 @@ play_clear_flag (GstPlay * self, gint pos)
+@@ -1688,22 +1688,22 @@ play_clear_flag (GstPlay * self, gint pos)
   * application.
   */
  static void
@@ -4240,7 +4246,7 @@ index f99bbe1..24b3e44 100644
  {
    GstPad *pad = NULL;
    GstCaps *caps = NULL;
-@@ -1724,9 +1724,9 @@ get_caps (GstPlay * self, gint stream_index, GType type)
+@@ -1727,9 +1727,9 @@ get_caps (GstPlay * self, gint stream_index, GType type)
  }
  
  static void
@@ -4252,7 +4258,7 @@ index f99bbe1..24b3e44 100644
  
    if (stream_info->tags) {
  
-@@ -1768,7 +1768,7 @@ gst_play_subtitle_info_update (GstPlay * self, GstPlayStreamInfo * stream_info)
+@@ -1771,7 +1771,7 @@ gst_play_subtitle_info_update (GstPlay * self, GstPlayStreamInfo * stream_info)
          } else {
            g_object_get (G_OBJECT (self->playbin), "current-text", &text_index,
                NULL);
@@ -4261,7 +4267,7 @@ index f99bbe1..24b3e44 100644
              info->language = g_path_get_basename (suburi);
          }
          g_free (suburi);
-@@ -1784,9 +1784,9 @@ gst_play_subtitle_info_update (GstPlay * self, GstPlayStreamInfo * stream_info)
+@@ -1787,9 +1787,9 @@ gst_play_subtitle_info_update (GstPlay * self, GstPlayStreamInfo * stream_info)
  }
  
  static void
@@ -4273,7 +4279,7 @@ index f99bbe1..24b3e44 100644
  
    if (stream_info->caps) {
      GstStructure *s;
-@@ -1856,9 +1856,9 @@ gst_play_video_info_update (GstPlay * self, GstPlayStreamInfo * stream_info)
+@@ -1859,9 +1859,9 @@ gst_play_video_info_update (GstPlay * self, GstPlayStreamInfo * stream_info)
  }
  
  static void
@@ -4285,7 +4291,7 @@ index f99bbe1..24b3e44 100644
  
    if (stream_info->caps) {
      GstStructure *s;
-@@ -1928,19 +1928,19 @@ gst_play_audio_info_update (GstPlay * self, GstPlayStreamInfo * stream_info)
+@@ -1931,19 +1931,19 @@ gst_play_audio_info_update (GstPlay * self, GstPlayStreamInfo * stream_info)
        info->bitrate, info->max_bitrate);
  }
  
@@ -4310,7 +4316,7 @@ index f99bbe1..24b3e44 100644
      if ((G_OBJECT_TYPE (info) == type) && (info->stream_index == stream_index)) {
        return info;
      }
-@@ -1949,19 +1949,19 @@ gst_play_stream_info_find (GstPlayMediaInfo * media_info,
+@@ -1952,19 +1952,19 @@ gst_play_stream_info_find (GstPlayMediaInfo * media_info,
    return NULL;
  }
  
@@ -4335,7 +4341,7 @@ index f99bbe1..24b3e44 100644
      if (g_str_equal (info->stream_id, stream_id)) {
        return info;
      }
-@@ -1971,7 +1971,7 @@ gst_play_stream_info_find_from_stream_id (GstPlayMediaInfo * media_info,
+@@ -1974,7 +1974,7 @@ gst_play_stream_info_find_from_stream_id (GstPlayMediaInfo * media_info,
  }
  
  static gboolean
@@ -4344,7 +4350,7 @@ index f99bbe1..24b3e44 100644
  {
    gint flags;
  
-@@ -1983,39 +1983,39 @@ is_track_enabled (GstPlay * self, gint pos)
+@@ -1986,39 +1986,39 @@ is_track_enabled (GstPlay * self, gint pos)
    return FALSE;
  }
  
@@ -4394,7 +4400,7 @@ index f99bbe1..24b3e44 100644
    else
      info = NULL;
    g_mutex_unlock (&self->lock);
-@@ -2025,9 +2025,9 @@ gst_play_stream_info_get_current_from_stream_id (GstPlay * self,
+@@ -2028,9 +2028,9 @@ gst_play_stream_info_get_current_from_stream_id (GstPlay * self,
  
  static void
  stream_notify_cb (GstStreamCollection * collection, GstStream * stream,
@@ -4406,7 +4412,7 @@ index f99bbe1..24b3e44 100644
    const gchar *stream_id;
    gboolean emit_signal = FALSE;
  
-@@ -2040,9 +2040,9 @@ stream_notify_cb (GstStreamCollection * collection, GstStream * stream,
+@@ -2043,9 +2043,9 @@ stream_notify_cb (GstStreamCollection * collection, GstStream * stream,
  
    stream_id = gst_stream_get_stream_id (stream);
    g_mutex_lock (&self->lock);
@@ -4418,7 +4424,7 @@ index f99bbe1..24b3e44 100644
      emit_signal = TRUE;
    }
    g_mutex_unlock (&self->lock);
-@@ -2052,18 +2052,18 @@ stream_notify_cb (GstStreamCollection * collection, GstStream * stream,
+@@ -2055,18 +2055,18 @@ stream_notify_cb (GstStreamCollection * collection, GstStream * stream,
  }
  
  static void
@@ -4442,7 +4448,7 @@ index f99bbe1..24b3e44 100644
  {
    const gchar *type;
    GstTagList *tags;
-@@ -2076,7 +2076,7 @@ stream_info_get_codec (GstPlayStreamInfo * s)
+@@ -2079,7 +2079,7 @@ stream_info_get_codec (GstPlayStreamInfo * s)
    else
      type = GST_TAG_SUBTITLE_CODEC;
  
@@ -4451,7 +4457,7 @@ index f99bbe1..24b3e44 100644
    if (tags) {
      gst_tag_list_get_string (tags, type, &codec);
      if (!codec)
-@@ -2085,7 +2085,7 @@ stream_info_get_codec (GstPlayStreamInfo * s)
+@@ -2088,7 +2088,7 @@ stream_info_get_codec (GstPlayStreamInfo * s)
  
    if (!codec) {
      GstCaps *caps;
@@ -4460,7 +4466,7 @@ index f99bbe1..24b3e44 100644
      if (caps) {
        codec = gst_pb_utils_get_codec_description (caps);
      }
-@@ -2095,13 +2095,13 @@ stream_info_get_codec (GstPlayStreamInfo * s)
+@@ -2098,13 +2098,13 @@ stream_info_get_codec (GstPlayStreamInfo * s)
  }
  
  static void
@@ -4477,7 +4483,7 @@ index f99bbe1..24b3e44 100644
  
    if (GST_IS_PLAY_VIDEO_INFO (s))
      g_signal_emit_by_name (self->playbin, "get-video-tags",
-@@ -2124,18 +2124,18 @@ gst_play_stream_info_update_tags_and_caps (GstPlay * self,
+@@ -2127,18 +2127,18 @@ gst_play_stream_info_update_tags_and_caps (GstPlay * self,
    s->codec = stream_info_get_codec (s);
  
    GST_DEBUG_OBJECT (self, "%s index: %d tags: %p caps: %p",
@@ -4501,7 +4507,7 @@ index f99bbe1..24b3e44 100644
  
    if (!media_info)
      return;
-@@ -2146,11 +2146,11 @@ gst_play_streams_info_create (GstPlay * self,
+@@ -2149,11 +2149,11 @@ gst_play_streams_info_create (GstPlay * self,
  
    for (i = 0; i < total; i++) {
      /* check if stream already exist in the list */
@@ -4515,7 +4521,7 @@ index f99bbe1..24b3e44 100644
  
        /* add the object in stream list */
        media_info->stream_list = g_list_append (media_info->stream_list, s);
-@@ -2167,16 +2167,16 @@ gst_play_streams_info_create (GstPlay * self,
+@@ -2170,16 +2170,16 @@ gst_play_streams_info_create (GstPlay * self,
              (media_info->subtitle_stream_list, s);
  
        GST_DEBUG_OBJECT (self, "create %s stream stream_index: %d",
@@ -4536,7 +4542,7 @@ index f99bbe1..24b3e44 100644
  {
    if (s->tags)
      gst_tag_list_unref (s->tags);
-@@ -2190,19 +2190,19 @@ gst_play_stream_info_update_from_stream (GstPlay * self,
+@@ -2193,19 +2193,19 @@ gst_play_stream_info_update_from_stream (GstPlay * self,
    s->codec = stream_info_get_codec (s);
  
    GST_DEBUG_OBJECT (self, "%s index: %d tags: %p caps: %p",
@@ -4561,7 +4567,7 @@ index f99bbe1..24b3e44 100644
    guint n_audio = 0;
    guint n_video = 0;
    guint n_text = 0;
-@@ -2218,13 +2218,13 @@ gst_play_streams_info_create_from_collection (GstPlay * self,
+@@ -2221,13 +2221,13 @@ gst_play_streams_info_create_from_collection (GstPlay * self,
      const gchar *stream_id = gst_stream_get_stream_id (stream);
  
      if (stream_type & GST_STREAM_TYPE_AUDIO) {
@@ -4578,7 +4584,7 @@ index f99bbe1..24b3e44 100644
        n_text++;
      } else {
        GST_DEBUG_OBJECT (self, "Unknown type stream %d", i);
-@@ -2248,19 +2248,19 @@ gst_play_streams_info_create_from_collection (GstPlay * self,
+@@ -2251,19 +2251,19 @@ gst_play_streams_info_create_from_collection (GstPlay * self,
            (media_info->subtitle_stream_list, s);
  
      GST_DEBUG_OBJECT (self, "create %s stream stream_index: %d",
@@ -4602,7 +4608,7 @@ index f99bbe1..24b3e44 100644
        "n-video", GST_TYPE_PLAY_VIDEO_INFO);
    g_mutex_unlock (&self->lock);
  }
-@@ -2268,10 +2268,10 @@ video_changed_cb (G_GNUC_UNUSED GObject * object, gpointer user_data)
+@@ -2271,10 +2271,10 @@ video_changed_cb (G_GNUC_UNUSED GObject * object, gpointer user_data)
  static void
  audio_changed_cb (G_GNUC_UNUSED GObject * object, gpointer user_data)
  {
@@ -4615,7 +4621,7 @@ index f99bbe1..24b3e44 100644
        "n-audio", GST_TYPE_PLAY_AUDIO_INFO);
    g_mutex_unlock (&self->lock);
  }
-@@ -2279,10 +2279,10 @@ audio_changed_cb (G_GNUC_UNUSED GObject * object, gpointer user_data)
+@@ -2282,10 +2282,10 @@ audio_changed_cb (G_GNUC_UNUSED GObject * object, gpointer user_data)
  static void
  subtitle_changed_cb (G_GNUC_UNUSED GObject * object, gpointer user_data)
  {
@@ -4628,7 +4634,7 @@ index f99bbe1..24b3e44 100644
        "n-text", GST_TYPE_PLAY_SUBTITLE_INFO);
    g_mutex_unlock (&self->lock);
  }
-@@ -2314,7 +2314,7 @@ get_container_format (GstTagList * tags)
+@@ -2317,7 +2317,7 @@ get_container_format (GstTagList * tags)
  }
  
  static void *
@@ -4637,7 +4643,7 @@ index f99bbe1..24b3e44 100644
      void *(*func) (GstTagList *))
  {
    GList *l;
-@@ -2328,11 +2328,11 @@ get_from_tags (GstPlay * self, GstPlayMediaInfo * media_info,
+@@ -2331,11 +2331,11 @@ get_from_tags (GstPlay * self, GstPlayMediaInfo * media_info,
  
    /* if global tag does not exit then try video and audio streams */
    GST_DEBUG_OBJECT (self, "trying video tags");
@@ -4651,7 +4657,7 @@ index f99bbe1..24b3e44 100644
      if (tags)
        ret = func (tags);
  
-@@ -2341,11 +2341,11 @@ get_from_tags (GstPlay * self, GstPlayMediaInfo * media_info,
+@@ -2344,11 +2344,11 @@ get_from_tags (GstPlay * self, GstPlayMediaInfo * media_info,
    }
  
    GST_DEBUG_OBJECT (self, "trying audio tags");
@@ -4665,7 +4671,7 @@ index f99bbe1..24b3e44 100644
      if (tags)
        ret = func (tags);
  
-@@ -2369,15 +2369,15 @@ get_cover_sample (GstTagList * tags)
+@@ -2372,15 +2372,15 @@ get_cover_sample (GstTagList * tags)
    return cover_sample;
  }
  
@@ -4686,7 +4692,7 @@ index f99bbe1..24b3e44 100644
    media_info->tags = self->global_tags;
    media_info->is_live = self->is_live;
    self->global_tags = NULL;
-@@ -2388,15 +2388,15 @@ gst_play_media_info_create (GstPlay * self)
+@@ -2391,15 +2391,15 @@ gst_play_media_info_create (GstPlay * self)
    gst_query_unref (query);
  
    if (self->use_playbin3 && self->collection) {
@@ -4706,7 +4712,7 @@ index f99bbe1..24b3e44 100644
          GST_TYPE_PLAY_SUBTITLE_INFO);
    }
  
-@@ -2416,17 +2416,17 @@ gst_play_media_info_create (GstPlay * self)
+@@ -2419,17 +2419,17 @@ gst_play_media_info_create (GstPlay * self)
  }
  
  static void
@@ -4728,7 +4734,7 @@ index f99bbe1..24b3e44 100644
    g_mutex_unlock (&self->lock);
  
    on_media_info_updated (self);
-@@ -2458,29 +2458,29 @@ subtitle_tags_changed_cb (G_GNUC_UNUSED GstElement * playbin, gint stream_index,
+@@ -2461,29 +2461,29 @@ subtitle_tags_changed_cb (G_GNUC_UNUSED GstElement * playbin, gint stream_index,
  
  static void
  volume_notify_cb (G_GNUC_UNUSED GObject * obj, G_GNUC_UNUSED GParamSpec * pspec,
@@ -4768,7 +4774,7 @@ index f99bbe1..24b3e44 100644
    if (user_agent) {
      GParamSpec *prop;
  
-@@ -2496,9 +2496,9 @@ source_setup_cb (GstElement * playbin, GstElement * source, GstPlay * self)
+@@ -2499,9 +2499,9 @@ source_setup_cb (GstElement * playbin, GstElement * source, GstPlay * self)
  }
  
  static gpointer
@@ -4780,7 +4786,7 @@ index f99bbe1..24b3e44 100644
    GstBus *bus;
    GSource *source;
    GstElement *scaletempo;
-@@ -2514,7 +2514,7 @@ gst_play_main (gpointer data)
+@@ -2517,7 +2517,7 @@ gst_play_main (gpointer data)
    g_source_attach (source, self->context);
    g_source_unref (source);
  
@@ -4789,7 +4795,7 @@ index f99bbe1..24b3e44 100644
    if (env && g_str_has_prefix (env, "1"))
      self->use_playbin3 = TRUE;
  
-@@ -2526,21 +2526,21 @@ gst_play_main (gpointer data)
+@@ -2529,21 +2529,21 @@ gst_play_main (gpointer data)
    }
  
    if (!self->playbin) {
@@ -4814,7 +4820,7 @@ index f99bbe1..24b3e44 100644
          "will not be preserved during trick modes");
    }
  
-@@ -2598,7 +2598,7 @@ gst_play_main (gpointer data)
+@@ -2601,7 +2601,7 @@ gst_play_main (gpointer data)
  
    self->target_state = GST_STATE_NULL;
    self->current_state = GST_STATE_NULL;
@@ -4823,7 +4829,7 @@ index f99bbe1..24b3e44 100644
    self->buffering_percent = 100;
    self->is_eos = FALSE;
    self->is_live = FALSE;
-@@ -2639,36 +2639,36 @@ gst_play_main (gpointer data)
+@@ -2642,7 +2642,7 @@ gst_play_main (gpointer data)
  }
  
  static gpointer
@@ -4832,12 +4838,7 @@ index f99bbe1..24b3e44 100644
  {
    gst_init (NULL, NULL);
  
--  GST_DEBUG_CATEGORY_INIT (gst_play_debug, "gst-play", 0, "GstPlay");
--  gst_play_error_quark ();
-+  GST_DEBUG_CATEGORY_INIT (gtk_gst_play_debug, "gst-play", 0, "GtkGstPlay");
-+  gtk_gst_play_error_quark ();
- 
-   return NULL;
+@@ -2650,10 +2650,10 @@ gst_play_init_once (G_GNUC_UNUSED gpointer user_data)
  }
  
  /**
@@ -4851,7 +4852,9 @@ index f99bbe1..24b3e44 100644
   *
   * Video is going to be rendered by @video_renderer, or if %NULL is provided
   * no special video set up will be done and some default handling will be
-  * performed.
+@@ -2662,16 +2662,16 @@ gst_play_init_once (G_GNUC_UNUSED gpointer user_data)
+  * This also initializes GStreamer via `gst_init()` on the first call if this
+  * didn't happen before.
   *
 - * Returns: (transfer full): a new #GstPlay instance
 + * Returns: (transfer full): a new #GtkGstPlay instance
@@ -4871,7 +4874,7 @@ index f99bbe1..24b3e44 100644
  
    self = g_object_new (GST_TYPE_PLAY, "video-renderer", video_renderer, NULL);
  
-@@ -2681,14 +2681,14 @@ gst_play_new (GstPlayVideoRenderer * video_renderer)
+@@ -2684,14 +2684,14 @@ gst_play_new (GstPlayVideoRenderer * video_renderer)
  }
  
  /**
@@ -4890,7 +4893,7 @@ index f99bbe1..24b3e44 100644
   * Further fields of the message data are specific to each possible value of
   * that enumeration.
   *
-@@ -2702,15 +2702,15 @@ gst_play_new (GstPlayVideoRenderer * video_renderer)
+@@ -2705,15 +2705,15 @@ gst_play_new (GstPlayVideoRenderer * video_renderer)
   * Since: 1.20
   */
  GstBus *
@@ -4909,7 +4912,7 @@ index f99bbe1..24b3e44 100644
    GstStateChangeReturn state_ret;
  
    GST_DEBUG_OBJECT (self, "Play");
-@@ -2726,7 +2726,7 @@ gst_play_play_internal (gpointer user_data)
+@@ -2729,7 +2729,7 @@ gst_play_play_internal (gpointer user_data)
    self->target_state = GST_STATE_PLAYING;
  
    if (self->current_state < GST_STATE_PAUSED)
@@ -4918,7 +4921,7 @@ index f99bbe1..24b3e44 100644
  
    if (self->current_state >= GST_STATE_PAUSED && !self->is_eos
        && self->buffering_percent >= 100
-@@ -2737,7 +2737,7 @@ gst_play_play_internal (gpointer user_data)
+@@ -2740,7 +2740,7 @@ gst_play_play_internal (gpointer user_data)
    }
  
    if (state_ret == GST_STATE_CHANGE_FAILURE) {
@@ -4927,7 +4930,7 @@ index f99bbe1..24b3e44 100644
              "Failed to play"), NULL);
      return G_SOURCE_REMOVE;
    } else if (state_ret == GST_STATE_CHANGE_NO_PREROLL) {
-@@ -2755,8 +2755,8 @@ gst_play_play_internal (gpointer user_data)
+@@ -2758,8 +2758,8 @@ gst_play_play_internal (gpointer user_data)
          GST_SEEK_FLAG_FLUSH, 0);
      if (!ret) {
        GST_ERROR_OBJECT (self, "Seek to beginning failed");
@@ -4938,7 +4941,7 @@ index f99bbe1..24b3e44 100644
      }
    }
  
-@@ -2764,25 +2764,25 @@ gst_play_play_internal (gpointer user_data)
+@@ -2767,25 +2767,25 @@ gst_play_play_internal (gpointer user_data)
  }
  
  /**
@@ -4970,7 +4973,7 @@ index f99bbe1..24b3e44 100644
    GstStateChangeReturn state_ret;
  
    GST_DEBUG_OBJECT (self, "Pause");
-@@ -2801,11 +2801,11 @@ gst_play_pause_internal (gpointer user_data)
+@@ -2804,11 +2804,11 @@ gst_play_pause_internal (gpointer user_data)
    self->target_state = GST_STATE_PAUSED;
  
    if (self->current_state < GST_STATE_PAUSED)
@@ -4984,7 +4987,7 @@ index f99bbe1..24b3e44 100644
              "Failed to pause"), NULL);
      return G_SOURCE_REMOVE;
    } else if (state_ret == GST_STATE_CHANGE_NO_PREROLL) {
-@@ -2823,8 +2823,8 @@ gst_play_pause_internal (gpointer user_data)
+@@ -2826,8 +2826,8 @@ gst_play_pause_internal (gpointer user_data)
          GST_SEEK_FLAG_FLUSH, 0);
      if (!ret) {
        GST_ERROR_OBJECT (self, "Seek to beginning failed");
@@ -4995,7 +4998,7 @@ index f99bbe1..24b3e44 100644
      }
    }
  
-@@ -2832,23 +2832,23 @@ gst_play_pause_internal (gpointer user_data)
+@@ -2835,23 +2835,23 @@ gst_play_pause_internal (gpointer user_data)
  }
  
  /**
@@ -5024,7 +5027,7 @@ index f99bbe1..24b3e44 100644
  {
    /* directly return if we're already stopped */
    if (self->current_state <= GST_STATE_READY &&
-@@ -2871,8 +2871,8 @@ gst_play_stop_internal (GstPlay * self, gboolean transient)
+@@ -2874,8 +2874,8 @@ gst_play_stop_internal (GstPlay * self, gboolean transient)
    gst_bus_set_flushing (self->bus, FALSE);
    change_state (self, transient
        && self->app_state !=
@@ -5035,7 +5038,7 @@ index f99bbe1..24b3e44 100644
    self->buffering_percent = 100;
    self->cached_duration = GST_CLOCK_TIME_NONE;
    g_mutex_lock (&self->lock);
-@@ -2906,36 +2906,36 @@ gst_play_stop_internal (GstPlay * self, gboolean transient)
+@@ -2909,36 +2909,36 @@ gst_play_stop_internal (GstPlay * self, gboolean transient)
  }
  
  static gboolean
@@ -5080,7 +5083,7 @@ index f99bbe1..24b3e44 100644
  {
    gboolean ret;
    GstClockTime position;
-@@ -2954,7 +2954,7 @@ gst_play_seek_internal_locked (GstPlay * self)
+@@ -2957,7 +2957,7 @@ gst_play_seek_internal_locked (GstPlay * self)
      g_mutex_unlock (&self->lock);
      state_ret = gst_element_set_state (self->playbin, GST_STATE_PAUSED);
      if (state_ret == GST_STATE_CHANGE_FAILURE) {
@@ -5089,7 +5092,7 @@ index f99bbe1..24b3e44 100644
                "Failed to seek"), NULL);
        g_mutex_lock (&self->lock);
        return;
-@@ -2975,7 +2975,7 @@ gst_play_seek_internal_locked (GstPlay * self)
+@@ -2978,7 +2978,7 @@ gst_play_seek_internal_locked (GstPlay * self)
  
    flags |= GST_SEEK_FLAG_FLUSH;
  
@@ -5098,7 +5101,7 @@ index f99bbe1..24b3e44 100644
  
    if (accurate) {
      flags |= GST_SEEK_FLAG_ACCURATE;
-@@ -3000,7 +3000,7 @@ gst_play_seek_internal_locked (GstPlay * self)
+@@ -3003,7 +3003,7 @@ gst_play_seek_internal_locked (GstPlay * self)
  
    ret = gst_element_send_event (self->playbin, s_event);
    if (!ret)
@@ -5107,7 +5110,7 @@ index f99bbe1..24b3e44 100644
              "Failed to seek to %" GST_TIME_FORMAT, GST_TIME_ARGS (position)),
          NULL);
  
-@@ -3008,27 +3008,27 @@ gst_play_seek_internal_locked (GstPlay * self)
+@@ -3011,27 +3011,27 @@ gst_play_seek_internal_locked (GstPlay * self)
  }
  
  static gboolean
@@ -5141,7 +5144,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_if_fail (GST_IS_PLAY (self));
    g_return_if_fail (rate != 0.0);
-@@ -3037,14 +3037,14 @@ gst_play_set_rate (GstPlay * self, gdouble rate)
+@@ -3040,14 +3040,14 @@ gst_play_set_rate (GstPlay * self, gdouble rate)
  }
  
  /**
@@ -5159,7 +5162,7 @@ index f99bbe1..24b3e44 100644
  {
    gdouble val;
  
-@@ -3056,8 +3056,8 @@ gst_play_get_rate (GstPlay * self)
+@@ -3059,8 +3059,8 @@ gst_play_get_rate (GstPlay * self)
  }
  
  /**
@@ -5170,7 +5173,7 @@ index f99bbe1..24b3e44 100644
   * @position: position to seek in nanoseconds
   *
   * Seeks the currently-playing stream to the absolute @position time
-@@ -3065,7 +3065,7 @@ gst_play_get_rate (GstPlay * self)
+@@ -3068,7 +3068,7 @@ gst_play_get_rate (GstPlay * self)
   * Since: 1.20
   */
  void
@@ -5179,7 +5182,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_if_fail (GST_IS_PLAY (self));
    g_return_if_fail (GST_CLOCK_TIME_IS_VALID (position));
-@@ -3091,7 +3091,7 @@ gst_play_seek (GstPlay * self, GstClockTime position)
+@@ -3094,7 +3094,7 @@ gst_play_seek (GstPlay * self, GstClockTime position)
      if (!self->seek_pending || (now - self->last_seek_time > 250 * GST_MSECOND)) {
        self->seek_source = g_idle_source_new ();
        g_source_set_callback (self->seek_source,
@@ -5188,7 +5191,7 @@ index f99bbe1..24b3e44 100644
        GST_TRACE_OBJECT (self, "Dispatching seek to position %" GST_TIME_FORMAT,
            GST_TIME_ARGS (position));
        g_source_attach (self->seek_source, self->context);
-@@ -3102,7 +3102,7 @@ gst_play_seek (GstPlay * self, GstClockTime position)
+@@ -3105,7 +3105,7 @@ gst_play_seek (GstPlay * self, GstClockTime position)
         * it must be smaller than 250 mseconds */
        self->seek_source = g_timeout_source_new (delay);
        g_source_set_callback (self->seek_source,
@@ -5197,7 +5200,7 @@ index f99bbe1..24b3e44 100644
  
        GST_TRACE_OBJECT (self,
            "Delaying seek to position %" GST_TIME_FORMAT " by %u us",
-@@ -3114,7 +3114,7 @@ gst_play_seek (GstPlay * self, GstClockTime position)
+@@ -3117,7 +3117,7 @@ gst_play_seek (GstPlay * self, GstClockTime position)
  }
  
  static void
@@ -5206,7 +5209,7 @@ index f99bbe1..24b3e44 100644
  {
    if (!self->seek_source)
      return;
-@@ -3125,8 +3125,8 @@ remove_seek_source (GstPlay * self)
+@@ -3128,8 +3128,8 @@ remove_seek_source (GstPlay * self)
  }
  
  /**
@@ -5217,7 +5220,7 @@ index f99bbe1..24b3e44 100644
   *
   * Gets the URI of the currently-playing stream.
   *
-@@ -3135,7 +3135,7 @@ remove_seek_source (GstPlay * self)
+@@ -3138,7 +3138,7 @@ remove_seek_source (GstPlay * self)
   * Since: 1.20
   */
  gchar *
@@ -5226,7 +5229,7 @@ index f99bbe1..24b3e44 100644
  {
    gchar *val;
  
-@@ -3147,15 +3147,15 @@ gst_play_get_uri (GstPlay * self)
+@@ -3150,15 +3150,15 @@ gst_play_get_uri (GstPlay * self)
  }
  
  /**
@@ -5245,7 +5248,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_if_fail (GST_IS_PLAY (self));
  
-@@ -3163,17 +3163,17 @@ gst_play_set_uri (GstPlay * self, const gchar * val)
+@@ -3166,17 +3166,17 @@ gst_play_set_uri (GstPlay * self, const gchar * val)
  }
  
  /**
@@ -5267,7 +5270,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_if_fail (GST_IS_PLAY (self));
  
-@@ -3181,8 +3181,8 @@ gst_play_set_subtitle_uri (GstPlay * self, const gchar * suburi)
+@@ -3184,8 +3184,8 @@ gst_play_set_subtitle_uri (GstPlay * self, const gchar * suburi)
  }
  
  /**
@@ -5278,7 +5281,7 @@ index f99bbe1..24b3e44 100644
   *
   * current subtitle URI
   *
-@@ -3191,7 +3191,7 @@ gst_play_set_subtitle_uri (GstPlay * self, const gchar * suburi)
+@@ -3194,7 +3194,7 @@ gst_play_set_subtitle_uri (GstPlay * self, const gchar * suburi)
   * Since: 1.20
   */
  gchar *
@@ -5287,7 +5290,7 @@ index f99bbe1..24b3e44 100644
  {
    gchar *val = NULL;
  
-@@ -3203,15 +3203,15 @@ gst_play_get_subtitle_uri (GstPlay * self)
+@@ -3206,15 +3206,15 @@ gst_play_get_subtitle_uri (GstPlay * self)
  }
  
  /**
@@ -5306,7 +5309,7 @@ index f99bbe1..24b3e44 100644
  {
    GstClockTime val;
  
-@@ -3223,8 +3223,8 @@ gst_play_get_position (GstPlay * self)
+@@ -3226,8 +3226,8 @@ gst_play_get_position (GstPlay * self)
  }
  
  /**
@@ -5317,7 +5320,7 @@ index f99bbe1..24b3e44 100644
   *
   * Retrieves the duration of the media stream that self represents.
   *
-@@ -3233,7 +3233,7 @@ gst_play_get_position (GstPlay * self)
+@@ -3236,7 +3236,7 @@ gst_play_get_position (GstPlay * self)
   * Since: 1.20
   */
  GstClockTime
@@ -5326,7 +5329,7 @@ index f99bbe1..24b3e44 100644
  {
    GstClockTime val;
  
-@@ -3245,8 +3245,8 @@ gst_play_get_duration (GstPlay * self)
+@@ -3248,8 +3248,8 @@ gst_play_get_duration (GstPlay * self)
  }
  
  /**
@@ -5337,7 +5340,7 @@ index f99bbe1..24b3e44 100644
   *
   * Returns the current volume level, as a percentage between 0 and 1.
   *
-@@ -3254,7 +3254,7 @@ gst_play_get_duration (GstPlay * self)
+@@ -3257,7 +3257,7 @@ gst_play_get_duration (GstPlay * self)
   * Since: 1.20
   */
  gdouble
@@ -5346,7 +5349,7 @@ index f99bbe1..24b3e44 100644
  {
    gdouble val;
  
-@@ -3266,15 +3266,15 @@ gst_play_get_volume (GstPlay * self)
+@@ -3269,15 +3269,15 @@ gst_play_get_volume (GstPlay * self)
  }
  
  /**
@@ -5365,7 +5368,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_if_fail (GST_IS_PLAY (self));
  
-@@ -3282,14 +3282,14 @@ gst_play_set_volume (GstPlay * self, gdouble val)
+@@ -3285,14 +3285,14 @@ gst_play_set_volume (GstPlay * self, gdouble val)
  }
  
  /**
@@ -5383,7 +5386,7 @@ index f99bbe1..24b3e44 100644
  {
    gboolean val;
  
-@@ -3301,15 +3301,15 @@ gst_play_get_mute (GstPlay * self)
+@@ -3304,15 +3304,15 @@ gst_play_get_mute (GstPlay * self)
  }
  
  /**
@@ -5402,7 +5405,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_if_fail (GST_IS_PLAY (self));
  
-@@ -3317,8 +3317,8 @@ gst_play_set_mute (GstPlay * self, gboolean val)
+@@ -3320,8 +3320,8 @@ gst_play_set_mute (GstPlay * self, gboolean val)
  }
  
  /**
@@ -5413,7 +5416,7 @@ index f99bbe1..24b3e44 100644
   *
   * Returns: (transfer full): The internal playbin instance.
   *
-@@ -3326,7 +3326,7 @@ gst_play_set_mute (GstPlay * self, gboolean val)
+@@ -3329,7 +3329,7 @@ gst_play_set_mute (GstPlay * self, gboolean val)
   * Since: 1.20
   */
  GstElement *
@@ -5422,7 +5425,7 @@ index f99bbe1..24b3e44 100644
  {
    GstElement *val;
  
-@@ -3338,20 +3338,20 @@ gst_play_get_pipeline (GstPlay * self)
+@@ -3341,20 +3341,20 @@ gst_play_get_pipeline (GstPlay * self)
  }
  
  /**
@@ -5449,7 +5452,7 @@ index f99bbe1..24b3e44 100644
  
    g_return_val_if_fail (GST_IS_PLAY (self), NULL);
  
-@@ -3359,39 +3359,39 @@ gst_play_get_media_info (GstPlay * self)
+@@ -3362,39 +3362,39 @@ gst_play_get_media_info (GstPlay * self)
      return NULL;
  
    g_mutex_lock (&self->lock);
@@ -5500,7 +5503,7 @@ index f99bbe1..24b3e44 100644
          "current-audio", GST_TYPE_PLAY_AUDIO_INFO);
    }
  
-@@ -3399,32 +3399,32 @@ gst_play_get_current_audio_track (GstPlay * self)
+@@ -3402,32 +3402,32 @@ gst_play_get_current_audio_track (GstPlay * self)
  }
  
  /**
@@ -5543,7 +5546,7 @@ index f99bbe1..24b3e44 100644
          "current-video", GST_TYPE_PLAY_VIDEO_INFO);
    }
  
-@@ -3432,32 +3432,32 @@ gst_play_get_current_video_track (GstPlay * self)
+@@ -3435,32 +3435,32 @@ gst_play_get_current_video_track (GstPlay * self)
  }
  
  /**
@@ -5586,7 +5589,7 @@ index f99bbe1..24b3e44 100644
          "current-text", GST_TYPE_PLAY_SUBTITLE_INFO);
    }
  
-@@ -3466,7 +3466,7 @@ gst_play_get_current_subtitle_track (GstPlay * self)
+@@ -3469,7 +3469,7 @@ gst_play_get_current_subtitle_track (GstPlay * self)
  
  /* Must be called with lock */
  static gboolean
@@ -5595,7 +5598,7 @@ index f99bbe1..24b3e44 100644
  {
    GList *stream_list = NULL;
    gboolean ret = FALSE;
-@@ -3492,8 +3492,8 @@ gst_play_select_streams (GstPlay * self)
+@@ -3495,8 +3495,8 @@ gst_play_select_streams (GstPlay * self)
  }
  
  /**
@@ -5606,7 +5609,7 @@ index f99bbe1..24b3e44 100644
   * @stream_index: stream index
   *
   * Returns: %TRUE or %FALSE
-@@ -3502,15 +3502,15 @@ gst_play_select_streams (GstPlay * self)
+@@ -3505,15 +3505,15 @@ gst_play_select_streams (GstPlay * self)
   * Since: 1.20
   */
  gboolean
@@ -5625,7 +5628,7 @@ index f99bbe1..24b3e44 100644
        GST_TYPE_PLAY_AUDIO_INFO, stream_index);
    g_mutex_unlock (&self->lock);
    if (!info) {
-@@ -3522,7 +3522,7 @@ gst_play_set_audio_track (GstPlay * self, gint stream_index)
+@@ -3525,7 +3525,7 @@ gst_play_set_audio_track (GstPlay * self, gint stream_index)
      g_mutex_lock (&self->lock);
      g_free (self->audio_sid);
      self->audio_sid = g_strdup (info->stream_id);
@@ -5634,7 +5637,7 @@ index f99bbe1..24b3e44 100644
      g_mutex_unlock (&self->lock);
    } else {
      g_object_set (G_OBJECT (self->playbin), "current-audio", stream_index,
-@@ -3534,8 +3534,8 @@ gst_play_set_audio_track (GstPlay * self, gint stream_index)
+@@ -3537,8 +3537,8 @@ gst_play_set_audio_track (GstPlay * self, gint stream_index)
  }
  
  /**
@@ -5645,7 +5648,7 @@ index f99bbe1..24b3e44 100644
   * @stream_index: stream index
   *
   * Returns: %TRUE or %FALSE
-@@ -3544,16 +3544,16 @@ gst_play_set_audio_track (GstPlay * self, gint stream_index)
+@@ -3547,16 +3547,16 @@ gst_play_set_audio_track (GstPlay * self, gint stream_index)
   * Since: 1.20
   */
  gboolean
@@ -5665,7 +5668,7 @@ index f99bbe1..24b3e44 100644
        GST_TYPE_PLAY_VIDEO_INFO, stream_index);
    g_mutex_unlock (&self->lock);
    if (!info) {
-@@ -3565,7 +3565,7 @@ gst_play_set_video_track (GstPlay * self, gint stream_index)
+@@ -3568,7 +3568,7 @@ gst_play_set_video_track (GstPlay * self, gint stream_index)
      g_mutex_lock (&self->lock);
      g_free (self->video_sid);
      self->video_sid = g_strdup (info->stream_id);
@@ -5674,7 +5677,7 @@ index f99bbe1..24b3e44 100644
      g_mutex_unlock (&self->lock);
    } else {
      g_object_set (G_OBJECT (self->playbin), "current-video", stream_index,
-@@ -3577,8 +3577,8 @@ gst_play_set_video_track (GstPlay * self, gint stream_index)
+@@ -3580,8 +3580,8 @@ gst_play_set_video_track (GstPlay * self, gint stream_index)
  }
  
  /**
@@ -5685,7 +5688,7 @@ index f99bbe1..24b3e44 100644
   * @stream_index: stream index
   *
   * Returns: %TRUE or %FALSE
-@@ -3587,15 +3587,15 @@ gst_play_set_video_track (GstPlay * self, gint stream_index)
+@@ -3590,15 +3590,15 @@ gst_play_set_video_track (GstPlay * self, gint stream_index)
   * Since: 1.20
   */
  gboolean
@@ -5704,7 +5707,7 @@ index f99bbe1..24b3e44 100644
        GST_TYPE_PLAY_SUBTITLE_INFO, stream_index);
    g_mutex_unlock (&self->lock);
    if (!info) {
-@@ -3607,7 +3607,7 @@ gst_play_set_subtitle_track (GstPlay * self, gint stream_index)
+@@ -3610,7 +3610,7 @@ gst_play_set_subtitle_track (GstPlay * self, gint stream_index)
      g_mutex_lock (&self->lock);
      g_free (self->subtitle_sid);
      self->subtitle_sid = g_strdup (info->stream_id);
@@ -5713,7 +5716,7 @@ index f99bbe1..24b3e44 100644
      g_mutex_unlock (&self->lock);
    } else {
      g_object_set (G_OBJECT (self->playbin), "current-text", stream_index, NULL);
-@@ -3618,80 +3618,80 @@ gst_play_set_subtitle_track (GstPlay * self, gint stream_index)
+@@ -3621,80 +3621,80 @@ gst_play_set_subtitle_track (GstPlay * self, gint stream_index)
  }
  
  /**
@@ -5813,7 +5816,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_val_if_fail (GST_IS_PLAY (self), FALSE);
  
-@@ -3721,8 +3721,8 @@ error_no_element:
+@@ -3724,8 +3724,8 @@ error_no_element:
  }
  
  /**
@@ -5824,7 +5827,7 @@ index f99bbe1..24b3e44 100644
   *
   * Returns: (transfer full) (nullable): Name of the currently enabled
   *   visualization.
-@@ -3730,14 +3730,14 @@ error_no_element:
+@@ -3733,14 +3733,14 @@ error_no_element:
   * Since: 1.20
   */
  gchar *
@@ -5841,7 +5844,7 @@ index f99bbe1..24b3e44 100644
      return NULL;
  
    g_object_get (self->playbin, "vis-plugin", &vis_plugin, NULL);
-@@ -3755,22 +3755,22 @@ gst_play_get_current_visualization (GstPlay * self)
+@@ -3758,22 +3758,22 @@ gst_play_get_current_visualization (GstPlay * self)
  }
  
  /**
@@ -5869,7 +5872,7 @@ index f99bbe1..24b3e44 100644
  
    GST_DEBUG_OBJECT (self, "visualization is '%s'",
        enabled ? "Enabled" : "Disabled");
-@@ -3783,21 +3783,21 @@ struct CBChannelMap
+@@ -3786,21 +3786,21 @@ struct CBChannelMap
  };
  
  static const struct CBChannelMap cb_channel_map[] = {
@@ -5899,7 +5902,7 @@ index f99bbe1..24b3e44 100644
      return NULL;
  
    channels =
-@@ -3812,8 +3812,8 @@ gst_play_color_balance_find_channel (GstPlay * self,
+@@ -3815,8 +3815,8 @@ gst_play_color_balance_find_channel (GstPlay * self,
  }
  
  /**
@@ -5910,7 +5913,7 @@ index f99bbe1..24b3e44 100644
   *
   * Checks whether the @play has color balance support available.
   *
-@@ -3822,7 +3822,7 @@ gst_play_color_balance_find_channel (GstPlay * self,
+@@ -3825,7 +3825,7 @@ gst_play_color_balance_find_channel (GstPlay * self,
   * Since: 1.20
   */
  gboolean
@@ -5919,7 +5922,7 @@ index f99bbe1..24b3e44 100644
  {
    const GList *channels;
  
-@@ -3837,9 +3837,9 @@ gst_play_has_color_balance (GstPlay * self)
+@@ -3840,9 +3840,9 @@ gst_play_has_color_balance (GstPlay * self)
  }
  
  /**
@@ -5932,7 +5935,7 @@ index f99bbe1..24b3e44 100644
   * @value: The new value for the @type, ranged [0,1]
   *
   * Sets the current value of the indicated channel @type to the passed
-@@ -3847,7 +3847,7 @@ gst_play_has_color_balance (GstPlay * self)
+@@ -3850,7 +3850,7 @@ gst_play_has_color_balance (GstPlay * self)
   * Since: 1.20
   */
  void
@@ -5941,7 +5944,7 @@ index f99bbe1..24b3e44 100644
      gdouble value)
  {
    GstColorBalanceChannel *channel;
-@@ -3859,7 +3859,7 @@ gst_play_set_color_balance (GstPlay * self, GstPlayColorBalanceType type,
+@@ -3862,7 +3862,7 @@ gst_play_set_color_balance (GstPlay * self, GstPlayColorBalanceType type,
    if (!GST_IS_COLOR_BALANCE (self->playbin))
      return;
  
@@ -5950,7 +5953,7 @@ index f99bbe1..24b3e44 100644
    if (!channel)
      return;
  
-@@ -3874,9 +3874,9 @@ gst_play_set_color_balance (GstPlay * self, GstPlayColorBalanceType type,
+@@ -3877,9 +3877,9 @@ gst_play_set_color_balance (GstPlay * self, GstPlayColorBalanceType type,
  }
  
  /**
@@ -5963,7 +5966,7 @@ index f99bbe1..24b3e44 100644
   *
   * Retrieve the current value of the indicated @type.
   *
-@@ -3885,7 +3885,7 @@ gst_play_set_color_balance (GstPlay * self, GstPlayColorBalanceType type,
+@@ -3888,7 +3888,7 @@ gst_play_set_color_balance (GstPlay * self, GstPlayColorBalanceType type,
   * Since: 1.20
   */
  gdouble
@@ -5972,7 +5975,7 @@ index f99bbe1..24b3e44 100644
  {
    GstColorBalanceChannel *channel;
    gint value;
-@@ -3895,7 +3895,7 @@ gst_play_get_color_balance (GstPlay * self, GstPlayColorBalanceType type)
+@@ -3898,7 +3898,7 @@ gst_play_get_color_balance (GstPlay * self, GstPlayColorBalanceType type)
    if (!GST_IS_COLOR_BALANCE (self->playbin))
      return -1;
  
@@ -5981,7 +5984,7 @@ index f99bbe1..24b3e44 100644
    if (!channel)
      return -1;
  
-@@ -3908,8 +3908,8 @@ gst_play_get_color_balance (GstPlay * self, GstPlayColorBalanceType type)
+@@ -3911,8 +3911,8 @@ gst_play_get_color_balance (GstPlay * self, GstPlayColorBalanceType type)
  }
  
  /**
@@ -5992,7 +5995,7 @@ index f99bbe1..24b3e44 100644
   *
   * Retrieve the current value of the indicated @type.
   *
-@@ -3918,7 +3918,7 @@ gst_play_get_color_balance (GstPlay * self, GstPlayColorBalanceType type)
+@@ -3921,7 +3921,7 @@ gst_play_get_color_balance (GstPlay * self, GstPlayColorBalanceType type)
   * Since: 1.20
   */
  GstVideoMultiviewFramePacking
@@ -6001,7 +6004,7 @@ index f99bbe1..24b3e44 100644
  {
    GstVideoMultiviewFramePacking val = GST_VIDEO_MULTIVIEW_FRAME_PACKING_NONE;
  
-@@ -3931,8 +3931,8 @@ gst_play_get_multiview_mode (GstPlay * self)
+@@ -3934,8 +3934,8 @@ gst_play_get_multiview_mode (GstPlay * self)
  }
  
  /**
@@ -6012,7 +6015,7 @@ index f99bbe1..24b3e44 100644
   * @mode: The new value for the @type
   *
   * Sets the current value of the indicated mode @type to the passed
-@@ -3941,7 +3941,7 @@ gst_play_get_multiview_mode (GstPlay * self)
+@@ -3944,7 +3944,7 @@ gst_play_get_multiview_mode (GstPlay * self)
   * Since: 1.20
   */
  void
@@ -6021,7 +6024,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_if_fail (GST_IS_PLAY (self));
  
-@@ -3949,8 +3949,8 @@ gst_play_set_multiview_mode (GstPlay * self, GstVideoMultiviewFramePacking mode)
+@@ -3952,8 +3952,8 @@ gst_play_set_multiview_mode (GstPlay * self, GstVideoMultiviewFramePacking mode)
  }
  
  /**
@@ -6032,7 +6035,7 @@ index f99bbe1..24b3e44 100644
   *
   * Retrieve the current value of the indicated @type.
   *
-@@ -3959,7 +3959,7 @@ gst_play_set_multiview_mode (GstPlay * self, GstVideoMultiviewFramePacking mode)
+@@ -3962,7 +3962,7 @@ gst_play_set_multiview_mode (GstPlay * self, GstVideoMultiviewFramePacking mode)
   * Since: 1.20
   */
  GstVideoMultiviewFlags
@@ -6041,7 +6044,7 @@ index f99bbe1..24b3e44 100644
  {
    GstVideoMultiviewFlags val = GST_VIDEO_MULTIVIEW_FLAGS_NONE;
  
-@@ -3971,8 +3971,8 @@ gst_play_get_multiview_flags (GstPlay * self)
+@@ -3974,8 +3974,8 @@ gst_play_get_multiview_flags (GstPlay * self)
  }
  
  /**
@@ -6052,7 +6055,7 @@ index f99bbe1..24b3e44 100644
   * @flags: The new value for the @type
   *
   * Sets the current value of the indicated mode @type to the passed
-@@ -3981,7 +3981,7 @@ gst_play_get_multiview_flags (GstPlay * self)
+@@ -3984,7 +3984,7 @@ gst_play_get_multiview_flags (GstPlay * self)
   * Since: 1.20
   */
  void
@@ -6061,7 +6064,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_if_fail (GST_IS_PLAY (self));
  
-@@ -3989,8 +3989,8 @@ gst_play_set_multiview_flags (GstPlay * self, GstVideoMultiviewFlags flags)
+@@ -3992,8 +3992,8 @@ gst_play_set_multiview_flags (GstPlay * self, GstVideoMultiviewFlags flags)
  }
  
  /**
@@ -6072,7 +6075,7 @@ index f99bbe1..24b3e44 100644
   *
   * Retrieve the current value of audio-video-offset property
   *
-@@ -3999,7 +3999,7 @@ gst_play_set_multiview_flags (GstPlay * self, GstVideoMultiviewFlags flags)
+@@ -4002,7 +4002,7 @@ gst_play_set_multiview_flags (GstPlay * self, GstVideoMultiviewFlags flags)
   * Since: 1.20
   */
  gint64
@@ -6081,7 +6084,7 @@ index f99bbe1..24b3e44 100644
  {
    gint64 val = 0;
  
-@@ -4011,8 +4011,8 @@ gst_play_get_audio_video_offset (GstPlay * self)
+@@ -4014,8 +4014,8 @@ gst_play_get_audio_video_offset (GstPlay * self)
  }
  
  /**
@@ -6092,7 +6095,7 @@ index f99bbe1..24b3e44 100644
   * @offset: #gint64 in nanoseconds
   *
   * Sets audio-video-offset property by value of @offset
-@@ -4020,7 +4020,7 @@ gst_play_get_audio_video_offset (GstPlay * self)
+@@ -4023,7 +4023,7 @@ gst_play_get_audio_video_offset (GstPlay * self)
   * Since: 1.20
   */
  void
@@ -6101,7 +6104,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_if_fail (GST_IS_PLAY (self));
  
-@@ -4028,8 +4028,8 @@ gst_play_set_audio_video_offset (GstPlay * self, gint64 offset)
+@@ -4031,8 +4031,8 @@ gst_play_set_audio_video_offset (GstPlay * self, gint64 offset)
  }
  
  /**
@@ -6112,7 +6115,7 @@ index f99bbe1..24b3e44 100644
   *
   * Retrieve the current value of subtitle-video-offset property
   *
-@@ -4038,7 +4038,7 @@ gst_play_set_audio_video_offset (GstPlay * self, gint64 offset)
+@@ -4041,7 +4041,7 @@ gst_play_set_audio_video_offset (GstPlay * self, gint64 offset)
   * Since: 1.20
   */
  gint64
@@ -6121,7 +6124,7 @@ index f99bbe1..24b3e44 100644
  {
    gint64 val = 0;
  
-@@ -4050,8 +4050,8 @@ gst_play_get_subtitle_video_offset (GstPlay * self)
+@@ -4053,8 +4053,8 @@ gst_play_get_subtitle_video_offset (GstPlay * self)
  }
  
  /**
@@ -6132,7 +6135,7 @@ index f99bbe1..24b3e44 100644
   * @offset: #gint64 in nanoseconds
   *
   * Sets subtitle-video-offset property by value of @offset
-@@ -4059,7 +4059,7 @@ gst_play_get_subtitle_video_offset (GstPlay * self)
+@@ -4062,7 +4062,7 @@ gst_play_get_subtitle_video_offset (GstPlay * self)
   * Since: 1.20
   */
  void
@@ -6141,7 +6144,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_if_fail (GST_IS_PLAY (self));
  
-@@ -4071,23 +4071,23 @@ gst_play_set_subtitle_video_offset (GstPlay * self, gint64 offset)
+@@ -4074,23 +4074,23 @@ gst_play_set_subtitle_video_offset (GstPlay * self, gint64 offset)
  #define C_FLAGS(v) ((guint) v)
  
  GType
@@ -6174,7 +6177,7 @@ index f99bbe1..24b3e44 100644
      g_once_init_leave (&id, tmp);
    }
  
-@@ -4095,8 +4095,8 @@ gst_play_color_balance_type_get_type (void)
+@@ -4098,8 +4098,8 @@ gst_play_color_balance_type_get_type (void)
  }
  
  /**
@@ -6185,7 +6188,7 @@ index f99bbe1..24b3e44 100644
   *
   * Gets a string representing the given color balance type.
   *
-@@ -4105,29 +4105,29 @@ gst_play_color_balance_type_get_type (void)
+@@ -4108,29 +4108,29 @@ gst_play_color_balance_type_get_type (void)
   * Since: 1.20
   */
  const gchar *
@@ -6224,7 +6227,7 @@ index f99bbe1..24b3e44 100644
      g_once_init_leave (&id, tmp);
    }
  
-@@ -4135,41 +4135,41 @@ gst_play_state_get_type (void)
+@@ -4138,41 +4138,41 @@ gst_play_state_get_type (void)
  }
  
  GType
@@ -6289,7 +6292,7 @@ index f99bbe1..24b3e44 100644
      g_once_init_leave (&id, tmp);
    }
  
-@@ -4177,8 +4177,8 @@ gst_play_message_get_type (void)
+@@ -4180,8 +4180,8 @@ gst_play_message_get_type (void)
  }
  
  /**
@@ -6300,7 +6303,7 @@ index f99bbe1..24b3e44 100644
   *
   * Gets a string representing the given state.
   *
-@@ -4186,16 +4186,16 @@ gst_play_message_get_type (void)
+@@ -4189,16 +4189,16 @@ gst_play_message_get_type (void)
   * Since: 1.20
   */
  const gchar *
@@ -6322,7 +6325,7 @@ index f99bbe1..24b3e44 100644
        return "playing";
    }
  
-@@ -4204,14 +4204,14 @@ gst_play_state_get_name (GstPlayState state)
+@@ -4207,14 +4207,14 @@ gst_play_state_get_name (GstPlayState state)
  }
  
  /**
@@ -6340,7 +6343,7 @@ index f99bbe1..24b3e44 100644
  {
    GEnumClass *enum_class;
    GEnumValue *enum_value;
-@@ -4223,16 +4223,16 @@ gst_play_message_get_name (GstPlayMessage message_type)
+@@ -4226,16 +4226,16 @@ gst_play_message_get_name (GstPlayMessage message_type)
  }
  
  GType
@@ -6360,7 +6363,7 @@ index f99bbe1..24b3e44 100644
      g_once_init_leave (&id, tmp);
    }
  
-@@ -4240,8 +4240,8 @@ gst_play_error_get_type (void)
+@@ -4243,8 +4243,8 @@ gst_play_error_get_type (void)
  }
  
  /**
@@ -6371,7 +6374,7 @@ index f99bbe1..24b3e44 100644
   *
   * Gets a string representing the given error.
   *
-@@ -4249,10 +4249,10 @@ gst_play_error_get_type (void)
+@@ -4252,10 +4252,10 @@ gst_play_error_get_type (void)
   * Since: 1.20
   */
  const gchar *
@@ -6384,7 +6387,7 @@ index f99bbe1..24b3e44 100644
        return "failed";
    }
  
-@@ -4261,13 +4261,13 @@ gst_play_error_get_name (GstPlayError error)
+@@ -4264,13 +4264,13 @@ gst_play_error_get_name (GstPlayError error)
  }
  
  /**
@@ -6401,7 +6404,7 @@ index f99bbe1..24b3e44 100644
   * and active configuration will remain.
   *
   * @config is a #GstStructure that contains the configuration parameters for
-@@ -4279,16 +4279,16 @@ gst_play_error_get_name (GstPlayError error)
+@@ -4282,16 +4282,16 @@ gst_play_error_get_name (GstPlayError error)
   * Since: 1.20
   */
  gboolean
@@ -6421,7 +6424,7 @@ index f99bbe1..24b3e44 100644
      g_mutex_unlock (&self->lock);
      return FALSE;
    }
-@@ -4302,20 +4302,20 @@ gst_play_set_config (GstPlay * self, GstStructure * config)
+@@ -4305,20 +4305,20 @@ gst_play_set_config (GstPlay * self, GstStructure * config)
  }
  
  /**
@@ -6447,7 +6450,7 @@ index f99bbe1..24b3e44 100644
  {
    GstStructure *ret;
  
-@@ -4329,8 +4329,8 @@ gst_play_get_config (GstPlay * self)
+@@ -4332,8 +4332,8 @@ gst_play_get_config (GstPlay * self)
  }
  
  /**
@@ -6458,7 +6461,7 @@ index f99bbe1..24b3e44 100644
   * @agent: (nullable): the string to use as user agent
   *
   * Set the user agent to pass to the server if @play needs to connect
-@@ -4340,7 +4340,7 @@ gst_play_get_config (GstPlay * self)
+@@ -4343,7 +4343,7 @@ gst_play_get_config (GstPlay * self)
   * Since: 1.20
   */
  void
@@ -6467,7 +6470,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_if_fail (config != NULL);
    g_return_if_fail (agent != NULL);
-@@ -4350,17 +4350,17 @@ gst_play_config_set_user_agent (GstStructure * config, const gchar * agent)
+@@ -4353,17 +4353,17 @@ gst_play_config_set_user_agent (GstStructure * config, const gchar * agent)
  }
  
  /**
@@ -6489,7 +6492,7 @@ index f99bbe1..24b3e44 100644
  {
    gchar *agent = NULL;
  
-@@ -4373,8 +4373,8 @@ gst_play_config_get_user_agent (const GstStructure * config)
+@@ -4376,8 +4376,8 @@ gst_play_config_get_user_agent (const GstStructure * config)
  }
  
  /**
@@ -6500,7 +6503,7 @@ index f99bbe1..24b3e44 100644
   * @interval: interval in ms
   *
   * set desired interval in milliseconds between two position-updated messages.
-@@ -4382,7 +4382,7 @@ gst_play_config_get_user_agent (const GstStructure * config)
+@@ -4385,7 +4385,7 @@ gst_play_config_get_user_agent (const GstStructure * config)
   * Since: 1.20
   */
  void
@@ -6509,7 +6512,7 @@ index f99bbe1..24b3e44 100644
      guint interval)
  {
    g_return_if_fail (config != NULL);
-@@ -4393,15 +4393,15 @@ gst_play_config_set_position_update_interval (GstStructure * config,
+@@ -4396,15 +4396,15 @@ gst_play_config_set_position_update_interval (GstStructure * config,
  }
  
  /**
@@ -6528,7 +6531,7 @@ index f99bbe1..24b3e44 100644
  {
    guint interval = DEFAULT_POSITION_UPDATE_INTERVAL_MS;
  
-@@ -4414,8 +4414,8 @@ gst_play_config_get_position_update_interval (const GstStructure * config)
+@@ -4417,8 +4417,8 @@ gst_play_config_get_position_update_interval (const GstStructure * config)
  }
  
  /**
@@ -6539,7 +6542,7 @@ index f99bbe1..24b3e44 100644
   * @accurate: accurate seek or not
   *
   * Enable or disable accurate seeking. When enabled, elements will try harder
-@@ -4431,7 +4431,7 @@ gst_play_config_get_position_update_interval (const GstStructure * config)
+@@ -4434,7 +4434,7 @@ gst_play_config_get_position_update_interval (const GstStructure * config)
   * Since: 1.20
   */
  void
@@ -6548,7 +6551,7 @@ index f99bbe1..24b3e44 100644
  {
    g_return_if_fail (config != NULL);
  
-@@ -4440,15 +4440,15 @@ gst_play_config_set_seek_accurate (GstStructure * config, gboolean accurate)
+@@ -4443,15 +4443,15 @@ gst_play_config_set_seek_accurate (GstStructure * config, gboolean accurate)
  }
  
  /**
@@ -6567,7 +6570,7 @@ index f99bbe1..24b3e44 100644
  {
    gboolean accurate = FALSE;
  
-@@ -4461,8 +4461,8 @@ gst_play_config_get_seek_accurate (const GstStructure * config)
+@@ -4464,8 +4464,8 @@ gst_play_config_get_seek_accurate (const GstStructure * config)
  }
  
  /**
@@ -6578,7 +6581,7 @@ index f99bbe1..24b3e44 100644
   * @format: output format of the video snapshot
   * @config: (allow-none): Additional configuration
   *
-@@ -4471,15 +4471,15 @@ gst_play_config_get_seek_accurate (const GstStructure * config)
+@@ -4474,15 +4474,15 @@ gst_play_config_get_seek_accurate (const GstStructure * config)
   * Currently supported settings are:
   * - width, height of type G_TYPE_INT
   * - pixel-aspect-ratio of type GST_TYPE_FRACTION
@@ -6597,7 +6600,7 @@ index f99bbe1..24b3e44 100644
  {
    gint video_tracks = 0;
    GstSample *sample = NULL;
-@@ -4497,21 +4497,21 @@ gst_play_get_video_snapshot (GstPlay * self,
+@@ -4500,21 +4500,21 @@ gst_play_get_video_snapshot (GstPlay * self,
    }
  
    switch (format) {
@@ -6624,7 +6627,7 @@ index f99bbe1..24b3e44 100644
      default:
        caps = gst_caps_new_empty_simple ("video/x-raw");
        break;
-@@ -4524,7 +4524,7 @@ gst_play_get_video_snapshot (GstPlay * self,
+@@ -4527,7 +4527,7 @@ gst_play_get_video_snapshot (GstPlay * self,
        height = -1;
      if (!gst_structure_get_fraction (config, "pixel-aspect-ratio", &par_n,
              &par_d)) {
@@ -6633,7 +6636,7 @@ index f99bbe1..24b3e44 100644
          par_n = 1;
          par_d = 1;
        } else {
-@@ -4539,7 +4539,7 @@ gst_play_get_video_snapshot (GstPlay * self,
+@@ -4542,7 +4542,7 @@ gst_play_get_video_snapshot (GstPlay * self,
          "height", G_TYPE_INT, height, NULL);
    }
  
@@ -6642,7 +6645,7 @@ index f99bbe1..24b3e44 100644
      gst_caps_set_simple (caps, "pixel-aspect-ratio", GST_TYPE_FRACTION,
          par_n, par_d, NULL);
    } else if (NULL != config && par_n != 0 && par_d != 0) {
-@@ -4558,15 +4558,15 @@ gst_play_get_video_snapshot (GstPlay * self,
+@@ -4561,15 +4561,15 @@ gst_play_get_video_snapshot (GstPlay * self,
  }
  
  /**
@@ -6661,7 +6664,7 @@ index f99bbe1..24b3e44 100644
  {
    const GstStructure *data = NULL;
    g_return_val_if_fail (GST_IS_MESSAGE (msg), FALSE);
-@@ -4574,34 +4574,34 @@ gst_play_is_play_message (GstMessage * msg)
+@@ -4577,34 +4577,34 @@ gst_play_is_play_message (GstMessage * msg)
    data = gst_message_get_structure (msg);
    g_return_val_if_fail (data, FALSE);
  
@@ -6703,7 +6706,7 @@ index f99bbe1..24b3e44 100644
   * @msg: A #GstMessage
   * @duration: (out) (optional): the resulting duration
   *
-@@ -4610,15 +4610,15 @@ gst_play_message_parse_type (GstMessage * msg, GstPlayMessage * type)
+@@ -4613,15 +4613,15 @@ gst_play_message_parse_type (GstMessage * msg, GstPlayMessage * type)
   * Since: 1.20
   */
  void
@@ -6722,7 +6725,7 @@ index f99bbe1..24b3e44 100644
   * @msg: A #GstMessage
   * @position: (out) (optional): the resulting position
   *
-@@ -4627,31 +4627,31 @@ gst_play_message_parse_duration_updated (GstMessage * msg,
+@@ -4630,31 +4630,31 @@ gst_play_message_parse_duration_updated (GstMessage * msg,
   * Since: 1.20
   */
  void
@@ -6761,7 +6764,7 @@ index f99bbe1..24b3e44 100644
   * @msg: A #GstMessage
   * @percent: (out) (optional): the resulting buffering percent
   *
-@@ -4660,14 +4660,14 @@ gst_play_message_parse_state_changed (GstMessage * msg, GstPlayState * state)
+@@ -4663,14 +4663,14 @@ gst_play_message_parse_state_changed (GstMessage * msg, GstPlayState * state)
   * Since: 1.20
   */
  void
@@ -6779,7 +6782,7 @@ index f99bbe1..24b3e44 100644
   * @msg: A #GstMessage
   * @error: (out) (optional) (transfer full): the resulting error
   * @details: (out) (optional) (nullable) (transfer full): A #GstStructure containing additional details about the error
-@@ -4677,16 +4677,16 @@ gst_play_message_parse_buffering_percent (GstMessage * msg, guint * percent)
+@@ -4680,16 +4680,16 @@ gst_play_message_parse_buffering_percent (GstMessage * msg, guint * percent)
   * Since: 1.20
   */
  void
@@ -6800,7 +6803,7 @@ index f99bbe1..24b3e44 100644
   * @msg: A #GstMessage
   * @error: (out) (optional) (transfer full): the resulting warning
   * @details: (out) (optional) (nullable) (transfer full): A #GstStructure containing additional details about the warning
-@@ -4696,16 +4696,16 @@ gst_play_message_parse_error (GstMessage * msg, GError ** error,
+@@ -4699,16 +4699,16 @@ gst_play_message_parse_error (GstMessage * msg, GError ** error,
   * Since: 1.20
   */
  void
@@ -6821,7 +6824,7 @@ index f99bbe1..24b3e44 100644
   * @msg: A #GstMessage
   * @width: (out) (optional): the resulting video width
   * @height: (out) (optional): the resulting video height
-@@ -4715,17 +4715,17 @@ gst_play_message_parse_warning (GstMessage * msg, GError ** error,
+@@ -4718,17 +4718,17 @@ gst_play_message_parse_warning (GstMessage * msg, GError ** error,
   * Since: 1.20
   */
  void
@@ -6843,7 +6846,7 @@ index f99bbe1..24b3e44 100644
   * @msg: A #GstMessage
   * @info: (out) (optional) (transfer full): the resulting media info
   *
-@@ -4734,15 +4734,15 @@ gst_play_message_parse_video_dimensions_changed (GstMessage * msg,
+@@ -4737,15 +4737,15 @@ gst_play_message_parse_video_dimensions_changed (GstMessage * msg,
   * Since: 1.20
   */
  void
@@ -6863,7 +6866,7 @@ index f99bbe1..24b3e44 100644
   * @msg: A #GstMessage
   * @volume: (out) (optional): the resulting audio volume
   *
-@@ -4751,14 +4751,14 @@ gst_play_message_parse_media_info_updated (GstMessage * msg,
+@@ -4754,14 +4754,14 @@ gst_play_message_parse_media_info_updated (GstMessage * msg,
   * Since: 1.20
   */
  void
@@ -6881,7 +6884,7 @@ index f99bbe1..24b3e44 100644
   * @msg: A #GstMessage
   * @muted: (out) (optional): the resulting audio muted state
   *
-@@ -4767,8 +4767,8 @@ gst_play_message_parse_volume_changed (GstMessage * msg, gdouble * volume)
+@@ -4770,8 +4770,8 @@ gst_play_message_parse_volume_changed (GstMessage * msg, gdouble * volume)
   * Since: 1.20
   */
  void
@@ -10582,7 +10585,7 @@ index a54f1df..564e172 100644
 +  return (GtkGstPlayerVideoRenderer *) self;
  }
 diff --git a/subprojects/gstreamer-player-1.0/gst/player/gstplayer.c b/subprojects/gstreamer-player-1.0/gst/player/gstplayer.c
-index 5fc0584..4245a4a 100644
+index ad78731..2d439fe 100644
 --- a/subprojects/gstreamer-player-1.0/gst/player/gstplayer.c
 +++ b/subprojects/gstreamer-player-1.0/gst/player/gstplayer.c
 @@ -21,13 +21,13 @@
@@ -10682,7 +10685,7 @@ index 5fc0584..4245a4a 100644
  }
  
  static void
-@@ -202,14 +202,14 @@ config_quark_initialize (void)
+@@ -202,17 +202,17 @@ config_quark_initialize (void)
  }
  
  static void
@@ -10690,6 +10693,11 @@ index 5fc0584..4245a4a 100644
 +gtk_gst_player_class_init (GtkGstPlayerClass * klass)
  {
    GObjectClass *gobject_class = (GObjectClass *) klass;
+ 
+-  GST_DEBUG_CATEGORY_INIT (gst_player_debug, "gst-player", 0, "GstPlayer");
+-  gst_player_error_quark ();
++  GST_DEBUG_CATEGORY_INIT (gtk_gst_player_debug, "gtk-gst-player", 0, "GtkGstPlayer");
++  gtk_gst_player_error_quark ();
  
 -  gobject_class->set_property = gst_player_set_property;
 -  gobject_class->get_property = gst_player_get_property;
@@ -10702,7 +10710,7 @@ index 5fc0584..4245a4a 100644
  
    param_specs[PROP_VIDEO_RENDERER] =
        g_param_spec_object ("video-renderer",
-@@ -372,9 +372,9 @@ gst_player_class_init (GstPlayerClass * klass)
+@@ -375,9 +375,9 @@ gst_player_class_init (GstPlayerClass * klass)
  }
  
  static void
@@ -10714,7 +10722,7 @@ index 5fc0584..4245a4a 100644
  
    GST_TRACE_OBJECT (self, "Finalizing");
  
-@@ -391,10 +391,10 @@ gst_player_finalize (GObject * object)
+@@ -394,10 +394,10 @@ gst_player_finalize (GObject * object)
  }
  
  static void
@@ -10727,7 +10735,7 @@ index 5fc0584..4245a4a 100644
  
    switch (prop_id) {
      case PROP_SIGNAL_DISPATCHER:
-@@ -411,26 +411,26 @@ gst_player_set_property (GObject * object, guint prop_id,
+@@ -414,26 +414,26 @@ gst_player_set_property (GObject * object, guint prop_id,
  }
  
  static void
@@ -10760,7 +10768,7 @@ index 5fc0584..4245a4a 100644
        break;
      default:
        g_object_get_property (G_OBJECT (self->play),
-@@ -440,136 +440,136 @@ gst_player_get_property (GObject * object, guint prop_id,
+@@ -443,7 +443,7 @@ gst_player_get_property (GObject * object, guint prop_id,
  }
  
  static gpointer
@@ -10769,12 +10777,7 @@ index 5fc0584..4245a4a 100644
  {
    gst_init (NULL, NULL);
  
--  GST_DEBUG_CATEGORY_INIT (gst_player_debug, "gst-player", 0, "GstPlayer");
--  gst_player_error_quark ();
-+  GST_DEBUG_CATEGORY_INIT (gtk_gst_player_debug, "gst-player", 0, "GtkGstPlayer");
-+  gtk_gst_player_error_quark ();
- 
-   return NULL;
+@@ -451,125 +451,125 @@ gst_player_init_once (G_GNUC_UNUSED gpointer user_data)
  }
  
  static void
@@ -10946,12 +10949,12 @@ index 5fc0584..4245a4a 100644
 +        gtk_gst_play_signal_adapter_new_with_main_context (self->play, context);
      g_main_context_unref (context);
    } else {
--    self->signal_adapter = gst_play_signal_adapter_new (self->play);
-+    self->signal_adapter = gtk_gst_play_signal_adapter_new (self->play);
+-    self->signal_adapter = gst_play_signal_adapter_new_sync_emit (self->play);
++    self->signal_adapter = gtk_gst_play_signal_adapter_new_sync_emit (self->play);
    }
  
    g_signal_connect (self->signal_adapter, "uri-loaded",
-@@ -613,28 +613,28 @@ gst_player_constructed (GObject * object)
+@@ -613,13 +613,13 @@ gst_player_constructed (GObject * object)
  }
  
  /**
@@ -10970,7 +10973,9 @@ index 5fc0584..4245a4a 100644
   *
   * Video is going to be rendered by @video_renderer, or if %NULL is provided
   * no special video set up will be done and some default handling will be
-  * performed.
+@@ -628,16 +628,16 @@ gst_player_constructed (GObject * object)
+  * This also initializes GStreamer via `gst_init()` on the first call if this
+  * didn't happen before.
   *
 - * Returns: (transfer full): a new #GstPlayer instance
 + * Returns: (transfer full): a new #GtkGstPlayer instance
@@ -10991,7 +10996,7 @@ index 5fc0584..4245a4a 100644
  
    self =
        g_object_new (GST_TYPE_PLAYER, "signal-dispatcher", signal_dispatcher,
-@@ -651,57 +651,57 @@ gst_player_new (GstPlayerVideoRenderer * video_renderer,
+@@ -654,57 +654,57 @@ gst_player_new (GstPlayerVideoRenderer * video_renderer,
  }
  
  /**
@@ -11064,7 +11069,7 @@ index 5fc0584..4245a4a 100644
  {
    g_return_if_fail (GST_IS_PLAYER (self));
    g_return_if_fail (rate != 0.0);
-@@ -710,13 +710,13 @@ gst_player_set_rate (GstPlayer * self, gdouble rate)
+@@ -713,13 +713,13 @@ gst_player_set_rate (GstPlayer * self, gdouble rate)
  }
  
  /**
@@ -11081,7 +11086,7 @@ index 5fc0584..4245a4a 100644
  {
    gdouble val;
  
-@@ -728,25 +728,25 @@ gst_player_get_rate (GstPlayer * self)
+@@ -731,25 +731,25 @@ gst_player_get_rate (GstPlayer * self)
  }
  
  /**
@@ -11113,7 +11118,7 @@ index 5fc0584..4245a4a 100644
   *
   * Gets the URI of the currently-playing stream.
   *
-@@ -754,7 +754,7 @@ gst_player_seek (GstPlayer * self, GstClockTime position)
+@@ -757,7 +757,7 @@ gst_player_seek (GstPlayer * self, GstClockTime position)
   * currently-playing stream. g_free() after usage.
   */
  gchar *
@@ -11122,7 +11127,7 @@ index 5fc0584..4245a4a 100644
  {
    gchar *val;
  
-@@ -766,14 +766,14 @@ gst_player_get_uri (GstPlayer * self)
+@@ -769,14 +769,14 @@ gst_player_get_uri (GstPlayer * self)
  }
  
  /**
@@ -11140,7 +11145,7 @@ index 5fc0584..4245a4a 100644
  {
    g_return_if_fail (GST_IS_PLAYER (self));
  
-@@ -781,16 +781,16 @@ gst_player_set_uri (GstPlayer * self, const gchar * val)
+@@ -784,16 +784,16 @@ gst_player_set_uri (GstPlayer * self, const gchar * val)
  }
  
  /**
@@ -11161,7 +11166,7 @@ index 5fc0584..4245a4a 100644
  {
    g_return_if_fail (GST_IS_PLAYER (self));
  
-@@ -798,8 +798,8 @@ gst_player_set_subtitle_uri (GstPlayer * self, const gchar * suburi)
+@@ -801,8 +801,8 @@ gst_player_set_subtitle_uri (GstPlayer * self, const gchar * suburi)
  }
  
  /**
@@ -11172,7 +11177,7 @@ index 5fc0584..4245a4a 100644
   *
   * current subtitle URI
   *
-@@ -807,7 +807,7 @@ gst_player_set_subtitle_uri (GstPlayer * self, const gchar * suburi)
+@@ -810,7 +810,7 @@ gst_player_set_subtitle_uri (GstPlayer * self, const gchar * suburi)
   *   g_free() after usage.
   */
  gchar *
@@ -11181,7 +11186,7 @@ index 5fc0584..4245a4a 100644
  {
    gchar *val = NULL;
  
-@@ -819,14 +819,14 @@ gst_player_get_subtitle_uri (GstPlayer * self)
+@@ -822,14 +822,14 @@ gst_player_get_subtitle_uri (GstPlayer * self)
  }
  
  /**
@@ -11199,7 +11204,7 @@ index 5fc0584..4245a4a 100644
  {
    GstClockTime val;
  
-@@ -838,8 +838,8 @@ gst_player_get_position (GstPlayer * self)
+@@ -841,8 +841,8 @@ gst_player_get_position (GstPlayer * self)
  }
  
  /**
@@ -11210,7 +11215,7 @@ index 5fc0584..4245a4a 100644
   *
   * Retrieves the duration of the media stream that self represents.
   *
-@@ -847,7 +847,7 @@ gst_player_get_position (GstPlayer * self)
+@@ -850,7 +850,7 @@ gst_player_get_position (GstPlayer * self)
   * nanoseconds.
   */
  GstClockTime
@@ -11219,7 +11224,7 @@ index 5fc0584..4245a4a 100644
  {
    GstClockTime val;
  
-@@ -859,15 +859,15 @@ gst_player_get_duration (GstPlayer * self)
+@@ -862,15 +862,15 @@ gst_player_get_duration (GstPlayer * self)
  }
  
  /**
@@ -11238,7 +11243,7 @@ index 5fc0584..4245a4a 100644
  {
    gdouble val;
  
-@@ -879,8 +879,8 @@ gst_player_get_volume (GstPlayer * self)
+@@ -882,8 +882,8 @@ gst_player_get_volume (GstPlayer * self)
  }
  
  /**
@@ -11249,7 +11254,7 @@ index 5fc0584..4245a4a 100644
   * @val: the new volume level, as a percentage between 0 and 1
   *
   * Sets the volume level of the stream as a percentage between 0 and 1.
-@@ -890,7 +890,7 @@ gst_player_get_volume (GstPlayer * self)
+@@ -893,7 +893,7 @@ gst_player_get_volume (GstPlayer * self)
   * should usually use a cubic volume. See gst_stream_volume_convert_volume().
   */
  void
@@ -11258,7 +11263,7 @@ index 5fc0584..4245a4a 100644
  {
    g_return_if_fail (GST_IS_PLAYER (self));
  
-@@ -898,13 +898,13 @@ gst_player_set_volume (GstPlayer * self, gdouble val)
+@@ -901,13 +901,13 @@ gst_player_set_volume (GstPlayer * self, gdouble val)
  }
  
  /**
@@ -11275,7 +11280,7 @@ index 5fc0584..4245a4a 100644
  {
    gboolean val;
  
-@@ -916,14 +916,14 @@ gst_player_get_mute (GstPlayer * self)
+@@ -919,14 +919,14 @@ gst_player_get_mute (GstPlayer * self)
  }
  
  /**
@@ -11293,7 +11298,7 @@ index 5fc0584..4245a4a 100644
  {
    g_return_if_fail (GST_IS_PLAYER (self));
  
-@@ -931,15 +931,15 @@ gst_player_set_mute (GstPlayer * self, gboolean val)
+@@ -934,15 +934,15 @@ gst_player_set_mute (GstPlayer * self, gboolean val)
  }
  
  /**
@@ -11312,7 +11317,7 @@ index 5fc0584..4245a4a 100644
  {
    GstElement *val;
  
-@@ -951,113 +951,113 @@ gst_player_get_pipeline (GstPlayer * self)
+@@ -954,113 +954,113 @@ gst_player_get_pipeline (GstPlayer * self)
  }
  
  /**
@@ -11464,7 +11469,7 @@ index 5fc0584..4245a4a 100644
   * @stream_index: stream index
   *
   * Returns: %TRUE or %FALSE
-@@ -1065,16 +1065,16 @@ gst_player_get_current_subtitle_track (GstPlayer * self)
+@@ -1068,16 +1068,16 @@ gst_player_get_current_subtitle_track (GstPlayer * self)
   * Sets the audio track @stream_idex.
   */
  gboolean
@@ -11485,7 +11490,7 @@ index 5fc0584..4245a4a 100644
   * @stream_index: stream index
   *
   * Returns: %TRUE or %FALSE
-@@ -1082,16 +1082,16 @@ gst_player_set_audio_track (GstPlayer * self, gint stream_index)
+@@ -1085,16 +1085,16 @@ gst_player_set_audio_track (GstPlayer * self, gint stream_index)
   * Sets the video track @stream_index.
   */
  gboolean
@@ -11506,7 +11511,7 @@ index 5fc0584..4245a4a 100644
   * @stream_index: stream index
   *
   * Returns: %TRUE or %FALSE
-@@ -1099,104 +1099,104 @@ gst_player_set_video_track (GstPlayer * self, gint stream_index)
+@@ -1102,104 +1102,104 @@ gst_player_set_video_track (GstPlayer * self, gint stream_index)
   * Sets the subtitle stack @stream_index.
   */
  gboolean
@@ -11638,7 +11643,7 @@ index 5fc0584..4245a4a 100644
  }
  
  struct CBChannelMap
-@@ -1206,15 +1206,15 @@ struct CBChannelMap
+@@ -1209,15 +1209,15 @@ struct CBChannelMap
  };
  
  static const struct CBChannelMap cb_channel_map[] = {
@@ -11660,7 +11665,7 @@ index 5fc0584..4245a4a 100644
   *
   * Checks whether the @player has color balance support available.
   *
-@@ -1222,37 +1222,37 @@ static const struct CBChannelMap cb_channel_map[] = {
+@@ -1225,37 +1225,37 @@ static const struct CBChannelMap cb_channel_map[] = {
   *   %FALSE.
   */
  gboolean
@@ -11708,7 +11713,7 @@ index 5fc0584..4245a4a 100644
   *
   * Retrieve the current value of the indicated @type.
   *
-@@ -1260,17 +1260,17 @@ gst_player_set_color_balance (GstPlayer * self, GstPlayerColorBalanceType type,
+@@ -1263,17 +1263,17 @@ gst_player_set_color_balance (GstPlayer * self, GstPlayerColorBalanceType type,
   *   error -1 is returned.
   */
  gdouble
@@ -11731,7 +11736,7 @@ index 5fc0584..4245a4a 100644
   *
   * Retrieve the current value of the indicated @type.
   *
-@@ -1279,7 +1279,7 @@ gst_player_get_color_balance (GstPlayer * self, GstPlayerColorBalanceType type)
+@@ -1282,7 +1282,7 @@ gst_player_get_color_balance (GstPlayer * self, GstPlayerColorBalanceType type)
   * Since: 1.10
   */
  GstVideoMultiviewFramePacking
@@ -11740,7 +11745,7 @@ index 5fc0584..4245a4a 100644
  {
    GstVideoMultiviewFramePacking val = GST_VIDEO_MULTIVIEW_FRAME_PACKING_NONE;
  
-@@ -1292,8 +1292,8 @@ gst_player_get_multiview_mode (GstPlayer * self)
+@@ -1295,8 +1295,8 @@ gst_player_get_multiview_mode (GstPlayer * self)
  }
  
  /**
@@ -11751,7 +11756,7 @@ index 5fc0584..4245a4a 100644
   * @mode: The new value for the @type
   *
   * Sets the current value of the indicated mode @type to the passed
-@@ -1302,7 +1302,7 @@ gst_player_get_multiview_mode (GstPlayer * self)
+@@ -1305,7 +1305,7 @@ gst_player_get_multiview_mode (GstPlayer * self)
   * Since: 1.10
   */
  void
@@ -11760,7 +11765,7 @@ index 5fc0584..4245a4a 100644
      GstVideoMultiviewFramePacking mode)
  {
    g_return_if_fail (GST_IS_PLAYER (self));
-@@ -1311,8 +1311,8 @@ gst_player_set_multiview_mode (GstPlayer * self,
+@@ -1314,8 +1314,8 @@ gst_player_set_multiview_mode (GstPlayer * self,
  }
  
  /**
@@ -11771,7 +11776,7 @@ index 5fc0584..4245a4a 100644
   *
   * Retrieve the current value of the indicated @type.
   *
-@@ -1321,7 +1321,7 @@ gst_player_set_multiview_mode (GstPlayer * self,
+@@ -1324,7 +1324,7 @@ gst_player_set_multiview_mode (GstPlayer * self,
   * Since: 1.10
   */
  GstVideoMultiviewFlags
@@ -11780,7 +11785,7 @@ index 5fc0584..4245a4a 100644
  {
    GstVideoMultiviewFlags val = GST_VIDEO_MULTIVIEW_FLAGS_NONE;
  
-@@ -1333,8 +1333,8 @@ gst_player_get_multiview_flags (GstPlayer * self)
+@@ -1336,8 +1336,8 @@ gst_player_get_multiview_flags (GstPlayer * self)
  }
  
  /**
@@ -11791,7 +11796,7 @@ index 5fc0584..4245a4a 100644
   * @flags: The new value for the @type
   *
   * Sets the current value of the indicated mode @type to the passed
-@@ -1343,7 +1343,7 @@ gst_player_get_multiview_flags (GstPlayer * self)
+@@ -1346,7 +1346,7 @@ gst_player_get_multiview_flags (GstPlayer * self)
   * Since: 1.10
   */
  void
@@ -11800,7 +11805,7 @@ index 5fc0584..4245a4a 100644
  {
    g_return_if_fail (GST_IS_PLAYER (self));
  
-@@ -1351,8 +1351,8 @@ gst_player_set_multiview_flags (GstPlayer * self, GstVideoMultiviewFlags flags)
+@@ -1354,8 +1354,8 @@ gst_player_set_multiview_flags (GstPlayer * self, GstVideoMultiviewFlags flags)
  }
  
  /**
@@ -11811,7 +11816,7 @@ index 5fc0584..4245a4a 100644
   *
   * Retrieve the current value of audio-video-offset property
   *
-@@ -1361,7 +1361,7 @@ gst_player_set_multiview_flags (GstPlayer * self, GstVideoMultiviewFlags flags)
+@@ -1364,7 +1364,7 @@ gst_player_set_multiview_flags (GstPlayer * self, GstVideoMultiviewFlags flags)
   * Since: 1.10
   */
  gint64
@@ -11820,7 +11825,7 @@ index 5fc0584..4245a4a 100644
  {
    gint64 val = 0;
  
-@@ -1373,8 +1373,8 @@ gst_player_get_audio_video_offset (GstPlayer * self)
+@@ -1376,8 +1376,8 @@ gst_player_get_audio_video_offset (GstPlayer * self)
  }
  
  /**
@@ -11831,7 +11836,7 @@ index 5fc0584..4245a4a 100644
   * @offset: #gint64 in nanoseconds
   *
   * Sets audio-video-offset property by value of @offset
-@@ -1382,7 +1382,7 @@ gst_player_get_audio_video_offset (GstPlayer * self)
+@@ -1385,7 +1385,7 @@ gst_player_get_audio_video_offset (GstPlayer * self)
   * Since: 1.10
   */
  void
@@ -11840,7 +11845,7 @@ index 5fc0584..4245a4a 100644
  {
    g_return_if_fail (GST_IS_PLAYER (self));
  
-@@ -1390,8 +1390,8 @@ gst_player_set_audio_video_offset (GstPlayer * self, gint64 offset)
+@@ -1393,8 +1393,8 @@ gst_player_set_audio_video_offset (GstPlayer * self, gint64 offset)
  }
  
  /**
@@ -11851,7 +11856,7 @@ index 5fc0584..4245a4a 100644
   *
   * Retrieve the current value of subtitle-video-offset property
   *
-@@ -1400,7 +1400,7 @@ gst_player_set_audio_video_offset (GstPlayer * self, gint64 offset)
+@@ -1403,7 +1403,7 @@ gst_player_set_audio_video_offset (GstPlayer * self, gint64 offset)
   * Since: 1.16
   */
  gint64
@@ -11860,7 +11865,7 @@ index 5fc0584..4245a4a 100644
  {
    gint64 val = 0;
  
-@@ -1412,8 +1412,8 @@ gst_player_get_subtitle_video_offset (GstPlayer * self)
+@@ -1415,8 +1415,8 @@ gst_player_get_subtitle_video_offset (GstPlayer * self)
  }
  
  /**
@@ -11871,7 +11876,7 @@ index 5fc0584..4245a4a 100644
   * @offset: #gint64 in nanoseconds
   *
   * Sets subtitle-video-offset property by value of @offset
-@@ -1421,7 +1421,7 @@ gst_player_get_subtitle_video_offset (GstPlayer * self)
+@@ -1424,7 +1424,7 @@ gst_player_get_subtitle_video_offset (GstPlayer * self)
   * Since: 1.16
   */
  void
@@ -11880,7 +11885,7 @@ index 5fc0584..4245a4a 100644
  {
    g_return_if_fail (GST_IS_PLAYER (self));
  
-@@ -1433,23 +1433,23 @@ gst_player_set_subtitle_video_offset (GstPlayer * self, gint64 offset)
+@@ -1436,23 +1436,23 @@ gst_player_set_subtitle_video_offset (GstPlayer * self, gint64 offset)
  #define C_FLAGS(v) ((guint) v)
  
  GType
@@ -11913,7 +11918,7 @@ index 5fc0584..4245a4a 100644
      g_once_init_leave (&id, tmp);
    }
  
-@@ -1457,8 +1457,8 @@ gst_player_color_balance_type_get_type (void)
+@@ -1460,8 +1460,8 @@ gst_player_color_balance_type_get_type (void)
  }
  
  /**
@@ -11924,7 +11929,7 @@ index 5fc0584..4245a4a 100644
   *
   * Gets a string representing the given color balance type.
   *
-@@ -1466,29 +1466,29 @@ gst_player_color_balance_type_get_type (void)
+@@ -1469,29 +1469,29 @@ gst_player_color_balance_type_get_type (void)
   *   balance type.
   */
  const gchar *
@@ -11963,7 +11968,7 @@ index 5fc0584..4245a4a 100644
      g_once_init_leave (&id, tmp);
    }
  
-@@ -1496,24 +1496,24 @@ gst_player_state_get_type (void)
+@@ -1499,24 +1499,24 @@ gst_player_state_get_type (void)
  }
  
  /**
@@ -11995,7 +12000,7 @@ index 5fc0584..4245a4a 100644
        return "playing";
    }
  
-@@ -1522,16 +1522,16 @@ gst_player_state_get_name (GstPlayerState state)
+@@ -1525,16 +1525,16 @@ gst_player_state_get_name (GstPlayerState state)
  }
  
  GType
@@ -12015,7 +12020,7 @@ index 5fc0584..4245a4a 100644
      g_once_init_leave (&id, tmp);
    }
  
-@@ -1539,18 +1539,18 @@ gst_player_error_get_type (void)
+@@ -1542,18 +1542,18 @@ gst_player_error_get_type (void)
  }
  
  /**
@@ -12038,7 +12043,7 @@ index 5fc0584..4245a4a 100644
        return "failed";
    }
  
-@@ -1559,13 +1559,13 @@ gst_player_error_get_name (GstPlayerError error)
+@@ -1562,13 +1562,13 @@ gst_player_error_get_name (GstPlayerError error)
  }
  
  /**
@@ -12055,7 +12060,7 @@ index 5fc0584..4245a4a 100644
   * and active configuration will remain.
   *
   * @config is a #GstStructure that contains the configuration parameters for
-@@ -1577,38 +1577,38 @@ gst_player_error_get_name (GstPlayerError error)
+@@ -1580,38 +1580,38 @@ gst_player_error_get_name (GstPlayerError error)
   * Since: 1.10
   */
  gboolean
@@ -12104,7 +12109,7 @@ index 5fc0584..4245a4a 100644
   * @agent: (nullable): the string to use as user agent
   *
   * Set the user agent to pass to the server if @player needs to connect
-@@ -1618,7 +1618,7 @@ gst_player_get_config (GstPlayer * self)
+@@ -1621,7 +1621,7 @@ gst_player_get_config (GstPlayer * self)
   * Since: 1.10
   */
  void
@@ -12113,7 +12118,7 @@ index 5fc0584..4245a4a 100644
  {
    g_return_if_fail (config != NULL);
    g_return_if_fail (agent != NULL);
-@@ -1628,18 +1628,18 @@ gst_player_config_set_user_agent (GstStructure * config, const gchar * agent)
+@@ -1631,18 +1631,18 @@ gst_player_config_set_user_agent (GstStructure * config, const gchar * agent)
  }
  
  /**
@@ -12136,7 +12141,7 @@ index 5fc0584..4245a4a 100644
  {
    gchar *agent = NULL;
  
-@@ -1652,8 +1652,8 @@ gst_player_config_get_user_agent (const GstStructure * config)
+@@ -1655,8 +1655,8 @@ gst_player_config_get_user_agent (const GstStructure * config)
  }
  
  /**
@@ -12147,7 +12152,7 @@ index 5fc0584..4245a4a 100644
   * @interval: interval in ms
   *
   * set interval in milliseconds between two position-updated signals.
-@@ -1662,7 +1662,7 @@ gst_player_config_get_user_agent (const GstStructure * config)
+@@ -1665,7 +1665,7 @@ gst_player_config_get_user_agent (const GstStructure * config)
   * Since: 1.10
   */
  void
@@ -12156,7 +12161,7 @@ index 5fc0584..4245a4a 100644
      guint interval)
  {
    g_return_if_fail (config != NULL);
-@@ -1673,15 +1673,15 @@ gst_player_config_set_position_update_interval (GstStructure * config,
+@@ -1676,15 +1676,15 @@ gst_player_config_set_position_update_interval (GstStructure * config,
  }
  
  /**
@@ -12175,7 +12180,7 @@ index 5fc0584..4245a4a 100644
  {
    guint interval = DEFAULT_POSITION_UPDATE_INTERVAL_MS;
  
-@@ -1694,8 +1694,8 @@ gst_player_config_get_position_update_interval (const GstStructure * config)
+@@ -1697,8 +1697,8 @@ gst_player_config_get_position_update_interval (const GstStructure * config)
  }
  
  /**
@@ -12186,7 +12191,7 @@ index 5fc0584..4245a4a 100644
   * @accurate: accurate seek or not
   *
   * Enable or disable accurate seeking. When enabled, elements will try harder
-@@ -1711,7 +1711,7 @@ gst_player_config_get_position_update_interval (const GstStructure * config)
+@@ -1714,7 +1714,7 @@ gst_player_config_get_position_update_interval (const GstStructure * config)
   * Since: 1.12
   */
  void
@@ -12195,7 +12200,7 @@ index 5fc0584..4245a4a 100644
  {
    g_return_if_fail (config != NULL);
  
-@@ -1720,15 +1720,15 @@ gst_player_config_set_seek_accurate (GstStructure * config, gboolean accurate)
+@@ -1723,15 +1723,15 @@ gst_player_config_set_seek_accurate (GstStructure * config, gboolean accurate)
  }
  
  /**
@@ -12214,7 +12219,7 @@ index 5fc0584..4245a4a 100644
  {
    gboolean accurate = FALSE;
  
-@@ -1741,8 +1741,8 @@ gst_player_config_get_seek_accurate (const GstStructure * config)
+@@ -1744,8 +1744,8 @@ gst_player_config_get_seek_accurate (const GstStructure * config)
  }
  
  /**
@@ -12225,7 +12230,7 @@ index 5fc0584..4245a4a 100644
   * @format: output format of the video snapshot
   * @config: (allow-none): Additional configuration
   *
-@@ -1751,18 +1751,18 @@ gst_player_config_get_seek_accurate (const GstStructure * config)
+@@ -1754,18 +1754,18 @@ gst_player_config_get_seek_accurate (const GstStructure * config)
   * Currently supported settings are:
   * - width, height of type G_TYPE_INT
   * - pixel-aspect-ratio of type GST_TYPE_FRACTION
@@ -12743,3 +12748,16 @@ index 4b70469..554b5a0 100644
  
 -#endif /* __GST_PLAYER_PRELUDE_H__ */
 +#endif /* __GTK_GST_PLAYER_PRELUDE_H__ */
+diff --git a/subprojects/gstreamer-player-1.0/meson.build b/subprojects/gstreamer-player-1.0/meson.build
+index 589d90c..03d9808 100644
+--- a/subprojects/gstreamer-player-1.0/meson.build
++++ b/subprojects/gstreamer-player-1.0/meson.build
+@@ -24,7 +24,7 @@ gst_libraries = []
+ configinc = include_directories('.')
+ libsinc = include_directories('.')
+ 
+-gst_plugins_bad_args = ['-DGST_API_EXPORT=__attribute__((visibility("default")))']
++gst_plugins_bad_args = ['-DGTK_GST_PLAYER_API=__attribute__((visibility("default")))']
+ 
+ gst_dep = dependency('gstreamer-1.0')
+ gstaudio_dep = dependency('gstreamer-audio-1.0')

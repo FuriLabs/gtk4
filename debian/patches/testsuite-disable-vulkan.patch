@@ -1,0 +1,33 @@
+Description: The memorytexture, dmabufformats, scaling tests raise the GDK warning
+ .
+ vkCreateInstance(): The requested version of Vulkan is not supported
+ by the driver or is otherwise incompatible for implementation-specific
+ reasons. (VK_ERROR_INCOMPATIBLE_DRIVER) (-9)
+ .
+ This causes those test to fail.
+Author: Nathan Pratta Teodosio <nathan.teodosio@canonical.com>
+Forwarded: not-yet
+Bug-Ubuntu: https://launchpad.net/bugs/2077313
+
+--- a/testsuite/meson.build
++++ b/testsuite/meson.build
+@@ -23,17 +23,17 @@
+   'GTK_CSD=1',
+   'G_ENABLE_DIAGNOSTIC=0',
+   'GSETTINGS_SCHEMA_DIR=@0@'.format(gtk_schema_build_dir),
+-  'GDK_DEBUG=default-settings',
++  'GDK_DEBUG=default-settings,vulkan-disable',
+   'GTK_DEBUG=css',
+ ]
+ exclude_unstable = ['flaky', 'failing']
+ 
+ setups = [
+   { 'backend': 'x11', 'if': x11_enabled, },
+   { 'backend': 'wayland', 'if': wayland_enabled, 'is_default': true, },
+   { 'name': 'wayland_gles2',
+     'backend': 'wayland', 'if': wayland_enabled,
+-    'env': ['GDK_DEBUG=default-settings',
++    'env': ['GDK_DEBUG=default-settings,vulkan-disable',
+             'MESA_GLES_VERSION_OVERRIDE=2.0',
+             'GSK_MAX_TEXTURE_SIZE=1024',
+            ], },

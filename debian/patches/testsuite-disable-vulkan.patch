@@ -16,7 +16,7 @@ Bug-Ubuntu: https://launchpad.net/bugs/2077313
    'G_ENABLE_DIAGNOSTIC=0',
    'GSETTINGS_SCHEMA_DIR=@0@'.format(gtk_schema_build_dir),
 -  'GDK_DEBUG=default-settings',
-+  'GDK_DEBUG=vulkan-disable',
++  'GDK_DEBUG=default-settings,vulkan-disable',
    'GTK_DEBUG=css',
  ]
  exclude_unstable = ['flaky', 'failing']
@@ -27,7 +27,7 @@ Bug-Ubuntu: https://launchpad.net/bugs/2077313
    { 'name': 'wayland_gles2',
      'backend': 'wayland', 'if': wayland_enabled,
 -    'env': ['GDK_DEBUG=default-settings',
-+    'env': ['GDK_DEBUG=vulkan-disable',
++    'env': ['GDK_DEBUG=default-settings,vulkan-disable',
              'MESA_GLES_VERSION_OVERRIDE=2.0',
              'GSK_MAX_TEXTURE_SIZE=1024',
             ], },

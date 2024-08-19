@@ -1,3 +1,10 @@
+gtk4 (4.15.5+ds-1ubuntu1) oracular; urgency=medium
+
+  * Sync with Debian. Remaining change:
+    - Temporarily skip css tests on s390x
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 19 Aug 2024 16:31:49 -0400
+
 gtk4 (4.15.5+ds-1) experimental; urgency=medium
 
   [ Jeremy Bícha ]

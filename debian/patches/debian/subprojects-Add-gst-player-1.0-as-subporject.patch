@@ -1,6 +1,6 @@
 From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
 Date: Fri, 17 Mar 2023 19:50:10 +0100
-Subject: subprojects: Add gst-player-1.0 as subproject
+Subject: subprojects: Add gst-player-1.0 as subporject
 
 Origin: https://gitlab.gnome.org/3v1n0/gtk/-/commits/gst-player-subproject
 Forwarded: not-needed
@@ -19,7 +19,7 @@ Forwarded: not-needed
  .../gst/play/gstplay-video-renderer.h              |   61 +
  .../gst/play/gstplay-visualization.c               |  183 +
  .../gst/play/gstplay-visualization.h               |   65 +
- .../gstreamer-player-1.0/gst/play/gstplay.c        | 4774 ++++++++++++++++++++
+ .../gstreamer-player-1.0/gst/play/gstplay.c        | 4777 ++++++++++++++++++++
  .../gstreamer-player-1.0/gst/play/gstplay.h        |  442 ++
  .../gstreamer-player-1.0/gst/play/meson.build      |   76 +
  .../gstreamer-player-1.0/gst/play/play-prelude.h   |   43 +
@@ -42,13 +42,13 @@ Forwarded: not-needed
  .../gst/player/gstplayer-visualization.h           |   60 +
  .../gstplayer-wrapped-video-renderer-private.h     |   49 +
  .../gst/player/gstplayer-wrapped-video-renderer.c  |  114 +
- .../gstreamer-player-1.0/gst/player/gstplayer.c    | 1768 ++++++++
+ .../gstreamer-player-1.0/gst/player/gstplayer.c    | 1771 ++++++++
  .../gstreamer-player-1.0/gst/player/gstplayer.h    |  306 ++
  .../gstreamer-player-1.0/gst/player/meson.build    |   79 +
  .../gst/player/player-prelude.h                    |   43 +
  .../gstreamer-player-1.0/gst/player/player.h       |   31 +
  subprojects/gstreamer-player-1.0/meson.build       |   46 +
- 43 files changed, 13130 insertions(+)
+ 43 files changed, 13136 insertions(+)
  create mode 100644 subprojects/gstreamer-player-1.0/gst/play/gstplay-media-info-private.h
  create mode 100644 subprojects/gstreamer-player-1.0/gst/play/gstplay-media-info.c
  create mode 100644 subprojects/gstreamer-player-1.0/gst/play/gstplay-media-info.h
@@ -2974,10 +2974,10 @@ index 0000000..4c9bc86
 +#endif /* __GST_PLAY_VISUALIZATION_H__ */
 diff --git a/subprojects/gstreamer-player-1.0/gst/play/gstplay.c b/subprojects/gstreamer-player-1.0/gst/play/gstplay.c
 new file mode 100644
-index 0000000..f99bbe1
+index 0000000..820fd72
 --- /dev/null
 +++ b/subprojects/gstreamer-player-1.0/gst/play/gstplay.c
-@@ -0,0 +1,4774 @@
+@@ -0,0 +1,4777 @@
 +/* GStreamer
 + *
 + * Copyright (C) 2014-2015 Sebastian Dröge <sebastian@centricular.com>
@@ -3324,6 +3324,9 @@ index 0000000..f99bbe1
 +gst_play_class_init (GstPlayClass * klass)
 +{
 +  GObjectClass *gobject_class = (GObjectClass *) klass;
++
++  GST_DEBUG_CATEGORY_INIT (gst_play_debug, "gst-play", 0, "GstPlay");
++  gst_play_error_quark ();
 +
 +  gobject_class->set_property = gst_play_set_property;
 +  gobject_class->get_property = gst_play_get_property;
@@ -5623,9 +5626,6 @@ index 0000000..f99bbe1
 +{
 +  gst_init (NULL, NULL);
 +
-+  GST_DEBUG_CATEGORY_INIT (gst_play_debug, "gst-play", 0, "GstPlay");
-+  gst_play_error_quark ();
-+
 +  return NULL;
 +}
 +
@@ -5638,6 +5638,9 @@ index 0000000..f99bbe1
 + * Video is going to be rendered by @video_renderer, or if %NULL is provided
 + * no special video set up will be done and some default handling will be
 + * performed.
++ *
++ * This also initializes GStreamer via `gst_init()` on the first call if this
++ * didn't happen before.
 + *
 + * Returns: (transfer full): a new #GstPlay instance
 + * Since: 1.20
@@ -11174,10 +11177,10 @@ index 0000000..a54f1df
 +}
 diff --git a/subprojects/gstreamer-player-1.0/gst/player/gstplayer.c b/subprojects/gstreamer-player-1.0/gst/player/gstplayer.c
 new file mode 100644
-index 0000000..5fc0584
+index 0000000..ad78731
 --- /dev/null
 +++ b/subprojects/gstreamer-player-1.0/gst/player/gstplayer.c
-@@ -0,0 +1,1768 @@
+@@ -0,0 +1,1771 @@
 +/* GStreamer
 + *
 + * Copyright (C) 2014-2015 Sebastian Dröge <sebastian@centricular.com>
@@ -11385,6 +11388,9 @@ index 0000000..5fc0584
 +gst_player_class_init (GstPlayerClass * klass)
 +{
 +  GObjectClass *gobject_class = (GObjectClass *) klass;
++
++  GST_DEBUG_CATEGORY_INIT (gst_player_debug, "gst-player", 0, "GstPlayer");
++  gst_player_error_quark ();
 +
 +  gobject_class->set_property = gst_player_set_property;
 +  gobject_class->get_property = gst_player_get_property;
@@ -11624,9 +11630,6 @@ index 0000000..5fc0584
 +{
 +  gst_init (NULL, NULL);
 +
-+  GST_DEBUG_CATEGORY_INIT (gst_player_debug, "gst-player", 0, "GstPlayer");
-+  gst_player_error_quark ();
-+
 +  return NULL;
 +}
 +
@@ -11762,7 +11765,7 @@ index 0000000..5fc0584
 +        gst_play_signal_adapter_new_with_main_context (self->play, context);
 +    g_main_context_unref (context);
 +  } else {
-+    self->signal_adapter = gst_play_signal_adapter_new (self->play);
++    self->signal_adapter = gst_play_signal_adapter_new_sync_emit (self->play);
 +  }
 +
 +  g_signal_connect (self->signal_adapter, "uri-loaded",
@@ -11804,6 +11807,9 @@ index 0000000..5fc0584
 + * Video is going to be rendered by @video_renderer, or if %NULL is provided
 + * no special video set up will be done and some default handling will be
 + * performed.
++ *
++ * This also initializes GStreamer via `gst_init()` on the first call if this
++ * didn't happen before.
 + *
 + * Returns: (transfer full): a new #GstPlayer instance
 + */
@@ -13431,12 +13437,12 @@ index 0000000..40907c1
 +#endif /* __PLAYER_H__ */
 diff --git a/subprojects/gstreamer-player-1.0/meson.build b/subprojects/gstreamer-player-1.0/meson.build
 new file mode 100644
-index 0000000..6e2658b
+index 0000000..589d90c
 --- /dev/null
 +++ b/subprojects/gstreamer-player-1.0/meson.build
 @@ -0,0 +1,46 @@
 +project('gstreamer-player-1.0', 'c',
-+  version : '1.23.0.1',
++  version : '1.25.0.1',
 +  meson_version : '>= 0.62',
 +  default_options : [ 'warning_level=1',
 +                      'buildtype=debugoptimized',

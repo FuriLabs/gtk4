@@ -5,20 +5,21 @@ Subject: media: Use gstplayer from meson subproject
 Origin: https://gitlab.gnome.org/3v1n0/gtk/-/commits/gst-player-subproject
 Forwarded: not-needed
 ---
- meson.build | 3 +++
- 1 file changed, 3 insertions(+)
+ meson.build | 4 ++++
+ 1 file changed, 4 insertions(+)
 
 diff --git a/meson.build b/meson.build
-index 95cd481..25fd797 100644
+index 95cd481..1deec70 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -426,6 +426,9 @@ iso_codes_dep     = dependency('iso-codes', required: false)
- gi_dep            = dependency('gobject-introspection-1.0', version: introspection_req,
-                                required: get_option('introspection').enabled() and
-                                          get_option('build-tests'))
+@@ -411,6 +411,10 @@ if win32_enabled
+   pangowin32_dep = dependency('pangowin32')
+ endif
+ 
 +subproject('gstreamer-player-1.0',
 +           required: get_option('media-gstreamer'),
 +           default_options: 'default_library=static')
- gstplayer_dep     = dependency('gstreamer-player-1.0', version: gstreamer_req,
-                                required: get_option('media-gstreamer'))
- gstgl_dep         = dependency('gstreamer-gl-1.0', version: gstreamer_req,
++
+ pangocairo_dep    = dependency('pangocairo', version: pango_req)
+ pixbuf_dep        = dependency('gdk-pixbuf-2.0', version: gdk_pixbuf_req,
+                                default_options: ['png=enabled', 'jpeg=enabled', 'builtin_loaders=png,jpeg', 'man=false'])

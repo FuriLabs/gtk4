@@ -1,0 +1,28 @@
+From: Benjamin Otte <otte@redhat.com>
+Date: Fri, 23 Aug 2024 22:48:29 +0200
+Subject: vulkan: Don't spam stderr on failed Vulkan import
+
+We write a debug message and then handle things using fallback.
+
+Fixes error messages when trying to import incompatible dmabufs.
+(in my case: llvmpipe dmabufs into radv)
+
+(cherry picked from commit 4be1d754b71bd2c8d89370fe3c635842c46e9a13)
+
+Origin: upstream, after 4.15.5
+---
+ gsk/gpu/gskvulkanimage.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/gsk/gpu/gskvulkanimage.c b/gsk/gpu/gskvulkanimage.c
+index 38b971d..7cdcea0 100644
+--- a/gsk/gpu/gskvulkanimage.c
++++ b/gsk/gpu/gskvulkanimage.c
+@@ -963,7 +963,6 @@ gsk_vulkan_image_new_for_dmabuf (GskVulkanDevice *device,
+                         &self->vk_image);
+   if (res != VK_SUCCESS)
+     {
+-      gsk_vulkan_handle_result (res, "vkCreateImage");
+       GDK_DEBUG (DMABUF, "vkCreateImage() failed: %s", gdk_vulkan_strerror (res));
+       return NULL;
+     }

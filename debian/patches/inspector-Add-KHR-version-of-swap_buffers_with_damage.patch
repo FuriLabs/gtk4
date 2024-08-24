@@ -1,0 +1,24 @@
+From: Benjamin Otte <otte@redhat.com>
+Date: Wed, 21 Aug 2024 19:40:41 +0200
+Subject: inspector: Add KHR version of swap_buffers_with_damage
+
+Related: #6941
+(cherry picked from commit c2a637f68a1126c70eb2d56c50811551f02e6a12)
+
+Origin: upstream, after 4.15.5
+---
+ gtk/inspector/general.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/gtk/inspector/general.c b/gtk/inspector/general.c
+index 7c9f778..fdf8e84 100644
+--- a/gtk/inspector/general.c
++++ b/gtk/inspector/general.c
+@@ -411,6 +411,7 @@ init_gl (GtkInspectorGeneral *gen)
+       append_egl_extension_row (gen, egl_display, "EGL_KHR_create_context");
+       append_egl_extension_row (gen, egl_display, "EGL_EXT_buffer_age");
+       append_egl_extension_row (gen, egl_display, "EGL_EXT_swap_buffers_with_damage");
++      append_egl_extension_row (gen, egl_display, "EGL_KHR_swap_buffers_with_damage");
+       append_egl_extension_row (gen, egl_display, "EGL_KHR_surfaceless_context");
+       append_egl_extension_row (gen, egl_display, "EGL_KHR_no_config_context");
+       append_egl_extension_row (gen, egl_display, "EGL_EXT_image_dma_buf_import_modifiers");

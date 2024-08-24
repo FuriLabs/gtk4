@@ -1,3 +1,10 @@
+gtk4 (4.15.5+ds-2) experimental; urgency=medium
+
+  * Replace disable vulkan patch with alternative fix pushed upstream
+  * Update list of sysprof enabled architectures
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 24 Aug 2024 08:03:46 -0400
+
 gtk4 (4.15.5+ds-1ubuntu1) oracular; urgency=medium
 
   * Sync with Debian. Remaining change:

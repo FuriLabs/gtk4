@@ -1,0 +1,31 @@
+From: Benjamin Otte <otte@redhat.com>
+Date: Fri, 23 Aug 2024 22:51:31 +0200
+Subject: reftests: Make glarea-gl-only test XFAIL
+
+With CI now using udmabufs, we run into bugs in Mesa. So we disable
+some tests for now.
+
+https://gitlab.freedesktop.org/mesa/mesa/-/issues/11773 is the bug
+report for this one.
+
+(cherry picked from commit 58f7b966d0114c91af3d872434ea5ac531007a99)
+
+Origin: upstream, after 4.15.5
+---
+ testsuite/reftests/meson.build | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/testsuite/reftests/meson.build b/testsuite/reftests/meson.build
+index e73e6cd..8913e3b 100644
+--- a/testsuite/reftests/meson.build
++++ b/testsuite/reftests/meson.build
+@@ -603,6 +603,9 @@ xfails = [
+   'border-image-url.ui',
+   'label-background.ui',
+   'label-wrap-justify.ui',
++
++  # https://gitlab.freedesktop.org/mesa/mesa/-/issues/11773
++  'glarea-gl-only.ui',
+ ]
+ 
+ flaky = [

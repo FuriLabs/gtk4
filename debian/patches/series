@@ -13,4 +13,9 @@ debian/tests-Allow-longer-for-a-dialog-to-open.patch
 nodeparser-Adjust-test-for-pango-1.52.0.patch
 gdk-Check-some-assertions-on-our-architectures.patch
 testsuite-skip-color-mix.patch
-testsuite-disable-vulkan.patch
+gpu-Simplify-the-blur-op-a-bit.patch
+inspector-Add-KHR-version-of-swap_buffers_with_damage.patch
+gpu-Use-the-shared-GL-context-when-creating-GL-textures.patch
+vulkan-Don-t-print-errors-on-vkCreateInstance-failure.patch
+vulkan-Don-t-spam-stderr-on-failed-Vulkan-import.patch
+reftests-Make-glarea-gl-only-test-XFAIL.patch

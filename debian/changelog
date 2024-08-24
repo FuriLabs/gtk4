@@ -1,3 +1,10 @@
+gtk4 (4.15.5+ds-2ubuntu1) oracular; urgency=medium
+
+  * Merge with Debian. Remaining change:
+    - Temporarily skip css tests on s390x to work around Debian 1079546
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 24 Aug 2024 09:48:56 -0400
+
 gtk4 (4.15.5+ds-2) experimental; urgency=medium
 
   * Replace disable vulkan patch with alternative fix pushed upstream

@@ -124,12 +124,16 @@ buffer_diff_u8 (GdkColorState *color_state,
                 gsize          stride_b,
                 int            width,
                 int            height,
-                int            tolerance)
+                int            tolerance,
+                guint         *max_diff_out,
+                guint         *pixels_changed_out)
 {
   int x, y;
   guchar *buf_diff = NULL;
   gsize stride_diff = 0;
   GdkTexture *diff = NULL;
+  guint max_diff = 0;
+  guint pixels_changed = 0;
 
   for (y = 0; y < height; y++)
     {
@@ -188,6 +192,10 @@ buffer_diff_u8 (GdkColorState *color_state,
               guint channel_diff;
 
               channel_diff = ABS (value_a - value_b);
+
+              if (channel_diff > max_diff)
+                max_diff = channel_diff;
+
               channel_diff *= 4;  /* emphasize */
               if (channel_diff)
                 channel_diff += 128; /* make sure it's visible */
@@ -195,6 +203,8 @@ buffer_diff_u8 (GdkColorState *color_state,
                 channel_diff = 255;
               diff_pixel |= channel_diff << (channel * 8);
             }
+
+          pixels_changed++;
 
           if ((diff_pixel & 0x00ffffff) == 0)
             {
@@ -208,6 +218,12 @@ buffer_diff_u8 (GdkColorState *color_state,
           row[x] = diff_pixel;
       }
   }
+
+  if (max_diff_out != NULL)
+    *max_diff_out = max_diff;
+
+  if (pixels_changed_out != NULL)
+    *pixels_changed_out = pixels_changed;
 
   return diff;
 }
@@ -224,12 +240,16 @@ buffer_diff_float (GdkColorState *color_state,
                    int            stride_b,
                    int            width,
                    int            height,
-                   int            tolerance)
+                   int            tolerance,
+                   guint         *max_diff_out,
+                   guint         *pixels_changed_out)
 {
   int x, y;
   guchar *buf_diff = NULL;
   int stride_diff = 0;
   GdkTexture *diff = NULL;
+  float max_diff = 0.0;
+  guint pixels_changed = 0;
 
   for (y = 0; y < height; y++)
     {
@@ -288,6 +308,10 @@ buffer_diff_float (GdkColorState *color_state,
               float channel_diff;
 
               channel_diff = ABS (value_a - value_b);
+
+              if (channel_diff > max_diff)
+                max_diff = channel_diff;
+
               channel_diff *= 4;  /* emphasize */
               if (channel_diff)
                 channel_diff += 0.5; /* make sure it's visible */
@@ -295,6 +319,8 @@ buffer_diff_float (GdkColorState *color_state,
                 channel_diff = 1.0;
               row[4 * x + channel] = channel_diff;
             }
+
+          pixels_changed++;
 
           if (row[4 * x + 0] < 0.5 &&
               row[4 * x + 1] < 0.5 &&
@@ -309,6 +335,14 @@ buffer_diff_float (GdkColorState *color_state,
           row[4 * x + 3] = 1.0;
       }
   }
+
+  /* Scale the maximum difference we report so it's on the same 0-255
+   * scale as integer textures */
+  if (max_diff_out != NULL)
+    *max_diff_out = max_diff * 255;
+
+  if (pixels_changed_out != NULL)
+    *pixels_changed_out = pixels_changed;
 
   return diff;
 }
@@ -337,7 +371,10 @@ buffer_diff_float (GdkColorState *color_state,
 GdkTexture *
 reftest_compare_textures_with_tolerance (GdkTexture *texture1,
                                          GdkTexture *texture2,
-                                         int         tolerance)
+                                         int         tolerance,
+                                         guint      *max_diff_out,
+                                         guint      *pixels_changed_out,
+                                         guint      *pixels_out)
 {
   int w, h, stride;
   guchar *data1, *data2;
@@ -377,7 +414,8 @@ reftest_compare_textures_with_tolerance (GdkTexture *texture1,
                                 data1, stride,
                                 data2, stride,
                                 w, h,
-                                tolerance);
+                                tolerance,
+                                max_diff_out, pixels_changed_out);
     }
   else
     {
@@ -385,19 +423,27 @@ reftest_compare_textures_with_tolerance (GdkTexture *texture1,
                              data1, stride,
                              data2, stride,
                              w, h,
-                             tolerance);
+                             tolerance,
+                             max_diff_out, pixels_changed_out);
     }
 
   gdk_texture_downloader_free (downloader);
   g_free (data1);
   g_free (data2);
 
+  if (pixels_out != NULL)
+    *pixels_out = w * h;
+
   return diff;
 }
 
 GdkTexture *
 reftest_compare_textures (GdkTexture *texture1,
-                          GdkTexture *texture2)
+                          GdkTexture *texture2,
+                          guint      *max_diff_out,
+                          guint      *pixels_changed_out,
+                          guint      *pixels_out)
 {
-  return reftest_compare_textures_with_tolerance (texture1, texture2, 0);
+  return reftest_compare_textures_with_tolerance (texture1, texture2, 0,
+                                                  max_diff_out, pixels_changed_out, pixels_out);
 }

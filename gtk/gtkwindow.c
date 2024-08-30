@@ -4340,17 +4340,6 @@ gtk_window_realize (GtkWidget *widget)
 
   gdk_toplevel_set_decorated (GDK_TOPLEVEL (surface), priv->decorated && !priv->client_decorated);
   gdk_toplevel_set_deletable (GDK_TOPLEVEL (surface), priv->deletable);
-
-#ifdef GDK_WINDOWING_WAYLAND
-  if (GDK_IS_WAYLAND_SURFACE (surface))
-    {
-      if (priv->client_decorated)
-        gdk_wayland_toplevel_announce_csd (GDK_TOPLEVEL (surface));
-      else
-        gdk_wayland_toplevel_announce_ssd (GDK_TOPLEVEL (surface));
-    }
-#endif
-
   gdk_toplevel_set_modal (GDK_TOPLEVEL (surface), priv->modal);
 
   if (priv->startup_id)
@@ -6259,6 +6248,14 @@ G_GNUC_END_IGNORE_DEPRECATIONS
  *
  * The debugger offers access to the widget hierarchy of the application
  * and to useful debugging tools.
+ *
+ * This function allows applications that already use
+ * <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd>
+ * (or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>)
+ * for their own key shortcuts to add a different shortcut to open the Inspector.
+ *
+ * If you are not overriding the default key shortcuts for the Inspector,
+ * you should not use this function.
  */
 void
 gtk_window_set_interactive_debugging (gboolean enable)

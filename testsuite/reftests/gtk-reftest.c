@@ -341,6 +341,9 @@ test_ui_file (GFile *file)
   char *ui_file, *reference_file;
   GdkTexture *ui_image, *reference_image, *diff_image;
   GtkStyleProvider *provider;
+  guint max_diff = 0;
+  guint pixels_changed = 0;
+  guint pixels = 0;
 
   ui_file = g_file_get_path (file);
 
@@ -372,12 +375,16 @@ test_ui_file (GFile *file)
   if (reference_image == NULL)
     reference_image = gdk_memory_texture_new (1, 1, GDK_MEMORY_DEFAULT, g_bytes_new ((guchar[4]) {0, 0, 0, 0}, 4), 4);
 
-  diff_image = reftest_compare_textures (ui_image, reference_image);
+  diff_image = reftest_compare_textures (ui_image, reference_image,
+                                         &max_diff, &pixels_changed, &pixels);
 
   save_image (ui_image, ui_file, ".out.png");
   save_image (reference_image, ui_file, ".ref.png");
+
   if (diff_image)
     {
+      g_test_message ("%u (out of %u) pixels differ from reference by up to %u levels",
+                      pixels_changed, pixels, max_diff);
       save_node (g_object_get_data (G_OBJECT (ui_image), "source-render-node"), ui_file, ".out.node");
       save_node (g_object_get_data (G_OBJECT (reference_image), "source-render-node"), ui_file, ".ref.node");
       save_image (diff_image, ui_file, ".diff.png");

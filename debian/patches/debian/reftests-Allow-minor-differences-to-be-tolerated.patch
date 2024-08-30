@@ -22,13 +22,13 @@ Signed-off-by: Simon McVittie <smcv@debian.org>
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/3195
 Applied-upstream: no, upstream want reftests to be a strict pass/fail with identical results required
 ---
- testsuite/gsk/compare-render.c     | 121 ++++++++++++++++++++++++++++++++++---
+ testsuite/gsk/compare-render.c     | 118 ++++++++++++++++++++++++++++++++++---
  testsuite/reftests/gtk-reftest.c   |  32 +++++++++-
  testsuite/reftests/image-compare.c |   2 +-
- 3 files changed, 144 insertions(+), 11 deletions(-)
+ 3 files changed, 142 insertions(+), 10 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index caca1d1..813401c 100644
+index 2b07683..ed5e7fb 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
 @@ -111,6 +111,37 @@ get_output_file (const char *file,
@@ -173,7 +173,7 @@ index caca1d1..813401c 100644
          }
  
        g_clear_object (&diff_texture);
-@@ -639,10 +714,19 @@ main (int argc, char **argv)
+@@ -637,10 +712,19 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -194,7 +194,7 @@ index caca1d1..813401c 100644
          }
  
        g_clear_object (&diff_texture);
-@@ -697,8 +781,17 @@ main (int argc, char **argv)
+@@ -695,8 +779,17 @@ main (int argc, char **argv)
  
        if (diff_texture)
          {
@@ -213,13 +213,7 @@ index caca1d1..813401c 100644
          }
  
        g_clear_object (&diff_texture);
-@@ -736,12 +829,22 @@ skip_clip:
- 
-       save_image (reference_texture, node_file, "-colorflipped.ref.png");
- 
--      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
-+      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
-+                                               &max_diff, &pixels_changed, &pixels);
+@@ -739,8 +832,17 @@ skip_clip:
  
        if (diff_texture)
          {

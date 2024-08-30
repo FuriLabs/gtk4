@@ -9,7 +9,7 @@ Forwarded: not-needed
  1 file changed, 4 insertions(+)
 
 diff --git a/meson.build b/meson.build
-index 95cd481..1deec70 100644
+index 248347d..a492913 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -411,6 +411,10 @@ if win32_enabled

@@ -11,7 +11,7 @@ Forwarded: not-needed
  1 file changed, 24 insertions(+)
 
 diff --git a/gdk/gdk.c b/gdk/gdk.c
-index 5f99d6c..be2574f 100644
+index 13856d2..62be743 100644
 --- a/gdk/gdk.c
 +++ b/gdk/gdk.c
 @@ -43,6 +43,30 @@

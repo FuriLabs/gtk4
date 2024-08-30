@@ -1,5 +1,5 @@
 From: Simon McVittie <smcv@debian.org>
-Date: Sat, 13 Feb 2021 18:26:24 +0000
+Date: Sat, 31 Aug 2024 00:24:16 +0100
 Subject: reftest_compare_surfaces: Report how much the images differ
 
 In unattended/non-interactive/autobuilder environments where the images
@@ -10,17 +10,17 @@ Signed-off-by: Simon McVittie <smcv@debian.org>
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/3195
 Applied-upstream: no, upstream want reftests to be a strict pass/fail with identical results required
 ---
- testsuite/gsk/compare-render.c       | 36 +++++++++++++++++++++++++++++-------
+ testsuite/gsk/compare-render.c       | 39 ++++++++++++++++++++++++++++--------
  testsuite/gsk/normalize.c            |  6 +++++-
  testsuite/reftests/gtk-reftest.c     |  9 ++++++++-
- testsuite/reftests/reftest-compare.c | 28 +++++++++++++++++++++++++---
+ testsuite/reftests/reftest-compare.c | 28 +++++++++++++++++++++++---
  testsuite/reftests/reftest-compare.h |  6 +++++-
  tools/gtk-image-tool-compare.c       |  6 +++++-
  tools/gtk-rendernode-tool-compare.c  |  7 +++++--
- 7 files changed, 82 insertions(+), 16 deletions(-)
+ 7 files changed, 84 insertions(+), 17 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index 47a2f1f..caca1d1 100644
+index 9973df5..2b07683 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
 @@ -318,6 +318,9 @@ main (int argc, char **argv)
@@ -107,12 +107,12 @@ index 47a2f1f..caca1d1 100644
            save_image (diff_texture, node_file, "-masked.diff.png");
            success = FALSE;
          }
-@@ -616,10 +634,13 @@ main (int argc, char **argv)
+@@ -614,10 +632,13 @@ main (int argc, char **argv)
+       g_assert_nonnull (reference_texture);
        g_assert_nonnull (rendered_texture);
-       g_assert_nonnull (rendered_texture2);
  
--      diff_texture = reftest_compare_textures (rendered_texture, rendered_texture2);
-+      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
+-      diff_texture = reftest_compare_textures (reference_texture, rendered_texture);
++      diff_texture = reftest_compare_textures (reference_texture, rendered_texture,
 +                                               &max_diff, &pixels_changed, &pixels);
  
        if (diff_texture)
@@ -122,9 +122,19 @@ index 47a2f1f..caca1d1 100644
            save_image (diff_texture, node_file, "-replayed.diff.png");
            success = FALSE;
          }
-@@ -671,7 +692,8 @@ main (int argc, char **argv)
+@@ -669,7 +690,8 @@ main (int argc, char **argv)
  
        save_image (reference_texture, node_file, "-clipped.ref.png");
+ 
+-      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
++      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,
++                                               &max_diff, &pixels_changed, &pixels);
+ 
+       if (diff_texture)
+         {
+@@ -712,7 +734,8 @@ skip_clip:
+ 
+       save_image (reference_texture, node_file, "-colorflipped.ref.png");
  
 -      diff_texture = reftest_compare_textures (rendered_texture, reference_texture);
 +      diff_texture = reftest_compare_textures (rendered_texture, reference_texture,

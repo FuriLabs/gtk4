@@ -1,5 +1,5 @@
 compare_render = executable('compare-render',
-  ['compare-render.c', '../reftests/reftest-compare.c', 'replay-node.c'],
+  ['compare-render.c', '../reftests/reftest-compare.c', 'replay-node.c', '../gdk/udmabuf.c'],
   dependencies: libgtk_static_dep,
   c_args: common_cflags + ['-DGTK_COMPILATION'],
 )
@@ -431,6 +431,7 @@ node_parser_tests = [
   'shadow-fail.node',
   'shadow-fail.ref.node',
   'shadow-fail.errors',
+  'srgb-high-accuracy.node',
   'string-error.errors',
   'string-error.node',
   'string-error.ref.node',
@@ -492,7 +493,7 @@ endforeach
 if os_linux
   offload = executable('offload', 'offload.c', 'gskrendernodeattach.c',
     dependencies : libgtk_static_dep,
-    c_args: common_cflags,
+    c_args: common_cflags + [ '-DGTK_COMPILATION=1' ],
   )
 
   offload_tests = [

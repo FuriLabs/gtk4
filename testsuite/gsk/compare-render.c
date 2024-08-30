@@ -795,6 +795,9 @@ run_single_test (const TestSetup *setup,
   GdkTexture *reference, *rendered, *diff;
   graphene_rect_t test_bounds, *render_bounds;
   gpointer test_data;
+  guint max_diff = 0;
+  guint pixels_changed = 0;
+  guint pixels = 0;
 
   if (setup->flags & KEEP_BOUNDS)
     {
@@ -835,7 +838,8 @@ run_single_test (const TestSetup *setup,
   if (setup->free)
     setup->free (test_data);
 
-  diff = reftest_compare_textures (reference, rendered);
+  diff = reftest_compare_textures (reference, rendered,
+                                   &max_diff, &pixels_changed, &pixels);
   if (diff)
     {
       g_test_fail ();
@@ -847,7 +851,11 @@ run_single_test (const TestSetup *setup,
       save_image (reference, file_name, setup->name, ".ref.png");
       save_image (rendered, file_name, setup->name, ".out.png");
       if (diff)
-        save_image (diff, file_name, setup->name, ".diff.png");
+        {
+          g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
+                   pixels_changed, pixels, max_diff);
+          save_image (diff, file_name, setup->name, ".diff.png");
+        }
     }
 
   g_clear_object (&diff);

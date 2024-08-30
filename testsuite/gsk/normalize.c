@@ -9,6 +9,9 @@ test_normalize (GskRenderNode *node1,
   GskRenderer *renderer = gsk_ngl_renderer_new ();
   graphene_rect_t bounds1, bounds2;
   GdkTexture *texture1, *texture2, *diff;
+  guint max_diff = 0;
+  guint pixels_changed = 0;
+  guint pixels = 0;
   GError *error = NULL;
 
   gsk_renderer_realize_for_display (renderer, gdk_display_get_default (), &error);
@@ -20,7 +23,8 @@ test_normalize (GskRenderNode *node1,
   texture1 = gsk_renderer_render_texture (renderer, node1, &bounds1);
   texture2 = gsk_renderer_render_texture (renderer, node2, &bounds2);
 
-  diff = reftest_compare_textures (texture1, texture2);
+  diff = reftest_compare_textures (texture1, texture2,
+                                   &max_diff, &pixels_changed, &pixels);
   g_assert_null (diff);
 
   g_object_unref (texture1);

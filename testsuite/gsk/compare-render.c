@@ -660,6 +660,9 @@ run_single_test (const TestSetup *setup,
   GskRenderNode *test;
   GdkTexture *reference, *rendered, *diff;
   gpointer test_data;
+  guint max_diff = 0;
+  guint pixels_changed = 0;
+  guint pixels = 0;
 
   if (setup->setup)
     test_data = setup->setup (org_test);
@@ -688,9 +691,12 @@ run_single_test (const TestSetup *setup,
   if (setup->free)
     setup->free (test_data);
 
-  diff = reftest_compare_textures (reference, rendered);
+  diff = reftest_compare_textures (reference, rendered,
+                                   &max_diff, &pixels_changed, &pixels);
   if (diff)
     {
+      g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
+               pixels_changed, pixels, max_diff);
       save_image (diff, file_name, setup->name, ".diff.png");
       g_test_fail ();
     }

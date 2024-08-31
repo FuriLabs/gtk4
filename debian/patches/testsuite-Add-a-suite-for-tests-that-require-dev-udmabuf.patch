@@ -1,0 +1,34 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Sat, 31 Aug 2024 10:22:49 +0100
+Subject: testsuite: Add a suite for tests that require /dev/udmabuf
+
+On GTK's official upstream CI, all Linux runners are meant to have
+/dev/udmabuf available, so this should pass. On developer machines or
+downstream build environments, this can't be guaranteed (not all kernel
+configurations offer that device, and on those that do, an autobuilder
+might not have access to it) so make it possible to skip this with
+`--no-suite=needs-udmabuf`.
+
+Any future tests that rely on /dev/udmabuf (as opposed to using it for
+optional better coverage if available, like replay-node does) can be
+aded to the same suite.
+
+Signed-off-by: Simon McVittie <smcv@debian.org>
+---
+ testsuite/gdk/meson.build | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
+index c1382f7..0befb16 100644
+--- a/testsuite/gdk/meson.build
++++ b/testsuite/gdk/meson.build
+@@ -41,6 +41,9 @@ if os_linux
+   tests += [
+     { 'name': 'dmabuf-support',
+       'sources': [ 'udmabuf.c' ],
++      # This needs to pass on upstream Gitlab-CI, but cannot be guaranteed
++      # to work on developer machines or downstream build environments
++      'suites': [ 'needs-udmabuf' ],
+     },
+   ]
+ endif

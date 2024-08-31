@@ -5,9 +5,18 @@ gtk4 (4.15.6+ds-1) UNRELEASED; urgency=medium
     (Closes: #1077757)
 
   [ Simon McVittie ]
-  * New upstream release
+  * New upstream development release
+  * d/copyright: Update
+  * d/patches: Update patch series
+  * d/p/gtkcssvariableset-Fix-listing-IDs-on-big-endian-machines.patch,
+    d/p/gtkcssprovider-Fix-sorting-of-custom-property-IDs-on-64-b.patch:
+    Fix crashes on 64-bit big-endian since 4.15.x (Closes: #1079546)
+  * d/p/testsuite-Add-a-suite-for-tests-that-require-dev-udmabuf.patch,
+    d/rules:
+    Skip tests that require /dev/udmabuf, which is not currently available
+    on Debian kernels, and unlikely to become available on buildds
 
- -- Simon McVittie <smcv@debian.org>  Sat, 31 Aug 2024 00:21:28 +0100
+ -- Simon McVittie <smcv@debian.org>  Sat, 31 Aug 2024 12:58:57 +0100
 
 gtk4 (4.15.5+ds-2) experimental; urgency=medium
 

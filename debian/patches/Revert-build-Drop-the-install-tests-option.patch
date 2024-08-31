@@ -383,7 +383,7 @@ index 7fc4036..34ce8b7 100644
 +  install_data(test_data, install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index e3ab010..164d510 100644
+index 06b65a8..7af2ca4 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
 @@ -1,9 +1,13 @@
@@ -401,7 +401,7 @@ index e3ab010..164d510 100644
  )
  
  tests = [
-@@ -47,7 +51,8 @@ foreach t : tests
+@@ -50,7 +54,8 @@ foreach t : tests
      sources: [ '@0@.c'.format(test_name) ] + t.get('sources', []),
      c_args: common_cflags,
      dependencies: libgtk_dep,
@@ -411,7 +411,7 @@ index e3ab010..164d510 100644
    )
  
    suites = ['gdk'] + t.get('suites', [])
-@@ -87,7 +92,8 @@ foreach t : internal_tests
+@@ -90,7 +95,8 @@ foreach t : internal_tests
      sources: '@0@.c'.format(test_name),
      c_args: common_cflags + ['-DGTK_COMPILATION'],
      dependencies: libgtk_static_dep,
@@ -421,7 +421,7 @@ index e3ab010..164d510 100644
    )
  
    suites = ['gdk'] + t.get('suites', [])
-@@ -103,3 +109,28 @@ foreach t : internal_tests
+@@ -106,3 +112,28 @@ foreach t : internal_tests
      suite: suites,
    )
  endforeach

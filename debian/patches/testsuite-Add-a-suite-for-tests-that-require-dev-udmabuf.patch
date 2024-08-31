@@ -14,15 +14,16 @@ optional better coverage if available, like replay-node does) can be
 aded to the same suite.
 
 Signed-off-by: Simon McVittie <smcv@debian.org>
+Applied-upstream: 4.15.7, commit:204b8857a187d3dbce97906d619ec81759d05318
 ---
  testsuite/gdk/meson.build | 3 +++
  1 file changed, 3 insertions(+)
 
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index c1382f7..0befb16 100644
+index e3ab010..06b65a8 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
-@@ -41,6 +41,9 @@ if os_linux
+@@ -37,6 +37,9 @@ if os_linux
    tests += [
      { 'name': 'dmabuf-support',
        'sources': [ 'udmabuf.c' ],

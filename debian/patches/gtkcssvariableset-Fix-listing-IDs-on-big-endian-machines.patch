@@ -14,6 +14,7 @@ a crash. This was visible in the `gtk:css / style` automated test.
 Bug-Debian: https://bugs.debian.org/1079546
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7672
 Signed-off-by: Simon McVittie <smcv@debian.org>
+Applied-upstream: 4.15.7, commit:3ef1f448a3c12d91c6ff977b8afc47183a89f8d2
 ---
  gtk/gtkcssvariableset.c | 5 ++++-
  1 file changed, 4 insertions(+), 1 deletion(-)

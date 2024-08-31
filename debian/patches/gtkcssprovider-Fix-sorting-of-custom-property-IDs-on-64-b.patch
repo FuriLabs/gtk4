@@ -18,6 +18,7 @@ access and a crash. This was visible in the
 Bug-Debian: https://bugs.debian.org/1079546
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7672
 Signed-off-by: Simon McVittie <smcv@debian.org>
+Applied-upstream: 4.15.7, commit:a524524ffdf13e674e376a8ef6d969d1fd8f6d25
 ---
  gtk/gtkcssprovider.c | 10 ++++++----
  1 file changed, 6 insertions(+), 4 deletions(-)

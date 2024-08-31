@@ -1846,11 +1846,21 @@ gtk_css_dimension_value_is_zero (const GtkCssValue *value)
   return value->dimension.value == 0;
 }
 
+#if defined(__arm__) && !defined(__ARM_PCS_VFP)
+/* Floating-point emulated in software. Setting the rounding mode to
+ * anything other than FE_TONEAREST doesn't work */
+#undef HAVE_WORKING_FESETROUND
+#else
+#define HAVE_WORKING_FESETROUND
+#endif
+
 static double
 _round (guint mode, double a, double b)
 {
+#ifdef HAVE_WORKING_FESETROUND
   int old_mode;
   int modes[] = { FE_TONEAREST, FE_UPWARD, FE_DOWNWARD, FE_TOWARDZERO };
+#endif
   double result;
 
   if (b == 0)
@@ -1880,12 +1890,36 @@ _round (guint mode, double a, double b)
         }
     }
 
+#ifdef HAVE_WORKING_FESETROUND
   old_mode = fegetround ();
   fesetround (modes[mode]);
 
   result = nearbyint (a/b) * b;
 
   fesetround (old_mode);
+#else
+  result = a / b;
+
+  switch (mode)
+    {
+    case ROUND_NEAREST:
+      result = round (result);
+      break;
+    case ROUND_TO_ZERO:
+      result = (result >= 0 ? floor (result) : ceil (result));
+      break;
+    case ROUND_UP:
+      result = ceil (result);
+      break;
+    case ROUND_DOWN:
+      result = floor (result);
+      break;
+    default:
+      g_assert_not_reached ();
+    }
+
+  result *= b;
+#endif
 
   return result;
 }

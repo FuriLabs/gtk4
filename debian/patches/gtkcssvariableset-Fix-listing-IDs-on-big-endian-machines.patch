@@ -1,0 +1,36 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Sat, 31 Aug 2024 01:35:26 +0100
+Subject: gtkcssvariableset: Fix listing IDs on big-endian machines
+
+Previously this code assumed that if we have an int stored in a hash
+table via GINT_TO_POINTER, we can retrieve the pointer value and treat
+its first sizeof(int) bytes as an item to append to a GArray of int.
+
+However, on a 64-bit big-endian system, the first sizeof(int)
+bytes of the pointer will be zero, which is not a valid ID for a
+GtkCssCustomPropertyPool, causing an out-of-bounds array access and
+a crash. This was visible in the `gtk:css / style` automated test.
+
+Bug-Debian: https://bugs.debian.org/1079546
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7672
+Signed-off-by: Simon McVittie <smcv@debian.org>
+---
+ gtk/gtkcssvariableset.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/gtk/gtkcssvariableset.c b/gtk/gtkcssvariableset.c
+index 957d18e..5e0b699 100644
+--- a/gtk/gtkcssvariableset.c
++++ b/gtk/gtkcssvariableset.c
+@@ -309,7 +309,10 @@ gtk_css_variable_set_list_ids (GtkCssVariableSet  *self)
+   g_hash_table_iter_init (&iter, all_ids);
+ 
+   while (g_hash_table_iter_next (&iter, &id, NULL))
+-    g_array_append_val (ret, id);
++    {
++      int value = GPOINTER_TO_INT (id);
++      g_array_append_val (ret, value);
++    }
+ 
+   g_hash_table_unref (all_ids);
+ 

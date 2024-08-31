@@ -13,3 +13,5 @@ nodeparser-Adjust-test-for-pango-1.52.0.patch
 gdk-Check-some-assertions-on-our-architectures.patch
 testsuite-skip-color-mix.patch
 testsuite-Skip-instead-of-failing-if-dev-udmabuf-is-inacc.patch
+gtkcssvariableset-Fix-listing-IDs-on-big-endian-machines.patch
+gtkcssprovider-Fix-sorting-of-custom-property-IDs-on-64-b.patch

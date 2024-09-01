@@ -17,15 +17,6 @@ export HOME="$AUTOPKGTEST_TMP"
 # https://gitlab.gnome.org/GNOME/gtk/-/commit/1765e1b7c
 export GTK_DEBUG=css
 
-tests=$(gnome-desktop-testing-runner -l "$namespace" |
-    cut -f1 -d' ' |
-    grep -v '^gtk-4.0/gtk/templates.test$')
-
-if [ -z "$tests" ]; then
-    echo "Error: no installed-tests found matching $namespace" >&2
-    exit 1
-fi
-
 exec dbus-run-session -- \
 debian/tests/run-with-display $GDK_BACKEND \
 debian/tests/run-with-locales \
@@ -37,4 +28,4 @@ debian/tests/run-with-locales \
 gnome-desktop-testing-runner \
 --report-directory="$AUTOPKGTEST_ARTIFACTS" \
 --tap \
-$tests
+"$namespace"

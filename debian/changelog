@@ -1,4 +1,4 @@
-gtk4 (4.15.6+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.15.6+ds-1) experimental; urgency=medium
 
   [ Jeremy Bícha ]
   * Remove memorytexture patch: test should pass now on big-endian
@@ -23,7 +23,7 @@ gtk4 (4.15.6+ds-1) UNRELEASED; urgency=medium
     ci.debian.net now.
   * d/tests/installed-tests: Quote more defensively
 
- -- Simon McVittie <smcv@debian.org>  Sun, 01 Sep 2024 21:39:38 +0100
+ -- Simon McVittie <smcv@debian.org>  Sun, 01 Sep 2024 21:42:40 +0100
 
 gtk4 (4.15.5+ds-2) experimental; urgency=medium
 

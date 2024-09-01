@@ -18,8 +18,12 @@ gtk4 (4.15.6+ds-1) UNRELEASED; urgency=medium
   * d/p/gtkcssnumbervalue-Don-t-use-fesetround-on-ARM-softfloat.patch:
     Add a patch to work around fesetround() not working on armel
     (Closes: #1079545)
+  * d/tests: Run templates.test again.
+    This is believed to be reliable on all architectures supported by
+    ci.debian.net now.
+  * d/tests/installed-tests: Quote more defensively
 
- -- Simon McVittie <smcv@debian.org>  Sun, 01 Sep 2024 13:19:16 +0100
+ -- Simon McVittie <smcv@debian.org>  Sun, 01 Sep 2024 21:39:38 +0100
 
 gtk4 (4.15.5+ds-2) experimental; urgency=medium
 

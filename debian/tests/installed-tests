@@ -18,7 +18,7 @@ export HOME="$AUTOPKGTEST_TMP"
 export GTK_DEBUG=css
 
 exec dbus-run-session -- \
-debian/tests/run-with-display $GDK_BACKEND \
+debian/tests/run-with-display "$GDK_BACKEND" \
 debian/tests/run-with-locales \
     --generate de_DE.UTF-8 \
     --generate en_GB.UTF-8 \

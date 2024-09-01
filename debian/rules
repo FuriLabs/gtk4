@@ -352,6 +352,8 @@ override_dh_installman:
 	dh_installman --sourcedir=debian/install/deb
 
 override_dh_install:
+	# upstream's Gitlab-CI has /dev/udmabuf but Debian kernels normally don't
+	rm -fv debian/install/deb/usr/share/installed-tests/gtk-4.0/gdk/dmabuf-support.test
 	rm -fv debian/install/udeb/usr/bin/gtk4-update-icon-cache
 	rm -frv debian/install/udeb/usr/share/gtk-4.0/valgrind
 	rm -frv debian/install/udeb/usr/share/metainfo

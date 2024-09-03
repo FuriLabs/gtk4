@@ -304,6 +304,16 @@ test_linear_filtering (gconstpointer data,
 
   decode_renderer_format (data, &renderer, &format);
 
+  /* Cairo/Pixman and GTK/GL/Vulkan disagree on how to convert 241/256
+   * from floating-point to 8bpp (Cairo says 0xf1, GTK says 0xf0) */
+  if (GSK_IS_CAIRO_RENDERER (renderer) &&
+      (gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_16 ||
+       gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_32))
+    {
+      g_test_skip ("https://gitlab.gnome.org/GNOME/gtk/-/issues/6978");
+      return;
+    }
+
   width = MAX (width, gdk_memory_format_get_block_width (format));
   height = MAX (height, gdk_memory_format_get_block_height (format));
 
@@ -336,6 +346,16 @@ test_mipmaps (gconstpointer data)
   gsize width, height;
 
   decode_renderer_format (data, &renderer, &format);
+
+  /* Cairo/Pixman and GTK/GL/Vulkan disagree on how to convert 241/256
+   * from floating-point to 8bpp (Cairo says 0xf1, GTK says 0xf0) */
+  if (GSK_IS_CAIRO_RENDERER (renderer) &&
+      (gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_16 ||
+       gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_32))
+    {
+      g_test_skip ("https://gitlab.gnome.org/GNOME/gtk/-/issues/6978");
+      return;
+    }
 
   width = MAX (2, gdk_memory_format_get_block_width (format));
   height = MAX (2, gdk_memory_format_get_block_height (format));

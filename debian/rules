@@ -212,8 +212,8 @@ endif
 
 export LIBGL_ALWAYS_SOFTWARE=true
 
-ifneq ($(filter mips% powerpc sparc%,$(DEB_HOST_ARCH_CPU)),)
-$(info Disabling use of llvmpipe on this CPU, see https://bugs.debian.org/993550)
+ifneq ($(filter mips% powerpc riscv% sparc%,$(DEB_HOST_ARCH_CPU)),)
+$(info Disabling use of llvmpipe on this CPU, see https://bugs.debian.org/993550 and https://bugs.debian.org/1080435)
 export GALLIUM_DRIVER=softpipe
 endif
 

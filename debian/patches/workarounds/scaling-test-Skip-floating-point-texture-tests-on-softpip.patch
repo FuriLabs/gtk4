@@ -1,0 +1,51 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Mon, 9 Sep 2024 17:38:19 +0100
+Subject: scaling test: Skip floating-point texture tests on softpipe
+
+This doesn't seem to work reliably. We can try this again when
+llvm-toolchain-18 provides a working llvmpipe on riscv64, estimated to
+happen after around 3 days of additional compiling.
+
+Forwarded: no, upstream generally rejects embedded-architecture-specific workarounds
+---
+ testsuite/gsk/scaling.c | 20 ++++++++++++++++++--
+ 1 file changed, 18 insertions(+), 2 deletions(-)
+
+diff --git a/testsuite/gsk/scaling.c b/testsuite/gsk/scaling.c
+index 5d5e41d..1035dde 100644
+--- a/testsuite/gsk/scaling.c
++++ b/testsuite/gsk/scaling.c
+@@ -302,7 +302,15 @@ test_linear_filtering (gconstpointer data,
+   compare_textures (expected, output, FALSE);
+ 
+   if (g_test_failed ())
+-    dump_scaling_input (colors, &average_color);
++    {
++      dump_scaling_input (colors, &average_color);
++
++      if (G_TYPE_CHECK_INSTANCE_TYPE (renderer, gsk_ngl_renderer_get_type ()) &&
++          g_strcmp0 (g_getenv ("GALLIUM_DRIVER"), "softpipe") == 0 &&
++          (gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_16 ||
++           gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_32))
++        g_test_incomplete ("scaling floating-point textures not reliable on softpipe?");
++    }
+ 
+   g_object_unref (expected);
+   g_object_unref (output);
+@@ -340,7 +348,15 @@ test_mipmaps (gconstpointer data)
+   compare_textures (expected, output, FALSE);
+ 
+   if (g_test_failed ())
+-    dump_scaling_input (colors, &average_color);
++    {
++      dump_scaling_input (colors, &average_color);
++
++      if (G_TYPE_CHECK_INSTANCE_TYPE (renderer, gsk_ngl_renderer_get_type ()) &&
++          g_strcmp0 (g_getenv ("GALLIUM_DRIVER"), "softpipe") == 0 &&
++          (gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_16 ||
++           gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_32))
++        g_test_incomplete ("scaling floating-point textures not reliable on softpipe?");
++    }
+ 
+   g_object_unref (expected);
+   g_object_unref (output);

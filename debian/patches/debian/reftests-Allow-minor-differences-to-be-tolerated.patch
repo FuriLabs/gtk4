@@ -28,14 +28,14 @@ Applied-upstream: no, upstream want reftests to be a strict pass/fail with ident
  3 files changed, 72 insertions(+), 3 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index 695b7d1..244051c 100644
+index 695b7d1..e004cad 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
 @@ -113,6 +113,37 @@ get_output_file (const char *file,
    return result;
  }
  
-+void
++static void
 +load_test_settings (const char *node_file,
 +                    guint64 *max_diff,
 +                    guint64 *max_pixels)

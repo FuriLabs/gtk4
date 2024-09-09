@@ -14,3 +14,4 @@ nodeparser-Adjust-test-for-pango-1.52.0.patch
 gdk-Check-some-assertions-on-our-architectures.patch
 testsuite-skip-color-mix.patch
 gtkcssnumbervalue-Don-t-use-fesetround-on-ARM-softfloat.patch
+workarounds/scaling-test-Skip-floating-point-pixel-formats-with-Cairo.patch

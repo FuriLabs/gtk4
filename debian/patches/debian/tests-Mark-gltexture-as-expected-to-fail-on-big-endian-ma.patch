@@ -8,7 +8,7 @@ Forwarded: not-needed, workaround
  1 file changed, 4 insertions(+)
 
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index 7af2ca4..0befb16 100644
+index 2ae1847..4138f86 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
 @@ -101,6 +101,10 @@ foreach t : internal_tests

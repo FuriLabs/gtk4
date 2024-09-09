@@ -1,6 +1,3 @@
-gtkcssvariableset-Fix-listing-IDs-on-big-endian-machines.patch
-gtkcssprovider-Fix-sorting-of-custom-property-IDs-on-64-b.patch
-testsuite-Add-a-suite-for-tests-that-require-dev-udmabuf.patch
 Revert-tests-Stop-copying-the-tool-tests.patch
 Revert-build-Drop-the-install-tests-option.patch
 debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch

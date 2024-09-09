@@ -17,7 +17,7 @@ tests = [
   { 'name': 'displaymanager' },
   { 'name': 'glcontext' },
   { 'name': 'keysyms' },
-  { 'name': 'memorytexture' },
+  { 'name': 'memorytexture', 'sources': [ 'gdktestutils.c' ] },
   { 'name': 'rectangle' },
   { 'name': 'rgba' },
   { 'name': 'seat' },
@@ -37,6 +37,9 @@ if os_linux
   tests += [
     { 'name': 'dmabuf-support',
       'sources': [ 'udmabuf.c' ],
+      # This needs to pass on upstream Gitlab-CI, but cannot be guaranteed
+      # to work on developer machines or downstream build environments
+      'suites': [ 'needs-udmabuf' ],
     },
   ]
 endif

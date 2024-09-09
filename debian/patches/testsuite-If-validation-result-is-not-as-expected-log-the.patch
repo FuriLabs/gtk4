@@ -1,0 +1,25 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Tue, 3 Sep 2024 02:49:06 +0100
+Subject: testsuite: If validation result is not as expected, log the diff
+
+It's easier to diagnose test failures if everything (within reason)
+is in the build log.
+
+Signed-off-by: Simon McVittie <smcv@debian.org>
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7687
+---
+ testsuite/tools/validate.in | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/testsuite/tools/validate.in b/testsuite/tools/validate.in
+index b3f1edd..d8a3301 100644
+--- a/testsuite/tools/validate.in
++++ b/testsuite/tools/validate.in
+@@ -32,6 +32,7 @@ for t in ${TESTS[*]}; do
+     echo "ok $I $name"
+     rm "$diff"
+   else
++    sed -e 's/^/# /' < "$diff"
+     echo "not ok $I $name"
+     cp "$expected" "$ref"
+   fi

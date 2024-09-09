@@ -1,3 +1,29 @@
+gtk4 (4.16.0+ds-2) UNRELEASED; urgency=medium
+
+  * d/p/Revert-css-Simplify-theme-loading.patch:
+    Add a regression fix from upstream
+  * d/p/gdkgltexture-Avoid-use-after-free-when-switching-GdkGLCon.patch:
+    Add patch to fix a use-after-free when using softpipe
+  * d/rules: Ignore label-shadows reftest failure whenever we are using
+    softpipe.
+    Temporarily switching from llvmpipe to softpipe on an architecture
+    where this previously worked (armel) causes this reftest to fail,
+    which seems like evidence that the different result is a softpipe
+    rendering difference.
+  * d/p/testsuite-If-validation-result-is-not-as-expected-log-the.patch:
+    Add proposed patch to improve diagnostics if the validate test fails
+  * d/p/workarounds/scaling-test-Skip-floating-point-pixel-formats-with-Cairo.patch:
+    Add a proposed patch to skip test-cases that have intermittent failures
+  * d/p/workarounds/tests-Skip-floating-point-texture-scaling-tests-on-softpi.patch:
+    Add a workaround for test failures on architectures that use softpipe
+  * d/p/workarounds/memorytexture-test-Ignore-failures-with-FP-softpipe-ngl-o.patch:
+    Add a patch to work around floating point textures not working on mips64el
+    (Mitigates: #1081275)
+  * d/p/debian/reftests-Allow-minor-differences-to-be-tolerated.patch:
+    Fix a compiler warning
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 10 Sep 2024 15:07:17 +0100
+
 gtk4 (4.16.0+ds-1) experimental; urgency=medium
 
   [ Simon McVittie ]

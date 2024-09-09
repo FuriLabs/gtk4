@@ -46,14 +46,16 @@
 
 G_DEFINE_TYPE (GdkWaylandGLContext, gdk_wayland_gl_context, GDK_TYPE_GL_CONTEXT)
 
-static gboolean
-gdk_wayland_gl_context_make_current (GdkGLContext *context,
-                                     gboolean      surfaceless)
+static void
+gdk_wayland_gl_context_begin_frame (GdkDrawContext  *draw_context,
+                                    GdkMemoryDepth   depth,
+                                    cairo_region_t  *region,
+                                    GdkColorState  **out_color_state,
+                                    GdkMemoryDepth  *out_depth)
 {
-  if (!surfaceless)
-    gdk_wayland_surface_ensure_wl_egl_window (gdk_gl_context_get_surface (context));
+  gdk_wayland_surface_ensure_wl_egl_window (gdk_draw_context_get_surface (draw_context));
 
-  return GDK_GL_CONTEXT_CLASS (gdk_wayland_gl_context_parent_class)->make_current (context, surfaceless);
+  GDK_DRAW_CONTEXT_CLASS (gdk_wayland_gl_context_parent_class)->begin_frame (draw_context, depth, region, out_color_state, out_depth);
 }
 
 static void
@@ -95,13 +97,13 @@ static void
 gdk_wayland_gl_context_class_init (GdkWaylandGLContextClass *klass)
 {
   GdkDrawContextClass *draw_context_class = GDK_DRAW_CONTEXT_CLASS (klass);
-  GdkGLContextClass *gl_context_class = GDK_GL_CONTEXT_CLASS (klass);
+  GdkGLContextClass *context_class = GDK_GL_CONTEXT_CLASS (klass);
 
+  draw_context_class->begin_frame = gdk_wayland_gl_context_begin_frame;
   draw_context_class->end_frame = gdk_wayland_gl_context_end_frame;
   draw_context_class->empty_frame = gdk_wayland_gl_context_empty_frame;
 
-  gl_context_class->make_current = gdk_wayland_gl_context_make_current;
-  gl_context_class->backend_type = GDK_GL_EGL;
+  context_class->backend_type = GDK_GL_EGL;
 }
 
 static void

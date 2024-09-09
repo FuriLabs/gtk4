@@ -1,4 +1,4 @@
-gtk4 (4.15.6+ds-2) UNRELEASED; urgency=medium
+gtk4 (4.16.0+ds-1) UNRELEASED; urgency=medium
 
   * d/rules: Use softpipe to run tests on riscv*, similar to mips*,
     powerpc and sparc*.
@@ -6,8 +6,9 @@ gtk4 (4.15.6+ds-2) UNRELEASED; urgency=medium
     does not seem to be ready yet, and now that Mesa 24.2.1-4 has
     re-enabled softpipe (#1080475) we can use it to avoid llvmpipe issues.
     (Mitigates: #1080435)
+  * New upstream release
 
- -- Simon McVittie <smcv@debian.org>  Thu, 05 Sep 2024 23:46:00 +0100
+ -- Simon McVittie <smcv@debian.org>  Mon, 09 Sep 2024 10:54:42 +0100
 
 gtk4 (4.15.6+ds-1) experimental; urgency=medium
 

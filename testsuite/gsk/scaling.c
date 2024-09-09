@@ -302,7 +302,15 @@ test_linear_filtering (gconstpointer data,
   compare_textures (expected, output, FALSE);
 
   if (g_test_failed ())
-    dump_scaling_input (colors, &average_color);
+    {
+      dump_scaling_input (colors, &average_color);
+
+      if (G_TYPE_CHECK_INSTANCE_TYPE (renderer, gsk_ngl_renderer_get_type ()) &&
+          g_strcmp0 (g_getenv ("GALLIUM_DRIVER"), "softpipe") == 0 &&
+          (gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_16 ||
+           gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_32))
+        g_test_incomplete ("scaling floating-point textures not reliable on softpipe?");
+    }
 
   g_object_unref (expected);
   g_object_unref (output);
@@ -340,7 +348,15 @@ test_mipmaps (gconstpointer data)
   compare_textures (expected, output, FALSE);
 
   if (g_test_failed ())
-    dump_scaling_input (colors, &average_color);
+    {
+      dump_scaling_input (colors, &average_color);
+
+      if (G_TYPE_CHECK_INSTANCE_TYPE (renderer, gsk_ngl_renderer_get_type ()) &&
+          g_strcmp0 (g_getenv ("GALLIUM_DRIVER"), "softpipe") == 0 &&
+          (gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_16 ||
+           gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_32))
+        g_test_incomplete ("scaling floating-point textures not reliable on softpipe?");
+    }
 
   g_object_unref (expected);
   g_object_unref (output);

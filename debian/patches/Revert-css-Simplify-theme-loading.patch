@@ -1,0 +1,49 @@
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Mon, 9 Sep 2024 06:51:34 -0400
+Subject: Revert "css: Simplify theme loading"
+
+This reverts commit c033de9b83315abf1688fe5b3689461e30d9ffc7.
+
+This change unintentionally broke use of relative paths in Adwaita.
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/6991
+Origin: upstream, 4.17.0, commit:a9b46e8409c91fe3edd0d02c839f65fcdccfba45
+---
+ gtk/gtkcssprovider.c | 17 ++++++++++++-----
+ 1 file changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/gtk/gtkcssprovider.c b/gtk/gtkcssprovider.c
+index 083336e..0b8ce87 100644
+--- a/gtk/gtkcssprovider.c
++++ b/gtk/gtkcssprovider.c
+@@ -1418,18 +1418,25 @@ gtk_css_provider_load_from_path (GtkCssProvider  *css_provider,
+  */
+ void
+ gtk_css_provider_load_from_resource (GtkCssProvider *css_provider,
+-                                     const char     *resource_path)
++			             const char     *resource_path)
+ {
+-  GBytes *bytes;
++  GFile *file;
++  char *uri, *escaped;
+ 
+   g_return_if_fail (GTK_IS_CSS_PROVIDER (css_provider));
+   g_return_if_fail (resource_path != NULL);
+ 
+-  bytes = g_resources_lookup_data (resource_path, G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
++  escaped = g_uri_escape_string (resource_path,
++				 G_URI_RESERVED_CHARS_ALLOWED_IN_PATH, FALSE);
++  uri = g_strconcat ("resource://", escaped, NULL);
++  g_free (escaped);
+ 
+-  gtk_css_provider_load_from_bytes (css_provider, bytes);
++  file = g_file_new_for_uri (uri);
++  g_free (uri);
+ 
+-  g_bytes_unref (bytes);
++  gtk_css_provider_load_from_file (css_provider, file);
++
++  g_object_unref (file);
+ }
+ 
+ char *

@@ -516,6 +516,15 @@ test_download (gconstpointer data,
       
       compare_textures (expected, test, texture_method_is_accurate (method));
 
+#ifdef __mips__
+      if (g_test_failed () &&
+          method == TEXTURE_METHOD_NGL &&
+          g_strcmp0 (g_getenv ("GALLIUM_DRIVER"), "softpipe") == 0 &&
+          (gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_16 ||
+           gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_32))
+        g_test_incomplete ("https://bugs.debian.org/1081275");
+#endif
+
       g_object_unref (expected);
       g_object_unref (test);
     }

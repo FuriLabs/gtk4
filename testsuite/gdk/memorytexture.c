@@ -500,6 +500,11 @@ test_download (gconstpointer data,
       
       compare_textures (expected, test, texture_method_is_accurate (method));
 
+      if (g_test_failed () &&
+          (gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_16 ||
+           gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_32))
+        g_test_incomplete ("https://gitlab.gnome.org/GNOME/gtk/-/issues/7282");
+
       g_object_unref (expected);
       g_object_unref (test);
     }

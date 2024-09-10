@@ -17,3 +17,4 @@ testsuite-skip-color-mix.patch
 gtkcssnumbervalue-Don-t-use-fesetround-on-ARM-softfloat.patch
 workarounds/scaling-test-Skip-floating-point-pixel-formats-with-Cairo.patch
 workarounds/scaling-test-Skip-floating-point-texture-tests-on-softpip.patch
+workarounds/memorytexture-test-Ignore-failures-with-FP-softpipe-ngl-o.patch

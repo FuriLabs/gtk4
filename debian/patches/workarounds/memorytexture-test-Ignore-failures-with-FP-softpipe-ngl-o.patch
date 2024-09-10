@@ -1,0 +1,36 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Tue, 10 Sep 2024 10:34:00 +0100
+Subject: memorytexture test: Ignore failures with FP + softpipe + ngl on
+ mips*
+
+Floating-point texture formats do not seem to be reliable with
+GALLIUM_DRIVER=softpipe and the ngl renderer, but only on mips64el
+(riscv64 seems to be OK). We can revisit this if mips64el gets a
+working llvmpipe in future.
+
+Forwarded: no, upstream generally rejects embedded-architecture-specific workarounds
+Bug-Debian: https://bugs.debian.org/1081275
+---
+ testsuite/gdk/memorytexture.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/testsuite/gdk/memorytexture.c b/testsuite/gdk/memorytexture.c
+index 996c0a5..421578a 100644
+--- a/testsuite/gdk/memorytexture.c
++++ b/testsuite/gdk/memorytexture.c
+@@ -516,6 +516,15 @@ test_download (gconstpointer data,
+       
+       compare_textures (expected, test, texture_method_is_accurate (method));
+ 
++#ifdef __mips__
++      if (g_test_failed () &&
++          method == TEXTURE_METHOD_NGL &&
++          g_strcmp0 (g_getenv ("GALLIUM_DRIVER"), "softpipe") == 0 &&
++          (gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_16 ||
++           gdk_memory_format_get_channel_type (format) == CHANNEL_FLOAT_32))
++        g_test_incomplete ("https://bugs.debian.org/1081275");
++#endif
++
+       g_object_unref (expected);
+       g_object_unref (test);
+     }

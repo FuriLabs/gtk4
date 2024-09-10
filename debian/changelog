@@ -1,5 +1,6 @@
-gtk4 (4.16.0+ds-2) UNRELEASED; urgency=medium
+gtk4 (4.16.0+ds-2) experimental; urgency=medium
 
+  [ Simon McVittie ]
   * d/p/Revert-css-Simplify-theme-loading.patch:
     Add a regression fix from upstream
   * d/p/gdkgltexture-Avoid-use-after-free-when-switching-GdkGLCon.patch:
@@ -22,7 +23,7 @@ gtk4 (4.16.0+ds-2) UNRELEASED; urgency=medium
   * d/p/debian/reftests-Allow-minor-differences-to-be-tolerated.patch:
     Fix a compiler warning
 
- -- Simon McVittie <smcv@debian.org>  Tue, 10 Sep 2024 15:07:17 +0100
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 10 Sep 2024 10:15:12 -0400
 
 gtk4 (4.16.0+ds-1) experimental; urgency=medium
 

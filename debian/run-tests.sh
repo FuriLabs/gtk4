@@ -39,6 +39,7 @@ fi
 if [ ! -d "$XDG_RUNTIME_DIR" ]; then
     export XDG_RUNTIME_DIR="$test_data/xdg-runtime"
     mkdir -p "$XDG_RUNTIME_DIR"
+    chmod 0700 "$XDG_RUNTIME_DIR"
 fi
 
 for reftest in $FUZZY_REFTESTS; do

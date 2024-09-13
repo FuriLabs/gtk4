@@ -260,8 +260,8 @@ skipped_suites = \
 # The doc-check tests aren't passing yet
 skipped_suites += docs
 
-ifneq ($(filter mips% powerpc riscv% sparc%,$(DEB_HOST_ARCH_CPU)),)
-$(info Disabling use of llvmpipe on this CPU, see https://bugs.debian.org/993550 and https://bugs.debian.org/1080435)
+ifneq ($(filter mips% powerpc sparc%,$(DEB_HOST_ARCH_CPU)),)
+$(info Disabling use of llvmpipe on this CPU, see https://bugs.debian.org/993550)
 export GALLIUM_DRIVER=softpipe
 # https://bugs.debian.org/1077178
 ignore_reftests += label-shadows

@@ -1,9 +1,10 @@
-gtk4 (4.16.0+ds-3) UNRELEASED; urgency=medium
+gtk4 (4.16.1+ds-1) UNRELEASED; urgency=medium
 
+  * New upstream release
   * d/run-tests.sh: Ensure temporary XDG_RUNTIME_DIR is mode 0700.
     This avoids warnings from e.g. weston.
 
- -- Simon McVittie <smcv@debian.org>  Sat, 14 Sep 2024 19:17:13 +0100
+ -- Simon McVittie <smcv@debian.org>  Sat, 14 Sep 2024 19:18:05 +0100
 
 gtk4 (4.16.0+ds-2) experimental; urgency=medium
 

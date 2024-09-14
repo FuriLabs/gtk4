@@ -41,6 +41,7 @@ static const GdkDebugKey gsk_vulkan_feature_keys[] = {
   { "semaphore-export", GDK_VULKAN_FEATURE_SEMAPHORE_EXPORT, "Disable sync of exported dmabufs" },
   { "semaphore-import", GDK_VULKAN_FEATURE_SEMAPHORE_IMPORT, "Disable sync of imported dmabufs" },
   { "incremental-present", GDK_VULKAN_FEATURE_INCREMENTAL_PRESENT, "Do not send damage regions" },
+  { "swapchain-maintenance", GDK_VULKAN_FEATURE_SWAPCHAIN_MAINTENANCE, "Do not use advanced swapchain features" },
 };
 #endif
 
@@ -271,7 +272,13 @@ gdk_vulkan_strerror (VkResult result)
 #endif
 #if VK_HEADER_VERSION >= 274
     case VK_ERROR_INVALID_VIDEO_STD_PARAMETERS_KHR:
-      return "The specified Video Std parameters do not adhere to the syntactic or semantic requirements of the used video compression standard or implementation";
+      return "The specified Video Std parameters do not adhere to the syntactic or semantic requirements of the used video compression standard or implementation. (VK_ERROR_INVALID_VIDEO_STD_PARAMETERS_KHR)";
+#endif
+#if VK_HEADER_VERSION >= 294
+    case VK_PIPELINE_BINARY_MISSING_KHR:
+      return "The application attempted to create a pipeline binary by querying an internal cache, but the internal cache entry did not exist. (VK_PIPELINE_BINARY_MISSING_KHR)";
+    case VK_ERROR_NOT_ENOUGH_SPACE_KHR:
+      return "The application did not provide enough space to return all the required data. (VK_ERROR_NOT_ENOUGH_SPACE_KHR)";
 #endif
 
     case VK_RESULT_MAX_ENUM:
@@ -301,6 +308,15 @@ surface_present_mode_to_string (VkPresentModeKHR present_mode)
     }
 
   return "(unknown)";
+}
+
+static gboolean
+gdk_vulkan_context_has_feature (GdkVulkanContext  *self,
+                                GdkVulkanFeatures  feature)
+{
+  GdkDisplay *display = gdk_draw_context_get_display (GDK_DRAW_CONTEXT (self));
+
+  return (display->vulkan_features & feature) ? TRUE : FALSE;
 }
 
 static const VkPresentModeKHR preferred_present_modes[] = {
@@ -556,8 +572,12 @@ physical_device_supports_extension (VkPhysicalDevice  device,
 static GdkVulkanFeatures
 physical_device_check_features (VkPhysicalDevice device)
 {
+  VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT swapchain_maintenance1_features = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT,
+  };
   VkPhysicalDeviceVulkan12Features v12_features = {
       .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+      .pNext = &swapchain_maintenance1_features
   };
   VkPhysicalDeviceSamplerYcbcrConversionFeatures ycbcr_features = {
       .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES,
@@ -602,6 +622,10 @@ physical_device_check_features (VkPhysicalDevice device)
 
   if (physical_device_supports_extension (device, VK_KHR_INCREMENTAL_PRESENT_EXTENSION_NAME))
     features |= GDK_VULKAN_FEATURE_INCREMENTAL_PRESENT;
+
+  if (swapchain_maintenance1_features.swapchainMaintenance1 ||
+      physical_device_supports_extension (device, VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME))
+    features |= GDK_VULKAN_FEATURE_SWAPCHAIN_MAINTENANCE;
 
   return features;
 }
@@ -692,11 +716,10 @@ gdk_vulkan_context_end_frame (GdkDrawContext *draw_context,
   GdkVulkanContext *context = GDK_VULKAN_CONTEXT (draw_context);
   GdkVulkanContextPrivate *priv = gdk_vulkan_context_get_instance_private (context);
   GdkSurface *surface = gdk_draw_context_get_surface (draw_context);
-  GdkDisplay *display = gdk_draw_context_get_display (draw_context);
   VkRectLayerKHR *rectangles;
   int n_regions;
 
-  if (display->vulkan_features & GDK_VULKAN_FEATURE_INCREMENTAL_PRESENT)
+  if (gdk_vulkan_context_has_feature (context, GDK_VULKAN_FEATURE_INCREMENTAL_PRESENT))
     {
       double scale;
 
@@ -1507,6 +1530,11 @@ gdk_display_create_vulkan_device (GdkDisplay  *display,
         {
           if (queue_props[j].queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
+              VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT swapchain_maintenance1_features = { 
+                .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT,
+                .swapchainMaintenance1 = VK_TRUE,
+              };
+              gpointer create_device_pNext = NULL;
               GPtrArray *device_extensions;
 
               device_extensions = g_ptr_array_new ();
@@ -1535,6 +1563,12 @@ gdk_display_create_vulkan_device (GdkDisplay  *display,
                 }
               if (features & GDK_VULKAN_FEATURE_INCREMENTAL_PRESENT)
                 g_ptr_array_add (device_extensions, (gpointer) VK_KHR_INCREMENTAL_PRESENT_EXTENSION_NAME);
+              if (features & GDK_VULKAN_FEATURE_SWAPCHAIN_MAINTENANCE)
+                {
+                  g_ptr_array_add (device_extensions, (gpointer) VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME);
+                  swapchain_maintenance1_features.pNext = create_device_pNext;
+                  create_device_pNext = &swapchain_maintenance1_features;
+                }
 
 #define ENABLE_IF(flag) ((features & (flag)) ? VK_TRUE : VK_FALSE)
               GDK_DISPLAY_DEBUG (display, VULKAN, "Using Vulkan device %u, queue %u", i, j);
@@ -1553,6 +1587,7 @@ gdk_display_create_vulkan_device (GdkDisplay  *display,
                                                     .pNext = &(VkPhysicalDeviceVulkan11Features) {
                                                         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
                                                         .samplerYcbcrConversion = ENABLE_IF (GDK_VULKAN_FEATURE_YCBCR),
+                                                        .pNext = create_device_pNext,
                                                     }
                                                 },
                                                 NULL,
@@ -1671,6 +1706,10 @@ gdk_display_create_vulkan_instance (GdkDisplay  *display,
         g_ptr_array_add (used_extensions, (gpointer) VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
       if (g_str_equal (extensions[i].extensionName, VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME))
         g_ptr_array_add (used_extensions, (gpointer) VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME);
+      if (g_str_equal (extensions[i].extensionName, VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME))
+        g_ptr_array_add (used_extensions, (gpointer) VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+      if (g_str_equal (extensions[i].extensionName, VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME))
+        g_ptr_array_add (used_extensions, (gpointer) VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME);
     }
 
   res = vkCreateInstance (&(VkInstanceCreateInfo) {

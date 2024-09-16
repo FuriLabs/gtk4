@@ -1,3 +1,12 @@
+gtk4 (4.16.1+ds-3) UNRELEASED; urgency=medium
+
+  [ Aurelien Jarno ]
+  * Revert "d/rules: Use softpipe to run tests on riscv64".
+    llvmpipe should work now that #1080475 has been fixed in
+    llvm-toolchain-18. (Closes: #1081678)
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 16 Sep 2024 10:30:58 +0100
+
 gtk4 (4.16.1+ds-2) unstable; urgency=medium
 
   * Release to unstable (Closes: #1079548)

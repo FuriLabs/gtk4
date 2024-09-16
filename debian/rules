@@ -260,8 +260,11 @@ skipped_suites = \
 # The doc-check tests aren't passing yet
 skipped_suites += docs
 
+# mips*: many tests segfault as of 2024-09-16, see also https://bugs.debian.org/993550
+# powerpc: "LLVM ERROR: Relocation type not implemented yet!" as of 2024-09-16, https://bugs.debian.org/1081947
+# sparc*: "Target has no JIT support" as of 2024-09-16, https://bugs.debian.org/1081943
 ifneq ($(filter mips% powerpc sparc%,$(DEB_HOST_ARCH_CPU)),)
-$(info Disabling use of llvmpipe on this CPU, see https://bugs.debian.org/993550)
+$(info Disabling use of llvmpipe on this CPU)
 export GALLIUM_DRIVER=softpipe
 # https://bugs.debian.org/1077178
 ignore_reftests += label-shadows

@@ -5,7 +5,13 @@ gtk4 (4.16.1+ds-3) UNRELEASED; urgency=medium
     llvmpipe should work now that #1080475 has been fixed in
     llvm-toolchain-18. (Closes: #1081678)
 
- -- Simon McVittie <smcv@debian.org>  Mon, 16 Sep 2024 10:30:58 +0100
+  [ Simon McVittie ]
+  * d/rules: Be more selective about disabling tests that fail with
+    softpipe.
+    If they succeed with llvmpipe, then we should be able to enable them
+    on most architectures now.
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 16 Sep 2024 11:18:51 +0100
 
 gtk4 (4.16.1+ds-2) unstable; urgency=medium
 

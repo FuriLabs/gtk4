@@ -6,6 +6,7 @@ TEST_RESULT_DIR=${TEST_RESULT_DIR:-/tmp}/validate
 
 # https://gitlab.freedesktop.org/mesa/mesa/-/issues/10293
 export LIBGL_ALWAYS_SOFTWARE=true
+export GALLIUM_DRIVER=softpipe
 
 mkdir -p "$TEST_RESULT_DIR"
 

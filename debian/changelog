@@ -1,29 +1,8 @@
-gtk4 (4.16.3+ds-1) unstable; urgency=medium
+gtk4 (4.16.3+ds-0ubuntu1) oracular; urgency=medium
 
   * New upstream release (LP: #2083714)
-  * Revert "Fix cursor sizes under Plasma/Wayland when using (fractional) scaling"
-    The backported patches caused cursor size regressions with scaling on GNOME.
-    (Closes: #1083055) (Reopens: #1083115)
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 04 Oct 2024 15:27:50 -0400
-
-gtk4 (4.16.2+ds-4) unstable; urgency=high
-
-  [ Michael Biebl ]
-  * Fix cursor sizes under Plasma/Wayland when using scaling
-    (Closes: #1083055) (LP: #2083274)
-
-  [ Jeremy Bícha ]
-  * Bump urgency to high since this includes multiple 4.16 regression fixes
-    (Closes: #1083019)
-
- -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 30 Sep 2024 15:16:37 -0400
-
-gtk4 (4.16.2+ds-3) unstable; urgency=medium
-
-  * Release to unstable (Mitigates: #1081962)
-
- -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 29 Sep 2024 10:25:23 -0400
 
 gtk4 (4.16.2+ds-2) experimental; urgency=medium
 

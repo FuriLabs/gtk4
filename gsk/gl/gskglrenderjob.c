@@ -1257,6 +1257,7 @@ gsk_gl_render_job_visit_as_fallback (GskGLRenderJob      *job,
     job->driver->last_cairo_script_size = 0;
 
     // And now we "paint" whatever this thing is.
+    cairo_translate (cr, - node->bounds.origin.x, - node->bounds.origin.y);
     gsk_render_node_draw_fallback ((GskRenderNode *)node, cr);
     cairo_destroy (cr);
 
@@ -1292,6 +1293,7 @@ gsk_gl_render_job_visit_as_fallback (GskGLRenderJob      *job,
   cairo_scale (cr, scale_x < 0 ? -1 : 1, scale_y < 0 ? 1 : -1);
   cairo_translate (cr, scale_x < 0 ? - surface_width / fabsf (scale_x) : 0,
                        scale_y < 0 ? 0 : - surface_height / fabsf (scale_y));
+  cairo_translate (cr, - node->bounds.origin.x, - node->bounds.origin.y);
   gsk_render_node_draw_fallback ((GskRenderNode *)node, cr);
   cairo_fill (cr);
   cairo_restore (cr);

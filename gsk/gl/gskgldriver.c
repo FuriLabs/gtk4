@@ -149,7 +149,7 @@ gsk_gl_driver_collect_unused_textures (GskGLDriver *self,
       if (t->user || t->permanent)
         continue;
 
-      if (t->last_used_in_frame + (t->width * t->height < FAST_EVICTION_PIXELS_THRESHOLD ? 120 : 0) <= watermark)
+      if (t->last_used_in_frame - (t->width * t->height < FAST_EVICTION_PIXELS_THRESHOLD ? 120 : 1) <= watermark)
         {
           g_hash_table_iter_steal (&iter);
 

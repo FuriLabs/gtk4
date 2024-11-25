@@ -536,7 +536,7 @@ gdk_registry_handle_global (void               *data,
                           MIN (version, 1));
     }
   else if (strcmp (interface, xx_color_manager_v4_interface.name) == 0 &&
-           gdk_has_feature (GDK_FEATURE_COLOR_MANAGEMENT))
+           GDK_DISPLAY_DEBUG_CHECK (GDK_DISPLAY (display_wayland), COLOR_MANAGEMENT))
     {
       display_wayland->color = gdk_wayland_color_new (display_wayland, registry, id, version);
     }
@@ -2002,7 +2002,7 @@ init_settings (GdkDisplay *display)
               if (entry)
                 {
                   char *a = g_variant_print (v, FALSE);
-                  g_debug ("Using portal setting for %s %s: %s\n", schema_str, key, a);
+                  g_debug ("Using portal setting for %s %s: %s", schema_str, key, a);
                   g_free (a);
                   entry->valid = TRUE;
                   apply_portal_setting (entry, v, display);

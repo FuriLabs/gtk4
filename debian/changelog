@@ -1,8 +1,8 @@
-gtk4 (4.16.7+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.16.7+ds-1) unstable; urgency=medium
 
   * New upstream release
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 25 Nov 2024 09:32:50 -0500
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 25 Nov 2024 18:37:54 -0500
 
 gtk4 (4.16.5+ds-2) unstable; urgency=medium
 

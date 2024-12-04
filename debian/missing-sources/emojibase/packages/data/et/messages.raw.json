@@ -53,12 +53,12 @@
   ],
   "skinTones": [
     {
-      "key": "light",
-      "message": "kerge nahatoon"
+      "key": "dark",
+      "message": "tume nahatoon"
     },
     {
-      "key": "medium-light",
-      "message": "keskmise valgusega nahatoon"
+      "key": "light",
+      "message": "kerge nahatoon"
     },
     {
       "key": "medium",
@@ -69,8 +69,8 @@
       "message": "keskmine-tume nahatoon"
     },
     {
-      "key": "dark",
-      "message": "tume nahatoon"
+      "key": "medium-light",
+      "message": "keskmise valgusega nahatoon"
     }
   ],
   "subgroups": [
@@ -145,164 +145,169 @@
       "order": 13
     },
     {
+      "key": "heart",
+      "message": "südamed",
+      "order": 14
+    },
+    {
       "key": "emotion",
       "message": "emotsioone",
-      "order": 14
+      "order": 15
     },
     {
       "key": "hand-fingers-open",
       "message": "sõrmed avatud",
-      "order": 15
+      "order": 16
     },
     {
       "key": "hand-fingers-partial",
       "message": "käe märgid",
-      "order": 16
+      "order": 17
     },
     {
       "key": "hand-single-finger",
       "message": "näpuga osutamine",
-      "order": 17
+      "order": 18
     },
     {
       "key": "hand-fingers-closed",
       "message": "sõrmed suletud",
-      "order": 18
+      "order": 19
     },
     {
       "key": "hands",
       "message": "käed",
-      "order": 19
+      "order": 20
     },
     {
       "key": "hand-prop",
       "message": "käsi rekvisiidid",
-      "order": 20
+      "order": 21
     },
     {
       "key": "body-parts",
       "message": "kehaosad",
-      "order": 21
+      "order": 22
     },
     {
       "key": "person",
       "message": "inimesed",
-      "order": 22
+      "order": 23
     },
     {
       "key": "person-gesture",
       "message": "žestid",
-      "order": 23
+      "order": 24
     },
     {
       "key": "person-role",
       "message": "rollid ja karjäär",
-      "order": 24
+      "order": 25
     },
     {
       "key": "person-fantasy",
       "message": "fantaasia",
-      "order": 25
+      "order": 26
     },
     {
       "key": "person-activity",
       "message": "tegevuse",
-      "order": 26
+      "order": 27
     },
     {
       "key": "person-sport",
       "message": "kergejõustik",
-      "order": 27
+      "order": 28
     },
     {
       "key": "person-resting",
       "message": "puhkavad",
-      "order": 28
+      "order": 29
     },
     {
       "key": "family",
       "message": "perekond",
-      "order": 29
+      "order": 30
     },
     {
       "key": "person-symbol",
       "message": "inimeste sümbolid",
-      "order": 30
+      "order": 31
     },
     {
       "key": "skin-tone",
       "message": "naha toonid",
-      "order": 31
+      "order": 32
     },
     {
       "key": "hair-style",
       "message": "juuste stiilid",
-      "order": 32
+      "order": 33
     },
     {
       "key": "animal-mammal",
       "message": "imetajad",
-      "order": 33
+      "order": 34
     },
     {
       "key": "animal-bird",
       "message": "linnud",
-      "order": 34
+      "order": 35
     },
     {
       "key": "animal-amphibian",
       "message": "kahepaiksed",
-      "order": 35
+      "order": 36
     },
     {
       "key": "animal-reptile",
       "message": "roomajad",
-      "order": 36
+      "order": 37
     },
     {
       "key": "animal-marine",
       "message": "mereelustikule",
-      "order": 37
+      "order": 38
     },
     {
       "key": "animal-bug",
       "message": "vigu",
-      "order": 38
+      "order": 39
     },
     {
       "key": "plant-flower",
       "message": "lilled",
-      "order": 39
+      "order": 40
     },
     {
       "key": "plant-other",
       "message": "muud taimed",
-      "order": 40
+      "order": 41
     },
     {
       "key": "food-fruit",
       "message": "puu",
-      "order": 41
+      "order": 42
     },
     {
       "key": "food-vegetable",
       "message": "köögiviljad",
-      "order": 42
+      "order": 43
     },
     {
       "key": "food-prepared",
       "message": "keedetud / valmis",
-      "order": 43
+      "order": 44
     },
     {
       "key": "food-asian",
       "message": "aasia",
-      "order": 44
+      "order": 45
     },
     {
       "key": "food-marine",
       "message": "mereannid",
-      "order": 45
+      "order": 46
     },
     {
       "key": "food-sweet",

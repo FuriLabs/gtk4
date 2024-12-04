@@ -53,12 +53,12 @@
   ],
   "skinTones": [
     {
-      "key": "light",
-      "message": "হালকা ত্বকের স্বর"
+      "key": "dark",
+      "message": "গাঢ় ত্বক টোন"
     },
     {
-      "key": "medium-light",
-      "message": "মাঝারি-হালকা ত্বকের স্বর"
+      "key": "light",
+      "message": "হালকা ত্বকের স্বর"
     },
     {
       "key": "medium",
@@ -69,8 +69,8 @@
       "message": "মাঝারি-গাঢ় ত্বকের স্বর"
     },
     {
-      "key": "dark",
-      "message": "গাঢ় ত্বক টোন"
+      "key": "medium-light",
+      "message": "মাঝারি-হালকা ত্বকের স্বর"
     }
   ],
   "subgroups": [
@@ -145,164 +145,169 @@
       "order": 13
     },
     {
+      "key": "heart",
+      "message": "হৃদয়",
+      "order": 14
+    },
+    {
       "key": "emotion",
       "message": "আবেগ",
-      "order": 14
+      "order": 15
     },
     {
       "key": "hand-fingers-open",
       "message": "আঙ্গুল খোলা",
-      "order": 15
+      "order": 16
     },
     {
       "key": "hand-fingers-partial",
       "message": "হাতের চিহ্ন",
-      "order": 16
+      "order": 17
     },
     {
       "key": "hand-single-finger",
       "message": "আঙুল নির্দেশ করে",
-      "order": 17
+      "order": 18
     },
     {
       "key": "hand-fingers-closed",
       "message": "আঙ্গুল বন্ধ",
-      "order": 18
+      "order": 19
     },
     {
       "key": "hands",
       "message": "হাত",
-      "order": 19
+      "order": 20
     },
     {
       "key": "hand-prop",
       "message": "হাত প্রপস",
-      "order": 20
+      "order": 21
     },
     {
       "key": "body-parts",
       "message": "শরীরের অংশ",
-      "order": 21
+      "order": 22
     },
     {
       "key": "person",
       "message": "মানুষ",
-      "order": 22
+      "order": 23
     },
     {
       "key": "person-gesture",
       "message": "অঙ্গভঙ্গি",
-      "order": 23
+      "order": 24
     },
     {
       "key": "person-role",
       "message": "ভূমিকা এবং কর্মজীবন",
-      "order": 24
+      "order": 25
     },
     {
       "key": "person-fantasy",
       "message": "ফ্যান্টাসি",
-      "order": 25
+      "order": 26
     },
     {
       "key": "person-activity",
       "message": "কার্যক্রম",
-      "order": 26
+      "order": 27
     },
     {
       "key": "person-sport",
       "message": "অ্যাথলেটিক্স",
-      "order": 27
+      "order": 28
     },
     {
       "key": "person-resting",
       "message": "বিশ্রাম",
-      "order": 28
+      "order": 29
     },
     {
       "key": "family",
       "message": "পরিবার",
-      "order": 29
+      "order": 30
     },
     {
       "key": "person-symbol",
       "message": "মানুষের প্রতীক",
-      "order": 30
+      "order": 31
     },
     {
       "key": "skin-tone",
       "message": "ত্বক টোন",
-      "order": 31
+      "order": 32
     },
     {
       "key": "hair-style",
       "message": "চুলের শৈলী",
-      "order": 32
+      "order": 33
     },
     {
       "key": "animal-mammal",
       "message": "স্তন্যপায়ী প্রাণী",
-      "order": 33
+      "order": 34
     },
     {
       "key": "animal-bird",
       "message": "পাখি",
-      "order": 34
+      "order": 35
     },
     {
       "key": "animal-amphibian",
       "message": "উভচর",
-      "order": 35
+      "order": 36
     },
     {
       "key": "animal-reptile",
       "message": "সরীসৃপ",
-      "order": 36
+      "order": 37
     },
     {
       "key": "animal-marine",
       "message": "নাবিক জীবন",
-      "order": 37
+      "order": 38
     },
     {
       "key": "animal-bug",
       "message": "বাগ",
-      "order": 38
+      "order": 39
     },
     {
       "key": "plant-flower",
       "message": "ফুল",
-      "order": 39
+      "order": 40
     },
     {
       "key": "plant-other",
       "message": "অন্যান্য গাছপালা",
-      "order": 40
+      "order": 41
     },
     {
       "key": "food-fruit",
       "message": "ফল",
-      "order": 41
+      "order": 42
     },
     {
       "key": "food-vegetable",
       "message": "সবজি",
-      "order": 42
+      "order": 43
     },
     {
       "key": "food-prepared",
       "message": "রান্না করা / প্রস্তুত",
-      "order": 43
+      "order": 44
     },
     {
       "key": "food-asian",
       "message": "এশিয়ান",
-      "order": 44
+      "order": 45
     },
     {
       "key": "food-marine",
       "message": "সীফুড",
-      "order": 45
+      "order": 46
     },
     {
       "key": "food-sweet",

@@ -53,12 +53,12 @@
   ],
   "skinTones": [
     {
-      "key": "light",
-      "message": "淺膚色"
+      "key": "dark",
+      "message": "深色膚色"
     },
     {
-      "key": "medium-light",
-      "message": "中光膚色"
+      "key": "light",
+      "message": "淺膚色"
     },
     {
       "key": "medium",
@@ -69,8 +69,8 @@
       "message": "中深色膚色"
     },
     {
-      "key": "dark",
-      "message": "深色膚色"
+      "key": "medium-light",
+      "message": "中光膚色"
     }
   ],
   "subgroups": [
@@ -145,164 +145,169 @@
       "order": 13
     },
     {
+      "key": "heart",
+      "message": "心",
+      "order": 14
+    },
+    {
       "key": "emotion",
       "message": "情绪",
-      "order": 14
+      "order": 15
     },
     {
       "key": "hand-fingers-open",
       "message": "手伸开",
-      "order": 15
+      "order": 16
     },
     {
       "key": "hand-fingers-partial",
       "message": "手的手指部分",
-      "order": 16
+      "order": 17
     },
     {
       "key": "hand-single-finger",
       "message": "一根手指",
-      "order": 17
+      "order": 18
     },
     {
       "key": "hand-fingers-closed",
       "message": "拳头",
-      "order": 18
+      "order": 19
     },
     {
       "key": "hands",
       "message": "手",
-      "order": 19
+      "order": 20
     },
     {
       "key": "hand-prop",
       "message": "举手",
-      "order": 20
+      "order": 21
     },
     {
       "key": "body-parts",
       "message": "身体部位",
-      "order": 21
+      "order": 22
     },
     {
       "key": "person",
       "message": "人",
-      "order": 22
+      "order": 23
     },
     {
       "key": "person-gesture",
       "message": "做手势",
-      "order": 23
+      "order": 24
     },
     {
       "key": "person-role",
       "message": "演员",
-      "order": 24
+      "order": 25
     },
     {
       "key": "person-fantasy",
       "message": "有魅力的人",
-      "order": 25
+      "order": 26
     },
     {
       "key": "person-activity",
       "message": "个人活动",
-      "order": 26
+      "order": 27
     },
     {
       "key": "person-sport",
       "message": "競技",
-      "order": 27
+      "order": 28
     },
     {
       "key": "person-resting",
       "message": "休息",
-      "order": 28
+      "order": 29
     },
     {
       "key": "family",
       "message": "家庭",
-      "order": 29
+      "order": 30
     },
     {
       "key": "person-symbol",
       "message": "人符號",
-      "order": 30
+      "order": 31
     },
     {
       "key": "skin-tone",
       "message": "膚色",
-      "order": 31
+      "order": 32
     },
     {
       "key": "hair-style",
       "message": "髮型",
-      "order": 32
+      "order": 33
     },
     {
       "key": "animal-mammal",
       "message": "哺乳類動物",
-      "order": 33
+      "order": 34
     },
     {
       "key": "animal-bird",
       "message": "鳥類動物",
-      "order": 34
+      "order": 35
     },
     {
       "key": "animal-amphibian",
       "message": "两栖动物",
-      "order": 35
+      "order": 36
     },
     {
       "key": "animal-reptile",
       "message": "爬蟲類動物",
-      "order": 36
+      "order": 37
     },
     {
       "key": "animal-marine",
       "message": "水生動物",
-      "order": 37
+      "order": 38
     },
     {
       "key": "animal-bug",
       "message": "蟲類動物",
-      "order": 38
+      "order": 39
     },
     {
       "key": "plant-flower",
       "message": "花卉植物",
-      "order": 39
+      "order": 40
     },
     {
       "key": "plant-other",
       "message": "其他植物",
-      "order": 40
+      "order": 41
     },
     {
       "key": "food-fruit",
       "message": "水果類食物",
-      "order": 41
+      "order": 42
     },
     {
       "key": "food-vegetable",
       "message": "蔬菜類食物",
-      "order": 42
+      "order": 43
     },
     {
       "key": "food-prepared",
       "message": "准备好的食物",
-      "order": 43
+      "order": 44
     },
     {
       "key": "food-asian",
       "message": "亞洲食物",
-      "order": 44
+      "order": 45
     },
     {
       "key": "food-marine",
       "message": "水產食物",
-      "order": 45
+      "order": 46
     },
     {
       "key": "food-sweet",

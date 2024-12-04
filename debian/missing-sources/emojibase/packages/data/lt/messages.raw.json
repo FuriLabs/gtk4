@@ -53,12 +53,12 @@
   ],
   "skinTones": [
     {
-      "key": "light",
-      "message": "lengvas odos tonas"
+      "key": "dark",
+      "message": "tamsios odos tonas"
     },
     {
-      "key": "medium-light",
-      "message": "vidutinio apšvietimo odos tonas"
+      "key": "light",
+      "message": "lengvas odos tonas"
     },
     {
       "key": "medium",
@@ -69,8 +69,8 @@
       "message": "vidutinio tamsumo odos tonas"
     },
     {
-      "key": "dark",
-      "message": "tamsios odos tonas"
+      "key": "medium-light",
+      "message": "vidutinio apšvietimo odos tonas"
     }
   ],
   "subgroups": [
@@ -145,164 +145,169 @@
       "order": 13
     },
     {
+      "key": "heart",
+      "message": "širdyse",
+      "order": 14
+    },
+    {
       "key": "emotion",
       "message": "emocijas",
-      "order": 14
+      "order": 15
     },
     {
       "key": "hand-fingers-open",
       "message": "pirštai atidaryti",
-      "order": 15
+      "order": 16
     },
     {
       "key": "hand-fingers-partial",
       "message": "rankų ženklai",
-      "order": 16
+      "order": 17
     },
     {
       "key": "hand-single-finger",
       "message": "pirštu nukreiptas",
-      "order": 17
+      "order": 18
     },
     {
       "key": "hand-fingers-closed",
       "message": "uždaryti pirštai",
-      "order": 18
+      "order": 19
     },
     {
       "key": "hands",
       "message": "rankos",
-      "order": 19
+      "order": 20
     },
     {
       "key": "hand-prop",
       "message": "rankiniai rekvizitai",
-      "order": 20
+      "order": 21
     },
     {
       "key": "body-parts",
       "message": "kūno dalys",
-      "order": 21
+      "order": 22
     },
     {
       "key": "person",
       "message": "žmonių",
-      "order": 22
+      "order": 23
     },
     {
       "key": "person-gesture",
       "message": "gestai",
-      "order": 23
+      "order": 24
     },
     {
       "key": "person-role",
       "message": "vaidmenys ir karjera",
-      "order": 24
+      "order": 25
     },
     {
       "key": "person-fantasy",
       "message": "fantazija",
-      "order": 25
+      "order": 26
     },
     {
       "key": "person-activity",
       "message": "veikla",
-      "order": 26
+      "order": 27
     },
     {
       "key": "person-sport",
       "message": "lengvosios atletikos",
-      "order": 27
+      "order": 28
     },
     {
       "key": "person-resting",
       "message": "poilsio",
-      "order": 28
+      "order": 29
     },
     {
       "key": "family",
       "message": "šeima",
-      "order": 29
+      "order": 30
     },
     {
       "key": "person-symbol",
       "message": "žmonių simboliai",
-      "order": 30
+      "order": 31
     },
     {
       "key": "skin-tone",
       "message": "odos tonai",
-      "order": 31
+      "order": 32
     },
     {
       "key": "hair-style",
       "message": "plaukų stiliai",
-      "order": 32
+      "order": 33
     },
     {
       "key": "animal-mammal",
       "message": "žinduoliai",
-      "order": 33
+      "order": 34
     },
     {
       "key": "animal-bird",
       "message": "paukščių",
-      "order": 34
+      "order": 35
     },
     {
       "key": "animal-amphibian",
       "message": "varliagyvių",
-      "order": 35
+      "order": 36
     },
     {
       "key": "animal-reptile",
       "message": "ropliai",
-      "order": 36
+      "order": 37
     },
     {
       "key": "animal-marine",
       "message": "jūrų gyvybė",
-      "order": 37
+      "order": 38
     },
     {
       "key": "animal-bug",
       "message": "klaidas",
-      "order": 38
+      "order": 39
     },
     {
       "key": "plant-flower",
       "message": "gėlės",
-      "order": 39
+      "order": 40
     },
     {
       "key": "plant-other",
       "message": "kiti augalai",
-      "order": 40
+      "order": 41
     },
     {
       "key": "food-fruit",
       "message": "vaisių",
-      "order": 41
+      "order": 42
     },
     {
       "key": "food-vegetable",
       "message": "daržovių",
-      "order": 42
+      "order": 43
     },
     {
       "key": "food-prepared",
       "message": "virti / paruošti",
-      "order": 43
+      "order": 44
     },
     {
       "key": "food-asian",
       "message": "azijos",
-      "order": 44
+      "order": 45
     },
     {
       "key": "food-marine",
       "message": "jūros gėrybių",
-      "order": 45
+      "order": 46
     },
     {
       "key": "food-sweet",

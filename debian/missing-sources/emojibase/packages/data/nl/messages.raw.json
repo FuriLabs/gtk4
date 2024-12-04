@@ -53,12 +53,12 @@
   ],
   "skinTones": [
     {
-      "key": "light",
-      "message": "lichte huidskleur"
+      "key": "dark",
+      "message": "donkere huidskleur"
     },
     {
-      "key": "medium-light",
-      "message": "medium-lichte huidskleur"
+      "key": "light",
+      "message": "lichte huidskleur"
     },
     {
       "key": "medium",
@@ -69,8 +69,8 @@
       "message": "medium-donkere huidskleur"
     },
     {
-      "key": "dark",
-      "message": "donkere huidskleur"
+      "key": "medium-light",
+      "message": "medium-lichte huidskleur"
     }
   ],
   "subgroups": [
@@ -145,164 +145,169 @@
       "order": 13
     },
     {
+      "key": "heart",
+      "message": "harten",
+      "order": 14
+    },
+    {
       "key": "emotion",
       "message": "emoties",
-      "order": 14
+      "order": 15
     },
     {
       "key": "hand-fingers-open",
       "message": "vingers open",
-      "order": 15
+      "order": 16
     },
     {
       "key": "hand-fingers-partial",
       "message": "handtekens",
-      "order": 16
+      "order": 17
     },
     {
       "key": "hand-single-finger",
       "message": "vinger wijzen",
-      "order": 17
+      "order": 18
     },
     {
       "key": "hand-fingers-closed",
       "message": "vingers gesloten",
-      "order": 18
+      "order": 19
     },
     {
       "key": "hands",
       "message": "handen",
-      "order": 19
+      "order": 20
     },
     {
       "key": "hand-prop",
       "message": "handrekwisieten",
-      "order": 20
+      "order": 21
     },
     {
       "key": "body-parts",
       "message": "lichaamsdelen",
-      "order": 21
+      "order": 22
     },
     {
       "key": "person",
       "message": "personen",
-      "order": 22
+      "order": 23
     },
     {
       "key": "person-gesture",
       "message": "gebaren",
-      "order": 23
+      "order": 24
     },
     {
       "key": "person-role",
       "message": "rollen & carrières",
-      "order": 24
+      "order": 25
     },
     {
       "key": "person-fantasy",
       "message": "fantasie",
-      "order": 25
+      "order": 26
     },
     {
       "key": "person-activity",
       "message": "activiteiten",
-      "order": 26
+      "order": 27
     },
     {
       "key": "person-sport",
       "message": "atletiek",
-      "order": 27
+      "order": 28
     },
     {
       "key": "person-resting",
       "message": "rust",
-      "order": 28
+      "order": 29
     },
     {
       "key": "family",
       "message": "familie",
-      "order": 29
+      "order": 30
     },
     {
       "key": "person-symbol",
       "message": "symbolen voor personen",
-      "order": 30
+      "order": 31
     },
     {
       "key": "skin-tone",
       "message": "huidtinten",
-      "order": 31
+      "order": 32
     },
     {
       "key": "hair-style",
       "message": "haarstijlen",
-      "order": 32
+      "order": 33
     },
     {
       "key": "animal-mammal",
       "message": "zoogdieren",
-      "order": 33
+      "order": 34
     },
     {
       "key": "animal-bird",
       "message": "vogels",
-      "order": 34
+      "order": 35
     },
     {
       "key": "animal-amphibian",
       "message": "amfibieën",
-      "order": 35
+      "order": 36
     },
     {
       "key": "animal-reptile",
       "message": "reptielen",
-      "order": 36
+      "order": 37
     },
     {
       "key": "animal-marine",
       "message": "zeeleven",
-      "order": 37
+      "order": 38
     },
     {
       "key": "animal-bug",
       "message": "bugs",
-      "order": 38
+      "order": 39
     },
     {
       "key": "plant-flower",
       "message": "bloemen",
-      "order": 39
+      "order": 40
     },
     {
       "key": "plant-other",
       "message": "andere planten",
-      "order": 40
+      "order": 41
     },
     {
       "key": "food-fruit",
       "message": "fruit",
-      "order": 41
+      "order": 42
     },
     {
       "key": "food-vegetable",
       "message": "groenten",
-      "order": 42
+      "order": 43
     },
     {
       "key": "food-prepared",
       "message": "gekookt / bereid",
-      "order": 43
+      "order": 44
     },
     {
       "key": "food-asian",
       "message": "aziatische",
-      "order": 44
+      "order": 45
     },
     {
       "key": "food-marine",
       "message": "zeevruchten",
-      "order": 45
+      "order": 46
     },
     {
       "key": "food-sweet",

@@ -53,12 +53,12 @@
   ],
   "skinTones": [
     {
-      "key": "light",
-      "message": "светлый тон кожи"
+      "key": "dark",
+      "message": "темный тон кожи"
     },
     {
-      "key": "medium-light",
-      "message": "средне-светлый тон кожи"
+      "key": "light",
+      "message": "светлый тон кожи"
     },
     {
       "key": "medium",
@@ -69,8 +69,8 @@
       "message": "средне-темный тон кожи"
     },
     {
-      "key": "dark",
-      "message": "темный тон кожи"
+      "key": "medium-light",
+      "message": "средне-светлый тон кожи"
     }
   ],
   "subgroups": [
@@ -145,164 +145,169 @@
       "order": 13
     },
     {
+      "key": "heart",
+      "message": "сердца",
+      "order": 14
+    },
+    {
       "key": "emotion",
       "message": "эмоция",
-      "order": 14
+      "order": 15
     },
     {
       "key": "hand-fingers-open",
       "message": "пальцы открыты",
-      "order": 15
+      "order": 16
     },
     {
       "key": "hand-fingers-partial",
       "message": "ручные знаки",
-      "order": 16
+      "order": 17
     },
     {
       "key": "hand-single-finger",
       "message": "пальцем указывая",
-      "order": 17
+      "order": 18
     },
     {
       "key": "hand-fingers-closed",
       "message": "пальцы закрыты",
-      "order": 18
+      "order": 19
     },
     {
       "key": "hands",
       "message": "руки",
-      "order": 19
+      "order": 20
     },
     {
       "key": "hand-prop",
       "message": "ручные реквизиты",
-      "order": 20
+      "order": 21
     },
     {
       "key": "body-parts",
       "message": "части тела",
-      "order": 21
+      "order": 22
     },
     {
       "key": "person",
       "message": "человек",
-      "order": 22
+      "order": 23
     },
     {
       "key": "person-gesture",
       "message": "жесты",
-      "order": 23
+      "order": 24
     },
     {
       "key": "person-role",
       "message": "роли и карьеры",
-      "order": 24
+      "order": 25
     },
     {
       "key": "person-fantasy",
       "message": "фантастика",
-      "order": 25
+      "order": 26
     },
     {
       "key": "person-activity",
       "message": "варианты досуга",
-      "order": 26
+      "order": 27
     },
     {
       "key": "person-sport",
       "message": "легкая атлетика",
-      "order": 27
+      "order": 28
     },
     {
       "key": "person-resting",
       "message": "отдыхающий",
-      "order": 28
+      "order": 29
     },
     {
       "key": "family",
       "message": "семья",
-      "order": 29
+      "order": 30
     },
     {
       "key": "person-symbol",
       "message": "символы людей",
-      "order": 30
+      "order": 31
     },
     {
       "key": "skin-tone",
       "message": "тона кожи",
-      "order": 31
+      "order": 32
     },
     {
       "key": "hair-style",
       "message": "прически",
-      "order": 32
+      "order": 33
     },
     {
       "key": "animal-mammal",
       "message": "mлекопитающих",
-      "order": 33
+      "order": 34
     },
     {
       "key": "animal-bird",
       "message": "птицы",
-      "order": 34
+      "order": 35
     },
     {
       "key": "animal-amphibian",
       "message": "aмфибий",
-      "order": 35
+      "order": 36
     },
     {
       "key": "animal-reptile",
       "message": "pептилий",
-      "order": 36
+      "order": 37
     },
     {
       "key": "animal-marine",
       "message": "морской флоры и фауны",
-      "order": 37
+      "order": 38
     },
     {
       "key": "animal-bug",
       "message": "ошибки",
-      "order": 38
+      "order": 39
     },
     {
       "key": "plant-flower",
       "message": "цветы",
-      "order": 39
+      "order": 40
     },
     {
       "key": "plant-other",
       "message": "другие растения",
-      "order": 40
+      "order": 41
     },
     {
       "key": "food-fruit",
       "message": "фрукты",
-      "order": 41
+      "order": 42
     },
     {
       "key": "food-vegetable",
       "message": "овощи",
-      "order": 42
+      "order": 43
     },
     {
       "key": "food-prepared",
       "message": "приготовленные / подготовленные",
-      "order": 43
+      "order": 44
     },
     {
       "key": "food-asian",
       "message": "азиатский",
-      "order": 44
+      "order": 45
     },
     {
       "key": "food-marine",
       "message": "mорепродукты",
-      "order": 45
+      "order": 46
     },
     {
       "key": "food-sweet",

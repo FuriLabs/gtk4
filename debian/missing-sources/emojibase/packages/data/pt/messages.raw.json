@@ -53,12 +53,12 @@
   ],
   "skinTones": [
     {
-      "key": "light",
-      "message": "tom de pele clara"
+      "key": "dark",
+      "message": "tom de pele escura"
     },
     {
-      "key": "medium-light",
-      "message": "tom de pele de luz média"
+      "key": "light",
+      "message": "tom de pele clara"
     },
     {
       "key": "medium",
@@ -69,8 +69,8 @@
       "message": "tom de pele média-escura"
     },
     {
-      "key": "dark",
-      "message": "tom de pele escura"
+      "key": "medium-light",
+      "message": "tom de pele de luz média"
     }
   ],
   "subgroups": [
@@ -145,164 +145,169 @@
       "order": 13
     },
     {
+      "key": "heart",
+      "message": "corações",
+      "order": 14
+    },
+    {
       "key": "emotion",
       "message": "emoções",
-      "order": 14
+      "order": 15
     },
     {
       "key": "hand-fingers-open",
       "message": "dedos abertos",
-      "order": 15
+      "order": 16
     },
     {
       "key": "hand-fingers-partial",
       "message": "sinais de mão",
-      "order": 16
+      "order": 17
     },
     {
       "key": "hand-single-finger",
       "message": "apontar o dedo",
-      "order": 17
+      "order": 18
     },
     {
       "key": "hand-fingers-closed",
       "message": "dedos fechados",
-      "order": 18
+      "order": 19
     },
     {
       "key": "hands",
       "message": "mãos",
-      "order": 19
+      "order": 20
     },
     {
       "key": "hand-prop",
       "message": "adereços de mão",
-      "order": 20
+      "order": 21
     },
     {
       "key": "body-parts",
       "message": "partes do corpo",
-      "order": 21
+      "order": 22
     },
     {
       "key": "person",
       "message": "pessoas",
-      "order": 22
+      "order": 23
     },
     {
       "key": "person-gesture",
       "message": "gestos",
-      "order": 23
+      "order": 24
     },
     {
       "key": "person-role",
       "message": "papéis e carreiras",
-      "order": 24
+      "order": 25
     },
     {
       "key": "person-fantasy",
       "message": "fantasia",
-      "order": 25
+      "order": 26
     },
     {
       "key": "person-activity",
       "message": "atividades",
-      "order": 26
+      "order": 27
     },
     {
       "key": "person-sport",
       "message": "atletismo",
-      "order": 27
+      "order": 28
     },
     {
       "key": "person-resting",
       "message": "descansando",
-      "order": 28
+      "order": 29
     },
     {
       "key": "family",
       "message": "família",
-      "order": 29
+      "order": 30
     },
     {
       "key": "person-symbol",
       "message": "símbolos de pessoas",
-      "order": 30
+      "order": 31
     },
     {
       "key": "skin-tone",
       "message": "tons de pele",
-      "order": 31
+      "order": 32
     },
     {
       "key": "hair-style",
       "message": "estilos de cabelo",
-      "order": 32
+      "order": 33
     },
     {
       "key": "animal-mammal",
       "message": "mamíferos",
-      "order": 33
+      "order": 34
     },
     {
       "key": "animal-bird",
       "message": "aves",
-      "order": 34
+      "order": 35
     },
     {
       "key": "animal-amphibian",
       "message": "anfíbios",
-      "order": 35
+      "order": 36
     },
     {
       "key": "animal-reptile",
       "message": "répteis",
-      "order": 36
+      "order": 37
     },
     {
       "key": "animal-marine",
       "message": "vida marinha",
-      "order": 37
+      "order": 38
     },
     {
       "key": "animal-bug",
       "message": "insetos",
-      "order": 38
+      "order": 39
     },
     {
       "key": "plant-flower",
       "message": "flores",
-      "order": 39
+      "order": 40
     },
     {
       "key": "plant-other",
       "message": "outras plantas",
-      "order": 40
+      "order": 41
     },
     {
       "key": "food-fruit",
       "message": "fruta",
-      "order": 41
+      "order": 42
     },
     {
       "key": "food-vegetable",
       "message": "vegetais",
-      "order": 42
+      "order": 43
     },
     {
       "key": "food-prepared",
       "message": "cozido / preparado",
-      "order": 43
+      "order": 44
     },
     {
       "key": "food-asian",
       "message": "asiático",
-      "order": 44
+      "order": 45
     },
     {
       "key": "food-marine",
       "message": "marisco",
-      "order": 45
+      "order": 46
     },
     {
       "key": "food-sweet",

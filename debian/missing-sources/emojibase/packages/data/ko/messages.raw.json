@@ -53,12 +53,12 @@
   ],
   "skinTones": [
     {
-      "key": "light",
-      "message": "밝은 피부 톤"
+      "key": "dark",
+      "message": "어두운 피부 톤"
     },
     {
-      "key": "medium-light",
-      "message": "중간 빛 피부 톤"
+      "key": "light",
+      "message": "밝은 피부 톤"
     },
     {
       "key": "medium",
@@ -69,8 +69,8 @@
       "message": "미디엄 다크 스킨 톤"
     },
     {
-      "key": "dark",
-      "message": "어두운 피부 톤"
+      "key": "medium-light",
+      "message": "중간 빛 피부 톤"
     }
   ],
   "subgroups": [
@@ -145,164 +145,169 @@
       "order": 13
     },
     {
+      "key": "heart",
+      "message": "마음",
+      "order": 14
+    },
+    {
       "key": "emotion",
       "message": "감정",
-      "order": 14
+      "order": 15
     },
     {
       "key": "hand-fingers-open",
       "message": "손가락 열기",
-      "order": 15
+      "order": 16
     },
     {
       "key": "hand-fingers-partial",
       "message": "손 표지판",
-      "order": 16
+      "order": 17
     },
     {
       "key": "hand-single-finger",
       "message": "손가락 포인팅",
-      "order": 17
+      "order": 18
     },
     {
       "key": "hand-fingers-closed",
       "message": "손가락 닫기",
-      "order": 18
+      "order": 19
     },
     {
       "key": "hands",
       "message": "손",
-      "order": 19
+      "order": 20
     },
     {
       "key": "hand-prop",
       "message": "손 소품",
-      "order": 20
+      "order": 21
     },
     {
       "key": "body-parts",
       "message": "신체 부위",
-      "order": 21
+      "order": 22
     },
     {
       "key": "person",
       "message": "사람들",
-      "order": 22
+      "order": 23
     },
     {
       "key": "person-gesture",
       "message": "제스처",
-      "order": 23
+      "order": 24
     },
     {
       "key": "person-role",
       "message": "역할 및 경력",
-      "order": 24
+      "order": 25
     },
     {
       "key": "person-fantasy",
       "message": "판타지",
-      "order": 25
+      "order": 26
     },
     {
       "key": "person-activity",
       "message": "액티비티",
-      "order": 26
+      "order": 27
     },
     {
       "key": "person-sport",
       "message": "육상",
-      "order": 27
+      "order": 28
     },
     {
       "key": "person-resting",
       "message": "휴식",
-      "order": 28
+      "order": 29
     },
     {
       "key": "family",
       "message": "가족",
-      "order": 29
+      "order": 30
     },
     {
       "key": "person-symbol",
       "message": "사람 기호",
-      "order": 30
+      "order": 31
     },
     {
       "key": "skin-tone",
       "message": "피부 톤",
-      "order": 31
+      "order": 32
     },
     {
       "key": "hair-style",
       "message": "헤어 스타일",
-      "order": 32
+      "order": 33
     },
     {
       "key": "animal-mammal",
       "message": "포유류",
-      "order": 33
+      "order": 34
     },
     {
       "key": "animal-bird",
       "message": "조류",
-      "order": 34
+      "order": 35
     },
     {
       "key": "animal-amphibian",
       "message": "양서류",
-      "order": 35
+      "order": 36
     },
     {
       "key": "animal-reptile",
       "message": "파충류",
-      "order": 36
+      "order": 37
     },
     {
       "key": "animal-marine",
       "message": "해양 생물",
-      "order": 37
+      "order": 38
     },
     {
       "key": "animal-bug",
       "message": "버그",
-      "order": 38
+      "order": 39
     },
     {
       "key": "plant-flower",
       "message": "꽃",
-      "order": 39
+      "order": 40
     },
     {
       "key": "plant-other",
       "message": "기타 식물",
-      "order": 40
+      "order": 41
     },
     {
       "key": "food-fruit",
       "message": "과일",
-      "order": 41
+      "order": 42
     },
     {
       "key": "food-vegetable",
       "message": "야채",
-      "order": 42
+      "order": 43
     },
     {
       "key": "food-prepared",
       "message": "조리 / 준비",
-      "order": 43
+      "order": 44
     },
     {
       "key": "food-asian",
       "message": "아시아",
-      "order": 44
+      "order": 45
     },
     {
       "key": "food-marine",
       "message": "해산물",
-      "order": 45
+      "order": 46
     },
     {
       "key": "food-sweet",

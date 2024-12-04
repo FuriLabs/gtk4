@@ -53,12 +53,12 @@
   ],
   "skinTones": [
     {
-      "key": "light",
-      "message": "світлий тон шкіри"
+      "key": "dark",
+      "message": "темний тон шкіри"
     },
     {
-      "key": "medium-light",
-      "message": "помірно світлий тон шкіри"
+      "key": "light",
+      "message": "світлий тон шкіри"
     },
     {
       "key": "medium",
@@ -69,8 +69,8 @@
       "message": "помірно темний тон шкіри"
     },
     {
-      "key": "dark",
-      "message": "темний тон шкіри"
+      "key": "medium-light",
+      "message": "помірно світлий тон шкіри"
     }
   ],
   "subgroups": [
@@ -145,164 +145,169 @@
       "order": 13
     },
     {
+      "key": "heart",
+      "message": "серця",
+      "order": 14
+    },
+    {
       "key": "emotion",
       "message": "емоції",
-      "order": 14
+      "order": 15
     },
     {
       "key": "hand-fingers-open",
       "message": "пальці відкриті",
-      "order": 15
+      "order": 16
     },
     {
       "key": "hand-fingers-partial",
       "message": "знаки руки",
-      "order": 16
+      "order": 17
     },
     {
       "key": "hand-single-finger",
       "message": "вказівник пальця",
-      "order": 17
+      "order": 18
     },
     {
       "key": "hand-fingers-closed",
       "message": "пальці закриті",
-      "order": 18
+      "order": 19
     },
     {
       "key": "hands",
       "message": "pуки",
-      "order": 19
+      "order": 20
     },
     {
       "key": "hand-prop",
       "message": "реквізит ручний",
-      "order": 20
+      "order": 21
     },
     {
       "key": "body-parts",
       "message": "частини тіла",
-      "order": 21
+      "order": 22
     },
     {
       "key": "person",
       "message": "люди",
-      "order": 22
+      "order": 23
     },
     {
       "key": "person-gesture",
       "message": "жести",
-      "order": 23
+      "order": 24
     },
     {
       "key": "person-role",
       "message": "ролі та кар'єра",
-      "order": 24
+      "order": 25
     },
     {
       "key": "person-fantasy",
       "message": "фантазія",
-      "order": 25
+      "order": 26
     },
     {
       "key": "person-activity",
       "message": "діяльності",
-      "order": 26
+      "order": 27
     },
     {
       "key": "person-sport",
       "message": "атлетика",
-      "order": 27
+      "order": 28
     },
     {
       "key": "person-resting",
       "message": "відпочиваючи",
-      "order": 28
+      "order": 29
     },
     {
       "key": "family",
       "message": "сімейство",
-      "order": 29
+      "order": 30
     },
     {
       "key": "person-symbol",
       "message": "люди символи",
-      "order": 30
+      "order": 31
     },
     {
       "key": "skin-tone",
       "message": "тони шкіри",
-      "order": 31
+      "order": 32
     },
     {
       "key": "hair-style",
       "message": "зачіски",
-      "order": 32
+      "order": 33
     },
     {
       "key": "animal-mammal",
       "message": "cсавців",
-      "order": 33
+      "order": 34
     },
     {
       "key": "animal-bird",
       "message": "птахів",
-      "order": 34
+      "order": 35
     },
     {
       "key": "animal-amphibian",
       "message": "aмфібії",
-      "order": 35
+      "order": 36
     },
     {
       "key": "animal-reptile",
       "message": "плазуни",
-      "order": 36
+      "order": 37
     },
     {
       "key": "animal-marine",
       "message": "морське життя",
-      "order": 37
+      "order": 38
     },
     {
       "key": "animal-bug",
       "message": "помилки",
-      "order": 38
+      "order": 39
     },
     {
       "key": "plant-flower",
       "message": "квіти",
-      "order": 39
+      "order": 40
     },
     {
       "key": "plant-other",
       "message": "інші рослини",
-      "order": 40
+      "order": 41
     },
     {
       "key": "food-fruit",
       "message": "фрукти",
-      "order": 41
+      "order": 42
     },
     {
       "key": "food-vegetable",
       "message": "овощи",
-      "order": 42
+      "order": 43
     },
     {
       "key": "food-prepared",
       "message": "приготований / приготований",
-      "order": 43
+      "order": 44
     },
     {
       "key": "food-asian",
       "message": "aзіатських",
-      "order": 44
+      "order": 45
     },
     {
       "key": "food-marine",
       "message": "морепродукти",
-      "order": 45
+      "order": 46
     },
     {
       "key": "food-sweet",

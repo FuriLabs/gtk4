@@ -53,12 +53,12 @@
   ],
   "skinTones": [
     {
-      "key": "light",
-      "message": "โทนสีผิวอ่อน"
+      "key": "dark",
+      "message": "โทนสีผิวคล้ํา"
     },
     {
-      "key": "medium-light",
-      "message": "โทนสีผิวสีอ่อนปานกลาง"
+      "key": "light",
+      "message": "โทนสีผิวอ่อน"
     },
     {
       "key": "medium",
@@ -69,8 +69,8 @@
       "message": "โทนสีผิวคล้ําปานกลาง"
     },
     {
-      "key": "dark",
-      "message": "โทนสีผิวคล้ํา"
+      "key": "medium-light",
+      "message": "โทนสีผิวสีอ่อนปานกลาง"
     }
   ],
   "subgroups": [
@@ -145,164 +145,169 @@
       "order": 13
     },
     {
+      "key": "heart",
+      "message": "หัวใจ",
+      "order": 14
+    },
+    {
       "key": "emotion",
       "message": "อารมณ์",
-      "order": 14
+      "order": 15
     },
     {
       "key": "hand-fingers-open",
       "message": "เปิดนิ้ว",
-      "order": 15
+      "order": 16
     },
     {
       "key": "hand-fingers-partial",
       "message": "สัญญาณมือ",
-      "order": 16
+      "order": 17
     },
     {
       "key": "hand-single-finger",
       "message": "การชี้นิ้ว",
-      "order": 17
+      "order": 18
     },
     {
       "key": "hand-fingers-closed",
       "message": "ปิดนิ้วแล้ว",
-      "order": 18
+      "order": 19
     },
     {
       "key": "hands",
       "message": "มือ",
-      "order": 19
+      "order": 20
     },
     {
       "key": "hand-prop",
       "message": "อุปกรณ์ประกอบฉากมือ",
-      "order": 20
+      "order": 21
     },
     {
       "key": "body-parts",
       "message": "ส่วนต่างๆ ของร่างกาย",
-      "order": 21
+      "order": 22
     },
     {
       "key": "person",
       "message": "คน",
-      "order": 22
+      "order": 23
     },
     {
       "key": "person-gesture",
       "message": "รูป แบบ ลาย เส้น",
-      "order": 23
+      "order": 24
     },
     {
       "key": "person-role",
       "message": "บทบาทและอาชีพ",
-      "order": 24
+      "order": 25
     },
     {
       "key": "person-fantasy",
       "message": "แฟนตาซี",
-      "order": 25
+      "order": 26
     },
     {
       "key": "person-activity",
       "message": "กิจกรรม",
-      "order": 26
+      "order": 27
     },
     {
       "key": "person-sport",
       "message": "กรีฑา",
-      "order": 27
+      "order": 28
     },
     {
       "key": "person-resting",
       "message": "พักผ่อน",
-      "order": 28
+      "order": 29
     },
     {
       "key": "family",
       "message": "ครอบครัว",
-      "order": 29
+      "order": 30
     },
     {
       "key": "person-symbol",
       "message": "สัญลักษณ์บุคคล",
-      "order": 30
+      "order": 31
     },
     {
       "key": "skin-tone",
       "message": "โทนสีผิว",
-      "order": 31
+      "order": 32
     },
     {
       "key": "hair-style",
       "message": "สไตล์ผม",
-      "order": 32
+      "order": 33
     },
     {
       "key": "animal-mammal",
       "message": "เลี้ยงลูกด้วยนม",
-      "order": 33
+      "order": 34
     },
     {
       "key": "animal-bird",
       "message": "นก",
-      "order": 34
+      "order": 35
     },
     {
       "key": "animal-amphibian",
       "message": "สะเทินน้ําสะเทินบก",
-      "order": 35
+      "order": 36
     },
     {
       "key": "animal-reptile",
       "message": "สัตว์เลื้อยคลาน",
-      "order": 36
+      "order": 37
     },
     {
       "key": "animal-marine",
       "message": "ชีวิตทางทะเล",
-      "order": 37
+      "order": 38
     },
     {
       "key": "animal-bug",
       "message": "ข้อ บกพร่อง",
-      "order": 38
+      "order": 39
     },
     {
       "key": "plant-flower",
       "message": "ดอกไม้",
-      "order": 39
+      "order": 40
     },
     {
       "key": "plant-other",
       "message": "พืชอื่น ๆ",
-      "order": 40
+      "order": 41
     },
     {
       "key": "food-fruit",
       "message": "ผลไม้",
-      "order": 41
+      "order": 42
     },
     {
       "key": "food-vegetable",
       "message": "ผัก",
-      "order": 42
+      "order": 43
     },
     {
       "key": "food-prepared",
       "message": "สุก / เตรียม",
-      "order": 43
+      "order": 44
     },
     {
       "key": "food-asian",
       "message": "เอเชีย",
-      "order": 44
+      "order": 45
     },
     {
       "key": "food-marine",
       "message": "อาหาร ทะเล",
-      "order": 45
+      "order": 46
     },
     {
       "key": "food-sweet",

@@ -53,12 +53,12 @@
   ],
   "skinTones": [
     {
-      "key": "light",
-      "message": "heller Hautton"
+      "key": "dark",
+      "message": "dunkler Hautton"
     },
     {
-      "key": "medium-light",
-      "message": "mittelheller Hautton"
+      "key": "light",
+      "message": "heller Hautton"
     },
     {
       "key": "medium",
@@ -69,8 +69,8 @@
       "message": "mitteldunkrer Hautton"
     },
     {
-      "key": "dark",
-      "message": "dunkler Hautton"
+      "key": "medium-light",
+      "message": "mittelheller Hautton"
     }
   ],
   "subgroups": [
@@ -145,164 +145,169 @@
       "order": 13
     },
     {
+      "key": "heart",
+      "message": "Herzen",
+      "order": 14
+    },
+    {
       "key": "emotion",
       "message": "Emotionen",
-      "order": 14
+      "order": 15
     },
     {
       "key": "hand-fingers-open",
       "message": "Finger offen",
-      "order": 15
+      "order": 16
     },
     {
       "key": "hand-fingers-partial",
       "message": "Handzeichen",
-      "order": 16
+      "order": 17
     },
     {
       "key": "hand-single-finger",
       "message": "Fingerzeige",
-      "order": 17
+      "order": 18
     },
     {
       "key": "hand-fingers-closed",
       "message": "Finger geschlossen",
-      "order": 18
+      "order": 19
     },
     {
       "key": "hands",
       "message": "Hände",
-      "order": 19
+      "order": 20
     },
     {
       "key": "hand-prop",
       "message": "Handrequisiten",
-      "order": 20
+      "order": 21
     },
     {
       "key": "body-parts",
       "message": "Körperteile",
-      "order": 21
+      "order": 22
     },
     {
       "key": "person",
       "message": "Personen",
-      "order": 22
+      "order": 23
     },
     {
       "key": "person-gesture",
       "message": "Gesten",
-      "order": 23
+      "order": 24
     },
     {
       "key": "person-role",
       "message": "Rollen & Karrieren",
-      "order": 24
+      "order": 25
     },
     {
       "key": "person-fantasy",
       "message": "Fantasie",
-      "order": 25
+      "order": 26
     },
     {
       "key": "person-activity",
       "message": "Aktivitäten",
-      "order": 26
+      "order": 27
     },
     {
       "key": "person-sport",
       "message": "Leichtathletik",
-      "order": 27
+      "order": 28
     },
     {
       "key": "person-resting",
       "message": "Ruhe",
-      "order": 28
+      "order": 29
     },
     {
       "key": "family",
       "message": "Familie",
-      "order": 29
+      "order": 30
     },
     {
       "key": "person-symbol",
       "message": "Personensymbole",
-      "order": 30
+      "order": 31
     },
     {
       "key": "skin-tone",
       "message": "Hauttöne",
-      "order": 31
+      "order": 32
     },
     {
       "key": "hair-style",
       "message": "Frisuren",
-      "order": 32
+      "order": 33
     },
     {
       "key": "animal-mammal",
       "message": "Säugetiere",
-      "order": 33
+      "order": 34
     },
     {
       "key": "animal-bird",
       "message": "Vögel",
-      "order": 34
+      "order": 35
     },
     {
       "key": "animal-amphibian",
       "message": "Amphibien",
-      "order": 35
+      "order": 36
     },
     {
       "key": "animal-reptile",
       "message": "Reptilien",
-      "order": 36
+      "order": 37
     },
     {
       "key": "animal-marine",
       "message": "Meereslebewesen",
-      "order": 37
+      "order": 38
     },
     {
       "key": "animal-bug",
       "message": "Fehler",
-      "order": 38
+      "order": 39
     },
     {
       "key": "plant-flower",
       "message": "Blumen",
-      "order": 39
+      "order": 40
     },
     {
       "key": "plant-other",
       "message": "andere Pflanzen",
-      "order": 40
+      "order": 41
     },
     {
       "key": "food-fruit",
       "message": "Frucht",
-      "order": 41
+      "order": 42
     },
     {
       "key": "food-vegetable",
       "message": "Gemüse",
-      "order": 42
+      "order": 43
     },
     {
       "key": "food-prepared",
       "message": "gekocht / zubereitet",
-      "order": 43
+      "order": 44
     },
     {
       "key": "food-asian",
       "message": "Asiatisch",
-      "order": 44
+      "order": 45
     },
     {
       "key": "food-marine",
       "message": "Meeresfrüchte",
-      "order": 45
+      "order": 46
     },
     {
       "key": "food-sweet",

@@ -64,6 +64,8 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_clipboard_store_finish@Base 4.0.0
  gdk_color_state_create_cicp_params@Base 4.15.4
  gdk_color_state_equal@Base 4.15.4
+ gdk_color_state_get_oklab@Base 4.17.1
+ gdk_color_state_get_oklch@Base 4.17.1
  gdk_color_state_get_rec2100_linear@Base 4.15.4
  gdk_color_state_get_rec2100_pq@Base 4.15.4
  gdk_color_state_get_srgb@Base 4.15.4
@@ -99,6 +101,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_content_formats_get_gtypes@Base 4.0.0
  gdk_content_formats_get_mime_types@Base 4.0.0
  gdk_content_formats_get_type@Base 4.0.0
+ gdk_content_formats_is_empty@Base 4.17.1
  gdk_content_formats_match@Base 4.0.0
  gdk_content_formats_match_gtype@Base 4.0.0
  gdk_content_formats_match_mime_type@Base 4.0.0
@@ -2002,6 +2005,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_directory_list_set_file@Base 4.0.0
  gtk_directory_list_set_io_priority@Base 4.0.0
  gtk_directory_list_set_monitored@Base 4.0.0
+ gtk_disable_portals@Base 4.17.1
  gtk_disable_setlocale@Base 4.0.0
  gtk_distribute_natural_allocation@Base 4.0.0
  gtk_drag_check_threshold@Base 4.0.0
@@ -2994,6 +2998,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_list_box_get_selected_rows@Base 4.0.0
  gtk_list_box_get_selection_mode@Base 4.0.0
  gtk_list_box_get_show_separators@Base 4.0.0
+ gtk_list_box_get_tab_behavior@Base 4.17.1
  gtk_list_box_get_type@Base 4.0.0
  gtk_list_box_insert@Base 4.0.0
  gtk_list_box_invalidate_filter@Base 4.0.0
@@ -3027,6 +3032,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_list_box_set_selection_mode@Base 4.0.0
  gtk_list_box_set_show_separators@Base 4.0.0
  gtk_list_box_set_sort_func@Base 4.0.0
+ gtk_list_box_set_tab_behavior@Base 4.17.1
  gtk_list_box_unselect_all@Base 4.0.0
  gtk_list_box_unselect_row@Base 4.0.0
  gtk_list_header_get_child@Base 4.12.0
@@ -4296,6 +4302,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_string_filter_set_match_mode@Base 4.0.0
  gtk_string_filter_set_search@Base 4.0.0
  gtk_string_list_append@Base 4.0.0
+ gtk_string_list_find@Base 4.17.1
  gtk_string_list_get_string@Base 4.0.0
  gtk_string_list_get_type@Base 4.0.0
  gtk_string_list_new@Base 4.0.0
@@ -4628,6 +4635,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_text_view_get_tabs@Base 4.0.0
  gtk_text_view_get_top_margin@Base 4.0.0
  gtk_text_view_get_type@Base 4.0.0
+ gtk_text_view_get_visible_offset@Base 4.17.1
  gtk_text_view_get_visible_rect@Base 4.0.0
  gtk_text_view_get_wrap_mode@Base 4.0.0
  gtk_text_view_im_context_filter_keypress@Base 4.0.0

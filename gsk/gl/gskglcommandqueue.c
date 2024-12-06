@@ -1087,25 +1087,25 @@ gsk_gl_command_queue_execute (GskGLCommandQueue    *self,
   glEnableVertexAttribArray (0);
   glVertexAttribPointer (0, 2, GL_FLOAT, GL_FALSE,
                          sizeof (GskGLDrawVertex),
-                         (void *) G_STRUCT_OFFSET (GskGLDrawVertex, position));
+                         GSIZE_TO_POINTER ((gsize) G_STRUCT_OFFSET (GskGLDrawVertex, position)));
 
   /* 1 = texture coord location */
   glEnableVertexAttribArray (1);
   glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE,
                          sizeof (GskGLDrawVertex),
-                         (void *) G_STRUCT_OFFSET (GskGLDrawVertex, uv));
+                         GSIZE_TO_POINTER ((gsize) G_STRUCT_OFFSET (GskGLDrawVertex, uv)));
 
   /* 2 = color location */
   glEnableVertexAttribArray (2);
   glVertexAttribPointer (2, 4, GL_HALF_FLOAT, GL_FALSE,
                          sizeof (GskGLDrawVertex),
-                         (void *) G_STRUCT_OFFSET (GskGLDrawVertex, color));
+                         GSIZE_TO_POINTER ((gsize) G_STRUCT_OFFSET (GskGLDrawVertex, color)));
 
   /* 3 = color2 location */
   glEnableVertexAttribArray (3);
   glVertexAttribPointer (3, 4, GL_HALF_FLOAT, GL_FALSE,
                          sizeof (GskGLDrawVertex),
-                         (void *) G_STRUCT_OFFSET (GskGLDrawVertex, color2));
+                         GSIZE_TO_POINTER ((gsize) G_STRUCT_OFFSET (GskGLDrawVertex, color2)));
 
   /* Setup initial scissor clip */
   if (scissor != NULL && cairo_region_num_rectangles (scissor) > 0)
@@ -1629,7 +1629,7 @@ gsk_gl_command_queue_do_upload_texture_chunk (GskGLCommandQueue *self,
     {
       glTexSubImage2D (GL_TEXTURE_2D, 0, x, y, width, height, gl_format, gl_type, data);
     }
-  else if (stride % bpp == 0 && gdk_gl_context_has_feature (self->context, GDK_GL_FEATURE_UNPACK_SUBIMAGE))
+  else if (stride % bpp == 0)
     {
       glPixelStorei (GL_UNPACK_ROW_LENGTH, stride / bpp);
 

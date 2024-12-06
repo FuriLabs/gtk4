@@ -14,10 +14,7 @@ struct _GdkDmabufDownloaderInterface
   GTypeInterface g_iface;
 
   void                  (* close)                               (GdkDmabufDownloader            *downloader);
-  gboolean              (* supports)                            (GdkDmabufDownloader            *downloader,
-                                                                 GdkDmabufTexture               *texture,
-                                                                 GError                        **error);
-  void                  (* download)                            (GdkDmabufDownloader            *downloader,
+  gboolean              (* download)                            (GdkDmabufDownloader            *downloader,
                                                                  GdkDmabufTexture               *texture,
                                                                  GdkMemoryFormat                 format,
                                                                  GdkColorState                  *color_state,
@@ -25,11 +22,8 @@ struct _GdkDmabufDownloaderInterface
                                                                  gsize                           stride);
 };
 
-void                    gdk_dmabuf_downloader_close             (GdkDmabufDownloader            *downloader);
-gboolean                gdk_dmabuf_downloader_supports          (GdkDmabufDownloader            *downloader,
-                                                                 GdkDmabufTexture               *texture,
-                                                                 GError                        **error);
-void                    gdk_dmabuf_downloader_download          (GdkDmabufDownloader            *downloader,
+void                    gdk_dmabuf_downloader_close             (GdkDmabufDownloader            *self);
+gboolean                gdk_dmabuf_downloader_download          (GdkDmabufDownloader            *downloader,
                                                                  GdkDmabufTexture               *texture,
                                                                  GdkMemoryFormat                 format,
                                                                  GdkColorState                  *color_state,

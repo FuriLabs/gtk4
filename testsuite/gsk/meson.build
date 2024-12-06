@@ -4,7 +4,8 @@ compare_render = executable('compare-render',
   c_args: common_cflags + ['-DGTK_COMPILATION'],
 )
 
-node_parser = executable('node-parser', 'node-parser.c',
+node_parser = executable('node-parser', 
+  [ 'node-parser.c', '../testutils.c' ],
   dependencies: libgtk_dep,
   c_args: common_cflags,
 )
@@ -58,6 +59,7 @@ compare_render_tests = [
   'cross-fade-in-rotate',
   'css-background-nogl',
   'dihedral',
+  'dihedral-f',
   'empty-blend',
   'empty-blur',
   'empty-border',
@@ -100,6 +102,7 @@ compare_render_tests = [
   'inset-shadow-multiple',
   'invalid-transform',
   'issue-3615',
+  'linear-gradient-interpolation-nogl-nocairo',
   'linear-gradient-3d-nocairo',
   'linear-gradient-nonorthogonal-scale-nogl',
   'linear-gradient-premultiplied-nocairo',
@@ -222,14 +225,6 @@ renderers = [
   { 'name': 'vulkan' },
 ]
 
-compare_xfails_small_texture = [
-  'big-checkerboard',
-  'big-checkerboard-scaled-down',
-  'big-checkerboard-scaled-down2',
-  'repeat-repeats', # only fails when rotated
-  'glyph-scaling',
-]
-
 variants = {
   'plain': '--plain',
   'flip': '--flip',
@@ -287,10 +282,6 @@ foreach renderer : renderers
       'gsk-' + renderer_name,
       'gsk-compare-' + renderer_name,
     ]
-
-    if compare_xfails_small_texture.contains(testname)
-      suites += 'wayland_gles2_failing'
-    endif
 
     test_env = [
       'GSK_RENDERER=' + renderer_name,
@@ -416,6 +407,8 @@ node_parser_tests = [
   'gradient-fail.node',
   'gradient-fail.ref.node',
   'gradient-fail.errors',
+  'gradients.node',
+  'gradients.ref.node',
   'mask-modes.node',
   'mask-modes.ref.node',
   'node-names.node',
@@ -497,7 +490,8 @@ endforeach
 
 # offload does not work outside of linux
 if os_linux
-  offload = executable('offload', 'offload.c', 'gskrendernodeattach.c',
+  offload = executable('offload',
+    [ 'offload.c', 'gskrendernodeattach.c', '../testutils.c' ],
     dependencies : libgtk_static_dep,
     c_args: common_cflags + [ '-DGTK_COMPILATION=1' ],
   )
@@ -540,7 +534,6 @@ endif
 
 tests = [
   [ 'normalize', [ 'normalize.c', '../reftests/reftest-compare.c' ] ],
-  [ 'transform' ],
   [ 'shader' ],
   [ 'opaque' ],
   [ 'path', [ 'path-utils.c' ], [ 'flaky'] ],
@@ -577,11 +570,12 @@ internal_tests = [
   [ 'boundingbox'],
   [ 'curve', [ ], [ 'flaky' ]],
   [ 'curve-special-cases' ],
-  [ 'diff' ],
   [ 'half-float' ],
+  [ 'not-diff' ],
   [ 'misc'],
   [ 'path-private' ],
   [ 'rounded-rect'],
+  [ 'transform' ],
 ]
 
 foreach t : internal_tests

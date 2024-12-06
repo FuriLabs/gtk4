@@ -14,7 +14,9 @@ GDK backends use some additional environment variables.
 
 Note that environment variables are generally used for debugging
 purposes. They are not guaranteed to be API stable, and should not
-be used for end-user configuration and customization.
+be used for end-user configuration and customization. If you feel the
+need to set one of them programmatically, you should probably ask for
+an API to do what you want, instead.
 
 ### `GTK_DEBUG`
 
@@ -248,9 +250,6 @@ A number of options affect behavior instead of logging:
 `no-vsync`
 : Repaint instantly (uses 100% CPU with animations)
 
-`color-mgmt`
-: Enable color management
-
 The special value `all` can be used to turn on all debug options. The special
 value `help` can be used to obtain a list of all supported debug options.
 
@@ -358,6 +357,15 @@ disable certain features.
 `offload`
 : Disable graphics offload to subsurfaces
 
+`color-mgmt`
+: Disable color management
+
+`aerosnap`
+: Disable Aerosnap support on Windows
+
+`threads`
+: Disabled the use of threads where possible
+
 ### `GDK_GL_DISABLE`
 
 This variable can be set to a list of values, which cause GDK to
@@ -379,13 +387,6 @@ does not support them.
 
 `base-instance`
 :GL_EXT_base_instance
-
-### `GDK_VULKAN_DEVICE`
-
-This variable can be set to the index of a Vulkan device to override
-the default selection of the device that is used for Vulkan rendering.
-The special value `list` can be used to obtain a list of all Vulkan
-devices.
 
 ### `GDK_VULKAN_DISABLE`
 
@@ -430,14 +431,8 @@ using and the GDK backend supports them:
 `cairo`
 : Selects the fallback Cairo renderer
 
-`opengl`
-: Selects the default OpenGL renderer
-
-`gl`
-: Selects the "gl" OpenGL renderer
-
 `ngl`
-: Selects the "ngl" OpenGL renderer
+: Selects the OpenGL renderer
 
 `vulkan`
 : Selects the Vulkan renderer
@@ -487,6 +482,8 @@ disable certain optimizations of the "ngl" and "vulkan" renderer.
 `occlusion`
 : Disable occlusion culling via opacity tracking
 
+`repeat`
+: Repeat drawing operations instead of using offscreen and GL_REPEAT
 
 The special value `all` can be used to turn on all values. The special
 value `help` can be used to obtain a list of all supported values.

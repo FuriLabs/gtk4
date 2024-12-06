@@ -754,6 +754,7 @@ gtk_print_output_stream_set_print_done (GtkPrintOutputStream *stream,
 typedef struct
 {
   GtkWindow *exported_window;
+  char *exported_window_handle;
   char *portal_handle;
   unsigned int response_signal_id;
   unsigned int token;
@@ -778,6 +779,9 @@ print_task_data_free (gpointer data)
   PrintTaskData *ptd = data;
 
   g_free (ptd->portal_handle);
+  if (ptd->exported_window && ptd->exported_window_handle)
+    gtk_window_unexport_handle (ptd->exported_window, ptd->exported_window_handle);
+  g_clear_pointer (&ptd->exported_window_handle, g_free);
   g_clear_object (&ptd->exported_window);
   if (ptd->fds[0] != -1)
     close (ptd->fds[0]);
@@ -819,10 +823,11 @@ send_close (GTask *task)
 
 static gboolean
 ensure_portal_proxy (GtkPrintDialog  *self,
+                     GtkWindow       *parent,
                      GError         **error)
 {
-  if (gdk_display_get_debug_flags (NULL) & GDK_DEBUG_NO_PORTALS)
-    return FALSE;
+  if (self->portal)
+    return TRUE;
 
   if (!self->portal)
     self->portal = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
@@ -872,8 +877,12 @@ cleanup_portal_call_data (GTask *task)
       ptd->response_signal_id = 0;
     }
 
+  if (ptd->exported_window && ptd->exported_window_handle)
+    gtk_window_unexport_handle (ptd->exported_window, ptd->exported_window_handle);
+
   g_clear_pointer (&ptd->portal_handle, g_free);
   g_clear_object (&ptd->exported_window);
+  g_clear_pointer (&ptd->exported_window_handle, g_free);
 }
 
 /* }}} */
@@ -1015,6 +1024,12 @@ setup_window_handle_exported (GtkWindow  *window,
 
   g_assert (ptd->portal_handle == NULL);
   ptd->portal_handle = gtk_get_portal_request_path (connection, &handle_token);
+
+  if (window)
+    {
+      ptd->exported_window = g_object_ref (window);
+      ptd->exported_window_handle = g_strdup (window_handle);
+    }
 
   g_assert (ptd->response_signal_id == 0);
   ptd->response_signal_id =
@@ -1213,7 +1228,10 @@ print_window_handle_exported (GtkWindow  *window,
   int idx;
 
   if (window)
-    ptd->exported_window = g_object_ref (window);
+    {
+      ptd->exported_window = g_object_ref (window);
+      ptd->exported_window_handle = g_strdup (window_handle);
+    }
 
   g_assert (ptd->fds[0] != -1);
 
@@ -1451,6 +1469,9 @@ gtk_print_dialog_setup (GtkPrintDialog       *self,
                         gpointer              user_data)
 {
   GTask *task;
+#ifdef HAVE_GIO_UNIX
+  GdkDisplay *display;
+#endif
   G_GNUC_UNUSED GError *error = NULL;
 
   g_return_if_fail (GTK_IS_PRINT_DIALOG (self));
@@ -1464,13 +1485,26 @@ gtk_print_dialog_setup (GtkPrintDialog       *self,
   if (cancellable)
     g_signal_connect (cancellable, "cancelled", G_CALLBACK (cancelled_cb), task);
 
-  if (!ensure_portal_proxy (self, &error))
+  if (parent)
+    display = gtk_widget_get_display (GTK_WIDGET (parent));
+  else
+    display = gdk_display_get_default ();
+
+  if (!gdk_display_should_use_portal (display, PORTAL_PRINT_INTERFACE, 0))
     {
       GtkPrintUnixDialog *window;
 
       window = create_print_dialog (self, self->print_settings, self->page_setup, parent);
       g_signal_connect (window, "response", G_CALLBACK (setup_response_cb), task);
       gtk_window_present (GTK_WINDOW (window));
+    }
+  else if (!ensure_portal_proxy (self, parent, &error))
+    {
+      g_task_return_new_error (task,
+                               GTK_DIALOG_ERROR, GTK_DIALOG_ERROR_FAILED,
+                               "The print portal is not available: %s", error->message);
+      g_error_free (error);
+      g_object_unref (task);
     }
   else
     {
@@ -1550,6 +1584,7 @@ gtk_print_dialog_print (GtkPrintDialog       *self,
   GTask *task;
   G_GNUC_UNUSED GError *error = NULL;
 #ifdef HAVE_GIO_UNIX
+  GdkDisplay *display;
   PrintTaskData *ptd;
 #endif
 
@@ -1575,7 +1610,12 @@ gtk_print_dialog_print (GtkPrintDialog       *self,
   if (cancellable)
     g_signal_connect (cancellable, "cancelled", G_CALLBACK (cancelled_cb), task);
 
-  if (!ensure_portal_proxy (self, &error))
+  if (parent)
+    display = gtk_widget_get_display (GTK_WIDGET (parent));
+  else
+    display = gdk_display_get_default ();
+
+  if (!gdk_display_should_use_portal (display, PORTAL_PRINT_INTERFACE, 0))
     {
       if (setup == NULL || gtk_print_setup_get_printer (setup) == NULL)
         {
@@ -1592,6 +1632,14 @@ gtk_print_dialog_print (GtkPrintDialog       *self,
         {
           print_content (setup, task);
         }
+    }
+  else if (!ensure_portal_proxy (self, parent, &error))
+    {
+      g_task_return_new_error (task,
+                               GTK_DIALOG_ERROR, GTK_DIALOG_ERROR_FAILED,
+                               "The print portal is not available: %s", error->message);
+      g_error_free (error);
+      g_object_unref (task);
     }
   else
     {
@@ -1674,6 +1722,7 @@ gtk_print_dialog_print_file (GtkPrintDialog       *self,
 {
   GTask *task;
 #ifdef HAVE_GIO_UNIX
+  GdkDisplay *display;
   PrintTaskData *ptd;
   GFileInputStream *content;
   GError *error = NULL;
@@ -1701,7 +1750,7 @@ gtk_print_dialog_print_file (GtkPrintDialog       *self,
     {
       g_task_return_new_error (task,
                                GTK_DIALOG_ERROR, GTK_DIALOG_ERROR_FAILED,
-                               "Failed to create read fd");
+                               _("Failed to create the read file descriptor"));
       g_object_unref (task);
       return;
     }
@@ -1709,7 +1758,12 @@ gtk_print_dialog_print_file (GtkPrintDialog       *self,
  if (cancellable)
     g_signal_connect (cancellable, "cancelled", G_CALLBACK (cancelled_cb), task);
 
-  if (!ensure_portal_proxy (self, &error))
+  if (parent)
+    display = gtk_widget_get_display (GTK_WIDGET (parent));
+  else
+    display = gdk_display_get_default ();
+
+  if (!gdk_display_should_use_portal (display, PORTAL_PRINT_INTERFACE, 0))
     {
       if (setup == NULL || gtk_print_setup_get_printer (setup) == NULL)
         {
@@ -1726,6 +1780,14 @@ gtk_print_dialog_print_file (GtkPrintDialog       *self,
         {
           print_content (setup, task);
         }
+    }
+  else if (!ensure_portal_proxy (self, parent, &error))
+    {
+      g_task_return_new_error (task,
+                               GTK_DIALOG_ERROR, GTK_DIALOG_ERROR_FAILED,
+                               "The print portal is not available: %s", error->message);
+      g_error_free (error);
+      g_object_unref (task);
     }
   else
     {
@@ -1771,4 +1833,4 @@ gtk_print_dialog_print_file_finish (GtkPrintDialog  *self,
 
 /* }}} */
 
-/* vim:set foldmethod=marker expandtab: */
+/* vim:set foldmethod=marker: */

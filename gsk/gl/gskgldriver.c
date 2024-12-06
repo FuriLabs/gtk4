@@ -711,7 +711,7 @@ gsk_gl_driver_cache_texture (GskGLDriver         *self,
     {
       GskTextureKey *k;
 
-      k = g_memdup (key, sizeof *key);
+      k = g_memdup2 (key, sizeof *key);
 
       g_assert (!g_hash_table_contains (self->texture_id_to_key, GUINT_TO_POINTER (texture_id)));
       g_hash_table_insert (self->key_to_texture_id, k, GUINT_TO_POINTER (texture_id));
@@ -1843,8 +1843,7 @@ gsk_gl_driver_create_gdk_texture (GskGLDriver     *self,
   state = g_new0 (GskGLTextureState, 1);
   state->texture_id = texture_id;
   state->context = g_object_ref (self->shared_command_queue->context);
-  if (gdk_gl_context_has_feature (self->shared_command_queue->context, GDK_GL_FEATURE_SYNC))
-    state->sync = glFenceSync (GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+  state->sync = glFenceSync (GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
   g_hash_table_steal (self->textures, GUINT_TO_POINTER (texture_id));
 

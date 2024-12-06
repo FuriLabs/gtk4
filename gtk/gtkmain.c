@@ -43,9 +43,7 @@
 #include <sys/types.h>          /* For uid_t, gid_t */
 
 #ifdef G_OS_WIN32
-#define STRICT
 #include <windows.h>
-#undef STRICT
 #endif
 
 #include <hb-glib.h>
@@ -264,6 +262,26 @@ gtk_disable_setlocale (void)
     g_warning ("gtk_disable_setlocale() must be called before gtk_init()");
 
   do_setlocale = FALSE;
+}
+
+/**
+ * gtk_disable_portals:
+ *
+ * Prevents GTK from using portals.
+ *
+ * This is equivalent to setting `GDK_DEBUG=no-portals` in the environment.
+ *
+ * This should only be used in portal implementations, apps must not call it.
+ *
+ * Since: 4.18
+ */
+void
+gtk_disable_portals (void)
+{
+  if (pre_initialized)
+    g_warning ("gtk_disable_portals() must be called before gtk_init()");
+
+  gdk_disable_portals ();
 }
 
 #ifdef G_PLATFORM_WIN32
@@ -631,18 +649,19 @@ gtk_init_check (void)
  * gtk_init:
  *
  * Call this function before using any other GTK functions in your GUI
- * applications. It will initialize everything needed to operate the
- * toolkit.
+ * applications.
+ *
+ * It will initialize everything needed to operate the toolkit. In particular,
+ * it will open the default display (see [func@Gdk.Display.get_default]).
  *
  * If you are using `GtkApplication`, you usually don't have to call this
  * function; the `GApplication::startup` handler does it for you. Though,
  * if you are using GApplication methods that will be invoked before `startup`,
  * such as `local_command_line`, you may need to initialize stuff explicitly.
  *
- * This function will terminate your program if it was unable to
- * initialize the windowing system for some reason. If you want
- * your program to fall back to a textual interface, call
- * [func@Gtk.init_check] instead.
+ * This function will terminate your program if it was unable to initialize
+ * the windowing system for some reason. If you want your program to fall back
+ * to a textual interface, call [func@Gtk.init_check] instead.
  *
  * GTK calls `signal (SIGPIPE, SIG_IGN)` during initialization, to ignore
  * SIGPIPE signals, since these are almost never wanted in graphical

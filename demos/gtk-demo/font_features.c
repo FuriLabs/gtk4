@@ -811,7 +811,7 @@ tag_pair_equal (gconstpointer a, gconstpointer b)
 }
 
 
-static GtkOrdering
+static int
 script_sort (const void *item1,
              const void *item2,
              void       *data)
@@ -1869,4 +1869,4 @@ do_font_features (GtkWidget *do_widget)
   return window;
 }
 
-/* vim:set foldmethod=marker expandtab: */
+/* vim:set foldmethod=marker: */

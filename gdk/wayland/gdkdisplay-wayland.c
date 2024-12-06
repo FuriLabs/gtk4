@@ -43,6 +43,7 @@
 #include "gdksurface-wayland.h"
 #include "gdksurfaceprivate.h"
 #include "gdkdeviceprivate.h"
+#include "gdkdevice-wayland-private.h"
 #include "gdkkeysprivate.h"
 #include "gdkprivate-wayland.h"
 #include "gdkcairocontext-wayland.h"
@@ -536,7 +537,7 @@ gdk_registry_handle_global (void               *data,
                           MIN (version, 1));
     }
   else if (strcmp (interface, xx_color_manager_v4_interface.name) == 0 &&
-           GDK_DISPLAY_DEBUG_CHECK (GDK_DISPLAY (display_wayland), COLOR_MANAGEMENT))
+           gdk_has_feature (GDK_FEATURE_COLOR_MANAGEMENT))
     {
       display_wayland->color = gdk_wayland_color_new (display_wayland, registry, id, version);
     }
@@ -546,6 +547,12 @@ gdk_registry_handle_global (void               *data,
         wl_registry_bind (display_wayland->wl_registry, id,
                           &wp_single_pixel_buffer_manager_v1_interface,
                           MIN (version, 1));
+    }
+  else if (strcmp (interface, xdg_system_bell_v1_interface.name) == 0)
+    {
+      display_wayland->system_bell =
+        wl_registry_bind (display_wayland->wl_registry, id,
+                          &xdg_system_bell_v1_interface, 1);
     }
 
   g_hash_table_insert (display_wayland->known_globals,
@@ -762,6 +769,7 @@ gdk_wayland_display_dispose (GObject *object)
   g_clear_pointer (&display_wayland->linux_dmabuf, zwp_linux_dmabuf_v1_destroy);
   g_clear_pointer (&display_wayland->dmabuf_formats_info, dmabuf_formats_info_free);
   g_clear_pointer (&display_wayland->color, gdk_wayland_color_free);
+  g_clear_pointer (&display_wayland->system_bell, xdg_system_bell_v1_destroy);
 
   g_clear_pointer (&display_wayland->shm, wl_shm_destroy);
   g_clear_pointer (&display_wayland->wl_registry, wl_registry_destroy);
@@ -808,23 +816,32 @@ gdk_wayland_display_get_name (GdkDisplay *display)
 
 void
 gdk_wayland_display_system_bell (GdkDisplay *display,
-                                 GdkSurface  *window)
+                                 GdkSurface *surface)
 {
   GdkWaylandDisplay *display_wayland;
-  struct gtk_surface1 *gtk_surface;
+  struct gtk_surface1 *gtk_surface = NULL;
+  struct wl_surface *wl_surface = NULL;
   gint64 now_ms;
 
   g_return_if_fail (GDK_IS_DISPLAY (display));
 
   display_wayland = GDK_WAYLAND_DISPLAY (display);
 
-  if (!display_wayland->gtk_shell)
+  if (!display_wayland->gtk_shell &&
+      !display_wayland->system_bell)
     return;
 
-  if (window && GDK_IS_WAYLAND_TOPLEVEL (window))
-    gtk_surface = gdk_wayland_toplevel_get_gtk_surface (GDK_WAYLAND_TOPLEVEL (window));
-  else
-    gtk_surface = NULL;
+  if (surface)
+    {
+      if (GDK_IS_WAYLAND_TOPLEVEL (surface))
+        {
+          GdkWaylandToplevel *toplevel = GDK_WAYLAND_TOPLEVEL (surface);
+
+          gtk_surface = gdk_wayland_toplevel_get_gtk_surface (toplevel);
+        }
+
+      wl_surface = gdk_wayland_surface_get_wl_surface (surface);
+    }
 
   now_ms = g_get_monotonic_time () / 1000;
   if (now_ms - display_wayland->last_bell_time_ms < MIN_SYSTEM_BELL_DELAY_MS)
@@ -832,7 +849,10 @@ gdk_wayland_display_system_bell (GdkDisplay *display,
 
   display_wayland->last_bell_time_ms = now_ms;
 
-  gtk_shell1_system_bell (display_wayland->gtk_shell, gtk_surface);
+  if (display_wayland->system_bell)
+    xdg_system_bell_v1_ring (display_wayland->system_bell, wl_surface);
+  else
+    gtk_shell1_system_bell (display_wayland->gtk_shell, gtk_surface);
 }
 
 static void
@@ -1122,7 +1142,7 @@ get_cursor_theme (GdkWaylandDisplay *display_wayland,
     return get_cursor_theme (display_wayland, "default", size);
 
   /* This may fall back to builtin cursors */
-  return wl_cursor_theme_create ("/usr/share/icons/default/cursors", size, display_wayland->shm);
+  return wl_cursor_theme_create ("/usr/share/icons/Adwaita/cursors", size, display_wayland->shm);
 }
 
 /**
@@ -1151,6 +1171,7 @@ _gdk_wayland_display_set_cursor_theme (GdkDisplay *display,
 {
   GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY(display);
   struct wl_cursor_theme *theme;
+  GList *seats;
 
   g_assert (display_wayland);
   g_assert (display_wayland->shm);
@@ -1180,6 +1201,15 @@ _gdk_wayland_display_set_cursor_theme (GdkDisplay *display,
     g_free (display_wayland->cursor_theme_name);
   display_wayland->cursor_theme_name = g_strdup (name);
   display_wayland->cursor_theme_size = size;
+
+ seats = gdk_display_list_seats (display);
+ for (GList *l = seats; l; l = l->next)
+   {
+     GdkSeat *seat = l->data;
+
+     gdk_wayland_device_update_surface_cursor (gdk_seat_get_pointer (seat));
+   }
+ g_list_free (seats);
 }
 
 struct wl_cursor_theme *
@@ -1935,7 +1965,7 @@ init_settings (GdkDisplay *display)
   GSettings *settings;
   int i;
 
-  if (gdk_should_use_portal () &&
+  if (gdk_display_should_use_portal (display, PORTAL_SETTINGS_INTERFACE, 0) &&
       !(gdk_display_get_debug_flags (display) & GDK_DEBUG_DEFAULT_SETTINGS))
     {
       GVariant *ret;

@@ -19,6 +19,7 @@
 
 #include "gdkclipboardprivate.h"
 #include "gdkclipboard-win32.h"
+#include "gdkdisplay-win32.h"
 
 #include "gdkdebugprivate.h"
 #include <glib/gi18n-lib.h>
@@ -61,12 +62,13 @@ gdk_win32_clipboard_request_contentformats (GdkWin32Clipboard *cb)
   UINT w32_formats_len = 0;
   UINT w32_formats_allocated;
   gsize i;
-  GArray *formatpairs;
-  GdkWin32Clipdrop *clipdrop = _gdk_win32_clipdrop_get ();
+  GdkContentFormatsBuilder *builder;
+  GdkContentFormats *formats;
+  GdkWin32Clipdrop *clipdrop = gdk_win32_clipboard_get_clipdrop (GDK_CLIPBOARD (cb));
   DWORD error_code;
 
   SetLastError (0);
-  success = clipdrop->GetUpdatedClipboardFormats (NULL, 0, &w32_formats_allocated);
+  success = GetUpdatedClipboardFormats (NULL, 0, &w32_formats_allocated);
   error_code = GetLastError ();
 
   if (!success && error_code != ERROR_INSUFFICIENT_BUFFER)
@@ -78,7 +80,7 @@ gdk_win32_clipboard_request_contentformats (GdkWin32Clipboard *cb)
   w32_formats = g_new0 (UINT, w32_formats_allocated);
 
   SetLastError (0);
-  success = clipdrop->GetUpdatedClipboardFormats (w32_formats, w32_formats_allocated, &w32_formats_len);
+  success = GetUpdatedClipboardFormats (w32_formats, w32_formats_allocated, &w32_formats_len);
   error_code = GetLastError ();
 
   if (!success)
@@ -88,46 +90,21 @@ gdk_win32_clipboard_request_contentformats (GdkWin32Clipboard *cb)
       return NULL;
     }
 
-  formatpairs = g_array_sized_new (FALSE,
-                                   FALSE,
-                                   sizeof (GdkWin32ContentFormatPair),
-                                   MIN (w32_formats_len, w32_formats_allocated));
+  builder = gdk_content_formats_builder_new ();
 
   for (i = 0; i < MIN (w32_formats_len, w32_formats_allocated); i++)
-    _gdk_win32_add_w32format_to_pairs (w32_formats[i], formatpairs, NULL);
+    gdk_win32_clipdrop_add_win32_format_to_pairs (clipdrop, w32_formats[i], NULL, builder);
 
   g_free (w32_formats);
+  formats = gdk_content_formats_builder_free_to_formats (builder);
 
   GDK_NOTE (DND, {
-      g_print ("... ");
-      for (i = 0; i < formatpairs->len; i++)
-        {
-          const char *mime_type = (const char *) g_array_index (formatpairs, GdkWin32ContentFormatPair, i).contentformat;
-
-          g_print ("%s", mime_type);
-          if (i < formatpairs->len - 1)
-            g_print (", ");
-        }
-      g_print ("\n");
+      char *s = gdk_content_formats_to_string (formats);
+      g_print ("... %s\n", s);
+      g_free (s);
     });
 
-  if (formatpairs->len > 0)
-    {
-      GdkContentFormatsBuilder *builder = gdk_content_formats_builder_new ();
-
-      for (i = 0; i < formatpairs->len; i++)
-        gdk_content_formats_builder_add_mime_type (builder, g_array_index (formatpairs, GdkWin32ContentFormatPair, i).contentformat);
-
-      g_array_free (formatpairs, TRUE);
-
-      return gdk_content_formats_builder_free_to_formats (builder);
-    }
-  else
-    {
-      g_array_free (formatpairs, TRUE);
-
-      return NULL;
-    }
+  return formats;
 }
 
 void
@@ -164,7 +141,7 @@ gdk_win32_clipboard_claim (GdkClipboard       *clipboard,
                            GdkContentProvider *content)
 {
   if (local)
-    _gdk_win32_advertise_clipboard_contentformats (NULL, content ? formats : NULL);
+    _gdk_win32_advertise_clipboard_contentformats (clipboard, NULL, content ? formats : NULL);
 
   return GDK_CLIPBOARD_CLASS (gdk_win32_clipboard_parent_class)->claim (clipboard, formats, local, content);
 }
@@ -232,7 +209,7 @@ gdk_win32_clipboard_read_async (GdkClipboard        *clipboard,
   g_task_set_priority (task, io_priority);
   g_task_set_source_tag (task, gdk_win32_clipboard_read_async);
 
-  _gdk_win32_retrieve_clipboard_contentformats (task, contentformats);
+  _gdk_win32_retrieve_clipboard_contentformats (clipboard, task, contentformats);
 
   return;
 }
@@ -296,3 +273,8 @@ gdk_win32_clipboard_new (GdkDisplay  *display)
   return GDK_CLIPBOARD (cb);
 }
 
+GdkWin32Clipdrop *
+gdk_win32_clipboard_get_clipdrop (GdkClipboard *cb)
+{
+  return gdk_win32_display_get_clipdrop (gdk_clipboard_get_display (GDK_CLIPBOARD (cb)));
+}

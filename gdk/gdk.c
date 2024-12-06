@@ -113,6 +113,12 @@ static int gdk_initialized = 0;                     /* 1 if the library is initi
                                                      * 0 otherwise.
                                                      */
 
+gboolean
+gdk_is_initialized (void)
+{
+  return gdk_initialized != 0;
+}
+
 static const GdkDebugKey gdk_debug_keys[] = {
   { "misc",            GDK_DEBUG_MISC, "Miscellaneous information" },
   { "events",          GDK_DEBUG_EVENTS, "Information about events" },
@@ -139,7 +145,6 @@ static const GdkDebugKey gdk_debug_keys[] = {
   { "default-settings",GDK_DEBUG_DEFAULT_SETTINGS, "Force default values for xsettings" },
   { "high-depth",      GDK_DEBUG_HIGH_DEPTH, "Use high bit depth rendering if possible" },
   { "no-vsync",        GDK_DEBUG_NO_VSYNC, "Repaint instantly (uses 100% CPU with animations)" },
-  { "color-mgmt",      GDK_DEBUG_COLOR_MANAGEMENT, "Enable color management" },
 };
 
 static const GdkDebugKey gdk_feature_keys[] = {
@@ -152,6 +157,9 @@ static const GdkDebugKey gdk_feature_keys[] = {
   { "vulkan",     GDK_FEATURE_VULKAN,           "Disable Vulkan support" },
   { "dmabuf",     GDK_FEATURE_DMABUF,           "Disable dmabuf support" },
   { "offload",    GDK_FEATURE_OFFLOAD,          "Disable graphics offload" },
+  { "color-mgmt", GDK_FEATURE_COLOR_MANAGEMENT, "Disable color management" },
+  { "aerosnap",   GDK_FEATURE_AEROSNAP,         "Disable Aerosnap support on Windows" },
+  { "threads",    GDK_FEATURE_THREADS,          "Disable threads where possible" },
 };
 
 
@@ -360,13 +368,12 @@ gdk_display_open_default (void)
 {
   GdkDisplay *display;
 
-  g_return_val_if_fail (gdk_initialized, NULL);
+  gdk_ensure_initialized ();
 
   display = gdk_display_get_default ();
-  if (display)
-    return display;
 
-  display = gdk_display_open (NULL);
+  if (!display)
+    display = gdk_display_open (NULL);
 
   return display;
 }
@@ -397,19 +404,88 @@ gdk_running_in_sandbox (void)
   return g_file_test ("/.flatpak-info", G_FILE_TEST_EXISTS);
 }
 
-gboolean
-gdk_should_use_portal (void)
+#define PORTAL_BUS_NAME "org.freedesktop.portal.Desktop"
+#define PORTAL_OBJECT_PATH "/org/freedesktop/portal/desktop"
+
+static gboolean portals_disabled;
+
+void
+gdk_disable_portals (void)
 {
-  if (gdk_display_get_debug_flags (NULL) & GDK_DEBUG_PORTALS)
+  portals_disabled = TRUE;
+}
+
+/* Here we decide whether we should use a given portal or not.
+ * - If the GDK_DEBUG flags are set, they always win
+ * - If we are in a sandbox, we always want to use portals
+ * - Otherwise, we want to use the portal if it is available
+ *
+ * The upshot is: if this functions return true and using the
+ * portal fails, we should treat it as an error, not fall back
+ * to something else.
+ */
+gboolean
+gdk_display_should_use_portal (GdkDisplay *display,
+                               const char *portal_interface,
+                               guint       min_version)
+{
+  GDBusConnection *bus = NULL;
+  GDBusProxy *proxy = NULL;
+  char *owner = NULL;
+  GVariant *ret = NULL;
+  gboolean result = FALSE;
+
+  g_assert (display != NULL);
+
+  if (gdk_display_get_debug_flags (display) & GDK_DEBUG_NO_PORTALS)
+    return FALSE;
+
+  if (gdk_display_get_debug_flags (display) & GDK_DEBUG_PORTALS)
     return TRUE;
 
-  if (gdk_display_get_debug_flags (NULL) & GDK_DEBUG_NO_PORTALS)
+  if (portals_disabled)
     return FALSE;
 
   if (gdk_running_in_sandbox ())
     return TRUE;
 
-  return FALSE;
+  bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+  if (bus == NULL)
+    goto done;
+
+  proxy = g_dbus_proxy_new_sync (bus,
+                                 G_DBUS_PROXY_FLAGS_NONE,
+                                 NULL,
+                                 PORTAL_BUS_NAME,
+                                 PORTAL_OBJECT_PATH,
+                                 portal_interface,
+                                 NULL,
+                                 NULL);
+
+  if (proxy == NULL)
+    goto done;
+
+  owner = g_dbus_proxy_get_name_owner (proxy);
+  if (owner == NULL)
+    goto done;
+
+  ret = g_dbus_proxy_get_cached_property (proxy, "version");
+
+  if (!ret)
+    goto done;
+
+  if (min_version == 0)
+    result = TRUE;
+  else
+    result = g_variant_get_uint32 (ret) >= min_version;
+
+done:
+  g_clear_object (&bus);
+  g_clear_object (&proxy);
+  g_clear_pointer (&owner, g_free);
+  g_clear_pointer (&ret, g_variant_unref);
+
+  return result;
 }
 
 PangoDirection

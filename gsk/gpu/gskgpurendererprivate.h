@@ -34,10 +34,12 @@ struct _GskGpuRendererClass
                                                                          GError                **error);
 
   void                  (* make_current)                                (GskGpuRenderer         *self);
+  gpointer              (* save_current)                                (GskGpuRenderer         *self);
+  void                  (* restore_current)                             (GskGpuRenderer         *self,
+                                                                         gpointer                current);
   GskGpuImage *         (* get_backbuffer)                              (GskGpuRenderer         *self);
 
   double                (* get_scale)                                   (GskGpuRenderer         *self);
-  GdkDmabufFormats *    (* get_dmabuf_formats)                          (GskGpuRenderer         *self);
 };
 
 GdkDrawContext *        gsk_gpu_renderer_get_context                    (GskGpuRenderer         *self);

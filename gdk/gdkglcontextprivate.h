@@ -24,17 +24,19 @@
 #include "gdkdrawcontextprivate.h"
 #include "gdkglversionprivate.h"
 #include "gdkdmabufprivate.h"
+#include "gdkdebugprivate.h"
 
 G_BEGIN_DECLS
 
 typedef enum {
   GDK_GL_FEATURE_DEBUG                      = 1 << 0,
-  GDK_GL_FEATURE_UNPACK_SUBIMAGE            = 1 << 1,
-  GDK_GL_FEATURE_VERTEX_HALF_FLOAT          = 1 << 2,
-  GDK_GL_FEATURE_SYNC                       = 1 << 3,
-  GDK_GL_FEATURE_BASE_INSTANCE              = 1 << 4,
-  GDK_GL_FEATURE_BUFFER_STORAGE             = 1 << 5,
+  GDK_GL_FEATURE_BASE_INSTANCE              = 1 << 1,
+  GDK_GL_FEATURE_BUFFER_STORAGE             = 1 << 2,
 } GdkGLFeatures;
+
+#define GDK_GL_N_FEATURES 3
+
+extern const GdkDebugKey gdk_gl_feature_keys[];
 
 typedef enum {
   GDK_GL_NONE = 0,
@@ -133,16 +135,16 @@ void                    gdk_gl_context_set_version              (GdkGLContext   
                                                                  const GdkGLVersion     *version);
 void                    gdk_gl_context_set_is_legacy            (GdkGLContext           *context,
                                                                  gboolean                is_legacy);
-gboolean                gdk_gl_context_check_gl_version         (GdkGLContext           *context,
+gboolean                gdk_gl_context_check_gl_version         (GdkGLContext           *self,
                                                                  const GdkGLVersion     *gl_version,
                                                                  const GdkGLVersion     *gles_version);
 
 static inline gboolean
-gdk_gl_context_check_version (GdkGLContext *context,
+gdk_gl_context_check_version (GdkGLContext *self,
                               const char   *gl_version,
                               const char   *gles_version)
 {
-  return gdk_gl_context_check_gl_version (context,
+  return gdk_gl_context_check_gl_version (self,
                                           gl_version ? &GDK_GL_VERSION_STRING (gl_version) : NULL,
                                           gles_version ? &GDK_GL_VERSION_STRING (gles_version) : NULL);
 }
@@ -180,6 +182,17 @@ gboolean                gdk_gl_context_use_es_bgra              (GdkGLContext   
 gboolean                gdk_gl_context_has_vertex_arrays        (GdkGLContext    *self) G_GNUC_PURE;
 
 double                  gdk_gl_context_get_scale                (GdkGLContext    *self);
+
+void                    gdk_gl_context_download                 (GdkGLContext    *self,
+                                                                 GLuint           tex_id,
+                                                                 GdkMemoryFormat  tex_format,
+                                                                 GdkColorState   *tex_color_state,
+                                                                 guchar          *dest_data,
+                                                                 gsize            dest_stride,
+                                                                 GdkMemoryFormat  dest_format,
+                                                                 GdkColorState   *dest_color_state,
+                                                                 gsize            width,
+                                                                 gsize            height);
 
 guint                   gdk_gl_context_import_dmabuf            (GdkGLContext    *self,
                                                                  int              width,

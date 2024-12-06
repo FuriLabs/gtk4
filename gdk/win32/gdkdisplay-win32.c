@@ -28,6 +28,7 @@
 #include "gdkdisplay-win32.h"
 #include "gdkdevicemanager-win32.h"
 #include "gdkglcontext-win32.h"
+#include "gdkinput-dmanipulation.h"
 #include "gdksurface-win32.h"
 #include "gdkwin32display.h"
 #include "gdkwin32screen.h"
@@ -38,7 +39,6 @@
 
 #include <dwmapi.h>
 
-#include "gdkwin32langnotification.h"
 #ifdef HAVE_EGL
 # include <epoxy/egl.h>
 #endif
@@ -46,8 +46,6 @@
 #ifndef IMAGE_FILE_MACHINE_ARM64
 # define IMAGE_FILE_MACHINE_ARM64 0xAA64
 #endif
-
-static int debug_indent = 0;
 
 /**
  * gdk_win32_display_add_filter:
@@ -425,7 +423,7 @@ gdk_win32_display_get_next_serial (GdkDisplay *display)
 }
 
 static LRESULT CALLBACK
-inner_display_change_window_procedure (HWND   hwnd,
+inner_display_change_hwnd_procedure (HWND   hwnd,
                                        UINT   message,
                                        WPARAM wparam,
                                        LPARAM lparam)
@@ -439,7 +437,7 @@ inner_display_change_window_procedure (HWND   hwnd,
       }
     case WM_DISPLAYCHANGE:
       {
-        GdkWin32Display *win32_display = GDK_WIN32_DISPLAY (_gdk_display);
+        GdkWin32Display *win32_display = GDK_WIN32_DISPLAY (GetWindowLongPtr (hwnd, GWLP_USERDATA));
 
         _gdk_win32_screen_on_displaychange_event (GDK_WIN32_SCREEN (win32_display->screen));
         return 0;
@@ -452,27 +450,48 @@ inner_display_change_window_procedure (HWND   hwnd,
 }
 
 static LRESULT CALLBACK
-display_change_window_procedure (HWND   hwnd,
+display_change_hwnd_procedure (HWND   hwnd,
                                  UINT   message,
                                  WPARAM wparam,
                                  LPARAM lparam)
 {
   LRESULT retval;
+  GdkDisplay *display;
 
-  GDK_NOTE (EVENTS, g_print ("%s%*s%s %p",
-			     (debug_indent > 0 ? "\n" : ""),
-			     debug_indent, "",
-			     _gdk_win32_message_to_string (message), hwnd));
-  debug_indent += 2;
-  retval = inner_display_change_window_procedure (hwnd, message, wparam, lparam);
-  debug_indent -= 2;
+  if (message == WM_NCCREATE)
+    {
+      CREATESTRUCT *cs = (CREATESTRUCT *)lparam;
+      display = (GdkDisplay *)cs->lpCreateParams;
 
-  GDK_NOTE (EVENTS, g_print (" => %" G_GINT64_FORMAT "%s", (gint64) retval, (debug_indent == 0 ? "\n" : "")));
+      SetWindowLongPtr (hwnd, GWLP_USERDATA, (LONG_PTR) display);
+      retval = TRUE;
+    }
+  else
+    {
+      int debug_indent;
+
+	  display = GDK_DISPLAY (GetWindowLongPtr (hwnd, GWLP_USERDATA));
+
+      debug_indent = GDK_WIN32_DISPLAY (display)->event_record->debug_indent_displaychange;
+      GDK_NOTE (EVENTS, g_print ("%s%*s%s %p",
+                (debug_indent > 0 ? "\n" : ""),
+                 debug_indent, "",
+                _gdk_win32_message_to_string (message), hwnd));
+
+      GDK_WIN32_DISPLAY (display)->event_record->debug_indent_displaychange += 2;
+
+      retval = inner_display_change_hwnd_procedure (hwnd, message, wparam, lparam);
+
+      GDK_WIN32_DISPLAY (display)->event_record->debug_indent_displaychange -= 2;
+      SetWindowLongPtr (hwnd, GWLP_USERDATA, (LONG_PTR) display);
+      debug_indent = GDK_WIN32_DISPLAY (display)->event_record->debug_indent_displaychange;
+      GDK_NOTE (EVENTS, g_print (" => %" G_GINT64_FORMAT "%s", (gint64) retval, (debug_indent == 0 ? "\n" : "")));
+    }
 
   return retval;
 }
 
-/* Use a hidden window to be notified about display changes */
+/* Use a hidden HWND to be notified about display changes */
 static void
 register_display_change_notification (GdkDisplay *display)
 {
@@ -481,7 +500,7 @@ register_display_change_notification (GdkDisplay *display)
   ATOM klass;
 
   wclass.lpszClassName = L"GdkDisplayChange";
-  wclass.lpfnWndProc = display_change_window_procedure;
+  wclass.lpfnWndProc = display_change_hwnd_procedure;
   wclass.hInstance = this_module ();
   wclass.style = CS_OWNDC;
 
@@ -491,7 +510,7 @@ register_display_change_notification (GdkDisplay *display)
       display_win32->hwnd = CreateWindow (MAKEINTRESOURCE (klass),
                                           NULL, WS_POPUP,
                                           0, 0, 0, 0, NULL, NULL,
-                                          this_module (), NULL);
+                                          this_module (), display);
       if (!display_win32->hwnd)
         {
           UnregisterClass (MAKEINTRESOURCE (klass), this_module ());
@@ -502,58 +521,64 @@ register_display_change_notification (GdkDisplay *display)
 GdkDisplay *
 _gdk_win32_display_open (const char *display_name)
 {
+  static gsize display_inited = 0;
+  static GdkDisplay *display = NULL;
   GdkWin32Display *win32_display;
 
   GDK_NOTE (MISC, g_print ("gdk_display_open: %s\n", (display_name ? display_name : "NULL")));
 
-  if (display_name == NULL ||
-      g_ascii_strcasecmp (display_name,
-			  gdk_display_get_name (_gdk_display)) == 0)
+  if (display != NULL)
     {
-      if (_gdk_display != NULL)
-	{
-	  GDK_NOTE (MISC, g_print ("... return _gdk_display\n"));
-	  return _gdk_display;
-	}
-    }
-  else
-    {
-      GDK_NOTE (MISC, g_print ("... return NULL\n"));
+      GDK_NOTE (MISC, g_print ("... Display is already open\n"));
       return NULL;
     }
 
-  _gdk_display = g_object_new (GDK_TYPE_WIN32_DISPLAY, NULL);
-  win32_display = GDK_WIN32_DISPLAY (_gdk_display);
+  if (display_name != NULL)
+    {
+      /* we don't really support multiple GdkDisplay's on Windows at this point */
+      GDK_NOTE (MISC, g_print ("... win32 does not support named displays, but given name was \"%s\"\n", display_name));
+      return NULL;
+    }
 
-  win32_display->screen = g_object_new (GDK_TYPE_WIN32_SCREEN, NULL);
+  if (g_once_init_enter (&display_inited))
+    {
+      display = g_object_new (GDK_TYPE_WIN32_DISPLAY, NULL);
 
-  _gdk_events_init (_gdk_display);
+      win32_display = GDK_WIN32_DISPLAY (display);
 
-  _gdk_input_ignore_core = 0;
+      win32_display->screen = g_object_new (GDK_TYPE_WIN32_SCREEN,
+                                            "display", display,
+                                            NULL);
 
-  _gdk_device_manager = g_object_new (GDK_TYPE_DEVICE_MANAGER_WIN32,
-                                      NULL);
-  _gdk_device_manager->display = _gdk_display;
+      _gdk_events_init (display);
 
-  _gdk_win32_lang_notification_init ();
-  _gdk_drag_init ();
+      win32_display->device_manager = g_object_new (GDK_TYPE_DEVICE_MANAGER_WIN32,
+                                                    "display", display,
+                                                    NULL);
+      gdk_dmanipulation_initialize (win32_display);
 
-  _gdk_display->clipboard = gdk_win32_clipboard_new (_gdk_display);
-  _gdk_display->primary_clipboard = gdk_clipboard_new (_gdk_display);
+      gdk_win32_display_lang_notification_init (win32_display);
+      _gdk_drag_init ();
 
-  /* Precalculate display name */
-  (void) gdk_display_get_name (_gdk_display);
+      display->clipboard = gdk_win32_clipboard_new (display);
+      display->primary_clipboard = gdk_clipboard_new (display);
 
-  register_display_change_notification (_gdk_display);
+      /* Precalculate display name */
+      gdk_display_get_name (display);
 
-  g_signal_emit_by_name (_gdk_display, "opened");
+      register_display_change_notification (display);
 
-  /* Precalculate keymap, see #6203 */
-  (void) _gdk_win32_display_get_keymap (_gdk_display);
+      g_signal_emit_by_name (display, "opened");
 
-  GDK_NOTE (MISC, g_print ("... _gdk_display now set up\n"));
+      /* Precalculate keymap, see #6203 */
+      gdk_display_get_keymap (display);
 
-  return _gdk_display;
+      GDK_NOTE (MISC, g_print ("... gdk_display now set up\n"));
+
+      g_once_init_leave (&display_inited, 1);
+    }
+
+  return display;
 }
 
 G_DEFINE_TYPE (GdkWin32Display, gdk_win32_display, GDK_TYPE_DISPLAY)
@@ -631,25 +656,17 @@ gdk_win32_display_get_name (GdkDisplay *display)
 static void
 gdk_win32_display_beep (GdkDisplay *display)
 {
-  g_return_if_fail (display == gdk_display_get_default());
-  if (!MessageBeep (-1))
-    Beep(1000, 50);
+  MessageBeep ((UINT)-1);
 }
 
 static void
 gdk_win32_display_flush (GdkDisplay * display)
 {
-  g_return_if_fail (display == _gdk_display);
-
-  GdiFlush ();
 }
 
 static void
 gdk_win32_display_sync (GdkDisplay * display)
 {
-  g_return_if_fail (display == _gdk_display);
-
-  GdiFlush ();
 }
 
 static void
@@ -687,9 +704,22 @@ gdk_win32_display_finalize (GObject *object)
 {
   GdkWin32Display *display_win32 = GDK_WIN32_DISPLAY (object);
 
+  g_free (display_win32->event_record);
+  if (display_win32->display_surface_record->modal_timer != 0)
+    {
+      KillTimer (NULL, display_win32->display_surface_record->modal_timer);
+	  display_win32->display_surface_record->modal_timer = 0;
+    }
+  g_slist_free_full (display_win32->display_surface_record->modal_surface_stack, g_object_unref);
+  g_hash_table_destroy (display_win32->display_surface_record->handle_ht);
+  g_free (display_win32->display_surface_record);
   _gdk_win32_display_finalize_cursors (display_win32);
+  gdk_win32_display_close_dmanip_manager (GDK_DISPLAY (display_win32));
   _gdk_win32_dnd_exit ();
-  _gdk_win32_lang_notification_exit ();
+  gdk_win32_display_lang_notification_exit (display_win32);
+  g_free (display_win32->pointer_device_items);
+  g_object_unref (display_win32->cb_dnd_items->clipdrop);
+  g_free (display_win32->cb_dnd_items);
 
   g_list_store_remove_all (G_LIST_STORE (display_win32->monitors));
   g_object_unref (display_win32->monitors);
@@ -1024,13 +1054,45 @@ _gdk_win32_check_processor (GdkWin32ProcessorCheckType check_type)
     }
 }
 
+static guint
+gdk_handle_hash (HANDLE *handle)
+{
+#ifdef _WIN64
+  return ((guint *) handle)[0] ^ ((guint *) handle)[1];
+#else
+  return (guint) *handle;
+#endif
+}
+
+static int
+gdk_handle_equal (HANDLE *a,
+                  HANDLE *b)
+{
+  return (*a == *b);
+}
+
+/* facts of life, DestroyWindow() is a __stdcall function */
+static void
+gdk_destroy_surface_hwnd (gpointer hwnd)
+{
+  DestroyWindow ((HWND)hwnd);
+}
+
 static void
 gdk_win32_display_init (GdkWin32Display *display_win32)
 {
   const char *scale_str = g_getenv ("GDK_SCALE");
 
   display_win32->monitors = G_LIST_MODEL (g_list_store_new (GDK_TYPE_MONITOR));
+  display_win32->pointer_device_items = g_new0 (GdkWin32PointerDeviceItems, 1);
+  display_win32->cb_dnd_items = g_new0 (GdkWin32CbDnDItems, 1);
+  display_win32->cb_dnd_items->display_main_thread = g_thread_self ();
+  display_win32->cb_dnd_items->clipdrop = GDK_WIN32_CLIPDROP (g_object_new (GDK_TYPE_WIN32_CLIPDROP, NULL));
+  display_win32->display_surface_record = g_new0 (surface_records, 1);
+  display_win32->display_surface_record->handle_ht = g_hash_table_new ((GHashFunc) gdk_handle_hash,
+                                                                       (GEqualFunc) gdk_handle_equal);
 
+  display_win32->event_record = g_new0 (event_records, 1);
   _gdk_win32_enable_hidpi (display_win32);
   display_win32->running_on_arm64 = _gdk_win32_check_processor (GDK_WIN32_ARM64);
 
@@ -1146,7 +1208,7 @@ gdk_win32_display_get_monitor_scale_factor (GdkWin32Display *display_win32,
       else
         hdc = GetDC (NULL);
 
-      /* in case we can't get the DC for the window, return 1 for the scale */
+      /* in case we can't get the DC for the HWND, return 1 for the scale */
       if (hdc == NULL)
         return 1;
 
@@ -1155,7 +1217,7 @@ gdk_win32_display_get_monitor_scale_factor (GdkWin32Display *display_win32,
 
       /*
        * If surface is not NULL, the HDC should not be released, since surfaces have
-       * Win32 windows created with CS_OWNDC
+       * Win32 HWNDs created with CS_OWNDC
        */
       if (surface == NULL)
         ReleaseDC (NULL, hdc);
@@ -1173,17 +1235,6 @@ gdk_win32_display_get_monitor_scale_factor (GdkWin32Display *display_win32,
     }
   else
     return 1;
-}
-
-static gboolean
-gdk_win32_display_get_setting (GdkDisplay  *display,
-                               const char *name,
-                               GValue      *value)
-{
-  if (gdk_display_get_debug_flags (display) & GDK_DEBUG_DEFAULT_SETTINGS)
-    return FALSE;
-
-  return _gdk_win32_get_setting (name, value);
 }
 
 #ifndef EGL_PLATFORM_ANGLE_ANGLE
@@ -1271,6 +1322,22 @@ gdk_win32_display_get_egl_display (GdkDisplay *display)
   return gdk_display_get_egl_display (display);
 }
 
+GdkWin32Clipdrop *
+gdk_win32_display_get_clipdrop (GdkDisplay *display)
+{
+  GdkWin32Display *display_win32 = GDK_WIN32_DISPLAY (display);
+
+  return display_win32->cb_dnd_items->clipdrop;
+}
+
+static GdkKeymap*
+_gdk_win32_display_get_keymap (GdkDisplay *display)
+{
+  g_return_val_if_fail (display == gdk_display_get_default (), NULL);
+
+  return gdk_win32_display_get_default_keymap (GDK_WIN32_DISPLAY (display));
+}
+
 static void
 gdk_win32_display_class_init (GdkWin32DisplayClass *klass)
 {
@@ -1307,6 +1374,4 @@ gdk_win32_display_class_init (GdkWin32DisplayClass *klass)
   display_class->get_setting = gdk_win32_display_get_setting;
   display_class->set_cursor_theme = gdk_win32_display_set_cursor_theme;
   display_class->init_gl = gdk_win32_display_init_gl;
-
-  _gdk_win32_surfaceing_init ();
 }

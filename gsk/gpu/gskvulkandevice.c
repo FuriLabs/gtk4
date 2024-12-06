@@ -198,7 +198,8 @@ gsk_vulkan_device_create_vk_pipeline_layout (GskVulkanDevice       *self,
 static GskGpuImage *
 gsk_vulkan_device_create_offscreen_image (GskGpuDevice   *device,
                                           gboolean        with_mipmap,
-                                          GdkMemoryDepth  depth,
+                                          GdkMemoryFormat format,
+                                          gboolean        is_srgb,
                                           gsize           width,
                                           gsize           height)
 {
@@ -206,8 +207,8 @@ gsk_vulkan_device_create_offscreen_image (GskGpuDevice   *device,
 
   return gsk_vulkan_image_new_for_offscreen (self,
                                              with_mipmap,
-                                             gdk_memory_depth_get_format (depth),
-                                             gdk_memory_depth_is_srgb (depth),
+                                             format,
+                                             is_srgb,
                                              width,
                                              height);
 }
@@ -342,8 +343,6 @@ gsk_vulkan_device_finalize (GObject *object)
     g_clear_pointer (&self->allocators[i], gsk_vulkan_allocator_unref);
   g_clear_pointer (&self->external_allocator, gsk_vulkan_allocator_unref);
 
-  gdk_display_unref_vulkan (display);
-
   G_OBJECT_CLASS (gsk_vulkan_device_parent_class)->finalize (object);
 }
 
@@ -408,7 +407,8 @@ gsk_vulkan_device_setup (GskVulkanDevice *self,
   gsk_gpu_device_setup (GSK_GPU_DEVICE (self),
                         display,
                         vk_props.properties.limits.maxImageDimension2D,
-                        GSK_GPU_DEVICE_DEFAULT_TILE_SIZE);
+                        GSK_GPU_DEVICE_DEFAULT_TILE_SIZE,
+                        vk_props.properties.limits.minUniformBufferOffsetAlignment);
 }
 
 GskGpuDevice *
@@ -421,7 +421,7 @@ gsk_vulkan_device_get_for_display (GdkDisplay  *display,
   if (self)
     return GSK_GPU_DEVICE (g_object_ref (self));
 
-  if (!gdk_display_init_vulkan (display, error))
+  if (!gdk_display_prepare_vulkan (display, error))
     return NULL;
 
   self = g_object_new (GSK_TYPE_VULKAN_DEVICE, NULL);
@@ -772,7 +772,7 @@ gsk_vulkan_device_get_vk_render_pass (GskVulkanDevice    *self,
                                       NULL,
                                       &render_pass);
 
-  cached_result = g_memdup (&cache_key, sizeof (RenderPassCacheKey));
+  cached_result = g_memdup2 (&cache_key, sizeof (RenderPassCacheKey));
   cached_result->render_pass = render_pass;
 
   g_hash_table_insert (self->render_pass_cache, cached_result, cached_result);
@@ -1024,7 +1024,7 @@ gsk_vulkan_device_get_vk_pipeline (GskVulkanDevice           *self,
   g_free (fragment_shader_name);
   g_free (vertex_shader_name);
 
-  cached_result = g_memdup (&cache_key, sizeof (PipelineCacheKey));
+  cached_result = g_memdup2 (&cache_key, sizeof (PipelineCacheKey));
   cached_result->vk_pipeline = vk_pipeline;
   g_hash_table_add (self->pipeline_cache, cached_result);
   gdk_display_vulkan_pipeline_cache_updated (display);

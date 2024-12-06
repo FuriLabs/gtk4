@@ -103,11 +103,8 @@
 
 #define DEFAULT_ALLOWED_APIS GDK_GL_API_GL | GDK_GL_API_GLES
 
-static const GdkDebugKey gdk_gl_feature_keys[] = {
+const GdkDebugKey gdk_gl_feature_keys[] = {
   { "debug", GDK_GL_FEATURE_DEBUG, "GL_KHR_debug" },
-  { "unpack-subimage", GDK_GL_FEATURE_UNPACK_SUBIMAGE, "GL_EXT_unpack_subimage" },
-  { "half-float", GDK_GL_FEATURE_VERTEX_HALF_FLOAT, "GL_OES_vertex_half_float" },
-  { "sync", GDK_GL_FEATURE_SYNC, "GL_ARB_sync" },
   { "base-instance", GDK_GL_FEATURE_BASE_INSTANCE, "GL_ARB_base_instance" },
   { "buffer-storage", GDK_GL_FEATURE_BUFFER_STORAGE, "GL_EXT_buffer_storage" },
 };
@@ -1058,16 +1055,9 @@ gdk_gl_context_get_matching_version (GdkGLContext *context,
   g_return_if_fail (GDK_IS_GL_CONTEXT (context));
 
   if (api == GDK_GL_API_GL)
-    {
-      if (legacy)
-        min_version = GDK_GL_MIN_GL_LEGACY_VERSION;
-      else
-        min_version = GDK_GL_MIN_GL_VERSION;
-    }
+    min_version = GDK_GL_MIN_GL_VERSION;
   else
-    {
-      min_version = GDK_GL_MIN_GLES_VERSION;
-    }
+    min_version = GDK_GL_MIN_GLES_VERSION;
 
   if (gdk_gl_version_greater_equal (&priv->required, &min_version))
     *out_version = priv->required;
@@ -1590,38 +1580,35 @@ gdk_gl_context_init_memory_flags (GdkGLContext *self)
   priv->memory_flags[GDK_MEMORY_G8A8] = GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_FILTERABLE;
 #endif
 
-  if (gdk_gl_version_greater_equal (&priv->gl_version, &GDK_GL_VERSION_INIT (3, 0)))
+  /* GLES 3.0.6 spec, table 3.13 */
+  priv->memory_flags[GDK_MEMORY_G8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+  priv->memory_flags[GDK_MEMORY_A8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+  priv->memory_flags[GDK_MEMORY_G8A8_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+  priv->memory_flags[GDK_MEMORY_G8A8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+  priv->memory_flags[GDK_MEMORY_R8G8B8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+  priv->memory_flags[GDK_MEMORY_R8G8B8A8_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+  priv->memory_flags[GDK_MEMORY_R8G8B8A8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+  priv->memory_flags[GDK_MEMORY_R8G8B8X8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+  priv->memory_flags[GDK_MEMORY_R16G16B16_FLOAT] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_FILTERABLE;
+  priv->memory_flags[GDK_MEMORY_R16G16B16A16_FLOAT_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_FILTERABLE;
+  priv->memory_flags[GDK_MEMORY_R16G16B16A16_FLOAT] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_FILTERABLE;
+  priv->memory_flags[GDK_MEMORY_A16_FLOAT] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_FILTERABLE;
+  priv->memory_flags[GDK_MEMORY_R32G32B32_FLOAT] |= GDK_GL_FORMAT_USABLE;
+  priv->memory_flags[GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE;
+  priv->memory_flags[GDK_MEMORY_R32G32B32A32_FLOAT] |= GDK_GL_FORMAT_USABLE;
+  priv->memory_flags[GDK_MEMORY_A32_FLOAT] |= GDK_GL_FORMAT_USABLE;
+
+  /* no changes in GLES 3.1 spec, table 8.13 */
+
+  if (gdk_gl_version_greater_equal (&priv->gl_version, &GDK_GL_VERSION_INIT (3, 2)))
     {
-      /* GLES 3.0.6 spec, table 3.13 */
-      priv->memory_flags[GDK_MEMORY_G8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-      priv->memory_flags[GDK_MEMORY_A8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-      priv->memory_flags[GDK_MEMORY_G8A8_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-      priv->memory_flags[GDK_MEMORY_G8A8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-      priv->memory_flags[GDK_MEMORY_R8G8B8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-      priv->memory_flags[GDK_MEMORY_R8G8B8A8_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-      priv->memory_flags[GDK_MEMORY_R8G8B8A8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-      priv->memory_flags[GDK_MEMORY_R8G8B8X8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-      priv->memory_flags[GDK_MEMORY_R16G16B16_FLOAT] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_FILTERABLE;
-      priv->memory_flags[GDK_MEMORY_R16G16B16A16_FLOAT_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_FILTERABLE;
-      priv->memory_flags[GDK_MEMORY_R16G16B16A16_FLOAT] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_FILTERABLE;
-      priv->memory_flags[GDK_MEMORY_A16_FLOAT] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_FILTERABLE;
-      priv->memory_flags[GDK_MEMORY_R32G32B32_FLOAT] |= GDK_GL_FORMAT_USABLE;
-      priv->memory_flags[GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE;
-      priv->memory_flags[GDK_MEMORY_R32G32B32A32_FLOAT] |= GDK_GL_FORMAT_USABLE;
-      priv->memory_flags[GDK_MEMORY_A32_FLOAT] |= GDK_GL_FORMAT_USABLE;
-
-      /* no changes in GLES 3.1 spec, table 8.13 */
-
-      if (gdk_gl_version_greater_equal (&priv->gl_version, &GDK_GL_VERSION_INIT (3, 2)))
-        {
-          /* GLES 3.2 spec, table 8.10 */
-          priv->memory_flags[GDK_MEMORY_R16G16B16A16_FLOAT_PREMULTIPLIED] |= GDK_GL_FORMAT_RENDERABLE;
-          priv->memory_flags[GDK_MEMORY_R16G16B16A16_FLOAT] |= GDK_GL_FORMAT_RENDERABLE;
-          priv->memory_flags[GDK_MEMORY_A16_FLOAT] |= GDK_GL_FORMAT_RENDERABLE;
-          priv->memory_flags[GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED] |= GDK_GL_FORMAT_RENDERABLE;
-          priv->memory_flags[GDK_MEMORY_R32G32B32A32_FLOAT] |= GDK_GL_FORMAT_RENDERABLE;
-          priv->memory_flags[GDK_MEMORY_A32_FLOAT] |= GDK_GL_FORMAT_RENDERABLE;
-        }
+      /* GLES 3.2 spec, table 8.10 */
+      priv->memory_flags[GDK_MEMORY_R16G16B16A16_FLOAT_PREMULTIPLIED] |= GDK_GL_FORMAT_RENDERABLE;
+      priv->memory_flags[GDK_MEMORY_R16G16B16A16_FLOAT] |= GDK_GL_FORMAT_RENDERABLE;
+      priv->memory_flags[GDK_MEMORY_A16_FLOAT] |= GDK_GL_FORMAT_RENDERABLE;
+      priv->memory_flags[GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED] |= GDK_GL_FORMAT_RENDERABLE;
+      priv->memory_flags[GDK_MEMORY_R32G32B32A32_FLOAT] |= GDK_GL_FORMAT_RENDERABLE;
+      priv->memory_flags[GDK_MEMORY_A32_FLOAT] |= GDK_GL_FORMAT_RENDERABLE;
     }
 
   if (epoxy_has_gl_extension ("GL_OES_rgb8_rgba8"))
@@ -1629,64 +1616,55 @@ gdk_gl_context_init_memory_flags (GdkGLContext *self)
       priv->memory_flags[GDK_MEMORY_R8G8B8A8_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
       priv->memory_flags[GDK_MEMORY_R8G8B8A8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
       priv->memory_flags[GDK_MEMORY_R8G8B8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-      if (gdk_gl_version_greater_equal (&priv->gl_version, &GDK_GL_VERSION_INIT (3, 0)))
-        priv->memory_flags[GDK_MEMORY_R8G8B8X8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+      priv->memory_flags[GDK_MEMORY_R8G8B8X8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
     }
   if (epoxy_has_gl_extension ("GL_EXT_abgr"))
     {
       priv->memory_flags[GDK_MEMORY_A8B8G8R8_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
       priv->memory_flags[GDK_MEMORY_A8B8G8R8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-      if (gdk_gl_version_greater_equal (&priv->gl_version, &GDK_GL_VERSION_INIT (3, 0)))
-        priv->memory_flags[GDK_MEMORY_X8B8G8R8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+      priv->memory_flags[GDK_MEMORY_X8B8G8R8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
     }
   if (epoxy_has_gl_extension ("GL_EXT_texture_format_BGRA8888"))
     {
       priv->memory_flags[GDK_MEMORY_B8G8R8A8_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
       priv->memory_flags[GDK_MEMORY_B8G8R8A8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-      if (gdk_gl_version_greater_equal (&priv->gl_version, &GDK_GL_VERSION_INIT (3, 0)))
-        priv->memory_flags[GDK_MEMORY_B8G8R8X8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+      priv->memory_flags[GDK_MEMORY_B8G8R8X8] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
     }
 
-  /* Technically, those extensions are supported on GLES2.
-   * However, GTK uses the wrong format/type pairs with them, so we don't enable them.
-   */
-  if (gdk_gl_version_greater_equal (&priv->gl_version, &GDK_GL_VERSION_INIT (3, 0)))
+  if (epoxy_has_gl_extension ("GL_EXT_texture_norm16"))
     {
-      if (epoxy_has_gl_extension ("GL_EXT_texture_norm16"))
-        {
-          priv->memory_flags[GDK_MEMORY_R16G16B16A16_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-          priv->memory_flags[GDK_MEMORY_R16G16B16A16] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-          priv->memory_flags[GDK_MEMORY_R16G16B16] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_FILTERABLE;
-          priv->memory_flags[GDK_MEMORY_G16A16_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-          priv->memory_flags[GDK_MEMORY_G16A16] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-          priv->memory_flags[GDK_MEMORY_G16] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-          priv->memory_flags[GDK_MEMORY_A16] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
-        }
-      if (epoxy_has_gl_extension ("GL_OES_texture_half_float"))
-        {
-          GdkGLMemoryFlags flags = GDK_GL_FORMAT_USABLE;
-          if (epoxy_has_gl_extension ("GL_EXT_color_buffer_half_float"))
-            flags |= GDK_GL_FORMAT_RENDERABLE;
-          if (epoxy_has_gl_extension ("GL_OES_texture_half_float_linear"))
-            flags |= GDK_GL_FORMAT_FILTERABLE;
-          priv->memory_flags[GDK_MEMORY_R16G16B16A16_FLOAT_PREMULTIPLIED] |= flags;
-          priv->memory_flags[GDK_MEMORY_R16G16B16A16_FLOAT] |= flags;
-          /* disabled for now, see https://gitlab.freedesktop.org/mesa/mesa/-/issues/10378 */
-          priv->memory_flags[GDK_MEMORY_R16G16B16_FLOAT] |= flags & ~GDK_GL_FORMAT_RENDERABLE;
-          priv->memory_flags[GDK_MEMORY_A16_FLOAT] |= flags;
-        }
-      if (epoxy_has_gl_extension ("GL_OES_texture_float"))
-        {
-          GdkGLMemoryFlags flags = GDK_GL_FORMAT_USABLE;
-          if (epoxy_has_gl_extension ("GL_EXT_color_buffer_float"))
-            flags |= GDK_GL_FORMAT_RENDERABLE;
-          if (epoxy_has_gl_extension ("GL_OES_texture_float_linear"))
-            flags |= GDK_GL_FORMAT_FILTERABLE;
-          priv->memory_flags[GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED] |= flags;
-          priv->memory_flags[GDK_MEMORY_R32G32B32A32_FLOAT] |= flags;
-          priv->memory_flags[GDK_MEMORY_R32G32B32_FLOAT] |= flags & ~GDK_GL_FORMAT_RENDERABLE;
-          priv->memory_flags[GDK_MEMORY_A32_FLOAT] |= flags;
-        }
+      priv->memory_flags[GDK_MEMORY_R16G16B16A16_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+      priv->memory_flags[GDK_MEMORY_R16G16B16A16] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+      priv->memory_flags[GDK_MEMORY_R16G16B16] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_FILTERABLE;
+      priv->memory_flags[GDK_MEMORY_G16A16_PREMULTIPLIED] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+      priv->memory_flags[GDK_MEMORY_G16A16] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+      priv->memory_flags[GDK_MEMORY_G16] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+      priv->memory_flags[GDK_MEMORY_A16] |= GDK_GL_FORMAT_USABLE | GDK_GL_FORMAT_RENDERABLE | GDK_GL_FORMAT_FILTERABLE;
+    }
+  if (epoxy_has_gl_extension ("GL_OES_texture_half_float"))
+    {
+      GdkGLMemoryFlags flags = GDK_GL_FORMAT_USABLE;
+      if (epoxy_has_gl_extension ("GL_EXT_color_buffer_half_float"))
+        flags |= GDK_GL_FORMAT_RENDERABLE;
+      if (epoxy_has_gl_extension ("GL_OES_texture_half_float_linear"))
+        flags |= GDK_GL_FORMAT_FILTERABLE;
+      priv->memory_flags[GDK_MEMORY_R16G16B16A16_FLOAT_PREMULTIPLIED] |= flags;
+      priv->memory_flags[GDK_MEMORY_R16G16B16A16_FLOAT] |= flags;
+      /* disabled for now, see https://gitlab.freedesktop.org/mesa/mesa/-/issues/10378 */
+      priv->memory_flags[GDK_MEMORY_R16G16B16_FLOAT] |= flags & ~GDK_GL_FORMAT_RENDERABLE;
+      priv->memory_flags[GDK_MEMORY_A16_FLOAT] |= flags;
+    }
+  if (epoxy_has_gl_extension ("GL_OES_texture_float"))
+    {
+      GdkGLMemoryFlags flags = GDK_GL_FORMAT_USABLE;
+      if (epoxy_has_gl_extension ("GL_EXT_color_buffer_float"))
+        flags |= GDK_GL_FORMAT_RENDERABLE;
+      if (epoxy_has_gl_extension ("GL_OES_texture_float_linear"))
+        flags |= GDK_GL_FORMAT_FILTERABLE;
+      priv->memory_flags[GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED] |= flags;
+      priv->memory_flags[GDK_MEMORY_R32G32B32A32_FLOAT] |= flags;
+      priv->memory_flags[GDK_MEMORY_R32G32B32_FLOAT] |= flags & ~GDK_GL_FORMAT_RENDERABLE;
+      priv->memory_flags[GDK_MEMORY_A32_FLOAT] |= flags;
     }
 }
 
@@ -1701,31 +1679,10 @@ gdk_gl_version_init_epoxy (GdkGLVersion *version)
 static GdkGLFeatures
 gdk_gl_context_check_features (GdkGLContext *context)
 {
-  GdkGLContextPrivate *priv = gdk_gl_context_get_instance_private (context);
   GdkGLFeatures features = 0;
-
-  if (gdk_gl_context_get_use_es (context))
-    {
-      if (gdk_gl_version_greater_equal (&priv->gl_version, &GDK_GL_VERSION_INIT (3, 0)) ||
-          epoxy_has_gl_extension ("GL_EXT_unpack_subimage"))
-        features |= GDK_GL_FEATURE_UNPACK_SUBIMAGE;
-    }
-  else
-    {
-      features |= GDK_GL_FEATURE_UNPACK_SUBIMAGE;
-    }
 
   if (epoxy_has_gl_extension ("GL_KHR_debug"))
     features |= GDK_GL_FEATURE_DEBUG;
-
-  if (gdk_gl_context_check_version (context, "3.0", "3.0") ||
-      epoxy_has_gl_extension ("GL_OES_vertex_half_float"))
-    features |= GDK_GL_FEATURE_VERTEX_HALF_FLOAT;
-
-  if (gdk_gl_context_check_version (context, "3.2", "3.0") ||
-      epoxy_has_gl_extension ("GL_ARB_sync") ||
-      epoxy_has_gl_extension ("GL_APPLE_sync"))
-    features |= GDK_GL_FEATURE_SYNC;
 
   if (gdk_gl_context_check_version (context, "4.2", "9.9") ||
       epoxy_has_gl_extension ("GL_EXT_base_instance") ||
@@ -2258,59 +2215,26 @@ gdk_gl_context_import_dmabuf (GdkGLContext    *self,
 
   gdk_dmabuf_egl_init (display);
 
-  if (gdk_dmabuf_formats_contains (display->egl_dmabuf_formats, dmabuf->fourcc, dmabuf->modifier))
+  if (gdk_dmabuf_formats_contains (display->egl_internal_formats, dmabuf->fourcc, dmabuf->modifier))
     {
-      /* This is the path for modern drivers that support modifiers */
-
-      if (!gdk_dmabuf_formats_contains (display->egl_external_formats, dmabuf->fourcc, dmabuf->modifier))
-        {
-          texture_id = gdk_gl_context_import_dmabuf_for_target (self,
-                                                                width, height,
-                                                                dmabuf,
-                                                                GL_TEXTURE_2D);
-          if (texture_id == 0)
-            {
-              GDK_DISPLAY_DEBUG (display, DMABUF,
-                                 "Import of %dx%d %.4s:%#" G_GINT64_MODIFIER "x dmabuf failed",
-                                 width, height,
-                                 (char *) &dmabuf->fourcc, dmabuf->modifier);
-              return 0;
-            }
-
-          GDK_DISPLAY_DEBUG (display, DMABUF,
-                             "Imported %dx%d %.4s:%#" G_GINT64_MODIFIER "x dmabuf as GL_TEXTURE_2D texture",
-                             width, height,
-                             (char *) &dmabuf->fourcc, dmabuf->modifier);
-          *external = FALSE;
-          return texture_id;
-        }
-
-      if (!gdk_gl_context_get_use_es (self))
-        {
-          GDK_DISPLAY_DEBUG (display, DMABUF,
-                             "Can't import external_only %.4s:%#" G_GINT64_MODIFIER "x outside of GLES",
-                             (char *) &dmabuf->fourcc, dmabuf->modifier);
-          return 0;
-        }
-
       texture_id = gdk_gl_context_import_dmabuf_for_target (self,
                                                             width, height,
                                                             dmabuf,
-                                                            GL_TEXTURE_EXTERNAL_OES);
+                                                            GL_TEXTURE_2D);
       if (texture_id == 0)
         {
           GDK_DISPLAY_DEBUG (display, DMABUF,
-                             "Import of external_only %dx%d %.4s:%#" G_GINT64_MODIFIER "x dmabuf failed",
+                             "Import of %dx%d %.4s:%#" G_GINT64_MODIFIER "x dmabuf failed",
                              width, height,
                              (char *) &dmabuf->fourcc, dmabuf->modifier);
           return 0;
         }
 
       GDK_DISPLAY_DEBUG (display, DMABUF,
-                         "Imported %dx%d %.4s:%#" G_GINT64_MODIFIER "x dmabuf as GL_TEXTURE_EXTERNAL_OES texture",
+                         "Imported %dx%d %.4s:%#" G_GINT64_MODIFIER "x dmabuf as GL_TEXTURE_2D texture",
                          width, height,
                          (char *) &dmabuf->fourcc, dmabuf->modifier);
-      *external = TRUE;
+      *external = FALSE;
       return texture_id;
     }
   else
@@ -2467,3 +2391,277 @@ out:
   return FALSE;
 #endif
 }
+
+static gboolean
+gdk_gl_context_find_format (GdkGLContext    *self,
+                            GdkMemoryAlpha   alpha,
+                            GLint            gl_format,
+                            GLint            gl_type,
+                            GdkMemoryFormat *out_format)
+{
+  GdkMemoryFormat format;
+
+  for (format = 0; format < GDK_MEMORY_N_FORMATS; format++)
+    {
+      GLint q_internal_format, q_internal_srgb_format;
+      GLenum q_format, q_type;
+      GLint q_swizzle[4];
+
+      if (gdk_memory_format_alpha (format) != alpha)
+        continue;
+
+      if (!(gdk_gl_context_get_format_flags (self, format) & GDK_GL_FORMAT_RENDERABLE))
+        continue;
+
+      gdk_memory_format_gl_format (format,
+                                   gdk_gl_context_get_use_es (self),
+                                   &q_internal_format,
+                                   &q_internal_srgb_format,
+                                   &q_format,
+                                   &q_type,
+                                   q_swizzle);
+
+      if (q_format != gl_format || q_type != gl_type)
+        continue;
+
+      *out_format = format;
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
+void
+gdk_gl_context_download (GdkGLContext    *self,
+                         GLuint           tex_id,
+                         GdkMemoryFormat  tex_format,
+                         GdkColorState   *tex_color_state,
+                         guchar          *dest_data,
+                         gsize            dest_stride,
+                         GdkMemoryFormat  dest_format,
+                         GdkColorState   *dest_color_state,
+                         gsize            width,
+                         gsize            height)
+{
+  gsize expected_stride;
+  GLint gl_internal_format, gl_internal_srgb_format;
+  GLenum gl_format, gl_type;
+  GLint gl_swizzle[4];
+
+  expected_stride = width * gdk_memory_format_bytes_per_pixel (dest_format);
+
+  if (!gdk_gl_context_get_use_es (self) &&
+      ((gdk_gl_context_get_format_flags (self, tex_format) & GDK_GL_FORMAT_USABLE) == GDK_GL_FORMAT_USABLE))
+    {
+      gdk_memory_format_gl_format (tex_format,
+                                   gdk_gl_context_get_use_es (self),
+                                   &gl_internal_format, &gl_internal_srgb_format,
+                                   &gl_format, &gl_type, gl_swizzle);
+      if (dest_stride == expected_stride &&
+          dest_format == tex_format)
+        {
+          glGetTexImage (GL_TEXTURE_2D,
+                         0,
+                         gl_format,
+                         gl_type,
+                         dest_data);
+
+          gdk_memory_convert_color_state (dest_data,
+                                          dest_stride,
+                                          dest_format,
+                                          dest_color_state,
+                                          tex_color_state,
+                                          width,
+                                          height);
+        }
+      else
+        {
+          gsize stride = width * gdk_memory_format_bytes_per_pixel (tex_format);
+          guchar *pixels = g_malloc_n (stride, height);
+
+          glPixelStorei (GL_PACK_ALIGNMENT, 1);
+          glGetTexImage (GL_TEXTURE_2D,
+                         0,
+                         gl_format,
+                         gl_type,
+                         pixels);
+
+          gdk_memory_convert (dest_data,
+                              dest_stride,
+                              dest_format,
+                              dest_color_state,
+                              pixels,
+                              stride,
+                              tex_format,
+                              tex_color_state,
+                              width,
+                              height);
+
+          g_free (pixels);
+        }
+    }
+  else
+    {
+      GdkMemoryFormat actual_format;
+      GLenum gl_read_format, gl_read_type;
+      GLuint fbo;
+
+      glGenFramebuffers (1, &fbo);
+      glBindFramebuffer (GL_FRAMEBUFFER, fbo);
+      glFramebufferTexture2D (GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_id, 0);
+      if (gdk_gl_context_check_version (self, "4.3", "3.1"))
+        {
+          GLint read_format, read_type;
+          glGetFramebufferParameteriv (GL_FRAMEBUFFER, GL_IMPLEMENTATION_COLOR_READ_FORMAT, &read_format);
+          glGetFramebufferParameteriv (GL_FRAMEBUFFER, GL_IMPLEMENTATION_COLOR_READ_TYPE, &read_type);
+          if (gdk_gl_context_find_format (self, gdk_memory_format_alpha (tex_format), read_format, read_type, &actual_format))
+            {
+              gl_read_format = read_format;
+              gl_read_type = read_type;
+            }
+          else
+            {
+              actual_format = gdk_memory_depth_get_format (gdk_memory_format_get_depth (tex_format, FALSE));
+              if (gdk_memory_format_alpha (tex_format) == GDK_MEMORY_ALPHA_STRAIGHT)
+                actual_format = gdk_memory_format_get_straight (actual_format);
+
+              gdk_memory_format_gl_format (actual_format,
+                                           gdk_gl_context_get_use_es (self),
+                                           &gl_internal_format, &gl_internal_srgb_format,
+                                           &gl_read_format, &gl_read_type, gl_swizzle);
+            }
+        }
+      else
+        {
+          actual_format = gdk_memory_depth_get_format (gdk_memory_format_get_depth (tex_format, FALSE));
+          if (gdk_memory_format_alpha (tex_format) == GDK_MEMORY_ALPHA_STRAIGHT)
+            actual_format = gdk_memory_format_get_straight (actual_format);
+
+          gdk_memory_format_gl_format (actual_format,
+                                       gdk_gl_context_get_use_es (self),
+                                       &gl_internal_format, &gl_internal_srgb_format,
+                                       &gl_read_format, &gl_read_type, gl_swizzle);
+        }
+
+      if (dest_format == actual_format &&
+          (dest_stride == expected_stride))
+        {
+          glReadPixels (0, 0,
+                        width, height,
+                        gl_read_format,
+                        gl_read_type,
+                        dest_data);
+
+          gdk_memory_convert_color_state (dest_data,
+                                          dest_stride,
+                                          dest_format,
+                                          dest_color_state,
+                                          tex_color_state,
+                                          width,
+                                          height);
+        }
+      else
+        {
+          gsize actual_bpp = gdk_memory_format_bytes_per_pixel (actual_format);
+          gsize stride = actual_bpp * width;
+          guchar *pixels = g_malloc_n (stride, height);
+
+          glPixelStorei (GL_PACK_ALIGNMENT, 1);
+          glReadPixels (0, 0,
+                        width, height,
+                        gl_read_format,
+                        gl_read_type,
+                        pixels);
+
+          /* Fix up gles inadequacies */
+
+          if (gl_read_format == GL_RGBA &&
+              gl_read_type == GL_UNSIGNED_BYTE &&
+              (tex_format == GDK_MEMORY_G8A8 ||
+               tex_format == GDK_MEMORY_G8A8_PREMULTIPLIED ||
+               tex_format == GDK_MEMORY_G8 ||
+               tex_format == GDK_MEMORY_A8))
+            {
+              for (unsigned int y = 0; y < height; y++)
+                {
+                  for (unsigned int x = 0; x < width; x++)
+                    {
+                      guchar *data = &pixels[y * stride + x * actual_bpp];
+                      if (tex_format == GDK_MEMORY_G8A8 ||
+                          tex_format == GDK_MEMORY_G8A8_PREMULTIPLIED)
+                        {
+                          data[3] = data[1];
+                          data[1] = data[0];
+                          data[2] = data[0];
+                        }
+                      else if (tex_format == GDK_MEMORY_G8)
+                        {
+                          data[1] = data[0];
+                          data[2] = data[0];
+                          data[3] = 0xff;
+                        }
+                      else if (tex_format == GDK_MEMORY_A8)
+                        {
+                          data[3] = data[0];
+                          data[0] = 0;
+                          data[1] = 0;
+                          data[2] = 0;
+                        }
+                    }
+                }
+            }
+
+          if (gl_read_format == GL_RGBA &&
+              gl_read_type == GL_UNSIGNED_SHORT &&
+              (tex_format == GDK_MEMORY_G16A16 ||
+               tex_format == GDK_MEMORY_G16A16_PREMULTIPLIED ||
+               tex_format == GDK_MEMORY_G16 ||
+               tex_format == GDK_MEMORY_A16))
+            {
+              for (unsigned int y = 0; y < height; y++)
+                {
+                  for (unsigned int x = 0; x < width; x++)
+                    {
+                      guint16 *data = (guint16 *) &pixels[y * stride + x * actual_bpp];
+                      if (tex_format == GDK_MEMORY_G16A16 ||
+                          tex_format == GDK_MEMORY_G16A16_PREMULTIPLIED)
+                        {
+                          data[3] = data[1];
+                          data[1] = data[0];
+                          data[2] = data[0];
+                        }
+                      else if (tex_format == GDK_MEMORY_G16)
+                        {
+                          data[1] = data[0];
+                          data[2] = data[0];
+                          data[3] = 0xffff;
+                        }
+                      else if (tex_format == GDK_MEMORY_A16)
+                        {
+                          data[3] = data[0];
+                          data[0] = 0;
+                          data[1] = 0;
+                          data[2] = 0;
+                        }
+                    }
+                }
+            }
+
+          gdk_memory_convert (dest_data,
+                              dest_stride,
+                              dest_format,
+                              dest_color_state,
+                              pixels,
+                              stride,
+                              actual_format,
+                              tex_color_state,
+                              width,
+                              height);
+
+          g_free (pixels);
+        }
+      glBindFramebuffer (GL_FRAMEBUFFER, 0);
+      glDeleteFramebuffers (1, &fbo);
+    }
+}
+

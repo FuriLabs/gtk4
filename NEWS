@@ -1,79 +1,63 @@
-Overview of Changes in 4.16.7, 23-11-2024
+Overview of Changes in 4.17.1, 06-12-2024
 =========================================
 
-* Text:
- - Reduce the size of error underlines
+This release switches our portal support from opt-in to opt-out.
+We will use portals by default, unless you set GDK_DEBUG=no-portals.
+And we will *always* use portals in flatpaks.
 
-* Accessibility:
- - Fix a wrong return value type
- - Fix an invalid free call
-
-
-Overview of Changes in 4.16.6, 20-11-2024
-=========================================
-
-To prevent issues when using GTK under kwin, this release
-makes Wayland color management opt-in. To experiment with
-it, set GDK_DEBUG=color-mgmt.
+* Text rendering:
+ - Make error underlines smaller
 
 * GtkText:
- - Don't select inserted Emoji
+ - Avoid selecting inserted Emoji
 
-* GtkApplication:
- - Set the default window icon from the app ID
+* GtkPlacesView:
+ - Improve accessibility
 
-* GtkFontChooser:
- - Make the dialog more shrinkable
+* GtkFileChooser:
+ - Fix a case where search was stealing focus
 
-* macOS:
- - Use correct modifier keys for GtkTextView and GtkLabel
-   shortcuts
+* GtkEmojiChooser:
+ - Update to CLDR 46 / Unicode 16
+
+* Accessibility:
+ - Fix DBus signature of ChildrenChanged
+
+* GDK:
+ - Don't recycle threads too aggressively
+ - Add GDK_DISABLE=threads to disable threaded operations
+ - Improve parallelization for small tasks
+
+* GSK:
+ - Make occlusion checking more effective
+ - Clip luminosity when clipping colors (avoiding masking artifacts)
+ - Fix problems with dihedral transforms
+
+* Vulkan:
+ - Streamline Vulkan setup
+ - Fix blurry rendering at certain scale/size combinations
+
+* OpenGL:
+ - Conform to buffer offset alignment requirements
+
+* Windows:
+ - Fix pasting certain bitmaps
+
+* Documentation:
+ - Revise and modernize some docs
+
+* Debugging:
+ - Inspector: Show surfaces and renderers in the tree
+ - Inspector: Make the object tree resizable
+ - Inspector: Add a "Copy for gitlab" button
 
 * Translation updates
  Icelandic
  Serbian
- Serbian (Latin)
+ Slovenian
 
 
-Overview of Changes in 4.16.5, 01-11-2024
-=========================================
-
-* Clean up debug spew
-
-
-Overview of Changes in 4.16.4, 01-11-2024
-=========================================
-
-* GtkTextView:
- - Fix some missing CSS invalidation
- - Handle charsets in clipboard datatypes
-
-* GtkApplication:
- - Respect GDK_DEBUG=no-portals
-
-* Printing:
- - Avoid warnings for avahi errors
- - Fix a segfault in the print dialog setup code
-
-* Accessibility:
- - Handle NULL values in more places
-
-* Gdk:
- - vulkan: Fix validation errors
- - Fix 32bit build for the jpeg loader
-
-* Wayland:
- - Fix a possible deadlock with high-priority sources
-   triggering Wayland roundtrips
-
-* Translation updates
- Belarusian
- British English
- Latvian
- Romanian
-
-
-Overview of Changes in 4.16.3, 04-10-2024
+Overview of Changes in 4.17.0, 06-11-2024
 =========================================
 
 * GtkScrolledWindow
@@ -82,27 +66,110 @@ Overview of Changes in 4.16.3, 04-10-2024
 * GtkFileChooser
  - Fix a crash in the portal code
 
+* GtkFontChoser
+ - Make the dialog more shrinkable
+
 * GtkPicture
  - Avoid unnecessary resizes
 
 * GtkVideo
  - Make dmabufs work without GL
 
+* GtkListBox:
+ - Add a tab-behavior property to influence keynav
+
+* GtkEmojiChooser:
+ - Fix problems with insertion and selection
+
+* GtkStringList:
+ - Add gtk_string_list_find
+
+* GtkApplication:
+ - Respect GDK_DEBUG=no-portals
+ - Set default window icon from app ID
+
+* GtkTextView:
+ - Vertical and horizontal positioning of the textview is now quantized
+   to the nearest device pixel. This should improve the perceived smoothness
+   of scrolling with fractional scaling and font hinting.
+ - Incorrect re-use of cached styling was fixed
+ - Fix some missing CSS invalidation
+ - Handle charsets in clipboard datatypes
+
+* Printing:
+ - Avoid warnings for avahi errors
+ - Fix a segfault in the print dialog setup code
+
 * Accessibility:
- - Always realized non-widget accessibles
+ - Always realize non-widget accessibles, to help webkit
+ - Fix list view selection implementation
+ - Handle NULL values in more places
+
+* Gstreamer:
+ - Make dmabufs works without GL
+
+* Gdk:
+ - Add OKLAB and OKLCH color states
+ - GL: Drop support for GLES 2 and GL < 3.3
+ - GL: Use the ngl dmabuf downloader instead of the GL downloader
+ - Vulkan: Drop the GDK_VULKAN_DEVICE env var. Use MESA_VK_DEVICE_SELECT instead
+ - Vulkan: Use the swapchain maintenance extension to release swap images
+ - Forbid opening displays before gtk_init()
+
+* Gsk:
+ - Many improvements to the dmabuf downloaders
+ - ngl: Avoid glBufferSubData for globals, speeding up llvmpipe
+ - Renderer selection will no longer consider the GL renderer
+ - Allow Vulkan software rendering as fallback
+ - Support gradient interpolation in different color states
 
 * Wayland:
  - Improve settings portal handling
  - Improve fallback for cursor themes
- - Sync default values for settings with schema defaults
+ - Make cursor theme changes apply immediately
+ - Use a viewporter for cursor image scaling
+ - Improve cursor size handling
+ - Use the system bell protocol if available
+ - Fix possible deadlock with high-priority sources triggering roundtrips
 
-* Translation updates:
+* Windows:
+ - Improve the backend code
+ - Fix some problems with WGL on NVidia
+ - Many testsuite fixes for Windows compatibility
+ - Make all pixbuf loaders builtin in the gdk-pixbuf subproject
+ - Add GDK_DISABLE=aerosnap to disable aerosnap
+ - Improve clipboard handling
+ - Fix behavior or gdk_display_open() on Windows
+ - Numerous papercut fixes
+ - Require Windows 10
+
+* Macos:
+ - Fix crashes when dragging libadwaita TabView tabs
+ - Require macOS 10.15
+
+* Tools and demos
+ - gtk4-demo: Make demos standalone
+ - gtk4-demo: Drop GL shader demos
+ - gtk4-demo: Improve scrolling benchmarks
+ - gtk4-builder-tool: Improve separator handling
+ - gtk4-image-tool: Better color state support
+
+* Build:
+ - Don't set GSK_RENDERER in our flatpaks
+ - Require meson 1.2
+
+* Translation updates
+ Belarusian
  Brazilian Portuguese
+ British English
  Galician
+ Lithuanian
+ Romanian
+ Slovenian
  Swedish
 
 
-Overview of Changes in 4.16.2, 25-09-2024
+Overview of Changes in 4.16.2, 09-25-2024
 =========================================
 
 * GtkLabel:
@@ -143,7 +210,7 @@ Overview of Changes in 4.16.2, 25-09-2024
  Ukrainian
 
 
-Overview of Changes in 4.16.1, 16-09-2024
+Overview of Changes in 4.16.1, 09-16-2024
 =========================================
 
 * GtkFileChooser:
@@ -184,7 +251,7 @@ Overview of Changes in 4.16.1, 16-09-2024
  Swedish
 
 
-Overview of Changes in 4.16.0, 06-09-2024
+Overview of Changes in 4.16.0, 09-06-2024
 =========================================
 
 Note: This release changes the default GSK renderer to be Vulkan,
@@ -282,7 +349,7 @@ with the new renderers.
  Ukrainian
 
 
-Overview of Changes in 4.15.6, 26-08-2024
+Overview of Changes in 4.15.6, 08-26-2024
 =========================================
 
 * GtkCheckButton:

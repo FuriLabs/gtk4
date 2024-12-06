@@ -32,9 +32,9 @@
 G_DEFINE_TYPE (GdkDeviceWin32, gdk_device_win32, GDK_TYPE_DEVICE)
 
 static void
-gdk_device_win32_set_surface_cursor (GdkDevice *device,
-                                    GdkSurface *window,
-                                    GdkCursor *cursor)
+gdk_device_win32_set_surface_cursor (GdkDevice  *device,
+                                     GdkSurface *surface,
+                                     GdkCursor  *cursor)
 {
 }
 
@@ -66,8 +66,8 @@ get_current_mask (void)
 
 static void
 gdk_device_win32_query_state (GdkDevice        *device,
-                              GdkSurface       *window,
-                              GdkSurface      **child_window,
+                              GdkSurface       *surface,
+                              GdkSurface      **child_surface,
                               double           *win_x,
                               double           *win_y,
                               GdkModifierType  *mask)
@@ -75,21 +75,20 @@ gdk_device_win32_query_state (GdkDevice        *device,
   POINT point;
   HWND hwnd, hwndc;
   int scale;
+  GdkDisplay *display = gdk_device_get_display (device);
 
-  if (window)
+  if (surface)
     {
-      scale = GDK_WIN32_SURFACE (window)->surface_scale;
-      hwnd = GDK_SURFACE_HWND (window);
+      scale = GDK_WIN32_SURFACE (surface)->surface_scale;
+      hwnd = GDK_SURFACE_HWND (surface);
     }
   else
     {
-      GdkDisplay *display = gdk_device_get_display (device);
-
       scale = GDK_WIN32_DISPLAY (display)->surface_scale;
       hwnd = NULL;
     }
 
-  _gdk_win32_get_cursor_pos (&point);
+  _gdk_win32_get_cursor_pos (display, &point);
 
   if (hwnd)
     ScreenToClient (hwnd, &point);
@@ -100,14 +99,14 @@ gdk_device_win32_query_state (GdkDevice        *device,
   if (win_y)
     *win_y = point.y / scale;
 
-  if (hwnd && child_window)
+  if (hwnd && child_surface)
     {
       hwndc = ChildWindowFromPoint (hwnd, point);
 
       if (hwndc && hwndc != hwnd)
-        *child_window = gdk_win32_handle_table_lookup_ (hwndc);
+        *child_surface = gdk_win32_display_handle_table_lookup_ (display, hwndc);
       else
-        *child_window = NULL; /* Direct child unknown to gdk */
+        *child_surface = NULL; /* Direct child unknown to gdk */
     }
 
   if (mask)
@@ -116,26 +115,26 @@ gdk_device_win32_query_state (GdkDevice        *device,
 
 void
 _gdk_device_win32_query_state (GdkDevice        *device,
-                               GdkSurface       *window,
-                               GdkSurface      **child_window,
+                               GdkSurface       *surface,
+                               GdkSurface      **child_surface,
                                double           *win_x,
                                double           *win_y,
                                GdkModifierType  *mask)
 {
   if (GDK_IS_DEVICE_VIRTUAL (device))
-    gdk_device_virtual_query_state (device, window, child_window, win_x, win_y, mask);
+    gdk_device_virtual_query_state (device, surface, child_surface, win_x, win_y, mask);
   else if (GDK_IS_DEVICE_WINTAB (device))
-    gdk_device_wintab_query_state (device, window, child_window, win_x, win_y, mask);
+    gdk_device_wintab_query_state (device, surface, child_surface, win_x, win_y, mask);
   else
-    gdk_device_win32_query_state (device, window, child_window, win_x, win_y, mask);
+    gdk_device_win32_query_state (device, surface, child_surface, win_x, win_y, mask);
 }
 
 static GdkGrabStatus
 gdk_device_win32_grab (GdkDevice    *device,
-                       GdkSurface    *window,
+                       GdkSurface   *surface,
                        gboolean      owner_events,
                        GdkEventMask  event_mask,
-                       GdkSurface    *confine_to,
+                       GdkSurface   *confine_to,
                        GdkCursor    *cursor,
                        guint32       time_)
 {
@@ -162,32 +161,33 @@ _gdk_device_win32_surface_at_position (GdkDevice       *device,
                                        double          *win_y,
                                        GdkModifierType *mask)
 {
-  GdkSurface *window = NULL;
+  GdkSurface *surface = NULL;
   GdkWin32Surface *impl = NULL;
   POINT screen_pt, client_pt;
   HWND hwnd;
   RECT rect;
+  GdkDisplay *display = gdk_device_get_display (device);
 
-  if (!_gdk_win32_get_cursor_pos (&screen_pt))
+  if (!_gdk_win32_get_cursor_pos (display, &screen_pt))
     return NULL;
 
   /* Use WindowFromPoint instead of ChildWindowFromPoint(Ex).
   *  Only WindowFromPoint is able to look through transparent
-  *  layered windows.
+  *  layered HWNDs.
   */
   hwnd = GetAncestor (WindowFromPoint (screen_pt), GA_ROOT);
 
-  /* Verify that we're really inside the client area of the window */
+  /* Verify that we're really inside the client area of the HWND */
   GetClientRect (hwnd, &rect);
   screen_to_client (hwnd, screen_pt, &client_pt);
   if (!PtInRect (&rect, client_pt))
     hwnd = NULL;
 
-  window = gdk_win32_handle_table_lookup_ (hwnd);
+  surface = gdk_win32_display_handle_table_lookup_ (display, hwnd);
 
-  if (window && (win_x || win_y))
+  if (surface && (win_x || win_y))
     {
-      impl = GDK_WIN32_SURFACE (window);
+      impl = GDK_WIN32_SURFACE (surface);
 
       if (win_x)
         *win_x = client_pt.x / impl->surface_scale;
@@ -195,7 +195,7 @@ _gdk_device_win32_surface_at_position (GdkDevice       *device,
         *win_y = client_pt.y / impl->surface_scale;
     }
 
-  return window;
+  return surface;
 }
 
 static void

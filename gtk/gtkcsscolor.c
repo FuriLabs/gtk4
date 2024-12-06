@@ -1167,6 +1167,50 @@ gtk_css_color_interpolation_method_print (GtkCssColorSpace        in,
 /* }}} */
 /* {{{ GdkColor conversion */
 
+/*< private >
+ * gtk_css_color_space_get_color_state:
+ * @color_space: a CSS color space
+ *
+ * Returns the best-matching GdkColorState for a given CSS color
+ * space.
+ *
+ * Note that we don't guarantee a 1:1 match between CSS color
+ * spaces and color states, so conversion of the color may
+ * still be necessary.
+ *
+ * Returns: (transfer none): the `GdkColorState`
+ */
+GdkColorState *
+gtk_css_color_space_get_color_state (GtkCssColorSpace color_space)
+{
+  switch (color_space)
+    {
+    case GTK_CSS_COLOR_SPACE_SRGB:
+    case GTK_CSS_COLOR_SPACE_HSL:
+    case GTK_CSS_COLOR_SPACE_HWB:
+      return GDK_COLOR_STATE_SRGB;
+
+    case GTK_CSS_COLOR_SPACE_OKLAB:
+      return GDK_COLOR_STATE_OKLAB;
+
+    case GTK_CSS_COLOR_SPACE_OKLCH:
+      return GDK_COLOR_STATE_OKLCH;
+
+    case GTK_CSS_COLOR_SPACE_SRGB_LINEAR:
+      return GDK_COLOR_STATE_SRGB_LINEAR;
+
+    case GTK_CSS_COLOR_SPACE_REC2020:
+    case GTK_CSS_COLOR_SPACE_DISPLAY_P3:
+    case GTK_CSS_COLOR_SPACE_XYZ:
+    case GTK_CSS_COLOR_SPACE_REC2100_PQ:
+      return GDK_COLOR_STATE_REC2100_PQ;
+      break;
+
+    default:
+      g_assert_not_reached ();
+    }
+}
+
 void
 gtk_css_color_to_color (const GtkCssColor *css,
                         GdkColor          *color)
@@ -1185,10 +1229,17 @@ gtk_css_color_to_color (const GtkCssColor *css,
       gdk_color_init (color, GDK_COLOR_STATE_REC2100_PQ, css->values);
       break;
 
+    case GTK_CSS_COLOR_SPACE_OKLAB:
+      gdk_color_init (color, GDK_COLOR_STATE_OKLAB, css->values);
+      break;
+
+    case GTK_CSS_COLOR_SPACE_OKLCH:
+      gdk_color_init (color, GDK_COLOR_STATE_OKLCH, css->values);
+      break;
+
+
     case GTK_CSS_COLOR_SPACE_HSL:
     case GTK_CSS_COLOR_SPACE_HWB:
-    case GTK_CSS_COLOR_SPACE_OKLAB:
-    case GTK_CSS_COLOR_SPACE_OKLCH:
       {
         GtkCssColor tmp;
         gtk_css_color_convert (css, GTK_CSS_COLOR_SPACE_SRGB, &tmp);
@@ -1211,5 +1262,12 @@ gtk_css_color_to_color (const GtkCssColor *css,
     }
 }
 
+GskHueInterpolation
+gtk_css_hue_interpolation_to_hue_interpolation (GtkCssHueInterpolation interp)
+{
+  return (GskHueInterpolation) interp;
+}
+
 /* }}} */
-/* vim:set foldmethod=marker expandtab: */
+
+/* vim:set foldmethod=marker: */

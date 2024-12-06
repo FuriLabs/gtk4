@@ -50,7 +50,7 @@ Forwarded: not-needed
  41 files changed, 2860 insertions(+), 2860 deletions(-)
 
 diff --git a/modules/media/gtkgstmediafile.c b/modules/media/gtkgstmediafile.c
-index 5487bb0..8e956b7 100644
+index abf73fe..1bb989a 100644
 --- a/modules/media/gtkgstmediafile.c
 +++ b/modules/media/gtkgstmediafile.c
 @@ -29,7 +29,7 @@ struct _GtkGstMediaFile
@@ -175,7 +175,7 @@ index 5487bb0..8e956b7 100644
  
        g_free (uri);
      }
-@@ -290,7 +290,7 @@ gtk_gst_media_file_open (GtkMediaFile *media_file)
+@@ -291,7 +291,7 @@ gtk_gst_media_file_open (GtkMediaFile *media_file)
        g_assert_not_reached ();
      }
  
@@ -184,7 +184,7 @@ index 5487bb0..8e956b7 100644
  }
  
  static void
-@@ -309,7 +309,7 @@ gtk_gst_media_file_play (GtkMediaStream *stream)
+@@ -310,7 +310,7 @@ gtk_gst_media_file_play (GtkMediaStream *stream)
    if (self->player == NULL)
      return FALSE;
  
@@ -193,7 +193,7 @@ index 5487bb0..8e956b7 100644
  
    return TRUE;
  }
-@@ -319,7 +319,7 @@ gtk_gst_media_file_pause (GtkMediaStream *stream)
+@@ -320,7 +320,7 @@ gtk_gst_media_file_pause (GtkMediaStream *stream)
  {
    GtkGstMediaFile *self = GTK_GST_MEDIA_FILE (stream);
  
@@ -202,7 +202,7 @@ index 5487bb0..8e956b7 100644
  }
  
  static void
-@@ -328,7 +328,7 @@ gtk_gst_media_file_seek (GtkMediaStream *stream,
+@@ -329,7 +329,7 @@ gtk_gst_media_file_seek (GtkMediaStream *stream,
  {
    GtkGstMediaFile *self = GTK_GST_MEDIA_FILE (stream);
  
@@ -211,7 +211,7 @@ index 5487bb0..8e956b7 100644
  }
  
  static void
-@@ -338,8 +338,8 @@ gtk_gst_media_file_update_audio (GtkMediaStream *stream,
+@@ -339,8 +339,8 @@ gtk_gst_media_file_update_audio (GtkMediaStream *stream,
  {
    GtkGstMediaFile *self = GTK_GST_MEDIA_FILE (stream);
  

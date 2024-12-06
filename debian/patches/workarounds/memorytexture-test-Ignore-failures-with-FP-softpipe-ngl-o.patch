@@ -15,10 +15,10 @@ Bug-Debian: https://bugs.debian.org/1081275
  1 file changed, 9 insertions(+)
 
 diff --git a/testsuite/gdk/memorytexture.c b/testsuite/gdk/memorytexture.c
-index 996c0a5..421578a 100644
+index e9484f1..855d3c6 100644
 --- a/testsuite/gdk/memorytexture.c
 +++ b/testsuite/gdk/memorytexture.c
-@@ -516,6 +516,15 @@ test_download (gconstpointer data,
+@@ -500,6 +500,15 @@ test_download (gconstpointer data,
        
        compare_textures (expected, test, texture_method_is_accurate (method));
  

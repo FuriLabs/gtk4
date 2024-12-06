@@ -14,26 +14,26 @@ Applied-upstream: no, upstream want reftests to be a strict pass/fail with ident
  testsuite/gsk/normalize.c            |  6 ++++-
  testsuite/reftests/gtk-reftest.c     |  9 ++++++-
  testsuite/reftests/reftest-compare.c | 52 ++++++++++++++++++++++++++++++++----
- testsuite/reftests/reftest-compare.h |  6 ++++-
+ testsuite/reftests/reftest-compare.h |  5 +++-
  tools/gtk-image-tool-compare.c       |  6 ++++-
  tools/gtk-rendernode-tool-compare.c  |  7 +++--
- 7 files changed, 82 insertions(+), 12 deletions(-)
+ 7 files changed, 81 insertions(+), 12 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index 2d1aa25..695b7d1 100644
+index b933ab5..5af5320 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
-@@ -660,6 +660,9 @@ run_single_test (const TestSetup *setup,
-   GskRenderNode *test;
+@@ -655,6 +655,9 @@ run_single_test (const TestSetup *setup,
    GdkTexture *reference, *rendered, *diff;
+   graphene_rect_t test_bounds, *render_bounds;
    gpointer test_data;
 +  guint max_diff = 0;
 +  guint pixels_changed = 0;
 +  guint pixels = 0;
  
-   if (setup->setup)
-     test_data = setup->setup (org_test);
-@@ -688,9 +691,12 @@ run_single_test (const TestSetup *setup,
+   if (setup->flags & KEEP_BOUNDS)
+     {
+@@ -691,9 +694,12 @@ run_single_test (const TestSetup *setup,
    if (setup->free)
      setup->free (test_data);
  
@@ -48,11 +48,11 @@ index 2d1aa25..695b7d1 100644
        g_test_fail ();
      }
 diff --git a/testsuite/gsk/normalize.c b/testsuite/gsk/normalize.c
-index c7c6617..957817c 100644
+index 5ca51f3..4ca5fe2 100644
 --- a/testsuite/gsk/normalize.c
 +++ b/testsuite/gsk/normalize.c
 @@ -9,6 +9,9 @@ test_normalize (GskRenderNode *node1,
-   GskRenderer *renderer = gsk_ngl_renderer_new ();
+   GskRenderer *renderer = gsk_cairo_renderer_new ();
    graphene_rect_t bounds1, bounds2;
    GdkTexture *texture1, *texture2, *diff;
 +  guint max_diff = 0;
@@ -72,7 +72,7 @@ index c7c6617..957817c 100644
  
    g_object_unref (texture1);
 diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
-index 2ba47a4..046751d 100644
+index 349dc2b..d18c338 100644
 --- a/testsuite/reftests/gtk-reftest.c
 +++ b/testsuite/reftests/gtk-reftest.c
 @@ -341,6 +341,9 @@ test_ui_file (GFile *file)
@@ -248,10 +248,10 @@ index 2b1e41f..86c9ae3 100644
    return diff;
  }
 diff --git a/testsuite/reftests/reftest-compare.h b/testsuite/reftests/reftest-compare.h
-index b91a12f..0eb4936 100644
+index b91a12f..a303ad2 100644
 --- a/testsuite/reftests/reftest-compare.h
 +++ b/testsuite/reftests/reftest-compare.h
-@@ -23,6 +23,10 @@ G_BEGIN_DECLS
+@@ -23,6 +23,9 @@ G_BEGIN_DECLS
  
  G_MODULE_EXPORT
  GdkTexture *            reftest_compare_textures        (GdkTexture             *texture1,
@@ -262,7 +262,6 @@ index b91a12f..0eb4936 100644
 +                                                         guint                  *pixels_out);
  
  G_END_DECLS
-+
 diff --git a/tools/gtk-image-tool-compare.c b/tools/gtk-image-tool-compare.c
 index 79de789..cd58f8e 100644
 --- a/tools/gtk-image-tool-compare.c

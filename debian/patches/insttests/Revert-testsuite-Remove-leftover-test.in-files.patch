@@ -1,0 +1,188 @@
+From: =?utf-8?q?Jeremy_B=C3=ADcha?= <jeremy.bicha@canonical.com>
+Date: Fri, 6 Dec 2024 14:05:12 -0500
+Subject: Revert "testsuite: Remove leftover test.in files"
+
+This reverts commit b598f21506c31d3913c9705a00eb1e8270e9a810.
+---
+ testsuite/css/api.test.in                 | 4 ++++
+ testsuite/css/change/change.test.in       | 4 ++++
+ testsuite/css/data.test.in                | 4 ++++
+ testsuite/css/nodes/nodes.test.in         | 4 ++++
+ testsuite/css/parser/parser.test.in       | 4 ++++
+ testsuite/css/style/style.test.in         | 4 ++++
+ testsuite/gdk/gdk.test.in                 | 4 ++++
+ testsuite/gsk/render-nodes-cairo.test.in  | 4 ++++
+ testsuite/gsk/render-nodes-vulkan.test.in | 4 ++++
+ testsuite/gtk/gtk.test.in                 | 4 ++++
+ testsuite/reftests/reftests-dark.test.in  | 4 ++++
+ testsuite/reftests/reftests-hc.test.in    | 4 ++++
+ testsuite/reftests/reftests-hci.test.in   | 4 ++++
+ testsuite/reftests/reftests.test.in       | 4 ++++
+ testsuite/tools/tools.test.in             | 4 ++++
+ 15 files changed, 60 insertions(+)
+ create mode 100644 testsuite/css/api.test.in
+ create mode 100644 testsuite/css/change/change.test.in
+ create mode 100644 testsuite/css/data.test.in
+ create mode 100644 testsuite/css/nodes/nodes.test.in
+ create mode 100644 testsuite/css/parser/parser.test.in
+ create mode 100644 testsuite/css/style/style.test.in
+ create mode 100644 testsuite/gdk/gdk.test.in
+ create mode 100644 testsuite/gsk/render-nodes-cairo.test.in
+ create mode 100644 testsuite/gsk/render-nodes-vulkan.test.in
+ create mode 100644 testsuite/gtk/gtk.test.in
+ create mode 100644 testsuite/reftests/reftests-dark.test.in
+ create mode 100644 testsuite/reftests/reftests-hc.test.in
+ create mode 100644 testsuite/reftests/reftests-hci.test.in
+ create mode 100644 testsuite/reftests/reftests.test.in
+ create mode 100644 testsuite/tools/tools.test.in
+
+diff --git a/testsuite/css/api.test.in b/testsuite/css/api.test.in
+new file mode 100644
+index 0000000..a55d3a4
+--- /dev/null
++++ b/testsuite/css/api.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env G_ENABLE_DIAGNOSTIC=0 GTK_A11Y=test @libexecdir@/installed-tests/gtk-4.0/css/api --tap -k"
++Type=session
++Output=TAP
+diff --git a/testsuite/css/change/change.test.in b/testsuite/css/change/change.test.in
+new file mode 100644
+index 0000000..207c98b
+--- /dev/null
++++ b/testsuite/css/change/change.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env G_ENABLE_DIAGNOSTIC=0 GTK_A11Y=test @libexecdir@/installed-tests/gtk-4.0/css/change/test-css-change --tap -k"
++Type=session
++Output=TAP
+diff --git a/testsuite/css/data.test.in b/testsuite/css/data.test.in
+new file mode 100644
+index 0000000..11e0e39
+--- /dev/null
++++ b/testsuite/css/data.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env G_ENABLE_DIAGNOSTIC=0 GTK_A11Y=test @libexecdir@/installed-tests/gtk-4.0/css/data --tap -k"
++Type=session
++Output=TAP
+diff --git a/testsuite/css/nodes/nodes.test.in b/testsuite/css/nodes/nodes.test.in
+new file mode 100644
+index 0000000..e3f5f0d
+--- /dev/null
++++ b/testsuite/css/nodes/nodes.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env G_ENABLE_DIAGNOSTIC=0 GTK_A11Y=test @libexecdir@/installed-tests/gtk-4.0/css/nodes/test-css-nodes --tap -k"
++Type=session
++Output=TAP
+diff --git a/testsuite/css/parser/parser.test.in b/testsuite/css/parser/parser.test.in
+new file mode 100644
+index 0000000..91d1dbd
+--- /dev/null
++++ b/testsuite/css/parser/parser.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env G_ENABLE_DIAGNOSTIC=0 GTK_A11Y=test @libexecdir@/installed-tests/gtk-4.0/css/parser/test-css-parser --tap -k"
++Type=session
++Output=TAP
+diff --git a/testsuite/css/style/style.test.in b/testsuite/css/style/style.test.in
+new file mode 100644
+index 0000000..edfb555
+--- /dev/null
++++ b/testsuite/css/style/style.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env G_ENABLE_DIAGNOSTIC=0 GTK_A11Y=test @libexecdir@/installed-tests/gtk-4.0/css/style/test-css-style --tap -k"
++Type=session
++Output=TAP
+diff --git a/testsuite/gdk/gdk.test.in b/testsuite/gdk/gdk.test.in
+new file mode 100644
+index 0000000..fadf4f5
+--- /dev/null
++++ b/testsuite/gdk/gdk.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env GDK_DEBUG=clipboard G_ENABLE_DIAGNOSTIC=0 GTK_A11Y=test @testexecdir@/@test@ --tap -k --verbose"
++Type=session-exclusive
++Output=TAP
+diff --git a/testsuite/gsk/render-nodes-cairo.test.in b/testsuite/gsk/render-nodes-cairo.test.in
+new file mode 100644
+index 0000000..8498a29
+--- /dev/null
++++ b/testsuite/gsk/render-nodes-cairo.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env G_ENABLE_DIAGNOSTIC=0 GSK_RENDERER=cairo GTK_A11Y=test @libexecdir@/installed-tests/gtk-4.0/gsk/test-render-nodes --tap -k --verbose"
++Type=session
++Output=TAP
+diff --git a/testsuite/gsk/render-nodes-vulkan.test.in b/testsuite/gsk/render-nodes-vulkan.test.in
+new file mode 100644
+index 0000000..f1b17ff
+--- /dev/null
++++ b/testsuite/gsk/render-nodes-vulkan.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env GTK_A11Y=test GSK_RENDERER=vulkan @libexecdir@/installed-tests/gtk-4.0/gsk/test-render-nodes --tap -k --verbose"
++Type=session
++Output=TAP
+diff --git a/testsuite/gtk/gtk.test.in b/testsuite/gtk/gtk.test.in
+new file mode 100644
+index 0000000..ed15a7e
+--- /dev/null
++++ b/testsuite/gtk/gtk.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env G_ENABLE_DIAGNOSTIC=0 GTK_A11Y=test @testexecdir@/@test@ --tap -k --verbose"
++Type=session-exclusive
++Output=TAP
+diff --git a/testsuite/reftests/reftests-dark.test.in b/testsuite/reftests/reftests-dark.test.in
+new file mode 100644
+index 0000000..f461521
+--- /dev/null
++++ b/testsuite/reftests/reftests-dark.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env GTK_THEME=Adwaita:dark GTK_A11Y=test G_ENABLE_DIAGNOSTIC=0 @libexecdir@/installed-tests/gtk-4.0/gtk-reftest -k --verbose --tap --output $(pwd) --directory @libexecdir@/installed-tests/gtk-4.0/reftests"
++Type=session-exclusive
++Output=TAP
+diff --git a/testsuite/reftests/reftests-hc.test.in b/testsuite/reftests/reftests-hc.test.in
+new file mode 100644
+index 0000000..000ff96
+--- /dev/null
++++ b/testsuite/reftests/reftests-hc.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env GTK_THEME=HighContrast GTK_A11Y=test G_ENABLE_DIAGNOSTIC=0 @libexecdir@/installed-tests/gtk-4.0/gtk-reftest -k --verbose --tap --output $(pwd) --directory @libexecdir@/installed-tests/gtk-4.0/reftests"
++Type=session-exclusive
++Output=TAP
+diff --git a/testsuite/reftests/reftests-hci.test.in b/testsuite/reftests/reftests-hci.test.in
+new file mode 100644
+index 0000000..887862a
+--- /dev/null
++++ b/testsuite/reftests/reftests-hci.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env GTK_THEME=HighContrastInverse GTK_A11Y=test G_ENABLE_DIAGNOSTIC=0 @libexecdir@/installed-tests/gtk-4.0/gtk-reftest -k --verbose --tap --output $(pwd) --directory @libexecdir@/installed-tests/gtk-4.0/reftests"
++Type=session-exclusive
++Output=TAP
+diff --git a/testsuite/reftests/reftests.test.in b/testsuite/reftests/reftests.test.in
+new file mode 100644
+index 0000000..d2f199f
+--- /dev/null
++++ b/testsuite/reftests/reftests.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env GTK_A11Y=test G_ENABLE_DIAGNOSTIC=0 @libexecdir@/installed-tests/gtk-4.0/gtk-reftest -k --verbose --tap --output $(pwd) --directory @libexecdir@/installed-tests/gtk-4.0/reftests"
++Type=session-exclusive
++Output=TAP
+diff --git a/testsuite/tools/tools.test.in b/testsuite/tools/tools.test.in
+new file mode 100644
+index 0000000..2ded626
+--- /dev/null
++++ b/testsuite/tools/tools.test.in
+@@ -0,0 +1,4 @@
++[Test]
++Exec=/bin/sh -c "env GTK_A11Y=test G_ENABLE_DIAGNOSTIC=0 TEST_DATA_DIR=@testexecdir@/@test@-data @testexecdir@/@test@"
++Type=session
++Output=TAP

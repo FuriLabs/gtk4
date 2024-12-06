@@ -1,5 +1,6 @@
-
 #pragma once
+
+#include <gdk/gdk.h>
 
 void do_compare     (int *argc, const char ***argv);
 void do_convert     (int *argc, const char ***argv);
@@ -17,6 +18,7 @@ GdkColorState * find_color_state_by_name (const char      *name);
 
 char **         get_color_state_names    (void);
 char *          get_color_state_name     (GdkColorState   *color_state);
+char *          get_color_state_cicp     (GdkColorState   *color_state);
 
 GdkColorState  *parse_cicp_tuple         (const char      *cicp_tuple,
                                           GError         **error);

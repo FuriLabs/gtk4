@@ -35,7 +35,7 @@
 #include <math.h>
 
 #ifdef GDK_RENDERING_VULKAN
-static const GdkDebugKey gdk_vulkan_feature_keys[] = {
+const GdkDebugKey gdk_vulkan_feature_keys[] = {
   { "dmabuf", GDK_VULKAN_FEATURE_DMABUF, "Never import Dmabufs" },
   { "ycbcr", GDK_VULKAN_FEATURE_YCBCR, "Do not support Ycbcr textures (also disables dmabufs)" },
   { "semaphore-export", GDK_VULKAN_FEATURE_SEMAPHORE_EXPORT, "Disable sync of exported dmabufs" },
@@ -367,7 +367,6 @@ gdk_vulkan_context_dispose (GObject *gobject)
 {
   GdkVulkanContext *context = GDK_VULKAN_CONTEXT (gobject);
   GdkVulkanContextPrivate *priv = gdk_vulkan_context_get_instance_private (context);
-  GdkDisplay *display;
   VkDevice device;
   guint i;
 
@@ -397,12 +396,16 @@ gdk_vulkan_context_dispose (GObject *gobject)
       priv->surface = VK_NULL_HANDLE;
     }
 
-  /* display will be unset in gdk_draw_context_dispose() */
-  display = gdk_draw_context_get_display (GDK_DRAW_CONTEXT (context));
-  if (display && priv->vulkan_ref)
-    gdk_display_unref_vulkan (display);
-
   G_OBJECT_CLASS (gdk_vulkan_context_parent_class)->dispose (gobject);
+}
+
+static void
+gdk_vulkan_context_get_image_size (GdkVulkanContext *context,
+                                   VkExtent2D       *size)
+{
+  GDK_VULKAN_CONTEXT_GET_CLASS (context)->get_image_size (context,
+                                                          &size->width,
+                                                          &size->height);
 }
 
 static gboolean
@@ -417,6 +420,7 @@ gdk_vulkan_context_check_swapchain (GdkVulkanContext  *context,
   VkSwapchainKHR new_swapchain;
   VkResult res;
   VkDevice device;
+  VkExtent2D size;
   guint i;
 
   GDK_DEBUG (VULKAN, "(Re)creating the swapchain for surface of size %dx%d",
@@ -460,10 +464,8 @@ gdk_vulkan_context_check_swapchain (GdkVulkanContext  *context,
 
   GDK_DEBUG (VULKAN, "Using surface present mode %s",
              surface_present_mode_to_string (present_mode));
-  GDK_DEBUG (VULKAN, "Using extent %dx%d",
-             capabilities.currentExtent.width,
-             capabilities.currentExtent.height);
 
+  gdk_vulkan_context_get_image_size (context, &size);
 
   /*
    * Per https://www.khronos.org/registry/vulkan/specs/1.0-wsi_extensions/xhtml/vkspec.html#VkSurfaceCapabilitiesKHR
@@ -472,14 +474,34 @@ gdk_vulkan_context_check_swapchain (GdkVulkanContext  *context,
    */
   if (capabilities.currentExtent.width == -1 || capabilities.currentExtent.height == -1)
     {
-      double scale = gdk_surface_get_scale (surface);
+      GDK_DEBUG (VULKAN, "GTK selecting swapchain size as %ux%u",
+                 (guint) size.width, (guint) size.height);
+    }
+  else if (capabilities.currentExtent.width == size.width &&
+           capabilities.currentExtent.height == size.height)
+    {
+      GDK_DEBUG (VULKAN, "Vulkan and GTK agree on size as %ux%u",
+                 (guint) size.width, (guint) size.height);
+    }
+  else
+    {
+      GDK_DEBUG (VULKAN, "Vulkan %ux%u and GTK %ux%u disagree on size, using GTK's",
+                 (guint) capabilities.currentExtent.width, (guint) capabilities.currentExtent.height,
+                 (guint) size.width, (guint) size.height);
+    }
 
-      capabilities.currentExtent.width = MAX (1, (int) ceil (gdk_surface_get_width (surface) * scale));
-      capabilities.currentExtent.height = MAX (1, (int) ceil (gdk_surface_get_height (surface) * scale));
-
-      GDK_DEBUG (VULKAN, "Effective extent %dx%d",
-                 capabilities.currentExtent.width,
-                 capabilities.currentExtent.height);
+  if (capabilities.minImageExtent.width > size.width ||
+      capabilities.minImageExtent.height > size.height ||
+      capabilities.maxImageExtent.width < size.width ||
+      capabilities.maxImageExtent.height < size.height)
+    {
+      /* Should this be a g_warning()? */
+      GDK_DEBUG (VULKAN, "Clamping size %ux%u to fit into min %ux%u, max %ux%u",
+                 (guint) size.width, (guint) size.height,
+                 (guint) capabilities.minImageExtent.width, (guint) capabilities.minImageExtent.height,
+                 (guint) capabilities.maxImageExtent.width, (guint) capabilities.maxImageExtent.height);
+      size.width = CLAMP (size.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+      size.height = CLAMP (size.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
     }
 
   res = GDK_VK_CHECK (vkCreateSwapchainKHR, device,
@@ -493,7 +515,7 @@ gdk_vulkan_context_check_swapchain (GdkVulkanContext  *context,
                                                                         capabilities.maxImageCount ? capabilities.maxImageCount : G_MAXUINT32),
                                                 .imageFormat = priv->formats[priv->current_depth].vk_format.format,
                                                 .imageColorSpace = priv->formats[priv->current_depth].vk_format.colorSpace,
-                                                .imageExtent = capabilities.currentExtent,
+                                                .imageExtent = size,
                                                 .imageArrayLayers = 1,
                                                 .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
                                                 .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
@@ -566,11 +588,19 @@ physical_device_supports_extension (VkPhysicalDevice  device,
 {
   VkExtensionProperties *extensions;
   uint32_t n_device_extensions;
+  static gboolean first = TRUE;
 
   GDK_VK_CHECK (vkEnumerateDeviceExtensionProperties, device, NULL, &n_device_extensions, NULL);
 
   extensions = g_newa (VkExtensionProperties, n_device_extensions);
   GDK_VK_CHECK (vkEnumerateDeviceExtensionProperties, device, NULL, &n_device_extensions, extensions);
+
+  if (first)
+    {
+      first = FALSE;
+      for (uint32_t i = 0; i < n_device_extensions; i++)
+        GDK_DEBUG (VULKAN, "%s", extensions[i].extensionName);
+    }
 
   for (uint32_t i = 0; i < n_device_extensions; i++)
     {
@@ -831,6 +861,20 @@ gdk_vulkan_context_surface_resized (GdkDrawContext *draw_context)
 }
 
 static void
+gdk_vulkan_context_get_default_image_size (GdkVulkanContext *context,
+                                           uint32_t         *width,
+                                           uint32_t         *height)
+{
+  GdkSurface *surface = gdk_draw_context_get_surface (GDK_DRAW_CONTEXT (context));
+  double scale;
+
+  scale = gdk_surface_get_scale (surface);
+
+  *width = MAX (1, (uint32_t) ceil (gdk_surface_get_width (surface) * scale));
+  *height = MAX (1, (uint32_t) ceil (gdk_surface_get_height (surface) * scale));
+}
+
+static void
 gdk_vulkan_context_class_init (GdkVulkanContextClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
@@ -841,6 +885,8 @@ gdk_vulkan_context_class_init (GdkVulkanContextClass *klass)
   draw_context_class->begin_frame = gdk_vulkan_context_begin_frame;
   draw_context_class->end_frame = gdk_vulkan_context_end_frame;
   draw_context_class->surface_resized = gdk_vulkan_context_surface_resized;
+
+  klass->get_image_size = gdk_vulkan_context_get_default_image_size;
 
   /**
    * GdkVulkanContext::images-updated:
@@ -879,8 +925,7 @@ gdk_vulkan_context_real_init (GInitable     *initable,
   VkBool32 supported;
   uint32_t i;
 
-  priv->vulkan_ref = gdk_display_init_vulkan (display, error);
-  if (!priv->vulkan_ref)
+  if (!gdk_display_prepare_vulkan (display, error))
     return FALSE;
 
   if (surface == NULL)
@@ -1447,9 +1492,6 @@ gdk_display_create_vulkan_device (GdkDisplay  *display,
 {
   G_GNUC_UNUSED gint64 start_time = GDK_PROFILER_CURRENT_TIME;
   uint32_t i, j, k;
-  const char *override;
-  gboolean list_devices;
-  int first, last;
   GdkVulkanFeatures skip_features;
 
   uint32_t n_devices = 0;
@@ -1467,9 +1509,6 @@ gdk_display_create_vulkan_device (GdkDisplay  *display,
   devices = g_newa (VkPhysicalDevice, n_devices);
   GDK_VK_CHECK(vkEnumeratePhysicalDevices, display->vk_instance, &n_devices, devices);
 
-  first = 0;
-  last = n_devices;
-
   skip_features = gdk_parse_debug_var ("GDK_VULKAN_DISABLE",
       "GDK_VULKAN_DISABLE can be set to a list of Vulkan features to disable.\n",
       gdk_vulkan_feature_keys,
@@ -1477,35 +1516,7 @@ gdk_display_create_vulkan_device (GdkDisplay  *display,
   if (skip_features & GDK_VULKAN_FEATURE_YCBCR)
     skip_features |= GDK_VULKAN_FEATURE_DMABUF;
 
-  override = g_getenv ("GDK_VULKAN_DEVICE");
-  list_devices = FALSE;
-  if (override)
-    {
-      if (g_strcmp0 (override, "list") == 0)
-        list_devices = TRUE;
-      else
-        {
-          gint64 device_idx;
-          GError *error2 = NULL;
-
-          if (!g_ascii_string_to_signed (override, 10, 0, G_MAXINT, &device_idx, &error2))
-            {
-              g_warning ("Failed to parse %s: %s", "GDK_VULKAN_DEVICE", error2->message);
-              g_error_free (error2);
-              device_idx = -1;
-            }
-
-          if (device_idx < 0 || device_idx >= n_devices)
-            g_warning ("%s value out of range, ignoring", "GDK_VULKAN_DEVICE");
-          else
-            {
-              first = device_idx;
-              last = first + 1;
-            }
-        }
-    }
-
-  if (list_devices || GDK_DISPLAY_DEBUG_CHECK (display, VULKAN))
+  if (GDK_DISPLAY_DEBUG_CHECK (display, VULKAN))
     {
       for (i = 0; i < n_devices; i++)
         {
@@ -1556,7 +1567,7 @@ gdk_display_create_vulkan_device (GdkDisplay  *display,
         }
     }
 
-  for (i = first; i < last; i++)
+  for (i = 0; i < n_devices; i++)
     {
       GdkVulkanFeatures features, device_features;
       uint32_t n_queue_props;
@@ -1572,7 +1583,7 @@ gdk_display_create_vulkan_device (GdkDisplay  *display,
         {
           if (queue_props[j].queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
-              VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT swapchain_maintenance1_features = { 
+              VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT swapchain_maintenance1_features = {
                 .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT,
                 .swapchainMaintenance1 = VK_TRUE,
               };
@@ -1694,7 +1705,7 @@ gdk_vulkan_debug_report (VkDebugReportFlagsEXT      flags,
   return VK_FALSE;
 }
 
-static gboolean
+gboolean
 gdk_display_create_vulkan_instance (GdkDisplay  *display,
                                     GError     **error)
 {
@@ -1703,6 +1714,8 @@ gdk_display_create_vulkan_instance (GdkDisplay  *display,
   GPtrArray *used_extensions;
   gboolean have_debug_report = FALSE;
   VkResult res;
+
+  g_assert (display->vk_instance == NULL);
 
   if (!gdk_has_feature (GDK_FEATURE_VULKAN))
     {
@@ -1830,66 +1843,16 @@ gdk_display_create_vulkan_instance (GdkDisplay  *display,
   return TRUE;
 }
 
-/*
- * gdk_display_init_vulkan:
- * @display: a display
- * @error: A potential error message
- *
- * Initializes Vulkan and returns an error on failure.
- *
- * If Vulkan is already initialized, this function returns
- * %TRUE and increases the refcount of the existing instance.
- *
- * You need to gdk_display_unref_vulkan() to close it again.
- *
- * Returns: %TRUE if Vulkan is initialized.
- **/
-gboolean
-gdk_display_init_vulkan (GdkDisplay *display,
-                         GError     **error)
-{
-  if (display->vulkan_refcount == 0)
-    {
-      if (!gdk_display_create_vulkan_instance (display, error))
-        return FALSE;
-    }
-
-  display->vulkan_refcount++;
-
-  return TRUE;
-}
-
-/*
- * gdk_display_ref_vulkan:
- * @display: a GdkDisplay
- *
- * Increases the refcount of an existing Vulkan instance.
- *
- * This function must not be called if Vulkan may not be initialized
- * yet, call gdk_display_init_vulkan() in that case.
- **/
 void
-gdk_display_ref_vulkan (GdkDisplay *display)
-{
-  g_assert (display->vulkan_refcount > 0);
-
-  display->vulkan_refcount++;
-}
-
-void
-gdk_display_unref_vulkan (GdkDisplay *display)
+gdk_display_destroy_vulkan_instance (GdkDisplay *display)
 {
   GHashTableIter iter;
   gpointer key, value;
 
-  g_return_if_fail (GDK_IS_DISPLAY (display));
-  g_return_if_fail (display->vulkan_refcount > 0);
+  g_assert (GDK_IS_DISPLAY (display));
+  g_assert (display->vk_instance != NULL);
 
-  display->vulkan_refcount--;
-  if (display->vulkan_refcount > 0)
-    return;
-
-  GDK_DEBUG (VULKAN, "Closing Vulkan instance");
+  GDK_DEBUG (VULKAN, "Destroy Vulkan instance");
   display->vulkan_features = 0;
   g_clear_pointer (&display->vk_dmabuf_formats, gdk_dmabuf_formats_unref);
   g_hash_table_iter_init (&iter, display->vk_shader_modules);
@@ -1967,11 +1930,9 @@ gdk_vulkan_init_dmabuf (GdkDisplay *display)
     return;
 
   if (!gdk_has_feature (GDK_FEATURE_DMABUF) ||
-      !gdk_display_init_vulkan (display, NULL) ||
-      ((display->vulkan_features & GDK_VULKAN_FEATURE_DMABUF) == 0))
-    {
-      return;
-    }
+      !gdk_display_prepare_vulkan (display, NULL) ||
+      (display->vulkan_features & GDK_VULKAN_FEATURE_DMABUF) == 0)
+    return;
 
   vulkan_builder = gdk_dmabuf_formats_builder_new ();
 
@@ -1987,19 +1948,20 @@ gdk_vulkan_init_dmabuf (GdkDisplay *display)
       g_warn_if_fail (modifier_props.drmFormatModifierCount < sizeof (modifier_list));
       for (j = 0; j < modifier_props.drmFormatModifierCount; j++)
         {
+          gboolean advertise = modifier_list[j].drmFormatModifier != DRM_FORMAT_MOD_LINEAR;
+
           GDK_DISPLAY_DEBUG (display, DMABUF,
-                             "Vulkan supports dmabuf format %.4s::%016llx with %u planes and features 0x%x",
+                             "Vulkan %s dmabuf format %.4s::%016"G_GINT64_MODIFIER"x with %u planes and features 0x%x",
+                             advertise ? "advertises" : "supports",
                              (char *) &fourcc,
-                             (long long unsigned) modifier_list[j].drmFormatModifier,
+                             modifier_list[j].drmFormatModifier,
                              modifier_list[j].drmFormatModifierPlaneCount,
                              modifier_list[j].drmFormatModifierTilingFeatures);
 
-          if (modifier_list[j].drmFormatModifier == DRM_FORMAT_MOD_LINEAR)
-            continue;
-
-          gdk_dmabuf_formats_builder_add_format (vulkan_builder,
-                                                 fourcc,
-                                                 modifier_list[j].drmFormatModifier);
+          if (advertise)
+            gdk_dmabuf_formats_builder_add_format (vulkan_builder,
+                                                   fourcc,
+                                                   modifier_list[j].drmFormatModifier);
         }
     }
 

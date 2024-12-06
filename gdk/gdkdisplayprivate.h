@@ -51,6 +51,12 @@ typedef enum {
   GDK_VULKAN_FEATURE_SWAPCHAIN_MAINTENANCE      = 1 << 5,
 } GdkVulkanFeatures;
 
+#define GDK_VULKAN_N_FEATURES 6
+
+#ifdef GDK_RENDERING_VULKAN
+extern const GdkDebugKey gdk_vulkan_feature_keys[];
+#endif
+
 /* Tracks information about the device grab on this display */
 typedef struct
 {
@@ -120,7 +126,7 @@ struct _GdkDisplay
   GdkDmabufFormats *vk_dmabuf_formats;
   GdkVulkanFeatures vulkan_features;
 
-  guint vulkan_refcount;
+  GError *vulkan_error;
 #endif /* GDK_RENDERING_VULKAN */
 
   /* egl info */
@@ -137,7 +143,7 @@ struct _GdkDisplay
 
    /* Cached data the EGL dmabuf downloader */
   GdkDmabufFormats *egl_dmabuf_formats;
-  GdkDmabufFormats *egl_external_formats;
+  GdkDmabufFormats *egl_internal_formats;
 };
 
 struct _GdkDisplayClass
@@ -233,21 +239,23 @@ void                _gdk_display_unpause_events       (GdkDisplay       *display
 
 void                gdk_display_init_dmabuf           (GdkDisplay       *self);
 
+gboolean            gdk_display_prepare_vulkan        (GdkDisplay       *self,
+                                                       GError          **error);
 gboolean            gdk_display_has_vulkan_feature    (GdkDisplay       *self,
                                                        GdkVulkanFeatures feature);
 GdkVulkanContext *  gdk_display_create_vulkan_context (GdkDisplay       *self,
                                                        GdkSurface       *surface,
                                                        GError          **error);
 
-GdkGLContext *      gdk_display_get_gl_context        (GdkDisplay       *display);
+GdkGLContext *      gdk_display_get_gl_context        (GdkDisplay       *self);
 
-gboolean            gdk_display_init_egl              (GdkDisplay       *display,
+gboolean            gdk_display_init_egl              (GdkDisplay       *self,
                                                        int /*EGLenum*/   platform,
                                                        gpointer          native_display,
                                                        gboolean          allow_any,
                                                        GError          **error);
-gpointer            gdk_display_get_egl_display       (GdkDisplay       *display);
-gpointer            gdk_display_get_egl_config        (GdkDisplay       *display,
+gpointer            gdk_display_get_egl_display       (GdkDisplay       *self);
+gpointer            gdk_display_get_egl_config        (GdkDisplay       *self,
                                                        GdkMemoryDepth    depth);
 
 void                gdk_display_set_rgba              (GdkDisplay       *display,
@@ -288,7 +296,7 @@ void gdk_display_set_double_click_time     (GdkDisplay   *display,
 void gdk_display_set_double_click_distance (GdkDisplay   *display,
                                             guint         distance);
 void gdk_display_set_cursor_theme          (GdkDisplay   *display,
-                                            const char   *theme,
+                                            const char   *name,
                                             int           size);
 
 G_END_DECLS

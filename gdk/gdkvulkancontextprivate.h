@@ -50,14 +50,18 @@ struct _GdkVulkanContextClass
   GdkDrawContextClass parent_class;
 
 #ifdef GDK_RENDERING_VULKAN
-  VkResult     (* create_surface)       (GdkVulkanContext       *context,
-                                         VkSurfaceKHR           *surface);
+  VkResult              (* create_surface)                              (GdkVulkanContext      *context,
+                                                                         VkSurfaceKHR          *surface);
+  void                  (* get_image_size)                              (GdkVulkanContext      *context,
+                                                                         uint32_t              *out_width,
+                                                                         uint32_t              *out_height);
+
 #endif
 };
 
 #ifdef GDK_RENDERING_VULKAN
 
-const char *            gdk_vulkan_strerror                         (VkResult           result);
+const char *            gdk_vulkan_strerror                             (VkResult               result);
 
 static inline VkResult
 gdk_vulkan_handle_result (VkResult    res,
@@ -73,10 +77,9 @@ gdk_vulkan_handle_result (VkResult    res,
 
 #define GDK_VK_CHECK(func, ...) gdk_vulkan_handle_result (func (__VA_ARGS__), G_STRINGIFY (func))
 
-gboolean                gdk_display_init_vulkan                         (GdkDisplay            *display,
+gboolean                gdk_display_create_vulkan_instance              (GdkDisplay            *display,
                                                                          GError               **error);
-void                    gdk_display_ref_vulkan                          (GdkDisplay            *display);
-void                    gdk_display_unref_vulkan                        (GdkDisplay            *display);
+void                    gdk_display_destroy_vulkan_instance             (GdkDisplay            *display);
 
 void                    gdk_vulkan_init_dmabuf                          (GdkDisplay            *display);
 
@@ -117,4 +120,3 @@ gdk_display_ref_vulkan (GdkDisplay  *display,
 #endif /* !GDK_RENDERING_VULKAN */
 
 G_END_DECLS
-

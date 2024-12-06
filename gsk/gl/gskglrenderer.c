@@ -100,7 +100,7 @@ gsk_gl_renderer_dmabuf_downloader_supports (GdkDmabufDownloader  *downloader,
   return TRUE;
 }
 
-static void
+static gboolean
 gsk_gl_renderer_dmabuf_downloader_download (GdkDmabufDownloader *downloader_,
                                             GdkDmabufTexture    *texture,
                                             GdkMemoryFormat      format,
@@ -115,7 +115,12 @@ gsk_gl_renderer_dmabuf_downloader_download (GdkDmabufDownloader *downloader_,
   int width, height;
   GskRenderNode *node;
 
+  if (!gsk_gl_renderer_dmabuf_downloader_supports (downloader_, texture, NULL))
+    return FALSE;
+
   previous = gdk_gl_context_get_current ();
+  if (previous)
+    g_object_ref (previous);
 
   width = gdk_texture_get_width (GDK_TEXTURE (texture));
   height = gdk_texture_get_height (GDK_TEXTURE (texture));
@@ -133,9 +138,14 @@ gsk_gl_renderer_dmabuf_downloader_download (GdkDmabufDownloader *downloader_,
   g_object_unref (native);
 
   if (previous)
-    gdk_gl_context_make_current (previous);
+    {
+      gdk_gl_context_make_current (previous);
+      g_object_unref (previous);
+    }
   else
     gdk_gl_context_clear_current ();
+
+  return TRUE;
 }
 
 static void
@@ -148,7 +158,6 @@ static void
 gsk_gl_renderer_dmabuf_downloader_init (GdkDmabufDownloaderInterface *iface)
 {
   iface->close = gsk_gl_renderer_dmabuf_downloader_close;
-  iface->supports = gsk_gl_renderer_dmabuf_downloader_supports;
   iface->download = gsk_gl_renderer_dmabuf_downloader_download;
 }
 
@@ -183,7 +192,6 @@ gsk_gl_renderer_realize (GskRenderer  *renderer,
   GskGLDriver *driver = NULL;
   gboolean ret = FALSE;
   gboolean debug_shaders = FALSE;
-  GdkGLAPI api;
 
   if (self->context != NULL)
     return TRUE;
@@ -199,24 +207,6 @@ gsk_gl_renderer_realize (GskRenderer  *renderer,
 
   if (!gdk_gl_context_realize (context, error))
     goto failure;
-
-  api = gdk_gl_context_get_api (context);
-  if (api == GDK_GL_API_GLES)
-    {
-      gdk_gl_context_make_current (context);
-
-      if (!gdk_gl_context_has_feature (context, GDK_GL_FEATURE_VERTEX_HALF_FLOAT))
-        {
-          int major, minor;
-
-          gdk_gl_context_get_version (context, &major, &minor);
-          g_set_error (error,
-                       GDK_GL_ERROR, GDK_GL_ERROR_NOT_AVAILABLE,
-                       _("This GLES %d.%d implementation does not support half-float vertex data"),
-                       major, minor);
-          goto failure;
-        }
-    }
 
   if (GSK_RENDERER_DEBUG_CHECK (GSK_RENDERER (self), SHADERS))
     debug_shaders = TRUE;

@@ -2,7 +2,7 @@
 
 #include "gskgpuglobalsopprivate.h"
 
-#include "gskglframeprivate.h"
+#include "gskglbufferprivate.h"
 #include "gskgpuframeprivate.h"
 #include "gskgpuprintprivate.h"
 #include "gskroundedrectprivate.h"
@@ -17,6 +17,7 @@ struct _GskGpuGlobalsOp
 {
   GskGpuOp op;
 
+  gsize id;
   GskGpuGlobalsInstance instance;
 };
 
@@ -66,14 +67,14 @@ gsk_gpu_globals_op_gl_command (GskGpuOp          *op,
                                GskGLCommandState *state)
 {
   GskGpuGlobalsOp *self = (GskGpuGlobalsOp *) op;
+  gsize globals_size;
 
-  gsk_gl_frame_bind_globals (GSK_GL_FRAME (frame));
+  globals_size = gsk_gpu_device_get_globals_aligned_size (gsk_gpu_frame_get_device (frame));
 
-  /* FIXME: Does it matter if we glBufferData() or glSubBufferData() here? */
-  glBufferSubData (GL_UNIFORM_BUFFER,
-                   0,
-                   sizeof (self->instance),
-                   &self->instance);
+  gsk_gl_buffer_bind_range (GSK_GL_BUFFER (state->globals),
+                            0,
+                            self->id * globals_size,
+                            sizeof (GskGpuGlobalsInstance));
 
   return op->next;
 }
@@ -102,4 +103,5 @@ gsk_gpu_globals_op (GskGpuFrame             *frame,
   graphene_matrix_to_float (mvp, self->instance.mvp);
   gsk_rounded_rect_to_float (clip, graphene_point_zero (), self->instance.clip);
   graphene_vec2_to_float (scale, self->instance.scale);
+  self->id = gsk_gpu_frame_add_globals (frame, &self->instance);
 }

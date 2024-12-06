@@ -93,6 +93,7 @@
 #include "gtkmultisorter.h"
 #include "gtkcolumnviewsorter.h"
 #include "gtkexpression.h"
+#include "gtkactionbar.h"
 
 #ifndef G_OS_WIN32
 #include "gtkopenuriportal.h"
@@ -6833,6 +6834,8 @@ captured_key (GtkEventControllerKey *controller,
 {
   GtkFileChooserWidget *impl = data;
   gboolean handled;
+  GtkWidget *focus;
+  GtkWidget *ancestor;
 
   if (impl->operation_mode == OPERATION_MODE_SEARCH ||
       impl->operation_mode == OPERATION_MODE_ENTER_LOCATION ||
@@ -6843,10 +6846,14 @@ captured_key (GtkEventControllerKey *controller,
   if (keyval == GDK_KEY_slash || keyval == GDK_KEY_asciitilde || keyval == GDK_KEY_period)
     return GDK_EVENT_PROPAGATE;
 
+  focus = gtk_root_get_focus (gtk_widget_get_root (GTK_WIDGET (impl)));
+
+  ancestor = gtk_widget_get_ancestor (focus, GTK_TYPE_ACTION_BAR);
+  if (ancestor && gtk_widget_is_ancestor (ancestor, impl->places_view))
+    return GDK_EVENT_PROPAGATE;
+
   if (impl->location_entry)
     {
-      GtkWidget *focus = gtk_root_get_focus (gtk_widget_get_root (GTK_WIDGET (impl)));
-
       if (focus && gtk_widget_is_ancestor (focus, impl->location_entry))
         return GDK_EVENT_PROPAGATE;
     }
@@ -6959,7 +6966,7 @@ match_func (gpointer item, gpointer user_data)
   return g_file_info_get_attribute_boolean (G_FILE_INFO (item), "filechooser::visible");
 }
 
-static GtkOrdering
+static int
 directory_sort_func (gconstpointer a,
                      gconstpointer b,
                      gpointer      user_data)
@@ -6980,13 +6987,13 @@ directory_sort_func (gconstpointer a,
   return GTK_ORDERING_EQUAL;
 }
 
-static GtkOrdering
+static int
 name_sort_func (gconstpointer a,
                 gconstpointer b,
                 gpointer      user_data)
 {
   char *key_a, *key_b;
-  GtkOrdering result;
+  int result;
 
   /* FIXME: use sortkeys for these */
   key_a = g_utf8_collate_key_for_filename (g_file_info_get_display_name ((GFileInfo *)a), -1);
@@ -7026,7 +7033,7 @@ location_sort_func (gconstpointer a,
   return result;
 }
 
-static GtkOrdering
+static int
 size_sort_func (gconstpointer a,
                 gconstpointer b,
                 gpointer      user_data)
@@ -7044,14 +7051,14 @@ size_sort_func (gconstpointer a,
     return GTK_ORDERING_EQUAL;
 }
 
-static GtkOrdering
+static int
 type_sort_func (gconstpointer a,
                 gconstpointer b,
                 gpointer      user_data)
 {
   GtkFileChooserWidget *impl = user_data;
   char *key_a, *key_b;
-  GtkOrdering result;
+  int result;
 
   /* FIXME: use sortkeys for these */
   key_a = get_type_information (impl, (GFileInfo *)a);
@@ -7065,7 +7072,7 @@ type_sort_func (gconstpointer a,
   return result;
 }
 
-static GtkOrdering
+static int
 time_sort_func (gconstpointer a,
                 gconstpointer b,
                 gpointer      user_data)
@@ -7094,12 +7101,12 @@ time_sort_func (gconstpointer a,
     return GTK_ORDERING_EQUAL;
 }
 
-static GtkOrdering
+static int
 recent_sort_func (gconstpointer a,
                   gconstpointer b,
                   gpointer      user_data)
 {
-  GtkOrdering result;
+  int result;
 
   result = time_sort_func (a, b, user_data);
 
@@ -7116,12 +7123,12 @@ recent_sort_func (gconstpointer a,
   return result;
 }
 
-static GtkOrdering
+static int
 search_sort_func (gconstpointer a,
                   gconstpointer b,
                   gpointer      user_data)
 {
-  GtkOrdering result;
+  int result;
 
   result = location_sort_func (a, b, user_data);
 

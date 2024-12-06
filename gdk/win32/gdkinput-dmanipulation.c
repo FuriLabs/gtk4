@@ -28,7 +28,6 @@
 #endif
 #define WINVER 0x0603
 #define _WIN32_WINNT 0x0603
-#define COBJMACROS
 #include "config.h"
 
 #include <gdk/gdk.h>
@@ -37,7 +36,8 @@
 #include "gdkdevicemanager-win32.h"
 #include "gdkdevice-virtual.h"
 #include "gdkdeviceprivate.h"
-#include "gdkdisplayprivate.h"
+#include "gdkdisplay-win32.h"
+#include "gdkprivate-win32.h"
 #include "gdkeventsprivate.h"
 #include "gdkseatdefaultprivate.h"
 #include "gdkinput-dmanipulation.h"
@@ -48,9 +48,6 @@
 
 typedef BOOL
 (WINAPI *getPointerType_t)(UINT32 pointerId, POINTER_INPUT_TYPE *pointerType);
-static getPointerType_t getPointerType;
-
-static IDirectManipulationManager *dmanipulation_manager;
 
 typedef struct
 {
@@ -203,12 +200,13 @@ DManipEventHandler_OnContentUpdated (IDirectManipulationViewportEventHandler *se
         POINT cursor = {0, 0};
         float scale;
         GdkEvent *event;
+        GdkDisplay *display = gdk_surface_get_display (self->surface);
 
         scale = transform[0];
 
         state = util_get_modifier_state ();
         time = (uint32_t) GetMessageTime ();
-        _gdk_win32_get_cursor_pos (&cursor);
+        _gdk_win32_get_cursor_pos (display, &cursor);
 
         ScreenToClient (GDK_SURFACE_HWND (self->surface), &cursor);
 
@@ -266,13 +264,14 @@ DManipEventHandler_OnViewportStatusChanged (IDirectManipulationViewportEventHand
             uint32_t time;
             POINT cursor = {0, 0};
             GdkEvent *event;
+            GdkDisplay *display = gdk_surface_get_display (self->surface);
 
             if (self->phase == GDK_TOUCHPAD_GESTURE_PHASE_BEGIN)
               break;
 
             state = util_get_modifier_state ();
             time = (uint32_t) GetMessageTime ();
-            _gdk_win32_get_cursor_pos (&cursor);
+            _gdk_win32_get_cursor_pos (display, &cursor);
 
             ScreenToClient (GDK_SURFACE_HWND (self->surface), &cursor);
 
@@ -327,7 +326,7 @@ dmanip_event_handler_new (GdkSurface *surface,
   handler->gesture = gesture;
 
   handler->surface = surface;
-  handler->device = _gdk_device_manager->core_pointer;
+  handler->device = GDK_WIN32_DISPLAY (gdk_surface_get_display (surface))->device_manager->core_pointer;
 
   dmanip_event_handler_running_state_clear (handler);
 
@@ -361,7 +360,7 @@ reset_viewport (IDirectManipulationViewport *viewport)
   HR_CHECK_GOTO (hr, failed);
 
 failed:
-  IUnknown_Release (content);
+  gdk_win32_com_clear (&content);
 }
 
 static void
@@ -378,6 +377,27 @@ close_viewport (IDirectManipulationViewport **p_viewport)
     }
 }
 
+#define GDK_DISPLAY_GET_DMANIP_MANAGER(d) GDK_WIN32_DISPLAY(d)->dmanip_items != NULL ? \
+  (IDirectManipulationManager *) ((dmanip_items *)(GDK_WIN32_DISPLAY(d)->dmanip_items)->manager) : \
+  NULL
+
+#define GDK_DISPLAY_GET_GET_POINTER_TYPE(d) GDK_WIN32_DISPLAY(d)->dmanip_items != NULL ? \
+  (getPointerType_t) ((dmanip_items *)(GDK_WIN32_DISPLAY(d)->dmanip_items)->getPointerType) : \
+  NULL
+
+void
+gdk_win32_display_close_dmanip_manager (GdkDisplay *display)
+{
+  if (GDK_WIN32_DISPLAY (display)->dmanip_items != NULL)
+    {
+      IDirectManipulationManager *manager = GDK_DISPLAY_GET_DMANIP_MANAGER (display);
+
+      gdk_win32_com_clear (&manager);
+
+      g_clear_pointer (&GDK_WIN32_DISPLAY (display)->dmanip_items, g_free);
+    }
+}
+
 static void
 create_viewport (GdkSurface *surface,
                  int gesture,
@@ -388,6 +408,7 @@ create_viewport (GdkSurface *surface,
   IDirectManipulationViewportEventHandler *handler = NULL;
   DWORD cookie = 0;
   HRESULT hr;
+  IDirectManipulationManager *dmanipulation_manager = GDK_DISPLAY_GET_DMANIP_MANAGER (gdk_surface_get_display (surface));
 
   hr = IDirectManipulationManager_CreateViewport (dmanipulation_manager, NULL, hwnd,
                                                   &IID_IDirectManipulationViewport,
@@ -430,8 +451,7 @@ create_viewport (GdkSurface *surface,
   return;
 
 failed:
-  if (handler)
-    IUnknown_Release (handler);
+  gdk_win32_com_clear (&handler);
 
   close_viewport (pViewport);
 }
@@ -441,11 +461,14 @@ failed:
 /* {{{ Public */
 
 
-void gdk_dmanipulation_initialize (void)
+void gdk_dmanipulation_initialize (GdkWin32Display *display)
 {
-  if (!getPointerType)
+  if (display->dmanip_items == NULL)
     {
+      IDirectManipulationManager *dmanipulation_manager;
+      getPointerType_t getPointerType;
       HMODULE user32_mod;
+      HRESULT hr;
 
       user32_mod = LoadLibraryW (L"user32.dll");
       if (!user32_mod)
@@ -459,20 +482,22 @@ void gdk_dmanipulation_initialize (void)
 
       if (!getPointerType)
         return;
-    }
 
-  if (!gdk_win32_ensure_com ())
+      if (!gdk_win32_ensure_com ())
         return;
 
-  if (dmanipulation_manager == NULL)
-    {
-      HRESULT hr;
+      display->dmanip_items = g_new0 (dmanip_items, 1);
+      display->dmanip_items->getPointerType = getPointerType;
 
       hr = CoCreateInstance (&CLSID_DirectManipulationManager,
                              NULL,
                              CLSCTX_INPROC_SERVER,
                              &IID_IDirectManipulationManager,
                              (LPVOID*)&dmanipulation_manager);
+
+      if (SUCCEEDED (hr))
+        display->dmanip_items->manager = dmanipulation_manager;
+
       if (FAILED (hr))
         {
           if (hr == REGDB_E_CLASSNOTREG || hr == E_NOINTERFACE);
@@ -487,6 +512,7 @@ void gdk_dmanipulation_initialize_surface (GdkSurface *surface)
 {
   GdkWin32Surface *surface_win32;
   HRESULT hr;
+  IDirectManipulationManager *dmanipulation_manager = GDK_DISPLAY_GET_DMANIP_MANAGER (gdk_surface_get_display (surface));
 
   if (!dmanipulation_manager)
     return;
@@ -508,6 +534,8 @@ void gdk_dmanipulation_finalize_surface (GdkSurface *surface)
 {
   GdkWin32Surface *surface_win32 = GDK_WIN32_SURFACE (surface);
 
+  IDirectManipulationManager_Deactivate (GDK_DISPLAY_GET_DMANIP_MANAGER (gdk_surface_get_display (surface)),
+                                         GDK_SURFACE_HWND (surface));
   close_viewport (&surface_win32->dmanipulation_viewport_zoom);
   close_viewport (&surface_win32->dmanipulation_viewport_pan);
 }
@@ -517,6 +545,9 @@ void gdk_dmanipulation_maybe_add_contact (GdkSurface *surface,
 {
   POINTER_INPUT_TYPE type = PT_POINTER;
   UINT32 pointer_id = GET_POINTERID_WPARAM (msg->wParam);
+  GdkDisplay *display = gdk_surface_get_display (surface);
+  IDirectManipulationManager *dmanipulation_manager = GDK_DISPLAY_GET_DMANIP_MANAGER (display);
+  getPointerType_t getPointerType = GDK_DISPLAY_GET_GET_POINTER_TYPE (display);
 
   if (!dmanipulation_manager)
     return;

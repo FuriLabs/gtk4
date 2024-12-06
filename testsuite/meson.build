@@ -9,26 +9,26 @@ if catch.found()
 endif
 
 common_env = [
-  'GIO_USE_VOLUME_MONITOR=unix',
   'GIO_USE_VFS=local',
   'GSETTINGS_BACKEND=memory',
   'GTK_CSD=1',
   'G_ENABLE_DIAGNOSTIC=0',
   'GSETTINGS_SCHEMA_DIR=@0@'.format(gtk_schema_build_dir),
-  'GDK_DEBUG=default-settings',
+  'GDK_DEBUG=default-settings,no-portals',
   'GTK_DEBUG=css',
 ]
 exclude_unstable = ['flaky', 'failing']
 
+if os_win32
+  common_env += [ 'GIO_USE_VOLUME_MONITOR=win32' ]
+else
+  common_env += [ 'GIO_USE_VOLUME_MONITOR=unix' ]
+endif
+
+
 setups = [
   { 'backend': 'x11', 'if': x11_enabled, },
   { 'backend': 'wayland', 'if': wayland_enabled, 'is_default': true, },
-  { 'name': 'wayland_gles2',
-    'backend': 'wayland', 'if': wayland_enabled,
-    'env': ['GDK_DEBUG=default-settings',
-            'MESA_GLES_VERSION_OVERRIDE=2.0',
-            'GSK_MAX_TEXTURE_SIZE=1024',
-           ], },
   { 'name': 'wayland_gl',
     'backend': 'wayland', 'if': wayland_enabled,
     'env': ['GDK_DISABLE=gles-api' ], },
@@ -45,11 +45,6 @@ foreach setup : setups
 
     if backend != 'broadway'
       exclude += 'gsk-compare-broadway'
-    endif
-
-    if name == 'wayland_gles2'
-      # exclude tests that are failing with the small texture size in this setup
-      exclude += 'wayland_gles2_failing'
     endif
 
     env = common_env + [

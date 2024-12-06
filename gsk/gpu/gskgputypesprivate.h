@@ -11,6 +11,7 @@ typedef struct _GskGpuClip              GskGpuClip;
 typedef guint32                         GskGpuColorStates;
 typedef struct _GskGpuDevice            GskGpuDevice;
 typedef struct _GskGpuFrame             GskGpuFrame;
+typedef struct _GskGpuGlobalsInstance   GskGpuGlobalsInstance;
 typedef struct _GskGpuImage             GskGpuImage;
 typedef struct _GskGpuOp                GskGpuOp;
 typedef struct _GskGpuOpClass           GskGpuOpClass;
@@ -138,5 +139,6 @@ typedef enum {
   GSK_GPU_OPTIMIZE_MIPMAP               = 1 <<  4,
   GSK_GPU_OPTIMIZE_TO_IMAGE             = 1 <<  5,
   GSK_GPU_OPTIMIZE_OCCLUSION_CULLING    = 1 <<  6,
+  GSK_GPU_OPTIMIZE_REPEAT               = 1 <<  7,
 } GskGpuOptimizations;
 

@@ -5,9 +5,20 @@
 /* Private API for use in GTK+ */
 
 void            gdk_pre_parse                   (void);
+gboolean        gdk_is_initialized              (void);
+
+#define gdk_ensure_initialized() \
+G_STMT_START { \
+  if (!gdk_is_initialized ()) \
+    g_error ("%s() was called before gtk_init()", G_STRFUNC); \
+} G_STMT_END
 
 gboolean gdk_running_in_sandbox (void);
-gboolean gdk_should_use_portal (void);
+void     gdk_disable_portals (void);
+
+gboolean gdk_display_should_use_portal (GdkDisplay *display,
+                                        const char *portal_interface,
+                                        guint       min_version);
 
 const char *   gdk_get_startup_notification_id (void);
 

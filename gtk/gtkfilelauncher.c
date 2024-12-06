@@ -24,6 +24,7 @@
 #include "gtkdialogerror.h"
 #include "gtkopenuriportal.h"
 #include "deprecated/gtkshow.h"
+#include "gtkprivate.h"
 #include <glib/gi18n-lib.h>
 
 #ifdef G_OS_WIN32
@@ -33,8 +34,7 @@
 /**
  * GtkFileLauncher:
  *
- * A `GtkFileLauncher` object collects the arguments that are needed to open a
- * file with an application.
+ * Collects the arguments that are needed to open a file with an application.
  *
  * Depending on system configuration, user preferences and available APIs, this
  * may or may not show an app chooser dialog or launch the default application
@@ -216,7 +216,7 @@ gtk_file_launcher_new (GFile *file)
 
 /**
  * gtk_file_launcher_get_file:
- * @self: a `GtkFileLauncher`
+ * @self: a file launcher
  *
  * Gets the file that will be opened.
  *
@@ -234,8 +234,8 @@ gtk_file_launcher_get_file (GtkFileLauncher *self)
 
 /**
  * gtk_file_launcher_set_file:
- * @self: a `GtkFileLauncher`
- * @file: (nullable): a `GFile`
+ * @self: a file launcher
+ * @file: (nullable): the file
  *
  * Sets the file that will be opened.
  *
@@ -256,11 +256,11 @@ gtk_file_launcher_set_file (GtkFileLauncher *self,
 
 /**
  * gtk_file_launcher_get_always_ask:
- * @self: a `GtkFileLauncher`
+ * @self: a file launcher
  *
- * Returns whether to ask the user to choose an app for opening the file.
+ * Returns whether to ask the user which app to use.
  *
- * Returns: `TRUE` if always asking for app
+ * Returns: true if always asking the user
  *
  * Since: 4.12
  */
@@ -274,11 +274,13 @@ gtk_file_launcher_get_always_ask (GtkFileLauncher *self)
 
 /**
  * gtk_file_launcher_set_always_ask:
- * @self: a `GtkFileLauncher`
- * @always_ask: a `gboolean`
+ * @self: a file launcher
+ * @always_ask: whether to always ask
  *
- * Sets whether to awlays ask the user to choose an app for opening the file.
- * If `FALSE`, the file might be opened with a default app or the previous choice.
+ * Sets whether to awlays ask the user which app to use.
+ *
+ * If false, the file might be opened with a default app
+ * or the previous choice.
  *
  * Since: 4.12
  */
@@ -298,11 +300,11 @@ gtk_file_launcher_set_always_ask (GtkFileLauncher *self,
 
 /**
  * gtk_file_launcher_get_writable:
- * @self: a `GtkFileLauncher`
+ * @self: a file launcher
  *
  * Returns whether to make the file writable for the handler.
  *
- * Returns: `TRUE` if the file will be made writable
+ * Returns: true if the file will be made writable
  *
  * Since: 4.14
  */
@@ -316,8 +318,8 @@ gtk_file_launcher_get_writable (GtkFileLauncher *self)
 
 /**
  * gtk_file_launcher_set_writable:
- * @self: a `GtkFileLauncher`
- * @writable: a `gboolean`
+ * @self: a file launcher
+ * @writable: whether to make the file writable
  *
  * Sets whether to make the file writable for the handler.
  *
@@ -460,14 +462,14 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 
 /**
  * gtk_file_launcher_launch:
- * @self: a `GtkFileLauncher`
- * @parent: (nullable): the parent `GtkWindow`
- * @cancellable: (nullable): a `GCancellable` to cancel the operation
+ * @self: a file launcher
+ * @parent: (nullable): the parent window
+ * @cancellable: (nullable): a cancellable to cancel the operation
  * @callback: (scope async) (closure user_data): a callback to call when the
  *   operation is complete
  * @user_data: data to pass to @callback
  *
- * Launch an application to open the file.
+ * Launches an application to open the file.
  *
  * This may present an app chooser dialog to the user.
  *
@@ -481,6 +483,9 @@ gtk_file_launcher_launch (GtkFileLauncher     *self,
                           gpointer             user_data)
 {
   GTask *task;
+#ifndef G_OS_WIN32
+  GdkDisplay *display;
+#endif
 
   g_return_if_fail (GTK_IS_FILE_LAUNCHER (self));
 
@@ -498,7 +503,12 @@ gtk_file_launcher_launch (GtkFileLauncher     *self,
     }
 
 #ifndef G_OS_WIN32
-  if (gtk_openuri_portal_is_available ())
+  if (parent)
+    display = gtk_widget_get_display (GTK_WIDGET (parent));
+  else
+    display = gdk_display_get_default ();
+
+  if (gdk_display_should_use_portal (display, PORTAL_OPENURI_INTERFACE, 3))
     {
       GtkOpenuriFlags flags = 0;
 
@@ -529,15 +539,14 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 
 /**
  * gtk_file_launcher_launch_finish:
- * @self: a `GtkFileLauncher`
- * @result: a `GAsyncResult`
+ * @self: a file launcher
+ * @result: the result
  * @error: return location for a [enum@Gtk.DialogError] or [enum@Gio.Error] error
  *
  * Finishes the [method@Gtk.FileLauncher.launch] call and
  * returns the result.
  *
- * Returns: `TRUE` if an application was launched,
- *     or `FALSE` and @error is set
+ * Returns: true if an application was launched
  *
  * Since: 4.10
  */
@@ -555,16 +564,16 @@ gtk_file_launcher_launch_finish (GtkFileLauncher  *self,
 
 /**
  * gtk_file_launcher_open_containing_folder:
- * @self: a `GtkFileLauncher`
- * @parent: (nullable): the parent `GtkWindow`
- * @cancellable: (nullable): a `GCancellable` to cancel the operation
+ * @self: a file launcher
+ * @parent: (nullable): the parent window
+ * @cancellable: (nullable): a cancellable to cancel the operation
  * @callback: (scope async) (closure user_data): a callback to call when the
  *   operation is complete
  * @user_data: data to pass to @callback
  *
- * Launch a file manager to show the file in its parent directory.
+ * Launches a file manager to show the file in its parent directory.
  *
- * This is only supported native files. It will fail if @file
+ * This is only supported for native files. It will fail if @file
  * is e.g. a http:// uri.
  *
  * Since: 4.10
@@ -622,15 +631,14 @@ gtk_file_launcher_open_containing_folder (GtkFileLauncher     *self,
 
 /**
  * gtk_file_launcher_open_containing_folder_finish:
- * @self: a `GtkFileLauncher`
- * @result: a `GAsyncResult`
+ * @self: a file launcher
+ * @result: the result
  * @error: return location for a [enum@Gtk.DialogError] or [enum@Gio.Error] error
  *
  * Finishes the [method@Gtk.FileLauncher.open_containing_folder]
  * call and returns the result.
  *
- * Returns: `TRUE` if an application was launched,
- *     or `FALSE` and @error is set
+ * Returns: true if an application was launched
  *
  * Since: 4.10
  */
@@ -647,4 +655,5 @@ gtk_file_launcher_open_containing_folder_finish (GtkFileLauncher  *self,
 }
 
 /* }}} */
-/* vim:set foldmethod=marker expandtab: */
+
+/* vim:set foldmethod=marker: */

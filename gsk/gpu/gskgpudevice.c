@@ -3,6 +3,7 @@
 #include "gskgpudeviceprivate.h"
 
 #include "gskgpucacheprivate.h"
+#include "gskgpuglobalsopprivate.h"
 
 #include "gdk/gdkprofilerprivate.h"
 
@@ -17,6 +18,7 @@ struct _GskGpuDevicePrivate
   GdkDisplay *display;
   gsize max_image_size;
   gsize tile_size;
+  gsize globals_aligned_size;
 
   GskGpuCache *cache; /* we don't own a ref, but manage the cache */
   guint cache_gc_source;
@@ -143,11 +145,19 @@ static void
 gsk_gpu_device_init (GskGpuDevice *self)
 {
 }
+
+static inline gsize
+round_up (gsize number, gsize divisor)
+{
+  return (number + divisor - 1) / divisor * divisor;
+}
+
 void
 gsk_gpu_device_setup (GskGpuDevice *self,
                       GdkDisplay   *display,
                       gsize         max_image_size,
-                      gsize         tile_size)
+                      gsize         tile_size,
+                      gsize         globals_alignment)
 {
   GskGpuDevicePrivate *priv = gsk_gpu_device_get_instance_private (self);
   const char *str;
@@ -156,6 +166,7 @@ gsk_gpu_device_setup (GskGpuDevice *self,
   priv->max_image_size = max_image_size;
   priv->tile_size = tile_size;
   priv->cache_timeout = CACHE_TIMEOUT;
+  priv->globals_aligned_size = round_up (sizeof (GskGpuGlobalsInstance), globals_alignment);
 
   str = g_getenv ("GSK_CACHE_TIMEOUT");
   if (str != NULL)
@@ -246,14 +257,52 @@ gsk_gpu_device_get_tile_size (GskGpuDevice *self)
   return priv->tile_size;
 }
 
-GskGpuImage *
-gsk_gpu_device_create_offscreen_image (GskGpuDevice   *self,
-                                       gboolean        with_mipmap,
-                                       GdkMemoryDepth  depth,
-                                       gsize           width,
-                                       gsize           height)
+/*<private>
+ * gsk_gpu_device_get_globals_aligned_size:
+ * @self: a device
+ *
+ * The required size for allocating arrays of globals.
+ * This value will be at least sizeof (GskGpuGlobalsInstance) but due to constraints
+ * of how buffers are mapped, it might be larger to allow a single buffer to hold
+ * all the globals instances.
+ *
+ * Returns: The minimum aligned size for a GskGpuGlobalsInstance
+ **/
+gsize
+gsk_gpu_device_get_globals_aligned_size (GskGpuDevice *self)
 {
-  return GSK_GPU_DEVICE_GET_CLASS (self)->create_offscreen_image (self, with_mipmap, depth, width, height);
+  GskGpuDevicePrivate *priv = gsk_gpu_device_get_instance_private (self);
+
+  return priv->globals_aligned_size;
+}
+
+/**
+ * gsk_gpu_device_create_offscreen_image:
+ * @self: the device to create the offscreen in
+ * @with_mipmap: whether to allocate memory for mipmap levels
+ * @format: the desired format
+ * @is_srgb: if the format should be srgb
+ * @width: width of the image
+ * @height: height of the image
+ *
+ * Creates an image suitable for offscreen rendering. Note that the format
+ * is a hint and the device may choose a different format if the desired
+ * format is not be renderable on the device.
+ * 
+ * If width/height is too large or the device is out of memory, NULL may
+ * be returned.
+ *
+ * Returns: (nullable): The created image or NULL on error.
+ **/
+GskGpuImage *
+gsk_gpu_device_create_offscreen_image (GskGpuDevice    *self,
+                                       gboolean         with_mipmap,
+                                       GdkMemoryFormat  format,
+                                       gboolean         is_srgb,
+                                       gsize            width,
+                                       gsize            height)
+{
+  return GSK_GPU_DEVICE_GET_CLASS (self)->create_offscreen_image (self, with_mipmap, format, is_srgb, width, height);
 }
 
 GskGpuImage *
@@ -291,4 +340,4 @@ gsk_gpu_device_make_current (GskGpuDevice *self)
 }
 
 /* }}} */
-/* vim:set foldmethod=marker expandtab: */
+/* vim:set foldmethod=marker: */

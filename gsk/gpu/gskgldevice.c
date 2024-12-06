@@ -69,15 +69,16 @@ gl_program_key_equal (gconstpointer a,
 static GskGpuImage *
 gsk_gl_device_create_offscreen_image (GskGpuDevice   *device,
                                       gboolean        with_mipmap,
-                                      GdkMemoryDepth  depth,
+                                      GdkMemoryFormat format,
+                                      gboolean        is_srgb,
                                       gsize           width,
                                       gsize           height)
 {
   GskGLDevice *self = GSK_GL_DEVICE (device);
 
   return gsk_gl_image_new (self,
-                           gdk_memory_depth_get_format (depth),
-                           gdk_memory_depth_is_srgb (depth),
+                           format,
+                           is_srgb,
                            GSK_GPU_IMAGE_RENDERABLE | GSK_GPU_IMAGE_FILTERABLE,
                            width,
                            height);
@@ -234,7 +235,7 @@ gsk_gl_device_get_for_display (GdkDisplay  *display,
 {
   GskGLDevice *self;
   GdkGLContext *context;
-  GLint max_texture_size;
+  GLint max_texture_size, globals_alignment;
 
   self = g_object_get_data (G_OBJECT (display), "-gsk-gl-device");
   if (self)
@@ -258,10 +259,13 @@ gsk_gl_device_get_for_display (GdkDisplay  *display,
   gdk_gl_context_make_current (context);
 
   glGetIntegerv (GL_MAX_TEXTURE_SIZE, &max_texture_size);
+  glGetIntegerv (GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &globals_alignment);
+
   gsk_gpu_device_setup (GSK_GPU_DEVICE (self),
                         display,
                         max_texture_size,
-                        GSK_GPU_DEVICE_DEFAULT_TILE_SIZE);
+                        GSK_GPU_DEVICE_DEFAULT_TILE_SIZE,
+                        globals_alignment);
 
   self->version_string = gdk_gl_context_get_glsl_version_string (context);
   self->api = gdk_gl_context_get_api (context);
@@ -567,7 +571,7 @@ gsk_gl_device_use_program (GskGLDevice               *self,
       return;
     }
   
-  g_hash_table_insert (self->gl_programs, g_memdup (&key, sizeof (GLProgramKey)), GUINT_TO_POINTER (program_id));
+  g_hash_table_insert (self->gl_programs, g_memdup2 (&key, sizeof (GLProgramKey)), GUINT_TO_POINTER (program_id));
 
   glUseProgram (program_id);
 

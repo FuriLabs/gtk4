@@ -22,11 +22,10 @@ stages:
 
 # Common variables
 variables:
-  COMMON_MESON_FLAGS: "-Dwerror=true -Dcairo:werror=false -Dgi-docgen:werror=false -Dgraphene:werror=false -Dlibepoxy:werror=false -Dlibsass:werror=false -Dpango:werror=false -Dsassc:werror=false -Dgdk-pixbuf:werror=false -Dglib:werror=false -Dlibcloudproviders:werror=false -Dlibpng:werror=false -Dlibtiff:werror=false -Dsysprof:werror=false -Dwayland-protocols:werror=false -Dharfbuzz:werror=false -Dfreetype2:werror=false -Dfontconfig:werror=false -Dfribidi:werror=false -Dlibffi:werror=false -Dlibjpeg-turbo:werror=false -Dmutest:werror=false -Dpixman:werror=false -Dproxy-libintl:werror=false"
+  COMMON_MESON_FLAGS: "-Dwerror=true -Dcairo:werror=false -Dgi-docgen:werror=false -Dgraphene:werror=false -Dlibepoxy:werror=false -Dlibsass:werror=false -Dpango:werror=false -Dsassc:werror=false -Dgdk-pixbuf:werror=false -Dglib:werror=false -Dlibcloudproviders:werror=false -Dlibpng:werror=false -Dlibtiff:werror=false -Dsysprof:werror=false -Dwayland-protocols:werror=false -Dharfbuzz:werror=false -Dfreetype2:werror=false -Dfontconfig:werror=false -Dfribidi:werror=false -Dlibffi:werror=false -Dlibjpeg-turbo:werror=false -Dmutest:werror=false -Dpcre2:werror=false -Dpixman:werror=false -Dproxy-libintl:werror=false"
   BACKEND_FLAGS: "-Dx11-backend=true -Dwayland-backend=true -Dbroadway-backend=true"
   FEATURE_FLAGS: "-Dvulkan=enabled -Dcloudproviders=enabled -Dbuild-testsuite=true -Dintrospection=enabled"
   MESON_TEST_TIMEOUT_MULTIPLIER: 3
-  MESON_TEST_MAX_PROCESSES: 8
   FEDORA_IMAGE: "registry.gitlab.gnome.org/gnome/gtk/fedora:v52"
 
 workflow:
@@ -62,19 +61,16 @@ style-check-diff:
 .build-fedora-default:
   image: $FEDORA_IMAGE
   artifacts:
+    name: "gtk-${CI_COMMIT_REF_NAME}"
     when: always
     reports:
       junit:
-        - "${CI_PROJECT_DIR}/_build/report-x11.xml"
-        - "${CI_PROJECT_DIR}/_build/report-wayland.xml"
-        - "${CI_PROJECT_DIR}/_build/report-wayland_gl.xml"
-        - "${CI_PROJECT_DIR}/_build/report-wayland_gles2.xml"
-        - "${CI_PROJECT_DIR}/_build/report-broadway.xml"
-    name: "gtk-${CI_COMMIT_REF_NAME}"
+        - "${CI_PROJECT_DIR}/_build/meson-logs/testlog-x11.junit.xml"
+        - "${CI_PROJECT_DIR}/_build/meson-logs/testlog-wayland.junit.xml"
+        - "${CI_PROJECT_DIR}/_build/meson-logs/testlog-wayland_gl.junit.xml"
+        - "${CI_PROJECT_DIR}/_build/meson-logs/testlog-broadway.junit.xml"
     paths:
       - "${CI_PROJECT_DIR}/_build/meson-logs"
-      - "${CI_PROJECT_DIR}/_build/report*.xml"
-      - "${CI_PROJECT_DIR}/_build/report*.html"
       - "${CI_PROJECT_DIR}/_build/testsuite/reftests/output/*/*.png"
       - "${CI_PROJECT_DIR}/_build/testsuite/reftests/output/*/*.node"
       - "${CI_PROJECT_DIR}/_build/testsuite/tools/output/*/*"
@@ -83,6 +79,8 @@ style-check-diff:
       - "${CI_PROJECT_DIR}/_build/testsuite/css/output/*/*.syscap"
       - "${CI_PROJECT_DIR}/_build/testsuite/headless/*/*.log"
       - "${CI_PROJECT_DIR}/_build_hello/meson-logs"
+      - "${CI_PROJECT_DIR}/_build/gtk/GdkX11-4.0.gir"
+      - "${CI_PROJECT_DIR}/_build/gtk/GdkWayland-4.0.gir"
   cache:
     key: "$CI_JOB_NAME"
     paths:
@@ -136,8 +134,6 @@ release-build:
     - PKG_CONFIG_PATH=${CI_PROJECT_DIR}/_install/lib64/pkgconfig:${CI_PROJECT_DIR}/_install/share/pkgconfig meson setup _build_hello examples/hello
     - LD_LIBRARY_PATH=${CI_PROJECT_DIR}/_install/lib64 meson compile -C _build_hello
     - .gitlab-ci/run-tests.sh _build wayland gtk
-    # only repeat test runs that are likely affected by test setups
-    - .gitlab-ci/run-tests.sh _build wayland_gles2 gtk:gdk,gtk:gsk-gl
 
 fedora-clang:
   extends: .build-fedora-default
@@ -201,17 +197,18 @@ fedora-mingw64:
       - subprojects/libepoxy/
       - subprojects/pango/
 
-msys2-mingw64:
+msys2-ucrt64:
   extends: .mingw-defaults
   needs: []
   variables:
-    MSYSTEM: "MINGW64"
+    MSYSTEM: "UCRT64"
     CHERE_INVOKING: "yes"
   artifacts:
     when: always
     expose_as: 'Windows_DLL_MSYS2_64_bit_toolchain'
     paths:
       - "${CI_PROJECT_DIR}/_build/gtkdll.tar.gz"
+      - "${CI_PROJECT_DIR}/_build/gtk/GdkWin32-4.0.gir"
 
 macos:
   rules:
@@ -221,7 +218,7 @@ macos:
       when: never
     - if: $RUNNER == "macosintel"
       variables:
-        SDKROOT: /opt/sdks/MacOSX10.13.4.sdk
+        SDKROOT: /opt/sdks/MacOSX10.15.6.sdk
         NINJA_PKG: $CI_API_V4_URL/projects/30745/packages/generic/ninja_macos/v1.11.1.1+9/ninja-1.11.1.1-cp38-cp38-macosx_11_0_x86_64.whl
       when: manual
       allow_failure: true
@@ -245,6 +242,7 @@ macos:
     PIPENV_CACHE_DIR: $PIP_CACHE_DIR
     PYTHONPYCACHEPREFIX: $PIP_CACHE_DIR
   before_script:
+    - ls /opt/sdks/
     - .gitlab-ci/show-info-macos.sh
     - python3 -m venv .venv
     # Building the introspection feature requires pkg-config and bison.
@@ -267,8 +265,9 @@ macos:
     when: always
     paths:
       - "${CI_PROJECT_DIR}/_build/meson-logs"
+      - "${CI_PROJECT_DIR}/_build/gtk/GdkMacos-4.0.gir"
 
-vs2017-x64:
+vs2019-x64:
   # TODO: Uncomment this when ready to merge.
   # rules:
   #   - if: $CI_PROJECT_NAMESPACE == "GNOME"
@@ -277,7 +276,7 @@ vs2017-x64:
     - win32-ps
   needs: []
   script:
-    - .gitlab-ci/test-msvc.bat
+    - .gitlab-ci/test-msvc.bat ${COMMON_MESON_FLAGS}
   artifacts:
     when: always
     paths:
@@ -330,20 +329,6 @@ flatpak:widget-factory:aarch64:
   variables:
     APPID: org.gtk.WidgetFactory4
 
-flatpak:icon-browser:
-  extends: '.flatpak-defaults'
-  needs: []
-  variables:
-    APPID: org.gtk.IconBrowser4
-
-flatpak:icon-browser:aarch64:
-  extends: '.flatpak-defaults'
-  needs: []
-  tags:
-    - flatpak-aarch64
-  variables:
-    APPID: org.gtk.IconBrowser4
-
 flatpak:node-editor:
   extends: '.flatpak-defaults'
   needs: []
@@ -376,14 +361,6 @@ nightly factory:
 nightly factory aarch64:
     extends: '.publish_nightly'
     needs: ['flatpak:widget-factory:aarch64']
-
-nightly icon-browser:
-    extends: '.publish_nightly'
-    needs: ['flatpak:icon-browser']
-
-nightly icon-browser aarch64:
-    extends: '.publish_nightly'
-    needs: ['flatpak:icon-browser:aarch64']
 
 nightly node-editor:
     extends: '.publish_nightly'
@@ -420,8 +397,6 @@ asan-build:
   tags: [ asan ]
   stage: analysis
   needs: []
-  variables:
-    MESON_TEST_MAX_PROCESSES: 4
   script:
     - export PATH="$HOME/.local/bin:$PATH"
     - CC=clang meson setup

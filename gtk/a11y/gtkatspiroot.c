@@ -484,7 +484,6 @@ gtk_at_spi_root_child_changed (GtkAtSpiRoot             *self,
                                     self->root_path,
                                     state,
                                     idx,
-                                    gtk_at_spi_root_to_ref (self),
                                     window_ref);
 }
 
@@ -765,7 +764,7 @@ on_registration_reply (GObject      *gobject,
    * sandbox to allow event registration signals to propagate, so we
    * check if the version of the Flatpak portal is recent enough.
    */
-  if (gdk_should_use_portal () &&
+  if (gdk_running_in_sandbox () &&
       !check_flatpak_portal_version (7))
     {
       GTK_DEBUG (A11Y, "Sandboxed does not allow event listener registration");

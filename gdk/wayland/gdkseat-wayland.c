@@ -4261,7 +4261,6 @@ init_pointer_data (GdkWaylandPointerData *pointer_data,
   wl_surface_add_listener (pointer_data->pointer_surface,
                            &pointer_surface_listener,
                            logical_device);
-
   if (display_wayland->viewporter)
     pointer_data->pointer_surface_viewport = wp_viewporter_get_viewport (display_wayland->viewporter, pointer_data->pointer_surface);
 }

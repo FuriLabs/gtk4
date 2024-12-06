@@ -146,11 +146,8 @@ collect_states (GtkAtSpiContext    *self,
   set_atspi_state (&states, ATSPI_STATE_VISIBLE);
   set_atspi_state (&states, ATSPI_STATE_SHOWING);
 
-  if (ctx->accessible_role == GTK_ACCESSIBLE_ROLE_APPLICATION)
-    {
-      if (gtk_accessible_get_platform_state (accessible, GTK_ACCESSIBLE_PLATFORM_STATE_ACTIVE))
-        set_atspi_state (&states, ATSPI_STATE_ACTIVE);
-    }
+  if (gtk_accessible_get_platform_state (accessible, GTK_ACCESSIBLE_PLATFORM_STATE_ACTIVE))
+    set_atspi_state (&states, ATSPI_STATE_ACTIVE);
 
   if (ctx->accessible_role == GTK_ACCESSIBLE_ROLE_TEXT_BOX ||
       ctx->accessible_role == GTK_ACCESSIBLE_ROLE_SEARCH_BOX ||
@@ -858,19 +855,18 @@ emit_property_changed (GtkAtSpiContext *self,
                        const char      *name,
                        GVariant        *value)
 {
-  if (self->connection == NULL || !gtk_at_spi_root_has_event_listeners (self->root))
-    return;
-
   GVariant *value_owned = g_variant_ref_sink (value);
 
-  g_dbus_connection_emit_signal (self->connection,
-                                 NULL,
-                                 self->context_path,
-                                 "org.a11y.atspi.Event.Object",
-                                 "PropertyChange",
-                                 g_variant_new ("(siiva{sv})",
-                                                name, 0, 0, value_owned, NULL),
-                                 NULL);
+  if (self->connection != NULL && gtk_at_spi_root_has_event_listeners (self->root))
+    g_dbus_connection_emit_signal (self->connection,
+                                   NULL,
+                                   self->context_path,
+                                   "org.a11y.atspi.Event.Object",
+                                   "PropertyChange",
+                                   g_variant_new ("(siiva{sv})",
+                                                  name, 0, 0, value_owned, NULL),
+                                   NULL);
+
   g_variant_unref (value_owned);
 }
 
@@ -906,15 +902,13 @@ emit_children_changed (GtkAtSpiContext         *self,
       !gtk_at_spi_root_has_event_listeners (self->root))
     return;
 
-  GVariant *context_ref = gtk_at_spi_context_to_ref (self);
   GVariant *child_ref = gtk_at_spi_context_to_ref (child_context);
 
   gtk_at_spi_emit_children_changed (self->connection,
                                     self->context_path,
                                     state,
                                     idx,
-                                    child_ref,
-                                    context_ref);
+                                    child_ref);
 }
 
 static void
@@ -2019,4 +2013,4 @@ gtk_at_spi_context_get_child_count (GtkAtSpiContext *self)
 }
 /* }}} */
 
-/* vim:set foldmethod=marker expandtab: */
+/* vim:set foldmethod=marker: */

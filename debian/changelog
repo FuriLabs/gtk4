@@ -1,3 +1,9 @@
+gtk4 (4.17.1+ds-2) experimental; urgency=medium
+
+  * Fix typo in Breaks field
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 06 Dec 2024 18:16:08 -0500
+
 gtk4 (4.17.1+ds-1) experimental; urgency=medium
 
   [ Jeremy Bícha ]

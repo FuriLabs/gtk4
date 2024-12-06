@@ -1,4 +1,18 @@
-gtk4 (4.17.1+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.17.1+ds-1) experimental; urgency=medium
+
+  [ Jeremy Bícha ]
+  * New upstream release
+    - The Icon Browser is no longer provided
+  * GTK no longer allows displays to be created before GDK has been initialized.
+    Add Breaks for apps that were known to be broken by this change.
+    See gtk !7836
+  * missing-sources: Update emojibase
+  * missing-sources: Copy emoji 16.0 files from Debian's unicode-data package
+  * Bump minimum meson to 1.2.0
+  * debian/libgtk-4-1.symbols.in: Add new symbols
+  * Refresh patches
+  * Add a revert patch for our gstplayer subproject
+  * Add another revert patch to keep installed tests working
 
   [ Samuel Thibault ]
   * d/libgtk-4-1.symbols.in: Mark more Vulkan symbols as Linux-only
@@ -10,12 +24,8 @@ gtk4 (4.17.1+ds-1) UNRELEASED; urgency=medium
   * d/upstream/metadata: Canonicalize order
   * d/upstream/metadata: Update links to Changelog, FAQ
   * d/upstream/metadata: Add links to Documentation, Security-Contact
-  * d/patches: Refresh patch series (no functional changes)
 
-  [ Jeremy Bícha ]
-  * New upstream release
-
- -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 06 Dec 2024 13:13:26 -0500
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 06 Dec 2024 17:07:39 -0500
 
 gtk4 (4.16.7+ds-1) unstable; urgency=medium
 

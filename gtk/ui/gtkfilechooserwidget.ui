@@ -10,19 +10,19 @@
             <property name="vexpand">1</property>
             <child>
               <object class="GtkPaned" id="browse_widgets_hpaned">
-                <property name="shrink-end-child">0</property>
-                <property name="shrink-start-child">0</property>
+                <property name="shrink-end-child">1</property>
+                <property name="shrink-start-child">1</property>
                 <property name="resize-start-child">0</property>
                 <property name="position-set">1</property>
-                <property name="wide-handle">0</property>
                 <property name="position">0</property>
+                <property name="wide-handle">0</property>
                 <property name="resize-end-child">1</property>
                 <property name="vexpand">1</property>
                 <property name="start-child">
                   <object class="GtkRevealer" id="places_sidebar_revealer">
                     <property name="reveal-child">0</property>
                     <property name="transition-type">slide-right</property>
-                    <property name="transition-duration">300</property>
+                    <property name="transition-duration">200</property>
                     <child>
                       <object class="GtkPlacesSidebar" id="places_sidebar">
                         <property name="show-other-locations">1</property>
@@ -47,9 +47,11 @@
                           <object class="GtkBox">
                             <property name="name">pathbarbox</property>
                             <property name="orientation">1</property>
-                            <property name="spacing">12</property>
+                            <property name="spacing">6</property>
+                            <property name="hexpand">1</property>
                             <style>
                               <class name="view"/>
+                              <class name="compact"/>
                             </style>
                             <child>
                               <object class="GtkStack" id="browse_header_stack">
@@ -59,11 +61,11 @@
                                     <property name="name">pathbar</property>
                                     <property name="child">
                                       <object class="GtkBox">
-                                        <property name="spacing">6</property>
-                                        <property name="margin-start">6</property>
-                                        <property name="margin-end">6</property>
-                                        <property name="margin-top">6</property>
-                                        <property name="margin-bottom">6</property>
+                                        <property name="spacing">3</property>
+                                        <property name="margin-start">3</property>
+                                        <property name="margin-end">3</property>
+                                        <property name="margin-top">3</property>
+                                        <property name="margin-bottom">3</property>
                                         <child>
                                           <object class="GtkButton" id="places_sidebar_toggle">
                                             <property name="icon-name">sidebar-show-symbolic</property>
@@ -134,7 +136,7 @@
                                         <property name="margin-bottom">6</property>
                                         <child type="center">
                                           <object class="GtkSearchEntry" id="search_entry">
-                                            <property name="width-chars">45</property>
+                                            <property name="width-chars">25</property>
                                             <property name="hexpand">1</property>
                                             <property name="halign">3</property>
                                             <accessibility>
@@ -179,7 +181,7 @@
                     </child>
                     <child>
                       <object class="GtkBox" id="list_box">
-                        <property name="spacing">12</property>
+                        <property name="spacing">6</property>
                         <property name="vexpand">1</property>
                         <child>
                           <object class="GtkStack" id="browse_files_stack">

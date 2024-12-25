@@ -333,6 +333,9 @@ struct _GtkFileChooserWidget
   GtkWidget *toplevel_current_focus_widget;
   GtkWidget *toplevel_last_focus_widget;
 
+  GtkRevealer *places_sidebar_revealer;
+  GtkButton *places_sidebar_toggle;
+
   int sort_column;
   GtkSortType sort_order;
 
@@ -531,6 +534,9 @@ static char *   my_g_format_date_for_display (GtkFileChooserWidget *impl,
                                               glong                 secs);
 static char *   my_g_format_time_for_display (GtkFileChooserWidget *impl,
                                               glong                 secs);
+
+static void     places_sidebar_toggle_clicked (GtkButton *button,
+                                               GtkFileChooserWidget *self);
 
 G_DEFINE_TYPE_WITH_CODE (GtkFileChooserWidget, gtk_file_chooser_widget, GTK_TYPE_WIDGET,
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_FILE_CHOOSER,
@@ -6818,6 +6824,7 @@ gtk_file_chooser_widget_class_init (GtkFileChooserWidgetClass *class)
   gtk_widget_class_bind_template_callback (widget_class, column_view_get_file_display_name);
   gtk_widget_class_bind_template_callback (widget_class, column_view_get_tooltip_text);
   gtk_widget_class_bind_template_callback (widget_class, column_view_row_bind);
+  gtk_widget_class_bind_template_callback (widget_class, places_sidebar_toggle_clicked);
 
   gtk_widget_class_set_css_name (widget_class, I_("filechooser"));
 
@@ -7541,6 +7548,12 @@ gtk_file_chooser_widget_init (GtkFileChooserWidget *impl)
   gtk_gesture_single_set_touch_only (GTK_GESTURE_SINGLE (gesture), TRUE);
   g_signal_connect (gesture, "pressed", G_CALLBACK (file_chooser_widget_long_pressed), impl);
 
+  impl->places_sidebar_revealer = GTK_REVEALER (gtk_widget_get_template_child (GTK_WIDGET (impl),
+                                                                               GTK_TYPE_FILE_CHOOSER_WIDGET,
+                                                                               "places_sidebar_revealer"));
+  impl->places_sidebar_toggle = GTK_BUTTON (gtk_widget_get_template_child (GTK_WIDGET (impl),
+                                                                           GTK_TYPE_FILE_CHOOSER_WIDGET,
+                                                                           "places_sidebar_toggle"));
   /* Setup various attributes and callbacks in the UI
    * which cannot be done with GtkBuilder
    */
@@ -7703,6 +7716,52 @@ gtk_file_chooser_widget_get_choice (GtkFileChooser  *chooser,
 
   return NULL;
 }
+
+static gboolean
+hide_complete (GtkPaned *paned)
+{
+  gtk_paned_set_position (paned, 0);
+  GtkWidget *revealer = gtk_paned_get_start_child (paned);
+  gtk_widget_set_visible (GTK_WIDGET (revealer), FALSE);
+  return G_SOURCE_REMOVE;
+}
+
+static void
+places_sidebar_toggle_clicked (GtkButton *button,
+                               GtkFileChooserWidget *self)
+{
+  GtkPaned *paned = GTK_PANED (self->browse_widgets_hpaned);
+  GtkWidget *sidebar = GTK_WIDGET (self->places_sidebar);
+
+  GtkRevealer *revealer = GTK_REVEALER (gtk_paned_get_start_child (paned));
+
+  gboolean currently_revealed = gtk_revealer_get_reveal_child (revealer);
+
+  if (currently_revealed) {
+    g_object_set_data (G_OBJECT (paned), "old-position",
+                       GINT_TO_POINTER (gtk_paned_get_position (paned)));
+
+    gtk_revealer_set_reveal_child (revealer, FALSE);
+    g_timeout_add (300, (GSourceFunc) hide_complete, paned);
+  } else {
+    gtk_widget_set_visible (GTK_WIDGET (revealer), TRUE);
+    gtk_widget_set_visible (sidebar, TRUE);
+
+    int old_position = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (paned), "old-position"));
+    if (old_position <= 0)
+      old_position = 300;
+
+    gtk_paned_set_position (paned, old_position);
+    gtk_revealer_set_transition_type (revealer, GTK_REVEALER_TRANSITION_TYPE_SLIDE_RIGHT);
+    gtk_revealer_set_reveal_child (revealer, TRUE);
+  }
+
+  gtk_paned_set_resize_start_child (paned, !currently_revealed);
+  gtk_paned_set_shrink_start_child (paned, FALSE);
+
+  gtk_button_set_icon_name (button, "sidebar-show-symbolic");
+}
+
 
 GtkSelectionModel *
 gtk_file_chooser_widget_get_selection_model (GtkFileChooserWidget *chooser)

@@ -13,7 +13,12 @@ gtk4 (4.16.12+ds-1) UNRELEASED; urgency=medium
   * d/libgtk-4-1.symbols.in: Mark more Vulkan symbols as Linux-only
     (Closes: #1088749)
 
- -- Simon McVittie <smcv@debian.org>  Sun, 05 Jan 2025 13:14:44 +0000
+  [ Jeremy Bícha ]
+  * Unicode emoji updates corresponding to the new upstream release:
+    - d/missing-sources: Update emojibase to commit 04b7926
+    - d/missing-sources: Update Unicode data to 16.0
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 05 Jan 2025 13:30:04 +0000
 
 gtk4 (4.16.7+ds-1) unstable; urgency=medium
 

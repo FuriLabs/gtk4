@@ -112,12 +112,13 @@ gsk_pango_renderer_draw_glyph_item (PangoRenderer  *renderer,
 
   get_color (crenderer, PANGO_RENDER_PART_FOREGROUND, &color);
 
-  gtk_snapshot_append_text2 (crenderer->snapshot,
-                             glyph_item->item->analysis.font,
-                             glyph_item->glyphs,
-                             &color,
-                             (float) x / PANGO_SCALE,
-                             (float) y / PANGO_SCALE);
+  if (glyph_item->item->analysis.font)
+    gtk_snapshot_append_text2 (crenderer->snapshot,
+                               glyph_item->item->analysis.font,
+                               glyph_item->glyphs,
+                               &color,
+                               (float) x / PANGO_SCALE,
+                               (float) y / PANGO_SCALE);
 
   gdk_color_finish (&color);
 
@@ -206,6 +207,13 @@ gsk_pango_renderer_draw_error_underline (PangoRenderer *renderer,
   yy = (double)y / PANGO_SCALE;
   ww = (double)width / PANGO_SCALE;
   hh = (double)height / PANGO_SCALE;
+
+  /* Pango sets the height of error underlines to be 3 * underline thickness.
+   * That is appropriate for the traditional zigzag pattern, but our balls
+   * get just too big with that, so scale things down to 1.3 * underline
+   * thickness, which looks good, experimentally.
+   */
+  hh = hh * 1.3 / 3.0;
 
   get_color (crenderer, PANGO_RENDER_PART_UNDERLINE, &color);
 

@@ -2062,10 +2062,11 @@ gtk_label_activate_clipboard_copy (GtkWidget  *widget,
   g_signal_emit_by_name (widget, "copy-clipboard");
 }
 
-static void
+static gboolean
 gtk_label_select_all (GtkLabel *self)
 {
   gtk_label_select_region_index (self, 0, strlen (self->text));
+  return gtk_label_get_selectable (self);
 }
 
 static void
@@ -2823,16 +2824,16 @@ gtk_label_class_init (GtkLabelClass *class)
   add_move_binding (widget_class, GDK_KEY_KP_Left, GDK_ALT_MASK,
                     GTK_MOVEMENT_WORDS, -1);
 
-  add_move_binding (widget_class, GDK_KEY_Right, GDK_ALT_MASK,
+  add_move_binding (widget_class, GDK_KEY_Right, GDK_META_MASK,
                     GTK_MOVEMENT_DISPLAY_LINE_ENDS, 1);
 
-  add_move_binding (widget_class, GDK_KEY_Left, GDK_ALT_MASK,
+  add_move_binding (widget_class, GDK_KEY_Left, GDK_META_MASK,
                     GTK_MOVEMENT_DISPLAY_LINE_ENDS, -1);
 
-  add_move_binding (widget_class, GDK_KEY_KP_Right, GDK_ALT_MASK,
+  add_move_binding (widget_class, GDK_KEY_KP_Right, GDK_META_MASK,
                     GTK_MOVEMENT_DISPLAY_LINE_ENDS, 1);
 
-  add_move_binding (widget_class, GDK_KEY_KP_Left, GDK_ALT_MASK,
+  add_move_binding (widget_class, GDK_KEY_KP_Left, GDK_META_MASK,
                     GTK_MOVEMENT_DISPLAY_LINE_ENDS, -1);
 
   add_move_binding (widget_class, GDK_KEY_Up, GDK_META_MASK,

@@ -962,6 +962,13 @@ activate (GApplication *app)
   GtkFilterListModel *filter_model;
   GtkFilter *filter;
   GSimpleAction *action;
+  GList *list;
+
+  if ((list = gtk_application_get_windows (GTK_APPLICATION (app))) != NULL)
+    {
+      gtk_window_present (GTK_WINDOW (list->data));
+      return;
+    }
 
   builder = gtk_builder_new_from_resource ("/ui/main.ui");
 
@@ -1067,8 +1074,6 @@ command_line (GApplication            *app,
     }
 
   window = gtk_application_get_windows (GTK_APPLICATION (app))->data;
-
-  gtk_window_set_icon_name (GTK_WINDOW (window), "org.gtk.Demo4");
 
   if (name == NULL)
     goto out;

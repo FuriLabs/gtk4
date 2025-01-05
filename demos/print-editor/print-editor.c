@@ -789,16 +789,22 @@ startup (GApplication *app)
 static void
 activate (GApplication *app)
 {
+  GList *list;
   GtkWidget *box;
   GtkWidget *sw;
   GtkWidget *contents;
+
+  if ((list = gtk_application_get_windows (GTK_APPLICATION (app))) != NULL)
+    {
+      gtk_window_present (GTK_WINDOW (list->data));
+      return;
+    }
 
   main_window = gtk_application_window_new (GTK_APPLICATION (app));
 
   if (g_strcmp0 (PROFILE, "devel") == 0)
     gtk_widget_add_css_class (GTK_WIDGET (main_window), "devel");
 
-  gtk_window_set_icon_name (GTK_WINDOW (main_window), "org.gtk.PrintEditor4");
   gtk_window_set_default_size (GTK_WINDOW (main_window), 400, 600);
   gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (main_window), TRUE);
   update_title (GTK_WINDOW (main_window));

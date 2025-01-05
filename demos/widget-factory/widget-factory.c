@@ -2135,6 +2135,7 @@ load_texture_in_thread (GtkWidget  *picture,
 static void
 activate (GApplication *app)
 {
+  GList *list;
   GtkBuilder *builder;
   GtkBuilderScope *scope;
   GtkWindow *window;
@@ -2194,6 +2195,12 @@ activate (GApplication *app)
 
   g_type_ensure (my_text_view_get_type ());
 
+  if ((list = gtk_application_get_windows (GTK_APPLICATION (app))) != NULL)
+    {
+      gtk_window_present (GTK_WINDOW (list->data));
+      return;
+    }
+
   provider = gtk_css_provider_new ();
   gtk_css_provider_load_from_resource (provider, "/org/gtk/WidgetFactory4/widget-factory.css");
   gtk_style_context_add_provider_for_display (gdk_display_get_default (),
@@ -2241,7 +2248,6 @@ activate (GApplication *app)
   if (g_strcmp0 (PROFILE, "devel") == 0)
     gtk_widget_add_css_class (GTK_WIDGET (window), "devel");
 
-  gtk_window_set_icon_name (window, "org.gtk.WidgetFactory4");
   gtk_application_add_window (GTK_APPLICATION (app), window);
   g_action_map_add_action_entries (G_ACTION_MAP (window),
                                    win_entries, G_N_ELEMENTS (win_entries),

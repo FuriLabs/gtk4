@@ -1,6 +1,10 @@
 include:
   - project: 'gnome/citemplates'
     file: 'flatpak/flatpak_ci_initiative.yml'
+  - component:  gitlab.gnome.org/GNOME/citemplates/release-service@master
+    inputs:
+      dist-job-name: "dist-build"
+      tarball-artifact-path: "_build/meson-dist/$CI_PROJECT_NAME-$CI_COMMIT_TAG.tar.xz"
 
 stages:
   - check
@@ -10,6 +14,7 @@ stages:
   - flatpak
   - publish
   - deploy
+  - release
 
 .cache-paths: &cache-paths
   paths:
@@ -83,6 +88,7 @@ style-check-diff:
       - "${CI_PROJECT_DIR}/_build/testsuite/css/output/*/*.syscap"
       - "${CI_PROJECT_DIR}/_build/testsuite/headless/*/*.log"
       - "${CI_PROJECT_DIR}/_build_hello/meson-logs"
+      - "${CI_PROJECT_DIR}/_build/meson-dist/*.tar.xz"
   cache:
     key: "$CI_JOB_NAME"
     paths:
@@ -122,6 +128,7 @@ release-build:
     # don't use catch by default, since it causes sporadic test failures
     # - export PATH="$HOME/.local/bin:${CI_PROJECT_DIR}/_install/bin:$PATH"
     # - .gitlab-ci/install-meson-project.sh --prefix ${CI_PROJECT_DIR}/_install https://gitlab.gnome.org/jadahl/catch.git main
+    - git config --global --add safe.directory $CI_PROJECT_DIR
     - meson subprojects download
     - meson subprojects update --reset
     - meson setup
@@ -138,6 +145,27 @@ release-build:
     - .gitlab-ci/run-tests.sh _build wayland gtk
     # only repeat test runs that are likely affected by test setups
     - .gitlab-ci/run-tests.sh _build wayland_gles2 gtk:gdk,gtk:gsk-gl
+
+dist-build:
+  extends: .build-fedora-default
+  stage: build
+  needs: []
+  variables:
+    EXTRA_MESON_FLAGS: "--buildtype=release"
+  script:
+    - .gitlab-ci/show-info-linux.sh
+    - git config --global --add safe.directory $CI_PROJECT_DIR
+    - meson subprojects download
+    - meson subprojects update --reset
+    - meson setup
+            --prefix=${CI_PROJECT_DIR}/_install
+            ${COMMON_MESON_FLAGS}
+            ${EXTRA_MESON_FLAGS}
+            ${BACKEND_FLAGS}
+            ${FEATURE_FLAGS}
+            _build
+    - meson compile -C _build
+    - meson dist -C _build --include-subprojects --no-tests
 
 fedora-clang:
   extends: .build-fedora-default
@@ -486,4 +514,5 @@ publish-docs:
     - "curl -X POST -F token=${PAGES_TRIGGER_TOKEN} -F ref=docs-gtk-org https://gitlab.gnome.org/api/v4/projects/665/trigger/pipeline"
   rules:
     - if: $CI_COMMIT_REF_NAME == "main"
+
 

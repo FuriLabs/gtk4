@@ -1,3 +1,67 @@
+Overview of Changes in 4.16.12, 03-01-2025
+==========================================
+
+Switch to the new release process
+
+
+Overview of Changes in 4.16.8, 03-01-2025
+=========================================
+
+* GtkFileChooser:
+ - Fix a focus problem with the server entry
+
+* GtkEmojiChooser:
+ - Update to CLDR 46 / Unicode 16
+
+* GtkAboutDialog:
+ - Small improvements
+
+* Wayland:
+ - Fix some Vulkan sizing corner cases
+ - Fix problems with rotated, offloaded images
+ - Fix a few crashes
+
+* Demos:
+ - Don't create extra windows for D-Bus activation
+
+
+Overview of Changes in 4.16.7, 23-11-2024
+=========================================
+
+* Text:
+ - Reduce the size of error underlines
+
+* Accessibility:
+ - Fix a wrong return value type
+ - Fix an invalid free call
+
+
+Overview of Changes in 4.16.6, 20-11-2024
+=========================================
+
+To prevent issues when using GTK under kwin, this release
+makes Wayland color management opt-in. To experiment with
+it, set GDK_DEBUG=color-mgmt.
+
+* GtkText:
+ - Don't select inserted Emoji
+
+* GtkApplication:
+ - Set the default window icon from the app ID
+
+* GtkFontChooser:
+ - Make the dialog more shrinkable
+
+* macOS:
+ - Use correct modifier keys for GtkTextView and GtkLabel
+   shortcuts
+
+* Translation updates
+ Icelandic
+ Serbian
+ Serbian (Latin)
+
+
 Overview of Changes in 4.16.5, 01-11-2024
 =========================================
 

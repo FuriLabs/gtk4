@@ -1,4 +1,4 @@
-gtk4 (4.16.12+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.16.12+ds-1) unstable; urgency=medium
 
   [ Simon McVittie ]
   * New upstream stable release
@@ -23,7 +23,7 @@ gtk4 (4.16.12+ds-1) UNRELEASED; urgency=medium
     - d/missing-sources: Update emojibase to commit 04b7926
     - d/missing-sources: Update Unicode data to 16.0
 
- -- Simon McVittie <smcv@debian.org>  Sun, 05 Jan 2025 13:30:04 +0000
+ -- Simon McVittie <smcv@debian.org>  Mon, 06 Jan 2025 17:37:42 +0000
 
 gtk4 (4.16.7+ds-1) unstable; urgency=medium
 

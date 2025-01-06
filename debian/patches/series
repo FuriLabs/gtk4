@@ -1,3 +1,5 @@
+Update-Russian-translation.patch
+transform-Normalize-angles-before-the-0-check.patch
 testsuite-If-validation-result-is-not-as-expected-log-the.patch
 workarounds/testsuite-tools-validate-Use-softpipe-driver-for-validate.patch
 debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch

@@ -2,12 +2,16 @@ gtk4 (4.16.12+ds-1) UNRELEASED; urgency=medium
 
   [ Simon McVittie ]
   * New upstream stable release
+  * d/patches: Refresh patch series (no functional changes)
+  * d/patches: Update to upstream gtk-4-16 branch commit
+    4.16.12-4-g0631748538
+    - Fix FTBFS caused by a unit test failure
+    - Translation updates: ru
   * d/rules: Make it more obvious that we're intentionally using gcc
     from the build architecture to build debian/convert-emoji
   * d/upstream/metadata: Canonicalize order
   * d/upstream/metadata: Update links to Changelog, FAQ
   * d/upstream/metadata: Add links to Documentation, Security-Contact
-  * d/patches: Refresh patch series (no functional changes)
 
   [ Samuel Thibault ]
   * d/libgtk-4-1.symbols.in: Mark more Vulkan symbols as Linux-only

@@ -1,0 +1,88 @@
+From: Benjamin Otte <otte@redhat.com>
+Date: Wed, 4 Dec 2024 20:42:07 +0100
+Subject: transform: Normalize angles before the 0 check
+
+Otherwise we might end up with 0 degree rotations and our code assumes
+that this never happens.
+
+In particular it returns NULL from inverting and that's an error
+condition.
+
+Tests included.
+
+(cherry picked from commit 2f38de0ad980db1f9103e683fa783d2eeb30ea9f)
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/7245
+Origin: upstream, 4.16.13, commit:d8821d43c8cf739c5fcb7d07af166f63d1934e5a
+---
+ gsk/gsktransform.c        | 12 +++++++-----
+ testsuite/gsk/transform.c | 12 ++++++++++++
+ 2 files changed, 19 insertions(+), 5 deletions(-)
+
+diff --git a/gsk/gsktransform.c b/gsk/gsktransform.c
+index 900472b..071987b 100644
+--- a/gsk/gsktransform.c
++++ b/gsk/gsktransform.c
+@@ -1003,6 +1003,7 @@ gsk_transform_rotate (GskTransform *next,
+ {
+   GskRotateTransform *result;
+ 
++  angle = normalize_angle (angle);
+   if (angle == 0.0f)
+     return next;
+ 
+@@ -1019,7 +1020,7 @@ gsk_transform_rotate (GskTransform *next,
+                                                     : GSK_FINE_TRANSFORM_CATEGORY_2D_DIHEDRAL,
+                                 next);
+ 
+-  result->angle = normalize_angle (angle);
++  result->angle = angle;
+ 
+   return &result->parent;
+ }
+@@ -1137,17 +1138,18 @@ gsk_transform_rotate_3d (GskTransform          *next,
+ {
+   GskRotate3dTransform *result;
+ 
+-  if (graphene_vec3_get_x (axis) == 0.0 && graphene_vec3_get_y (axis) == 0.0)
+-    return gsk_transform_rotate (next, angle);
+-
++  angle = normalize_angle (angle);
+   if (angle == 0.0f)
+     return next;
+ 
++  if (graphene_vec3_get_x (axis) == 0.0 && graphene_vec3_get_y (axis) == 0.0)
++    return gsk_transform_rotate (next, angle);
++
+   result = gsk_transform_alloc (&GSK_ROTATE3D_TRANSFORM_CLASS,
+                                 GSK_FINE_TRANSFORM_CATEGORY_3D,
+                                 next);
+ 
+-  result->angle = normalize_angle (angle);
++  result->angle = angle;
+   graphene_vec3_init_from_vec3 (&result->axis, axis);
+ 
+   return &result->parent;
+diff --git a/testsuite/gsk/transform.c b/testsuite/gsk/transform.c
+index 24c0643..465fccc 100644
+--- a/testsuite/gsk/transform.c
++++ b/testsuite/gsk/transform.c
+@@ -879,6 +879,18 @@ test_rotate_transform (void)
+   gsk_transform_unref (t1);
+   gsk_transform_unref (t2);
+   gsk_transform_unref (t3);
++
++  t1 = gsk_transform_rotate (NULL, 180);
++  g_assert_true (gsk_transform_get_category (t1) == GSK_TRANSFORM_CATEGORY_2D);
++  t1 = gsk_transform_rotate (t1, 180);
++  g_assert_true (gsk_transform_get_category (t1) == GSK_TRANSFORM_CATEGORY_IDENTITY);
++  g_assert_null (t1);
++
++  t1 = gsk_transform_rotate (NULL, 360);
++  g_assert_null (t1);
++
++  t1 = gsk_transform_rotate (NULL, -360);
++  g_assert_null (t1);
+ }
+ 
+ static void

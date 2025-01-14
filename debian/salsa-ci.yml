@@ -1,0 +1,7 @@
+---
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/recipes/debian.yml
+
+variables:
+  # If we do a full build, we exceed Salsa's log size limit
+  DEB_BUILD_PROFILES: noudeb

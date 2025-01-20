@@ -18,6 +18,6 @@ workarounds/testsuite-skip-color-mix.patch
 workarounds/gtkcssnumbervalue-Don-t-use-fesetround-on-ARM-softfloat.patch
 workarounds/scaling-test-Skip-floating-point-pixel-formats-with-Cairo.patch
 workarounds/scaling-test-Skip-floating-point-texture-tests-on-softpip.patch
-workarounds/memorytexture-test-Ignore-failures-with-FP-softpipe-ngl-o.patch
+workarounds/memorytexture-test-Ignore-failures-with-FP.patch
 debian/gsk-Change-default-renderer-back-to-ngl.patch
 debian/png-handle-cICP-chunk-via-libpng-API.patch

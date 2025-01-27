@@ -1,3 +1,10 @@
+gtk4 (4.16.3+ds-0ubuntu2) oracular; urgency=medium
+
+  * missing-sources: Update emojibase to match what was done in gtk 4.16.8
+    to update the emoji chooser for Unicode 16 (LP: #2096803)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 27 Jan 2025 16:59:17 -0500
+
 gtk4 (4.16.3+ds-0ubuntu1) oracular; urgency=medium
 
   * New upstream release (LP: #2083714)

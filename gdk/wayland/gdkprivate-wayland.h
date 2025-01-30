@@ -195,8 +195,6 @@ GList *gdk_wayland_display_get_toplevel_surfaces (GdkDisplay *display);
 
 int gdk_wayland_display_get_output_refresh_rate (GdkWaylandDisplay *display_wayland,
                                                  struct wl_output  *output);
-guint32 gdk_wayland_display_get_output_scale (GdkWaylandDisplay *display_wayland,
-                                              struct wl_output  *output);
 GdkMonitor *gdk_wayland_display_get_monitor_for_output (GdkDisplay       *display,
                                                         struct wl_output *output);
 
@@ -221,8 +219,6 @@ void gdk_wayland_surface_inhibit_shortcuts (GdkSurface *surface,
                                            GdkSeat   *gdk_seat);
 void gdk_wayland_surface_restore_shortcuts (GdkSurface *surface,
                                            GdkSeat   *gdk_seat);
-
-void gdk_wayland_surface_update_scale (GdkSurface *surface);
 
 GdkModifierType gdk_wayland_keymap_get_gdk_modifiers (GdkKeymap *keymap,
                                                       guint32    mods);

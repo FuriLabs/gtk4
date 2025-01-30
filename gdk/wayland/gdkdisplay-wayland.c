@@ -2361,25 +2361,6 @@ subpixel_to_string (int layout)
 }
 
 static void
-update_scale (GdkDisplay *display)
-{
-  GList *seats;
-  GList *l;
-
-  g_list_foreach (gdk_wayland_display_get_toplevel_surfaces (display),
-                  (GFunc)gdk_wayland_surface_update_scale,
-                  NULL);
-  seats = gdk_display_list_seats (display);
-  for (l = seats; l; l = l->next)
-    {
-      GdkSeat *seat = l->data;
-
-      gdk_wayland_seat_update_cursor_scale (GDK_WAYLAND_SEAT (seat));
-    }
-  g_list_free (seats);
-}
-
-static void
 gdk_wayland_display_init_xdg_output (GdkWaylandDisplay *self)
 {
   guint i, n;
@@ -2475,8 +2456,6 @@ apply_monitor_change (GdkWaylandMonitor *monitor)
 
   monitor->wl_output_done = FALSE;
   monitor->xdg_output_done = FALSE;
-
-  update_scale (GDK_MONITOR (monitor)->display);
 }
 
 static void
@@ -2751,7 +2730,6 @@ gdk_wayland_display_remove_output (GdkWaylandDisplay *self,
         {
           g_list_store_remove (self->monitors, i);
           gdk_monitor_invalidate (GDK_MONITOR (monitor));
-          update_scale (GDK_DISPLAY (self));
           g_object_unref (monitor);
           break;
         }
@@ -2769,19 +2747,6 @@ gdk_wayland_display_get_output_refresh_rate (GdkWaylandDisplay *display_wayland,
   monitor = get_monitor_for_output (display_wayland, output);
   if (monitor != NULL)
     return gdk_monitor_get_refresh_rate (GDK_MONITOR (monitor));
-
-  return 0;
-}
-
-guint32
-gdk_wayland_display_get_output_scale (GdkWaylandDisplay *display_wayland,
-				      struct wl_output  *output)
-{
-  GdkWaylandMonitor *monitor;
-
-  monitor = get_monitor_for_output (display_wayland, output);
-  if (monitor != NULL)
-    return gdk_monitor_get_scale_factor (GDK_MONITOR (monitor));
 
   return 0;
 }

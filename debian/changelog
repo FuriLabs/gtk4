@@ -1,3 +1,16 @@
+gtk4 (4.17.1+ds-3) UNRELEASED; urgency=medium
+
+  [ Jeremy Bícha ]
+  * Remove obsolete Breaks/Replaces
+
+  [ Alessandro Astone ]
+  * Add proposed patch to fix compatibility with libpng-1.6.45
+    (Closes: #1093335)
+  * debian: Allow using vulkan in tests
+  * Update memorytexture tests patch for 4.17, and include more cases
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 30 Jan 2025 14:21:19 -0500
+
 gtk4 (4.17.1+ds-2) experimental; urgency=medium
 
   * Fix typo in Breaks field

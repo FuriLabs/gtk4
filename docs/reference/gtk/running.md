@@ -27,10 +27,16 @@ print out different types of debugging information.
 : Actions and menu models
 
 `builder`
-: GtkBuilder support
+: Deprecated GtkBuilder features
+
+`builder-trace`
+: Trace GtkBuilder operation
 
 `builder-objects`
 : Unused GtkBuilder objects
+
+`css`
+: Deprecated CSS features
 
 `geometry`
 : Size allocation
@@ -231,9 +237,6 @@ A number of options affect behavior instead of logging:
 
 `gl-prefer-gl`
 : Prefer OpenGL over OpenGL ES. This was the default behavior before GTK 4.14.
-
-`vulkan-validate`
-: Load the Vulkan validation layer, if available
 
 `default-settings`
 : Force default values for xsettings
@@ -525,6 +528,9 @@ library you are using:
 
 `atspi`
 : Selects the AT-SPI accessibility backend
+
+`accesskit`
+: Selects the AccessKit accessibility backend
 
 `test`
 : Selects the test backend

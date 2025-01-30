@@ -106,6 +106,7 @@
 #include "gtkbuttonprivate.h"
 #include "gtknative.h"
 #include "gtkwindow.h"
+#include "gtkbuilderprivate.h"
 
 typedef struct _GtkMenuButtonClass   GtkMenuButtonClass;
 typedef struct _GtkMenuButtonPrivate GtkMenuButtonPrivate;
@@ -700,9 +701,14 @@ gtk_menu_button_buildable_add_child (GtkBuildable *buildable,
                                      const char   *type)
 {
   if (GTK_IS_WIDGET (child))
-    gtk_menu_button_set_child (GTK_MENU_BUTTON (buildable), GTK_WIDGET (child));
+    {
+      gtk_buildable_child_deprecation_warning (buildable, builder, NULL, "child");
+      gtk_menu_button_set_child (GTK_MENU_BUTTON (buildable), GTK_WIDGET (child));
+    }
   else
-    parent_buildable_iface->add_child (buildable, builder, child, type);
+    {
+      parent_buildable_iface->add_child (buildable, builder, child, type);
+    }
 }
 
 static void
@@ -739,15 +745,15 @@ update_sensitivity (GtkMenuButton *self)
 
   gtk_widget_set_sensitive (self->button, has_popup);
 
-  gtk_accessible_update_property (GTK_ACCESSIBLE (self),
+  gtk_accessible_update_property (GTK_ACCESSIBLE (self->button),
                                   GTK_ACCESSIBLE_PROPERTY_HAS_POPUP, has_popup,
                                   -1);
   if (self->popover != NULL)
-    gtk_accessible_update_relation (GTK_ACCESSIBLE (self),
+    gtk_accessible_update_relation (GTK_ACCESSIBLE (self->button),
                                     GTK_ACCESSIBLE_RELATION_CONTROLS, self->popover, NULL,
                                     -1);
   else
-    gtk_accessible_reset_relation (GTK_ACCESSIBLE (self),
+    gtk_accessible_reset_relation (GTK_ACCESSIBLE (self->button),
                                    GTK_ACCESSIBLE_RELATION_CONTROLS);
 }
 

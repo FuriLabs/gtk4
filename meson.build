@@ -1,20 +1,26 @@
 project('gtk', 'c',
-        version: '4.17.1',
+        version: '4.17.3',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
           # We only need c99, but glib needs GNU-specific features
           # https://github.com/mesonbuild/meson/issues/2289
-          'c_std=gnu99',
+          'c_std=gnu11',
+          'cpp_std=c++11',
         ],
         meson_version : '>= 1.2.0',
         license: 'LGPL-2.1-or-later')
 
+glib_major_req = 2
+glib_minor_req = 80
+
+pango_major_req = 1
+pango_minor_req = 56
+
 # keep these numbers in sync with wrap files where there exist
-glib_req           = '>= 2.76.0'
-introspection_req  = '>= 1.76.0' # keep this in sync with glib
-pango_req          = '>= 1.52.0' # keep this in sync with .gitlab-ci/test-msys.sh
-harfbuzz_req       = '>= 2.6.0'
+glib_req           = '>= @0@.@1@'.format(glib_major_req, glib_minor_req)
+pango_req          = '>= @0@.@1@'.format(pango_major_req, pango_minor_req)
+harfbuzz_req       = '>= 8.4.0'
 fribidi_req        = '>= 1.0.6'
 cairo_req          = '>= 1.18.0'
 gdk_pixbuf_req     = '>= 2.30.0'
@@ -32,8 +38,15 @@ fs = import('fs')
 gnome = import('gnome')
 pkg_config = import('pkgconfig')
 
-add_project_arguments('-DG_LOG_USE_STRUCTURED=1', language: 'c')
-add_project_arguments('-DGLIB_DISABLE_DEPRECATION_WARNINGS', language: 'c')
+add_project_arguments([
+    '-DG_LOG_USE_STRUCTURED=1',
+    '-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_@0@_@1@'.format(glib_major_req, glib_minor_req),
+    '-DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_@0@_@1@'.format(glib_major_req, glib_minor_req),
+    '-DPANGO_VERSION_MIN_REQUIRED=G_ENCODE_VERSION(@0@,@1@)'.format(pango_major_req, pango_minor_req),
+    '-DPANGO_VERSION_MAX_ALLOWED=G_ENCODE_VERSION(@0@,@1@)'.format(pango_major_req, pango_minor_req),
+  ],
+  language: 'c'
+)
 
 # Making releases:
 #  1. new development cycle:
@@ -177,27 +190,13 @@ cdata.set_quoted('GTK_SYSCONFDIR', gtk_sysconfdir)
 cdata.set_quoted('GETTEXT_PACKAGE', 'gtk40')
 
 check_headers = [
-  'crt/externs.h',
   'dev/evdev/input.h',
-  'dlfcn.h',
   'ftw.h',
-  'inttypes.h',
   'linux/input.h',
   'linux/memfd.h',
-  'locale.h',
-  'memory.h',
-  'stdint.h',
-  'stdlib.h',
-  'string.h',
-  'strings.h',
   'sys/mman.h',
-  'sys/param.h',
-  'sys/stat.h',
-  'sys/sysinfo.h',
   'sys/sysmacros.h',
-  'sys/systeminfo.h',
   'sys/time.h',
-  'sys/types.h',
   'unistd.h',
 ]
 
@@ -446,9 +445,6 @@ xkbdep            = dependency('xkbcommon', version: xkbcommon_req, required: wa
 graphene_dep      = dependency('graphene-gobject-1.0', version: graphene_req,
                                default_options: ['tests=false', 'gobject_types=true'])
 iso_codes_dep     = dependency('iso-codes', required: false)
-gi_dep            = dependency('gobject-introspection-1.0', version: introspection_req,
-                               required: get_option('introspection').enabled() and
-                                         get_option('build-tests'))
 gstplayer_dep     = dependency('gstreamer-player-1.0', version: gstreamer_req,
                                required: get_option('media-gstreamer'),
                                default_options: [
@@ -687,6 +683,10 @@ cloudproviders_dep = dependency('cloudproviders',
   ])
 cdata.set('HAVE_CLOUDPROVIDERS', cloudproviders_dep.found())
 
+accesskit_dep = dependency('accesskit-c-0.14', required: get_option('accesskit').enabled())
+
+cdata.set('HAVE_ACCESSKIT', accesskit_dep.found())
+
 # libsysprof-capture support
 if not get_option('sysprof').disabled()
   libsysprof_capture_dep = dependency('sysprof-capture-4', version: sysprof_req,
@@ -849,10 +849,12 @@ subdir('gdk')
 subdir('gsk')
 subdir('gtk')
 subdir('modules')
+subdir('tools')
+subdir('po')
+subdir('docs/reference')
 if get_option('build-demos')
   subdir('demos')
 endif
-subdir('tools')
 if get_option('build-tests')
   subdir('tests')
 endif
@@ -948,9 +950,6 @@ if os_unix
   meson.override_dependency('gtk4-unix-print', libgtk_dep)
 endif
 
-subdir('po')
-
-subdir('docs/reference')
 
 devenv = environment()
 devenv.set('GTK_PATH', meson.current_build_dir() / 'modules')
@@ -989,6 +988,7 @@ summary('Cloud support', cloudproviders_dep.found(), section: 'Features')
 summary('Sysprof support', libsysprof_capture_dep.found(), section: 'Features')
 summary('Colord support', colord_dep.found(), section: 'Features')
 summary('Tracker support', tracker3_dep.found(), section: 'Features')
+summary('AccessKit support', accesskit_dep.found(), section: 'Features')
 
 summary('Compiler', cc.get_id(), section: 'Toolchain')
 summary('Linker', cc.get_linker_id(), section: 'Toolchain')

@@ -450,6 +450,14 @@ gdk_wayland_surface_commit (GdkSurface *surface)
 }
 
 void
+gdk_wayland_surface_force_next_commit (GdkSurface *surface)
+{
+  GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (surface);
+
+  impl->has_pending_subsurface_commits = TRUE;
+}
+
+void
 gdk_wayland_surface_notify_committed (GdkSurface *surface)
 {
   GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (surface);
@@ -479,43 +487,6 @@ on_frame_clock_after_paint (GdkFrameClock *clock,
       impl->awaiting_frame_frozen = TRUE;
       gdk_surface_freeze_updates (surface);
     }
-}
-
-void
-gdk_wayland_surface_update_scale (GdkSurface *surface)
-{
-  GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (surface);
-  GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (gdk_surface_get_display (surface));
-  guint32 scale;
-  GSList *l;
-
-  /* We can't set the scale on this surface */
-  if (!impl->display_server.wl_surface ||
-      wl_surface_get_version (impl->display_server.wl_surface) < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
-    return;
-
-  /* scale is tracked by the fractional scale extension */
-  if (impl->display_server.fractional_scale)
-    return;
-
-  if (!impl->display_server.outputs)
-    return;
-
-  scale = 1;
-  for (l = impl->display_server.outputs; l != NULL; l = l->next)
-    {
-      struct wl_output *output = l->data;
-      uint32_t output_scale;
-
-      output_scale = gdk_wayland_display_get_output_scale (display_wayland,
-                                                           output);
-      scale = MAX (scale, output_scale);
-    }
-
-  /* Notify app that scale changed */
-  gdk_wayland_surface_update_size (surface,
-                                   surface->width, surface->height,
-                                   &GDK_FRACTIONAL_SCALE_INIT_INT (scale));
 }
 
 void
@@ -831,7 +802,7 @@ gdk_wayland_surface_fractional_scale_preferred_scale_cb (void *data,
 {
   GdkWaylandSurface *self = GDK_WAYLAND_SURFACE (data);
   GdkSurface *surface = GDK_SURFACE (self);
-  
+
   /* Notify app that scale changed */
   gdk_wayland_surface_update_size (surface,
                                    surface->width, surface->height,
@@ -862,8 +833,6 @@ surface_enter (void              *data,
 
   impl->display_server.outputs = g_slist_prepend (impl->display_server.outputs, output);
 
-  gdk_wayland_surface_update_scale (surface);
-
   monitor = gdk_wayland_display_get_monitor_for_output (display, output);
   gdk_surface_enter_monitor (surface, monitor);
 }
@@ -883,9 +852,6 @@ surface_leave (void              *data,
 
   impl->display_server.outputs = g_slist_remove (impl->display_server.outputs, output);
 
-  if (impl->display_server.outputs)
-    gdk_wayland_surface_update_scale (surface);
-
   monitor = gdk_wayland_display_get_monitor_for_output (display, output);
   gdk_surface_leave_monitor (surface, monitor);
 }
@@ -896,10 +862,19 @@ surface_preferred_buffer_scale (void              *data,
                                 int32_t            factor)
 {
   GdkSurface *surface = GDK_SURFACE (data);
+  GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (surface);
 
   GDK_DISPLAY_DEBUG (gdk_surface_get_display (surface), EVENTS,
                      "preferred buffer scale, surface %p scale %d",
                      surface, factor);
+
+  if (impl->display_server.fractional_scale != NULL)
+    return;
+
+  /* Notify app that scale changed */
+  gdk_wayland_surface_update_size (surface,
+                                   surface->width, surface->height,
+                                   &GDK_FRACTIONAL_SCALE_INIT_INT (factor));
 }
 
 static void
@@ -978,28 +953,14 @@ gdk_wayland_surface_constructed (GObject *object)
   GdkDisplay *display = gdk_surface_get_display (surface);
   GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (display);
   GdkFrameClock *frame_clock = gdk_surface_get_frame_clock (surface);
+  int scale_factor = gdk_display_guess_scale_factor (display);
 
   self->event_queue = wl_display_create_queue (display_wayland->wl_display);
   display_wayland->event_queues = g_list_prepend (display_wayland->event_queues,
                                                   self->event_queue);
 
-  /* More likely to be right than just assuming 1 */
-  if (wl_compositor_get_version (display_wayland->compositor) >= WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
-    {
-      GdkMonitor *monitor = g_list_model_get_item (gdk_display_get_monitors (display), 0);
-      if (monitor)
-        {
-          guint32 monitor_scale = gdk_monitor_get_scale_factor (monitor);
-
-          if (monitor_scale != 1)
-            {
-              self->scale = GDK_FRACTIONAL_SCALE_INIT_INT (monitor_scale);
-              self->buffer_scale_dirty = TRUE;
-            }
-
-          g_object_unref (monitor);
-        }
-    }
+  self->scale = GDK_FRACTIONAL_SCALE_INIT_INT (scale_factor);
+  self->buffer_scale_dirty = scale_factor != 1;
 
   gdk_wayland_surface_create_wl_surface (surface);
 

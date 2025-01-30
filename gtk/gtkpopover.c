@@ -134,6 +134,7 @@
 #include "gtkrenderbackgroundprivate.h"
 #include "gtkshortcutmanager.h"
 #include "gtkbuildable.h"
+#include "gtkbuilderprivate.h"
 #include "gtktooltipprivate.h"
 #include "gtkcssboxesimplprivate.h"
 #include "gtknativeprivate.h"
@@ -166,7 +167,6 @@ typedef struct {
   gboolean autohide;
   gboolean has_arrow;
   gboolean mnemonics_visible;
-  gboolean disable_auto_mnemonics;
   gboolean cascade_popdown;
 
   int x_offset;
@@ -796,10 +796,6 @@ static void
 gtk_popover_focus_in (GtkWidget *widget)
 {
   GtkPopover *popover = GTK_POPOVER (widget);
-  GtkPopoverPrivate *priv = gtk_popover_get_instance_private (popover);
-
-  if (priv->disable_auto_mnemonics)
-    return;
 
   if (gtk_widget_get_visible (widget))
     {
@@ -812,10 +808,6 @@ static void
 gtk_popover_focus_out (GtkWidget *widget)
 {
   GtkPopover *popover = GTK_POPOVER (widget);
-  GtkPopoverPrivate *priv = gtk_popover_get_instance_private (popover);
-
-  if (priv->disable_auto_mnemonics)
-    return;
 
   gtk_popover_set_mnemonics_visible (popover, FALSE);
 }
@@ -826,11 +818,6 @@ update_mnemonics_visible (GtkPopover      *popover,
                           GdkModifierType  state,
                           gboolean         visible)
 {
-  GtkPopoverPrivate *priv = gtk_popover_get_instance_private (popover);
-
-  if (priv->disable_auto_mnemonics)
-    return;
-
   if ((keyval == GDK_KEY_Alt_L || keyval == GDK_KEY_Alt_R) &&
       ((state & (gtk_accelerator_get_default_mod_mask ()) & ~(GDK_ALT_MASK)) == 0))
     {
@@ -2151,9 +2138,14 @@ gtk_popover_buildable_add_child (GtkBuildable *buildable,
                                  const char   *type)
 {
   if (GTK_IS_WIDGET (child))
-    gtk_popover_set_child (GTK_POPOVER (buildable), GTK_WIDGET (child));
+    {
+      gtk_buildable_child_deprecation_warning (buildable, builder, NULL, "child");
+      gtk_popover_set_child (GTK_POPOVER (buildable), GTK_WIDGET (child));
+    }
   else
-    parent_buildable_iface->add_child (buildable, builder, child, type);
+    {
+      parent_buildable_iface->add_child (buildable, builder, child, type);
+    }
 }
 
 static void
@@ -2518,14 +2510,6 @@ gtk_popover_get_mnemonics_visible (GtkPopover *popover)
   g_return_val_if_fail (GTK_IS_POPOVER (popover), FALSE);
 
   return priv->mnemonics_visible;
-}
-
-void
-gtk_popover_disable_auto_mnemonics (GtkPopover *popover)
-{
-  GtkPopoverPrivate *priv = gtk_popover_get_instance_private (popover);
-
-  priv->disable_auto_mnemonics = TRUE;
 }
 
 /**

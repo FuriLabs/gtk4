@@ -1974,6 +1974,18 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                        "paste-clipboard",
                                        NULL);
 #endif
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_Cut, GDK_NO_MODIFIER_MASK,
+                                       "cut-clipboard",
+                                       NULL);
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_Copy, GDK_NO_MODIFIER_MASK,
+                                       "copy-clipboard",
+                                       NULL);
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_Paste, GDK_NO_MODIFIER_MASK,
+                                       "paste-clipboard",
+                                       NULL);
 
   /* Undo/Redo */
 #ifdef __APPLE__
@@ -1994,6 +2006,12 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
                                        GDK_KEY_z, GDK_CONTROL_MASK | GDK_SHIFT_MASK,
                                        "text.redo", NULL);
 #endif
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_Undo, GDK_NO_MODIFIER_MASK,
+                                       "text.undo", NULL);
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_Redo, GDK_NO_MODIFIER_MASK,
+                                       "text.redo", NULL);
 
   /* Overwrite */
   gtk_widget_class_add_binding_signal (widget_class,
@@ -2193,7 +2211,6 @@ gtk_text_view_init (GtkTextView *text_view)
 
   gtk_accessible_update_property (GTK_ACCESSIBLE (widget),
                                   GTK_ACCESSIBLE_PROPERTY_MULTI_LINE, TRUE,
-                                  GTK_ACCESSIBLE_PROPERTY_HAS_POPUP, TRUE,
                                   -1);
 }
 
@@ -2302,6 +2319,10 @@ gtk_text_view_set_buffer (GtkTextView   *text_view,
 
   if (old_buffer != NULL)
     {
+      gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (text_view),
+                                           GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_REMOVE,
+                                           0, gtk_text_buffer_get_char_count (old_buffer));
+
       while (priv->anchored_children.length)
         {
           AnchoredChild *ac = g_queue_peek_head (&priv->anchored_children);
@@ -2406,6 +2427,10 @@ gtk_text_view_set_buffer (GtkTextView   *text_view,
 
       gtk_widget_action_set_enabled (GTK_WIDGET (text_view), "text.undo", can_undo);
       gtk_widget_action_set_enabled (GTK_WIDGET (text_view), "text.redo", can_redo);
+
+      gtk_accessible_text_update_contents (GTK_ACCESSIBLE_TEXT (text_view),
+                                           GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_INSERT,
+                                           0, gtk_text_buffer_get_char_count (buffer));
     }
 
   if (old_buffer)
@@ -8249,6 +8274,15 @@ gtk_text_view_ensure_layout (GtkTextView *text_view)
           /* ac may now be invalid! */
         }
     }
+}
+
+GtkTextLayout *
+gtk_text_view_get_layout (GtkTextView *text_view)
+{
+  GtkTextViewPrivate *priv = text_view->priv;
+
+  gtk_text_view_ensure_layout (text_view);
+  return priv->layout;
 }
 
 GtkTextAttributes*

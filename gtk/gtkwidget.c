@@ -71,7 +71,11 @@
 #include "gtktestatcontextprivate.h"
 
 #include "inspector/window.h"
+#ifdef HAVE_ACCESSKIT
+#include "a11y/gtkaccesskitcontextprivate.h"
+#endif
 
+#include "gdk/gdkdisplayprivate.h"
 #include "gdk/gdkeventsprivate.h"
 #include "gdk/gdkprofilerprivate.h"
 #include "gdk/gdkmonitorprivate.h"
@@ -3836,35 +3840,32 @@ gtk_widget_adjust_size_allocation (GtkWidget     *widget,
                                    int           *baseline)
 {
   GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
-  int natural_width, natural_height, nat_baseline;
+  GtkSizeRequestMode request_mode;
+  GtkAlign effective_halign;
+  int natural_width = -1, natural_height = -1, nat_baseline = -1;
   int min_width, min_height;
+  int outer_width, outer_height;
 
-  if (priv->halign == GTK_ALIGN_FILL && priv->valign == GTK_ALIGN_FILL)
+  if (priv->halign == GTK_ALIGN_FILL &&
+      (priv->valign == GTK_ALIGN_FILL || priv->valign == GTK_ALIGN_BASELINE_FILL))
     goto out;
 
   /* Note that adjust_for_align removes any margins from the
    * allocated sizes and possibly limits them to the natural sizes
    */
 
-  if (priv->halign == GTK_ALIGN_FILL ||
-      (priv->valign != GTK_ALIGN_FILL &&
-       gtk_widget_get_request_mode (widget) == GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH))
+  request_mode = gtk_widget_get_request_mode (widget);
+  outer_width = allocation->width + priv->margin.left + priv->margin.right;
+  outer_height = allocation->height + priv->margin.top + priv->margin.bottom;
+  effective_halign = effective_align (priv->halign, _gtk_widget_get_direction (widget));
+
+  if (priv->halign == GTK_ALIGN_FILL)
     {
-      gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
-                          allocation->height + priv->margin.top + priv->margin.bottom,
-                          &min_width, NULL, NULL, NULL);
-      gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
-                          -1,
-                          NULL, &natural_width, NULL, NULL);
-      natural_width = MAX (min_width, natural_width);
-      adjust_for_align (effective_align (priv->halign, _gtk_widget_get_direction (widget)),
-                        natural_width - priv->margin.left - priv->margin.right,
-                        &allocation->x,
-                        &allocation->width,
-                        -1, baseline);
       gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL,
-                          allocation->width + priv->margin.left + priv->margin.right,
-                          NULL, &natural_height, NULL, &nat_baseline);
+                          outer_width,
+                          NULL, &natural_height,
+                          NULL, &nat_baseline);
+
       adjust_for_align (priv->valign,
                         natural_height - priv->margin.top - priv->margin.bottom,
                         &allocation->y,
@@ -3872,25 +3873,110 @@ gtk_widget_adjust_size_allocation (GtkWidget     *widget,
                         nat_baseline > -1 ? nat_baseline - priv->margin.top : -1,
                         baseline);
     }
-  else
+  else if (priv->valign == GTK_ALIGN_FILL ||
+           priv->valign == GTK_ALIGN_BASELINE_FILL)
     {
-      gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL,
-                          allocation->width + priv->margin.left + priv->margin.right,
-                          &min_height, NULL, NULL, NULL);
-      gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL,
+      gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
+                          outer_height,
+                          NULL, &natural_width, NULL, NULL);
+
+      adjust_for_align (effective_halign,
+                        natural_width - priv->margin.left - priv->margin.right,
+                        &allocation->x,
+                        &allocation->width,
+                        -1, NULL);
+    }
+  /* Otherwise, both halign and valign are non-fill */
+  else if (request_mode == GTK_SIZE_REQUEST_CONSTANT_SIZE ||
+           request_mode == GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH)
+    {
+      gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
                           -1,
-                          NULL, &natural_height, NULL, &nat_baseline);
-      natural_height = MAX (min_height, natural_height);
+                          NULL, &natural_width, NULL, NULL);
+
+      if (natural_width < outer_width)
+        {
+          /* See if the widget got allocated enough vertical space
+           * for its natural width.
+           */
+          gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL,
+                              natural_width,
+                              &min_height, &natural_height,
+                              NULL, &nat_baseline);
+          if (min_height > outer_height)
+            {
+              /* Slow path: measure the widget width-for-height to find
+               * out how much we can shrink it horizontally.
+               */
+              gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
+                                  outer_height,
+                                  NULL, &natural_width, NULL, NULL);
+              /* We'll re-measure for this new width */
+              natural_height = -1;
+            }
+
+          adjust_for_align (effective_halign,
+                            natural_width - priv->margin.left - priv->margin.right,
+                            &allocation->x,
+                            &allocation->width,
+                            -1, NULL);
+        }
+
+      if (natural_height == -1)
+        gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL,
+                            allocation->width + priv->margin.left + priv->margin.right,
+                            NULL, &natural_height, NULL, &nat_baseline);
+
       adjust_for_align (priv->valign,
                         natural_height - priv->margin.top - priv->margin.bottom,
                         &allocation->y,
                         &allocation->height,
                         nat_baseline > -1 ? nat_baseline - priv->margin.top : -1,
                         baseline);
-      gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
-                          allocation->height + priv->margin.top + priv->margin.bottom,
-                          &min_width, &natural_width, NULL, NULL);
-      adjust_for_align (effective_align (priv->halign, _gtk_widget_get_direction (widget)),
+    }
+  else /* GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT */
+    {
+      gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL,
+                          -1,
+                          NULL, &natural_height,
+                          NULL, &nat_baseline);
+
+      if (natural_height < outer_height)
+        {
+          /* See if the widget got allocated enough horizontal space
+           * for its natural height.
+           */
+          gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
+                              natural_height,
+                              &min_width, &natural_width,
+                              NULL, NULL);
+         if (min_width > outer_width)
+            {
+              /* Slow path: measure the widget height-for-width to find
+               * out how much we can shrink it vertically.
+               */
+              gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL,
+                                  outer_width,
+                                  NULL, &natural_height,
+                                  NULL, &nat_baseline);
+              /* We'll re-measure for this new height */
+              natural_width = -1;
+            }
+
+          adjust_for_align (priv->valign,
+                            natural_height - priv->margin.top - priv->margin.bottom,
+                            &allocation->y,
+                            &allocation->height,
+                            nat_baseline > -1 ? nat_baseline - priv->margin.top : -1,
+                            baseline);
+        }
+
+      if (natural_width == -1)
+        gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
+                            allocation->height + priv->margin.top + priv->margin.bottom,
+                            NULL, &natural_width, NULL, NULL);
+
+      adjust_for_align (effective_halign,
                         natural_width - priv->margin.left - priv->margin.right,
                         &allocation->x,
                         &allocation->width,
@@ -3984,7 +4070,11 @@ gtk_widget_allocate (GtkWidget    *widget,
   if (!GTK_IS_SCROLLABLE (widget))
     {
       int min;
-      gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL, width, &min, NULL, NULL, NULL);
+      GtkSizeRequestMode mode = gtk_widget_get_request_mode (widget);
+
+      gtk_widget_measure (widget, GTK_ORIENTATION_VERTICAL,
+                          (mode != GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT) ? width : -1,
+                          &min, NULL, NULL, NULL);
       if (min > height)
         {
           g_critical ("Allocation height too small. Tried to allocate %dx%d, but %s %p needs "
@@ -3993,7 +4083,9 @@ gtk_widget_allocate (GtkWidget    *widget,
                       gtk_widget_get_name (widget), widget,
                       width, min);
         }
-      gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL, height, &min, NULL, NULL, NULL);
+      gtk_widget_measure (widget, GTK_ORIENTATION_HORIZONTAL,
+                          (mode != GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH) ? height : -1,
+                          &min, NULL, NULL, NULL);
       if (min > width)
         {
           g_critical ("Allocation width too small. Tried to allocate %dx%d, but %s %p needs "
@@ -6892,38 +6984,18 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 int
 gtk_widget_get_scale_factor (GtkWidget *widget)
 {
-  GtkWidget *root;
+  GdkSurface *surface;
   GdkDisplay *display;
-  GdkMonitor *monitor;
 
   g_return_val_if_fail (GTK_IS_WIDGET (widget), 1);
 
-  if (_gtk_widget_get_realized (widget))
-    {
-      GdkSurface *surface = gtk_widget_get_surface (widget);
+  surface = gtk_widget_get_surface (widget);
+  if (surface)
+    return gdk_surface_get_scale_factor (surface);
 
-      if (surface)
-        return gdk_surface_get_scale_factor (surface);
-    }
-
-  root = (GtkWidget *)_gtk_widget_get_root (widget);
-  if (root && root != widget)
-    return gtk_widget_get_scale_factor (root);
-
-  /* else fall back to something that is more likely to be right than
-   * just returning 1:
-   */
   display = _gtk_widget_get_display (widget);
   if (display)
-    {
-      monitor = g_list_model_get_item (gdk_display_get_monitors (display), 0);
-      if (monitor)
-        {
-          int result = gdk_monitor_get_scale_factor (monitor);
-          g_object_unref (monitor);
-          return result;
-        }
-    }
+    return gdk_display_guess_scale_factor (display);
 
   return 1;
 }
@@ -11989,6 +12061,9 @@ gtk_widget_render (GtkWidget            *widget,
                    const cairo_region_t *region)
 {
   GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
+#ifdef HAVE_ACCESSKIT
+  GtkATContext *at_ctx;
+#endif
   GtkSnapshot *snapshot;
   GskRenderer *renderer;
   GskRenderNode *root;
@@ -12001,6 +12076,13 @@ gtk_widget_render (GtkWidget            *widget,
 
   if (!GTK_IS_NATIVE (widget))
     return;
+
+#ifdef HAVE_ACCESSKIT
+  at_ctx = gtk_accessible_get_at_context (GTK_ACCESSIBLE (widget));
+  if (GTK_IS_ACCESSKIT_CONTEXT (at_ctx))
+    gtk_accesskit_context_update_tree (GTK_ACCESSKIT_CONTEXT (at_ctx));
+  g_object_unref (at_ctx);
+#endif
 
   renderer = gtk_native_get_renderer (GTK_NATIVE (widget));
   if (renderer == NULL)

@@ -114,6 +114,8 @@
  * - <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes the last modification.
  * - <kbd>Ctrl</kbd>+<kbd>Y</kbd> or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>
  *   redoes the last undone modification.
+ * - <kbd>Ctrl</kbd>+<kbd>Shift</kbd> sets the text direction. The left
+ *   keys set it to LTR, and the right keys set it to RTL.
  *
  * Additionally, the following signals have default keybindings:
  *
@@ -138,6 +140,7 @@
  * - `menu.popup` opens the context menu.
  * - `misc.insert-emoji` opens the Emoji chooser.
  * - `misc.toggle-visibility` toggles the `GtkText`:visibility property.
+ * - `misc.toggle-direction` toggles the text direction.
  * - `selection.delete` deletes the current selection.
  * - `selection.select-all` selects all of the widgets content.
  * - `text.redo` redoes the last change to the contents.
@@ -151,6 +154,8 @@
  * ├── undershoot.left
  * ├── undershoot.right
  * ├── [selection]
+ * ├── [cursor-handle[.top]
+ * ├── [cursor-handle.bottom]
  * ├── [block-cursor]
  * ├── [cursor-handle[.top/.bottom][.insertion-cursor]]
  * ╰── [window.popup]
@@ -468,12 +473,8 @@ static void     gtk_text_copy_clipboard     (GtkText         *self);
 static void     gtk_text_paste_clipboard    (GtkText         *self);
 static void     gtk_text_toggle_overwrite   (GtkText         *self);
 static void     gtk_text_insert_emoji       (GtkText         *self);
-static void     gtk_text_select_all         (GtkText         *self);
+static gboolean gtk_text_select_all         (GtkText         *self);
 static void     gtk_text_real_activate      (GtkText         *self);
-
-static void     direction_changed           (GdkDevice       *keyboard,
-                                             GParamSpec      *pspec,
-                                             GtkText         *self);
 
 /* IM Context Callbacks
  */
@@ -629,6 +630,9 @@ static void gtk_text_activate_selection_delete       (GtkWidget  *widget,
                                                       const char *action_name,
                                                       GVariant   *parameter);
 static void gtk_text_activate_selection_select_all   (GtkWidget  *widget,
+                                                      const char *action_name,
+                                                      GVariant   *parameter);
+static void gtk_text_activate_misc_toggle_direction  (GtkWidget  *widget,
                                                       const char *action_name,
                                                       GVariant   *parameter);
 static void gtk_text_activate_misc_insert_emoji      (GtkWidget  *widget,
@@ -1031,7 +1035,7 @@ gtk_text_class_init (GtkTextClass *class)
 
   /**
    * GtkText::activate:
-   * @self: The text widget which emitted the signal
+   * @self: the text widget which emitted the signal
    *
    * Emitted when the user hits the <kbd>Enter</kbd> key.
    *
@@ -1062,8 +1066,8 @@ gtk_text_class_init (GtkTextClass *class)
    * This is a [keybinding signal](class.SignalAction.html).
    *
    * Applications should not connect to it, but may emit it with
-   * g_signal_emit_by_name() if they need to control the cursor
-   * programmatically.
+   * [func@GObject.signal_emit_by_name] if they need to control
+   * the cursor programmatically.
    *
    * The default bindings for this signal come in two variants,
    * the variant with the <kbd>Shift</kbd> modifier extends the
@@ -1230,7 +1234,7 @@ gtk_text_class_init (GtkTextClass *class)
    * GtkText::toggle-overwrite:
    * @self: the text widget which emitted the signal
    *
-   * Emitted to toggle the overwrite mode of the `GtkText`.
+   * Emitted to toggle the overwrite mode.
    *
    * This is a [keybinding signal](class.SignalAction.html).
    *
@@ -1270,7 +1274,7 @@ gtk_text_class_init (GtkTextClass *class)
    * GtkText::insert-emoji:
    * @self: the text widget which emitted the signal
    *
-   * Emitted to present the Emoji chooser for the widget.
+   * Emitted to present the Emoji chooser.
    *
    * This is a [keybinding signal](class.SignalAction.html).
    *
@@ -1340,6 +1344,14 @@ gtk_text_class_init (GtkTextClass *class)
                                    gtk_text_activate_misc_insert_emoji);
 
   /**
+   * GtkText|misc.toggle-direction:
+   *
+   * Toggles the text direction.
+   */
+  gtk_widget_class_install_action (widget_class, "misc.toggle-direction", NULL,
+                                   gtk_text_activate_misc_toggle_direction);
+
+  /**
    * GtkText|misc.toggle-visibility:
    *
    * Toggles the `GtkText`:visibility property.
@@ -1380,6 +1392,11 @@ gtk_text_class_init (GtkTextClass *class)
   gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_Menu, 0,
                                        "menu.popup",
+                                       NULL);
+
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_t, GDK_CONTROL_MASK | GDK_SHIFT_MASK,
+                                       "misc.toggle-direction",
                                        NULL);
 
   /* Moving the insertion point */
@@ -1624,6 +1641,18 @@ gtk_text_class_init (GtkTextClass *class)
                                        "paste-clipboard",
                                        NULL);
 #endif
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_Cut, GDK_NO_MODIFIER_MASK,
+                                       "cut-clipboard",
+                                       NULL);
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_Copy, GDK_NO_MODIFIER_MASK,
+                                       "copy-clipboard",
+                                       NULL);
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       GDK_KEY_Paste, GDK_NO_MODIFIER_MASK,
+                                       "paste-clipboard",
+                                       NULL);
 
   /* Overwrite */
   gtk_widget_class_add_binding_signal (widget_class,
@@ -1664,6 +1693,12 @@ gtk_text_class_init (GtkTextClass *class)
                                        GDK_KEY_z, GDK_CONTROL_MASK | GDK_SHIFT_MASK,
                                        "text.redo", NULL);
 #endif
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_Undo, GDK_NO_MODIFIER_MASK,
+                                       "text.undo", NULL);
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_Redo, GDK_NO_MODIFIER_MASK,
+                                       "text.redo", NULL);
 
   gtk_widget_class_set_css_name (widget_class, I_("text"));
   gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_NONE);
@@ -2108,8 +2143,6 @@ gtk_text_dispose (GObject *object)
 {
   GtkText *self = GTK_TEXT (object);
   GtkTextPrivate *priv = gtk_text_get_instance_private (self);
-  GdkSeat *seat;
-  GdkDevice *keyboard = NULL;
   GtkWidget *chooser;
 
   priv->current_pos = priv->selection_bound = 0;
@@ -2136,12 +2169,6 @@ gtk_text_dispose (GObject *object)
   chooser = g_object_get_data (object, "gtk-emoji-chooser");
   if (chooser)
     gtk_widget_unparent (chooser);
-
-  seat = gdk_display_get_default_seat (gtk_widget_get_display (GTK_WIDGET (object)));
-  if (seat)
-    keyboard = gdk_seat_get_keyboard (seat);
-  if (keyboard)
-    g_signal_handlers_disconnect_by_func (keyboard, direction_changed, self);
 
   g_clear_pointer (&priv->selection_bubble, gtk_widget_unparent);
   g_clear_pointer (&priv->popup_menu, gtk_widget_unparent);
@@ -3403,21 +3430,11 @@ gtk_text_focus_changed (GtkEventControllerFocus *controller,
 {
   GtkText *self = GTK_TEXT (widget);
   GtkTextPrivate *priv = gtk_text_get_instance_private (self);
-  GdkSeat *seat = NULL;
-  GdkDevice *keyboard = NULL;
-
-  seat = gdk_display_get_default_seat (gtk_widget_get_display (widget));
-  if (seat)
-    keyboard = gdk_seat_get_keyboard (seat);
 
   gtk_widget_queue_draw (widget);
 
   if (gtk_event_controller_focus_is_focus (controller))
     {
-      if (keyboard)
-        g_signal_connect (keyboard, "notify::direction",
-                          G_CALLBACK (direction_changed), self);
-
       gtk_text_im_set_focus_in (self);
       gtk_text_reset_blink_time (self);
       gtk_text_check_cursor_blink (self);
@@ -3429,9 +3446,6 @@ gtk_text_focus_changed (GtkEventControllerFocus *controller,
 
       priv->text_handles_enabled = FALSE;
       gtk_text_update_handles (self);
-
-      if (keyboard)
-        g_signal_handlers_disconnect_by_func (keyboard, direction_changed, self);
 
       if (priv->editable)
         {
@@ -4451,10 +4465,11 @@ gtk_text_toggle_overwrite (GtkText *self)
   gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
-static void
+static gboolean
 gtk_text_select_all (GtkText *self)
 {
   gtk_text_select_line (self);
+  return TRUE;
 }
 
 static void
@@ -4464,14 +4479,6 @@ gtk_text_real_activate (GtkText *self)
 
   if (priv->activates_default)
     gtk_widget_activate_default (GTK_WIDGET (self));
-}
-
-static void
-direction_changed (GdkDevice  *device,
-                   GParamSpec *pspec,
-                   GtkText    *self)
-{
-  gtk_text_recompute (self);
 }
 
 /* IM Context Callbacks
@@ -4695,6 +4702,17 @@ gtk_text_recompute (GtkText *self)
   gtk_text_update_handles (self);
 }
 
+static void
+update_resolved_dir (GtkText *self)
+{
+  GtkTextPrivate *priv = gtk_text_get_instance_private (self);
+
+  if (gtk_widget_get_direction (GTK_WIDGET (self)) == GTK_TEXT_DIR_RTL)
+    priv->resolved_dir = PANGO_DIRECTION_RTL;
+  else
+    priv->resolved_dir = PANGO_DIRECTION_LTR;
+}
+
 static PangoLayout *
 gtk_text_create_layout (GtkText  *self,
                         gboolean  include_preedit)
@@ -4741,49 +4759,10 @@ gtk_text_create_layout (GtkText  *self,
     }
   else
     {
-      PangoDirection pango_dir;
-
-      if (gtk_text_get_display_mode (self) == DISPLAY_NORMAL)
-        pango_dir = gdk_find_base_dir (display_text, n_bytes);
-      else
-        pango_dir = PANGO_DIRECTION_NEUTRAL;
-
-      if (pango_dir == PANGO_DIRECTION_NEUTRAL)
-        {
-          if (gtk_widget_has_focus (widget))
-            {
-              GdkDisplay *display;
-              GdkSeat *seat;
-              GdkDevice *keyboard = NULL;
-              PangoDirection direction = PANGO_DIRECTION_LTR;
-
-              display = gtk_widget_get_display (widget);
-              seat = gdk_display_get_default_seat (display);
-              if (seat)
-                keyboard = gdk_seat_get_keyboard (seat);
-              if (keyboard)
-                direction = gdk_device_get_direction (keyboard);
-
-              if (direction == PANGO_DIRECTION_RTL)
-                pango_dir = PANGO_DIRECTION_RTL;
-              else
-                pango_dir = PANGO_DIRECTION_LTR;
-            }
-          else
-            {
-              if (gtk_widget_get_direction (widget) == GTK_TEXT_DIR_RTL)
-                pango_dir = PANGO_DIRECTION_RTL;
-              else
-                pango_dir = PANGO_DIRECTION_LTR;
-            }
-        }
-
-      pango_context_set_base_dir (gtk_widget_get_pango_context (widget), pango_dir);
-
-      priv->resolved_dir = pango_dir;
-
       pango_layout_set_text (layout, display_text, n_bytes);
     }
+
+  update_resolved_dir (self);
 
   pango_layout_set_attributes (layout, tmp_attrs);
 
@@ -5625,7 +5604,7 @@ gtk_text_new (void)
 
 /**
  * gtk_text_new_with_buffer:
- * @buffer: the buffer to use for the new `GtkText`.
+ * @buffer: the buffer to use
  *
  * Creates a new `GtkText` with the specified buffer.
  *
@@ -5940,8 +5919,7 @@ gtk_text_get_invisible_char (GtkText *self)
  *
  * Unsets the invisible char.
  *
- * After calling this, the default invisible
- * char is used again.
+ * After calling this, the default invisible char is used again.
  */
 void
 gtk_text_unset_invisible_char (GtkText *self)
@@ -6253,7 +6231,7 @@ gtk_text_activate_selection_select_all (GtkWidget  *widget,
                                         GVariant   *parameter)
 {
   GtkText *self = GTK_TEXT (widget);
-  gtk_text_select_all (self);
+  gtk_text_select_line (self);
 }
 
 static void
@@ -6264,6 +6242,25 @@ gtk_text_activate_misc_insert_emoji (GtkWidget  *widget,
   GtkText *self = GTK_TEXT (widget);
   gtk_text_insert_emoji (self);
   hide_selection_bubble (self);
+}
+
+static void
+gtk_text_activate_misc_toggle_direction (GtkWidget  *widget,
+                                         const char *action_name,
+                                         GVariant   *parameter)
+{
+  GtkText *self = GTK_TEXT (widget);
+  GtkTextPrivate *priv = gtk_text_get_instance_private (self);
+
+  if (gtk_widget_get_direction (widget) == GTK_TEXT_DIR_RTL)
+    gtk_widget_set_direction (widget, GTK_TEXT_DIR_LTR);
+  else
+    gtk_widget_set_direction (widget, GTK_TEXT_DIR_RTL);
+
+  update_resolved_dir (self);
+
+  if (priv->cached_layout)
+    pango_layout_context_changed (priv->cached_layout);
 }
 
 static void
@@ -6342,6 +6339,11 @@ gtk_text_get_menu_model (GtkText *self)
 
   item = g_menu_item_new (_("Select _All"), "selection.select-all");
   g_menu_item_set_attribute (item, "touch-icon", "s", "edit-select-all-symbolic");
+  g_menu_append_item (section, item);
+  g_object_unref (item);
+
+  item = g_menu_item_new (_("Change di_rection"), "misc.toggle-direction");
+  g_menu_item_set_attribute (item, "hidden-when", "s", "action-disabled");
   g_menu_append_item (section, item);
   g_object_unref (item);
 
@@ -6989,8 +6991,8 @@ gtk_text_get_placeholder_text (GtkText *self)
  *
  * Sets the input purpose of the text widget.
  *
- * This can be used by on-screen keyboards and other
- * input methods to adjust their behaviour.
+ * The input purpose can be used by on-screen keyboards
+ * and other input methods to adjust their behaviour.
  */
 void
 gtk_text_set_input_purpose (GtkText         *self,
@@ -7425,7 +7427,7 @@ gtk_text_get_truncate_multiline (GtkText *self)
  * @strong: (out) (optional): location to store the strong cursor position
  * @weak: (out) (optional): location to store the weak cursor position
  *
- * Determine the positions of the strong and weak cursors for a
+ * Determines the positions of the strong and weak cursors for a
  * given character position.
  *
  * The position of each cursor is stored as a zero-width rectangle.

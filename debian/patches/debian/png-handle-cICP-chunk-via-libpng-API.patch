@@ -129,10 +129,10 @@ index 5aead6e..8b1897d 100644
    if (sigsetjmp (png_jmpbuf (png), 1))
      {
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
-index 92fc0a2..6e88173 100644
+index dbb5b0b..91de2c2 100644
 --- a/testsuite/gsk/meson.build
 +++ b/testsuite/gsk/meson.build
-@@ -398,9 +398,7 @@ node_parser_tests = [
+@@ -399,9 +399,7 @@ node_parser_tests = [
    'empty-subsurface.ref.node',
    'empty-text.node',
    'empty-text.ref.node',
@@ -142,7 +142,7 @@ index 92fc0a2..6e88173 100644
    'empty-texture-scale.ref.node',
    'empty-transform.node',
    'empty-transform.ref.node',
-@@ -460,14 +458,10 @@ node_parser_tests = [
+@@ -461,14 +459,10 @@ node_parser_tests = [
    'text-font-options-error.ref.node',
    'text-font-options-error.ref.errors',
    'text-no-color.node',
@@ -157,7 +157,7 @@ index 92fc0a2..6e88173 100644
    'texture-scale-unknown-filter.ref.node',
    'transform-fail.node',
    'transform-fail.ref.node',
-@@ -476,6 +470,18 @@ node_parser_tests = [
+@@ -477,6 +471,18 @@ node_parser_tests = [
    #'widgetfactory.node',
  ]
  

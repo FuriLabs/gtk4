@@ -1,8 +1,11 @@
-gtk4 (4.17.3+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.17.3+ds-1) experimental; urgency=medium
 
   [ Jeremy Bícha ]
   * New upstream release
+  * Bump minimum glib, harfbuzz, and pango
+  * debian/libgtk-4-1.symbols.in: Add new symbols
   * Remove obsolete Breaks/Replaces
+  * Remove test validation patch: applied in new release
 
   [ Alessandro Astone ]
   * Add proposed patch to fix compatibility with libpng-1.6.45
@@ -10,7 +13,7 @@ gtk4 (4.17.3+ds-1) UNRELEASED; urgency=medium
   * debian: Allow using vulkan in tests
   * Update memorytexture tests patch for 4.17, and include more cases
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 30 Jan 2025 14:26:09 -0500
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 30 Jan 2025 15:30:23 -0500
 
 gtk4 (4.17.1+ds-2) experimental; urgency=medium
 

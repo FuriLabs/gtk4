@@ -684,7 +684,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  (arch=linux-any)gdk_wayland_popup_get_type@Base 4.0.0
  (arch=linux-any)gdk_wayland_seat_get_type@Base 4.0.0
  (arch=linux-any)gdk_wayland_seat_get_wl_seat@Base 4.0.0
- gdk_wayland_surface_force_next_commit@Base 4.17.3
+ (arch=linux-any)gdk_wayland_surface_force_next_commit@Base 4.17.3
  (arch=linux-any)gdk_wayland_surface_get_type@Base 4.0.0
  (arch=linux-any)gdk_wayland_surface_get_wl_surface@Base 4.0.0
  (arch=linux-any)gdk_wayland_toplevel_drop_exported_handle@Base 4.12.0

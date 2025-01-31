@@ -1,3 +1,11 @@
+gtk4 (4.16.12+ds-2) unstable; urgency=medium
+
+  [ Alessandro Astone ]
+  * Add proposed patch to fix compatibility with libpng-1.6.45
+    (Closes: #1093335)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 30 Jan 2025 20:59:51 -0500
+
 gtk4 (4.16.12+ds-1) unstable; urgency=medium
 
   [ Simon McVittie ]

@@ -1,3 +1,9 @@
+gtk4 (4.16.12+ds-3) unstable; urgency=medium
+
+  * Bump minimum libpng to 1.6.45 (Closes: #1093335)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 31 Jan 2025 11:01:18 -0500
+
 gtk4 (4.16.12+ds-2) unstable; urgency=medium
 
   [ Alessandro Astone ]

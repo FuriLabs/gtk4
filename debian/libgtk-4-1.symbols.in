@@ -159,11 +159,13 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_cursor_new_from_name@Base 4.0.0
  gdk_cursor_new_from_texture@Base 4.0.0
  gdk_delete_event_get_type@Base 4.0.0
+ gdk_device_get_active_layout_index@Base 4.17.4
  gdk_device_get_caps_lock_state@Base 4.0.0
  gdk_device_get_device_tool@Base 4.0.0
  gdk_device_get_direction@Base 4.0.0
  gdk_device_get_display@Base 4.0.0
  gdk_device_get_has_cursor@Base 4.0.0
+ gdk_device_get_layout_names@Base 4.17.4
  gdk_device_get_modifier_state@Base 4.0.0
  gdk_device_get_name@Base 4.0.0
  gdk_device_get_num_lock_state@Base 4.0.0

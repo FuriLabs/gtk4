@@ -3,11 +3,6 @@ Upstream-Name: GTK
 Source: https://download.gnome.org/sources/gtk/
 License: LGPL-2.1+
 Files-Excluded:
- docs/reference/gdk/gdk4
- docs/reference/gdk/gdk4-wayland
- docs/reference/gdk/gdk4-x11
- docs/reference/gsk/gsk4
- docs/reference/gtk/gtk4
  gtk/theme/Default/Default-*.css
 
 Files: *

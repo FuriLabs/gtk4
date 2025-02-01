@@ -23,7 +23,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                gobject-introspection (>= 1.80.0),
                gsettings-desktop-schemas <!nocheck>,
                iso-codes <!nocheck>,
-               libcairo2-dev (>= 1.18.0),
+               libcairo2-dev (>= 1.18.2),
                libcolord-dev <!pkg.gtk4.nocolord>,
                libcloudproviders-dev (>= 0.3.1),
                libcpdb-dev (>= 2.0~b5),
@@ -165,7 +165,7 @@ Section: libdevel
 Architecture: any
 Multi-Arch: same
 Depends: gir1.2-gtk-4.0 (= ${binary:Version}),
-         libcairo2-dev (>= 1.18.0),
+         libcairo2-dev (>= 1.18.2),
          libegl1-mesa-dev [linux-any],
          libepoxy-dev (>= 1.0),
          libfontconfig-dev,

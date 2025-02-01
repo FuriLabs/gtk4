@@ -223,10 +223,10 @@ index abf73fe..1bb989a 100644
  
  static void
 diff --git a/modules/media/gtkgstpaintable.c b/modules/media/gtkgstpaintable.c
-index 51f392a..019e04e 100644
+index 491a3ce..cc6234e 100644
 --- a/modules/media/gtkgstpaintable.c
 +++ b/modules/media/gtkgstpaintable.c
-@@ -128,8 +128,8 @@ gtk_gst_paintable_paintable_init (GdkPaintableInterface *iface)
+@@ -202,8 +202,8 @@ gtk_gst_paintable_paintable_init (GdkPaintableInterface *iface)
  }
  
  static GstElement *
@@ -237,7 +237,7 @@ index 51f392a..019e04e 100644
  {
    GtkGstPaintable *self = GTK_GST_PAINTABLE (renderer);
    GstElement *sink;
-@@ -196,7 +196,7 @@ gtk_gst_paintable_video_renderer_create_video_sink (GstPlayerVideoRenderer *rend
+@@ -270,7 +270,7 @@ gtk_gst_paintable_video_renderer_create_video_sink (GstPlayerVideoRenderer *rend
  }
  
  static void
@@ -246,7 +246,7 @@ index 51f392a..019e04e 100644
  {
    iface->create_video_sink = gtk_gst_paintable_video_renderer_create_video_sink;
  }
-@@ -211,7 +211,7 @@ static void
+@@ -285,7 +285,7 @@ static void
  gtk_gst_paintable_dispose (GObject *object)
  {
    GtkGstPaintable *self = GTK_GST_PAINTABLE (object);

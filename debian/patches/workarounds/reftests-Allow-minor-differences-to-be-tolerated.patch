@@ -90,7 +90,7 @@ index 5af5320..11516cb 100644
  
    g_clear_object (&diff);
 diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
-index d18c338..a95e20b 100644
+index 9dd53df..2321b88 100644
 --- a/testsuite/reftests/gtk-reftest.c
 +++ b/testsuite/reftests/gtk-reftest.c
 @@ -302,6 +302,12 @@ save_image (GdkTexture *texture,

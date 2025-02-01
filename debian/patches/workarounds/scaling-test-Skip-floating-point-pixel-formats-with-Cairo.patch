@@ -15,10 +15,10 @@ Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7685
  1 file changed, 20 insertions(+)
 
 diff --git a/testsuite/gsk/scaling.c b/testsuite/gsk/scaling.c
-index 04208cf..5d5e41d 100644
+index 23562d0..68351cc 100644
 --- a/testsuite/gsk/scaling.c
 +++ b/testsuite/gsk/scaling.c
-@@ -284,6 +284,16 @@ test_linear_filtering (gconstpointer data,
+@@ -277,6 +277,16 @@ test_linear_filtering (gconstpointer data,
  
    decode_renderer_format (data, &renderer, &format);
  
@@ -35,7 +35,7 @@ index 04208cf..5d5e41d 100644
    input = create_stipple_texture (format, width, height, colors, &average_color);
    node = gsk_texture_scale_node_new (input, &GRAPHENE_RECT_INIT (0, 0, width / 2, height / 2), GSK_SCALING_FILTER_LINEAR);
    output = gsk_renderer_render_texture (renderer, node, NULL);
-@@ -312,6 +322,16 @@ test_mipmaps (gconstpointer data)
+@@ -305,6 +315,16 @@ test_mipmaps (gconstpointer data)
  
    decode_renderer_format (data, &renderer, &format);
  

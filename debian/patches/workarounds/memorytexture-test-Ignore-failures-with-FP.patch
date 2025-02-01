@@ -14,7 +14,7 @@ Bug-Debian: https://bugs.debian.org/1081275
  1 file changed, 5 insertions(+)
 
 diff --git a/testsuite/gdk/memorytexture.c b/testsuite/gdk/memorytexture.c
-index e9484f1..5394a91 100644
+index 6ba3832..72c600b 100644
 --- a/testsuite/gdk/memorytexture.c
 +++ b/testsuite/gdk/memorytexture.c
 @@ -500,6 +500,11 @@ test_download (gconstpointer data,

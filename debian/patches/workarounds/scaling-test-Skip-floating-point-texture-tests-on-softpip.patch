@@ -12,10 +12,10 @@ Forwarded: no, upstream generally rejects embedded-architecture-specific workaro
  1 file changed, 18 insertions(+), 2 deletions(-)
 
 diff --git a/testsuite/gsk/scaling.c b/testsuite/gsk/scaling.c
-index 5d5e41d..1035dde 100644
+index 68351cc..8834699 100644
 --- a/testsuite/gsk/scaling.c
 +++ b/testsuite/gsk/scaling.c
-@@ -302,7 +302,15 @@ test_linear_filtering (gconstpointer data,
+@@ -295,7 +295,15 @@ test_linear_filtering (gconstpointer data,
    compare_textures (expected, output, FALSE);
  
    if (g_test_failed ())
@@ -32,7 +32,7 @@ index 5d5e41d..1035dde 100644
  
    g_object_unref (expected);
    g_object_unref (output);
-@@ -340,7 +348,15 @@ test_mipmaps (gconstpointer data)
+@@ -333,7 +341,15 @@ test_mipmaps (gconstpointer data)
    compare_textures (expected, output, FALSE);
  
    if (g_test_failed ())

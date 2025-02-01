@@ -374,6 +374,30 @@ gtk_gst_sink_propose_allocation (GstBaseSink *bsink,
   return FALSE;
 }
 
+static gboolean
+gtk_gst_sink_event (GstBaseSink * bsink, GstEvent * event)
+{
+  GtkGstSink *self = GTK_GST_SINK (bsink);
+  gboolean ret;
+
+  if (GST_EVENT_TYPE (event) == GST_EVENT_TAG)
+    {
+      GstTagList *taglist;
+      GstVideoOrientationMethod orientation;
+
+      gst_event_parse_tag (event, &taglist);
+      if (gst_video_orientation_from_tag (taglist, &orientation))
+        {
+          GST_DEBUG_OBJECT (self, "Setting orientation to %d", orientation);
+          self->orientation = orientation;
+        }
+    }
+
+  ret = GST_BASE_SINK_CLASS (gtk_gst_sink_parent_class)->event (bsink, event);
+
+  return ret;
+}
+
 static GdkMemoryFormat
 gtk_gst_memory_format_from_video_info (GstVideoInfo *info)
 {
@@ -569,7 +593,11 @@ gtk_gst_sink_show_frame (GstVideoSink *vsink,
   texture = gtk_gst_sink_texture_from_buffer (self, buf, &pixel_aspect_ratio, &viewport);
   if (texture)
     {
-      gtk_gst_paintable_queue_set_texture (self->paintable, texture, pixel_aspect_ratio, &viewport);
+      gtk_gst_paintable_queue_set_texture (self->paintable,
+                                           texture,
+                                           pixel_aspect_ratio,
+                                           &viewport,
+                                           self->orientation);
       g_object_unref (texture);
     }
 
@@ -593,6 +621,9 @@ gtk_gst_sink_initialize_gl (GtkGstSink *self)
   gdk_gl_context_make_current (self->gdk_context);
 
 #ifdef HAVE_GST_X11_SUPPORT
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
   if (GDK_IS_X11_DISPLAY (display))
     {
       gpointer display_ptr;
@@ -630,6 +661,9 @@ gtk_gst_sink_initialize_gl (GtkGstSink *self)
         }
     }
   else
+
+G_GNUC_END_IGNORE_DEPRECATIONS
+
 #endif
 #ifdef HAVE_GST_WAYLAND_SUPPORT
   if (GDK_IS_WAYLAND_DISPLAY (display))
@@ -862,6 +896,7 @@ gtk_gst_sink_class_init (GtkGstSinkClass * klass)
   gstbasesink_class->query = gtk_gst_sink_query;
   gstbasesink_class->propose_allocation = gtk_gst_sink_propose_allocation;
   gstbasesink_class->get_caps = gtk_gst_sink_get_caps;
+  gstbasesink_class->event = gtk_gst_sink_event;
 
   gstvideosink_class->show_frame = gtk_gst_sink_show_frame;
 

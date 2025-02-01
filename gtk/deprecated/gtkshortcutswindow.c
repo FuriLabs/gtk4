@@ -106,6 +106,8 @@ G_GNUC_BEGIN_IGNORE_DEPRECATIONS
  *
  * `GtkShortcutsWindow` has a single CSS node with the name `window` and style
  * class `.shortcuts`.
+ *
+ * Deprecated: 4.18: This widget will be removed in GTK 5
  */
 
 struct _GtkShortcutsWindow
@@ -133,7 +135,6 @@ struct _GtkShortcutsWindow
   GtkBox         *search_shortcuts;
 
   GtkWindow      *window;
-  gulong          keys_changed_id;
 };
 
 typedef struct
@@ -356,13 +357,13 @@ section_notify_cb (GObject    *section,
  *
  * This is the programmatic equivalent to using [class@Gtk.Builder] and a
  * `<child>` tag to add the child.
- * 
+ *
  * Using [method@Gtk.Window.set_child] is not appropriate as the shortcuts
  * window manages its children internally.
  *
  * Since: 4.14
  *
- * Deprecated: 4.18
+ * Deprecated: 4.18: This widget will be removed in GTK 5
  */
 void
 gtk_shortcuts_window_add_section (GtkShortcutsWindow  *self,
@@ -511,29 +512,11 @@ update_accels_for_actions (GtkShortcutsWindow *self)
     }
 }
 
-static void
-keys_changed_handler (GtkWindow          *window,
-                      GtkShortcutsWindow *self)
-{
-  update_accels_for_actions (self);
-}
-
 void
 gtk_shortcuts_window_set_window (GtkShortcutsWindow *self,
                                  GtkWindow          *window)
 {
-  if (self->keys_changed_id)
-    {
-      g_signal_handler_disconnect (self->window, self->keys_changed_id);
-      self->keys_changed_id = 0;
-    }
-
   self->window = window;
-
-  if (self->window)
-    self->keys_changed_id = g_signal_connect (window, "keys-changed",
-                                              G_CALLBACK (keys_changed_handler),
-                                              self);
 
   update_accels_for_actions (self);
 }
@@ -764,10 +747,22 @@ gtk_shortcuts_window_unmap (GtkWidget *widget)
 }
 
 static void
+gtk_shortcuts_window_keys_changed (GtkWindow *window)
+{
+  GtkShortcutsWindow *self = GTK_SHORTCUTS_WINDOW (window);
+
+  GTK_WINDOW_CLASS (gtk_shortcuts_window_parent_class)->keys_changed (window);
+
+  if (self->window != NULL)
+    update_accels_for_actions (self);
+}
+
+static void
 gtk_shortcuts_window_class_init (GtkShortcutsWindowClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  GtkWindowClass *window_class = GTK_WINDOW_CLASS (klass);
 
   object_class->constructed = gtk_shortcuts_window_constructed;
   object_class->finalize = gtk_shortcuts_window_finalize;
@@ -776,6 +771,8 @@ gtk_shortcuts_window_class_init (GtkShortcutsWindowClass *klass)
   object_class->dispose = gtk_shortcuts_window_dispose;
 
   widget_class->unmap = gtk_shortcuts_window_unmap;
+
+  window_class->keys_changed = gtk_shortcuts_window_keys_changed;
 
   klass->close = gtk_shortcuts_window_close;
   klass->search = gtk_shortcuts_window_search;
@@ -787,6 +784,8 @@ gtk_shortcuts_window_class_init (GtkShortcutsWindowClass *klass)
    *
    * This should be the section-name of one of the `GtkShortcutsSection`
    * objects that are in this shortcuts window.
+   *
+   * Deprecated: 4.18: This widget will be removed in GTK 5
    */
   properties[PROP_SECTION_NAME] =
     g_param_spec_string ("section-name", NULL, NULL,
@@ -803,6 +802,8 @@ gtk_shortcuts_window_class_init (GtkShortcutsWindowClass *klass)
    * are inside this shortcuts window.
    *
    * Set this to %NULL to show all groups.
+   *
+   * Deprecated: 4.18: This widget will be removed in GTK 5
    */
   properties[PROP_VIEW_NAME] =
     g_param_spec_string ("view-name", NULL, NULL,
@@ -819,6 +820,8 @@ gtk_shortcuts_window_class_init (GtkShortcutsWindowClass *klass)
    * This is a [keybinding signal](class.SignalAction.html).
    *
    * The default binding for this signal is the <kbd>Escape</kbd> key.
+   *
+   * Deprecated: 4.18: This widget will be removed in GTK 5
    */
   signals[CLOSE] = g_signal_new (I_("close"),
                                  G_TYPE_FROM_CLASS (klass),
@@ -836,6 +839,8 @@ gtk_shortcuts_window_class_init (GtkShortcutsWindowClass *klass)
    * This is a [keybinding signal](class.SignalAction.html).
    *
    * The default binding for this signal is <kbd>Control</kbd>+<kbd>F</kbd>.
+   *
+   * Deprecated: 4.18: This widget will be removed in GTK 5
    */
   signals[SEARCH] = g_signal_new (I_("search"),
                                  G_TYPE_FROM_CLASS (klass),

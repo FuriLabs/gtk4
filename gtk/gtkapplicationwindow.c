@@ -529,7 +529,7 @@ gtk_application_window_real_unrealize (GtkWidget *widget)
 
 GActionGroup *
 gtk_application_window_get_action_group (GtkApplicationWindow *window)
-{          
+{
   GtkApplicationWindowPrivate *priv = gtk_application_window_get_instance_private (window);
   return G_ACTION_GROUP (priv->actions);
 }
@@ -655,10 +655,26 @@ gtk_application_window_init (GtkApplicationWindow *window)
 }
 
 static void
+gtk_application_window_keys_changed (GtkWindow *window)
+{
+  GtkApplicationWindow *self = GTK_APPLICATION_WINDOW (window);
+  GtkApplicationWindowPrivate *priv = gtk_application_window_get_instance_private (self);
+
+  GTK_WINDOW_CLASS (gtk_application_window_parent_class)->keys_changed (window);
+
+  /* Notify key changes on the help overlay */
+  if (priv->help_overlay != NULL)
+    _gtk_window_notify_keys_changed (GTK_WINDOW (priv->help_overlay));
+}
+
+static void
 gtk_application_window_class_init (GtkApplicationWindowClass *class)
 {
+  GtkWindowClass *window_class = GTK_WINDOW_CLASS (class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (class);
   GObjectClass *object_class = G_OBJECT_CLASS (class);
+
+  window_class->keys_changed = gtk_application_window_keys_changed;
 
   widget_class->measure = gtk_application_window_measure;
   widget_class->size_allocate = gtk_application_window_real_size_allocate;
@@ -801,6 +817,8 @@ show_help_overlay (GSimpleAction *action,
  * `win.show-help-overlay` to present it.
  *
  * The window takes responsibility for destroying the help overlay.
+ *
+ * Deprecated: 4.18: `GtkShortcutsWindow` will be removed in GTK 5
  */
 void
 gtk_application_window_set_help_overlay (GtkApplicationWindow *window,
@@ -844,6 +862,8 @@ gtk_application_window_set_help_overlay (GtkApplicationWindow *window,
  *
  * Returns: (transfer none) (nullable): the help overlay associated
  *   with the window
+ *
+ * Deprecated: 4.18: `GtkShortcutsWindow` will be removed in GTK 5
  */
 GtkShortcutsWindow *
 gtk_application_window_get_help_overlay (GtkApplicationWindow *window)

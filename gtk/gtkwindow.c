@@ -180,9 +180,9 @@
  *
  * # Accessibility
  *
- * Until GTK 4.10, `GtkWindow` used the [enum@Gtk.AccessibleRole.window] role.
+ * `GtkWindow` uses the [enum@Gtk.AccessibleRole.window] role.
  *
- * Since GTK 4.12, `GtkWindow` uses the [enum@Gtk.AccessibleRole.application] role.
+ * From GTK 4.12 to 4.18, it used the [enum@Gtk.AccessibleRole.application] role.
  */
 
 #define MENU_BAR_ACCEL GDK_KEY_F10
@@ -1260,7 +1260,7 @@ gtk_window_class_init (GtkWindowClass *klass)
 
   gtk_widget_class_set_css_name (widget_class, I_("window"));
 
-  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_APPLICATION);
+  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_WINDOW);
 }
 
 /**
@@ -4033,6 +4033,12 @@ gtk_window_unmap (GtkWidget *widget)
   GTK_WIDGET_CLASS (gtk_window_parent_class)->unmap (widget);
   gdk_surface_hide (priv->surface);
 
+  _gtk_window_set_is_active (window, FALSE);
+
+  gtk_accessible_update_state (GTK_ACCESSIBLE (window),
+                               GTK_ACCESSIBLE_STATE_HIDDEN, TRUE,
+                               -1);
+
   gtk_widget_unrealize_at_context (widget);
 
   if (priv->title_box != NULL)
@@ -4413,24 +4419,27 @@ gtk_window_realize (GtkWidget *widget)
   gdk_toplevel_set_deletable (GDK_TOPLEVEL (surface), priv->deletable);
   gdk_toplevel_set_modal (GDK_TOPLEVEL (surface), priv->modal);
 
+#ifdef GDK_WINDOWING_X11
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
   if (priv->startup_id)
     {
-#ifdef GDK_WINDOWING_X11
       if (GDK_IS_X11_SURFACE (surface))
         {
           guint32 timestamp = extract_time_from_startup_id (priv->startup_id);
           if (timestamp != GDK_CURRENT_TIME)
             gdk_x11_surface_set_user_time (surface, timestamp);
         }
-#endif
     }
 
-#ifdef GDK_WINDOWING_X11
   if (priv->initial_timestamp != GDK_CURRENT_TIME)
     {
       if (GDK_IS_X11_SURFACE (surface))
         gdk_x11_surface_set_user_time (surface, priv->initial_timestamp);
     }
+
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
   update_realized_window_properties (window);
@@ -5282,12 +5291,18 @@ _gtk_window_present (GtkWindow *window,
       if (timestamp == GDK_CURRENT_TIME)
         {
 #ifdef GDK_WINDOWING_X11
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
           if (GDK_IS_X11_SURFACE (priv->surface))
             {
               GdkDisplay *display = gtk_widget_get_display (widget);
               timestamp = gdk_x11_display_get_user_time (display);
             }
           else
+
+G_GNUC_END_IGNORE_DEPRECATIONS
+
 #endif
             timestamp = gtk_get_current_event_time ();
         }
@@ -5343,8 +5358,14 @@ gtk_window_set_startup_id (GtkWindow   *window,
       guint32 timestamp = extract_time_from_startup_id (priv->startup_id);
 
 #ifdef GDK_WINDOWING_X11
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
       if (timestamp != GDK_CURRENT_TIME && GDK_IS_X11_SURFACE (priv->surface))
         gdk_x11_surface_set_user_time (priv->surface, timestamp);
+
+G_GNUC_END_IGNORE_DEPRECATIONS
+
 #endif
 
       /* Here we differentiate real and "fake" startup notification IDs,
@@ -5819,9 +5840,14 @@ gtk_window_set_theme_variant (GtkWindow *window)
                 "gtk-application-prefer-dark-theme", &dark_theme_requested,
                 NULL);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
   if (GDK_IS_X11_SURFACE (priv->surface))
     gdk_x11_surface_set_theme_variant (priv->surface,
                                        dark_theme_requested ? "dark" : NULL);
+
+G_GNUC_END_IGNORE_DEPRECATIONS
+
 #endif
 }
 
@@ -6866,9 +6892,6 @@ gtk_window_destroy (GtkWindow *window)
   gtk_tooltip_unset_surface (GTK_NATIVE (window));
 
   gtk_window_hide (GTK_WIDGET (window));
-  gtk_accessible_update_state (GTK_ACCESSIBLE (window),
-                               GTK_ACCESSIBLE_STATE_HIDDEN, TRUE,
-                               -1);
 
   g_list_store_remove (toplevel_list, i);
 

@@ -336,11 +336,18 @@ collect_relations (GtkAtSpiContext *self,
     AtspiRelationType s;
   } map[] = {
     { GTK_ACCESSIBLE_RELATION_LABELLED_BY, ATSPI_RELATION_LABELLED_BY },
+    { GTK_ACCESSIBLE_RELATION_LABEL_FOR, ATSPI_RELATION_LABEL_FOR },
     { GTK_ACCESSIBLE_RELATION_CONTROLS, ATSPI_RELATION_CONTROLLER_FOR },
+    { GTK_ACCESSIBLE_RELATION_CONTROLLED_BY, ATSPI_RELATION_CONTROLLED_BY },
     { GTK_ACCESSIBLE_RELATION_DESCRIBED_BY, ATSPI_RELATION_DESCRIBED_BY },
+    { GTK_ACCESSIBLE_RELATION_DESCRIPTION_FOR, ATSPI_RELATION_DESCRIPTION_FOR },
     { GTK_ACCESSIBLE_RELATION_DETAILS, ATSPI_RELATION_DETAILS },
+    { GTK_ACCESSIBLE_RELATION_DETAILS, ATSPI_RELATION_DETAILS },
+    { GTK_ACCESSIBLE_RELATION_DETAILS_FOR, ATSPI_RELATION_DETAILS_FOR },
     { GTK_ACCESSIBLE_RELATION_ERROR_MESSAGE, ATSPI_RELATION_ERROR_MESSAGE},
+    { GTK_ACCESSIBLE_RELATION_ERROR_MESSAGE_FOR, ATSPI_RELATION_ERROR_FOR},
     { GTK_ACCESSIBLE_RELATION_FLOW_TO, ATSPI_RELATION_FLOWS_TO},
+    { GTK_ACCESSIBLE_RELATION_FLOW_FROM, ATSPI_RELATION_FLOWS_FROM},
   };
   GtkAccessibleValue *value;
   GList *list, *l;
@@ -1249,7 +1256,7 @@ gtk_at_spi_context_platform_change (GtkATContext                *ctx,
       /* Orca tracks the window:activate and window:deactivate events on top
        * levels to decide whether to track other AT-SPI events
        */
-      if (gtk_accessible_get_accessible_role (accessible) == GTK_ACCESSIBLE_ROLE_APPLICATION)
+      if (gtk_accessible_get_accessible_role (accessible) == GTK_ACCESSIBLE_ROLE_WINDOW)
         {
           if (state)
             emit_window_event (self, "activate");
@@ -1750,6 +1757,9 @@ gtk_at_spi_context_init (GtkAtSpiContext *self)
 /* }}} */
 /* {{{ Bus address discovery */
 #ifdef GDK_WINDOWING_X11
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static char *
 get_bus_address_x11 (GdkDisplay *display)
 {
@@ -1778,6 +1788,9 @@ get_bus_address_x11 (GdkDisplay *display)
 
   return address;
 }
+
+G_GNUC_END_IGNORE_DEPRECATIONS
+
 #endif
 
 #if defined(GDK_WINDOWING_WAYLAND) || defined(GDK_WINDOWING_X11)

@@ -11,6 +11,7 @@ stages:
   - build
   - analysis
   - docs
+  - android
   - flatpak
   - publish
   - deploy
@@ -32,6 +33,7 @@ variables:
   FEATURE_FLAGS: "-Dvulkan=enabled -Dcloudproviders=enabled -Dbuild-testsuite=true -Dintrospection=enabled"
   MESON_TEST_TIMEOUT_MULTIPLIER: 3
   FEDORA_IMAGE: "registry.gitlab.gnome.org/gnome/gtk/fedora:v52"
+  ANDROID_IMAGE: "registry.gitlab.gnome.org/gnome/gtk/android:v2"
 
 workflow:
   rules:
@@ -92,17 +94,37 @@ style-check-diff:
     paths:
       - _ccache/
 
+meson-subprojects:
+  stage: build
+  needs: []
+  image: $FEDORA_IMAGE
+  script:
+    - export PATH="$HOME/.local/bin:$PATH"
+    # DNS issues can cause this to fail
+    - meson subprojects download || exit 137
+    - meson subprojects update --reset || exit 137
+  retry:
+    max: 2
+    exit_codes: 137
+  artifacts:
+    name: "gtk-subprojects-${CI_COMMIT_REF_NAME}"
+    when: always
+    paths:
+      - "${CI_PROJECT_DIR}/subprojects"
+  cache:
+    key: "$CI_JOB_NAME"
+    paths:
+      - subprojects/
+
 fedora-x86_64:
   extends: .build-fedora-default
   stage: build
-  needs: []
+  needs: ["meson-subprojects"]
   variables:
     EXTRA_MESON_FLAGS: "--buildtype=debug --default-library=both"
   script:
     - .gitlab-ci/show-info-linux.sh
     - export PATH="$HOME/.local/bin:$PATH"
-    - meson subprojects download
-    - meson subprojects update --reset
     - meson setup
             ${COMMON_MESON_FLAGS}
             ${EXTRA_MESON_FLAGS}
@@ -146,19 +168,17 @@ release-build:
 fedora-clang:
   extends: .build-fedora-default
   stage: build
-  needs: []
+  needs: ["meson-subprojects"]
   variables:
     EXTRA_MESON_FLAGS: "--buildtype=release"
   script:
     - .gitlab-ci/show-info-linux.sh
     - export PATH="$HOME/.local/bin:$PATH"
     - export CC=clang
-    - meson subprojects download
-    - meson subprojects update --reset
     - meson setup
             ${COMMON_MESON_FLAGS}
             ${EXTRA_MESON_FLAGS}
-            ${BACKEND_FLAGS}
+            -Dx11-backend=false -Dwayland-backend=true -Dbroadway-backend=false
             ${FEATURE_FLAGS}
             _build
     - meson compile -C _build
@@ -166,7 +186,7 @@ fedora-clang:
 fedora-mingw64:
   extends: .build-fedora-default
   stage: build
-  needs: []
+  needs: ["meson-subprojects"]
   before_script:
     - sudo dnf install -y
             mingw64-filesystem
@@ -183,8 +203,6 @@ fedora-mingw64:
     - .gitlab-ci/show-info-linux.sh
     - export PATH="$HOME/.local/bin:$PATH"
     - pip3 install --user meson~=1.0
-    - meson subprojects download
-    - meson subprojects update --reset
     - meson -Dintrospection=disabled -Dgraphene:introspection=disabled _build
     - meson compile -C _build
 
@@ -218,63 +236,58 @@ msys2-ucrt64:
       - "${CI_PROJECT_DIR}/_build/gtkdll.tar.gz"
       - "${CI_PROJECT_DIR}/_build/gtk/GdkWin32-4.0.gir"
 
-macos:
+macos-arm64:
   rules:
     # Do not run in forks as the runner is not available there.
     # (except for dehesselle who maintains the runner)
-    - if: $CI_PROJECT_NAMESPACE != "GNOME" && $CI_PROJECT_NAMESPACE != "dehesselle"
-      when: never
-    - if: $RUNNER == "macosintel"
-      variables:
-        SDKROOT: /opt/sdks/MacOSX10.15.6.sdk
-        NINJA_PKG: $CI_API_V4_URL/projects/30745/packages/generic/ninja_macos/v1.11.1.1+9/ninja-1.11.1.1-cp38-cp38-macosx_11_0_x86_64.whl
-      when: manual
-      allow_failure: true
-    - if: $RUNNER == "macosarm"
-      variables:
-        SDKROOT: /opt/sdks/MacOSX11.3.sdk
-        NINJA_PKG: ninja==1.11.1.1
+    - if: $CI_PROJECT_NAMESPACE == "GNOME" || $CI_PROJECT_NAMESPACE == "dehesselle"
   stage: build
-  parallel:
-    matrix:
-      - RUNNER: [ "macosintel", "macosarm" ]
   tags:
-    - ${RUNNER}
+    - macosarm
   needs: []
   variables:
-    EXTRA_MESON_FLAGS: ""
     BACKEND_FLAGS: "-Dx11-backend=false -Dbroadway-backend=true"
-    FEATURE_FLAGS: "-Dmedia-gstreamer=disabled -Dintrospection=enabled -Dgobject-introspection:werror=false"
-    TMPDIR: /Users/Shared/work/tmp
-    PIP_CACHE_DIR: /Users/Shared/build/cache
+    FEATURE_FLAGS: "-Daccesskit=enabled -Dgobject-introspection:werror=false -Dintrospection=enabled -Dmedia-gstreamer=disabled"
+    EXTRA_MESON_FLAGS: ""
+    # additional settings
+    CARGO_HOME: $CI_PROJECT_DIR/.cargo
+    PIP_CACHE_DIR: /Users/Shared/work/cache
     PIPENV_CACHE_DIR: $PIP_CACHE_DIR
+    PKG_CONFIG_PATH: $CI_PROJECT_DIR/.venv/lib/pkgconfig
     PYTHONPYCACHEPREFIX: $PIP_CACHE_DIR
+    SDKROOT: /opt/sdks/MacOSX11.3.sdk
+    TMPDIR: /Users/Shared/work/tmp
   before_script:
-    - ls /opt/sdks/
     - .gitlab-ci/show-info-macos.sh
-    - python3 -m venv .venv
-    # Building the introspection feature requires pkg-config and bison.
+    # Setup the virtual environment with 'meson' and 'ninja'.
+    - |
+      python3 -m venv .venv
+      source .venv/bin/activate
+      pip3 install meson==1.4.0 ninja==1.11.1.1
+    # The introspection feature requires 'pkg-config' and 'bison'.
     - curl -L $CI_API_V4_URL/projects/30437/packages/generic/pkgconfig/v0.29.2+10/pkg-config-0.29.2+10_$(uname -m).tar.xz | tar -C .venv -xJ
     - curl -L $CI_API_V4_URL/projects/30438/packages/generic/bison/v3.8.2+3/bison-3.8.2+3_$(uname -m).tar.xz | tar -C .venv -xJ
-    - source .venv/bin/activate
-    - pip3 install meson==1.4.0 $NINJA_PKG
-    # this one is needed by the glib subproject
-    - pip3 install packaging
-    # The following dance is to work around the circular dependency of glib and gobject-introspection, and mesons inability to handle it for subprojects
-    - mkdir ${CI_PROJECT_DIR}/_install
-    - export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:${CI_PROJECT_DIR}/_install/lib/pkgconfig:${CI_PROJECT_DIR}/_install/share/pkgconfig
-    - export PATH=$PATH:${CI_PROJECT_DIR}/_install/bin
-    - git clone --depth 1 https://gitlab.gnome.org/gnome/glib.git
-    - git clone --depth 1 https://gitlab.gnome.org/gnome/gobject-introspection.git
-    - cd gobject-introspection; git submodule init; git submodule update; cd ..
-    - meson setup -Dprefix=${CI_PROJECT_DIR}/_install -Dtests=false -Dintrospection=disabled _glib_build glib; meson compile -C_glib_build; meson install -C_glib_build
-    - meson setup -Dprefix=${CI_PROJECT_DIR}/_install _gi_build gobject-introspection; meson compile -C_gi_build; meson install -C_gi_build
-    - meson configure -Dintrospection=enabled _glib_build; meson compile -C_glib_build; meson install -C_glib_build
-    # We're not setting up ccache here on purpose as it accelerates the build
-    # so much that it triggers race conditions in the gobject-introspection
-    # subproject.
+    # The AccessKit feature requires Rust.
+    - ln -s /opt/rustup/toolchains/1.84.0-aarch64-apple-darwin/bin/* .venv/bin
+    # The GLib subproject requires 'packaging'.
+    - pip3 install packaging==24.2
+    # Meson cannot handle circular dependencies in subprojects, so we have to build GLib and
+    # GObject Introspection ourselves.
+    - |
+      git clone --depth 1 https://gitlab.gnome.org/gnome/glib.git
+      meson setup -Dprefix=${CI_PROJECT_DIR}/.venv -Dintrospection=disabled -Dtests=false _glib_build glib
+      meson compile -C_glib_build
+      meson install -C_glib_build
+    - |
+      git clone --depth 1 --recurse-submodules https://gitlab.gnome.org/gnome/gobject-introspection.git
+      meson setup -Dprefix=${CI_PROJECT_DIR}/.venv _gi_build gobject-introspection
+      meson compile -C_gi_build
+      meson install -C_gi_build
+    - |
+      meson configure -Dintrospection=enabled _glib_build
+      meson compile -C_glib_build
+      meson install -C_glib_build
   script:
-    - export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:${CI_PROJECT_DIR}/_install/lib/pkgconfig:${CI_PROJECT_DIR}/_install/share/pkgconfig
     - meson setup
             ${COMMON_MESON_FLAGS}
             ${EXTRA_MESON_FLAGS}
@@ -303,6 +316,95 @@ vs2019-x64:
     when: always
     paths:
       - "${CI_PROJECT_DIR}/_build/meson-logs"
+
+android:
+  image: $ANDROID_IMAGE
+  stage: build
+  parallel:
+    matrix:
+      - ARCH: [ "aarch64", "x86_64" ]
+  needs: []
+  variables:
+    EXTRA_MESON_FLAGS: "-Dgperf:werror=false"
+    BACKEND_FLAGS: "-Dandroid-backend=true"
+    FEATURE_FLAGS: "-Dmedia-gstreamer=disabled"
+  before_script:
+    - .gitlab-ci/show-info-linux.sh
+    # We aren't actually using pixiewood here, we just make get the ${ARCH}.cross, android.cross and fontconfig.wrap files.
+    - git clone https://github.com/sp1ritCS/gtk-android-builder.git pixiewood
+    - cp -f pixiewood/prepare/wraps/fontconfig/fontconfig.wrap subprojects/
+    # Drop this as soon as Debian/the container has meson >= 1.7.0
+    - git clone --depth 1 https://github.com/mesonbuild/meson.git
+  script:
+    - ./meson/meson.py setup
+            --cross-file "${ANDROID_HOME}/toolchain.cross"
+            --cross-file "pixiewood/prepare/arch/$ARCH.cross"
+            --cross-file "pixiewood/prepare/android.cross"
+            ${COMMON_MESON_FLAGS}
+            ${EXTRA_MESON_FLAGS}
+            ${BACKEND_FLAGS}
+            ${FEATURE_FLAGS}
+            _build
+    - ./meson/meson.py compile -C _build
+  artifacts:
+    when: always
+    paths:
+      - "${CI_PROJECT_DIR}/_build/meson-logs"
+
+.android-defaults:
+  image: $ANDROID_IMAGE
+  stage: android
+  allow_failure: true
+  artifacts:
+    paths:
+      - apks
+    expire_in: 1 day
+  rules:
+    # Only build Android application bundles automatically on main
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH != "main"
+      when: "manual"
+  needs: []
+  before_script:
+    - .gitlab-ci/show-info-linux.sh
+    - git clone https://github.com/sp1ritCS/gtk-android-builder.git pixiewood
+    - git clone --depth 1 https://github.com/sp1ritCS/meson.git --branch android2
+    - git clone --depth 1 https://github.com/sp1ritCS/mini-studio.git
+  script:
+    # This should be included in the repo itself once it's been merged into meson and released
+    - find demos/ -type f -name 'meson.build' -exec sed -i 's/executable/gnome.executable/' {} \;
+    - ./pixiewood/pixiewood prepare --release -s "${ANDROID_HOME}" -a ./mini-studio --meson ./meson/meson.py "build-aux/android/${APPID}.xml"
+    - ./pixiewood/pixiewood generate
+    - ./pixiewood/pixiewood build
+    - mkdir -p apks/${APPID}/
+    - cp .pixiewood/android/app/build/outputs/apk/release/* apks/${APPID}/
+
+android:demo:
+  extends: '.android-defaults'
+  variables:
+    APPID: org.gtk.Demo4
+
+android-signer:
+  image: $ANDROID_IMAGE
+  stage: android
+  artifacts:
+    paths:
+      - apks
+    expire_in: 1 day
+  needs: [ 'android:demo' ]
+  before_script:
+    - |
+      if [ -z ${ANDROID_KEYSTORE_ENC} ]; then
+        export ANDROID_KEYSTORE_LOCATION=".gitlab-ci/debug.keystore"
+        export ANDROID_KEYSTORE_KEY="android"
+        export ANDROID_APK_SUFFIX="debugsigned"
+      else
+        export ANDROID_KEYSTORE_LOCATION="keystore.jks"
+        echo "${ANDROID_KEYSTORE_ENC}" | base64 -d > ${ANDROID_KEYSTORE_LOCATION}
+        export ANDROID_APK_SUFFIX="signed"
+      fi
+  script:
+    - find apks/ -type f -name '*.apk' -exec sh -c '${ANDROID_HOME}/build-tools/${ANDROID_SDKVER}/apksigner sign --ks "${ANDROID_KEYSTORE_LOCATION}" --ks-pass "env:ANDROID_KEYSTORE_KEY" --in "$0" --out `echo "$0" | sed s/unsigned/${ANDROID_APK_SUFFIX}/g`' {} \; -delete
 
 .flatpak-defaults:
   image: "quay.io/gnome_infrastructure/gnome-runtime-images:gnome-master"

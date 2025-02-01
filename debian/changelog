@@ -1,9 +1,12 @@
-gtk4 (4.17.4+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.17.4+ds-1) experimental; urgency=medium
 
   * New upstream release
+  * Bump minimum cairo
   * Bump minimum libpng to 1.6.45
+  * Remove libpng patch: applied in new release
+  * debian/libgtk-4-1.symbols.in: Add new symbols
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 01 Feb 2025 09:30:37 -0500
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 01 Feb 2025 10:10:15 -0500
 
 gtk4 (4.17.3+ds-1) experimental; urgency=medium
 

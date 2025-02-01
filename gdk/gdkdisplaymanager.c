@@ -36,6 +36,10 @@
 #include "x11/gdkprivate-x11.h"
 #endif
 
+#ifdef GDK_WINDOWING_ANDROID
+#include "android/gdkandroiddisplay-private.h"
+#endif
+
 #ifdef GDK_WINDOWING_BROADWAY
 #include "broadway/gdkprivate-broadway.h"
 #endif
@@ -255,7 +259,12 @@ struct _GdkBackend {
   GdkDisplay * (* open_display) (const char *name);
 };
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 static GdkBackend gdk_backends[] = {
+#ifdef GDK_WINDOWING_ANDROID
+  { "android", _gdk_android_display_open },
+#endif
 #ifdef GDK_WINDOWING_MACOS
   { "macos",   _gdk_macos_display_open },
 #endif
@@ -274,6 +283,8 @@ static GdkBackend gdk_backends[] = {
   /* NULL-terminating this array so we can use commas above */
   { NULL, NULL }
 };
+
+G_GNUC_END_IGNORE_DEPRECATIONS
 
 /**
  * gdk_display_manager_get:

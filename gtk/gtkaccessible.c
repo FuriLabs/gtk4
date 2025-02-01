@@ -162,7 +162,7 @@ gtk_accessible_set_accessible_parent (GtkAccessible *self,
 {
   g_return_if_fail (GTK_IS_ACCESSIBLE (self));
   g_return_if_fail (parent == NULL || GTK_IS_ACCESSIBLE (parent));
-  g_return_if_fail (next_sibling == NULL || GTK_IS_ACCESSIBLE (parent));
+  g_return_if_fail (next_sibling == NULL || GTK_IS_ACCESSIBLE (next_sibling));
 
   GtkATContext *context;
 
@@ -600,6 +600,27 @@ gtk_accessible_reset_property (GtkAccessible         *self,
   g_object_unref (context);
 }
 
+static inline bool
+relation_is_managed (const GtkAccessibleRelation relation)
+{
+  static const GtkAccessibleRelation managed_relations[] = {
+    GTK_ACCESSIBLE_RELATION_LABEL_FOR,
+    GTK_ACCESSIBLE_RELATION_CONTROLLED_BY,
+    GTK_ACCESSIBLE_RELATION_DESCRIPTION_FOR,
+    GTK_ACCESSIBLE_RELATION_DETAILS_FOR,
+    GTK_ACCESSIBLE_RELATION_ERROR_MESSAGE_FOR,
+    GTK_ACCESSIBLE_RELATION_FLOW_FROM,
+  };
+
+  for (unsigned i = 0; i < G_N_ELEMENTS (managed_relations); i++)
+    {
+      if (relation == managed_relations[i])
+        return true;
+    }
+
+  return false;
+}
+
 /**
  * gtk_accessible_update_relation:
  * @self: an accessible object
@@ -644,6 +665,12 @@ gtk_accessible_update_relation (GtkAccessible         *self,
 
   while (relation != -1)
     {
+      if (relation_is_managed (relation))
+        {
+          g_warning ("The relation “%s” is managed by GTK and must not be set directly",
+                      gtk_accessible_relation_get_attribute_name (relation));
+          continue;
+        }
       GError *error = NULL;
       GtkAccessibleValue *value =
         gtk_accessible_value_collect_for_relation ((GtkAccessibleRelation) relation, &error, &args);
@@ -707,6 +734,12 @@ gtk_accessible_update_relation_value (GtkAccessible         *self,
       GtkAccessibleRelation relation = relations[i];
       const GValue *value = &(values[i]);
       GError *error = NULL;
+      if (relation_is_managed (relation))
+        {
+          g_warning ("The relation “%s” is managed by GTK and must not be set directly",
+                      gtk_accessible_relation_get_attribute_name (relation));
+          continue;
+        }
       GtkAccessibleValue *real_value =
         gtk_accessible_value_collect_for_relation_value (relation, value, &error);
 
@@ -1049,7 +1082,6 @@ gtk_accessible_role_is_abstract (GtkAccessibleRole role)
     case GTK_ACCESSIBLE_ROLE_SELECT:
     case GTK_ACCESSIBLE_ROLE_STRUCTURE:
     case GTK_ACCESSIBLE_ROLE_WIDGET:
-    case GTK_ACCESSIBLE_ROLE_WINDOW:
       return TRUE;
     default:
       return FALSE;

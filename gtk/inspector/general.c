@@ -548,9 +548,11 @@ get_egl_display (GdkDisplay *display)
   else
 #endif
 #ifdef GDK_WINDOWING_X11
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   if (GDK_IS_X11_DISPLAY (display))
     return gdk_x11_display_get_egl_display (display);
   else
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 #ifdef GDK_WINDOWING_WIN32
   if (GDK_IS_WIN32_DISPLAY (display))
@@ -617,6 +619,9 @@ init_gl (GtkInspectorGeneral *gen)
   else
 #endif
 #ifdef GDK_WINDOWING_X11
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
   if (GDK_IS_X11_DISPLAY (gen->display))
     {
       Display *dpy = GDK_DISPLAY_XDISPLAY (gen->display);
@@ -631,11 +636,16 @@ init_gl (GtkInspectorGeneral *gen)
       g_free (version);
       gtk_label_set_text (GTK_LABEL (gen->gl_backend_vendor), glXGetClientString (dpy, GLX_VENDOR));
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       screen = XScreenNumberOfScreen (gdk_x11_display_get_xscreen (gen->display));
+G_GNUC_END_IGNORE_DEPRECATIONS
       gtk_label_set_text (GTK_LABEL (gen->egl_extensions_row_name), "GLX extensions");
       append_extensions (gen->egl_extensions_list, glXQueryExtensionsString (dpy, screen));
     }
   else
+
+G_GNUC_END_IGNORE_DEPRECATIONS
+
 #endif
 #ifdef GDK_WINDOWING_WIN32
   if (GDK_IS_WIN32_DISPLAY (gen->display) &&
@@ -728,6 +738,9 @@ dump_gl (GdkDisplay *display,
   else
 #endif
 #ifdef GDK_WINDOWING_X11
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
   if (GDK_IS_X11_DISPLAY (display))
     {
       Display *dpy = GDK_DISPLAY_XDISPLAY (display);
@@ -745,7 +758,9 @@ dump_gl (GdkDisplay *display,
 
       g_string_append_printf (string, "| GL Backend Vendor | %s |\n", glXGetClientString (dpy, GLX_VENDOR));
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       screen = XScreenNumberOfScreen (gdk_x11_display_get_xscreen (display));
+G_GNUC_END_IGNORE_DEPRECATIONS
       g_string_assign (ext, glXQueryExtensionsString (dpy, screen));
       count = g_string_replace (ext, " ", "<br>", 0);
       prefix = g_strdup_printf ("| GLX Extensions | <details><summary>%u Extensions</summary>", count + 1);
@@ -754,6 +769,9 @@ dump_gl (GdkDisplay *display,
       g_free (prefix);
     }
   else
+
+G_GNUC_END_IGNORE_DEPRECATIONS
+
 #endif
 #ifdef GDK_WINDOWING_WIN32
   if (GDK_IS_WIN32_DISPLAY (display) &&
@@ -1666,25 +1684,36 @@ add_device (GtkInspectorGeneral *gen,
       g_free (text);
     }
 
-#ifdef GDK_WINDOWING_WAYLAND
-  if (GDK_IS_WAYLAND_DEVICE (device) &&
-      gdk_device_get_source (device) == GDK_SOURCE_KEYBOARD)
+  if (gdk_device_get_source (device) == GDK_SOURCE_KEYBOARD)
     {
-      struct xkb_keymap *keymap = gdk_wayland_device_get_xkb_keymap (device);
       GString *s;
+      char **layout_names;
 
       s = g_string_new ("");
-      for (int i = 0; i < xkb_keymap_num_layouts (keymap); i++)
+      layout_names = gdk_device_get_layout_names (device);
+      if (layout_names)
         {
-          if (s->len > 0)
-            g_string_append (s, ", ");
-          g_string_append (s, xkb_keymap_layout_get_name (keymap, i));
+          int n_layouts, active_layout;
+
+          active_layout = gdk_device_get_active_layout_index (device);
+          n_layouts = g_strv_length (layout_names);
+          for (int i = 0; i < n_layouts; i++)
+            {
+              if (s->len > 0)
+                g_string_append (s, ", ");
+              g_string_append (s, layout_names[i]);
+              if (i == active_layout)
+                g_string_append (s, "*");
+            }
+        }
+      else
+        {
+          g_string_append (s, "Unknown");
         }
 
       add_label_row (gen, GTK_LIST_BOX (gen->device_box), "Layouts", s->str, 20);
       g_string_free (s, TRUE);
     }
-#endif
 
   g_type_class_unref (class);
 }
@@ -1709,25 +1738,28 @@ dump_device (GdkDevice *device,
   if (n_touches > 0)
     g_string_append_printf (string, "| Touches | %d |\n", n_touches);
 
-#ifdef GDK_WINDOWING_WAYLAND
-  if (GDK_IS_WAYLAND_DEVICE (device) &&
-      gdk_device_get_source (device) == GDK_SOURCE_KEYBOARD)
+  if (gdk_device_get_source (device) == GDK_SOURCE_KEYBOARD)
     {
-      struct xkb_keymap *keymap = gdk_wayland_device_get_xkb_keymap (device);
+      char **layout_names;
+      int n_layouts, active_layout;
       GString *s;
 
+      layout_names = gdk_device_get_layout_names (device);
+      active_layout = gdk_device_get_active_layout_index (device);
+      n_layouts = g_strv_length (layout_names);
       s = g_string_new ("");
-      for (int i = 0; i < xkb_keymap_num_layouts (keymap); i++)
+      for (int i = 0; i < n_layouts; i++)
         {
           if (s->len > 0)
             g_string_append (s, "<br>");
-          g_string_append (s, xkb_keymap_layout_get_name (keymap, i));
+          g_string_append (s, layout_names[i]);
+          if (i == active_layout)
+            g_string_append (s, "*");
         }
 
        g_string_append_printf (string, "| Layouts | %s |\n", s->str);
-      g_string_free (s, TRUE);
+       g_string_free (s, TRUE);
     }
-#endif
 
   g_type_class_unref (class);
 }

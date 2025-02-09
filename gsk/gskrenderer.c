@@ -738,8 +738,8 @@ static struct {
   { get_renderer_for_display },
   { get_renderer_for_env_var },
   { get_renderer_for_backend },
-  { get_renderer_for_gl_fallback },
   { get_renderer_for_gl },
+  { get_renderer_for_gl_fallback },
 #ifdef GDK_RENDERING_VULKAN
   { get_renderer_for_vulkan_fallback },
 #endif

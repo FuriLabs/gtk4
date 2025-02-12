@@ -1,9 +1,13 @@
-gtk4 (4.17.4+ds-2) UNRELEASED; urgency=medium
+gtk4 (4.17.4+ds-2) experimental; urgency=medium
 
+  [ Jeremy Bícha ]
   * Don't use mesa-vulkan-drivers for tests on armel, armhf & mips64el
     (Mitigates: #1094844)
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 04 Feb 2025 13:39:42 -0500
+  [ Alessandro Astone ]
+  * Add proposed patch to fix an autopkgtest error (Closes: #1094843)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 12 Feb 2025 09:18:46 -0500
 
 gtk4 (4.17.4+ds-1) experimental; urgency=medium
 

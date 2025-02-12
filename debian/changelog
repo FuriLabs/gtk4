@@ -1,3 +1,10 @@
+gtk4 (4.17.4+ds-3) unstable; urgency=medium
+
+  * Update autopkgtest patch with version applied upstream
+  * Release to unstable (Closes: #1094845, #1083055)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 12 Feb 2025 11:11:10 -0500
+
 gtk4 (4.17.4+ds-2) experimental; urgency=medium
 
   [ Jeremy Bícha ]

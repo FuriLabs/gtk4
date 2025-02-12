@@ -8,21 +8,24 @@ Gtk.FontDialogButton:font_desc property, e.g. when parsing from GtkBuilder.
 
 The button already handles this case by showing "None" as its label.
 
-Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/8201
+(cherry picked from commit 7d05cd7771b843c1793177bae2efa36f983b85d5)
+
+Origin: upstream, after 4.17.4
 ---
- gtk/gtkfontdialogbutton.c | 2 ++
- 1 file changed, 2 insertions(+)
+ gtk/gtkfontdialogbutton.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
 diff --git a/gtk/gtkfontdialogbutton.c b/gtk/gtkfontdialogbutton.c
-index 0eee4b3..fc0ed63 100644
+index 0eee4b3..1346544 100644
 --- a/gtk/gtkfontdialogbutton.c
 +++ b/gtk/gtkfontdialogbutton.c
-@@ -620,6 +620,8 @@ update_font_data (GtkFontDialogButton *self)
-           break;
+@@ -621,6 +621,9 @@ update_font_data (GtkFontDialogButton *self)
          }
      }
-+    if (self->font_family == NULL)
-+      return;
  
++  if (self->font_family == NULL)
++    return;
++
    for (unsigned i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->font_family)); i++)
      {
+       PangoFontFace *face = g_list_model_get_item (G_LIST_MODEL (self->font_family), i);

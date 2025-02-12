@@ -1,0 +1,28 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Wed, 12 Feb 2025 14:09:26 +0100
+Subject: fontdialogbutton: Gracefully handle unknown font
+
+It should not be possible find no matching font-family after choosing from
+the picker, but it is possible to set any font description with the
+Gtk.FontDialogButton:font_desc property, e.g. when parsing from GtkBuilder.
+
+The button already handles this case by showing "None" as its label.
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/8201
+---
+ gtk/gtkfontdialogbutton.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/gtk/gtkfontdialogbutton.c b/gtk/gtkfontdialogbutton.c
+index 0eee4b3..fc0ed63 100644
+--- a/gtk/gtkfontdialogbutton.c
++++ b/gtk/gtkfontdialogbutton.c
+@@ -620,6 +620,8 @@ update_font_data (GtkFontDialogButton *self)
+           break;
+         }
+     }
++    if (self->font_family == NULL)
++      return;
+ 
+   for (unsigned i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->font_family)); i++)
+     {

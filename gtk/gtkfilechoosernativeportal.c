@@ -485,9 +485,6 @@ gtk_file_chooser_native_portal_show (GtkFileChooserNative *self)
   else
     display = gdk_display_get_default ();
 
-  if (!gdk_display_should_use_portal (display, PORTAL_FILECHOOSER_INTERFACE, 3))
-    return FALSE;
-
   /* From here on out, we want to return TRUE, since we should use the portal,
    * or fail.
    */

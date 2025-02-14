@@ -878,12 +878,6 @@ endif
 if get_option('build-demos')
   subdir('demos')
 endif
-if get_option('build-tests')
-  subdir('tests')
-endif
-if get_option('build-testsuite')
-  subdir('testsuite')
-endif
 if get_option('build-examples')
   subdir('examples')
 endif
@@ -1021,9 +1015,6 @@ summary('Optimization', get_option('optimization'), section: 'Build')
 summary('Introspection', build_gir, section: 'Build')
 summary('Documentation', get_option('documentation'), section: 'Build')
 summary('Man pages', get_option('man-pages'), section: 'Build')
-summary('Testsuite', get_option('build-testsuite'), section: 'Build')
-summary('Tests', get_option('build-tests'), section: 'Build')
-summary('Install tests', get_option('install-tests'), section: 'Build')
 summary('Demos', get_option('build-demos'), section: 'Build')
 summary('Examples', get_option('build-examples'), section: 'Build')
 

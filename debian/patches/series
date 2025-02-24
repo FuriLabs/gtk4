@@ -19,3 +19,4 @@ workarounds/scaling-test-Skip-floating-point-pixel-formats-with-Cairo.patch
 workarounds/scaling-test-Skip-floating-point-texture-tests-on-softpip.patch
 workarounds/memorytexture-test-Ignore-failures-with-FP.patch
 debian/gsk-Change-default-renderer-back-to-ngl.patch
+wayland-update-color-coordinates-for-extra-precision.patch

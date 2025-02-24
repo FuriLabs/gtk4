@@ -1,3 +1,10 @@
+gtk4 (4.17.5+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release (Closes: #1098624)
+    - Fix numeric mode in spin buttons (LP: #2060164)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 23 Feb 2025 20:12:48 -0500
+
 gtk4 (4.17.4+ds-4) unstable; urgency=medium
 
   * Don't use mesa-vulkan-drivers for tests on ppc64el

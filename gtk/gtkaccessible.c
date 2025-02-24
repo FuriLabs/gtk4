@@ -26,7 +26,7 @@
  * Every accessible implementation has:
  *
  *  - a “role”, represented by a value of the [enum@Gtk.AccessibleRole] enumeration
- *  - an “attribute”, represented by a set of [enum@Gtk.AccessibleState],
+ *  - “attributes”, represented by a set of [enum@Gtk.AccessibleState],
  *    [enum@Gtk.AccessibleProperty] and [enum@Gtk.AccessibleRelation] values
  *
  * The role cannot be changed after instantiating a `GtkAccessible`
@@ -42,8 +42,10 @@
  * by reimplementing the [vfunc@Gtk.Accessible.get_accessible_parent],
  * [vfunc@Gtk.Accessible.get_first_accessible_child] and
  * [vfunc@Gtk.Accessible.get_next_accessible_sibling] virtual functions.
+ *
  * Note that you can not create a top-level accessible object as of now,
  * which means that you must always have a parent accessible object.
+ *
  * Also note that when an accessible object does not correspond to a widget,
  * and it has children, whose implementation you don't control,
  * it is necessary to ensure the correct shape of the a11y tree
@@ -1103,11 +1105,14 @@ gtk_accessible_role_is_abstract (GtkAccessibleRole role)
  * AT backends should use [method@Gtk.Accessible.get_platform_state]
  * to obtain the actual state.
  */
-void
+static void
 gtk_accessible_platform_changed (GtkAccessible               *self,
                                  GtkAccessiblePlatformChange  change)
 {
   GtkATContext *context;
+
+  if (change == 0)
+    return;
 
   if (GTK_IS_WIDGET (self) &&
       gtk_widget_get_root (GTK_WIDGET (self)) == NULL)
@@ -1158,6 +1163,48 @@ gtk_accessible_get_platform_state (GtkAccessible              *self,
   g_return_val_if_fail (GTK_IS_ACCESSIBLE (self), FALSE);
 
   return GTK_ACCESSIBLE_GET_IFACE (self)->get_platform_state (self, state);
+}
+
+/**
+ * gtk_accessible_update_platform_state:
+ * @self: an accessible object
+ * @state: the platform state to update
+ *
+ * Informs ATs that the platform state has changed.
+ *
+ * This function should be used by `GtkAccessible` implementations that
+ * have a platform state but are not widgets. Widgets handle platform
+ * states automatically.
+ *
+ * Since: 4.18
+ */
+void
+gtk_accessible_update_platform_state (GtkAccessible              *self,
+                                      GtkAccessiblePlatformState  state)
+{
+  GtkAccessiblePlatformChange change = 0;
+
+  g_return_if_fail (GTK_IS_ACCESSIBLE (self));
+
+  switch (state)
+    {
+    case GTK_ACCESSIBLE_PLATFORM_STATE_FOCUSABLE:
+      change |= GTK_ACCESSIBLE_PLATFORM_CHANGE_FOCUSABLE;
+      break;
+
+    case GTK_ACCESSIBLE_PLATFORM_STATE_FOCUSED:
+      change |= GTK_ACCESSIBLE_PLATFORM_CHANGE_FOCUSED;
+      break;
+
+    case GTK_ACCESSIBLE_PLATFORM_STATE_ACTIVE:
+      change |= GTK_ACCESSIBLE_PLATFORM_CHANGE_ACTIVE;
+      break;
+
+    default:
+      g_assert_not_reached ();
+    }
+
+  gtk_accessible_platform_changed (self, change);
 }
 
 /*< private >

@@ -32,15 +32,22 @@
 #include "gtktypebuiltins.h"
 #include "gtkwindowprivate.h"
 
+#ifdef GDK_WINDOWING_MACOS
+#include "gtkwindowbuttonsquartzprivate.h"
+#endif
+
 /**
  * GtkWindowControls:
  *
- * A widget that shows window frame controls.
+ * Shows window frame controls.
  *
  * Typical window frame controls are minimize, maximize and close buttons,
  * and the window icon.
  *
- * ![An example GtkWindowControls](windowcontrols.png)
+ * <picture>
+ *   <source srcset="windowcontrols-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkWindowControls" src="windowcontrols.png">
+ * </picture>
  *
  * `GtkWindowControls` only displays start or end side of the controls (see
  * [property@Gtk.WindowControls:side]), so it's intended to be always used
@@ -93,6 +100,7 @@ struct _GtkWindowControls {
   GtkPackType side;
   char *decoration_layout;
 
+  gboolean use_native_controls;
   gboolean empty;
 };
 
@@ -100,6 +108,7 @@ enum {
   PROP_0,
   PROP_SIDE,
   PROP_DECORATION_LAYOUT,
+  PROP_USE_NATIVE_CONTROLS,
   PROP_EMPTY,
   LAST_PROP
 };
@@ -129,20 +138,33 @@ get_layout (GtkWindowControls *self)
                   "gtk-decoration-layout", &layout_desc,
                   NULL);
 
+  if (layout_desc == NULL || layout_desc[0] == '\0')
+    {
+      g_free (layout_desc);
+      return NULL;
+    }
+
   tokens = g_strsplit (layout_desc, ":", 2);
 
-  switch (self->side)
+  if (tokens[1] == NULL)
     {
-    case GTK_PACK_START:
       layout_half = g_strdup (tokens[0]);
-      break;
+    }
+  else
+    {
+      switch (self->side)
+        {
+        case GTK_PACK_START:
+          layout_half = g_strdup (tokens[0]);
+          break;
 
-    case GTK_PACK_END:
-      layout_half = g_strdup (tokens[1]);
-      break;
+        case GTK_PACK_END:
+          layout_half = g_strdup (tokens[1]);
+          break;
 
-    default:
-      g_assert_not_reached ();
+        default:
+          g_assert_not_reached ();
+        }
     }
 
   g_free (layout_desc);
@@ -246,6 +268,36 @@ update_window_buttons (GtkWindowControls *self)
 
       return;
     }
+
+#ifdef GDK_WINDOWING_MACOS
+  if (self->use_native_controls)
+    {
+      if (GTK_IS_WINDOW_BUTTONS_QUARTZ (gtk_widget_get_first_child (widget)))
+        return;
+
+      clear_controls (self);
+
+      if (self->side == GTK_PACK_START)
+        {
+          GtkWidget *controls = g_object_new (GTK_TYPE_WINDOW_BUTTONS_QUARTZ, NULL);
+          g_object_bind_property (self, "decoration-layout",
+                                  controls, "decoration-layout",
+                                  G_BINDING_SYNC_CREATE);
+          gtk_widget_set_parent (controls, GTK_WIDGET (self));
+
+          gtk_widget_add_css_class (GTK_WIDGET (self), "native");
+          empty = FALSE;
+        }
+
+      set_empty (self, empty);
+
+      return;
+    }
+  else
+    {
+      gtk_widget_remove_css_class (GTK_WIDGET (self), "native");
+    }
+#endif
 
   clear_controls (self);
 
@@ -458,6 +510,10 @@ gtk_window_controls_get_property (GObject    *object,
       g_value_set_string (value, gtk_window_controls_get_decoration_layout (self));
       break;
 
+    case PROP_USE_NATIVE_CONTROLS:
+      g_value_set_boolean (value, gtk_window_controls_get_use_native_controls (self));
+      break;
+
     case PROP_EMPTY:
       g_value_set_boolean (value, gtk_window_controls_get_empty (self));
       break;
@@ -484,6 +540,10 @@ gtk_window_controls_set_property (GObject      *object,
 
     case PROP_DECORATION_LAYOUT:
       gtk_window_controls_set_decoration_layout (self, g_value_get_string (value));
+      break;
+
+    case PROP_USE_NATIVE_CONTROLS:
+      gtk_window_controls_set_use_native_controls (self, g_value_get_boolean (value));
       break;
 
     default:
@@ -532,6 +592,26 @@ gtk_window_controls_class_init (GtkWindowControlsClass *klass)
                            NULL,
                            GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
+
+  /**
+   * GtkWindowControls:use-native-controls:
+   *
+   * Whether to show platform native close/minimize/maximize buttons.
+   *
+   * For macOS, the [property@Gtk.HeaderBar:decoration-layout] property
+   * controls the use of native window controls.
+   *
+   * On other platforms, this option has no effect.
+   *
+   * See also [Using GTK on Apple macOS](osx.html?native-window-controls).
+   *
+   * Since: 4.18
+   */
+  props[PROP_USE_NATIVE_CONTROLS] =
+      g_param_spec_boolean ("use-native-controls", NULL, NULL,
+                            FALSE,
+                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+
   /**
    * GtkWindowControls:empty:
    *
@@ -554,6 +634,7 @@ gtk_window_controls_init (GtkWindowControls *self)
 {
   self->decoration_layout = NULL;
   self->side = GTK_PACK_START;
+  self->use_native_controls = FALSE;
   self->empty = TRUE;
 
   gtk_widget_add_css_class (GTK_WIDGET (self), "empty");
@@ -680,12 +761,62 @@ gtk_window_controls_set_decoration_layout (GtkWindowControls *self,
 {
   g_return_if_fail (GTK_IS_WINDOW_CONTROLS (self));
 
-  g_free (self->decoration_layout);
-  self->decoration_layout = g_strdup (layout);
+  g_set_str (&self->decoration_layout, layout);
 
   update_window_buttons (self);
 
   g_object_notify_by_pspec (G_OBJECT (self), props[PROP_DECORATION_LAYOUT]);
+}
+
+
+/**
+ * gtk_window_controls_get_use_native_controls:
+ * @self: a window controls widget
+ *
+ * Returns whether platform native window controls are shown.
+ *
+ * Returns: true if native window controls are shown
+ *
+ * Since: 4.18
+ */
+gboolean
+gtk_window_controls_get_use_native_controls (GtkWindowControls *self)
+{
+  g_return_val_if_fail (GTK_IS_WINDOW_CONTROLS (self), FALSE);
+
+  return self->use_native_controls;
+}
+
+/**
+ * gtk_window_controls_set_use_native_controls:
+ * @self: a window_controls widget
+ * @setting: true to show native window controls
+ *
+ * Sets whether platform native window controls are used.
+ *
+ * This option shows the "stoplight" buttons on macOS.
+ * For Linux, this option has no effect.
+ *
+ * See also [Using GTK on Apple macOS](osx.html?native-window-controls).
+ *
+ * Since: 4.18
+ */
+void
+gtk_window_controls_set_use_native_controls (GtkWindowControls *self,
+                                             gboolean           setting)
+{
+  g_return_if_fail (GTK_IS_WINDOW_CONTROLS (self));
+
+  setting = setting != FALSE;
+
+  if (self->use_native_controls == setting)
+    return;
+
+  self->use_native_controls = setting;
+
+  update_window_buttons (self);
+
+  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_USE_NATIVE_CONTROLS]);
 }
 
 /**

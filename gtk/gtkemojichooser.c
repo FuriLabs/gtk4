@@ -40,10 +40,12 @@
 /**
  * GtkEmojiChooser:
  *
- * The `GtkEmojiChooser` is used by text widgets such as `GtkEntry` or
- * `GtkTextView` to let users insert Emoji characters.
+ * Used by text widgets to let users insert Emoji characters.
  *
- * ![An example GtkEmojiChooser](emojichooser.png)
+ * <picture>
+ *   <source srcset="emojichooser-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkEmojiChooser" src="emojichooser.png">
+ * </picture>
  *
  * `GtkEmojiChooser` emits the [signal@Gtk.EmojiChooser::emoji-picked]
  * signal when an Emoji is selected.
@@ -917,6 +919,8 @@ filter_func (GtkFlowBoxChild *child,
   g_strfreev (term_tokens);
   g_strfreev (name_tokens);
   g_strfreev (name_tokens_en);
+  g_free (keywords_en);
+  g_free (keywords);
 
 out:
   if (res)

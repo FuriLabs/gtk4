@@ -114,7 +114,10 @@
  *
  * A toplevel window which can contain other widgets.
  *
- * ![An example GtkWindow](window.png)
+ * <picture>
+ *   <source srcset="window-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkWindow" src="window.png">
+ * </picture>
  *
  * Windows normally have decorations that are under the control
  * of the windowing system and allow the user to manipulate the window
@@ -1763,6 +1766,8 @@ gtk_window_init (GtkWindow *window)
 
   target = gtk_drop_target_async_new (gdk_content_formats_new ((const char*[1]) { "application/x-rootwindow-drop" }, 1),
                                       GDK_ACTION_MOVE);
+  gtk_event_controller_set_static_name (GTK_EVENT_CONTROLLER (target),
+                                        "gtk-window-rootwindow-drop");
   g_signal_connect (target, "drop", G_CALLBACK (gtk_window_accept_rootwindow_drop), NULL);
   gtk_widget_add_controller (GTK_WIDGET (window), GTK_EVENT_CONTROLLER (target));
 
@@ -1772,8 +1777,8 @@ gtk_window_init (GtkWindow *window)
                       G_CALLBACK (device_removed_cb), window);
 
   controller = gtk_event_controller_motion_new ();
-  gtk_event_controller_set_propagation_phase (controller,
-                                              GTK_PHASE_CAPTURE);
+  gtk_event_controller_set_static_name (controller, "gtk-window-resize-cursor");
+  gtk_event_controller_set_propagation_phase (controller, GTK_PHASE_CAPTURE);
   g_signal_connect_swapped (controller, "motion",
                             G_CALLBACK (gtk_window_capture_motion), window);
   g_signal_connect_swapped (controller, "leave",
@@ -1781,7 +1786,9 @@ gtk_window_init (GtkWindow *window)
   gtk_widget_add_controller (widget, controller);
 
   controller = gtk_event_controller_key_new ();
+  gtk_event_controller_set_static_name (controller, "gtk-window-visible-focus");
   gtk_event_controller_set_propagation_phase (controller, GTK_PHASE_CAPTURE);
+  gtk_event_controller_set_propagation_limit (controller, GTK_LIMIT_NONE);
   g_signal_connect_swapped (controller, "key-pressed",
                             G_CALLBACK (gtk_window_key_pressed), window);
   g_signal_connect_swapped (controller, "key-released",
@@ -1815,6 +1822,7 @@ gtk_window_constructed (GObject *object)
   G_OBJECT_CLASS (gtk_window_parent_class)->constructed (object);
 
   priv->click_gesture = gtk_gesture_click_new ();
+  gtk_event_controller_set_static_name (GTK_EVENT_CONTROLLER (priv->click_gesture), "gtk-window-resize");
   gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (priv->click_gesture), 0);
   gtk_event_controller_set_propagation_phase (GTK_EVENT_CONTROLLER (priv->click_gesture),
                                               GTK_PHASE_BUBBLE);
@@ -6035,7 +6043,8 @@ _gtk_window_set_is_active (GtkWindow *window,
       g_object_unref (focus);
     }
 
-  gtk_accessible_platform_changed (GTK_ACCESSIBLE (window), GTK_ACCESSIBLE_PLATFORM_CHANGE_ACTIVE);
+  gtk_accessible_update_platform_state (GTK_ACCESSIBLE (window),
+                                        GTK_ACCESSIBLE_PLATFORM_STATE_ACTIVE);
 
   g_object_notify_by_pspec (G_OBJECT (window), window_props[PROP_IS_ACTIVE]);
 }

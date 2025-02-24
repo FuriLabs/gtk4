@@ -157,7 +157,7 @@ struct _GtkAccessibleInterface
 /**
  * GtkAccessibleList:
  *
- * A boxed type which wraps a list of references to GtkAccessible objects.
+ * Wraps a list of references to [iface@Gtk.Accessible] objects.
  *
  * Since: 4.14
  */
@@ -264,5 +264,9 @@ GDK_AVAILABLE_IN_4_14
 void gtk_accessible_announce (GtkAccessible                     *self,
                               const char                        *message,
                               GtkAccessibleAnnouncementPriority  priority);
+
+GDK_AVAILABLE_IN_4_18
+void gtk_accessible_update_platform_state (GtkAccessible              *self,
+                                           GtkAccessiblePlatformState  state);
 
 G_END_DECLS

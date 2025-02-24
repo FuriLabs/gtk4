@@ -41,10 +41,12 @@
 /**
  * GtkPopoverMenu:
  *
- * `GtkPopoverMenu` is a subclass of `GtkPopover` that implements menu
- * behavior.
+ * A subclass of `GtkPopover` that implements menu behavior.
  *
- * ![An example GtkPopoverMenu](menu.png)
+ * <picture>
+ *   <source srcset="menu-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkPopoverMenu" src="menu.png">
+ * </picture>
  *
  * `GtkPopoverMenu` treats its children like menus and allows switching
  * between them. It can open submenus as traditional, nested submenus,
@@ -152,11 +154,10 @@
  *
  * # Accessibility
  *
- * `GtkPopoverMenu` uses the %GTK_ACCESSIBLE_ROLE_MENU role, and its
- * items use the %GTK_ACCESSIBLE_ROLE_MENU_ITEM,
- * %GTK_ACCESSIBLE_ROLE_MENU_ITEM_CHECKBOX or
- * %GTK_ACCESSIBLE_ROLE_MENU_ITEM_RADIO roles, depending on the
- * action they are connected to.
+ * `GtkPopoverMenu` uses the [enum@Gtk.AccessibleRole.menu] role, and its
+ * items use the [enum@Gtk.AccessibleRole.menu_item],
+ * [enum@Gtk.AccessibleRole.checkbox] or [enum@Gtk.AccessibleRole.menu_item_radio]
+ * roles, depending on the action they are connected to.
  */
 
 typedef struct _GtkPopoverMenuClass GtkPopoverMenuClass;

@@ -139,7 +139,6 @@ static const GdkDebugKey gdk_debug_keys[] = {
   { "portals",         GDK_DEBUG_PORTALS, "Force use of portals" },
   { "no-portals",      GDK_DEBUG_NO_PORTALS, "Disable use of portals" },
   { "force-offload",   GDK_DEBUG_FORCE_OFFLOAD, "Force graphics offload for all textures" },
-  { "gl-no-fractional", GDK_DEBUG_GL_NO_FRACTIONAL, "Disable fractional scaling for OpenGL" },
   { "gl-debug",        GDK_DEBUG_GL_DEBUG, "Insert debugging information in OpenGL" },
   { "gl-prefer-gl",    GDK_DEBUG_GL_PREFER_GL, "Prefer GL over GLES API" },
   { "default-settings",GDK_DEBUG_DEFAULT_SETTINGS, "Force default values for xsettings" },
@@ -281,7 +280,7 @@ gdk_parse_debug_var (const char        *variable,
                 }
             }
           if (i == nkeys)
-            fprintf (stderr, "Unrecognized value \"%.*s\". Try %s=help\n", (int) (q - p), p, variable);
+            gdk_help_message ("Unrecognized value \"%.*s\". Try %s=help", (int) (q - p), p, variable);
          }
 
       p = q;
@@ -296,14 +295,13 @@ gdk_parse_debug_var (const char        *variable,
         max_width = MAX (max_width, strlen (keys[i].key));
       max_width += 4;
 
-      fprintf (stderr, "%s\n", docs);
-      fprintf (stderr, "Supported %s values:\n", variable);
-      for (i = 0; i < nkeys; i++) {
-        fprintf (stderr, "  %s%*s%s\n", keys[i].key, (int)(max_width - strlen (keys[i].key)), " ", keys[i].help);
-      }
-      fprintf (stderr, "  %s%*s%s\n", "all", max_width - 3, " ", "Enable all values. Other given values are subtracted");
-      fprintf (stderr, "  %s%*s%s\n", "help", max_width - 4, " ", "Print this help");
-      fprintf (stderr, "\nMultiple values can be given, separated by : or space.\n");
+      gdk_help_message ("%s", docs);
+      gdk_help_message ("Supported %s values:", variable);
+      for (i = 0; i < nkeys; i++)
+        gdk_help_message ("  %s%*s%s", keys[i].key, (int)(max_width - strlen (keys[i].key)), " ", keys[i].help);
+      gdk_help_message ("  %s%*s%s", "all", max_width - 3, " ", "Enable all values. Other given values are subtracted");
+      gdk_help_message ("  %s%*s%s", "help", max_width - 4, " ", "Print this help");
+      gdk_help_message ("\nMultiple values can be given, separated by : or space.");
     }
 
   if (invert)

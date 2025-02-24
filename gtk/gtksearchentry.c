@@ -47,13 +47,15 @@
 /**
  * GtkSearchEntry:
  *
- * `GtkSearchEntry` is an entry widget that has been tailored for use
- * as a search entry.
+ * A single-line text entry widget for use as a search entry.
  *
  * The main API for interacting with a `GtkSearchEntry` as entry
  * is the `GtkEditable` interface.
  *
- * ![An example GtkSearchEntry](search-entry.png)
+ * <picture>
+ *   <source srcset="search-entry-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkSearchEntry" src="search-entry.png">
+ * </picture>
  *
  * It will show an inactive symbolic “find” icon when the search
  * entry is empty, and a symbolic “clear” icon when there is text.
@@ -99,7 +101,7 @@
  *
  * ## Accessibility
  *
- * `GtkSearchEntry` uses the %GTK_ACCESSIBLE_ROLE_SEARCH_BOX role.
+ * `GtkSearchEntry` uses the [enum@Gtk.AccessibleRole.search_box] role.
  */
 
 enum {

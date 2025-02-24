@@ -21,8 +21,7 @@
 /**
  * GtkBuilder:
  *
- * A `GtkBuilder` reads XML descriptions of a user interface and
- * instantiates the described objects.
+ * Reads XML descriptions of a user interface and instantiates the described objects.
  *
  * To create a `GtkBuilder` from a user interface description, call
  * [ctor@Gtk.Builder.new_from_file], [ctor@Gtk.Builder.new_from_resource]
@@ -355,6 +354,14 @@
  * Objects can implement the [iface@Gtk.Buildable] interface to add custom
  * elements and attributes to the XML. Typically, any extension will be
  * documented in each type that implements the interface.
+ *
+ * ## Menus
+ *
+ * In addition to objects with properties that are created with `<object>` and
+ * `<property>` elements, `GtkBuilder` also allows to parse XML menu definitions
+ * as used by [class@Gio.Menu] when exporting menu models over D-Bus, and as
+ * described in the [class@Gtk.PopoverMenu] documentation. Menus can be defined
+ * as toplevel elements, or as property values for properties of type `GMenuModel`.
  *
  * ## Templates
  *

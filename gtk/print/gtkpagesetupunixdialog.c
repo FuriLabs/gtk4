@@ -34,10 +34,13 @@
 /**
  * GtkPageSetupUnixDialog:
  *
- * `GtkPageSetupUnixDialog` implements a page setup dialog for platforms
- * which don’t provide a native page setup dialog, like Unix.
+ * Presents a page setup dialog for platforms which don’t provide
+ * a native page setup dialog, like Unix.
  *
- * ![An example GtkPageSetupUnixDialog](pagesetupdialog.png)
+ * <picture>
+ *   <source srcset="pagesetupdialog-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkPageSetupUnixDialog" src="pagesetupdialog.png">
+ * </picture>
  *
  * It can be used very much like any other GTK dialog, at the
  * cost of the portability offered by the high-level printing

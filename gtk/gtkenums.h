@@ -99,7 +99,7 @@ typedef enum
  * @GTK_ARROW_RIGHT: Represents a right pointing arrow.
  * @GTK_ARROW_NONE: No arrow.
  *
- * Used to indicate the direction in which an arrow should point.
+ * Indicates the direction in which an arrow should point.
  */
 typedef enum
 {
@@ -1043,9 +1043,10 @@ typedef enum
  * GtkPropagationLimit:
  * @GTK_LIMIT_NONE: Events are handled regardless of what their
  *   target is.
- * @GTK_LIMIT_SAME_NATIVE: Events are only handled if their target
- *   is in the same [iface@Native] as the event controllers widget. Note
- *   that some event types have two targets (origin and destination).
+ * @GTK_LIMIT_SAME_NATIVE: Events are only handled if their target is in
+ *   the same [iface@Native] (or widget with [property@Gtk.Widget:limit-events]
+ *   set) as the event controllers widget.
+ *   Note that some event types have two targets (origin and destination).
  *
  * Describes limits of a [class@EventController] for handling events
  * targeting other widgets.

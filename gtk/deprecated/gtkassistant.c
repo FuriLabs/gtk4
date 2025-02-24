@@ -26,7 +26,10 @@
  *
  * `GtkAssistant` is used to represent a complex as a series of steps.
  *
- * ![An example GtkAssistant](assistant.png)
+ * <picture>
+ *   <source srcset="assistant-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkAssistant" src="assistant.png">
+ * </picture>
  *
  * Each step consists of one or more pages. `GtkAssistant` guides the user
  * through the pages, and controls the page flow to collect the data needed
@@ -67,7 +70,7 @@
 /**
  * GtkAssistantPage:
  *
- * `GtkAssistantPage` is an auxiliary object used by `GtkAssistant.
+ * `GtkAssistantPage` is an auxiliary object used by `GtkAssistant`.
  *
  * Deprecated: 4.10: This object will be removed in GTK 5
  */

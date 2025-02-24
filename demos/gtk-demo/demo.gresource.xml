@@ -201,9 +201,9 @@
     <file>main.ui</file>
   </gresource>
   <gresource prefix="/menu">
-    <file>demo3widget.c</file>
-    <file>demo3widget.h</file>
-    <file>demo3widget.ui</file>
+    <file>imageview.c</file>
+    <file>imageview.h</file>
+    <file>imageview.ui</file>
   </gresource>
   <gresource prefix="/mask">
     <file>demo4widget.c</file>
@@ -273,6 +273,7 @@
     <file>filtermodel.c</file>
     <file>fishbowl.c</file>
     <file>fixed.c</file>
+    <file>fixed2.c</file>
     <file>flowbox.c</file>
     <file>frames.c</file>
     <file>font_features.c</file>

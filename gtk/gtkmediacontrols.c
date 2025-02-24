@@ -31,9 +31,12 @@
 /**
  * GtkMediaControls:
  *
- * `GtkMediaControls` is a widget to show controls for a video.
+ * Shows controls for video playback.
  *
- * ![An example GtkMediaControls](media-controls.png)
+ * <picture>
+ *   <source srcset="media-controls-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkMediaControls" src="media-controls.png">
+ * </picture>
  *
  * Usually, `GtkMediaControls` is used as part of [class@Gtk.Video].
  */

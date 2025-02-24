@@ -44,13 +44,12 @@ typedef enum {
   GDK_DEBUG_HDR             = 1 << 14,
   GDK_DEBUG_PORTALS         = 1 << 15,
   GDK_DEBUG_NO_PORTALS      = 1 << 16,
-  GDK_DEBUG_GL_NO_FRACTIONAL= 1 << 17,
-  GDK_DEBUG_FORCE_OFFLOAD   = 1 << 18,
-  GDK_DEBUG_GL_PREFER_GL    = 1 << 19,
-  GDK_DEBUG_GL_DEBUG        = 1 << 20,
-  GDK_DEBUG_DEFAULT_SETTINGS= 1 << 21,
-  GDK_DEBUG_HIGH_DEPTH      = 1 << 22,
-  GDK_DEBUG_NO_VSYNC        = 1 << 23,
+  GDK_DEBUG_FORCE_OFFLOAD   = 1 << 17,
+  GDK_DEBUG_GL_PREFER_GL    = 1 << 18,
+  GDK_DEBUG_GL_DEBUG        = 1 << 19,
+  GDK_DEBUG_DEFAULT_SETTINGS= 1 << 20,
+  GDK_DEBUG_HIGH_DEPTH      = 1 << 21,
+  GDK_DEBUG_NO_VSYNC        = 1 << 22,
 } GdkDebugFlags;
 
 typedef enum {
@@ -83,17 +82,34 @@ static inline void
 gdk_debug_message (const char *format, ...)
 {
   va_list args;
-  char *s;
 
   va_start (args, format);
-  s = g_strdup_vprintf (format, args);
-  va_end (args);
 #ifdef GLIB_USING_SYSTEM_PRINTF
-  fprintf (stderr, "%s\n", s);
+  vfprintf (stderr, format, args);
 #else
-  g_fprintf (stderr, "%s\n", s);
+  g_vfprintf (stderr, format, args);
 #endif
-  g_free (s);
+  va_end (args);
+
+  fprintf (stderr, "\n");
+}
+
+static inline void
+gdk_help_message (const char *format, ...) G_GNUC_PRINTF(1, 2);
+static inline void
+gdk_help_message (const char *format, ...)
+{
+  va_list args;
+
+  va_start (args, format);
+#ifdef GLIB_USING_SYSTEM_PRINTF
+  vfprintf (stderr, format, args);
+#else
+  g_vfprintf (stderr, format, args);
+#endif
+  va_end (args);
+
+  fprintf (stderr, "\n");
 }
 
 #define GDK_DISPLAY_DEBUG_CHECK(display,type) \

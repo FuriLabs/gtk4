@@ -35,10 +35,12 @@
 /**
  * GtkStackSwitcher:
  *
- * The `GtkStackSwitcher` shows a row of buttons to switch between `GtkStack`
- * pages.
+ * Shows a row of buttons to switch between `GtkStack` pages.
  *
- * ![An example GtkStackSwitcher](stackswitcher.png)
+ * <picture>
+ *   <source srcset="stackswitcher-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkStackSwitcher" src="stackswitcher.png">
+ * </picture>
  *
  * It acts as a controller for the associated `GtkStack`.
  *
@@ -60,8 +62,8 @@
  *
  * # Accessibility
  *
- * `GtkStackSwitcher` uses the %GTK_ACCESSIBLE_ROLE_TAB_LIST role
- * and uses the %GTK_ACCESSIBLE_ROLE_TAB for its buttons.
+ * `GtkStackSwitcher` uses the [enum@Gtk.AccessibleRole.tab_list] role
+ * and uses the [enum@Gtk.AccessibleRole.tab] role for its buttons.
  *
  * # Orientable
  *

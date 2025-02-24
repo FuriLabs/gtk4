@@ -48,8 +48,7 @@ const GdkDebugKey gdk_vulkan_feature_keys[] = {
 /**
  * GdkVulkanContext:
  *
- * `GdkVulkanContext` is an object representing the platform-specific
- * Vulkan draw context.
+ * Represents the platform-specific Vulkan draw context.
  *
  * `GdkVulkanContext`s are created for a surface using
  * [method@Gdk.Surface.create_vulkan_context], and the context will match
@@ -1945,11 +1944,11 @@ gdk_vulkan_init_dmabuf (GdkDisplay *display)
       if (vk_format == VK_FORMAT_UNDEFINED)
         continue;
 
-      modifier_props.drmFormatModifierCount = sizeof (modifier_list);
+      modifier_props.drmFormatModifierCount = G_N_ELEMENTS (modifier_list);
       vkGetPhysicalDeviceFormatProperties2 (display->vk_physical_device,
                                             vk_format,
                                             &props);
-      g_warn_if_fail (modifier_props.drmFormatModifierCount < sizeof (modifier_list));
+      g_warn_if_fail (modifier_props.drmFormatModifierCount < G_N_ELEMENTS (modifier_list));
       for (j = 0; j < modifier_props.drmFormatModifierCount; j++)
         {
           gboolean advertise = modifier_list[j].drmFormatModifier != DRM_FORMAT_MOD_LINEAR;

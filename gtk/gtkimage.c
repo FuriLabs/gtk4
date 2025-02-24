@@ -40,9 +40,12 @@
 /**
  * GtkImage:
  *
- * The `GtkImage` widget displays an image.
+ * Displays an image.
  *
- * ![An example GtkImage](image.png)
+ * picture>
+ *   <source srcset="image-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkImage" src="image.png">
+ * </picture>
  *
  * Various kinds of object can be displayed as an image; most typically,
  * you would load a `GdkTexture` from a file, using the convenience function
@@ -78,7 +81,7 @@
  *
  * ## Accessibility
  *
- * `GtkImage` uses the `GTK_ACCESSIBLE_ROLE_IMG` role.
+ * `GtkImage` uses the [enum@Gtk.AccessibleRole.img] role.
  */
 
 typedef struct _GtkImageClass GtkImageClass;

@@ -66,9 +66,12 @@
 /**
  * GtkTextView:
  *
- * A widget that displays the contents of a [class@Gtk.TextBuffer].
+ * Displays the contents of a [class@Gtk.TextBuffer].
  *
- * ![An example GtkTextView](multiline-text.png)
+ * <picture>
+ *   <source srcset="multiline-text-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkTextView" src="multiline-text.png">
+ * </picture>
  *
  * You may wish to begin by reading the [conceptual overview](section-text-widget.html),
  * which gives an overview of all the objects and data types related to the
@@ -136,7 +139,7 @@
  *
  * ## Accessibility
  *
- * `GtkTextView` uses the %GTK_ACCESSIBLE_ROLE_TEXT_BOX role.
+ * `GtkTextView` uses the [enum@Gtk.AccessibleRole.text_box] role.
  */
 
 /* How scrolling, validation, exposes, etc. work.
@@ -4538,7 +4541,11 @@ gtk_text_view_measure (GtkWidget      *widget,
   if (orientation == GTK_ORIENTATION_HORIZONTAL)
     extra = borders.left + priv->left_margin + priv->right_margin + borders.right;
   else
-    extra = borders.top + priv->height + borders.bottom;
+    {
+      min = MAX (min, priv->height);
+      nat = MAX (nat, priv->height);
+      extra = borders.top + borders.bottom;
+    }
 
   *minimum = min + extra;
   *natural = nat + extra;

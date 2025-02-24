@@ -39,9 +39,12 @@
 /**
  * GtkVideo:
  *
- * `GtkVideo` is a widget to show a `GtkMediaStream` with media controls.
+ * Shows a `GtkMediaStream` with media controls.
  *
- * ![An example GtkVideo](video.png)
+ * <picture>
+ *   <source srcset="video-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkVideo" src="video.png">
+ * </picture>
  *
  * The controls are available separately as [class@Gtk.MediaControls].
  * If you just want to display a video without controls, you can treat it

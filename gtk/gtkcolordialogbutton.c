@@ -53,10 +53,12 @@ static void     update_button_sensitivity
 /**
  * GtkColorDialogButton:
  *
- * The `GtkColorDialogButton` is a wrapped around a [class@Gtk.ColorDialog]
- * and allows to open a color chooser dialog to change the color.
+ * Opens a color chooser dialog to select a color.
  *
- * ![An example GtkColorDialogButton](color-button.png)
+ * <picture>
+ *   <source srcset="color-button-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkColorDialogButton" src="color-button.png">
+ * </picture>
  *
  * It is suitable widget for selecting a color in a preference dialog.
  *

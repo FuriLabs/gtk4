@@ -229,9 +229,6 @@ A number of options affect behavior instead of logging:
 : Force graphics offload for all textures, even when slower. This allows
   to debug offloading in the absence of dmabufs.
 
-`gl-no-fractional`
-: Disable fractional scaling for OpenGL.
-
 `gl-debug`
 : Insert debugging information in OpenGL
 
@@ -503,13 +500,6 @@ Overrides the timeout for cache GC in the "ngl" and "vulkan" renderers.
 The value can be -1 to disable GC entirely, 0 to force GC to happen
 before every frame, or a positive number to do GC in a timeout every
 n seconds. The default timeout is 15 seconds.
-
-### `GSK_MAX_TEXTURE_SIZE`
-
-Limit texture size to the minimum of this value and the OpenGL limit for
-texture sizes in the "gl" renderer. This can be used to debug issues with
-texture slicing on systems where the OpenGL texture size limit would
-otherwise make texture slicing difficult to test.
 
 ### `GTK_CSD`
 

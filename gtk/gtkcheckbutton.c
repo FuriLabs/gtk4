@@ -40,9 +40,12 @@
 /**
  * GtkCheckButton:
  *
- * A `GtkCheckButton` places a label next to an indicator.
+ * Places a label next to an indicator.
  *
- * ![Example GtkCheckButtons](check-button.png)
+ * <picture>
+ *   <source srcset="check-button-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="Example GtkCheckButtons" src="check-button.png">
+ * </picture>
  *
  * A `GtkCheckButton` is created by calling either [ctor@Gtk.CheckButton.new]
  * or [ctor@Gtk.CheckButton.new_with_label].
@@ -71,7 +74,10 @@
  * Grouped check buttons use a different indicator, and are commonly referred
  * to as *radio buttons*.
  *
- * ![Example GtkCheckButtons](radio-button.png)
+ * <picture>
+ *   <source srcset="radio-button-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="Example GtkRadioButtons" src="radio-button.png">
+ * </picture>
  *
  * To add a `GtkCheckButton` to a group, use [method@Gtk.CheckButton.set_group].
  *
@@ -102,7 +108,7 @@
  *
  * # Accessibility
  *
- * `GtkCheckButton` uses the %GTK_ACCESSIBLE_ROLE_CHECKBOX role.
+ * `GtkCheckButton` uses the [enum@Gtk.AccessibleRole.checkbox] role.
  */
 
 typedef struct {

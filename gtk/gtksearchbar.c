@@ -45,9 +45,12 @@
 /**
  * GtkSearchBar:
  *
- * `GtkSearchBar` is a container made to have a search entry.
+ * Reveals a search entry when search is started.
  *
- * ![An example GtkSearchBar](search-bar.png)
+ * <picture>
+ *   <source srcset="search-bar-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkSearchBar" src="search-bar.png">
+ * </picture>
  *
  * It can also contain additional widgets, such as drop-down menus,
  * or buttons.  The search bar would appear when a search is started
@@ -94,7 +97,7 @@
  *
  * # Accessibility
  *
- * `GtkSearchBar` uses the %GTK_ACCESSIBLE_ROLE_SEARCH role.
+ * `GtkSearchBar` uses the [enum@Gtk.AccessibleRole.search] role.
  */
 
 typedef struct _GtkSearchBarClass   GtkSearchBarClass;

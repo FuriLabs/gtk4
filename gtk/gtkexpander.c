@@ -22,10 +22,12 @@
 /**
  * GtkExpander:
  *
- * `GtkExpander` allows the user to reveal its child by clicking
- * on an expander triangle.
+ * Allows the user to reveal or conceal a child widget.
  *
- * ![An example GtkExpander](expander.png)
+ * <picture>
+ *   <source srcset="expander-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkExpander" src="expander.png">
+ * </picture>
  *
  * This is similar to the triangles used in a `GtkTreeView`.
  *
@@ -113,7 +115,7 @@
  *
  * # Accessibility
  *
- * `GtkExpander` uses the %GTK_ACCESSIBLE_ROLE_BUTTON role.
+ * `GtkExpander` uses the [enum@Gtk.AccessibleRole.button] role.
  */
 
 #include "config.h"

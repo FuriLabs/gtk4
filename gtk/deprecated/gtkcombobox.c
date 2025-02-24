@@ -50,7 +50,10 @@ G_GNUC_BEGIN_IGNORE_DEPRECATIONS
  * A `GtkComboBox` is a widget that allows the user to choose from a list of
  * valid choices.
  *
- * ![An example GtkComboBox](combo-box.png)
+ * <picture>
+ *   <source srcset="combo-box-dark.png" media="(prefers-color-scheme: dark)">
+ *   <img alt="An example GtkComboBox" src="combo-box.png">
+ * </picture>
  *
  * The `GtkComboBox` displays the selected choice; when activated, the
  * `GtkComboBox` displays a popup which allows the user to make a new choice.
@@ -106,7 +109,7 @@ G_GNUC_BEGIN_IGNORE_DEPRECATIONS
  *
  * ## Accessibility
  *
- * `GtkComboBox` uses the %GTK_ACCESSIBLE_ROLE_COMBO_BOX role.
+ * `GtkComboBox` uses the [enum@Gtk.AccessibleRole.combo_box] role.
  *
  * Deprecated: 4.10: Use [class@Gtk.DropDown] instead
  */

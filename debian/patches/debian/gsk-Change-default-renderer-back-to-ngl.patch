@@ -14,7 +14,7 @@ Forwarded: not-needed
  1 file changed, 1 insertion(+), 4 deletions(-)
 
 diff --git a/gsk/gskrenderer.c b/gsk/gskrenderer.c
-index 1cd3cae..97dac21 100644
+index 3468243..fd221c1 100644
 --- a/gsk/gskrenderer.c
 +++ b/gsk/gskrenderer.c
 @@ -733,14 +733,11 @@ static struct {

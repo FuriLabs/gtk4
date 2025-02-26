@@ -1,3 +1,13 @@
+gtk4 (4.17.5+ds-3) unstable; urgency=medium
+
+  * Don't use mesa-vulkan-drivers for tests on s390x
+  * Backport patches to fix flakiness when rendering with FP pixel formats.
+    This allows us to drop the workarounds to ignore test failures when using
+    floating-point pixel formats. It also fixes artifacts in gtk4 applications
+    visible mostly when using the asahi driver.
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Wed, 26 Feb 2025 15:50:53 -0500
+
 gtk4 (4.17.5+ds-2) unstable; urgency=medium
 
   * Add patch to fix color precision FTBFS issue on some architectures

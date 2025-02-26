@@ -1,0 +1,60 @@
+From: Benjamin Otte <otte@redhat.com>
+Date: Sat, 22 Feb 2025 02:13:42 +0100
+Subject: gpu: Don't use LOAD_OP_DONT_CARE when GL_BLEND is enabled
+
+We cannot ignore the background as long as blending is enabled. Blending
+is defined as
+  (1 - alpha) * dest + alpha * source
+and with alpha of 1.0 due to opacity, this comes out to
+  0 * dest + 1 * source
+so one would assume that the destination can be ignored, which is why
+DONT_CARE was used.
+
+However, code is free to initialize dest with any value, which means NaN
+is perfectly fine for float buffers. And that leads to
+  0 * NaN + 1 * source
+which does not ignore the destination but instead leads to the resulting
+value being NaN.
+
+So don't ignore the background and initialize it to transparent.
+
+There shouldn't be too many performance-relevant places where this code gets hit.
+The one case that I know where this could be noticable is vte redrawing.
+But we'll tackle that if it turns out to be a problem.
+
+Fixes: #7146
+Fixes: #7282
+---
+ gsk/gpu/gskgpunodeprocessor.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/gsk/gpu/gskgpunodeprocessor.c b/gsk/gpu/gskgpunodeprocessor.c
+index 8ed5ec5..93bedac 100644
+--- a/gsk/gpu/gskgpunodeprocessor.c
++++ b/gsk/gpu/gskgpunodeprocessor.c
+@@ -3807,14 +3807,14 @@ gsk_gpu_node_processor_add_first_container_node (GskGpuNodeProcessor *self,
+       !gsk_gpu_node_processor_clip_first_node (self, info, &opaque))
+     return FALSE;
+ 
+-  for (i = n; i-->0; )
++  for (i = n; i-- > 0; )
+     {
+       if (gsk_gpu_node_processor_add_first_node (self, info, children[i]))
+         break;
+     }
+ 
+   if (i < 0)
+-    gsk_gpu_first_node_begin_rendering (self, info, NULL);
++    gsk_gpu_first_node_begin_rendering (self, info, GSK_VEC4_TRANSPARENT);
+ 
+   for (i++; i < n; i++)
+     gsk_gpu_node_processor_add_node (self, children[i]);
+@@ -4173,7 +4173,7 @@ gsk_gpu_node_processor_add_first_node (GskGpuNodeProcessor *self,
+   if (!gsk_gpu_node_processor_clip_first_node (self, info, &opaque))
+     return FALSE;
+ 
+-  gsk_gpu_first_node_begin_rendering (self, info, NULL);
++  gsk_gpu_first_node_begin_rendering (self, info, GSK_VEC4_TRANSPARENT);
+   gsk_gpu_node_processor_add_node (self, node);
+ 
+   return TRUE;

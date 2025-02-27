@@ -1,0 +1,72 @@
+From: Michael Weghorn <m.weghorn@posteo.de>
+Date: Thu, 27 Feb 2025 20:19:18 +0100
+Subject: cpdb: Update gtk_print_backend_cpdb_init for latest CPDB version
+
+The latest upstream cpdb-libs (pre-)release 2.0b7 includes
+commit [1]
+
+    commit fb2686ba8f2fc60dc95ae0e2421e386922bf232e
+    Author: Biswadeep Purkayastha <98874428+metabiswadeep@users.noreply.github.com>
+    Date:   Mon Jul 8 21:21:01 2024 +0530
+
+        Removed unused parameter instance_name (#41)
+
+        From API functions cpdbGetNewFrontendObj() and cpdbStartListingPrinters().
+
+        Parameter got unused since commit 8f9e054.
+
+that dropped the `instance_name` parameter from
+`cpdbGetNewFrontendObj`.
+
+Update `gtk_print_backend_cpdb_init` to no longer
+pass the param, which fixes the build with that
+cpdb release when building with (the off-by-default)
+`-Dprint-cpdb=enabled`, see also Ubuntu Launchpad issue [2].
+
+At the moment, there are no stable CPDB releases
+or simple ways to check the version at build time
+(similar to `GTK_CHECK_VERSION`) and upstream's
+goal is to get all print dialog implementations
+to the current pre-release version, so don't bother
+about compatibility with older development versions.
+
+[1] https://github.com/OpenPrinting/cpdb-libs/commit/fb2686ba8f2fc60dc95ae0e2421e386922bf232e
+[2] https://bugs.launchpad.net/ubuntu/+source/gtk4/+bug/2100307
+
+(cherry picked from commit 40c3da77013284ca3f65c17302c2db3b20081c47)
+
+Origin: upstream, after 4.17.5
+---
+ modules/printbackends/gtkprintbackendcpdb.c | 15 ++-------------
+ 1 file changed, 2 insertions(+), 13 deletions(-)
+
+diff --git a/modules/printbackends/gtkprintbackendcpdb.c b/modules/printbackends/gtkprintbackendcpdb.c
+index fab4046..c5a4e8c 100644
+--- a/modules/printbackends/gtkprintbackendcpdb.c
++++ b/modules/printbackends/gtkprintbackendcpdb.c
+@@ -277,23 +277,12 @@ gtk_print_backend_cpdb_class_finalize (GtkPrintBackendCpdbClass *class)
+ static void
+ gtk_print_backend_cpdb_init (GtkPrintBackendCpdb *backend_cpdb)
+ {
+-  char *tmp, *instance_name;
+-
+   initialize ();
+ 
+-  /*
+-   * Initialize the FrontendObj with a random instance name to
+-   * prevent conflicts with print dialogs opened from other programs
+-   */
+-  tmp = random_string (4);
+-  instance_name = g_strdup_printf ("Gtk_%s", tmp);
+-  GTK_DEBUG (PRINTING, "Creating frontendObj for CPDB backend: %s", instance_name);
+-  backend_cpdb->frontend_obj = cpdbGetNewFrontendObj (instance_name,
+-                                                      (cpdb_printer_callback) printer_updates_callback);
++  GTK_DEBUG (PRINTING, "Creating frontendObj for CPDB backend");
++  backend_cpdb->frontend_obj = cpdbGetNewFrontendObj ((cpdb_printer_callback) printer_updates_callback);
+   cpdbIgnoreLastSavedSettings (backend_cpdb->frontend_obj);
+   gtk_print_backend = GTK_PRINT_BACKEND (backend_cpdb);
+-  g_free (tmp);
+-  g_free (instance_name);
+ }
+ 
+ static void

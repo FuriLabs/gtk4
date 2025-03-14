@@ -20,4 +20,3 @@ debian/gsk-Change-default-renderer-back-to-ngl.patch
 wayland-update-color-coordinates-for-extra-precision.patch
 gpu-Add-first-node-imlementations-that-don-t-blend.patch
 gpu-Don-t-use-LOAD_OP_DONT_CARE-when-GL_BLEND-is-enabled.patch
-cpdb-Update-gtk_print_backend_cpdb_init-for-latest-CPDB-v.patch

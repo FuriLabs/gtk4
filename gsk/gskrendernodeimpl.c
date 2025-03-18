@@ -7347,11 +7347,22 @@ gsk_text_node_new2 (PangoFont              *font,
   PangoGlyphInfo *glyph_infos;
   int n;
 
-  pango_glyph_string_extents (glyphs, font, &ink_rect, NULL);
+  gsk_get_glyph_string_extents (glyphs, font, &ink_rect);
 
   /* Don't create nodes with empty bounds */
   if (ink_rect.width == 0 || ink_rect.height == 0)
     return NULL;
+
+  /* Hack. As long as we shift glyphs when rendering, we risk ink leakage and clipping,
+   * so add some slop here. Note that this is not technically correct, the rendering can
+   * happen in scaled context, compared to this.
+   *
+   * See: https://gitlab.gnome.org/GNOME/gtk/-/issues/7400
+   */
+  ink_rect.x -= 1 * PANGO_SCALE;
+  ink_rect.y -= 1 * PANGO_SCALE;
+  ink_rect.width += 2 * PANGO_SCALE;
+  ink_rect.height += 2 * PANGO_SCALE;
 
   self = gsk_render_node_alloc (GSK_TEXT_NODE);
   node = (GskRenderNode *) self;
@@ -7955,7 +7966,7 @@ gsk_mask_node_draw (GskRenderNode *node,
   graphene_vec4_t color_offset;
 
   /* clip so the push_group() creates a smaller surface */
-  gdk_cairo_rect (cr, &node->bounds);
+  gsk_cairo_rectangle_pixel_aligned (cr, &node->bounds);
   cairo_clip (cr);
 
   if (has_empty_clip (cr))
@@ -7990,9 +8001,6 @@ gsk_mask_node_draw (GskRenderNode *node,
     default:
       g_assert_not_reached ();
     }
-
-  gdk_cairo_rect (cr, &node->bounds);
-  cairo_clip (cr);
 
   cairo_mask (cr, mask_pattern);
 

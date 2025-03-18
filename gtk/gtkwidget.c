@@ -6623,12 +6623,12 @@ gtk_widget_update_pango_context (GtkWidget        *widget,
       gboolean hint_font_metrics;
       cairo_font_options_t *font_options, *options;
 
-      g_object_get (settings, "gtk-hint-font-metrics", &hint_font_metrics, NULL);
-
       options = cairo_font_options_copy (gtk_settings_get_font_options (settings));
-      font_options = (cairo_font_options_t*)g_object_get_qdata (G_OBJECT (widget), quark_font_options);
+      font_options = (cairo_font_options_t *) g_object_get_qdata (G_OBJECT (widget), quark_font_options);
       if (font_options)
         cairo_font_options_merge (options, font_options);
+
+      g_object_get (settings, "gtk-hint-font-metrics", &hint_font_metrics, NULL);
 
       cairo_font_options_set_hint_metrics (options,
                                            hint_font_metrics == 1 ? CAIRO_HINT_METRICS_ON
@@ -6642,37 +6642,12 @@ gtk_widget_update_pango_context (GtkWidget        *widget,
   else
     {
       cairo_font_options_t *options;
-      double dpi = 96.;
-      GdkSurface *surface;
-
-      surface = gtk_widget_get_surface (widget);
-      if (surface)
-        {
-          GdkDisplay *display;
-          GdkMonitor *monitor;
-
-          display = gdk_surface_get_display (surface);
-          monitor = gdk_display_get_monitor_at_surface (display, surface);
-          if (monitor)
-            dpi = gdk_monitor_get_dpi (monitor);
-        }
 
       options = cairo_font_options_create ();
 
       cairo_font_options_set_antialias (options, CAIRO_ANTIALIAS_GRAY);
-
-      if (dpi < 200.)
-        {
-          /* Not high-dpi. Prefer sharpness by enabling hinting */
-          cairo_font_options_set_hint_metrics (options, CAIRO_HINT_METRICS_ON);
-          cairo_font_options_set_hint_style (options, CAIRO_HINT_STYLE_SLIGHT);
-        }
-      else
-        {
-          /* High-dpi. Prefer precise positioning */
-          cairo_font_options_set_hint_metrics (options, CAIRO_HINT_METRICS_OFF);
-          cairo_font_options_set_hint_style (options, CAIRO_HINT_STYLE_NONE);
-        }
+      cairo_font_options_set_hint_metrics (options, CAIRO_HINT_METRICS_OFF);
+      cairo_font_options_set_hint_style (options, CAIRO_HINT_STYLE_SLIGHT);
 
       pango_context_set_round_glyph_positions (context, FALSE);
       pango_cairo_context_set_font_options (context, options);
@@ -6984,6 +6959,16 @@ G_GNUC_END_IGNORE_DEPRECATIONS
   g_object_notify_by_pspec (G_OBJECT (widget), widget_props[PROP_SCALE_FACTOR]);
 
   gtk_widget_forall (widget, (GtkCallback)_gtk_widget_scale_changed, NULL);
+}
+
+void
+gtk_widget_monitor_changed (GtkWidget *widget)
+{
+  g_return_if_fail (GTK_IS_WIDGET (widget));
+
+  gtk_widget_update_default_pango_context (widget);
+
+  gtk_widget_forall (widget, (GtkCallback)gtk_widget_monitor_changed, NULL);
 }
 
 /**
@@ -9153,6 +9138,7 @@ accessibility_start_element (GtkBuildableParseContext  *context,
     {
       const char *name = NULL;
       const char *ctx = NULL;
+      const char *translatable_string = NULL;
       gboolean translatable = FALSE;
       AccessibilityAttributeInfo *pinfo;
 
@@ -9164,9 +9150,17 @@ accessibility_start_element (GtkBuildableParseContext  *context,
 
       if (!g_markup_collect_attributes (element_name, names, values, error,
                                         G_MARKUP_COLLECT_STRING, "name", &name,
-                                        G_MARKUP_COLLECT_BOOLEAN | G_MARKUP_COLLECT_OPTIONAL, "translatable", &translatable,
+                                        G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "translatable", &translatable_string,
+                                        G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "comments", NULL, /* ignore, just for translators */
                                         G_MARKUP_COLLECT_STRING | G_MARKUP_COLLECT_OPTIONAL, "context", &ctx,
                                         G_MARKUP_COLLECT_INVALID))
+        {
+          _gtk_builder_prefix_error (accessibility_data->builder, context, error);
+          return;
+        }
+
+      if (translatable_string &&
+          !gtk_builder_parse_translatable (translatable_string, &translatable, error))
         {
           _gtk_builder_prefix_error (accessibility_data->builder, context, error);
           return;

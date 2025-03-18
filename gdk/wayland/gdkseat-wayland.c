@@ -40,6 +40,7 @@
 
 #include "pointer-gestures-unstable-v1-client-protocol.h"
 #include "tablet-unstable-v2-client-protocol.h"
+#include "cursor-shape-v1-client-protocol.h"
 
 #include <xkbcommon/xkbcommon.h>
 
@@ -1324,13 +1325,14 @@ deliver_key_event (GdkWaylandSeat *seat,
   _gdk_wayland_display_deliver_event (seat->display, event);
 
   GDK_SEAT_DEBUG (seat, EVENTS,
-                  "keyboard %s event%s, surface %p, code %d, sym %d, "
+                  "keyboard %s event%s, surface %p, code %d, sym %d (%s), "
                   "mods 0x%x, consumed 0x%x, layout %d level %d",
                   (state ? "press" : "release"),
                   (from_key_repeat ? " (repeat)" : ""),
                   gdk_event_get_surface (event),
                   gdk_key_event_get_keycode (event),
                   gdk_key_event_get_keyval (event),
+                  gdk_keyval_name (gdk_key_event_get_keyval (event)),
                   gdk_event_get_modifier_state (event),
                   gdk_key_event_get_consumed_modifiers (event),
                   gdk_key_event_get_layout (event),
@@ -2081,6 +2083,8 @@ static void
 _gdk_wayland_seat_remove_tool (GdkWaylandSeat           *seat,
                                GdkWaylandTabletToolData *tool)
 {
+  g_clear_pointer (&tool->shape_device, wp_cursor_shape_device_v1_destroy);
+
   seat->tablet_tools = g_list_remove (seat->tablet_tools, tool);
 
   gdk_seat_tool_removed (GDK_SEAT (seat), tool->tool);
@@ -2364,6 +2368,11 @@ seat_handle_capabilities (void                    *data,
                                                         &gesture_hold_listener, seat);
             }
         }
+      if (display_wayland->cursor_shape)
+        {
+          seat->pointer_info.shape_device =
+              wp_cursor_shape_manager_v1_get_pointer (display_wayland->cursor_shape, seat->wl_pointer);
+        }
     }
   else if (!(caps & WL_SEAT_CAPABILITY_POINTER) && seat->wl_pointer)
     {
@@ -2402,6 +2411,8 @@ seat_handle_capabilities (void                    *data,
 
           g_clear_object (&seat->continuous_scrolling);
         }
+
+      g_clear_pointer (&seat->pointer_info.shape_device, wp_cursor_shape_device_v1_destroy);
     }
 
   if ((caps & WL_SEAT_CAPABILITY_KEYBOARD) && !seat->wl_keyboard)
@@ -3687,6 +3698,7 @@ tablet_seat_handle_tool_added (void                      *data,
 {
   GdkWaylandSeat *seat = data;
   GdkWaylandTabletToolData *tool;
+  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (seat->display);
 
   tool = g_new0 (GdkWaylandTabletToolData, 1);
   tool->wp_tablet_tool = wp_tablet_tool;
@@ -3696,6 +3708,13 @@ tablet_seat_handle_tool_added (void                      *data,
   zwp_tablet_tool_v2_set_user_data (wp_tablet_tool, tool);
 
   seat->tablet_tools = g_list_prepend (seat->tablet_tools, tool);
+
+  if (display->cursor_shape)
+    {
+      tool->shape_device =
+          wp_cursor_shape_manager_v1_get_tablet_tool_v2 (
+              display->cursor_shape, tool->wp_tablet_tool);
+    }
 }
 
 static void

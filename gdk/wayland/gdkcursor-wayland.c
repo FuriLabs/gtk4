@@ -99,7 +99,8 @@ static const struct {
   { "nesw-resize",  "fd_double_arrow" },
   { "nwse-resize",  "bd_double_arrow" },
   { "zoom-in",      "left_ptr" },
-  { "zoom-out",     "left_ptr" }
+  { "zoom-out",     "left_ptr" },
+  { "all-resize",   "move" }, /* not CSS, but we want to guarantee it anyway */
 };
 
 static const char *
@@ -219,8 +220,7 @@ from_texture:
         {
           surface = gdk_wayland_display_create_shm_surface (display,
                                                             gdk_texture_get_width (texture),
-                                                            gdk_texture_get_height (texture),
-                                                            &GDK_FRACTIONAL_SCALE_INIT_INT (1));
+                                                            gdk_texture_get_height (texture));
 
           gdk_texture_download (texture,
                                 cairo_image_surface_get_data (surface),
@@ -264,8 +264,7 @@ from_texture:
 
           surface = gdk_wayland_display_create_shm_surface (display,
                                                             gdk_texture_get_width (texture),
-                                                            gdk_texture_get_height (texture),
-                                                            &GDK_FRACTIONAL_SCALE_INIT_INT (1));
+                                                            gdk_texture_get_height (texture));
 
           gdk_texture_download (texture,
                                 cairo_image_surface_get_data (surface),

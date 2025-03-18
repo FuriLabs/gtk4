@@ -923,33 +923,6 @@ init_in_thread (gpointer task_data)
 }
 
 static gpointer
-match_in_thread (gpointer task_data)
-{
-  ThreadData *td = task_data;
-  FcResult result;
-  FcPattern *match;
-  gint64 before G_GNUC_UNUSED;
-
-  before = PANGO_TRACE_CURRENT_TIME;
-
-  match = FcFontSetMatch (td->config,
-                          &td->fonts, 1,
-                          td->pattern,
-                          &result);
-
-  pango_trace_mark (before, "FcFontSetMatch", NULL);
-
-  g_mutex_lock (&td->patterns->mutex);
-  td->patterns->match = match;
-  g_cond_signal (&td->patterns->cond);
-  g_mutex_unlock (&td->patterns->mutex);
-
-  thread_data_free (td);
-
-  return NULL;
-}
-
-static gpointer
 sort_in_thread (gpointer task_data)
 {
   ThreadData *td = task_data;
@@ -974,6 +947,36 @@ sort_in_thread (gpointer task_data)
   g_mutex_unlock (&td->patterns->mutex);
 
   thread_data_free (td);
+
+  return NULL;
+}
+
+static gpointer
+match_in_thread (gpointer task_data)
+{
+  ThreadData *td = task_data;
+  FcResult result;
+  FcPattern *match;
+  gint64 before G_GNUC_UNUSED;
+
+  before = PANGO_TRACE_CURRENT_TIME;
+
+  match = FcFontSetMatch (td->config,
+                          &td->fonts, 1,
+                          td->pattern,
+                          &result);
+
+  pango_trace_mark (before, "FcFontSetMatch", NULL);
+
+  g_mutex_lock (&td->patterns->mutex);
+  td->patterns->match = match;
+  g_cond_signal (&td->patterns->cond);
+  g_mutex_unlock (&td->patterns->mutex);
+
+  if (result == FcResultNoMatch)
+    sort_in_thread (td);
+  else
+    thread_data_free (td);
 
   return NULL;
 }
@@ -1040,7 +1043,6 @@ pango_fc_patterns_new (FcPattern *pat, PangoFcFontMap *fontmap)
   g_cond_init (&pats->cond);
 
   g_async_queue_push (fontmap->priv->queue, thread_data_new (FC_MATCH, pats));
-  g_async_queue_push (fontmap->priv->queue, thread_data_new (FC_SORT, pats));
 
   g_hash_table_insert (fontmap->priv->patterns_hash, pats->pattern, pats);
 
@@ -1214,6 +1216,9 @@ pango_fc_patterns_get_font_pattern (PangoFcPatterns *pats, int i, gboolean *prep
       gboolean waited = FALSE;
 
       before = PANGO_TRACE_CURRENT_TIME;
+
+      if (!pats->fontset)
+        g_async_queue_push (pats->fontmap->priv->queue, thread_data_new (FC_SORT, pats));
 
       g_mutex_lock (&pats->mutex);
 
@@ -1790,9 +1795,6 @@ pango_fc_font_map_reload_font (PangoFontMap *fontmap,
 
           pixel_size = point_size * dpi / 72.;
         }
-
-      FcPatternRemove (pattern, FC_SIZE, 0);
-      FcPatternAddDouble (pattern, FC_SIZE, point_size * scale);
 
       FcPatternRemove (pattern, FC_PIXEL_SIZE, 0);
       FcPatternAddDouble (pattern, FC_PIXEL_SIZE, pixel_size * scale);
@@ -2733,7 +2735,8 @@ pango_fc_font_map_get_font_face_data (PangoFcFontMap *fcfontmap,
 typedef struct {
   PangoCoverage parent_instance;
 
-  FcCharSet *charset;
+  FcCharSet *covered;
+  FcCharSet *not_covered;
 } PangoFcCoverage;
 
 typedef struct {
@@ -2754,10 +2757,26 @@ pango_fc_coverage_real_get (PangoCoverage *coverage,
                             int            index)
 {
   PangoFcCoverage *fc_coverage = (PangoFcCoverage*)coverage;
+  gunichar ch1, ch2;
 
-  return FcCharSetHasChar (fc_coverage->charset, index)
-         ? PANGO_COVERAGE_EXACT
-         : PANGO_COVERAGE_NONE;
+  if (FcCharSetHasChar (fc_coverage->covered, index))
+    return PANGO_COVERAGE_EXACT;
+
+  if (FcCharSetHasChar (fc_coverage->not_covered, index))
+    return PANGO_COVERAGE_NONE;
+
+  if (g_unichar_decompose ((gunichar) index, &ch1, &ch2))
+    {
+      if ((pango_coverage_get (coverage, ch1) == PANGO_COVERAGE_EXACT) &&
+          (ch2 == 0 || pango_coverage_get (coverage, ch2) == PANGO_COVERAGE_EXACT))
+        {
+          FcCharSetAddChar (fc_coverage->covered, index);
+          return PANGO_COVERAGE_EXACT;
+        }
+    }
+
+  FcCharSetAddChar (fc_coverage->not_covered, index);
+  return PANGO_COVERAGE_NONE;
 }
 
 static void
@@ -2768,9 +2787,15 @@ pango_fc_coverage_real_set (PangoCoverage *coverage,
   PangoFcCoverage *fc_coverage = (PangoFcCoverage*)coverage;
 
   if (level == PANGO_COVERAGE_NONE)
-    FcCharSetDelChar (fc_coverage->charset, index);
+    {
+      FcCharSetDelChar (fc_coverage->covered, index);
+      FcCharSetAddChar (fc_coverage->not_covered, index);
+    }
   else
-    FcCharSetAddChar (fc_coverage->charset, index);
+    {
+      FcCharSetAddChar (fc_coverage->covered, index);
+      FcCharSetDelChar (fc_coverage->not_covered, index);
+    }
 }
 
 static PangoCoverage *
@@ -2780,7 +2805,8 @@ pango_fc_coverage_real_copy (PangoCoverage *coverage)
   PangoFcCoverage *copy;
 
   copy = g_object_new (pango_fc_coverage_get_type (), NULL);
-  copy->charset = FcCharSetCopy (fc_coverage->charset);
+  copy->covered = FcCharSetCopy (fc_coverage->covered);
+  copy->not_covered = FcCharSetCopy (fc_coverage->not_covered);
 
   return (PangoCoverage *)copy;
 }
@@ -2790,7 +2816,8 @@ pango_fc_coverage_finalize (GObject *object)
 {
   PangoFcCoverage *fc_coverage = (PangoFcCoverage*)object;
 
-  FcCharSetDestroy (fc_coverage->charset);
+  FcCharSetDestroy (fc_coverage->covered);
+  FcCharSetDestroy (fc_coverage->not_covered);
 
   G_OBJECT_CLASS (pango_fc_coverage_parent_class)->finalize (object);
 }
@@ -2850,7 +2877,8 @@ _pango_fc_font_map_fc_to_coverage (FcCharSet *charset)
   PangoFcCoverage *coverage;
 
   coverage = g_object_new (pango_fc_coverage_get_type (), NULL);
-  coverage->charset = FcCharSetCopy (charset);
+  coverage->covered = FcCharSetCopy (charset);
+  coverage->not_covered = FcCharSetCreate ();
 
   return (PangoCoverage *)coverage;
 }

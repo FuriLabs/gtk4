@@ -144,6 +144,7 @@ static const GdkDebugKey gdk_debug_keys[] = {
   { "default-settings",GDK_DEBUG_DEFAULT_SETTINGS, "Force default values for xsettings" },
   { "high-depth",      GDK_DEBUG_HIGH_DEPTH, "Use high bit depth rendering if possible" },
   { "no-vsync",        GDK_DEBUG_NO_VSYNC, "Repaint instantly (uses 100% CPU with animations)" },
+  { "color-mgmt",      GDK_DEBUG_COLOR_MANAGEMENT, "Enable color management" },
 };
 
 static const GdkDebugKey gdk_feature_keys[] = {
@@ -156,7 +157,6 @@ static const GdkDebugKey gdk_feature_keys[] = {
   { "vulkan",     GDK_FEATURE_VULKAN,           "Disable Vulkan support" },
   { "dmabuf",     GDK_FEATURE_DMABUF,           "Disable dmabuf support" },
   { "offload",    GDK_FEATURE_OFFLOAD,          "Disable graphics offload" },
-  { "color-mgmt", GDK_FEATURE_COLOR_MANAGEMENT, "Disable color management" },
   { "threads",    GDK_FEATURE_THREADS,          "Disable threads where possible" },
 };
 
@@ -411,6 +411,68 @@ gdk_disable_portals (void)
   portals_disabled = TRUE;
 }
 
+static gboolean
+check_portal_interface (const char *portal_interface,
+                        guint       min_version)
+{
+  static GHashTable *versions = NULL;
+  GDBusConnection *bus = NULL;
+  guint version = 0;
+  gpointer val;
+
+  /* Portal versions start at 1, and we use 0 as marker
+   * for unsupported interfaces.
+   */
+  min_version = MAX (min_version, 1);
+
+  bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+  if (bus == NULL)
+    return FALSE;
+
+  if (!versions)
+    versions = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  if (!g_hash_table_lookup_extended (versions, portal_interface, NULL, &val))
+    {
+      GVariant *result;
+
+      result = g_dbus_connection_call_sync (bus,
+                                            PORTAL_BUS_NAME,
+                                            PORTAL_OBJECT_PATH,
+                                            "org.freedesktop.DBus.Properties",
+                                            "Get",
+                                            g_variant_new ("(ss)", portal_interface, "version"),
+                                            NULL,
+                                            G_DBUS_CALL_FLAGS_NO_AUTO_START,
+                                            3000,
+                                            NULL,
+                                            NULL);
+
+      if (result)
+        {
+          GVariant *v;
+
+          g_variant_get (result, "(v)", &v);
+          version = g_variant_get_uint32 (v);
+          g_variant_unref (v);
+          g_variant_unref (result);
+        }
+      else
+        version = 0;
+
+      val = GUINT_TO_POINTER (version);
+      g_hash_table_insert (versions, g_strdup (portal_interface), val);
+    }
+  else
+    {
+      version = GPOINTER_TO_UINT (val);
+    }
+
+  g_object_unref (bus);
+
+  return version >= min_version;
+}
+
 /* Here we decide whether we should use a given portal or not.
  * - If the GDK_DEBUG flags are set, they always win
  * - If we are in a sandbox, we always want to use portals
@@ -425,12 +487,6 @@ gdk_display_should_use_portal (GdkDisplay *display,
                                const char *portal_interface,
                                guint       min_version)
 {
-  GDBusConnection *bus = NULL;
-  GDBusProxy *proxy = NULL;
-  char *owner = NULL;
-  GVariant *ret = NULL;
-  gboolean result = FALSE;
-
   g_assert (display != NULL);
 
   if (gdk_display_get_debug_flags (display) & GDK_DEBUG_NO_PORTALS)
@@ -445,43 +501,10 @@ gdk_display_should_use_portal (GdkDisplay *display,
   if (gdk_running_in_sandbox ())
     return TRUE;
 
-  bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
-  if (bus == NULL)
-    goto done;
+  if (portal_interface == NULL)
+    return TRUE;
 
-  proxy = g_dbus_proxy_new_sync (bus,
-                                 G_DBUS_PROXY_FLAGS_NONE,
-                                 NULL,
-                                 PORTAL_BUS_NAME,
-                                 PORTAL_OBJECT_PATH,
-                                 portal_interface,
-                                 NULL,
-                                 NULL);
-
-  if (proxy == NULL)
-    goto done;
-
-  owner = g_dbus_proxy_get_name_owner (proxy);
-  if (owner == NULL)
-    goto done;
-
-  ret = g_dbus_proxy_get_cached_property (proxy, "version");
-
-  if (!ret)
-    goto done;
-
-  if (min_version == 0)
-    result = TRUE;
-  else
-    result = g_variant_get_uint32 (ret) >= min_version;
-
-done:
-  g_clear_object (&bus);
-  g_clear_object (&proxy);
-  g_clear_pointer (&owner, g_free);
-  g_clear_pointer (&ret, g_variant_unref);
-
-  return result;
+  return check_portal_interface (portal_interface, min_version);
 }
 
 PangoDirection

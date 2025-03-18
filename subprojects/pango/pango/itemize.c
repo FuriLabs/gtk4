@@ -178,7 +178,7 @@ width_iter_is_upright (gunichar ch)
   };
   static const int max = sizeof(upright) / sizeof(upright[0]);
   int st = 0;
-  int ed = max;
+  int ed = max - 1;
 
   if (ch < upright[0][0])
     return FALSE;
@@ -1337,7 +1337,7 @@ find_text_transform (const PangoAnalysis *analysis)
  * add font scale and text transform attributes to make
  * them be appear according to variant. The log_attrs are
  * needed for taking text transforms into account when
- * determining the case of characters int he run.
+ * determining the case of characters in the run.
  */
 static void
 split_item_for_variant (const char   *text,

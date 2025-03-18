@@ -66,7 +66,9 @@ test_parse (void)
   g_assert_cmpint (pango_font_description_get_stretch (desc), ==, PANGO_STRETCH_CONDENSED); 
   g_assert_cmpint (pango_font_description_get_gravity (desc), ==, PANGO_GRAVITY_SOUTH);  g_assert_cmpint (pango_font_description_get_set_fields (desc), ==, PANGO_FONT_MASK_FAMILY | PANGO_FONT_MASK_STYLE | PANGO_FONT_MASK_VARIANT | PANGO_FONT_MASK_WEIGHT | PANGO_FONT_MASK_STRETCH | PANGO_FONT_MASK_SIZE);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   pango_font_descriptions_free (descs, 2);
+G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 static void
@@ -257,6 +259,25 @@ test_features_and_variations (void)
   pango_font_description_free (desc1);
   pango_font_description_free (desc2);
   pango_font_description_free (desc3);
+}
+
+static void
+test_features_serialization (void)
+{
+  PangoFontDescription *desc;
+  gchar *str;
+
+  desc = pango_font_description_from_string ("Cantarell 14");
+  g_assert_nonnull (desc);
+  g_assert_cmpint (pango_font_description_get_set_fields (desc) & PANGO_FONT_MASK_FEATURES, ==, 0);
+  g_assert_null (pango_font_description_get_features (desc));
+
+  pango_font_description_set_features (desc, "tnum 1, cv05 2");
+  str = pango_font_description_to_string (desc);
+  g_assert_cmpstr (str, ==, "Cantarell 14 #tnum,cv05=2");
+  g_free (str);
+
+  pango_font_description_free (desc);
 }
 
 static void
@@ -815,12 +836,12 @@ test_font_scale (void)
 
   g_assert_true (scaled_font != font);
 
-  scaled_desc = pango_font_describe (scaled_font);
+  scaled_desc = pango_font_describe_with_absolute_size (scaled_font);
 
   /* FIXME there are rounding errors in the win32 font map code, so we have
    * to compare the sizes with some slop
    */
-  g_assert_cmpfloat_with_epsilon (16.5, pango_font_description_get_size (scaled_desc) / (double) PANGO_SCALE, 0.005);
+  g_assert_cmpfloat_with_epsilon (16.5 * 96.0 / 72.0, pango_font_description_get_size (scaled_desc) / (double) PANGO_SCALE, 0.005);
 
   pango_font_description_set_size (scaled_desc, 16.5 * 1024);
 
@@ -997,6 +1018,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/pango/fontdescription/features", test_features);
   g_test_add_func ("/pango/fontdescription/features-and-variations", test_features_and_variations);
   g_test_add_func ("/pango/fontdescription/empty-features", test_empty_features);
+  g_test_add_func ("/pango/fontdescription/features-serialization", test_features_serialization);
   g_test_add_func ("/pango/fontdescription/to-filename", test_to_filename);
   g_test_add_func ("/pango/fontdescription/set-gravity", test_set_gravity);
   g_test_add_func ("/pango/fontdescription/match", test_match);

@@ -37,6 +37,7 @@ typedef struct
   {
     jclass klass;
     jmethodID constructor;
+    jmethodID vflip;
   } clipboard_bitmap_drag_shadow;
   struct
   {
@@ -100,7 +101,6 @@ typedef struct
     jclass klass;
     jmethodID get_task_id;
     jmethodID get_window_manager;
-    jmethodID has_window_focus;
     jmethodID finish;
     jmethodID move_task_to_back;
     jmethodID start_activity;

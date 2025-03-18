@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface domain="gtk40">
   <object class="GtkSingleSelection" id="selection">
+    <property name="autoselect">0</property>
     <signal name="notify::selected-item" handler="selection_changed_cb" object="GtkFontChooserWidget" swapped="0"/>
     <signal name="items-changed" handler="rows_changed_cb" object="GtkFontChooserWidget" swapped="1"/>
     <property name="model">
@@ -66,14 +67,14 @@
                         <property name="placeholder-text" translatable="yes">Search font name</property>
                         <signal name="stop-search" handler="stop_search_cb" swapped="no"/>
                         <accessibility>
-                          <property name="label" translatable="1">Search font name</property>
+                          <property name="label" translatable="yes">Search font name</property>
                         </accessibility>
                       </object>
                     </child>
                     <child>
                       <object class="GtkMenuButton">
                         <accessibility>
-                          <property name="label" translatable="1">Filters</property>
+                          <property name="label" translatable="yes">Filters</property>
                         </accessibility>
                         <property name="icon-name">pan-down-symbolic</property>
                         <property name="tooltip-text" translatable="yes">Filters</property>
@@ -330,7 +331,7 @@
                     <property name="ellipsize">3</property>
                     <property name="xalign">0</property>
                     <accessibility>
-                      <property name="description" translatable="1">Font Name</property>
+                      <property name="description" translatable="yes">Font Name</property>
                     </accessibility>
                     <binding name="label" object="GtkFontChooserWidget">
                       <closure type="gchararray" function="get_font_name">
@@ -375,7 +376,7 @@
                             <property name="row-spacing">6</property>
                             <property name="column-spacing">12</property>
                             <accessibility>
-                              <property name="label" translatable="1">Font Variation Axes</property>
+                              <property name="label" translatable="yes">Font Variation Axes</property>
                             </accessibility>
                             <child>
                               <object class="GtkLabel" id="size_label2">
@@ -423,7 +424,7 @@
                             <property name="orientation">1</property>
                             <property name="spacing">12</property>
                             <accessibility>
-                              <property name="label" translatable="1">Font Features</property>
+                              <property name="label" translatable="yes">Font Features</property>
                             </accessibility>
                           </object>
                         </child>

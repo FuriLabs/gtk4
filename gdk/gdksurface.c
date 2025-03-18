@@ -30,6 +30,7 @@
 #include "gdksurface.h"
 
 #include "gdkprivate.h"
+#include "gdkcairoprivate.h"
 #include "gdkcontentprovider.h"
 #include "gdkdeviceprivate.h"
 #include "gdkdisplayprivate.h"
@@ -507,6 +508,18 @@ gdk_surface_real_get_scale (GdkSurface *surface)
   return 1.0;
 }
 
+static void
+gdk_surface_default_get_buffer_size (GdkSurface      *surface,
+                                     GdkDrawContext  *context,
+                                     guint           *out_width,
+                                     guint           *out_height)
+{
+  double scale = gdk_surface_get_scale (surface);
+
+  *out_width = ceil (scale * surface->width);
+  *out_height = ceil (scale * surface->height);
+}
+
 static GdkSubsurface *
 gdk_surface_real_create_subsurface (GdkSurface *surface)
 {
@@ -543,6 +556,7 @@ gdk_surface_class_init (GdkSurfaceClass *klass)
 
   klass->beep = gdk_surface_real_beep;
   klass->get_scale = gdk_surface_real_get_scale;
+  klass->get_buffer_size = gdk_surface_default_get_buffer_size;
   klass->create_subsurface = gdk_surface_real_create_subsurface;
   klass->set_opaque_region = gdk_surface_default_set_opaque_region;
 
@@ -1298,6 +1312,9 @@ gdk_surface_create_gl_context (GdkSurface   *surface,
  * Creates a new `GdkCairoContext` for rendering on @surface.
  *
  * Returns: (transfer full): the newly created `GdkCairoContext`
+ *
+ * Deprecated: 4.18: Drawing content with Cairo should be done via
+ *   Cairo rendernodes, not by using the Cairo renderer.
  */
 GdkCairoContext *
 gdk_surface_create_cairo_context (GdkSurface *surface)
@@ -2398,8 +2415,7 @@ gdk_surface_create_similar_surface (GdkSurface      *surface,
 
   scale = gdk_surface_get_scale_factor (surface);
 
-  similar_surface = cairo_image_surface_create (content == CAIRO_CONTENT_COLOR ? CAIRO_FORMAT_RGB24 :
-                                                content == CAIRO_CONTENT_ALPHA ? CAIRO_FORMAT_A8 : CAIRO_FORMAT_ARGB32,
+  similar_surface = cairo_image_surface_create (gdk_cairo_format_for_content (content),
                                                 width * scale, height * scale);
   cairo_surface_set_device_scale (similar_surface, scale, scale);
 

@@ -60,6 +60,7 @@ compare_render_tests = [
   'css-background',
   'dihedral',
   'dihedral-f',
+  'eagain',
   'empty-blend',
   'empty-blur',
   'empty-border',
@@ -100,6 +101,8 @@ compare_render_tests = [
   'huge-height',
   'huge-width',
   'inset-shadow-multiple',
+  'inter-hinting',
+  'inter-optical-scaling',
   'invalid-transform',
   'issue-3615',
   'linear-gradient-interpolation-nocairo',
@@ -112,6 +115,7 @@ compare_render_tests = [
   'mask-clipped-inverted-alpha',
   'mask-empty-mask',
   'mask-empty-source',
+  'mask-half-pixel',
   'mask-modes',
   'mask-modes-in-opacity',
   'mask-modes-with-alpha',
@@ -245,6 +249,7 @@ compare_xfails = {
     'blur-child-bounds-oversize': ['clip'], # 6450
     'rounded-clip-with-huge-bounds': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'], # 6532
     'big-checkerboard': ['clipped'], # 6444
+    'inter-optical-scaling': ['flip', 'rotate', 'mask', 'colorflip'],
   },
   'vulkan': {
     'radial-gradient-with-64-colorstops': ['clip', 'colorflip'],
@@ -254,7 +259,13 @@ compare_xfails = {
     'repeating-radial-gradient-edge-colors': ['colorflip'],
     'rounded-clip-with-huge-bounds': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'], # 6532
     'big-checkerboard': ['clip'], # 6444
+    'inter-optical-scaling': ['flip', 'rotate', 'mask', 'colorflip'],
   },
+  'cairo': {
+    'inter-hinting': ['flip', 'rotate'],
+    'inter-optical-scaling': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'],
+    'eagain': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'],
+  }
 }
 
 foreach renderer : renderers

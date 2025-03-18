@@ -867,7 +867,8 @@ gtk_window_class_init (GtkWindowClass *klass)
   /**
    * GtkWindow:hide-on-close:
    *
-   * If this window should be hidden when the users clicks the close button.
+   * If this window should be hidden instead of destroyed when the user clicks
+   * the close button.
    */
   window_props[PROP_HIDE_ON_CLOSE] =
       g_param_spec_boolean ("hide-on-close", NULL, NULL,
@@ -2215,10 +2216,12 @@ gtk_window_native_layout (GtkNative *native,
                                                           device, NULL);
           if (focus)
             {
-              GdkSurface *focus_surface =
-                gtk_native_get_surface (gtk_widget_get_native (focus));
+              GdkSurface *surface;
 
-              gdk_surface_request_motion (focus_surface);
+              surface = gtk_native_get_surface (gtk_widget_get_native (focus));
+
+              if (surface)
+                gdk_surface_request_motion (surface);
             }
         }
     }
@@ -2637,10 +2640,10 @@ gtk_window_transient_parent_destroyed (GtkWindow *parent,
 {
   GtkWindowPrivate *priv = gtk_window_get_instance_private (GTK_WINDOW (window));
 
+  gtk_window_unset_transient_for (window);
+
   if (priv->destroy_with_parent)
     gtk_window_destroy (window);
-  else
-    priv->transient_parent = NULL;
 }
 
 static void
@@ -2960,7 +2963,7 @@ gtk_window_set_hide_on_close (GtkWindow *window,
  * gtk_window_get_hide_on_close:
  * @window: a window
  *
- * Returns whether the window will be hidden when the close
+ * Returns whether the window will be hidden instead of destroyed when the close
  * button is clicked.
  *
  * Returns: true if the window will be hidden

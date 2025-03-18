@@ -472,13 +472,15 @@ gdk_gl_context_default_realize (GdkGLContext  *context,
 static cairo_region_t *
 gdk_gl_context_real_get_damage (GdkGLContext *context)
 {
-  GdkSurface *surface = gdk_draw_context_get_surface (GDK_DRAW_CONTEXT (context));
+  GdkDrawContext *draw_context = GDK_DRAW_CONTEXT (context);
+  guint buffer_width, buffer_height;
 #ifdef HAVE_EGL
   GdkGLContextPrivate *priv = gdk_gl_context_get_instance_private (context);
-  GdkDisplay *display = gdk_draw_context_get_display (GDK_DRAW_CONTEXT (context));
+  GdkDisplay *display = gdk_draw_context_get_display (draw_context);
 
   if (priv->egl_context && display->have_egl_buffer_age)
     {
+      GdkSurface *surface = gdk_draw_context_get_surface (draw_context);
       EGLSurface egl_surface;
       int buffer_age = 0;
       egl_surface = gdk_surface_get_egl_surface (surface);
@@ -495,10 +497,11 @@ gdk_gl_context_real_get_damage (GdkGLContext *context)
             {
               if (context->old_updated_area[i] == NULL)
                 {
+                  gdk_draw_context_get_buffer_size (draw_context, &buffer_width, &buffer_height);
                   cairo_region_create_rectangle (&(GdkRectangle) {
                                                      0, 0,
-                                                     gdk_surface_get_width (surface),
-                                                     gdk_surface_get_height (surface)
+                                                     buffer_width,
+                                                     buffer_height
                                                  });
                   break;
                 }
@@ -510,10 +513,11 @@ gdk_gl_context_real_get_damage (GdkGLContext *context)
     }
 #endif
 
+  gdk_draw_context_get_buffer_size (draw_context, &buffer_width, &buffer_height);
   return cairo_region_create_rectangle (&(GdkRectangle) {
                                             0, 0,
-                                            gdk_surface_get_width (surface),
-                                            gdk_surface_get_height (surface)
+                                            buffer_width,
+                                            buffer_height
                                         });
 }
 
@@ -598,12 +602,10 @@ gdk_gl_context_real_begin_frame (GdkDrawContext  *draw_context,
   GdkSurface *surface = gdk_draw_context_get_surface (draw_context);
   GdkColorState *color_state;
   cairo_region_t *damage;
-  double scale;
-  int ww, wh;
+  guint ww, wh;
   int i;
 
   color_state = gdk_surface_get_color_state (surface);
-  scale = gdk_surface_get_scale (surface);
 
   depth = gdk_memory_depth_merge (depth, gdk_color_state_get_depth (color_state));
 
@@ -636,8 +638,7 @@ gdk_gl_context_real_begin_frame (GdkDrawContext  *draw_context,
   cairo_region_union (region, damage);
   cairo_region_destroy (damage);
 
-  ww = (int) ceil (gdk_surface_get_width (surface) * scale);
-  wh = (int) ceil (gdk_surface_get_height (surface) * scale);
+  gdk_draw_context_get_buffer_size (draw_context, &ww, &wh);
 
   gdk_gl_context_make_current (context);
 
@@ -679,9 +680,10 @@ gdk_gl_context_real_end_frame (GdkDrawContext *draw_context,
       EGLint stack_rects[4 * 4]; /* 4 rects */
       EGLint *heap_rects = NULL;
       int i, j, n_rects = cairo_region_num_rectangles (painted);
-      int surface_height = gdk_surface_get_height (surface);
-      double scale = gdk_surface_get_scale (surface);
+      guint buffer_width, buffer_height;
       EGLint *rects;
+
+      gdk_draw_context_get_buffer_size (draw_context, &buffer_width, &buffer_height);
 
       if (n_rects < G_N_ELEMENTS (stack_rects) / 4)
         rects = (EGLint *)&stack_rects;
@@ -693,10 +695,10 @@ gdk_gl_context_real_end_frame (GdkDrawContext *draw_context,
           cairo_rectangle_int_t rect;
 
           cairo_region_get_rectangle (painted, i, &rect);
-          rects[j++] = (int) floor (rect.x * scale);
-          rects[j++] = (int) floor ((surface_height - rect.height - rect.y) * scale);
-          rects[j++] = (int) ceil ((rect.x + rect.width) * scale) - floor (rect.x * scale);
-          rects[j++] = (int) ceil ((surface_height - rect.y) * scale) - floor ((surface_height - rect.height - rect.y) * scale);
+          rects[j++] = rect.x;
+          rects[j++] = buffer_height - rect.height - rect.y;
+          rects[j++] = rect.width;
+          rects[j++] = rect.height;
         }
       priv->eglSwapBuffersWithDamage (gdk_display_get_egl_display (display), egl_surface, rects, n_rects);
       g_free (heap_rects);
@@ -2232,7 +2234,7 @@ gdk_gl_context_export_dmabuf (GdkGLContext *self,
   int i;
   int fourcc;
   int n_planes;
-  guint64 modifier;
+  EGLuint64KHR modifiers[GDK_DMABUF_MAX_PLANES];
   int fds[GDK_DMABUF_MAX_PLANES];
   int strides[GDK_DMABUF_MAX_PLANES];
   int offsets[GDK_DMABUF_MAX_PLANES];
@@ -2273,7 +2275,7 @@ gdk_gl_context_export_dmabuf (GdkGLContext *self,
                                       image,
                                       &fourcc,
                                       &n_planes,
-                                      &modifier))
+                                      NULL))
     {
       GDK_DISPLAY_DEBUG (display, DMABUF,
                          "eglExportDMABUFImageQueryMESA failed: %#x", eglGetError ());
@@ -2284,6 +2286,17 @@ gdk_gl_context_export_dmabuf (GdkGLContext *self,
     {
       GDK_DISPLAY_DEBUG (display, DMABUF,
                          "dmabufs with %d planes are not supported", n_planes);
+      goto out;
+    }
+
+  if (!eglExportDMABUFImageQueryMESA (egl_display,
+                                      image,
+                                      &fourcc,
+                                      &n_planes,
+                                      modifiers))
+    {
+      GDK_DISPLAY_DEBUG (display, DMABUF,
+                         "eglExportDMABUFImageQueryMESA for modifiers failed: %#x", eglGetError ());
       goto out;
     }
 
@@ -2307,7 +2320,7 @@ gdk_gl_context_export_dmabuf (GdkGLContext *self,
     }
 
   dmabuf->fourcc = (guint32)fourcc;
-  dmabuf->modifier = modifier;
+  dmabuf->modifier = modifiers[0];
   dmabuf->n_planes = n_planes;
 
   for (i = 0; i < n_planes; i++)
@@ -2319,7 +2332,7 @@ gdk_gl_context_export_dmabuf (GdkGLContext *self,
 
   GDK_DISPLAY_DEBUG (display, DMABUF,
                      "Exported GL texture to dmabuf (format: %.4s:%#" G_GINT64_MODIFIER "x, planes: %d)",
-             (char *)&fourcc, modifier, n_planes);
+                     (char *)&fourcc, modifiers[0], n_planes);
 
   result = TRUE;
 

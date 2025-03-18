@@ -118,23 +118,23 @@
  *
  * # CSS nodes
  *
- * |[<!-- language="plain" -->
+ * ```
  * modelbutton
  * ├── <child>
  * ╰── check
- * ]|
+ * ```
  *
- * |[<!-- language="plain" -->
+ * ```
  * modelbutton
  * ├── <child>
  * ╰── radio
- * ]|
+ * ```
  *
- * |[<!-- language="plain" -->
+ * ```
  * modelbutton
  * ├── <child>
  * ╰── arrow
- * ]|
+ * ```
  *
  * GtkModelButton has a main CSS node with name modelbutton, and a subnode,
  * which will have the name check, radio or arrow, depending on the role
@@ -143,11 +143,11 @@
  * The subnode is positioned before or after the content nodes and gets the
  * .left or .right style class, depending on where it is located.
  *
- * |[<!-- language="plain" -->
+ * ```
  * button.model
  * ├── <child>
  * ╰── check
- * ]|
+ * ```
  *
  * Iconic model buttons (see GtkModelButton:iconic) change the name of
  * their main node to button and add a .model style class to it. The indicator
@@ -1401,6 +1401,10 @@ open_submenu (gpointer data)
           gtk_popover_popup (GTK_POPOVER (submenu));
           gtk_popover_menu_set_open_submenu (GTK_POPOVER_MENU (popover), submenu);
           gtk_popover_menu_set_parent_menu (GTK_POPOVER_MENU (submenu), GTK_WIDGET (popover));
+        }
+      else
+        {
+          gtk_popover_menu_close_submenus (GTK_POPOVER_MENU (popover));
         }
     }
 

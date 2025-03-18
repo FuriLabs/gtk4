@@ -86,10 +86,10 @@
  *
  * # CSS nodes
  *
- * |[<!-- language="plain" -->
+ * ```
  * list[.separators][.rich-list][.navigation-sidebar][.boxed-list]
  * ╰── row[.activatable]
- * ]|
+ * ```
  *
  * `GtkListBox` uses a single CSS node named list. It may carry the .separators
  * style class, when the [property@Gtk.ListBox:show-separators] property is set.
@@ -2401,7 +2401,8 @@ gtk_list_box_row_visibility_changed (GtkListBox    *box,
 {
   update_row_is_visible (box, row);
 
-  if (gtk_widget_get_visible (GTK_WIDGET (box)))
+  if (gtk_widget_get_visible (GTK_WIDGET (box)) &&
+      ROW_PRIV (row)->iter)
     {
       gtk_list_box_update_header (box, ROW_PRIV (row)->iter);
       gtk_list_box_update_header (box,
@@ -2463,6 +2464,8 @@ gtk_list_box_remove (GtkListBox *box,
 
   row = GTK_LIST_BOX_ROW (child);
   iter = ROW_PRIV (row)->iter;
+  ROW_PRIV (row)->iter = NULL;
+
   if (g_sequence_iter_get_sequence (iter) != box->children)
     {
       g_warning ("Tried to remove non-child %p", child);

@@ -17,6 +17,3 @@ workarounds/testsuite-skip-color-mix.patch
 workarounds/gtkcssnumbervalue-Don-t-use-fesetround-on-ARM-softfloat.patch
 workarounds/scaling-test-Skip-floating-point-pixel-formats-with-Cairo.patch
 debian/gsk-Change-default-renderer-back-to-ngl.patch
-wayland-update-color-coordinates-for-extra-precision.patch
-gpu-Add-first-node-imlementations-that-don-t-blend.patch
-gpu-Don-t-use-LOAD_OP_DONT_CARE-when-GL_BLEND-is-enabled.patch

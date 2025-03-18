@@ -14,10 +14,10 @@ Forwarded: not-needed
  1 file changed, 1 insertion(+), 4 deletions(-)
 
 diff --git a/gsk/gskrenderer.c b/gsk/gskrenderer.c
-index 3468243..fd221c1 100644
+index b6f7404..d010cff 100644
 --- a/gsk/gskrenderer.c
 +++ b/gsk/gskrenderer.c
-@@ -733,14 +733,11 @@ static struct {
+@@ -707,14 +707,11 @@ static struct {
    { get_renderer_for_display },
    { get_renderer_for_env_var },
    { get_renderer_for_backend },

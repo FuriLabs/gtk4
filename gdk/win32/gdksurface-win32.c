@@ -384,6 +384,8 @@ gdk_win32_surface_constructed (GObject *object)
   RECT rect;
   const char *title;
   wchar_t *wtitle;
+  int pos;
+  int size;
 
   impl->surface_scale = gdk_win32_display_get_monitor_scale_factor (display_win32, NULL, NULL);
 
@@ -427,12 +429,14 @@ gdk_win32_surface_constructed (GObject *object)
 
   wtitle = g_utf8_to_utf16 (title, -1, NULL, NULL, NULL);
 
+  pos = (dwStyle & WS_POPUP) ? 0 : CW_USEDEFAULT;
+  size = (dwStyle & WS_POPUP) ? 1 : CW_USEDEFAULT;
   impl->handle = CreateWindowExW (dwExStyle,
                                   MAKEINTRESOURCEW (klass),
                                   wtitle,
                                   dwStyle,
-                                  CW_USEDEFAULT, CW_USEDEFAULT,
-                                  CW_USEDEFAULT, CW_USEDEFAULT,
+                                  pos, pos,
+                                  size, size,
                                   owner,
                                   NULL,
                                   this_module (),
@@ -2920,8 +2924,8 @@ _gdk_win32_surface_compute_size (GdkSurface *surface)
 
       if (GDK_IS_TOPLEVEL (surface) && impl->force_recompute_size)
         {
-          size_changed = width != surface->width ||
-                         height != surface->height;
+          size_changed = surface->width != width ||
+                         surface->height != height;
 
           surface->width = width;
           surface->height = height;
@@ -2930,8 +2934,8 @@ _gdk_win32_surface_compute_size (GdkSurface *surface)
         }
       else
         {
-          size_changed = width != impl->next_layout.configured_width ||
-                         height != impl->next_layout.configured_height;
+          size_changed = surface->width != impl->next_layout.configured_width ||
+                         surface->height != impl->next_layout.configured_height;
 
           surface->width = impl->next_layout.configured_width;
           surface->height = impl->next_layout.configured_height;

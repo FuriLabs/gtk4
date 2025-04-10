@@ -1,3 +1,10 @@
+gtk4 (4.14.2+ds-1ubuntu3) noble; urgency=medium
+
+  * Cherry-pick upstream fix for Orca not reading shortcuts in actions
+    (LP: #2106744).
+
+ -- Nathan Pratta Teodosio <nteodosio@ubuntu.com>  Thu, 10 Apr 2025 15:30:28 +0200
+
 gtk4 (4.14.2+ds-1ubuntu2) noble; urgency=medium
 
   [ Jeremy Bícha ]

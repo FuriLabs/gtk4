@@ -1,0 +1,81 @@
+From: Sebastian Keller <skeller@gnome.org>
+Date: Fri, 11 Apr 2025 13:57:51 +0200
+Subject: cairoblur: Consider current scale when creating blur buffer
+
+ab5b762a changed the Cairo renderer to apply the scaling factor to the
+context rather than using the Cairo device scale. However cairoblur was
+only looking at the device scale to scale the buffer used for blurring.
+This then resulted in the buffer being too small for scales > 1 which
+affected the visual correctness and performance of the blur for these
+scales.
+
+The blur was now less accurate and less blurry than intended due to
+being rendered at a lower resolution and with a wrongly scaled radius.
+
+The performance impact was primarily affecting box shadows which make
+use of repeated shadow rendering for the sides of the box. The pattern
+generated from the blurred buffer no longer matched the pixel size,
+causing it to be rendered using bilinear filtering instead of the copy
+fast path.
+
+Fix this by applying the current scale of the context as well.
+
+Closes: https://gitlab.gnome.org/GNOME/gtk/-/issues/7451
+Part-of: <https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/8461>
+(cherry picked from commit b99179d91a1a062bd0c36f9037b629006fe3ad95)
+
+Origin: upstream gtk-4-18 after 4.18.4
+---
+ gsk/gskcairoblur.c | 32 ++++++++++++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
+
+diff --git a/gsk/gskcairoblur.c b/gsk/gskcairoblur.c
+index 816fbc0..4f37f0b 100644
+--- a/gsk/gskcairoblur.c
++++ b/gsk/gskcairoblur.c
+@@ -301,6 +301,37 @@ needs_blur (float        radius,
+   return TRUE;
+ }
+ 
++static void
++apply_current_scale (cairo_t *cr,
++                     double  *x,
++                     double  *y)
++{
++  double x_scale, y_scale;
++  cairo_matrix_t matrix;
++
++  cairo_get_matrix (cr, &matrix);
++
++  if (matrix.xx != 0 || matrix.yx != 0)
++    {
++      x_scale = sqrt (matrix.xx * matrix.xx + matrix.yx * matrix.yx);
++      y_scale = (matrix.xx * matrix.yy - matrix.yx * matrix.xy) / x_scale;
++    }
++  else if (matrix.xy != 0 || matrix.yy != 0)
++    {
++      y_scale = sqrt (matrix.xy * matrix.xy + matrix.yy * matrix.yy);
++      x_scale = (matrix.xx * matrix.yy - matrix.yx * matrix.xy) / y_scale;
++    }
++  else
++    {
++      return;
++    }
++
++  if (x)
++    *x *= fabs (x_scale);
++  if (y)
++    *y *= fabs (y_scale);
++}
++
+ static const cairo_user_data_key_t original_cr_key;
+ 
+ cairo_t *
+@@ -327,6 +358,7 @@ gsk_cairo_blur_start_drawing (cairo_t         *cr,
+ 
+   x_scale = y_scale = 1;
+   cairo_surface_get_device_scale (cairo_get_target (cr), &x_scale, &y_scale);
++  apply_current_scale (cr, &x_scale, &y_scale);
+ 
+   if (blur_flags & GSK_BLUR_REPEAT)
+     {

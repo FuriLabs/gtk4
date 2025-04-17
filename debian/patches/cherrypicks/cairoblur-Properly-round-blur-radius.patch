@@ -1,0 +1,56 @@
+From: Sebastian Keller <skeller@gnome.org>
+Date: Sat, 12 Apr 2025 12:14:04 +0200
+Subject: cairoblur: Properly round blur radius
+
+Since the scale factors now have to be calculated from the Cairo
+transformation matrix, as done in the previous commit, they now may not
+correspond to exact integers anymore as they did prior to ab5b762a.
+This often ended up in a different blur radius being used for the Cairo
+renderer than for the GPU renderers as the radius double is cast to an
+integer value in _boxblur(), effectively rounding down for scaling
+factors just below an integer value.
+
+To avoid this issue round the scaled radius, but with a slight bias to
+rounding up. This is due to the unscaled blur radius often coming from a
+halved integer value, meaning that it is likely to be at exactly a .5
+value, which for a scale slightly below an integer would otherwise end
+up getting rounded down. Always rounding up on the other hand could end
+up with a too large radius for scaling factors just above an integer.
+The bias was chosen to be small enough to not artificially increase the
+scaled radius for any reasonably chosen blur radius.
+
+This also fixes an issue existing prior to ab5b762a where a shadow node
+with a radius of 3 at a surface scale of 1 was not getting blurred with
+the Cairo renderer while it was with the GPU renderer.
+
+Part-of: <https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/8461>
+(cherry picked from commit fe2fb86a273b3b08ce5c582fc413af94b0e040b8)
+
+Origin: upstream gtk-4-18 after 4.18.4
+---
+ gsk/gskcairoblur.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/gsk/gskcairoblur.c b/gsk/gskcairoblur.c
+index 4f37f0b..339479f 100644
+--- a/gsk/gskcairoblur.c
++++ b/gsk/gskcairoblur.c
+@@ -416,6 +416,7 @@ gsk_cairo_blur_finish_drawing (cairo_t         *cr,
+   cairo_t *original_cr;
+   cairo_surface_t *surface;
+   double x_scale;
++  double scaled_radius;
+ 
+   if (!needs_blur (radius, blur_flags))
+     return cr;
+@@ -427,8 +428,9 @@ gsk_cairo_blur_finish_drawing (cairo_t         *cr,
+ 
+   x_scale = 1;
+   cairo_surface_get_device_scale (cairo_get_target (cr), &x_scale, NULL);
++  scaled_radius = round ((x_scale + 0.0001) * radius);
+ 
+-  gsk_cairo_blur_surface (surface, x_scale * radius, blur_flags);
++  gsk_cairo_blur_surface (surface, scaled_radius, blur_flags);
+ 
+   gdk_cairo_set_source_color (original_cr, ccs, color);
+   if (blur_flags & GSK_BLUR_REPEAT)

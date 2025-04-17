@@ -1,0 +1,37 @@
+From: Benjamin Otte <otte@redhat.com>
+Date: Fri, 8 Nov 2024 15:44:11 +0100
+Subject: icontheme: Load the missing image icon from the theme
+
+... instead of hardcoding the included resource unconditionally.
+
+Fixes icon-effect-missing.ui reftest on Windows.
+
+Part-of: <https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/8461>
+(cherry picked from commit e84380c72c2d47d4da6b3eb31577a5dbe376dc59)
+
+Origin: upstream gtk-4-18 after 4.18.4
+---
+ gtk/gtkicontheme.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/gtk/gtkicontheme.c b/gtk/gtkicontheme.c
+index 5ae6321..2b54c6f 100644
+--- a/gtk/gtkicontheme.c
++++ b/gtk/gtkicontheme.c
+@@ -2277,9 +2277,13 @@ real_choose_icon (GtkIconTheme      *self,
+           gdk_debug_message ("No icon found in %s (or fallbacks) for: %s", self->current_theme, s);
+           g_free (s);
+         }
+-      icon = icon_paintable_new ("image-missing", size, scale);
+-      icon->filename = g_strdup (IMAGE_MISSING_RESOURCE_PATH);
+-      icon->is_resource = TRUE;
++      
++      return real_choose_icon (self,
++                               (const char*[2]) { "image-missing", NULL },
++                               size,
++                               scale,
++                               flags,
++                               non_blocking);
+     }
+ 
+  out:

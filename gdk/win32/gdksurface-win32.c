@@ -384,6 +384,8 @@ gdk_win32_surface_constructed (GObject *object)
   RECT rect;
   const char *title;
   wchar_t *wtitle;
+  int pos;
+  int size;
 
   impl->surface_scale = gdk_win32_display_get_monitor_scale_factor (display_win32, NULL, NULL);
 
@@ -427,12 +429,14 @@ gdk_win32_surface_constructed (GObject *object)
 
   wtitle = g_utf8_to_utf16 (title, -1, NULL, NULL, NULL);
 
+  pos = (dwStyle & WS_POPUP) ? 0 : CW_USEDEFAULT;
+  size = (dwStyle & WS_POPUP) ? 1 : CW_USEDEFAULT;
   impl->handle = CreateWindowExW (dwExStyle,
                                   MAKEINTRESOURCEW (klass),
                                   wtitle,
                                   dwStyle,
-                                  CW_USEDEFAULT, CW_USEDEFAULT,
-                                  CW_USEDEFAULT, CW_USEDEFAULT,
+                                  pos, pos,
+                                  size, size,
                                   owner,
                                   NULL,
                                   this_module (),
@@ -2920,8 +2924,8 @@ _gdk_win32_surface_compute_size (GdkSurface *surface)
 
       if (GDK_IS_TOPLEVEL (surface) && impl->force_recompute_size)
         {
-          size_changed = width != surface->width ||
-                         height != surface->height;
+          size_changed = surface->width != width ||
+                         surface->height != height;
 
           surface->width = width;
           surface->height = height;
@@ -2930,8 +2934,8 @@ _gdk_win32_surface_compute_size (GdkSurface *surface)
         }
       else
         {
-          size_changed = width != impl->next_layout.configured_width ||
-                         height != impl->next_layout.configured_height;
+          size_changed = surface->width != impl->next_layout.configured_width ||
+                         surface->height != impl->next_layout.configured_height;
 
           surface->width = impl->next_layout.configured_width;
           surface->height = impl->next_layout.configured_height;
@@ -3306,27 +3310,25 @@ gdk_win32_toplevel_present (GdkToplevel       *toplevel,
   compute_toplevel_size (surface, FALSE, &width, &height);
   gdk_win32_surface_resize (surface, width, height);
 
-  if (gdk_toplevel_layout_get_maximized (layout, &maximize))
+  if (gdk_toplevel_layout_get_maximized (layout, &maximize) && maximize)
     {
-      if (maximize)
-        gdk_win32_surface_maximize (surface);
-      else
-        gdk_win32_surface_unmaximize (surface);
+      gdk_win32_surface_maximize (surface);
+    }
+  else
+    {
+      gdk_win32_surface_unmaximize (surface);
     }
 
-  if (gdk_toplevel_layout_get_fullscreen (layout, &fullscreen))
+  if (gdk_toplevel_layout_get_fullscreen (layout, &fullscreen) && fullscreen)
     {
-      if (fullscreen)
-        {
-          GdkMonitor *monitor;
+      GdkMonitor *monitor;
 
-          monitor = gdk_toplevel_layout_get_fullscreen_monitor (layout);
-          gdk_win32_surface_fullscreen (surface, monitor);
-        }
-      else
-        {
-          gdk_win32_surface_unfullscreen (surface);
-        }
+      monitor = gdk_toplevel_layout_get_fullscreen_monitor (layout);
+      gdk_win32_surface_fullscreen (surface, monitor);
+    }
+  else
+    {
+      gdk_win32_surface_unfullscreen (surface);
     }
 
   gdk_win32_surface_show (surface, FALSE);

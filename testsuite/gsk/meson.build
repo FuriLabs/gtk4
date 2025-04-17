@@ -106,7 +106,9 @@ compare_render_tests = [
   'glyph-scaling',
   'glyph-antialias',
   'huge-height',
+  'huge-height-hdr',
   'huge-width',
+  'huge-width-hdr',
   'inset-shadow-multiple',
   'inter-hinting',
   'inter-optical-scaling',
@@ -551,7 +553,6 @@ tests = [
   [ 'opaque' ],
   [ 'path', [ 'path-utils.c' ], [ 'flaky'] ],
   [ 'path-special-cases' ],
-  [ 'scaling', [ 'scaling.c', '../gdk/gdktestutils.c' ] ],
 ]
 
 test_cargs = []
@@ -591,6 +592,7 @@ internal_tests = [
   [ 'misc'],
   [ 'path-private' ],
   [ 'rounded-rect'],
+  [ 'scaling', [ 'scaling.c', '../gdk/gdktestutils.c' ] ],
   [ 'transform' ],
 ]
 

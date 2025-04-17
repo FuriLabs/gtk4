@@ -44,12 +44,6 @@
 
 #include <xkbcommon/xkbcommon.h>
 
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/mman.h>
 #if defined(HAVE_DEV_EVDEV_INPUT_H)
 #include <dev/evdev/input.h>
 #elif defined(HAVE_LINUX_INPUT_H)
@@ -676,6 +670,7 @@ pointer_handle_enter (void              *data,
   seat->pointer_info.surface_x = wl_fixed_to_double (sx);
   seat->pointer_info.surface_y = wl_fixed_to_double (sy);
   seat->pointer_info.enter_serial = serial;
+  seat->pointer_info.cursor_shape = 0;
 
   event = gdk_crossing_event_new (GDK_ENTER_NOTIFY,
                                   seat->pointer_info.focus,
@@ -746,6 +741,7 @@ pointer_handle_leave (void              *data,
 
   g_object_unref (seat->pointer_info.focus);
   seat->pointer_info.focus = NULL;
+  seat->pointer_info.cursor_shape = 0;
   if (seat->cursor)
     gdk_wayland_seat_stop_cursor_animation (seat, &seat->pointer_info);
 

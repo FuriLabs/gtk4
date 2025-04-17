@@ -104,12 +104,12 @@ index 154a2a6..9dd53df 100644
        save_node (g_object_get_data (G_OBJECT (reference_image), "source-render-node"), ui_file, ".ref.node");
        save_image (diff_image, ui_file, ".diff.png");
 diff --git a/testsuite/reftests/reftest-compare.c b/testsuite/reftests/reftest-compare.c
-index 2b1e41f..86c9ae3 100644
+index b82cd17..a338030 100644
 --- a/testsuite/reftests/reftest-compare.c
 +++ b/testsuite/reftests/reftest-compare.c
 @@ -85,12 +85,16 @@ buffer_diff_u8 (GdkColorState *color_state,
                  const guchar  *buf_b,
-                 int            stride_b,
+                 gsize          stride_b,
                  int            width,
 -                int            height)
 +                int            height,
@@ -118,7 +118,7 @@ index 2b1e41f..86c9ae3 100644
  {
    int x, y;
    guchar *buf_diff = NULL;
-   int stride_diff = 0;
+   gsize stride_diff = 0;
    GdkTexture *diff = NULL;
 +  guint max_diff = 0;
 +  guint pixels_changed = 0;

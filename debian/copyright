@@ -536,8 +536,14 @@ License: LGPL-2+
  .
  You should have received a copy of the GNU Lesser General Public
  License along with this library. If not, see <https://www.gnu.org/licenses/>.
+Comment:
+ The oldest version of the Lesser General Public License under that name
+ was version 2.1.
  .
- See /usr/share/common-licenses/LGPL-2 on your debian system.
+ On Debian systems, the full text of the GNU Lesser General Public License
+ version 2.1 can be found in the file /usr/share/common-licenses/LGPL-2.1,
+ and its predecessor the GNU Library General Public License version 2 can
+ be found in /usr/share/common-licenses/LGPL-2.
 
 License: LGPL-2.1+
  This library is free software; you can redistribute it and/or modify it
@@ -552,8 +558,9 @@ License: LGPL-2.1+
  .
  You should have received a copy of the GNU Lesser General Public
  License along with this library. If not, see <https://www.gnu.org/licenses/>.
- .
- See /usr/share/common-licenses/LGPL-2.1 on your debian system.
+Comment:
+ On Debian systems, a copy of the GNU Lesser General Public License version 2
+ can be found in /usr/share/common-licenses/LGPL-2.1.
 
 License: lcs-telegraphics-permissive
  The text and information contained in this file may be freely used,

@@ -1,2 +1,2 @@
 # Generally uses GLib instead of calling into glibc directly
-hardening-no-bindnow [usr/bin/gtk4-update-icon-cache]
+hardening-no-fortify-functions [usr/bin/gtk4-update-icon-cache]

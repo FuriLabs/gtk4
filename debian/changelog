@@ -1,8 +1,12 @@
-gtk4 (4.14.5+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.14.5+ds-0ubuntu0.1) UNRELEASED; urgency=medium
 
-  * New upstream release
+  [ Carlos Nihelton ]
+  * New upstream release (LP: #2109978)
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 08 May 2025 15:27:19 -0400
+  [ Simon McVittie ]
+  * Depend on libgles2 (Closes: #1077287, LP: #2098698)
+
+ -- Carlos Nihelton <cnihelton@ubuntu.com>  Mon, 05 May 2025 14:41:09 -0300
 
 gtk4 (4.14.2+ds-1ubuntu3) noble; urgency=medium
 

@@ -1,3 +1,32 @@
+gtk4 (4.18.5+ds-1) unstable; urgency=medium
+
+  [ Jeremy Bícha ]
+  * New upstream release
+    - Drop patches that were cherry-picked from upstream, no longer needed
+
+  [ Simon McVittie ]
+  * d/rules: Make blhc happy
+    - Pass appropriate compiler flags to build-architecture gcc, when
+      building a tool used during build
+    - Consistently apply -Wl,-z,now to everything
+  * Fix d/copyright issues reported by Lintian:
+    - Point to GNU by web address rather than postal address
+    - Improve cross-references to LGPL in common-licenses
+    - Remove details of stb_rect_pack.
+      This was part of the old GL renderer, and was removed when the old GL
+      renderer was fully superseded by ngl.
+  * Update lintian overrides for executables not affected by glibc hardening
+  * Standards-Version: 4.7.2 (no changes required)
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 04 May 2025 15:39:45 +0100
+
+gtk4 (4.18.4+ds-2) unstable; urgency=medium
+
+  * Cherry-pick commits from gtk-4-18 branch up to April 15
+  * Only watch for 4.18.x updates
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 17 Apr 2025 10:45:54 -0400
+
 gtk4 (4.18.4+ds-1) unstable; urgency=medium
 
   * New upstream bugfix release (LP: #2106391)

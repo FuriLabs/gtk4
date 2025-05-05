@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.18.4',
+        version: '4.18.5',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -830,7 +830,7 @@ endif
 ld_is_bfd = false
 ld = find_program('ld', required : false)
 if ld.found()
-  ld_is_bfd = run_command(ld, '--version', check: false).stdout().contains('GNU ld')
+  ld_is_bfd = run_command(ld, '--version', check: false).stdout().startswith('GNU ld')
 endif
 
 if not meson.is_cross_build() and build_machine.cpu_family() == 'x86_64' and build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and objcopy_supports_section_alignment and ld.found() and ld_is_bfd

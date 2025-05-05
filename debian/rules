@@ -2,6 +2,8 @@
 
 include /usr/share/dpkg/pkg-info.mk
 
+export DEB_BUILD_MAINT_OPTIONS = hardening=+bindnow
+
 # Ensure the build aborts when there are still references to undefined symbols
 export DEB_LDFLAGS_MAINT_APPEND = -Wl,-z,defs
 
@@ -172,7 +174,13 @@ override_dh_auto_build: $(call dh_subst_files,$(all_binaries))
 
 override_dh_auto_build: rebuild-emoji
 rebuild-emoji:
-	${DEB_BUILD_GNU_TYPE}-gcc -o debian/convert-emoji gtk/emoji/convert-emoji.c $$(${DEB_BUILD_GNU_TYPE}-pkgconf --cflags --libs json-glib-1.0)
+	${DEB_BUILD_GNU_TYPE}-gcc \
+		$(CPPFLAGS_FOR_BUILD) \
+		$(CFLAGS_FOR_BUILD) \
+		$(LDFLAGS_FOR_BUILD) \
+		-o debian/convert-emoji \
+		gtk/emoji/convert-emoji.c \
+		$$(${DEB_BUILD_GNU_TYPE}-pkgconf --cflags --libs json-glib-1.0)
 	set -eu; for input in debian/missing-sources/emojibase/packages/data/??/data.raw.json; do \
 		lang="$$(echo "$$input" | sed -ne 's,^.*/\([a-z][a-z]\)/data.raw.json$$,\1,p')"; \
 		output="gtk/emoji/$$lang.data"; \

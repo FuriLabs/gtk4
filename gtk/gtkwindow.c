@@ -5835,19 +5835,20 @@ gtk_window_is_active (GtkWindow *window)
 GtkWindowGroup *
 gtk_window_get_group (GtkWindow *window)
 {
-  GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
+  static GtkWindowGroup *default_group = NULL;
 
-  if (window && priv->group)
-    return priv->group;
-  else
+  if (window)
     {
-      static GtkWindowGroup *default_group = NULL;
+      GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
 
-      if (!default_group)
-	default_group = gtk_window_group_new ();
-
-      return default_group;
+      if (priv->group)
+        return priv->group;
     }
+
+  if (!default_group)
+    default_group = gtk_window_group_new ();
+
+  return default_group;
 }
 
 /**
@@ -6281,6 +6282,14 @@ G_GNUC_END_IGNORE_DEPRECATIONS
  *
  * The debugger offers access to the widget hierarchy of the application
  * and to useful debugging tools.
+ *
+ * This function allows applications that already use
+ * <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd>
+ * (or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>)
+ * for their own key shortcuts to add a different shortcut to open the Inspector.
+ *
+ * If you are not overriding the default key shortcuts for the Inspector,
+ * you should not use this function.
  */
 void
 gtk_window_set_interactive_debugging (gboolean enable)

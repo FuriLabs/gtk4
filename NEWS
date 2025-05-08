@@ -1,3 +1,134 @@
+Overview of Changes in 4.14.5, 16-08-2024
+=========================================
+
+* GtkSpinner:
+ - Only set :checked state when mapped to avoid animation overhead
+
+* GtkFileChooserWidget:
+ - Plug memory leaks
+
+* GtkProgressBar, GtkRange:
+ - Fix hightlight clipping
+
+* GtkSpinButton:
+ - Set number input hint for numeric spin buttons
+
+* GtkPopover:
+ - Recompute the sampe more often
+ - Handle allocation corner cases better
+
+* GtkIconTheme:
+ - Fix an argument order mishap that could lead to wrong icon selection
+
+* Accessibility:
+ - Use text instead of label for GtkLabesl accessible name
+ - Improve the role mapping for containers
+ - Realize the AT context when needed to fix AdwToast
+ - Fix handling or relations in GtkExpander
+
+* GDK:
+ - Don't leak EGLSurfaces
+
+* GSK:
+ - Speed up mask nodes with cairo
+
+* Vulkan:
+ - Recreate the swapchain when necessary or beneficial
+
+* Wayland:
+ - Support the xdg-dialog protocol
+
+* macOS:
+ - Make Dock>Quit invoke the "app.quit" action
+ - Take shadows into account when positioning popups
+ - Propagate create-folder to Open panels
+
+* Windows:
+ - Backport build and runtime fixes for 32bit Windows
+ - Ensure the dnd-move cursor exists
+
+* Translation updates
+ Catalan
+ Chinese (Taiwan)
+ Galician
+ Hindi
+ Hungarian
+ Kabyle
+ Nepali
+ Persian
+ Portuguese
+ Romanian
+ Serbian
+
+
+Overview of Changes in 4.14.4, 02-05-2024
+=========================================
+
+* GtkGraphicsOffload:
+ - Don't crash without a child
+
+* Icontheme:
+ - Make symbolic svg loading more efficient
+ - Handle color-free symbolics more efficiently
+
+* Accessibility:
+ - Make the gtk-demo sidebar search more accessible
+ - Stop emitting focus events
+
+* GDK:
+ - Support XDG_ACTIVATION_TOKEN
+ - dmabuf: Be more defensive when importing unknown formats to G
+ - dmabuf: Use narrow range for YUV
+
+* GSK:
+ - gpu: Handle  tiny offscreens correctl
+
+* Build:
+ - Fix many ubsan warning
+
+* macOS
+ - Fix problems with events handed back to the OS
+ - Respect GDK_DEBUG=default-settings
+
+* Translation updates:
+ German
+ Indonesian
+ Kabyle
+ Korean
+ Lithuanian
+ Russian
+
+
+Overview of Changes in 4.14.3, 18-04-2024
+=========================================
+
+* GtkShortcutManager:
+ - Track the propagation phase of added controllers
+
+* Accessibility:
+ - Implement GtkAccessibleRange for scrollbars
+
+* X11:
+ - Fix some confusing debug messages
+ - Drop a no-longer-relevant optimization that was interfering with
+   getting the current window manager capabilities
+
+* Tools:
+ - Support generating pdf in gtk4-rendernode-tool
+
+* Translation updates:
+ Basque
+ Brazilian Portuguese
+ Georgian
+ Hebrew
+ Kabyle
+ Persian
+ Polish
+ Slovenian
+ Swedish
+ Ukrainian
+
+
 Overview of Changes in 4.14.2, 03-04-2024
 =========================================
 

@@ -15,3 +15,5 @@ debian/tests-Allow-longer-for-a-dialog-to-open.patch
 debian/ignore_a11ytext_i386.patch
 nodeparser-Adjust-test-for-pango-1.52.0.patch
 orca-read-keybindings-in-actions.patch
+listbase-Factor-out-item-select-action-activation.patch
+listbase-Select-focus-before-moving-cursor.patch

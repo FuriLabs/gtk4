@@ -1,0 +1,83 @@
+From: =?utf-8?q?Ant=C3=B3nio_Fernandes?= <antoniof@gnome.org>
+Date: Mon, 11 Dec 2023 22:54:11 +0000
+Subject: listbase: Select focus before moving cursor
+
+We have built-in keybindings for cursor arrow keys. They move the focus
+in the pointed direction and may also select the new focus child.
+
+However, some views allow selection but start with no item selected;
+such is the case of nautilus, and 'colors' in GTK Demo. In these views,
+pressing an arrow key to initiate the cursor actually moves it to the
+next position instead of the first position.
+
+At best, this means we need to take an a extra step to move the cursor
+into the first position. At worst, if there is only one child, the
+cursor arrow keys don't work at all and the only way to reach the child
+is with the Tab key or a pointer.
+
+Instead, let's select the focus item if unselected but selectable. This
+was the behavior of GtkTreeView in such cases, which can be tested in
+GTK Demo -> Tree View -> Tree Store.
+
+Origin: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/6354
+Bug: https://gitlab.gnome.org/GNOME/nautilus/-/issues/2618
+Bug: https://gitlab.gnome.org/GNOME/nautilus/-/issues/3078
+Bug-Ubuntu: https://launchpad.net/bugs/2066062
+---
+ gtk/gtklistbase.c | 36 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 36 insertions(+)
+
+diff --git a/gtk/gtklistbase.c b/gtk/gtklistbase.c
+index ea3a57c..533912a 100644
+--- a/gtk/gtklistbase.c
++++ b/gtk/gtklistbase.c
+@@ -1142,6 +1142,35 @@ gtk_list_base_move_cursor_to_end (GtkWidget *widget,
+   return TRUE;
+ }
+ 
++static gboolean
++handle_selecting_unselected_cursor (GtkListBase *self,
++                                    guint        position,
++                                    gboolean     select,
++                                    gboolean     modify,
++                                    gboolean     extend)
++{
++  GtkListBasePrivate *priv = gtk_list_base_get_instance_private (self);
++  GtkSelectionModel *model;
++
++  /* If Ctrl is pressed, we don't want to reset the selection. */
++  if (!select || modify)
++    return FALSE;
++
++  model = gtk_list_item_manager_get_model (priv->item_manager);
++
++  /* Selection of current position is not needed if it's already selected or if
++   * there is nothing to select.
++   */
++  if (model == NULL || gtk_selection_model_is_selected (model, position))
++    return FALSE;
++
++  /* Reset cursor to current position trying to select it as well. */
++  activate_listitem_select_action (priv, position, FALSE, extend);
++
++  /* Report whether the model allowed the selection change. */
++  return gtk_selection_model_is_selected (model, position);
++}
++
+ static gboolean
+ gtk_list_base_move_cursor (GtkWidget *widget,
+                            GVariant  *args,
+@@ -1156,6 +1185,13 @@ gtk_list_base_move_cursor (GtkWidget *widget,
+   g_variant_get (args, "(ubbbi)", &orientation, &select, &modify, &extend, &amount);
+ 
+   old_pos = gtk_list_base_get_focus_position (self);
++
++  /* When the focus is on an unselected item while we're selecting, we want to
++   * not move focus but select the focused item instead if we can.
++   */
++  if (handle_selecting_unselected_cursor (self, old_pos, select, modify, extend))
++    return TRUE;
++
+   new_pos = gtk_list_base_move_focus (self, old_pos, orientation, amount);
+ 
+   if (old_pos != new_pos)

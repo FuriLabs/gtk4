@@ -1,9 +1,9 @@
-gtk4 (4.18.5+ds-0ubuntu0.1) UNRELEASED; urgency=medium
+gtk4 (4.18.5+ds-0ubuntu0.1) plucky; urgency=medium
 
   * New upstream bugfix release (LP: #2109964)
     - Fix resizing X11 applications in GNOME (LP: #2107245)
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Mon, 05 May 2025 12:02:07 +0200
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Fri, 23 May 2025 13:50:29 +0200
 
 gtk4 (4.18.4+ds-1) unstable; urgency=medium
 

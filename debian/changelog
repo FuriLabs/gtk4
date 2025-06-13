@@ -1,6 +1,45 @@
 gtk4 (4.18.6+ds-1) UNRELEASED; urgency=medium
 
-  * New upstream release
+  * New upstream bugfix release
+    - In the cups printer driver, fix NULL-termination on arrays of choices,
+      avoiding a possible crash
+      (gtk!8595 upstream)
+    - Fix a crash caused by using uninitialized memory in GtkCssKeyframes
+      (gtk!8656 upstream)
+    - Fix a memory leak in GtkCssValue
+      (gtk!8629 upstream)
+    - Avoid a warning when gtk_application_inhibit() is called with
+      GTK_APPLICATION_INHIBIT_IDLE and no window
+      (gtk!8638 upstream)
+    - Fix names of Activate, Deactivate window events to match AT-SPI spec
+      (gtk!8652 upstream)
+    - Render symbolic SVG icons more correctly by improving the parser
+      for the path mini-language, and improve related test coverage
+      (gtk#7575, gtk!8548, gtk!8549, gtk!8642 upstream)
+    - Under Wayland, delay destruction of the event queue until after
+      everything has been detached from it
+      (gtk!8481 upstream)
+    - Simplify gdk_memory_texture_builder_set_color_state() by not handling
+      a NULL state that was already checked for
+      (gtk!8582 upstream)
+    - Improve the "inspector" debugging tool:
+      + show more environment variables
+      + show the text protocol
+      + centre-align accessibility errors
+      + report an error if buttons are too small
+      + make warnings not wrap too much
+      + remove incorrect early-returns
+    - Improve examples:
+      + In gtkgears fix lighting
+      + In gtk-demo, add missing accessibility properties
+      + In gtk-demo, fix a regression in the ucd demo
+      + In node-editor, make the help non-editable
+    - Documentation updates
+    - Translation updates: ca, de, fi, he, sk
+    - Upstream CI changes not relevant to Debian
+    - macOS-specific changes not relevant to Debian
+    - Minor updates in vendored pango subproject, not relevant to Debian
+      (we use libpango1.0-dev instead)
 
  -- Simon McVittie <smcv@debian.org>  Fri, 13 Jun 2025 10:51:59 +0100
 

@@ -1,9 +1,9 @@
-gtk4 (4.18.6+ds-2) UNRELEASED; urgency=medium
+gtk4 (4.18.6+ds-2) unstable; urgency=medium
 
   * Add packaging changes to previous changelog entry that were
     accidentally left undocumented in the previous upload
 
- -- Simon McVittie <smcv@debian.org>  Sat, 14 Jun 2025 23:42:37 +0100
+ -- Simon McVittie <smcv@debian.org>  Sun, 15 Jun 2025 10:37:29 +0100
 
 gtk4 (4.18.6+ds-1) unstable; urgency=medium
 

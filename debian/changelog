@@ -1,4 +1,4 @@
-gtk4 (4.14.5+ds-0ubuntu0.1) UNRELEASED; urgency=medium
+gtk4 (4.14.5+ds-0ubuntu0.1) noble; urgency=medium
 
   [ Carlos Nihelton ]
   * New upstream release (LP: #2109978)
@@ -6,7 +6,10 @@ gtk4 (4.14.5+ds-0ubuntu0.1) UNRELEASED; urgency=medium
   [ Simon McVittie ]
   * Depend on libgles2 (Closes: #1077287, LP: #2098698)
 
- -- Carlos Nihelton <cnihelton@ubuntu.com>  Mon, 05 May 2025 14:41:09 -0300
+  [ Alessandro Astone ]
+  * Fix keyboard navigation in lists with only a single item (LP: #2066062)
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Fri, 27 Jun 2025 14:24:37 +0200
 
 gtk4 (4.14.2+ds-1ubuntu3) noble; urgency=medium
 

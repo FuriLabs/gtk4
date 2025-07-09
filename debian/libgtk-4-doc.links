@@ -8,7 +8,3 @@ usr/share/doc/${env:DOC_PKG}/gsk4 usr/share/doc/${env:DEV_PKG}/gsk4
 usr/share/doc/${env:DOC_PKG}/gsk4 usr/share/devhelp/books/gsk4
 usr/share/doc/${env:DOC_PKG}/gtk4 usr/share/doc/${env:DEV_PKG}/gtk4
 usr/share/doc/${env:DOC_PKG}/gtk4 usr/share/devhelp/books/gtk4
-usr/share/doc/libglib2.0-doc/glib usr/share/doc/${env:DEV_PKG}/glib
-usr/share/doc/libglib2.0-doc/glib usr/share/doc/${env:DOC_PKG}/glib
-usr/share/doc/libglib2.0-doc/gobject usr/share/doc/${env:DEV_PKG}/gobject
-usr/share/doc/libglib2.0-doc/gobject usr/share/doc/${env:DOC_PKG}/gobject

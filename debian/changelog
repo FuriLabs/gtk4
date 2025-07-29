@@ -1,3 +1,9 @@
+gtk4 (4.14.5+ds-0ubuntu0.2) noble; urgency=medium
+
+  * Fix accessibility groups (LP: #2119005)
+
+ -- Sergio Costas Rodriguez <sergio.costas@canonical.com>  Tue, 29 Jul 2025 15:06:32 +0200
+
 gtk4 (4.14.5+ds-0ubuntu0.1) noble; urgency=medium
 
   [ Carlos Nihelton ]

@@ -1,0 +1,45 @@
+From: Sergio Costas Rodriguez <sergio.costas@canonical.com>
+Date: Tue, 29 Jul 2025 14:59:49 +0200
+Subject: a11y: Fix A11Y groups
+
+When an element is marked as a group, and is labelled by other
+element, if an inner element gets the focus, the screen reader
+must read the group label first and then the focused element
+label.
+
+This is how it worked in the previous version of GTK from Noble,
+and in the one in Plucky; but the last update in Noble broke it,
+and now, when there are nested elements, it doesn't work and the
+screen reader doesn't read the upper levels, only the focused
+element itself.
+
+This patch reverts the change that broke it.
+
+The reason is that the ORCA version in Noble doesn't know how to
+handle ATSPI_ROLE_GROUPING, and that's why Gtk used previously
+ATSPI_ROLE_PANEL instead. When ORCA added support for GROUPING,
+GTK did the change too, and that's why upstream GTK 4.14.5 works
+fine in Plucky, which has a more recent ORCA version. Unfortunately,
+the change broke A11Y in Noble due to its older ORCA version.
+Since both ATSPI_ROLE_PANEL and ATSPI_ROLE_GROUPING work in a
+similar way, and, in fact, it's what the ORCA version used in Noble
+expects from GTK, reverting the patch is safe.
+
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gtk4/+bug/2119005
+---
+ gtk/a11y/gtkatspiutils.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gtk/a11y/gtkatspiutils.c b/gtk/a11y/gtkatspiutils.c
+index eae924e..8fd7500 100644
+--- a/gtk/a11y/gtkatspiutils.c
++++ b/gtk/a11y/gtkatspiutils.c
+@@ -106,7 +106,7 @@ gtk_accessible_role_to_atspi_role (GtkAccessibleRole role)
+       return ATSPI_ROLE_TABLE_CELL;
+ 
+     case GTK_ACCESSIBLE_ROLE_GROUP:
+-      return ATSPI_ROLE_GROUPING;
++      return ATSPI_ROLE_PANEL;
+ 
+     case GTK_ACCESSIBLE_ROLE_HEADING:
+       return ATSPI_ROLE_HEADING;

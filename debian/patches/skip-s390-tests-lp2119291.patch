@@ -1,0 +1,45 @@
+Description: skip some failing s390x tests
+ When run with mesa 25.0.7, some tests fail on s390x only. Since s390x is not a
+ desktop platform, we don't produce desktop images, and gtk4 is not seeded,
+ let's skip these tests for now while the problem is troubleshooted.
+Author: Andreas Hasenack <andreas.hasenack@canonical.com>
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gtk4/+bug/2119291
+Forwarded: no
+Last-Update: 2025-08-02
+
+--- a/testsuite/reftests/meson.build
++++ b/testsuite/reftests/meson.build
+@@ -605,6 +605,33 @@
+   'label-wrap-justify.ui',
+ ]
+ 
++if host_machine.endian() == 'big'
++  # https://launchpad.net/bugs/2119291
++  xfails += [
++    'animation-fill-mode-iteration-count.ui',
++    'background-positioning-area-empty.ui',
++    'border-color-default.ui',
++    'box-pseudo-classes.ui',
++    'box-shadow-with-blend-mode.ui',
++    'css-match-inherit-different-state.ui',
++    'css-match-inherit.ui',
++    'default-size-with-titlebar.ui',
++    'default-size-without-titlebar.ui',
++    'inscription-overflow-multiline.ui',
++    'inscription-overflow-yalign.ui',
++    'inscription-overflow.ui',
++    'label-wrap-word-char-natural-size.ui',
++    'late-binding.ui',
++    'late-property.ui',
++    'messagedialog-secondarytext.ui',
++    'overlay-no-main-widget.ui',
++    'sibling-pseudoclasses.ui',
++    'style-properties-only-child.ui',
++    'treeview-crash-too-wide.ui',
++    'window-height-for-width.ui',
++  ]
++endif
++
+ flaky = [
+   # these tests need a better way to perform delayed actions
+   # they are not in xfails since they succeed on some platforms

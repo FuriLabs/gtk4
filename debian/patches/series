@@ -18,3 +18,4 @@ orca-read-keybindings-in-actions.patch
 listbase-Factor-out-item-select-action-activation.patch
 listbase-Select-focus-before-moving-cursor.patch
 a11y-Fix-A11Y-groups.patch
+skip-s390-tests-lp2119291.patch

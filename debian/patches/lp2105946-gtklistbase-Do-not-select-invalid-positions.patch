@@ -1,0 +1,30 @@
+From: Lukáš Tyrychtr <ltyrycht@redhat.com>
+Date: Wed, 26 Mar 2025 13:12:32 +0100
+Subject: gtklistbase: Do not select invalid positions
+
+Bug-Ubuntu: https://launchpad.net/bugs/2105946
+Origin: https://gitlab.gnome.org/GNOME/gtk/-/commit/53bdfa6a13b4aa478bf14e77e164d97bd6d05111
+
+When we have a model but it is empty (say when we have no search results in
+Nautilus), we were trying to select an invalid position during keyboard
+navigation, leading to a crash.
+---
+ gtk/gtklistbase.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gtk/gtklistbase.c b/gtk/gtklistbase.c
+index 533912a..2202389 100644
+--- a/gtk/gtklistbase.c
++++ b/gtk/gtklistbase.c
+@@ -1159,9 +1159,9 @@ handle_selecting_unselected_cursor (GtkListBase *self,
+   model = gtk_list_item_manager_get_model (priv->item_manager);
+
+   /* Selection of current position is not needed if it's already selected or if
+-   * there is nothing to select.
++   * there is nothing to select, or the position is invalid.
+    */
+-  if (model == NULL || gtk_selection_model_is_selected (model, position))
++  if (model == NULL || position == GTK_INVALID_LIST_POSITION || gtk_selection_model_is_selected (model, position))
+     return FALSE;
+
+   /* Reset cursor to current position trying to select it as well. */

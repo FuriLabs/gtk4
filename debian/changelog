@@ -1,3 +1,11 @@
+gtk4 (4.14.5+ds-0ubuntu0.5) noble; urgency=medium
+
+  * d/p/lp2105946-gtklistbase-Do-not-select-invalid-positions.patch:
+    cherry-pick fix from upstream to fix a crash when pressing the arrow keys
+    in an empty directory (LP: #2105946).
+
+ -- Ural Tunaboyu <ural.tunaboyu@canonical.com>  Fri, 08 Aug 2025 09:35:08 -0700
+
 gtk4 (4.14.5+ds-0ubuntu0.4) noble; urgency=medium
 
   * d/p/skip-s390-tests-lp2119291.patch: skip some gtk4 tests that are failing

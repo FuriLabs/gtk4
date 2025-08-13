@@ -177,11 +177,7 @@ gdk_drop_new (GdkDisplay        *display,
                              "surface", surface,
                              NULL);
 
-  if (display_win32->has_fixed_scale)
-    drop_win32->scale = display_win32->surface_scale;
-  else
-    drop_win32->scale = gdk_win32_display_get_monitor_scale_factor (display_win32, NULL, NULL);
-
+  drop_win32->scale = gdk_win32_display_get_monitor_scale_factor (display_win32, NULL, NULL);
   drop_win32->protocol = protocol;
 
   return GDK_DROP (drop_win32);
@@ -276,12 +272,12 @@ query_object_formats (GdkDisplay   *display,
   GdkContentFormatsBuilder *builder;
   GdkContentFormats *result_formats;
 
-  builder = gdk_content_formats_builder_new ();
-
   hr = IDataObject_EnumFormatEtc (pDataObj, DATADIR_GET, &pfmt);
+  if (FAILED (hr))
+    return gdk_content_formats_new (NULL, 0);
 
-  if (SUCCEEDED (hr))
-    hr = IEnumFORMATETC_Next (pfmt, 1, &fmt, NULL);
+  builder = gdk_content_formats_builder_new ();
+  hr = IEnumFORMATETC_Next (pfmt, 1, &fmt, NULL);
 
   while (SUCCEEDED (hr) && hr != S_FALSE)
     {

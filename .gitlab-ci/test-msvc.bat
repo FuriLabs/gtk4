@@ -18,8 +18,11 @@ if not exist %HOMEPATH%\.cargo\bin\rustup.exe rustup-init -y --default-toolchain
 
 @set PATH=%PATH%;%HOMEPATH%\.cargo\bin
 
-pip3 install --upgrade --user packaging==24.2 meson==1.7.2 || goto :error
-meson setup -Dbackend_max_links=1 -Ddebug=false -Dwin32-backend=true -Dmedia-gstreamer=disabled -Dvulkan=disabled -Daccesskit=enabled _build %~1 || goto :error
+:: If the existing toolchain isn't MSVC, add it as target
+rustup target add %RUST_HOST% || goto :error
+
+pip3 install --upgrade --user meson==1.8.2 || goto :error
+meson setup _build -Dbackend_max_links=1 -Ddebug=false -Dwin32-backend=true -Dmedia-gstreamer=disabled -Dvulkan=disabled -Dsysprof=disabled -Dglib:sysprof=disabled -Daccesskit=enabled -Dlibxml2:werror=false -Daccesskit-c:triplet=%RUST_HOST% %~1 || goto :error
 ninja -C _build || goto :error
 
 goto :EOF

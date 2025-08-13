@@ -26,6 +26,14 @@
 #include "gtkmodulesprivate.h"
 #include "gtkprivate.h"
 
+#ifdef HAVE_PRINTBACKEND_CPDB
+#include "print/backends/gtkprintbackendcpdb.h"
+#endif
+#ifdef HAVE_PRINTBACKEND_CUPS
+#include "print/backends/gtkprintbackendcups.h"
+#endif
+#include "print/backends/gtkprintbackendfile.h"
+
 #include "gtkprintbackendprivate.h"
 
 
@@ -94,6 +102,14 @@ gtk_print_backends_init (void)
   g_io_extension_point_set_required_type (ep, GTK_TYPE_PRINT_BACKEND);
 
   scope = g_io_module_scope_new (G_IO_MODULE_SCOPE_BLOCK_DUPLICATES);
+
+#ifdef HAVE_PRINTBACKEND_CPDB
+  g_type_ensure (GTK_TYPE_PRINT_BACKEND_CPDB);
+#endif
+#ifdef HAVE_PRINTBACKEND_CUPS
+  g_type_ensure (GTK_TYPE_PRINT_BACKEND_CUPS);
+#endif
+  g_type_ensure (GTK_TYPE_PRINT_BACKEND_FILE);
 
   paths = _gtk_get_module_path ("printbackends");
   for (i = 0; paths[i]; i++)
@@ -700,6 +716,10 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 
           gtk_entry_set_visibility (GTK_ENTRY (entry), ai_visible[i]);
           gtk_entry_set_activates_default (GTK_ENTRY (entry), TRUE);
+          
+          /* Set password input purpose for hidden entries */
+          if (!ai_visible[i])
+            gtk_entry_set_input_purpose (GTK_ENTRY (entry), GTK_INPUT_PURPOSE_PASSWORD);
 
           gtk_box_append (GTK_BOX (vbox), box);
 

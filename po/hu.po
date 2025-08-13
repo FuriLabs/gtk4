@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gtk master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2025-04-07 00:36+0000\n"
-"PO-Revision-Date: 2025-04-08 16:43+0200\n"
+"POT-Creation-Date: 2025-04-08 10:57+0000\n"
+"PO-Revision-Date: 2025-04-08 16:47+0200\n"
 "Last-Translator: Balázs Úr <ur.balazs at fsf dot hu>\n"
 "Language-Team: Hungarian <openscope at fsf dot hu>\n"
 "Language: hu\n"
@@ -30,7 +30,7 @@ msgstr ""
 "átviteléhez."
 
 #: gdk/android/gdkandroidclipboard.c:623 gdk/macos/gdkmacospasteboard.c:161
-#: gdk/wayland/gdkclipboard-wayland.c:244 gdk/wayland/gdkdrop-wayland.c:205
+#: gdk/wayland/gdkclipboard-wayland.c:245 gdk/wayland/gdkdrop-wayland.c:205
 #: gdk/wayland/gdkprimary-wayland.c:343 gdk/win32/gdkdrop-win32.c:1014
 #: gdk/win32/gdkdrop-win32.c:1063 gdk/x11/gdkclipboard-x11.c:801
 #: gdk/x11/gdkdrop-x11.c:237
@@ -54,25 +54,26 @@ msgstr "Üres vágólapról nem lehet olvasni."
 msgid "No compatible formats to transfer clipboard contents."
 msgstr "Nincs megfelelő formátum a vágólap tartalmának átviteléhez."
 
-#: gdk/gdkcolorstate.c:921
-#, c-format
-msgid "cicp: Narrow range or YUV not supported"
-msgstr "cicp: keskeny tartomány vagy YUV nem támogatott"
-
-#: gdk/gdkcolorstate.c:931
+#: gdk/gdkcolorstate.c:1057
 #, c-format
 msgid "cicp: Unspecified parameters not supported"
 msgstr "cicp: meghatározatlan paraméterek nem támogatottak"
 
-#: gdk/gdkcolorstate.c:977
+#: gdk/gdkcolorstate.c:1103
 #, c-format
 msgid "cicp: Transfer function %u not supported"
 msgstr "cicp: a(z) %u átviteli függvény nem támogatott"
 
-#: gdk/gdkcolorstate.c:1007
+#: gdk/gdkcolorstate.c:1134
 #, c-format
 msgid "cicp: Color primaries %u not supported"
 msgstr "cicp: a(z) %u szín elsődlegesek nem támogatottak"
+
+#: gdk/gdkcolorstate.c:1161
+#, c-format
+#| msgid "cicp: Transfer function %u not supported"
+msgid "cicp: Matrix coefficients %u, %s not supported"
+msgstr "cicp: a(z) %u, %s mátrix együtthatók nem támogatottak"
 
 #: gdk/gdkcontentprovider.c:106 gdk/gdkcontentproviderimpl.c:313
 #: gdk/gdkcontentproviderimpl.c:532
@@ -187,7 +188,7 @@ msgstr ""
 "A(z) %s használatának kísérlete, de le van tiltva a GDK_DISABLE beállításon "
 "keresztül"
 
-#: gdk/gdktexture.c:672
+#: gdk/gdktexture.c:671
 msgid "Unknown image format."
 msgstr "Ismeretlen képformátum."
 
@@ -578,7 +579,7 @@ msgstr "Hiba a JPEG-képfájl értelmezésekor (%s)"
 msgid "Unsupported JPEG colorspace (%d)"
 msgstr "Nem támogatott JPEG színtér (%d)"
 
-#: gdk/loaders/gdkjpeg.c:194 gdk/loaders/gdkpng.c:468 gdk/loaders/gdktiff.c:472
+#: gdk/loaders/gdkjpeg.c:194 gdk/loaders/gdkpng.c:465 gdk/loaders/gdktiff.c:491
 #, c-format
 msgid "Not enough memory for image size %ux%u"
 msgstr "Nincs elég memória a(z) %u×%u méretű képhez"
@@ -588,30 +589,30 @@ msgstr "Nincs elég memória a(z) %u×%u méretű képhez"
 msgid "Error reading png (%s)"
 msgstr "Hiba a PNG olvasásakor (%s)"
 
-#: gdk/loaders/gdkpng.c:389
+#: gdk/loaders/gdkpng.c:388
 #, c-format
 msgid "Unsupported depth %u in png image"
 msgstr "Nem támogatott színmélység (%u) a PNG-képben"
 
-#: gdk/loaders/gdkpng.c:439
+#: gdk/loaders/gdkpng.c:438
 #, c-format
 msgid "Unsupported color type %u in png image"
 msgstr "Nem támogatott színtípus (%u) a PNG-képben"
 
-#: gdk/loaders/gdkpng.c:453
+#: gdk/loaders/gdkpng.c:450
 #, c-format
 msgid "Image stride too large for image size %ux%u"
 msgstr "A kép memóriában elfoglalt helye túl nagy a(z) %u×%u méretű képhez"
 
-#: gdk/loaders/gdktiff.c:358
+#: gdk/loaders/gdktiff.c:382
 msgid "Failed to load RGB data from TIFF file"
 msgstr "Az RGB adatok TIFF-fájlból történő betöltése sikertelen"
 
-#: gdk/loaders/gdktiff.c:401
+#: gdk/loaders/gdktiff.c:424
 msgid "Could not load TIFF data"
 msgstr "Nem sikerült betölteni a TIFF adatokat"
 
-#: gdk/loaders/gdktiff.c:484
+#: gdk/loaders/gdktiff.c:505
 #, c-format
 msgid "Reading data failed at row %d"
 msgstr "Nem sikerült az adatok beolvasása a(z) %d. sorban"
@@ -1860,7 +1861,7 @@ msgstr "Nem jelenhet meg szöveg ezen belül: <%s>"
 #. * first day of the week to calendar:week_start:1 if you want Monday
 #. * to be the first day of the week, and so on.
 #.
-#: gtk/gtkcalendar.c:672
+#: gtk/gtkcalendar.c:693
 msgid "calendar:week_start:0"
 msgstr "calendar:week_start:1"
 
@@ -1874,7 +1875,7 @@ msgstr "calendar:week_start:1"
 #. * text direction of RTL and specify "calendar:YM", then the year
 #. * will appear to the right of the month.
 #.
-#: gtk/gtkcalendar.c:823
+#: gtk/gtkcalendar.c:844
 msgid "calendar:MY"
 msgstr "calendar:YM"
 
@@ -1888,7 +1889,7 @@ msgstr "calendar:YM"
 #. * digits. That needs support from your system and locale definition
 #. * too.
 #.
-#: gtk/gtkcalendar.c:1004
+#: gtk/gtkcalendar.c:1025
 #, c-format
 msgctxt "calendar:day:digits"
 msgid "%d"
@@ -1901,7 +1902,7 @@ msgstr "%d"
 #. *
 #. * "%Y" is appropriate for most locales.
 #.
-#: gtk/gtkcalendar.c:1108
+#: gtk/gtkcalendar.c:1129
 msgctxt "calendar year format"
 msgid "%Y"
 msgstr "%Y"
@@ -1914,7 +1915,7 @@ msgstr "%Y"
 #. * Note that translating this doesn't guarantee that you get localized
 #. * digits. That needs support from your system and locale definition
 #. * too.
-#: gtk/gtkcalendar.c:1154
+#: gtk/gtkcalendar.c:1175
 #, c-format
 msgctxt "calendar:week:digits"
 msgid "%d"
@@ -2238,13 +2239,13 @@ msgstr "Papírmargók"
 msgid "_Edit"
 msgstr "_Szerkesztés"
 
-#: gtk/gtkeditablelabel.c:171 gtk/gtklabel.c:5902 gtk/gtktext.c:6322
-#: gtk/gtktextview.c:9320
+#: gtk/gtkeditablelabel.c:171 gtk/gtklabel.c:5902 gtk/gtktext.c:6353
+#: gtk/gtktextview.c:9355
 msgid "_Copy"
 msgstr "_Másolás"
 
-#: gtk/gtkeditablelabel.c:344 gtk/gtklabel.c:5962 gtk/gtktext.c:2877
-#: gtk/gtktextview.c:9398
+#: gtk/gtkeditablelabel.c:344 gtk/gtklabel.c:5962 gtk/gtktext.c:2891
+#: gtk/gtktextview.c:9433
 msgid "Context menu"
 msgstr "Helyi menü"
 
@@ -2323,7 +2324,7 @@ msgstr "Már létezik egy ugyanilyen nevű fájl"
 #: gtk/gtkmessagedialog.c:182 gtk/gtkmountoperation.c:608
 #: gtk/print/gtkpagesetupunixdialog.c:285 gtk/print/gtkprintbackend.c:638
 #: gtk/print/gtkprintunixdialog.c:683 gtk/print/gtkprintunixdialog.c:840
-#: gtk/gtkwindow.c:6359 gtk/ui/gtkappchooserdialog.ui:48
+#: gtk/gtkwindow.c:6368 gtk/ui/gtkappchooserdialog.ui:48
 #: gtk/ui/gtkassistant.ui:52 gtk/ui/gtkcolorchooserdialog.ui:36
 #: gtk/ui/gtkfontchooserdialog.ui:29
 msgid "_Cancel"
@@ -2416,7 +2417,7 @@ msgid "If you delete an item, it will be permanently lost."
 msgstr "Ha töröl egy elemet, akkor az véglegesen elvész."
 
 #: gtk/gtkfilechooserwidget.c:1214 gtk/gtkfilechooserwidget.c:1816
-#: gtk/gtklabel.c:5904 gtk/gtktext.c:6330 gtk/gtktextview.c:9328
+#: gtk/gtklabel.c:5904 gtk/gtktext.c:6361 gtk/gtktextview.c:9363
 msgid "_Delete"
 msgstr "_Törlés"
 
@@ -2756,7 +2757,7 @@ msgstr "Stílusváltozatok"
 msgid "Character Variations"
 msgstr "Karakterváltozatok"
 
-#: gtk/gtkglarea.c:319
+#: gtk/gtkglarea.c:326
 msgid "OpenGL context creation failed"
 msgstr "Az OpenGL környezet létrehozása sikertelen"
 
@@ -2769,15 +2770,15 @@ msgstr "Bezárás"
 msgid "Close the infobar"
 msgstr "Az információs sáv bezárása"
 
-#: gtk/gtklabel.c:5901 gtk/gtktext.c:6318 gtk/gtktextview.c:9316
+#: gtk/gtklabel.c:5901 gtk/gtktext.c:6349 gtk/gtktextview.c:9351
 msgid "Cu_t"
 msgstr "_Kivágás"
 
-#: gtk/gtklabel.c:5903 gtk/gtktext.c:6326 gtk/gtktextview.c:9324
+#: gtk/gtklabel.c:5903 gtk/gtktext.c:6357 gtk/gtktextview.c:9359
 msgid "_Paste"
 msgstr "_Beillesztés"
 
-#: gtk/gtklabel.c:5909 gtk/gtktext.c:6339 gtk/gtktextview.c:9349
+#: gtk/gtklabel.c:5909 gtk/gtktext.c:6370 gtk/gtktextview.c:9384
 msgid "Select _All"
 msgstr "Ö_sszes kijelölése"
 
@@ -2856,7 +2857,7 @@ msgid "Play"
 msgstr "Lejátszás"
 
 #: gtk/gtkmessagedialog.c:165 gtk/gtkmessagedialog.c:183
-#: gtk/print/gtkprintbackend.c:639 gtk/gtkwindow.c:6360
+#: gtk/print/gtkprintbackend.c:639 gtk/gtkwindow.c:6369
 msgid "_OK"
 msgstr "_OK"
 
@@ -3732,11 +3733,11 @@ msgctxt "accessibility"
 msgid "Sidebar"
 msgstr "Oldalsáv"
 
-#: gtk/gtktext.c:6344
+#: gtk/gtktext.c:6375
 msgid "Change di_rection"
 msgstr "I_rány megváltoztatása"
 
-#: gtk/gtktext.c:6349 gtk/gtktextview.c:9354
+#: gtk/gtktext.c:6380 gtk/gtktextview.c:9389
 msgid "Insert _Emoji"
 msgstr "_Emodzsi beszúrása"
 
@@ -3896,20 +3897,20 @@ msgctxt "Line ending name"
 msgid "Mac OS Classic"
 msgstr "Mac OS klasszikus"
 
-#: gtk/gtktextview.c:9336
+#: gtk/gtktextview.c:9371
 msgid "_Undo"
 msgstr "_Visszavonás"
 
-#: gtk/gtktextview.c:9340
+#: gtk/gtktextview.c:9375
 msgid "_Redo"
 msgstr "Mé_gis"
 
-#: gtk/gtkwindow.c:6348
+#: gtk/gtkwindow.c:6357
 #, c-format
 msgid "Do you want to use GTK Inspector?"
 msgstr "Szeretné használni a GTK vizsgálót?"
 
-#: gtk/gtkwindow.c:6350
+#: gtk/gtkwindow.c:6359
 #, c-format
 msgid ""
 "GTK Inspector is an interactive debugger that lets you explore and modify "
@@ -3920,7 +3921,7 @@ msgstr ""
 "alkalmazás belső működésének felfedezését és módosítását. A használata miatt "
 "az alkalmazás hibásan működhet vagy összeomolhat."
 
-#: gtk/gtkwindow.c:6355
+#: gtk/gtkwindow.c:6364
 msgid "Don’t show this message again"
 msgstr "Ne jelenjen meg többé ez az üzenet"
 
@@ -3970,8 +3971,8 @@ msgid "Attribute"
 msgstr "Attribútum"
 
 #: gtk/inspector/a11y.ui:176 gtk/inspector/css-node-tree.ui:70
-#: gtk/inspector/prop-list.ui:57 gtk/inspector/recorder.ui:156
-#: gtk/inspector/recorder.ui:199 gtk/inspector/strv-editor.c:73
+#: gtk/inspector/prop-list.ui:57 gtk/inspector/recorder.ui:159
+#: gtk/inspector/recorder.ui:203 gtk/inspector/strv-editor.c:73
 msgid "Value"
 msgstr "Érték"
 
@@ -4471,7 +4472,7 @@ msgstr "Forrás:"
 msgid "Defined At"
 msgstr "Meghatározva itt:"
 
-#: gtk/inspector/recorder.c:2059
+#: gtk/inspector/recorder.c:2181
 #, c-format
 msgid "Saving RenderNode failed"
 msgstr "A RenderNode mentése sikertelen"
@@ -4512,7 +4513,7 @@ msgstr "Kiválasztott csomópont mentése"
 msgid "Copy to clipboard"
 msgstr "Másolás a vágólapra"
 
-#: gtk/inspector/recorder.ui:151 gtk/inspector/recorder.ui:194
+#: gtk/inspector/recorder.ui:154 gtk/inspector/recorder.ui:198
 msgid "Property"
 msgstr "Tulajdonság"
 
@@ -7677,7 +7678,7 @@ msgid "Overwrite existing file"
 msgstr "Meglévő fájl felülírása"
 
 #: tools/gtk-builder-tool-screenshot.c:363 tools/gtk-image-tool-compare.c:46
-#: tools/gtk-image-tool-convert.c:89 tools/gtk-image-tool-relabel.c:86
+#: tools/gtk-image-tool-convert.c:112 tools/gtk-image-tool-relabel.c:86
 #: tools/gtk-image-tool-show.c:119 tools/gtk-rendernode-tool-benchmark.c:99
 #: tools/gtk-rendernode-tool-render.c:255
 msgid "FILE…"
@@ -7828,7 +7829,7 @@ msgstr "Kimeneti fájl"
 msgid "Compare two images"
 msgstr "Két kép összehasonlítása"
 
-#: tools/gtk-image-tool-compare.c:70 tools/gtk-image-tool-convert.c:113
+#: tools/gtk-image-tool-compare.c:70 tools/gtk-image-tool-convert.c:136
 #: tools/gtk-image-tool-info.c:101 tools/gtk-image-tool-relabel.c:109
 #: tools/gtk-image-tool-show.c:141
 #, c-format
@@ -7865,40 +7866,40 @@ msgstr "A képek különbözőek.\n"
 msgid "No differences.\n"
 msgstr "Nincsenek különbségek.\n"
 
-#: tools/gtk-image-tool-convert.c:86
+#: tools/gtk-image-tool-convert.c:109
 msgid "Format to use"
 msgstr "Használandó formátum"
 
-#: tools/gtk-image-tool-convert.c:86
+#: tools/gtk-image-tool-convert.c:109
 msgid "FORMAT"
 msgstr "FORMÁTUM"
 
-#: tools/gtk-image-tool-convert.c:87 tools/gtk-image-tool-relabel.c:84
+#: tools/gtk-image-tool-convert.c:110 tools/gtk-image-tool-relabel.c:84
 msgid "Color state to use"
 msgstr "Használandó színállapot"
 
-#: tools/gtk-image-tool-convert.c:87 tools/gtk-image-tool-relabel.c:84
+#: tools/gtk-image-tool-convert.c:110 tools/gtk-image-tool-relabel.c:84
 msgid "COLORSTATE"
 msgstr "SZÍNÁLLAPOT"
 
-#: tools/gtk-image-tool-convert.c:88 tools/gtk-image-tool-relabel.c:85
+#: tools/gtk-image-tool-convert.c:111 tools/gtk-image-tool-relabel.c:85
 msgid "Color state to use, as cicp tuple"
 msgstr "Használandó színállapot cicp-értéksorozatként"
 
-#: tools/gtk-image-tool-convert.c:88 tools/gtk-image-tool-relabel.c:85
+#: tools/gtk-image-tool-convert.c:111 tools/gtk-image-tool-relabel.c:85
 msgid "CICP"
 msgstr "CICP"
 
-#: tools/gtk-image-tool-convert.c:100
+#: tools/gtk-image-tool-convert.c:123
 msgid "Convert the image to a different format or color state."
 msgstr "A kép átalakítása eltérő formátumra vagy színállapotra."
 
-#: tools/gtk-image-tool-convert.c:119 tools/gtk-image-tool-relabel.c:115
+#: tools/gtk-image-tool-convert.c:142 tools/gtk-image-tool-relabel.c:115
 #, c-format
 msgid "Can only accept a single image file and output file\n"
 msgstr "Csak egy önálló képfájl és egy kimeneti fájl fogadható el\n"
 
-#: tools/gtk-image-tool-convert.c:133
+#: tools/gtk-image-tool-convert.c:156
 #, c-format
 msgid ""
 "Not a memory format: %s\n"
@@ -7909,7 +7910,7 @@ msgstr ""
 "Lehetséges értékek:\n"
 "  %s\n"
 
-#: tools/gtk-image-tool-convert.c:150
+#: tools/gtk-image-tool-convert.c:173
 #, c-format
 msgid ""
 "Not a color state: %s\n"
@@ -7920,12 +7921,12 @@ msgstr ""
 "Lehetséges értékek:\n"
 "  %s\n"
 
-#: tools/gtk-image-tool-convert.c:160 tools/gtk-image-tool-relabel.c:140
+#: tools/gtk-image-tool-convert.c:183 tools/gtk-image-tool-relabel.c:140
 #, c-format
 msgid "Can't specify both --color-state and --cicp\n"
 msgstr "Nem lehet megadni a --color-state és --cicp kapcsolókat egyszerre\n"
 
-#: tools/gtk-image-tool-convert.c:168 tools/gtk-image-tool-relabel.c:148
+#: tools/gtk-image-tool-convert.c:191 tools/gtk-image-tool-relabel.c:148
 #, c-format
 msgid "Not a supported cicp tuple: %s\n"
 msgstr "Nem támogatott cicp-értéksorozat: %s\n"
@@ -8638,4 +8639,3 @@ msgstr ""
 "Nem található témaindexfájl a következőben: „%s”.\n"
 "Ha valóban ikongyorsítótárat kíván itt létrehozni, akkor használja a --"
 "ignore-theme-index kapcsolót.\n"
-

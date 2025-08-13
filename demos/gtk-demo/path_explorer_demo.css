@@ -1,0 +1,10 @@
+.pathexplorer .menu {
+  padding: 10px;
+  border-spacing: 10px 10px;
+}
+.pathexplorer .menu box {
+  border-spacing: 10px 10px;
+}
+.pathexplorer .content {
+  padding: 10px;
+}

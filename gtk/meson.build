@@ -1,6 +1,7 @@
 subdir('a11y')
 subdir('deprecated')
 subdir('inspector')
+subdir('media')
 subdir('print')
 
 gtk_cargs = [
@@ -79,6 +80,7 @@ gtk_private_sources = files([
   'gtkcsskeyframes.c',
   'gtkcsslineheightvalue.c',
   'gtkcsslookup.c',
+  'gtkcssmediaquery.c',
   'gtkcssnode.c',
   'gtkcssnodedeclaration.c',
   'gtkcssnodestylecache.c',
@@ -263,6 +265,7 @@ gtk_public_sources = files([
   'gtkgridlayout.c',
   'gtkgridview.c',
   'gtkheaderbar.c',
+  'gtkiconpaintable.c',
   'gtkicontheme.c',
   'gtkimage.c',
   'gtkimagedefinition.c',
@@ -408,6 +411,7 @@ gtk_public_sources = files([
 ])
 
 gtk_public_sources += gtk_print_sources
+gtk_private_sources += print_backend_sources
 
 gtk_private_type_headers = files([
   'gtkcsstypesprivate.h',
@@ -514,6 +518,7 @@ gtk_public_headers = files([
   'gtkgridview.h',
   'gtkheaderbar.h',
   'gtkicontheme.h',
+  'gtkiconpaintable.h',
   'gtkimage.h',
   'gtkimcontext.h',
   'gtkimcontextsimple.h',
@@ -991,6 +996,7 @@ gtk_sources += [
   gtk_dbus_src,
   gtk_deprecated_sources,
   inspector_sources,
+  media_sources,
   gtkresources,
   gtkmarshalers,
   gtkprivatetypebuiltins,
@@ -1010,6 +1016,8 @@ gtk_deps = [
   fontconfig_dep,
   pixbuf_dep,
   epoxy_dep,
+  media_deps,
+  rsvg_dep,
   libm,
   graphene_dep,
   accesskit_dep,
@@ -1119,9 +1127,9 @@ darwin_versions = [
 # Library
 libgtk_static = static_library('gtk',
   sources: [typefuncs, gtk_sources, gtkmarshal_h, gtkprivatetypebuiltins_h, xdp_dbus_generated],
-  c_args: gtk_cargs + common_cflags,
+  c_args: gtk_cargs + print_backend_cflags + common_cflags,
   include_directories: [confinc, gdkinc, gskinc, gtkinc],
-  dependencies: gtk_deps + [libgtk_css_dep, libgdk_dep, libgsk_dep],
+  dependencies: gtk_deps + [libgtk_css_dep, libgdk_dep, libgsk_dep, media_deps, print_backend_deps],
   link_with: [libgtk_css, libgdk, libgsk ],
 )
 
@@ -1145,6 +1153,7 @@ if build_gir
   gir_args = [
     '-DGTK_COMPILATION',
     '--quiet',
+     '--doc-format=gi-docgen',
   ]
 
   gdk_gir_inc = [ 'cairo-1.0', 'Gio-2.0', 'GdkPixbuf-2.0', 'Pango-1.0', 'PangoCairo-1.0' ]
@@ -1235,6 +1244,24 @@ if build_gir
       fatal_warnings: get_option('werror'),
     )
     gtk_dep_sources += gdk_macos_gir
+  endif
+
+  if android_enabled
+    gdk_android_gir = gnome.generate_gir(libgtk,
+      sources: gdk_android_public_headers + gdk_android_sources,
+      namespace: 'GdkAndroid',
+      nsversion: gtk_api_version,
+      identifier_prefix: 'Gdk',
+      symbol_prefix: 'gdk',
+      export_packages: 'gtk4-android',
+      includes: [ gdk_gir[0], ],
+      install: true,
+      dependencies: libgdk_dep,
+      header: 'gdk/android/gdkandroid.h',
+      extra_args: gir_args,
+      fatal_warnings: get_option('werror'),
+    )
+    gtk_dep_sources += gdk_android_gir
   endif
 
   gsk_gir_inc = [ gdk_gir[0], 'Graphene-1.0' ]

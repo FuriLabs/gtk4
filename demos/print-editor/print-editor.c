@@ -2,6 +2,7 @@
 #include <math.h>
 #include <pango/pangocairo.h>
 #include <glib/gi18n.h>
+#include <gmodule.h>
 #include <gtk/gtk.h>
 
 #include "profile_conf.h"
@@ -577,6 +578,8 @@ activate_about (GSimpleAction *action,
   char *os_name;
   char *os_version;
   GtkWidget *dialog;
+  GFile *logo_file;
+  GtkIconPaintable *logo;
 
   os_name = g_get_os_info (G_OS_INFO_KEY_NAME);
   os_version = g_get_os_info (G_OS_INFO_KEY_VERSION_ID);
@@ -613,6 +616,8 @@ activate_about (GSimpleAction *action,
                              gtk_get_minor_version (),
                              gtk_get_micro_version ());
 
+  logo_file = g_file_new_for_uri ("resource:///org/gtk/gtk4/print-editor/icons/apps/org.gtk.PrintEditor4.svg");
+  logo = gtk_icon_paintable_new_for_file (logo_file, 64, 1);
   dialog = g_object_new (GTK_TYPE_ABOUT_DIALOG,
                          "transient-for", main_window,
                          "program-name", g_strcmp0 (PROFILE, "devel") == 0
@@ -624,10 +629,12 @@ activate_about (GSimpleAction *action,
                          "website", "http://www.gtk.org",
                          "comments", "Program to demonstrate GTK printing",
                          "authors", (const char *[]) { "Alexander Larsson", NULL },
-                         "logo-icon-name", "org.gtk.PrintEditor4",
+                         "logo", logo,
                          "title", "About GTK Print Editor",
                          "system-information", sysinfo->str,
                          NULL);
+  g_object_unref (logo);
+  g_object_unref (logo_file);
 
   gtk_about_dialog_add_credit_section (GTK_ABOUT_DIALOG (dialog),
                                        _("Artwork by"), (const char *[]) { "Jakub Steiner", NULL });
@@ -863,6 +870,7 @@ open (GApplication  *application,
   load_file (files[0]);
 }
 
+G_MODULE_EXPORT
 int
 main (int argc, char **argv)
 {

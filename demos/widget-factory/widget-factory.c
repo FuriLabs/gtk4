@@ -23,6 +23,7 @@
 #include <stdlib.h>
 
 #include <glib/gi18n.h>
+#include <gmodule.h>
 #include <gtk/gtk.h>
 
 #include "profile_conf.h"
@@ -299,6 +300,8 @@ activate_about (GSimpleAction *action,
   char *os_version;
   GString *s;
   GtkWidget *dialog;
+  GFile *logo_file;
+  GtkIconPaintable *logo;
 
   s = g_string_new ("");
 
@@ -331,6 +334,8 @@ activate_about (GSimpleAction *action,
                              gtk_get_minor_version (),
                              gtk_get_micro_version ());
 
+  logo_file = g_file_new_for_uri ("resource:///org/gtk/WidgetFactory4/icons/scalable/apps/org.gtk.WidgetFactory4.svg");
+  logo = gtk_icon_paintable_new_for_file (logo_file, 64, 1);
   dialog = g_object_new (GTK_TYPE_ABOUT_DIALOG,
                          "transient-for", gtk_application_get_active_window (app),
                          "modal", TRUE,
@@ -343,10 +348,12 @@ activate_about (GSimpleAction *action,
                          "website", "http://www.gtk.org",
                          "comments", "Program to demonstrate GTK themes and widgets",
                          "authors", (const char *[]) { "Andrea Cimitan", "Cosimo Cecchi", NULL },
-                         "logo-icon-name", "org.gtk.WidgetFactory4",
+                         "logo", logo,
                          "title", "About GTK Widget Factory",
                          "system-information", s->str,
                          NULL);
+  g_object_unref (logo);
+  g_object_unref (logo_file);
 
   gtk_about_dialog_add_credit_section (GTK_ABOUT_DIALOG (dialog),
                                        _("Maintained by"), (const char *[]) { "The GTK Team", NULL });
@@ -1235,7 +1242,9 @@ background_loaded_cb (GObject      *source,
       return;
     }
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   texture = gdk_texture_new_for_pixbuf (pixbuf);
+G_GNUC_END_IGNORE_DEPRECATIONS
   add_background (bd->flowbox, bd->filename, texture, FALSE);
 
   g_object_unref (texture);
@@ -1285,7 +1294,9 @@ populate_flowbox (GtkWidget *flowbox)
     {
       filename = g_strconcat ("/org/gtk/WidgetFactory4/", resources[i], NULL);
       pixbuf = gdk_pixbuf_new_from_resource_at_scale (filename, 110, 110, TRUE, NULL);
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       texture = gdk_texture_new_for_pixbuf (pixbuf);
+G_GNUC_END_IGNORE_DEPRECATIONS
       add_background (flowbox, filename, texture, TRUE);
       g_object_unref (texture);
       g_object_unref (pixbuf);
@@ -2008,11 +2019,16 @@ validate_more_details (GtkEntry   *entry,
     {
       gtk_widget_set_tooltip_text (GTK_WIDGET (entry), "Must have details first");
       gtk_widget_add_css_class (GTK_WIDGET (entry), "error");
+      gtk_accessible_update_state (GTK_ACCESSIBLE (entry),
+                                   GTK_ACCESSIBLE_STATE_INVALID, GTK_ACCESSIBLE_INVALID_TRUE,
+                                   -1);
     }
   else
     {
       gtk_widget_set_tooltip_text (GTK_WIDGET (entry), "");
       gtk_widget_remove_css_class (GTK_WIDGET (entry), "error");
+      gtk_accessible_reset_state (GTK_ACCESSIBLE (entry),
+                                  GTK_ACCESSIBLE_STATE_INVALID);
     }
 }
 
@@ -2028,10 +2044,20 @@ mode_switch_state_set (GtkSwitch *sw, gboolean state)
     {
       gtk_widget_set_visible (label, FALSE);
       gtk_switch_set_state (sw, state);
+      gtk_accessible_reset_state (GTK_ACCESSIBLE (sw),
+                                  GTK_ACCESSIBLE_STATE_INVALID);
+      gtk_accessible_reset_relation (GTK_ACCESSIBLE (sw),
+                                     GTK_ACCESSIBLE_RELATION_ERROR_MESSAGE);
     }
   else
     {
       gtk_widget_set_visible (label, TRUE);
+      gtk_accessible_update_state (GTK_ACCESSIBLE (sw),
+                                   GTK_ACCESSIBLE_STATE_INVALID, GTK_ACCESSIBLE_INVALID_TRUE,
+                                   -1);
+      gtk_accessible_update_relation (GTK_ACCESSIBLE (sw),
+                                      GTK_ACCESSIBLE_RELATION_ERROR_MESSAGE, label, NULL,
+                                      -1);
     }
 
   return TRUE;
@@ -2050,6 +2076,10 @@ level_scale_value_changed (GtkRange *range)
     {
       gtk_widget_set_visible (label, FALSE);
       gtk_switch_set_state (GTK_SWITCH (sw), TRUE);
+      gtk_accessible_reset_state (GTK_ACCESSIBLE (sw),
+                                  GTK_ACCESSIBLE_STATE_INVALID);
+      gtk_accessible_reset_relation (GTK_ACCESSIBLE (sw),
+                                     GTK_ACCESSIBLE_RELATION_ERROR_MESSAGE);
     }
   else if (gtk_switch_get_state (GTK_SWITCH (sw)) &&
           (gtk_range_get_value (range) <= 50))
@@ -2123,6 +2153,36 @@ load_texture_in_thread (GtkWidget  *picture,
   g_task_set_task_data (task, (gpointer)resource_path, NULL);
   g_task_run_in_thread (task, load_texture_thread);
   g_object_unref (task);
+}
+
+static GFile *
+resource_file_new (const char *resource_path)
+{
+  char *uri;
+  GFile *file;
+
+  uri = g_strconcat ("resource://", resource_path, NULL);
+  file = g_file_new_for_uri (uri);
+  g_free (uri);
+
+  return file;
+}
+
+static void
+builder_add_symbolic (GtkBuilder *builder,
+                      const char *icon_name,
+                      const char *resource_path)
+{
+  GFile *file;
+  GtkIconPaintable *paintable;
+
+  file = resource_file_new (resource_path);
+  paintable = gtk_icon_paintable_new_for_file (file, 16, 1);
+
+  gtk_builder_expose_object (builder, icon_name, G_OBJECT (paintable));
+
+  g_object_unref (paintable);
+  g_object_unref (file);
 }
 
 static void
@@ -2222,6 +2282,36 @@ activate (GApplication *app)
   gtk_builder_cscope_add_callback (scope, transition_speed_changed);
   gtk_builder_cscope_add_callback (scope, reset_icon_size);
   gtk_builder_set_scope (builder, scope);
+
+  builder_add_symbolic (builder, "open-menu-symbolic", "/org/gtk/libgtk/icons/scalable/actions/open-menu-symbolic.svg");
+  builder_add_symbolic (builder, "view-refresh-symbolic", "/org/gtk/libgtk/icons/scalable/actions/view-refresh-symbolic.svg");
+  builder_add_symbolic (builder, "window-close-symbolic", "/org/gtk/libgtk/icons/scalable/actions/window-close-symbolic.svg");
+  builder_add_symbolic (builder, "emblem-system-symbolic", "/org/gtk/libgtk/icons/scalable/emblems/emblem-system-symbolic.svg");
+  builder_add_symbolic (builder, "object-select-symbolic", "/org/gtk/libgtk/icons/scalable/status/object-select-symbolic.svg");
+  builder_add_symbolic (builder, "appointment-soon-symbolic", "/org/gtk/WidgetFactory4/icons/scalable/status/appointment-soon-symbolic.svg");
+  builder_add_symbolic (builder, "document-new-symbolic", "/org/gtk/WidgetFactory4/icons/scalable/actions/document-new-symbolic.svg");
+  builder_add_symbolic (builder, "document-save-symbolic", "/org/gtk/libgtk/icons/scalable/actions/document-save-symbolic.svg");
+  builder_add_symbolic (builder, "edit-find-symbolic", "/org/gtk/libgtk/icons/scalable/actions/edit-find-symbolic.svg");
+  builder_add_symbolic (builder, "insert-image-symbolic", "/org/gtk/libgtk/icons/scalable/actions/insert-image-symbolic.svg");
+  builder_add_symbolic (builder, "zoom-out-symbolic", "/org/gtk/WidgetFactory4/icons/scalable/actions/zoom-out-symbolic.svg");
+  builder_add_symbolic (builder, "zoom-in-symbolic", "/org/gtk/WidgetFactory4/icons/scalable/actions/zoom-in-symbolic.svg");
+  builder_add_symbolic (builder, "zoom-original-symbolic", "/org/gtk/WidgetFactory4/icons/scalable/actions/zoom-original-symbolic.svg");
+  builder_add_symbolic (builder, "media-record-symbolic", "/org/gtk/libgtk/icons/scalable/actions/media-record-symbolic.svg");
+  builder_add_symbolic (builder, "view-grid-symbolic", "/org/gtk/libgtk/icons/scalable/actions/view-grid-symbolic.svg");
+  builder_add_symbolic (builder, "view-list-symbolic", "/org/gtk/libgtk/icons/scalable/actions/view-list-symbolic.svg");
+  builder_add_symbolic (builder, "view-more-symbolic", "/org/gtk/libgtk/icons/scalable/actions/view-more-symbolic.svg");
+  builder_add_symbolic (builder, "document-open-symbolic", "/org/gtk/libgtk/icons/scalable/actions/document-open-symbolic.svg");
+  builder_add_symbolic (builder, "send-to-symbolic", "/org/gtk/WidgetFactory4/icons/scalable/actions/send-to-symbolic.svg");
+  builder_add_symbolic (builder, "view-fullscreen-symbolic", "/org/gtk/WidgetFactory4/icons/scalable/actions/view-fullscreen-symbolic.svg");
+  builder_add_symbolic (builder, "start-new-symbolic", "/org/gtk/WidgetFactory4/icons/scalable/actions/star-new-symbolic.svg");
+  builder_add_symbolic (builder, "edit-cut-symbolic", "/org/gtk/libgtk/icons/scalable/actions/edit-cut-symbolic.svg");
+  builder_add_symbolic (builder, "edit-copy-symbolic", "/org/gtk/libgtk/icons/scalable/actions/edit-copy-symbolic.svg");
+  builder_add_symbolic (builder, "edit-paste-symbolic", "/org/gtk/libgtk/icons/scalable/actions/edit-paste-symbolic.svg");
+  builder_add_symbolic (builder, "edit-delete-symbolic", "/org/gtk/libgtk/icons/scalable/actions/edit-delete-symbolic.svg");
+  builder_add_symbolic (builder, "go-previous-symbolic", "/org/gtk/libgtk/icons/scalable/actions/go-previous-symbolic.svg");
+  builder_add_symbolic (builder, "go-next-symbolic", "/org/gtk/libgtk/icons/scalable/actions/go-next-symbolic.svg");
+  builder_add_symbolic (builder, "emblem-important-symbolic", "/org/gtk/libgtk/icons/scalable/emblems/emblem-important-symbolic.svg");
+
   g_object_unref (scope);
   if (!gtk_builder_add_from_resource (builder, "/org/gtk/WidgetFactory4/widget-factory.ui", &error))
     {
@@ -2543,6 +2633,7 @@ quit_timeout (gpointer data)
   return G_SOURCE_REMOVE;
 }
 
+G_MODULE_EXPORT
 int
 main (int argc, char *argv[])
 {

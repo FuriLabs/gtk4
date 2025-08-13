@@ -5,6 +5,10 @@
 
 #include "gdk/gdkdmabufprivate.h"
 
+#ifdef GDK_WINDOWING_WIN32
+#include <gdk/win32/gdkwin32.h>
+#endif
+
 G_BEGIN_DECLS
 
 #define GSK_TYPE_VULKAN_IMAGE (gsk_vulkan_image_get_type ())
@@ -30,7 +34,7 @@ GskGpuImage *           gsk_vulkan_image_new_for_offscreen              (GskVulk
 GskGpuImage *           gsk_vulkan_image_new_for_upload                 (GskVulkanDevice        *device,
                                                                          gboolean                with_mipmap,
                                                                          GdkMemoryFormat         format,
-                                                                         gboolean                try_srgb,
+                                                                         GskGpuConversion        conv,
                                                                          gsize                   width,
                                                                          gsize                   height);
 #ifdef HAVE_DMABUF
@@ -43,13 +47,23 @@ GskGpuImage *           gsk_vulkan_image_new_for_dmabuf                 (GskVulk
                                                                          gsize                   width,
                                                                          gsize                   height,
                                                                          const GdkDmabuf        *dmabuf,
-                                                                         gboolean                premultiplied);
+                                                                         gboolean                premultiplied,
+                                                                         GskGpuConversion        conv);
 GdkTexture *            gsk_vulkan_image_to_dmabuf_texture              (GskVulkanImage         *self,
                                                                          GdkColorState          *color_state);
 #endif
+#ifdef GDK_WINDOWING_WIN32
+GskGpuImage *           gsk_vulkan_image_new_for_d3d12resource          (GskVulkanDevice        *device,
+                                                                         ID3D12Resource         *resource,
+                                                                         HANDLE                  resource_handle,
+                                                                         ID3D12Fence            *fence,
+                                                                         HANDLE                  fence_handle,
+                                                                         guint64                 fence_wait,
+                                                                         gboolean                premultiplied);
+#endif
 
 guchar *                gsk_vulkan_image_get_data                       (GskVulkanImage         *self,
-                                                                         gsize                  *out_stride);
+                                                                         GdkMemoryLayout        *out_layout);
 
 GskVulkanYcbcr *        gsk_vulkan_image_get_ycbcr                      (GskVulkanImage         *self);
 VkDescriptorSet         gsk_vulkan_image_get_vk_descriptor_set          (GskVulkanImage         *self,
@@ -76,13 +90,6 @@ VkImageView             gsk_vulkan_image_get_vk_image_view              (GskVulk
 VkFormat                gsk_vulkan_image_get_vk_format                  (GskVulkanImage         *self);
 VkFramebuffer           gsk_vulkan_image_get_vk_framebuffer             (GskVulkanImage         *self,
                                                                          VkRenderPass            pass);
-
-static inline guint
-gsk_vulkan_mipmap_levels (gsize width,
-                          gsize height)
-{
-  return g_bit_nth_msf (MAX (width, height), -1) + 1;
-}
 
 G_END_DECLS
 

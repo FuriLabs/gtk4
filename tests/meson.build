@@ -1,5 +1,6 @@
 gtk_tests = [
   # testname, optional extra sources
+  ['imagednd'],
   ['testcursor'],
   ['callbackcursor'],
   ['devicepixels'],
@@ -130,12 +131,7 @@ if os_unix
   gtk_tests += [
     ['testfontchooserdialog'],
     ['parallel', [], [ libgtk_static_dep, libm ] ],
-  ]
-endif
-
-if os_linux
-  gtk_tests += [
-    ['testdmabuf', ['testdmabuf.c', 'gtkclipper.c']],
+    ['testsymbolic', [], [ libgtk_static_dep ] ],
   ]
 endif
 

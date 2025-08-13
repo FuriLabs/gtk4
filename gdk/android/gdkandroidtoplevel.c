@@ -483,8 +483,22 @@ gdk_android_toplevel_get_property (GObject    *object,
       g_value_set_boolean (value, TRUE);
       break;
 
+    case N_PROPERTIES + GDK_TOPLEVEL_PROP_FULLSCREEN_MODE:
+      g_value_set_enum (value, surface->fullscreen_mode);
+      break;
+
     case N_PROPERTIES + GDK_TOPLEVEL_PROP_SHORTCUTS_INHIBITED:
       g_value_set_boolean (value, FALSE);
+      break;
+
+    case N_PROPERTIES + GDK_TOPLEVEL_PROP_CAPABILITIES:
+      g_value_set_flags (value, GDK_TOPLEVEL_CAPABILITIES_MAXIMIZE |
+                                GDK_TOPLEVEL_CAPABILITIES_FULLSCREEN |
+                                GDK_TOPLEVEL_CAPABILITIES_MINIMIZE);
+      break;
+
+    case N_PROPERTIES + GDK_TOPLEVEL_PROP_GRAVITY:
+      g_value_set_enum (value, GDK_GRAVITY_NORTH_EAST);
       break;
 
     default:
@@ -530,7 +544,15 @@ gdk_android_toplevel_set_property (GObject      *object,
     case N_PROPERTIES + GDK_TOPLEVEL_PROP_DELETABLE:
       break;
 
+    case N_PROPERTIES + GDK_TOPLEVEL_PROP_FULLSCREEN_MODE:
+      surface->fullscreen_mode = g_value_get_enum (value);
+      g_object_notify_by_pspec (G_OBJECT (surface), pspec);
+      break;
+
     case N_PROPERTIES + GDK_TOPLEVEL_PROP_SHORTCUTS_INHIBITED:
+      break;
+
+    case N_PROPERTIES + GDK_TOPLEVEL_PROP_GRAVITY:
       break;
 
     default:
@@ -561,21 +583,16 @@ gdk_android_toplevel_compute_size (GdkSurface *surface)
   GdkAndroidToplevel *self = GDK_ANDROID_TOPLEVEL (surface);
   GdkAndroidSurface *surface_impl = (GdkAndroidSurface *)self;
 
-  if (surface_impl->is_dirty)
-    {
-      GdkToplevelSize size;
-      g_info ("On compute_size, activity %p", self->activity);
+  GdkToplevelSize size;
+  gdk_toplevel_size_init (&size,
+                          ceilf (surface_impl->cfg.width / surface_impl->cfg.scale),
+                          ceilf (surface_impl->cfg.height / surface_impl->cfg.scale));
+  gdk_toplevel_notify_compute_size ((GdkToplevel *) self, &size);
 
-      gdk_toplevel_size_init (&size,
-                              ceilf (surface_impl->next.width / surface_impl->next.scale),
-                              ceilf (surface_impl->next.height / surface_impl->next.scale));
-      gdk_toplevel_notify_compute_size ((GdkToplevel *) self, &size);
+  g_warn_if_fail (size.width > 0);
+  g_warn_if_fail (size.height > 0);
 
-      g_warn_if_fail (size.width > 0);
-      g_warn_if_fail (size.height > 0);
-
-      // We currently don't do anything with size right now.
-    }
+  // We currently don't do anything with size right now.
 
   return GDK_SURFACE_CLASS (gdk_android_toplevel_parent_class)->compute_size (surface);
 }
@@ -594,16 +611,14 @@ gdk_android_toplevel_destroy (GdkSurface *surface, gboolean foreign_destroy)
 }
 
 static void
-gdk_android_toplevel_on_layout (GdkAndroidSurface *surface_impl,
-                                gint x, gint y,
-                                gint width, gint height,
-                                gfloat scale)
+gdk_android_toplevel_on_layout (GdkAndroidSurface *surface)
 {
-  GdkAndroidToplevel *self = GDK_ANDROID_TOPLEVEL (surface_impl);
+  GdkAndroidToplevel *self = GDK_ANDROID_TOPLEVEL (surface);
   GdkRectangle bounds = {
-    .x = x, .y = y, .width = width, .height = height
+    .x = surface->cfg.x, .y = surface->cfg.y,
+    .width = surface->cfg.width, .height = surface->cfg.height
   };
-  gdk_android_monitor_update (self->monitor, &bounds, scale);
+  gdk_android_monitor_update (self->monitor, &bounds, surface->cfg.scale);
 }
 
 static void

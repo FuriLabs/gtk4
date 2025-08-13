@@ -2600,8 +2600,7 @@ gtk_widget_unparent (GtkWidget *widget)
   if (gtk_widget_get_focus_child (priv->parent) == widget)
     gtk_widget_set_focus_child (priv->parent, NULL);
 
-  if (_gtk_widget_get_mapped (priv->parent))
-    gtk_widget_queue_draw (priv->parent);
+  gtk_widget_queue_draw (priv->parent);
 
   if (priv->visible && _gtk_widget_get_visible (priv->parent))
     gtk_widget_queue_resize (priv->parent);
@@ -3543,24 +3542,30 @@ gtk_widget_unrealize (GtkWidget *widget)
 void
 gtk_widget_queue_draw (GtkWidget *widget)
 {
+  GtkWidget *w;
+
   g_return_if_fail (GTK_IS_WIDGET (widget));
 
   /* Just return if the widget isn't mapped */
   if (!_gtk_widget_get_mapped (widget))
     return;
 
-  for (; widget; widget = _gtk_widget_get_parent (widget))
+  gtk_widget_push_verify_invariants (widget);
+
+  for (w = widget; w; w = _gtk_widget_get_parent (w))
     {
-      GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
+      GtkWidgetPrivate *priv = gtk_widget_get_instance_private (w);
 
       if (priv->draw_needed)
         break;
 
       priv->draw_needed = TRUE;
       g_clear_pointer (&priv->render_node, gsk_render_node_unref);
-      if (GTK_IS_NATIVE (widget) && _gtk_widget_get_realized (widget))
-        gdk_surface_queue_render (gtk_native_get_surface (GTK_NATIVE (widget)));
+      if (GTK_IS_NATIVE (w) && _gtk_widget_get_realized (w))
+        gdk_surface_queue_render (gtk_native_get_surface (GTK_NATIVE (w)));
     }
+
+  gtk_widget_pop_verify_invariants (widget);
 }
 
 static void
@@ -3586,37 +3591,58 @@ gtk_widget_queue_allocate (GtkWidget *widget)
 {
   g_return_if_fail (GTK_IS_WIDGET (widget));
 
-  if (_gtk_widget_get_realized (widget))
-    gtk_widget_queue_draw (widget);
+  gtk_widget_push_verify_invariants (widget);
+
+  gtk_widget_queue_draw (widget);
 
   gtk_widget_set_alloc_needed (widget);
+
+  gtk_widget_pop_verify_invariants (widget);
 }
 
 static inline gboolean
-gtk_widget_get_resize_needed (GtkWidget *widget)
+gtk_widget_get_resize_queued (GtkWidget *widget)
 {
   GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
 
-  return priv->resize_needed;
+  return priv->resize_queued;
 }
 
-/*
- * gtk_widget_queue_resize_internal:
+/**
+ * gtk_widget_queue_resize:
  * @widget: a widget
  *
- * Queue a resize on a widget, and on all other widgets
- * grouped with this widget.
+ * Flags a widget to have its size renegotiated.
+ *
+ * This should be called when a widget for some reason has a new
+ * size request. For example, when you change the text in a
+ * [class@Gtk.Label], the label queues a resize to ensure there’s
+ * enough space for the new text.
+ *
+ * Note that you cannot call gtk_widget_queue_resize() on a widget
+ * from inside its implementation of the [vfunc@Gtk.Widget.size_allocate]
+ * virtual method. Calls to gtk_widget_queue_resize() from inside
+ * [vfunc@Gtk.Widget.size_allocate] will be silently ignored.
+ *
+ * This function is only for use in widget implementations.
  */
-static void
-gtk_widget_queue_resize_internal (GtkWidget *widget)
+void
+gtk_widget_queue_resize (GtkWidget *widget)
 {
-  GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
+  GtkWidgetPrivate *priv;
   GSList *groups, *l, *widgets;
 
-  if (gtk_widget_get_resize_needed (widget))
+  g_return_if_fail (GTK_IS_WIDGET (widget));
+
+  if (gtk_widget_get_resize_queued (widget))
     return;
 
-  priv->resize_needed = TRUE;
+  gtk_widget_push_verify_invariants (widget);
+
+  gtk_widget_queue_draw (widget);
+
+  priv = gtk_widget_get_instance_private (widget);
+  priv->resize_queued = TRUE;
   _gtk_size_request_cache_clear (&priv->requests);
   gtk_widget_set_alloc_needed (widget);
 
@@ -3642,35 +3668,8 @@ gtk_widget_queue_resize_internal (GtkWidget *widget)
             gtk_widget_queue_resize (parent);
         }
     }
-}
 
-/**
- * gtk_widget_queue_resize:
- * @widget: a widget
- *
- * Flags a widget to have its size renegotiated.
- *
- * This should be called when a widget for some reason has a new
- * size request. For example, when you change the text in a
- * [class@Gtk.Label], the label queues a resize to ensure there’s
- * enough space for the new text.
- *
- * Note that you cannot call gtk_widget_queue_resize() on a widget
- * from inside its implementation of the [vfunc@Gtk.Widget.size_allocate]
- * virtual method. Calls to gtk_widget_queue_resize() from inside
- * [vfunc@Gtk.Widget.size_allocate] will be silently ignored.
- *
- * This function is only for use in widget implementations.
- */
-void
-gtk_widget_queue_resize (GtkWidget *widget)
-{
-  g_return_if_fail (GTK_IS_WIDGET (widget));
-
-  if (_gtk_widget_get_realized (widget))
-    gtk_widget_queue_draw (widget);
-
-  gtk_widget_queue_resize_internal (widget);
+  gtk_widget_pop_verify_invariants (widget);
 }
 
 /**
@@ -4021,7 +4020,7 @@ gtk_widget_ensure_allocate_on_children (GtkWidget *widget)
   GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
   GtkWidget *child;
 
-  g_assert (!priv->resize_needed);
+  g_assert (!priv->resize_queued);
   g_assert (!priv->alloc_needed);
 
   if (!priv->alloc_needed_on_child)
@@ -4086,8 +4085,29 @@ gtk_widget_allocate (GtkWidget    *widget,
       goto out;
     }
 
+#ifdef G_ENABLE_CONSISTENCY_CHECKS
+  {
+    SizeRequestCache *cache;
+    GtkSizeRequestMode cached;
+
+    cache = _gtk_widget_peek_request_cache (widget);
+
+    if (cache->request_mode_valid)
+      {
+        cached = cache->request_mode;
+        cache->request_mode_valid = FALSE;
+
+        if (cached != gtk_widget_get_request_mode (widget))
+          {
+            g_warning ("Allocating size to %s %p with stale request mode.",
+                       gtk_widget_get_name (widget), widget);
+          }
+      }
+  }
+#endif
+
 #ifdef G_ENABLE_DEBUG
-  if (gtk_widget_get_resize_needed (widget))
+  if (gtk_widget_get_resize_queued (widget))
     {
       g_warning ("Allocating size to %s %p without calling gtk_widget_measure(). "
                  "How does the code know the size to allocate?",
@@ -4239,13 +4259,13 @@ gtk_widget_allocate (GtkWidget    *widget,
 
       /* Size allocation is god... after consulting god, no further requests or allocations are needed */
       if (GTK_DISPLAY_DEBUG_CHECK (_gtk_widget_get_display (widget), GEOMETRY) &&
-          gtk_widget_get_resize_needed (widget))
+          gtk_widget_get_resize_queued (widget))
         {
           g_warning ("%s %p or a child called gtk_widget_queue_resize() during size_allocate().",
                      gtk_widget_get_name (widget), widget);
         }
 
-      gtk_widget_ensure_resize (widget);
+      gtk_widget_clear_resize_queued (widget);
       priv->alloc_needed = FALSE;
 
       gtk_widget_update_paintables (widget);
@@ -6389,23 +6409,6 @@ gtk_widget_verify_invariants (GtkWidget *widget)
         g_warning ("%s %p is mapped but not child_visible",
                    gtk_widget_get_name (widget), widget);
     }
-  else
-    {
-      /* Not mapped implies... */
-
-#if 0
-  /* This check makes sense for normal toplevels, but for
-   * something like a toplevel that is embedded within a clutter
-   * state, mapping may depend on external factors.
-   */
-      if (widget->priv->toplevel)
-        {
-          if (widget->priv->visible)
-            g_warning ("%s %p toplevel is visible but not mapped",
-                       G_OBJECT_TYPE_NAME (widget), widget);
-        }
-#endif
-    }
 
   /* Parent related checks aren't possible if parent has
    * verifying_invariants_count > 0 because parent needs to recurse
@@ -6417,18 +6420,6 @@ gtk_widget_verify_invariants (GtkWidget *widget)
           parent->priv->realized)
         {
           /* Parent realized implies... */
-
-#if 0
-          /* This is in widget_system.txt but appears to fail
-           * because there's no gtk_container_realize() that
-           * realizes all children... instead we just lazily
-           * wait for map to fix things up.
-           */
-          if (!widget->priv->realized)
-            g_warning ("%s %p is realized but child %s %p is not realized",
-                       G_OBJECT_TYPE_NAME (parent), parent,
-                       G_OBJECT_TYPE_NAME (widget), widget);
-#endif
         }
       else if (priv->realized && !GTK_IS_ROOT (widget))
         {
@@ -6462,25 +6453,22 @@ gtk_widget_verify_invariants (GtkWidget *widget)
         }
     }
 
-  if (!priv->realized)
-    {
-      /* Not realized implies... */
+  /* Some layout-related invariants */
 
-#if 0
-      /* widget_system.txt says these hold, but they don't. */
-      if (widget->priv->alloc_needed)
-        g_warning ("%s %p alloc needed but not realized",
-                   G_OBJECT_TYPE_NAME (widget), widget);
+  /* resize_queued -> alloc_needed */
+  if (widget->priv->resize_queued && !widget->priv->alloc_needed)
+    g_warning ("%s %p resize_queued but not alloc_needed",
+               G_OBJECT_TYPE_NAME (widget), widget);
 
-      if (widget->priv->width_request_needed)
-        g_warning ("%s %p width request needed but not realized",
-                   G_OBJECT_TYPE_NAME (widget), widget);
+  /* alloc_needed -> draw_needed */
+  if (widget->priv->alloc_needed && !widget->priv->draw_needed)
+    g_warning ("%s %p alloc_needed but not draw_needed",
+               G_OBJECT_TYPE_NAME (widget), widget);
 
-      if (widget->priv->height_request_needed)
-        g_warning ("%s %p height request needed but not realized",
-                   G_OBJECT_TYPE_NAME (widget), widget);
-#endif
-    }
+  /* !mapped -> draw_needed */
+  if (!widget->priv->mapped && !widget->priv->draw_needed)
+    g_warning ("%s %p not mapped and not draw_needed",
+               G_OBJECT_TYPE_NAME (widget), widget);
 }
 
 /* The point of this push/pop is that invariants may not hold while
@@ -10054,11 +10042,9 @@ gtk_widget_set_tooltip_text (GtkWidget  *widget,
 {
   GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
   GObject *object = G_OBJECT (widget);
-  char *tooltip_text, *tooltip_markup;
+  const char *tooltip_text;
 
   g_return_if_fail (GTK_IS_WIDGET (widget));
-
-  g_object_freeze_notify (object);
 
   /* Treat an empty string as a NULL string,
    * because an empty string would be useless for a tooltip:
@@ -10066,19 +10052,20 @@ gtk_widget_set_tooltip_text (GtkWidget  *widget,
   if (text != NULL && *text == '\0')
     {
       tooltip_text = NULL;
-      tooltip_markup = NULL;
     }
   else
     {
-      tooltip_text = g_strdup (text);
-      tooltip_markup = text != NULL ? g_markup_escape_text (text, -1) : NULL;
+      tooltip_text = text;
     }
 
-  g_clear_pointer (&priv->tooltip_markup, g_free);
-  g_clear_pointer (&priv->tooltip_text, g_free);
+  if (!g_set_str (&priv->tooltip_text, tooltip_text))
+    return;
 
-  priv->tooltip_text = tooltip_text;
-  priv->tooltip_markup = tooltip_markup;
+  g_object_freeze_notify (object);
+
+  g_clear_pointer (&priv->tooltip_markup, g_free);
+
+  priv->tooltip_markup = tooltip_text != NULL ? g_markup_escape_text (tooltip_text, -1) : NULL;
 
   gtk_widget_set_has_tooltip (widget, priv->tooltip_text != NULL);
   if (_gtk_widget_get_visible (widget))
@@ -10134,11 +10121,9 @@ gtk_widget_set_tooltip_markup (GtkWidget  *widget,
 {
   GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
   GObject *object = G_OBJECT (widget);
-  char *tooltip_markup;
+  const char *tooltip_markup;
 
   g_return_if_fail (GTK_IS_WIDGET (widget));
-
-  g_object_freeze_notify (object);
 
   /* Treat an empty string as a NULL string,
    * because an empty string would be useless for a tooltip:
@@ -10146,12 +10131,14 @@ gtk_widget_set_tooltip_markup (GtkWidget  *widget,
   if (markup != NULL && *markup == '\0')
     tooltip_markup = NULL;
   else
-    tooltip_markup = g_strdup (markup);
+    tooltip_markup = markup;
+
+  if (!g_set_str (&priv->tooltip_markup, tooltip_markup))
+    return;
+
+  g_object_freeze_notify (object);
 
   g_clear_pointer (&priv->tooltip_text, g_free);
-  g_clear_pointer (&priv->tooltip_markup, g_free);
-
-  priv->tooltip_markup = tooltip_markup;
 
   /* Store the tooltip without markup, as we might end up using
    * it for widget descriptions in the accessibility layer
@@ -10904,7 +10891,7 @@ gtk_widget_needs_allocate (GtkWidget *widget)
   if (!priv->visible || !priv->child_visible)
     return FALSE;
 
-  if (priv->resize_needed || priv->alloc_needed || priv->alloc_needed_on_child)
+  if (priv->resize_queued || priv->alloc_needed || priv->alloc_needed_on_child)
     return TRUE;
 
   return FALSE;
@@ -10918,7 +10905,7 @@ gtk_widget_ensure_allocate (GtkWidget *widget)
   if (!gtk_widget_needs_allocate (widget))
     return;
 
-  gtk_widget_ensure_resize (widget);
+  gtk_widget_clear_resize_queued (widget);
 
   /*  This code assumes that we only reach here if the previous
    *  allocation is still valid (ie no resize was queued).
@@ -10940,14 +10927,11 @@ gtk_widget_ensure_allocate (GtkWidget *widget)
 }
 
 void
-gtk_widget_ensure_resize (GtkWidget *widget)
+gtk_widget_clear_resize_queued (GtkWidget *widget)
 {
   GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
 
-  if (!priv->resize_needed)
-    return;
-
-  priv->resize_needed = FALSE;
+  priv->resize_queued = FALSE;
 }
 
 void

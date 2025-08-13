@@ -215,6 +215,8 @@
   <gresource prefix="/paintable_svg">
     <file>svgpaintable.h</file>
     <file>svgpaintable.c</file>
+    <file>symbolicpaintable.h</file>
+    <file>symbolicpaintable.c</file>
     <file>org.gtk.gtk4.NodeEditor.Devel.svg</file>
   </gresource>
   <gresource prefix="/shortcuts">
@@ -288,6 +290,7 @@
     <file>iconscroll.c</file>
     <file>iconview.c</file>
     <file>iconview_edit.c</file>
+    <file>image_filtering.c</file>
     <file>image_scaling.c</file>
     <file>images.c</file>
     <file>infobar.c</file>
@@ -323,9 +326,11 @@
     <file>paintable_symbolic.c</file>
     <file>panes.c</file>
     <file>password_entry.c</file>
+    <file>path_explorer_demo.c</file>
     <file>path_fill.c</file>
     <file>path_maze.c</file>
     <file>path_spinner.c</file>
+    <file>path_sweep.c</file>
     <file>path_walk.c</file>
     <file>path_text.c</file>
     <file>peg_solitaire.c</file>
@@ -336,7 +341,6 @@
     <file>rotated_text.c</file>
     <file>scale.c</file>
     <file>search_entry.c</file>
-    <file>search_entry2.c</file>
     <file>shadertoy.c</file>
     <file>shortcuts.c</file>
     <file>shortcut_triggers.c</file>
@@ -413,12 +417,27 @@
   <gresource prefix="/fontrendering">
     <file>fontrendering.ui</file>
   </gresource>
+  <gresource prefix="/path_explorer_demo">
+    <file>path_explorer_demo.ui</file>
+    <file>path_explorer_demo.css</file>
+  </gresource>
+  <gresource prefix="/path_sweep">
+    <file>path_sweep.ui</file>
+    <file compressed="true">path_world.txt</file>
+  </gresource>
   <gresource prefix="/path_walk">
     <file>path_walk.ui</file>
     <file compressed="true">path_world.txt</file>
   </gresource>
   <gresource prefix="/path_text">
     <file>path_text.ui</file>
+  </gresource>
+  <gresource prefix="/image_filtering">
+    <file>portland-rose.jpg</file>
+    <file>image_filtering.css</file>
+    <file>image_filtering.ui</file>
+    <file>filter_paintable.h</file>
+    <file>filter_paintable.c</file>
   </gresource>
   <gresource prefix="/org/gtk/Demo4">
     <file>icons/16x16/actions/application-exit.png</file>
@@ -431,14 +450,14 @@
     <file>icons/16x16/actions/process-stop.png</file>
     <file>icons/16x16/actions/go-home.png</file>
     <file>icons/16x16/actions/go-up.png</file>
-    <file>icons/16x16/actions/mail-send-receive-symbolic.symbolic.png</file>
-    <file>icons/16x16/actions/view-fullscreen-symbolic.symbolic.png</file>
-    <file>icons/16x16/actions/document-edit-symbolic.symbolic.png</file>
     <file>icons/16x16/emotes/face-cool.png</file>
-    <file>icons/16x16/emotes/face-laugh-symbolic.symbolic.png</file>
-    <file>icons/16x16/status/battery-caution-charging-symbolic.symbolic.png</file>
     <file>icons/16x16/categories/applications-other.png</file>
     <file>icons/48x48/status/starred.png</file>
+    <file>icons/scalable/actions/document-edit-symbolic.svg</file>
+    <file>icons/scalable/actions/mail-send-receive-symbolic.svg</file>
+    <file>icons/scalable/actions/view-fullscreen-symbolic.svg</file>
+    <file>icons/scalable/emotes/face-laugh-symbolic.svg</file>
+    <file>icons/scalable/status/battery-level-10-charging-symbolic.svg</file>
     <file alias="icons/scalable/apps/org.gtk.Demo4.svg">data/scalable/apps/org.gtk.Demo4.svg</file>
     <file>portland-rose-thumbnail.png</file>
     <file>large-image-thumbnail.png</file>

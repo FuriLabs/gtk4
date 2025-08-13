@@ -99,7 +99,15 @@
         <child type="start">
           <object class="GtkButton">
             <property name="focus-on-click">0</property>
-            <property name="icon-name">document-open-symbolic</property>
+            <child>
+              <object class="GtkImage">
+                <property name="paintable">
+                  <object class="GtkIconPaintable">
+                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/actions/document-open-symbolic.svg</property>
+                  </object>
+                </property>
+              </object>
+            </child>
             <property name="tooltip-text">Open node file</property>
             <signal name="clicked" handler="open_cb"/>
           </object>
@@ -107,7 +115,15 @@
         <child type="start">
           <object class="GtkButton">
             <property name="focus-on-click">0</property>
-            <property name="icon-name">document-save-symbolic</property>
+            <child>
+              <object class="GtkImage">
+                <property name="paintable">
+                  <object class="GtkIconPaintable">
+                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/actions/document-save-symbolic.svg</property>
+                  </object>
+                </property>
+              </object>
+            </child>
             <property name="tooltip-text">Save to node file</property>
             <signal name="clicked" handler="save_cb"/>
           </object>
@@ -115,7 +131,15 @@
         <child type="start">
           <object class="GtkButton">
             <property name="focus-on-click">0</property>
-            <property name="icon-name">insert-image-symbolic</property>
+            <child>
+              <object class="GtkImage">
+                <property name="paintable">
+                  <object class="GtkIconPaintable">
+                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/actions/insert-image-symbolic.svg</property>
+                  </object>
+                </property>
+              </object>
+            </child>
             <property name="tooltip-text">Export to image</property>
             <signal name="clicked" handler="export_image_cb"/>
           </object>
@@ -123,7 +147,15 @@
         <child type="start">
           <object class="GtkButton">
             <property name="focus-on-click">0</property>
-            <property name="icon-name">edit-copy-symbolic</property>
+            <child>
+              <object class="GtkImage">
+                <property name="paintable">
+                  <object class="GtkIconPaintable">
+                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/actions/edit-copy-symbolic.svg</property>
+                  </object>
+                </property>
+              </object>
+            </child>
             <property name="tooltip-text">Copy image to clipboard</property>
             <signal name="clicked" handler="clip_image_cb"/>
           </object>
@@ -140,7 +172,15 @@
             <property name="focus-on-click">0</property>
             <property name="valign">center</property>
             <property name="menu-model">gear_menu</property>
-            <property name="icon-name">open-menu-symbolic</property>
+            <child>
+              <object class="GtkImage">
+                <property name="paintable">
+                  <object class="GtkIconPaintable">
+                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/actions/open-menu-symbolic.svg</property>
+                  </object>
+                </property>
+              </object>
+            </child>
           </object>
         </child>
         <child type="end">
@@ -148,26 +188,55 @@
             <property name="focus-on-click">0</property>
             <property name="valign">center</property>
             <property name="has-frame">0</property>
-            <property name="icon-name">display-brightness-symbolic</property>
+            <child>
+              <object class="GtkImage">
+                <property name="paintable">
+                  <object class="GtkIconPaintable">
+                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/status/display-brightness-symbolic.svg</property>
+                  </object>
+                </property>
+              </object>
+            </child>
             <property name="tooltip-text" translatable="yes">Use a dark background</property>
             <signal name="notify::active" handler="dark_mode_cb" swapped="0"/>
           </object>
         </child>
         <child type="end">
-          <object class="GtkScaleButton" id="scale_scale">
+          <object class="GtkButton" id="zoom_in">
+            <property name="css-classes">circular
+flat</property>
             <property name="focus-on-click">0</property>
             <property name="valign">center</property>
-            <property name="adjustment">
-              <object class="GtkAdjustment">
-                <property name="lower">-4</property>
-                <property name="value">0</property>
-                <property name="upper">4</property>
-                <property name="step-increment">0.1</property>
-                <property name="page-increment">0.5</property>
+            <property name="tooltip-text" translatable="yes">Zoom in</property>
+            <signal name="clicked" handler="zoom_in_cb"/>
+            <child>
+              <object class="GtkImage">
+                <property name="paintable">
+                  <object class="GtkIconPaintable">
+                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/actions/zoom-in-symbolic.svg</property>
+                  </object>
+                </property>
               </object>
-            </property>
-            <property name="icons">zoom-in-symbolic</property>
-            <property name="tooltip-text" translatable="yes">Scale the image</property>
+            </child>
+          </object>
+        </child>
+        <child type="end">
+          <object class="GtkButton" id="zoom_out">
+            <property name="css-classes">circular
+flat</property>
+            <property name="focus-on-click">0</property>
+            <property name="valign">center</property>
+            <property name="tooltip-text" translatable="yes">Zoom out</property>
+            <signal name="clicked" handler="zoom_out_cb"/>
+            <child>
+              <object class="GtkImage">
+                <property name="paintable">
+                  <object class="GtkIconPaintable">
+                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/actions/zoom-out-symbolic.svg</property>
+                  </object>
+                </property>
+              </object>
+            </child>
           </object>
         </child>
       </object>

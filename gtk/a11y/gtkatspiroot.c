@@ -188,6 +188,12 @@ handle_application_method (GDBusConnection       *connection,
       locale = setlocale (types[lctype], NULL);
       g_dbus_method_invocation_return_value (invocation, g_variant_new ("(s)", locale));
     }
+  else if (g_strcmp0 (method_name, "GetApplicationBusAddress") == 0)
+    {
+      GtkAtSpiRoot *root = user_data;
+
+      g_dbus_method_invocation_return_value (invocation, g_variant_new ("(s)", root->bus_address));
+    }
 }
 
 static GVariant *
@@ -397,7 +403,7 @@ handle_accessible_get_property (GDBusConnection       *connection,
       res = g_variant_new_string (id ? id : "");
     }
   else if (g_strcmp0 (property_name, "Parent") == 0)
-    res = g_variant_new ("(so)", self->desktop_name, self->desktop_path);
+    res = gtk_at_spi_null_ref ();
   else if (g_strcmp0 (property_name, "ChildCount") == 0)
     {
       guint n_toplevels = g_list_model_get_n_items (self->toplevels);

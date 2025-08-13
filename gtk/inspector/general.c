@@ -71,7 +71,7 @@
 #include <xkbcommon/xkbcommon.h>
 #include "wayland/gdkdisplay-wayland.h"
 #include "wayland/gdkwaylandcolor-private.h"
-#include "gtk/gtkimcontextwayland.h"
+#include "gtk/gtkimcontextwaylandprivate.h"
 #endif
 
 #ifdef GDK_WINDOWING_BROADWAY
@@ -719,17 +719,17 @@ G_GNUC_END_IGNORE_DEPRECATIONS
   if (GDK_IS_WIN32_DISPLAY (gen->display) &&
       gdk_gl_backend_can_be_used (GDK_GL_WGL, NULL))
     {
-      PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB;
+      PFNWGLGETEXTENSIONSSTRINGARBPROC my_wglGetExtensionsStringARB;
 
       gtk_label_set_text (GTK_LABEL (gen->gl_backend_vendor), "Microsoft WGL");
       gtk_widget_set_visible (gen->gl_backend_version, FALSE);
 
-      wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC) wglGetProcAddress("wglGetExtensionsStringARB");
+      my_wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC) wglGetProcAddress("wglGetExtensionsStringARB");
 
-      if (wglGetExtensionsStringARB)
+      if (my_wglGetExtensionsStringARB)
         {
           gtk_label_set_text (GTK_LABEL (gen->egl_extensions_row_name), "WGL extensions");
-          append_extensions (gen->egl_extensions_list, wglGetExtensionsStringARB (wglGetCurrentDC ()));
+          append_extensions (gen->egl_extensions_list, my_wglGetExtensionsStringARB (wglGetCurrentDC ()));
         }
       else
         {
@@ -845,18 +845,18 @@ G_GNUC_END_IGNORE_DEPRECATIONS
   if (GDK_IS_WIN32_DISPLAY (display) &&
       gdk_gl_backend_can_be_used (GDK_GL_WGL, NULL))
     {
-      PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB;
+      PFNWGLGETEXTENSIONSSTRINGARBPROC my_wglGetExtensionsStringARB;
 
       g_string_append (string, "| GL Backend Vendor | Microsoft WGL |\n");
 
-      wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC) wglGetProcAddress("wglGetExtensionsStringARB");
+      my_wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC) wglGetProcAddress("wglGetExtensionsStringARB");
 
-      if (wglGetExtensionsStringARB)
+      if (my_wglGetExtensionsStringARB)
         {
           guint count;
           char *prefix;
 
-          g_string_assign (ext, wglGetExtensionsStringARB (wglGetCurrentDC ()));
+          g_string_assign (ext, my_wglGetExtensionsStringARB (wglGetCurrentDC ()));
           count = g_string_replace (ext, " ", "<br>", 0);
           prefix = g_strdup_printf ("| WGL Extensions | <details><summary>%u Extensions</summary>", count + 1);
           g_string_prepend (ext, prefix);
@@ -1140,6 +1140,7 @@ static const char *env_list[] = {
   "GDK_SCALE",
   "GDK_SYNCHRONIZE",
   "GDK_VULKAN_DISABLE",
+  "GDK_WAYLAND_DISABLE",
   "GDK_WIN32_CAIRO_DB",
   "GDK_WIN32_DISABLE_HIDPI",
   "GDK_WIN32_PER_MONITOR_HIDPI",
@@ -1310,8 +1311,10 @@ add_wayland_protocols (GdkDisplay          *display,
       append_wayland_protocol_row (gen, (struct wl_proxy *)d->presentation);
       append_wayland_protocol_row (gen, (struct wl_proxy *)d->single_pixel_buffer);
       append_wayland_protocol_row (gen, d->color ? gdk_wayland_color_get_color_manager (d->color) : NULL);
+      append_wayland_protocol_row (gen, d->color ? gdk_wayland_color_get_color_representation_manager (d->color) : NULL);
       append_wayland_protocol_row (gen, (struct wl_proxy *)d->system_bell);
       append_wayland_protocol_row (gen, (struct wl_proxy *)d->cursor_shape);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->toplevel_icon);
       append_wayland_protocol_row (gen, gtk_im_context_wayland_get_text_protocol (display));
     }
 }
@@ -1352,8 +1355,10 @@ dump_wayland_protocols (GdkDisplay *display,
       append_wayland_protocol (string, (struct wl_proxy *)d->presentation, &count);
       append_wayland_protocol (string, (struct wl_proxy *)d->single_pixel_buffer, &count);
       append_wayland_protocol (string, d->color ? gdk_wayland_color_get_color_manager (d->color) : NULL, &count);
+      append_wayland_protocol (string, d->color ? gdk_wayland_color_get_color_representation_manager (d->color) : NULL, &count);
       append_wayland_protocol (string, (struct wl_proxy *)d->system_bell, &count);
       append_wayland_protocol (string, (struct wl_proxy *)d->cursor_shape, &count);
+      append_wayland_protocol (string, (struct wl_proxy *)d->toplevel_icon, &count);
       append_wayland_protocol (string , gtk_im_context_wayland_get_text_protocol (display), &count);
 
       g_string_append (string, " |\n");

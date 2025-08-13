@@ -111,6 +111,10 @@ find_texture_to_attach (GskOffload          *self,
           node = gsk_subsurface_node_get_child (node);
           break;
 
+        case GSK_COMPONENT_TRANSFER_NODE:
+          node = gsk_component_transfer_node_get_child (node);
+          break;
+
         case GSK_CONTAINER_NODE:
           if (gsk_container_node_get_n_children (node) == 1)
             {
@@ -125,7 +129,7 @@ find_texture_to_attach (GskOffload          *self,
               gsk_transform_transform_bounds (transform, &child->bounds, &bounds);
               if (GSK_RENDER_NODE_TYPE (child) == GSK_COLOR_NODE &&
                   gsk_rect_equal (&bounds, &subsurface_node->bounds) &&
-                  color_is_black (gsk_color_node_get_color2 (child)))
+                  color_is_black (gsk_color_node_get_gdk_color (child)))
                 {
                   *has_background = TRUE;
                   node = gsk_container_node_get_child (node, 1);
@@ -549,6 +553,7 @@ visit_node (GskOffload    *self,
     case GSK_MASK_NODE:
     case GSK_FILL_NODE:
     case GSK_STROKE_NODE:
+    case GSK_COMPONENT_TRANSFER_NODE:
       break;
 
     case GSK_CLIP_NODE:

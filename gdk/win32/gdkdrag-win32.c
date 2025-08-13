@@ -214,6 +214,9 @@
 #include <gdk/gdk.h>
 #include <glib/gstdio.h>
 
+static void gdk_win32_drag_set_cursor (GdkDrag   *drag,
+                                       GdkCursor *cursor);
+
 /* accessors to thread data structs in GdkWin32Clipdrop/GdkWin32Drag */
 #define OBJECT_DND_THREAD_MEMBER(o,m) ((GdkWin32DnDThread *)(o->dnd_thread_items))->m
 
@@ -763,7 +766,7 @@ gdk_win32_drag_finalize (GObject *object)
 
   drag_win32 = GDK_WIN32_DRAG (drag);
 
-  gdk_drag_set_cursor (drag, NULL);
+  gdk_win32_drag_set_cursor (drag, NULL);
 
   g_set_object (&drag_win32->grab_surface, NULL);
   drag_surface = drag_win32->drag_surface;
@@ -796,11 +799,7 @@ gdk_drag_new (GdkDisplay         *display,
 
   drag = GDK_DRAG (drag_win32);
 
-  if (display_win32->has_fixed_scale)
-    drag_win32->scale = display_win32->surface_scale;
-  else
-    drag_win32->scale = gdk_win32_display_get_monitor_scale_factor (display_win32, NULL, NULL);
-
+  drag_win32->scale = gdk_win32_display_get_monitor_scale_factor (display_win32, NULL, NULL);
   drag_win32->dnd_thread_items = display_win32->cb_dnd_items->clipdrop->dnd_thread_items;
 
   return drag;
@@ -1798,8 +1797,8 @@ gdk_win32_drag_drop (GdkDrag *drag,
 }
 
 static void
-gdk_win32_drag_set_cursor (GdkDrag *drag,
-                           GdkCursor      *cursor)
+gdk_win32_drag_set_cursor (GdkDrag   *drag,
+                           GdkCursor *cursor)
 {
   GdkWin32Drag *drag_win32 = GDK_WIN32_DRAG (drag);
 
@@ -1818,6 +1817,17 @@ gdk_win32_drag_set_cursor (GdkDrag *drag,
                        cursor, GDK_CURRENT_TIME);
       G_GNUC_END_IGNORE_DEPRECATIONS;
     }
+}
+
+static void
+gdk_win32_drag_update_cursor (GdkDrag *drag)
+{
+  GdkDragAction action;
+  GdkCursor *cursor;
+
+  action = gdk_drag_get_selected_action (drag);
+  cursor = gdk_drag_get_cursor (drag, action);
+  gdk_win32_drag_set_cursor (drag, cursor);
 }
 
 static double
@@ -2008,7 +2018,7 @@ gdk_win32_drag_cancel (GdkDrag             *drag,
                           drag,
                           reason_str));
 
-  gdk_drag_set_cursor (drag, NULL);
+  gdk_win32_drag_set_cursor (drag, NULL);
   drag_context_ungrab (drag);
   gdk_drag_drop_done (drag, FALSE);
 }
@@ -2022,7 +2032,7 @@ gdk_win32_drag_drop_performed (GdkDrag *drag,
                           time_));
 
   gdk_win32_drag_drop (drag, time_);
-  gdk_drag_set_cursor (drag, NULL);
+  gdk_win32_drag_set_cursor (drag, NULL);
   drag_context_ungrab (drag);
 }
 
@@ -2268,7 +2278,7 @@ gdk_win32_drag_class_init (GdkWin32DragClass *klass)
   drag_class->get_drag_surface = gdk_win32_drag_get_drag_surface;
   drag_class->set_hotspot = gdk_win32_drag_set_hotspot;
   drag_class->drop_done = gdk_win32_drag_drop_done;
-  drag_class->set_cursor = gdk_win32_drag_set_cursor;
+  drag_class->update_cursor = gdk_win32_drag_update_cursor;
   drag_class->cancel = gdk_win32_drag_cancel;
   drag_class->drop_performed = gdk_win32_drag_drop_performed;
   drag_class->handle_event = gdk_win32_drag_handle_event;

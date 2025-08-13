@@ -306,7 +306,7 @@ gtk_map_list_model_items_changed_cb (GListModel      *model,
       if (node == NULL)
         node = gtk_rb_tree_insert_before (self->items, NULL);
       else if (node->item)
-        node = gtk_rb_tree_insert_after (self->items, node);
+        node = gtk_rb_tree_insert_before (self->items, node);
 
       node->n_items += added;
       gtk_rb_tree_node_mark_dirty (node);
@@ -435,7 +435,7 @@ gtk_map_list_model_class_init (GtkMapListModelClass *class)
   properties[PROP_MODEL] =
       g_param_spec_object ("model", NULL, NULL,
                            G_TYPE_LIST_MODEL,
-                           GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_EXPLICIT_NOTIFY);
+                           GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   /**
    * GtkMapListModel:n-items:

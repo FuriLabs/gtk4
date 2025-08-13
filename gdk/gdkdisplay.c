@@ -437,6 +437,7 @@ gdk_display_dispose (GObject *object)
 
   g_clear_pointer (&display->egl_dmabuf_formats, gdk_dmabuf_formats_unref);
   g_clear_pointer (&display->egl_internal_formats, gdk_dmabuf_formats_unref);
+  g_clear_pointer (&display->egl_external_formats, gdk_dmabuf_formats_unref);
 #ifdef GDK_RENDERING_VULKAN
   if (display->vk_instance)
     gdk_display_destroy_vulkan_instance (display);
@@ -1374,19 +1375,15 @@ gdk_display_create_vulkan_context (GdkDisplay  *self,
 
   if (surface)
     {
-      return g_initable_new (GDK_DISPLAY_GET_CLASS (self)->vk_context_type,
-                             NULL,
-                             error,
-                             "surface", surface,
-                             NULL);
+      return g_object_new (GDK_DISPLAY_GET_CLASS (self)->vk_context_type,
+                           "surface", surface,
+                           NULL);
     }
   else
     {
-      return g_initable_new (GDK_DISPLAY_GET_CLASS (self)->vk_context_type,
-                             NULL,
-                             error,
-                             "display", self,
-                             NULL);
+      return g_object_new (GDK_DISPLAY_GET_CLASS (self)->vk_context_type,
+                           "display", self,
+                           NULL);
     }
 }
 

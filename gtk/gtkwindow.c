@@ -70,6 +70,7 @@
 #include "gdk/gdktextureprivate.h"
 #include "gdk/gdktoplevelprivate.h"
 
+#include "gsk/gskrendererprivate.h"
 #include "gsk/gskroundedrectprivate.h"
 
 #include <cairo-gobject.h>
@@ -90,8 +91,6 @@
 #ifdef GDK_WINDOWING_WAYLAND
 #include "wayland/gdkwayland.h"
 #include "wayland/gdkdisplay-wayland.h"
-#include "wayland/gdksurface-wayland.h"
-#include "wayland/gdktoplevel-wayland-private.h"
 #endif
 
 #ifdef GDK_WINDOWING_MACOS
@@ -289,6 +288,8 @@ typedef struct
   int surface_width;
   int surface_height;
 
+  GtkWindowGravity gravity;
+
   GdkCursor *resize_cursor;
 
   GtkEventController *menubar_controller;
@@ -326,6 +327,7 @@ enum {
   PROP_CHILD,
   PROP_TITLEBAR,
   PROP_HANDLE_MENUBAR_ACCEL,
+  PROP_GRAVITY,
 
   /* Readonly properties */
   PROP_IS_ACTIVE,
@@ -757,6 +759,77 @@ gtk_window_get_request_mode (GtkWidget *widget)
     return GTK_SIZE_REQUEST_CONSTANT_SIZE;
 }
 
+static GdkGravity
+get_gdk_gravity (GtkWindow *window)
+{
+  GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
+
+  switch (priv->gravity)
+    {
+    case GTK_WINDOW_GRAVITY_TOP_LEFT:
+      return GDK_GRAVITY_NORTH_WEST;
+    case GTK_WINDOW_GRAVITY_TOP:
+      return GDK_GRAVITY_NORTH;
+    case GTK_WINDOW_GRAVITY_TOP_RIGHT:
+      return GDK_GRAVITY_NORTH_EAST;
+    case GTK_WINDOW_GRAVITY_LEFT:
+      return GDK_GRAVITY_WEST;
+    case GTK_WINDOW_GRAVITY_CENTER:
+      return GDK_GRAVITY_CENTER;
+    case GTK_WINDOW_GRAVITY_RIGHT:
+      return GDK_GRAVITY_EAST;
+    case GTK_WINDOW_GRAVITY_BOTTOM_LEFT:
+      return GDK_GRAVITY_SOUTH_WEST;
+    case GTK_WINDOW_GRAVITY_BOTTOM:
+      return GDK_GRAVITY_SOUTH;
+    case GTK_WINDOW_GRAVITY_BOTTOM_RIGHT:
+      return GDK_GRAVITY_SOUTH_EAST;
+    case GTK_WINDOW_GRAVITY_TOP_START:
+      if (gtk_widget_get_direction (GTK_WIDGET (window)) == GTK_TEXT_DIR_RTL)
+        return GDK_GRAVITY_NORTH_EAST;
+      else
+        return GDK_GRAVITY_NORTH_WEST;
+    case GTK_WINDOW_GRAVITY_TOP_END:
+      if (gtk_widget_get_direction (GTK_WIDGET (window)) == GTK_TEXT_DIR_RTL)
+        return GDK_GRAVITY_NORTH_WEST;
+      else
+        return GDK_GRAVITY_NORTH_EAST;
+    case GTK_WINDOW_GRAVITY_START:
+      if (gtk_widget_get_direction (GTK_WIDGET (window)) == GTK_TEXT_DIR_RTL)
+        return GDK_GRAVITY_EAST;
+      else
+        return GDK_GRAVITY_WEST;
+    case GTK_WINDOW_GRAVITY_END:
+      if (gtk_widget_get_direction (GTK_WIDGET (window)) == GTK_TEXT_DIR_RTL)
+        return GDK_GRAVITY_WEST;
+      else
+        return GDK_GRAVITY_EAST;
+    case GTK_WINDOW_GRAVITY_BOTTOM_START:
+      if (gtk_widget_get_direction (GTK_WIDGET (window)) == GTK_TEXT_DIR_RTL)
+        return GDK_GRAVITY_SOUTH_EAST;
+      else
+        return GDK_GRAVITY_SOUTH_WEST;
+    case GTK_WINDOW_GRAVITY_BOTTOM_END:
+      if (gtk_widget_get_direction (GTK_WIDGET (window)) == GTK_TEXT_DIR_RTL)
+        return GDK_GRAVITY_SOUTH_WEST;
+      else
+        return GDK_GRAVITY_SOUTH_EAST;
+    default:
+      g_assert_not_reached ();
+    }
+}
+
+static void
+gtk_window_direction_changed (GtkWidget        *widget,
+                              GtkTextDirection  previous_direction)
+{
+  GtkWindow *window = GTK_WINDOW (widget);
+  GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
+
+  if (priv->surface)
+    gdk_toplevel_set_gravity (GDK_TOPLEVEL (priv->surface), get_gdk_gravity (window));
+}
+
 static void
 gtk_window_class_init (GtkWindowClass *klass)
 {
@@ -787,6 +860,7 @@ gtk_window_class_init (GtkWindowClass *klass)
   widget_class->focus = gtk_window_focus;
   widget_class->move_focus = gtk_window_move_focus;
   widget_class->measure = gtk_window_measure;
+  widget_class->direction_changed = gtk_window_direction_changed;
 
   klass->activate_default = gtk_window_real_activate_default;
   klass->activate_focus = gtk_window_real_activate_focus;
@@ -1083,6 +1157,24 @@ gtk_window_class_init (GtkWindowClass *klass)
       g_param_spec_boolean ("handle-menubar-accel", NULL, NULL,
                             TRUE,
                             GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * GtkWindow:gravity:
+   *
+   * The gravity to use when resizing the window programmatically.
+   *
+   * Gravity describes which point of the window we want to keep
+   * fixed (meaning that the window will grow in the opposite direction).
+   * For example, a gravity of `GTK_WINDOW_GRAVITY_TOP_RIGHT` means that we
+   * want the to fix top right corner of the window.
+   *
+   * Since: 4.20
+   */
+  window_props[PROP_GRAVITY] =
+      g_param_spec_enum ("gravity", NULL, NULL,
+                         GTK_TYPE_WINDOW_GRAVITY,
+                         GTK_WINDOW_GRAVITY_TOP_START,
+                         GTK_PARAM_READWRITE|G_PARAM_STATIC_STRINGS|G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (gobject_class, LAST_ARG, window_props);
 
@@ -1756,6 +1848,7 @@ gtk_window_init (GtkWindow *window)
   priv->mnemonics_visible = FALSE;
   priv->focus_visible = TRUE;
   priv->initial_fullscreen_monitor = NULL;
+  priv->gravity = GTK_WINDOW_GRAVITY_TOP_START;
 
   g_object_ref_sink (window);
 
@@ -1934,6 +2027,9 @@ gtk_window_set_property (GObject      *object,
     case PROP_HANDLE_MENUBAR_ACCEL:
       gtk_window_set_handle_menubar_accel (window, g_value_get_boolean (value));
       break;
+    case PROP_GRAVITY:
+      gtk_window_set_gravity (window, g_value_get_enum (value));
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -2022,6 +2118,9 @@ gtk_window_get_property (GObject      *object,
       break;
     case PROP_HANDLE_MENUBAR_ACCEL:
       g_value_set_boolean (value, gtk_window_get_handle_menubar_accel (window));
+      break;
+    case PROP_GRAVITY:
+      g_value_set_enum (value, gtk_window_get_gravity (window));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -3852,11 +3951,18 @@ update_window_actions (GtkWindow *window)
 {
   GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
   gboolean is_sovereign_window = !priv->modal && !priv->transient_parent;
+  GdkToplevelCapabilities capabilities;
+
+  if (priv->surface)
+    capabilities = gdk_toplevel_get_capabilities (GDK_TOPLEVEL (priv->surface));
+  else
+    capabilities = GDK_TOPLEVEL_CAPABILITIES_MINIMIZE |
+                   GDK_TOPLEVEL_CAPABILITIES_MAXIMIZE;
 
   gtk_widget_action_set_enabled (GTK_WIDGET (window), "window.minimize",
-                                 is_sovereign_window);
+                                 is_sovereign_window && (capabilities & GDK_TOPLEVEL_CAPABILITIES_MINIMIZE));
   gtk_widget_action_set_enabled (GTK_WIDGET (window), "window.toggle-maximized",
-                                 priv->resizable && is_sovereign_window);
+                                 is_sovereign_window && priv->resizable && (capabilities & GDK_TOPLEVEL_CAPABILITIES_MAXIMIZE));
   gtk_widget_action_set_enabled (GTK_WIDGET (window), "window.close",
                                  priv->deletable);
 
@@ -4364,7 +4470,7 @@ toplevel_compute_size (GdkToplevel     *toplevel,
                                           shadow.top, shadow.bottom);
     }
 
-  gtk_widget_ensure_resize (widget);
+  gtk_widget_clear_resize_queued (widget);
 }
 
 static void
@@ -4406,10 +4512,11 @@ gtk_window_realize (GtkWidget *widget)
   gdk_surface_set_widget (surface, widget);
 
   if (priv->renderer == NULL)
-    priv->renderer = gsk_renderer_new_for_surface (surface);
+    priv->renderer = gsk_renderer_new_for_surface_full (surface, TRUE);
 
   g_signal_connect_swapped (surface, "notify::state", G_CALLBACK (surface_state_changed), widget);
   g_signal_connect_swapped (surface, "notify::mapped", G_CALLBACK (surface_state_changed), widget);
+  g_signal_connect_swapped (surface, "notify::capabilities", G_CALLBACK (update_window_actions), widget);
   g_signal_connect (surface, "render", G_CALLBACK (surface_render), widget);
   g_signal_connect (surface, "event", G_CALLBACK (surface_event), widget);
   g_signal_connect (surface, "compute-size", G_CALLBACK (toplevel_compute_size), widget);
@@ -4434,6 +4541,7 @@ gtk_window_realize (GtkWidget *widget)
   gdk_toplevel_set_decorated (GDK_TOPLEVEL (surface), priv->decorated && !priv->client_decorated);
   gdk_toplevel_set_deletable (GDK_TOPLEVEL (surface), priv->deletable);
   gdk_toplevel_set_modal (GDK_TOPLEVEL (surface), priv->modal);
+  gdk_toplevel_set_gravity (GDK_TOPLEVEL (surface), get_gdk_gravity (window));
 
 #ifdef GDK_WINDOWING_X11
 
@@ -4469,6 +4577,8 @@ G_GNUC_END_IGNORE_DEPRECATIONS
     _gtk_widget_scale_changed (widget);
 
   gtk_native_realize (GTK_NATIVE (window));
+
+  update_window_actions (window);
 }
 
 static void
@@ -4516,6 +4626,7 @@ gtk_window_unrealize (GtkWidget *widget)
   surface = priv->surface;
 
   g_signal_handlers_disconnect_by_func (surface, surface_state_changed, widget);
+  g_signal_handlers_disconnect_by_func (surface, update_window_actions, widget);
   g_signal_handlers_disconnect_by_func (surface, surface_render, widget);
   g_signal_handlers_disconnect_by_func (surface, surface_event, widget);
   g_signal_handlers_disconnect_by_func (surface, toplevel_compute_size, widget);
@@ -4534,61 +4645,50 @@ gtk_window_unrealize (GtkWidget *widget)
   priv->use_client_shadow = FALSE;
 }
 
+static inline void
+add_or_remove_class (GtkWidget  *widget,
+                     gboolean    add,
+                     const char *class)
+{
+  if (add)
+    gtk_widget_add_css_class (widget, class);
+  else
+    gtk_widget_remove_css_class (widget, class);
+}
+
 static void
 update_window_style_classes (GtkWindow *window)
 {
   GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
   GtkWidget *widget = GTK_WIDGET (window);
-  guint edge_constraints;
+  guint constraints;
 
-  edge_constraints = priv->edge_constraints;
+  constraints = priv->edge_constraints;
 
-  if (!priv->edge_constraints)
+  if (!constraints)
     {
       gtk_widget_remove_css_class (widget, "tiled-top");
       gtk_widget_remove_css_class (widget, "tiled-right");
       gtk_widget_remove_css_class (widget, "tiled-bottom");
       gtk_widget_remove_css_class (widget, "tiled-left");
 
-      if (priv->tiled)
-        gtk_widget_add_css_class (widget, "tiled");
-      else
-        gtk_widget_remove_css_class (widget, "tiled");
+      add_or_remove_class (widget, priv->tiled, "tiled");
     }
   else
     {
       gtk_widget_remove_css_class (widget, "tiled");
-
-      if (edge_constraints & GDK_TOPLEVEL_STATE_TOP_TILED)
-        gtk_widget_add_css_class (widget, "tiled-top");
-      else
-        gtk_widget_remove_css_class (widget, "tiled-top");
-
-      if (edge_constraints & GDK_TOPLEVEL_STATE_RIGHT_TILED)
-        gtk_widget_add_css_class (widget, "tiled-right");
-      else
-        gtk_widget_remove_css_class (widget, "tiled-right");
-
-      if (edge_constraints & GDK_TOPLEVEL_STATE_BOTTOM_TILED)
-        gtk_widget_add_css_class (widget, "tiled-bottom");
-      else
-        gtk_widget_remove_css_class (widget, "tiled-bottom");
-
-      if (edge_constraints & GDK_TOPLEVEL_STATE_LEFT_TILED)
-        gtk_widget_add_css_class (widget, "tiled-left");
-      else
-        gtk_widget_remove_css_class (widget, "tiled-left");
+      add_or_remove_class (widget, constraints & GDK_TOPLEVEL_STATE_TOP_TILED, "tiled-top");
+      add_or_remove_class (widget, constraints & GDK_TOPLEVEL_STATE_RIGHT_TILED, "tiled-right");
+      add_or_remove_class (widget, constraints & GDK_TOPLEVEL_STATE_BOTTOM_TILED, "tiled-bottom");
+      add_or_remove_class (widget, constraints & GDK_TOPLEVEL_STATE_LEFT_TILED, "tiled-left");
+      add_or_remove_class (widget, constraints & GDK_TOPLEVEL_STATE_TOP_RESIZABLE, "resizable-top");
+      add_or_remove_class (widget, constraints & GDK_TOPLEVEL_STATE_RIGHT_RESIZABLE, "resizable-right");
+      add_or_remove_class (widget, constraints & GDK_TOPLEVEL_STATE_BOTTOM_RESIZABLE, "resizable-bottom");
+      add_or_remove_class (widget, constraints & GDK_TOPLEVEL_STATE_LEFT_RESIZABLE, "resizable-left");
     }
 
-  if (priv->maximized)
-    gtk_widget_add_css_class (widget, "maximized");
-  else
-    gtk_widget_remove_css_class (widget, "maximized");
-
-  if (priv->fullscreen)
-    gtk_widget_add_css_class (widget, "fullscreen");
-  else
-    gtk_widget_remove_css_class (widget, "fullscreen");
+  add_or_remove_class (widget, priv->maximized, "maximized");
+  add_or_remove_class (widget, priv->fullscreen, "fullscreen");
 }
 
 /* _gtk_window_set_allocation:
@@ -5354,7 +5454,8 @@ G_GNUC_END_IGNORE_DEPRECATIONS
  * [method@Gtk.Window.present] or any equivalent function generating
  * a window map event.
  *
- * This function is only useful on X11, not with other GTK targets.
+ * This function is only useful on Wayland or X11, not with other GDK
+ * backends.
  */
 void
 gtk_window_set_startup_id (GtkWindow   *window,
@@ -7125,4 +7226,52 @@ gtk_window_get_handle_menubar_accel (GtkWindow *window)
   phase = gtk_event_controller_get_propagation_phase (priv->menubar_controller);
 
   return phase == GTK_PHASE_CAPTURE;
+}
+
+/**
+ * gtk_window_get_gravity:
+ * @window: a window
+ *
+ * Returns the gravity that is used when changing the window size programmatically.
+ *
+ * Returns: the gravity
+ *
+ * Since: 4.20
+ */
+GtkWindowGravity
+gtk_window_get_gravity (GtkWindow *window)
+{
+  GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
+
+  g_return_val_if_fail (GTK_IS_WINDOW (window), GTK_WINDOW_GRAVITY_TOP_START);
+
+  return priv->gravity;
+}
+
+/**
+ * gtk_window_set_gravity:
+ * @window: a window
+ * @gravity: the new gravity
+ *
+ * Sets the gravity that is used when changing the window size programmatically.
+ *
+ * Since: 4.20
+ */
+void
+gtk_window_set_gravity (GtkWindow        *window,
+                        GtkWindowGravity  gravity)
+{
+  GtkWindowPrivate *priv = gtk_window_get_instance_private (window);
+
+  g_return_if_fail (GTK_IS_WINDOW (window));
+
+  if (priv->gravity == gravity)
+    return;
+
+  priv->gravity = gravity;
+
+  if (priv->surface)
+    gdk_toplevel_set_gravity (GDK_TOPLEVEL (priv->surface), get_gdk_gravity (window));
+
+  g_object_notify_by_pspec (G_OBJECT (window), window_props[PROP_GRAVITY]);
 }

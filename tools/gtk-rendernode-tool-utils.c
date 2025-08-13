@@ -81,6 +81,7 @@ load_node_file (const char *filename)
 static GskRenderer *
 get_renderer_for_name (const char *renderer_name)
 {
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   if (renderer_name == NULL)
     return NULL;
 #ifdef GDK_WINDOWING_BROADWAY
@@ -97,6 +98,25 @@ get_renderer_for_name (const char *renderer_name)
 #endif
   else
     return NULL;
+G_GNUC_END_IGNORE_DEPRECATIONS
+}
+
+static const char **
+get_renderer_names (void)
+{
+  static const char *names[] = {
+#ifdef GDK_WINDOWING_BROADWAY
+    "broadway",
+#endif
+    "cairo",
+    "gl",
+#ifdef GDK_RENDERING_VULKAN
+    "vulkan",
+#endif
+    NULL
+  };
+
+  return names;
 }
 
 GskRenderer *
@@ -119,8 +139,14 @@ create_renderer (const char *name, GError **error)
 
   if (renderer == NULL)
     {
+      char **names;
+      char *suggestion;
+
+      names = (char **) get_renderer_names ();
+      suggestion = g_strjoinv ("\n  ", names);
+
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "No renderer named \"%s\"", name);
+                   "No renderer named \"%s\"\nPossible values:\n  %s", name, suggestion);
       return NULL;
     }
 

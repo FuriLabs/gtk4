@@ -31,78 +31,47 @@
 
 #include "path-view.h"
 
+
 static void
-show_path_fill (GskPath       *path,
-                GskFillRule    fill_rule,
-                const GdkRGBA *fg_color,
-                const GdkRGBA *bg_color,
-                gboolean       show_points,
-                gboolean       show_controls,
-                const GdkRGBA *point_color)
+show_path (GskPath       *path1,
+           GskPath       *path2,
+           gboolean       do_fill,
+           GskFillRule    fill_rule,
+           GskStroke     *stroke,
+           const GdkRGBA *fg_color,
+           const GdkRGBA *bg_color,
+           const GdkRGBA *point_color,
+           const GdkRGBA *intersection_color,
+           gboolean       show_points,
+           gboolean       show_controls,
+           gboolean       show_intersections,
+           double         zoom)
 {
   GtkWidget *window, *sw, *child;
 
   window = gtk_window_new ();
   gtk_window_set_title (GTK_WINDOW (window), _("Path Preview"));
 
-//  gtk_window_set_default_size (GTK_WINDOW (window), 700, 500);
-
   sw = gtk_scrolled_window_new ();
   gtk_scrolled_window_set_propagate_natural_width (GTK_SCROLLED_WINDOW (sw), TRUE);
   gtk_scrolled_window_set_propagate_natural_height (GTK_SCROLLED_WINDOW (sw), TRUE);
   gtk_window_set_child (GTK_WINDOW (window), sw);
 
-  child = path_view_new (path);
+  child = g_object_new (PATH_TYPE_VIEW, NULL);
   g_object_set (child,
-                "do-fill", TRUE,
+                "path1", path1,
+                "path2", path2,
+                "do-fill", do_fill,
                 "fill-rule", fill_rule,
-                "fg-color", fg_color,
-                "bg-color", bg_color,
-                "show-points", show_points,
-                "show-controls", show_controls,
-                "point-color", point_color,
-                NULL);
-
-  gtk_widget_set_hexpand (child, TRUE);
-  gtk_widget_set_vexpand (child, TRUE);
-  gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (sw), child);
-
-  gtk_window_present (GTK_WINDOW (window));
-
-  while (g_list_model_get_n_items (gtk_window_get_toplevels ()) > 0)
-    g_main_context_iteration (NULL, TRUE);
-}
-
-static void
-show_path_stroke (GskPath       *path,
-                  GskStroke     *stroke,
-                  const GdkRGBA *fg_color,
-                  const GdkRGBA *bg_color,
-                  gboolean       show_points,
-                  gboolean       show_controls,
-                  const GdkRGBA *point_color)
-{
-  GtkWidget *window, *sw, *child;
-
-  window = gtk_window_new ();
-  gtk_window_set_title (GTK_WINDOW (window), _("Path Preview"));
-
-//  gtk_window_set_default_size (GTK_WINDOW (window), 700, 500);
-
-  sw = gtk_scrolled_window_new ();
-  gtk_scrolled_window_set_propagate_natural_width (GTK_SCROLLED_WINDOW (sw), TRUE);
-  gtk_scrolled_window_set_propagate_natural_height (GTK_SCROLLED_WINDOW (sw), TRUE);
-  gtk_window_set_child (GTK_WINDOW (window), sw);
-
-  child = path_view_new (path);
-  g_object_set (child,
-                "do-fill", FALSE,
                 "stroke", stroke,
                 "fg-color", fg_color,
                 "bg-color", bg_color,
+                "point-color", point_color,
+                "intersection-color", intersection_color,
                 "show-points", show_points,
                 "show-controls", show_controls,
-                "point-color", point_color,
+                "show-intersections", show_intersections,
+                "zoom", zoom,
                 NULL);
 
   gtk_widget_set_hexpand (child, TRUE);
@@ -120,13 +89,16 @@ do_show (int          *argc,
          const char ***argv)
 {
   GError *error = NULL;
-  gboolean do_stroke = FALSE;
+  gboolean do_fill = TRUE;
   gboolean show_points = FALSE;
   gboolean show_controls = FALSE;
+  gboolean show_intersections = FALSE;
   const char *fill = "winding";
   const char *fg_color = "black";
   const char *bg_color = "white";
   const char *point_color = "red";
+  const char *intersection_color = "lightgreen";
+  double zoom = 1;
   double line_width = 1;
   const char *cap = "butt";
   const char *join = "miter";
@@ -137,14 +109,17 @@ do_show (int          *argc,
   GOptionContext *context;
   GOptionGroup *options;
   const GOptionEntry entries[] = {
-    { "fill", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &do_stroke, N_("Fill the path (the default)"), NULL },
-    { "stroke", 0, 0, G_OPTION_ARG_NONE, &do_stroke, N_("Stroke the path"), NULL },
+    { "fill", 0, 0, G_OPTION_ARG_NONE, &do_fill, N_("Fill the path (the default)"), NULL },
+    { "stroke", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &do_fill, N_("Stroke the path"), NULL },
     { "points", 0, 0, G_OPTION_ARG_NONE, &show_points, N_("Show path points"), NULL },
     { "controls", 0, 0, G_OPTION_ARG_NONE, &show_controls, N_("Show control points"), NULL },
+    { "intersections", 0, 0, G_OPTION_ARG_NONE, &show_intersections, N_("Show intersections"), NULL },
     { "fg-color", 0, 0, G_OPTION_ARG_STRING, &fg_color, N_("Foreground color"), N_("COLOR") },
     { "bg-color", 0, 0, G_OPTION_ARG_STRING, &bg_color, N_("Background color"), N_("COLOR") },
     { "point-color", 0, 0, G_OPTION_ARG_STRING, &point_color, N_("Point color"), N_("COLOR") },
-    { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_STRING_ARRAY, &args, NULL, N_("PATH") },
+    { "intersection-color", 0, 0, G_OPTION_ARG_STRING, &intersection_color, N_("Intersection color"), N_("COLOR") },
+    { "zoom", 0, 0, G_OPTION_ARG_DOUBLE, &zoom, N_("Zoom level (number)"), N_("VALUE") },
+    { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_STRING_ARRAY, &args, NULL, N_("PATH…") },
     { NULL, }
   };
   const GOptionEntry fill_entries[] = {
@@ -154,15 +129,16 @@ do_show (int          *argc,
   const GOptionEntry stroke_entries[] = {
     { "line-width", 0, 0, G_OPTION_ARG_DOUBLE, &line_width, N_("Line width (number)"), N_("VALUE") },
     { "line-cap", 0, 0, G_OPTION_ARG_STRING, &cap, N_("Line cap (butt, round, square)"), N_("VALUE") },
-    { "line-join", 0, 0, G_OPTION_ARG_STRING, &join, N_("Line join (miter, miter-clip, round, bevel, arcs)"), N_("VALUE") },
+    { "line-join", 0, 0, G_OPTION_ARG_STRING, &join, N_("Line join (miter, miter-clip, round, bevel)"), N_("VALUE") },
     { "miter-limit", 0, 0, G_OPTION_ARG_DOUBLE, &miter_limit, N_("Miter limit (number)"), N_("VALUE") },
     { "dashes", 0, 0, G_OPTION_ARG_STRING, &dashes, N_("Dash pattern (comma-separated numbers)"), N_("VALUE") },
     { "dash-offset", 0, 0, G_OPTION_ARG_DOUBLE, &dash_offset, N_("Dash offset (number)"), N_("VALUE") },
     { NULL, }
   };
-  GskPath *path;
+  GskPath *path1;
+  GskPath *path2;
   GskFillRule fill_rule;
-  GdkRGBA fg, bg, pc;
+  GdkRGBA fg, bg, pc, ic;
   GskLineCap line_cap;
   GskLineJoin line_join;
   GskStroke *stroke;
@@ -210,18 +186,23 @@ do_show (int          *argc,
       exit (1);
     }
 
-  if (g_strv_length (args) > 1)
+  if (g_strv_length (args) > 2)
     {
-      g_printerr ("%s\n", _("Can only show a single path"));
+      g_printerr ("%s\n", _("Can only show one or two paths"));
       exit (1);
     }
 
-  path = get_path (args[0]);
+  path1 = get_path (args[0]);
+  if (g_strv_length (args) > 1)
+    path2 = get_path (args[1]);
+  else
+    path2 = NULL;
 
   fill_rule = get_enum_value (GSK_TYPE_FILL_RULE, _("fill rule"), fill);
   get_color (&fg, fg_color);
   get_color (&bg, bg_color);
   get_color (&pc, point_color);
+  get_color (&ic, intersection_color);
 
   line_cap = get_enum_value (GSK_TYPE_LINE_CAP, _("line cap"), cap);
   line_join = get_enum_value (GSK_TYPE_LINE_JOIN, _("line join"), join);
@@ -233,12 +214,19 @@ do_show (int          *argc,
   gsk_stroke_set_dash_offset (stroke, dash_offset);
   _gsk_stroke_set_dashes (stroke, dashes);
 
-  if (do_stroke)
-    show_path_stroke (path, stroke, &fg, &bg, show_points, show_controls, &pc);
-  else
-    show_path_fill (path, fill_rule, &fg, &bg, show_points, show_controls, &pc);
+  show_path (path1, path2,
+             do_fill,
+             fill_rule,
+             stroke,
+             &fg, &bg, &pc, &ic,
+             show_points,
+             show_controls,
+             show_intersections,
+             zoom);
 
-  gsk_path_unref (path);
+  g_clear_pointer (&path1, gsk_path_unref);
+  g_clear_pointer (&path2, gsk_path_unref);
+  gsk_stroke_free (stroke);
 
   g_strfreev (args);
 }

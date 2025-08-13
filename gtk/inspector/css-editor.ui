@@ -35,22 +35,78 @@
         <child>
           <object class="GtkToggleButton" id="disable_button">
             <property name="tooltip-text" translatable="yes">Disable this custom CSS</property>
-            <property name="icon-name">media-playback-pause-symbolic</property>
+            <property name="child">
+              <object class="GtkImage">
+                <property name="paintable">
+                  <object class="GtkIconPaintable">
+                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/actions/media-playback-pause-symbolic.svg</property>
+                  </object>
+                </property>
+              </object>
+            </property>
             <signal name="toggled" handler="disable_toggled"/>
           </object>
         </child>
         <child>
           <object class="GtkButton" id="save_button">
             <property name="tooltip-text" translatable="yes">Save the current CSS</property>
-            <property name="icon-name">document-save-symbolic</property>
+            <property name="child">
+              <object class="GtkImage">
+                <property name="paintable">
+                  <object class="GtkIconPaintable">
+                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/actions/document-save-symbolic.svg</property>
+                  </object>
+                </property>
+              </object>
+            </property>
             <signal name="clicked" handler="save_clicked"/>
           </object>
         </child>
         <child>
           <object class="GtkToggleButton" id="deprections_button">
             <property name="tooltip-text" translatable="yes">Show deprecations</property>
-            <property name="icon-name">dialog-information-symbolic</property>
+            <property name="child">
+              <object class="GtkImage">
+                <property name="paintable">
+                  <object class="GtkIconPaintable">
+                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/status/dialog-information-symbolic.svg</property>
+                  </object>
+                </property>
+              </object>
+            </property>
             <signal name="toggled" handler="toggle_deprecations"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkDropDown" id="color_scheme">
+            <signal name="notify::selected" handler="color_scheme_changed"/>
+            <property name="tooltip-text">Color scheme to use for this CSS</property>
+            <property name="model">
+              <object class="GtkStringList">
+                <items>
+                  <item>System colors</item>
+                  <item>Dark colors</item>
+                  <item>Light colors</item>
+                </items>
+              </object>
+            </property>
+            <property name="selected">1</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkDropDown" id="contrast">
+            <signal name="notify::selected" handler="color_scheme_changed"/>
+            <property name="tooltip-text">Contrast level to use for this CSS</property>
+            <property name="model">
+              <object class="GtkStringList">
+                <items>
+                  <item>System contrast</item>
+                  <item>More contrast</item>
+                  <item>Less contrast</item>
+                </items>
+              </object>
+            </property>
+            <property name="selected">1</property>
           </object>
         </child>
       </object>

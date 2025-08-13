@@ -106,6 +106,8 @@ const GdkDebugKey gdk_gl_feature_keys[] = {
   { "debug", GDK_GL_FEATURE_DEBUG, "GL_KHR_debug" },
   { "base-instance", GDK_GL_FEATURE_BASE_INSTANCE, "GL_ARB_base_instance" },
   { "buffer-storage", GDK_GL_FEATURE_BUFFER_STORAGE, "GL_EXT_buffer_storage" },
+  { "external-objects", GDK_GL_FEATURE_EXTERNAL_OBJECTS, "GL_EXT_memory_object and GL_EXT_semaphore"},
+  { "external-objects-win32", GDK_GL_FEATURE_EXTERNAL_OBJECTS_WIN32, "GL_EXT_memory_object_win32 and GL_EXT_semaphore_win32" },
 };
 
 typedef struct _GdkGLContextPrivate GdkGLContextPrivate;
@@ -132,6 +134,9 @@ struct _GdkGLContextPrivate
   int max_debug_label_length;
 
 #ifdef HAVE_EGL
+  gpointer egl_native_window;
+  EGLSurface egl_surface;
+  GdkMemoryDepth egl_surface_depth;
   EGLContext egl_context;
   EGLBoolean (*eglSwapBuffersWithDamage) (EGLDisplay, EGLSurface, const EGLint *, EGLint);
 #endif
@@ -480,12 +485,9 @@ gdk_gl_context_real_get_damage (GdkGLContext *context)
 
   if (priv->egl_context && display->have_egl_buffer_age)
     {
-      GdkSurface *surface = gdk_draw_context_get_surface (draw_context);
-      EGLSurface egl_surface;
       int buffer_age = 0;
-      egl_surface = gdk_surface_get_egl_surface (surface);
       gdk_gl_context_make_current (context);
-      eglQuerySurface (gdk_display_get_egl_display (display), egl_surface,
+      eglQuerySurface (gdk_display_get_egl_display (display), priv->egl_surface,
                        EGL_BUFFER_AGE_EXT, &buffer_age);
 
       if (buffer_age > 0 && buffer_age <= GDK_GL_MAX_TRACKED_BUFFERS)
@@ -577,7 +579,7 @@ gdk_gl_context_real_make_current (GdkGLContext *context,
     return FALSE;
 
   if (!surfaceless)
-    egl_surface = gdk_surface_get_egl_surface (gdk_gl_context_get_surface (context));
+    egl_surface = priv->egl_surface;
   else
     egl_surface = EGL_NO_SURFACE;
 
@@ -590,15 +592,121 @@ gdk_gl_context_real_make_current (GdkGLContext *context,
 #endif
 }
 
+#ifdef HAVE_EGL
+void
+gdk_gl_context_set_egl_native_window (GdkGLContext *self,
+                                      gpointer      native_window)
+{
+  GdkGLContextPrivate *priv = gdk_gl_context_get_instance_private (self);
+  GdkGLContext *current = NULL;
+
+  /* This checks that all EGL platforms we support conform to the same struct sizes.
+   * When this ever fails, there will be some fun times happening for whoever tries
+   * this weird EGL backend... */
+  G_STATIC_ASSERT (sizeof (gpointer) == sizeof (EGLNativeWindowType));
+
+  if (priv->egl_surface != NULL)
+    {
+      GdkDrawContext *draw_context = GDK_DRAW_CONTEXT (self);
+      GdkDisplay *display = gdk_draw_context_get_display (draw_context);
+
+      current = gdk_gl_context_clear_current_if_surface (gdk_draw_context_get_surface (draw_context));
+
+      eglDestroySurface (gdk_display_get_egl_display (display), priv->egl_surface);
+      priv->egl_surface = NULL;
+    }
+
+  priv->egl_native_window = native_window;
+
+  if (current)
+    {
+      gdk_gl_context_make_current (current);
+      g_object_unref (current);
+    }
+}
+
+static void
+gdk_gl_context_ensure_egl_surface (GdkGLContext   *self,
+                                   GdkMemoryDepth  depth)
+{
+  GdkGLContextPrivate *priv = gdk_gl_context_get_instance_private (self);
+  GdkDrawContext *draw_context = GDK_DRAW_CONTEXT (self);
+  GdkSurface *surface = gdk_draw_context_get_surface (draw_context);
+  GdkDisplay *display = gdk_draw_context_get_display (draw_context);
+
+  g_return_if_fail (priv->egl_native_window != NULL);
+
+  if (depth == GDK_MEMORY_NONE)
+    {
+      if (priv->egl_surface_depth == GDK_MEMORY_NONE)
+        depth = GDK_MEMORY_U8;
+      else
+        depth = priv->egl_surface_depth;
+    }
+
+  if (priv->egl_surface == NULL ||
+      (priv->egl_surface != NULL &&
+       gdk_display_get_egl_config (display, priv->egl_surface_depth) != gdk_display_get_egl_config (display, depth)))
+    {
+      GdkGLContext *cleared;
+      EGLint attribs[4];
+      EGLDisplay egl_display;
+      EGLConfig egl_config;
+      int i;
+
+      cleared = gdk_gl_context_clear_current_if_surface (surface);
+      if (priv->egl_surface != NULL)
+        eglDestroySurface (gdk_display_get_egl_display (display), priv->egl_surface);
+
+      egl_display = gdk_display_get_egl_display (display),
+      egl_config = gdk_display_get_egl_config (display, depth),
+
+      i = 0;
+      if (depth == GDK_MEMORY_U8_SRGB && display->have_egl_gl_colorspace)
+        {
+          attribs[i++] = EGL_GL_COLORSPACE_KHR;
+          attribs[i++] = EGL_GL_COLORSPACE_SRGB_KHR;
+          surface->is_srgb = TRUE;
+        }
+      g_assert (i < G_N_ELEMENTS (attribs));
+      attribs[i++] = EGL_NONE;
+
+      priv->egl_surface = eglCreateWindowSurface (egl_display,
+                                                  egl_config,
+                                                  (EGLNativeWindowType) priv->egl_native_window,
+                                                  attribs);
+      if (priv->egl_surface == EGL_NO_SURFACE)
+        {
+          /* just assume the error is no srgb support and try again without */
+          surface->is_srgb = FALSE;
+          priv->egl_surface = eglCreateWindowSurface (egl_display,
+                                                      egl_config,
+                                                      (EGLNativeWindowType) priv->egl_native_window,
+                                                      NULL);
+        }
+      priv->egl_surface_depth = depth;
+
+      if (cleared)
+        {
+          gdk_gl_context_make_current (cleared);
+          g_object_unref (cleared);
+        }
+    }
+}
+#endif
+
 static void
 gdk_gl_context_real_begin_frame (GdkDrawContext  *draw_context,
+                                 gpointer         context_data,
                                  GdkMemoryDepth   depth,
                                  cairo_region_t  *region,
                                  GdkColorState  **out_color_state,
                                  GdkMemoryDepth  *out_depth)
 {
   GdkGLContext *context = GDK_GL_CONTEXT (draw_context);
-  G_GNUC_UNUSED GdkGLContextPrivate *priv = gdk_gl_context_get_instance_private (context);
+#ifdef HAVE_EGL
+  GdkGLContextPrivate *priv = gdk_gl_context_get_instance_private (context);
+#endif
   GdkSurface *surface = gdk_draw_context_get_surface (draw_context);
   GdkColorState *color_state;
   cairo_region_t *damage;
@@ -613,9 +721,9 @@ gdk_gl_context_real_begin_frame (GdkDrawContext  *draw_context,
 
 #ifdef HAVE_EGL
   if (priv->egl_context)
-    *out_depth = gdk_surface_ensure_egl_surface (surface, depth);
-  else
-    *out_depth = GDK_MEMORY_U8;
+    gdk_gl_context_ensure_egl_surface (context, depth);
+  
+  *out_depth = priv->egl_surface_depth;
 
   if (*out_depth == GDK_MEMORY_U8_SRGB)
     *out_color_state = gdk_color_state_get_no_srgb_tf (color_state);
@@ -658,6 +766,7 @@ gdk_gl_context_real_begin_frame (GdkDrawContext  *draw_context,
 
 static void
 gdk_gl_context_real_end_frame (GdkDrawContext *draw_context,
+                               gpointer        context_data,
                                cairo_region_t *painted)
 {
 #ifdef HAVE_EGL
@@ -665,25 +774,27 @@ gdk_gl_context_real_end_frame (GdkDrawContext *draw_context,
   GdkGLContextPrivate *priv = gdk_gl_context_get_instance_private (context);
   GdkSurface *surface = gdk_gl_context_get_surface (context);
   GdkDisplay *display = gdk_surface_get_display (surface);
-  EGLSurface egl_surface;
   G_GNUC_UNUSED gint64 begin_time = GDK_PROFILER_CURRENT_TIME;
+  guint buffer_width, buffer_height;
 
   if (priv->egl_context == NULL)
     return;
 
   gdk_gl_context_make_current (context);
 
-  egl_surface = gdk_surface_get_egl_surface (surface);
+  gdk_draw_context_get_buffer_size (draw_context, &buffer_width, &buffer_height);
 
-  if (priv->eglSwapBuffersWithDamage)
+  if (priv->eglSwapBuffersWithDamage &&
+      cairo_region_contains_rectangle (painted,
+                                       &(cairo_rectangle_int_t) {
+                                           0, 0,
+                                           buffer_width, buffer_height
+                                       }) == CAIRO_REGION_OVERLAP_IN)
     {
       EGLint stack_rects[4 * 4]; /* 4 rects */
       EGLint *heap_rects = NULL;
       int i, j, n_rects = cairo_region_num_rectangles (painted);
-      guint buffer_width, buffer_height;
       EGLint *rects;
-
-      gdk_draw_context_get_buffer_size (draw_context, &buffer_width, &buffer_height);
 
       if (n_rects < G_N_ELEMENTS (stack_rects) / 4)
         rects = (EGLint *)&stack_rects;
@@ -700,14 +811,29 @@ gdk_gl_context_real_end_frame (GdkDrawContext *draw_context,
           rects[j++] = rect.width;
           rects[j++] = rect.height;
         }
-      priv->eglSwapBuffersWithDamage (gdk_display_get_egl_display (display), egl_surface, rects, n_rects);
+      priv->eglSwapBuffersWithDamage (gdk_display_get_egl_display (display), priv->egl_surface, rects, n_rects);
       g_free (heap_rects);
     }
   else
-    eglSwapBuffers (gdk_display_get_egl_display (display), egl_surface);
+    eglSwapBuffers (gdk_display_get_egl_display (display), priv->egl_surface);
 #endif
 
   gdk_profiler_add_mark (begin_time, GDK_PROFILER_CURRENT_TIME - begin_time, "EGL swap buffers", NULL);
+}
+
+static void
+gdk_gl_context_surface_detach (GdkDrawContext *draw_context)
+{
+#ifdef HAVE_EGL
+  GdkGLContext *self = GDK_GL_CONTEXT (draw_context);
+  GdkGLContextPrivate *priv = gdk_gl_context_get_instance_private (self);
+
+  gdk_gl_context_set_egl_native_window (self, NULL);
+  g_assert (priv->egl_native_window == NULL);
+  g_assert (priv->egl_surface == NULL);
+
+  priv->egl_surface_depth = GDK_MEMORY_NONE;
+#endif
 }
 
 static void
@@ -740,6 +866,7 @@ gdk_gl_context_class_init (GdkGLContextClass *klass)
 
   draw_context_class->begin_frame = gdk_gl_context_real_begin_frame;
   draw_context_class->end_frame = gdk_gl_context_real_end_frame;
+  draw_context_class->surface_detach = gdk_gl_context_surface_detach;
   draw_context_class->surface_resized = gdk_gl_context_surface_resized;
 
   /**
@@ -1678,6 +1805,16 @@ gdk_gl_context_check_features (GdkGLContext *context)
       epoxy_has_gl_extension ("GL_ARB_buffer_storage"))
     features |= GDK_GL_FEATURE_BUFFER_STORAGE;
 
+  if (epoxy_has_gl_extension ("GL_EXT_memory_object") &&
+      epoxy_has_gl_extension ("GL_EXT_semaphore"))
+    {
+      features |= GDK_GL_FEATURE_EXTERNAL_OBJECTS;
+
+      if (epoxy_has_gl_extension ("GL_EXT_memory_object_win32") &&
+          epoxy_has_gl_extension ("GL_EXT_semaphore_win32"))
+        features |= GDK_GL_FEATURE_EXTERNAL_OBJECTS_WIN32;
+    }
+
   return features;
 }
 
@@ -1719,6 +1856,10 @@ gdk_gl_context_check_extensions (GdkGLContext *context)
       "certain OpenGL extensions.\n",
       gdk_gl_feature_keys,
       G_N_ELEMENTS (gdk_gl_feature_keys));
+
+  /* handle feature dependencies */
+  if (disabled_features & GDK_GL_FEATURE_EXTERNAL_OBJECTS)
+    disabled_features |= GDK_GL_FEATURE_EXTERNAL_OBJECTS_WIN32;
 
   priv->features = supported_features & ~disabled_features;
 
@@ -2154,70 +2295,6 @@ gdk_gl_backend_use (GdkGLBackend backend_type)
   g_assert (the_gl_backend_type == backend_type);
 }
 
-guint
-gdk_gl_context_import_dmabuf (GdkGLContext    *self,
-                              int              width,
-                              int              height,
-                              const GdkDmabuf *dmabuf,
-                              gboolean        *external)
-{
-#if defined(HAVE_EGL) && defined(HAVE_DMABUF)
-  GdkDisplay *display = gdk_gl_context_get_display (self);
-  EGLImage image;
-  guint texture_id;
-  int target;
-
-  gdk_dmabuf_egl_init (display);
-
-  if (gdk_dmabuf_formats_contains (display->egl_internal_formats, dmabuf->fourcc, dmabuf->modifier))
-    {
-      target = GL_TEXTURE_2D;
-    }
-  else
-    {
-      /* This is the opportunistic path.
-       * We hit it both for drivers that do not support modifiers as well as for dmabufs
-       * that the driver did not explicitly advertise. */
-      if (gdk_gl_context_get_use_es (self))
-        target = GL_TEXTURE_EXTERNAL_OES;
-      else
-        target = GL_TEXTURE_2D;
-    }
-
-  image = gdk_dmabuf_egl_create_image (display,
-                                       width,
-                                       height,
-                                       dmabuf);
-  if (image == EGL_NO_IMAGE)
-    {
-      GDK_DISPLAY_DEBUG (display, DMABUF,
-                         "Import of %dx%d %.4s:%#" G_GINT64_MODIFIER "x dmabuf failed",
-                         width, height,
-                         (char *) &dmabuf->fourcc, dmabuf->modifier);
-      return 0;
-    }
-
-  glGenTextures (1, &texture_id);
-  glBindTexture (target, texture_id);
-  glEGLImageTargetTexture2DOES (target, image);
-  glTexParameteri (target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri (target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-  eglDestroyImageKHR (gdk_display_get_egl_display (display), image);
-
-  GDK_DISPLAY_DEBUG (display, DMABUF,
-                     "Imported %dx%d %.4s:%#" G_GINT64_MODIFIER "x dmabuf as %s texture",
-                     width, height,
-                     (char *) &dmabuf->fourcc, dmabuf->modifier,
-                     target == GL_TEXTURE_EXTERNAL_OES ? "GL_TEXTURE_EXTERNAL_OES" : "GL_TEXTURE_2D");
-
-  *external = target == GL_TEXTURE_EXTERNAL_OES;
-  return texture_id;
-#else
-  return 0;
-#endif
-}
-
 gboolean
 gdk_gl_context_export_dmabuf (GdkGLContext *self,
                               unsigned int  texture_id,
@@ -2358,7 +2435,7 @@ gdk_gl_context_find_format (GdkGLContext    *self,
     {
       GLint q_internal_format, q_internal_srgb_format;
       GLenum q_format, q_type;
-      GLint q_swizzle[4];
+      GdkSwizzle q_swizzle;
 
       if (gdk_memory_format_alpha (format) != alpha)
         continue;
@@ -2366,13 +2443,15 @@ gdk_gl_context_find_format (GdkGLContext    *self,
       if (!(gdk_gl_context_get_format_flags (self, format) & GDK_GL_FORMAT_RENDERABLE))
         continue;
 
-      gdk_memory_format_gl_format (format,
-                                   gdk_gl_context_get_use_es (self),
-                                   &q_internal_format,
-                                   &q_internal_srgb_format,
-                                   &q_format,
-                                   &q_type,
-                                   q_swizzle);
+      if (!gdk_memory_format_gl_format (format,
+                                        0,
+                                        gdk_gl_context_get_use_es (self),
+                                        &q_internal_format,
+                                        &q_internal_srgb_format,
+                                        &q_format,
+                                        &q_type,
+                                        &q_swizzle))
+        continue;
 
       if (q_format != gl_format || q_type != gl_type)
         continue;
@@ -2385,52 +2464,60 @@ gdk_gl_context_find_format (GdkGLContext    *self,
 }
 
 void
-gdk_gl_context_download (GdkGLContext    *self,
-                         GLuint           tex_id,
-                         GdkMemoryFormat  tex_format,
-                         GdkColorState   *tex_color_state,
-                         guchar          *dest_data,
-                         gsize            dest_stride,
-                         GdkMemoryFormat  dest_format,
-                         GdkColorState   *dest_color_state,
-                         gsize            width,
-                         gsize            height)
+gdk_gl_context_download (GdkGLContext          *self,
+                         GLuint                 tex_id,
+                         GdkMemoryFormat        tex_format,
+                         GdkColorState         *tex_color_state,
+                         guchar                *dest_data,
+                         const GdkMemoryLayout *dest_layout,
+                         GdkColorState         *dest_color_state)
 {
   gsize expected_stride;
   GLint gl_internal_format, gl_internal_srgb_format;
   GLenum gl_format, gl_type;
-  GLint gl_swizzle[4];
+  GdkSwizzle gl_swizzle;
 
-  expected_stride = (width * gdk_memory_format_bytes_per_pixel (dest_format) + 3) & ~3;
+  g_assert (gdk_memory_format_get_n_planes (tex_format) == 1);
+
+  expected_stride = dest_layout->width / gdk_memory_format_get_plane_block_width (dest_layout->format, 0)
+                                       * gdk_memory_format_get_plane_block_bytes (dest_layout->format, 0);
+  expected_stride = (expected_stride + 3) & ~3;
 
   if (!gdk_gl_context_get_use_es (self) &&
       ((gdk_gl_context_get_format_flags (self, tex_format) & GDK_GL_FORMAT_USABLE) == GDK_GL_FORMAT_USABLE))
     {
-      gdk_memory_format_gl_format (tex_format,
-                                   gdk_gl_context_get_use_es (self),
-                                   &gl_internal_format, &gl_internal_srgb_format,
-                                   &gl_format, &gl_type, gl_swizzle);
-      if (dest_stride == expected_stride &&
-          dest_format == tex_format)
+      if (!gdk_memory_format_gl_format (tex_format,
+                                        0,
+                                        gdk_gl_context_get_use_es (self),
+                                        &gl_internal_format, &gl_internal_srgb_format,
+                                        &gl_format, &gl_type, &gl_swizzle))
+        {
+          g_assert_not_reached ();
+        }
+
+      glBindTexture (GL_TEXTURE_2D, tex_id);
+
+      if (dest_layout->planes[0].stride == expected_stride &&
+          dest_layout->format == tex_format)
         {
           glGetTexImage (GL_TEXTURE_2D,
                          0,
                          gl_format,
                          gl_type,
-                         dest_data);
+                         dest_data + gdk_memory_layout_offset (dest_layout, 0, 0, 0));
 
           gdk_memory_convert_color_state (dest_data,
-                                          dest_stride,
-                                          dest_format,
+                                          dest_layout,
                                           dest_color_state,
-                                          tex_color_state,
-                                          width,
-                                          height);
+                                          tex_color_state);
         }
       else
         {
-          gsize stride = width * gdk_memory_format_bytes_per_pixel (tex_format);
-          guchar *pixels = g_malloc_n (stride, height);
+          GdkMemoryLayout pixel_layout;
+          guchar *pixels;
+
+          gdk_memory_layout_init (&pixel_layout, tex_format, dest_layout->width, dest_layout->height, 1);
+          pixels = g_malloc (pixel_layout.size);
 
           glPixelStorei (GL_PACK_ALIGNMENT, 1);
           glGetTexImage (GL_TEXTURE_2D,
@@ -2440,15 +2527,11 @@ gdk_gl_context_download (GdkGLContext    *self,
                          pixels);
 
           gdk_memory_convert (dest_data,
-                              dest_stride,
-                              dest_format,
+                              dest_layout,
                               dest_color_state,
                               pixels,
-                              stride,
-                              tex_format,
-                              tex_color_state,
-                              width,
-                              height);
+                              &pixel_layout,
+                              tex_color_state);
 
           g_free (pixels);
         }
@@ -2478,10 +2561,14 @@ gdk_gl_context_download (GdkGLContext    *self,
               if (gdk_memory_format_alpha (tex_format) == GDK_MEMORY_ALPHA_STRAIGHT)
                 actual_format = gdk_memory_format_get_straight (actual_format);
 
-              gdk_memory_format_gl_format (actual_format,
-                                           gdk_gl_context_get_use_es (self),
-                                           &gl_internal_format, &gl_internal_srgb_format,
-                                           &gl_read_format, &gl_read_type, gl_swizzle);
+              if (!gdk_memory_format_gl_format (actual_format,
+                                                0,
+                                                gdk_gl_context_get_use_es (self),
+                                                &gl_internal_format, &gl_internal_srgb_format,
+                                                &gl_read_format, &gl_read_type, &gl_swizzle))
+                {
+                  g_assert_not_reached ();
+                }
             }
         }
       else
@@ -2490,38 +2577,41 @@ gdk_gl_context_download (GdkGLContext    *self,
           if (gdk_memory_format_alpha (tex_format) == GDK_MEMORY_ALPHA_STRAIGHT)
             actual_format = gdk_memory_format_get_straight (actual_format);
 
-          gdk_memory_format_gl_format (actual_format,
-                                       gdk_gl_context_get_use_es (self),
-                                       &gl_internal_format, &gl_internal_srgb_format,
-                                       &gl_read_format, &gl_read_type, gl_swizzle);
+          if (!gdk_memory_format_gl_format (actual_format,
+                                            0,
+                                            gdk_gl_context_get_use_es (self),
+                                            &gl_internal_format, &gl_internal_srgb_format,
+                                            &gl_read_format, &gl_read_type, &gl_swizzle))
+            {
+              g_assert_not_reached ();
+            }
         }
 
-      if (dest_format == actual_format &&
-          (dest_stride == expected_stride))
+      if (dest_layout->format == actual_format &&
+          (dest_layout->planes[0].stride == expected_stride))
         {
           glReadPixels (0, 0,
-                        width, height,
+                        dest_layout->width, dest_layout->height,
                         gl_read_format,
                         gl_read_type,
-                        dest_data);
+                        dest_data + gdk_memory_layout_offset (dest_layout, 0, 0, 0));
 
           gdk_memory_convert_color_state (dest_data,
-                                          dest_stride,
-                                          dest_format,
+                                          dest_layout,
                                           dest_color_state,
-                                          tex_color_state,
-                                          width,
-                                          height);
+                                          tex_color_state);
         }
       else
         {
-          gsize actual_bpp = gdk_memory_format_bytes_per_pixel (actual_format);
-          gsize stride = actual_bpp * width;
-          guchar *pixels = g_malloc_n (stride, height);
+          GdkMemoryLayout pixel_layout;
+          guchar *pixels;
+
+          gdk_memory_layout_init (&pixel_layout, actual_format, dest_layout->width, dest_layout->height, 1);
+          pixels = g_malloc (pixel_layout.size);
 
           glPixelStorei (GL_PACK_ALIGNMENT, 1);
           glReadPixels (0, 0,
-                        width, height,
+                        dest_layout->width, dest_layout->height,
                         gl_read_format,
                         gl_read_type,
                         pixels);
@@ -2535,9 +2625,12 @@ gdk_gl_context_download (GdkGLContext    *self,
                tex_format == GDK_MEMORY_G8 ||
                tex_format == GDK_MEMORY_A8))
             {
-              for (unsigned int y = 0; y < height; y++)
+              gsize stride = pixel_layout.planes[0].stride;
+              gsize actual_bpp = gdk_memory_format_get_plane_block_bytes (actual_format, 0);
+
+              for (unsigned int y = 0; y < pixel_layout.height; y++)
                 {
-                  for (unsigned int x = 0; x < width; x++)
+                  for (unsigned int x = 0; x < pixel_layout.width; x++)
                     {
                       guchar *data = &pixels[y * stride + x * actual_bpp];
                       if (tex_format == GDK_MEMORY_G8A8 ||
@@ -2571,9 +2664,12 @@ gdk_gl_context_download (GdkGLContext    *self,
                tex_format == GDK_MEMORY_G16 ||
                tex_format == GDK_MEMORY_A16))
             {
-              for (unsigned int y = 0; y < height; y++)
+              gsize stride = pixel_layout.planes[0].stride;
+              gsize actual_bpp = gdk_memory_format_get_plane_block_bytes (actual_format, 0);
+
+              for (unsigned int y = 0; y < pixel_layout.height; y++)
                 {
-                  for (unsigned int x = 0; x < width; x++)
+                  for (unsigned int x = 0; x < pixel_layout.width; x++)
                     {
                       guint16 *data = (guint16 *) &pixels[y * stride + x * actual_bpp];
                       if (tex_format == GDK_MEMORY_G16A16 ||
@@ -2601,15 +2697,11 @@ gdk_gl_context_download (GdkGLContext    *self,
             }
 
           gdk_memory_convert (dest_data,
-                              dest_stride,
-                              dest_format,
+                              dest_layout,
                               dest_color_state,
                               pixels,
-                              stride,
-                              actual_format,
-                              tex_color_state,
-                              width,
-                              height);
+                              &pixel_layout,
+                              tex_color_state);
 
           g_free (pixels);
         }

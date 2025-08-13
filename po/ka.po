@@ -5,14 +5,14 @@
 # Gia Shervashidze <giasher@telenet.ge>, 2005.
 # Vladimer Sichinava ვლადიმერ სიჭინავა <vsichi@gnome.org>, 2007, 2008.
 # Zura Davitashvili <zdavitashvili0@gmail.com>, 2020.
-# Ekaterine Papava <papava.e@gtu.ge>, 2023-2025
+# Ekaterine Papava <papava.e@gtu.ge>, 2023-2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gtk\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2025-04-07 14:57+0000\n"
-"PO-Revision-Date: 2025-04-08 04:25+0200\n"
+"POT-Creation-Date: 2025-07-07 00:07+0000\n"
+"PO-Revision-Date: 2025-07-07 15:55+0200\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <http://mail.gnome.org/mailman/listinfo/gnome-ge-"
 "list>\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.6\n"
 
 #: gdk/android/gdkandroidclipboard.c:174
 msgid "No compatible formats to transfer contents of content provider."
@@ -30,9 +30,9 @@ msgstr ""
 "აღმოჩენილი არაა."
 
 #: gdk/android/gdkandroidclipboard.c:623 gdk/macos/gdkmacospasteboard.c:161
-#: gdk/wayland/gdkclipboard-wayland.c:244 gdk/wayland/gdkdrop-wayland.c:205
-#: gdk/wayland/gdkprimary-wayland.c:343 gdk/win32/gdkdrop-win32.c:1014
-#: gdk/win32/gdkdrop-win32.c:1063 gdk/x11/gdkclipboard-x11.c:801
+#: gdk/wayland/gdkclipboard-wayland.c:245 gdk/wayland/gdkdrop-wayland.c:205
+#: gdk/wayland/gdkprimary-wayland.c:343 gdk/win32/gdkdrop-win32.c:1010
+#: gdk/win32/gdkdrop-win32.c:1059 gdk/x11/gdkclipboard-x11.c:801
 #: gdk/x11/gdkdrop-x11.c:237
 msgid "No compatible transfer format found"
 msgstr "გადატანის თავსებადი ფორმატი ნაპოვნი არაა"
@@ -54,25 +54,25 @@ msgstr "გაცვლის ცარიელი ბუფერიდან 
 msgid "No compatible formats to transfer clipboard contents."
 msgstr "გაცვლის ბაფერის შემცველობის შესანახად თავსებადი ფორმატი არ არსებობს."
 
-#: gdk/gdkcolorstate.c:921
-#, c-format
-msgid "cicp: Narrow range or YUV not supported"
-msgstr "cicp: ვიწრო შუალედი, ან YUV მხარდაჭერილი არაა"
-
-#: gdk/gdkcolorstate.c:931
+#: gdk/gdkcolorstate.c:1081
 #, c-format
 msgid "cicp: Unspecified parameters not supported"
 msgstr "cicp: მიუთითებელი პარამეტრები მხარდაჭერილი არაა"
 
-#: gdk/gdkcolorstate.c:977
+#: gdk/gdkcolorstate.c:1127
 #, c-format
 msgid "cicp: Transfer function %u not supported"
 msgstr "cicp: გადაცემის ფუნქცია %u მხარდაჭერილი არაა"
 
-#: gdk/gdkcolorstate.c:1007
+#: gdk/gdkcolorstate.c:1158
 #, c-format
 msgid "cicp: Color primaries %u not supported"
 msgstr "cicp: ფერის ძირითადები %u მხარდაჭერილი არაა"
+
+#: gdk/gdkcolorstate.c:1185
+#, c-format
+msgid "cicp: Matrix coefficients %u, %s not supported"
+msgstr "cicp: მატრიცის კოეფიციენტები %u და %s მხარდაჭერილი არაა"
 
 #: gdk/gdkcontentprovider.c:106 gdk/gdkcontentproviderimpl.c:313
 #: gdk/gdkcontentproviderimpl.c:532
@@ -85,57 +85,57 @@ msgstr "შემცველობის \"%s\"-ად გამოტანა
 msgid "Cannot provide contents as %s"
 msgstr "შემცველობის %s-ად გამოტანა შეუძლებელია"
 
-#: gdk/gdkdisplay.c:176 gdk/gdkglcontext.c:466
+#: gdk/gdkdisplay.c:176 gdk/gdkglcontext.c:471
 msgid "The current backend does not support OpenGL"
 msgstr "მიმდინარე უკანაბოლოს OpenGL-ის მხარდაჭერა არ გააჩნია"
 
-#: gdk/gdkdisplay.c:1364 gdk/gdkvulkancontext.c:1715
+#: gdk/gdkdisplay.c:1365 gdk/gdkvulkancontext.c:1754
 msgid "Vulkan support disabled via GDK_DISABLE"
 msgstr "Vulkan-ის მხარდაჭერა გამორთულია GDK_DISABLE-ით"
 
-#: gdk/gdkdisplay.c:1418
+#: gdk/gdkdisplay.c:1415
 msgid "OpenGL support disabled via GDK_DISABLE"
 msgstr "OpenGL-ის მხარდაჭერა გათიშულია GDK_DISABLE-ის მიერ"
 
-#: gdk/gdkdisplay.c:1732
+#: gdk/gdkdisplay.c:1729
 msgid "No EGL configuration available"
 msgstr "EGL-ის კონფიგურაცია მიუწვდომელია"
 
-#: gdk/gdkdisplay.c:1740
+#: gdk/gdkdisplay.c:1737
 msgid "Failed to get EGL configurations"
 msgstr "EGL-ის კონფიგურაციის მიღების შეცდოა"
 
-#: gdk/gdkdisplay.c:1770
+#: gdk/gdkdisplay.c:1767
 msgid "No EGL configuration with required features found"
 msgstr "მოთხოვნილი ფუნქციების მქონე EGL-ის კონფიგურაცია ნაპოვნი არაა"
 
-#: gdk/gdkdisplay.c:1777
+#: gdk/gdkdisplay.c:1774
 msgid "No perfect EGL configuration found"
 msgstr "EGL-ის მისაღები კონფიგურაცია ნაპოვნი არაა"
 
-#: gdk/gdkdisplay.c:1819
+#: gdk/gdkdisplay.c:1816
 #, c-format
 msgid "EGL implementation is missing extension %s"
 msgid_plural "EGL implementation is missing %2$d extensions: %1$s"
 msgstr[0] "EGL-ის განხორციელებას %2$d გაფართოება აკლია: %1$s"
 
-#: gdk/gdkdisplay.c:1868
+#: gdk/gdkdisplay.c:1865
 msgid "libEGL not available in this sandbox"
 msgstr "ამ იზოლირებულ გარემოში libEGL მიუწვდომელია"
 
-#: gdk/gdkdisplay.c:1869
+#: gdk/gdkdisplay.c:1866
 msgid "libEGL not available"
 msgstr "libEGL მიუწვდომელია"
 
-#: gdk/gdkdisplay.c:1879
+#: gdk/gdkdisplay.c:1876
 msgid "Failed to create EGL display"
 msgstr "EGL ეკრანის შექმნის შეცდომა"
 
-#: gdk/gdkdisplay.c:1888
+#: gdk/gdkdisplay.c:1885
 msgid "Could not initialize EGL display"
 msgstr "EGL ეკრანის ინიციალიზაციის შეცდომა"
 
-#: gdk/gdkdisplay.c:1898
+#: gdk/gdkdisplay.c:1895
 #, c-format
 msgid "EGL version %d.%d is too old. GTK requires %d.%d"
 msgstr "EGL-ის ვერსია %d.%d ძალიან ძველია. GTK-ს ესაჭიროება %d.%d"
@@ -148,25 +148,24 @@ msgstr "სხვა აპლიკაციებიდან DnD მხარ
 msgid "No compatible formats to transfer contents."
 msgstr "შემცველობის გადატანის თავსებადი ფორმატების გარეშე."
 
-#: gdk/gdkglcontext.c:426 gdk/x11/gdkglcontext-glx.c:653
+#: gdk/gdkglcontext.c:431 gdk/x11/gdkglcontext-glx.c:654
 msgid "No GL API allowed."
 msgstr "GL API არ არის დაშვებული."
 
-#: gdk/gdkglcontext.c:449 gdk/win32/gdkglcontext-win32-wgl.c:746
-#: gdk/win32/gdkglcontext-win32-wgl.c:889
-#: gdk/win32/gdkglcontext-win32-wgl.c:933 gdk/x11/gdkglcontext-glx.c:699
+#: gdk/gdkglcontext.c:454 gdk/win32/gdkglcontext-win32-wgl.c:661
+#: gdk/win32/gdkglcontext-win32-wgl.c:784 gdk/x11/gdkglcontext-glx.c:700
 msgid "Unable to create a GL context"
 msgstr "GL-ის კონტექსტის შექმნა შეუძლებელია"
 
-#: gdk/gdkglcontext.c:1312
+#: gdk/gdkglcontext.c:1439
 msgid "OpenGL ES API disabled via GDK_DISABLE"
 msgstr "OpenGL ES API გამორთულია GDK_DISABLE-ის საშუალებით"
 
-#: gdk/gdkglcontext.c:1324
+#: gdk/gdkglcontext.c:1451
 msgid "OpenGL API disabled via GDK_DISABLE"
 msgstr "OpenGL API გამორთულია GDK_DISABLE-ის საშუალებით"
 
-#: gdk/gdkglcontext.c:1335
+#: gdk/gdkglcontext.c:1462
 #, c-format
 msgid "Application does not support %s API"
 msgstr "აპლიკაციას %s-ის API-ის მხარდაჭერა არ გააცნია"
@@ -174,17 +173,17 @@ msgstr "აპლიკაციას %s-ის API-ის მხარდა�
 #. translators: This is about OpenGL backend names, like
 #. * "Trying to use X11 GLX, but EGL is already in use"
 #.
-#: gdk/gdkglcontext.c:2112
+#: gdk/gdkglcontext.c:2253
 #, c-format
 msgid "Trying to use %s, but %s is already in use"
 msgstr "%s გამოყენების მცდელობა, მაგრამ %s უკვე გამოიყენება"
 
-#: gdk/gdkglcontext.c:2123
+#: gdk/gdkglcontext.c:2264
 #, c-format
 msgid "Trying to use %s, but it is disabled via GDK_DISABLE"
 msgstr "%s გამოყენების მცდელობა, მაგრამ ის GDK_DISABLE-ითაა გათიშული"
 
-#: gdk/gdktexture.c:672
+#: gdk/gdktexture.c:679
 msgid "Unknown image format."
 msgstr "გამოსახულების ფაილის უცნობი ფორმატი."
 
@@ -264,12 +263,12 @@ msgctxt "keyboard label"
 msgid "Down"
 msgstr "ქვემოთ"
 
-#: gdk/keynamesprivate.h:6874 gtk/deprecated/gtkshortcutlabel.c:219
+#: gdk/keynamesprivate.h:6874 gtk/deprecated/gtkshortcutlabel.c:229
 msgctxt "keyboard label"
 msgid "Page_Up"
 msgstr "Page_Up"
 
-#: gdk/keynamesprivate.h:6875 gtk/deprecated/gtkshortcutlabel.c:222
+#: gdk/keynamesprivate.h:6875 gtk/deprecated/gtkshortcutlabel.c:232
 msgctxt "keyboard label"
 msgid "Page_Down"
 msgstr "Page_Down"
@@ -575,7 +574,7 @@ msgstr "JPEG გამოსახულების ფაილის კი�
 msgid "Unsupported JPEG colorspace (%d)"
 msgstr "მხარდაუჭერელი JPEG ფერთა სივრცე (%d)"
 
-#: gdk/loaders/gdkjpeg.c:194 gdk/loaders/gdkpng.c:468 gdk/loaders/gdktiff.c:472
+#: gdk/loaders/gdkjpeg.c:194 gdk/loaders/gdkpng.c:467 gdk/loaders/gdktiff.c:491
 #, c-format
 msgid "Not enough memory for image size %ux%u"
 msgstr "არასაკმარისი მეხსიერება გამოსახულების ჩასატვირთად %ux%u"
@@ -585,30 +584,30 @@ msgstr "არასაკმარისი მეხსიერება გ�
 msgid "Error reading png (%s)"
 msgstr "PNG-ის წაკითხვის შეცდომა (%s)"
 
-#: gdk/loaders/gdkpng.c:389
+#: gdk/loaders/gdkpng.c:390
 #, c-format
 msgid "Unsupported depth %u in png image"
 msgstr "PNG გამოსახულების მხარდაუჭერელი ფერთა სიღრმე %u"
 
-#: gdk/loaders/gdkpng.c:439
+#: gdk/loaders/gdkpng.c:440
 #, c-format
 msgid "Unsupported color type %u in png image"
 msgstr "PNG გამოსახულების ფერების მხარდაუჭერელი ტიპი %u"
 
-#: gdk/loaders/gdkpng.c:453
+#: gdk/loaders/gdkpng.c:452
 #, c-format
 msgid "Image stride too large for image size %ux%u"
 msgstr "გამოსახულებს ბიჯი მეტისმეტად დიდია გამოსახულების ზომისთვის %ux%u"
 
-#: gdk/loaders/gdktiff.c:358
+#: gdk/loaders/gdktiff.c:382
 msgid "Failed to load RGB data from TIFF file"
 msgstr "RGB მონაცემების ჩატვირთვა TIFF ფაილიდან ვერ შედგა"
 
-#: gdk/loaders/gdktiff.c:401
+#: gdk/loaders/gdktiff.c:424
 msgid "Could not load TIFF data"
 msgstr "TIFF-ის მონაცემების ჩატვირთვის შეცდომა"
 
-#: gdk/loaders/gdktiff.c:484
+#: gdk/loaders/gdktiff.c:505
 #, c-format
 msgid "Reading data failed at row %d"
 msgstr "მონაცემების კითხვის შეცდომა %d-ე ხაზზე"
@@ -688,20 +687,20 @@ msgstr ""
 "გაცვლის ბუფერის მონაცემების მიღება შეუძლებელია. მონაცემების დასამახსოვრებლად "
 "საჭირო %s ბაიტის გამოყოფა შეუძლებელია."
 
-#: gdk/win32/gdkclipdrop-win32.c:893
+#: gdk/win32/gdkclipdrop-win32.c:892
 #, c-format
 msgid "Cannot get clipboard data. OpenClipboard() timed out."
 msgstr ""
 "გაცვლის ბუფერის მონაცემების მიღება შეუძლებელია. OpenClipboard()-ის ვადა "
 "გავიდა."
 
-#: gdk/win32/gdkclipdrop-win32.c:903
+#: gdk/win32/gdkclipdrop-win32.c:902
 #, c-format
 msgid "Cannot get clipboard data. Clipboard ownership changed."
 msgstr ""
 "გაცვლის ბუფერის მონაცემების მიღება შეუძლებელია. ბუფერის მფლობელი შეიცვალა."
 
-#: gdk/win32/gdkclipdrop-win32.c:913
+#: gdk/win32/gdkclipdrop-win32.c:912
 #, c-format
 msgid ""
 "Cannot get clipboard data. Clipboard data changed before we could get it."
@@ -709,81 +708,86 @@ msgstr ""
 "გაცვლის ბუფერის მონაცემების მიღება შეუძლებელია. ბუფერის მონაცემები მანამდე "
 "შეიცვალა, სანამ ჩვენ მივიღებდით."
 
-#: gdk/win32/gdkclipdrop-win32.c:928
+#: gdk/win32/gdkclipdrop-win32.c:930
 #, c-format
 msgid "Cannot get clipboard data. OpenClipboard() failed: 0x%lx."
 msgstr ""
 "გაცვლის ბუფერის მონაცემების მიღება შეუძლებელია. OpenClipboard()-ის შეცდომა: "
 "0x%lx."
 
-#: gdk/win32/gdkclipdrop-win32.c:953
+#: gdk/win32/gdkclipdrop-win32.c:956
 #, c-format
 msgid "Cannot get clipboard data. No compatible transfer format found."
 msgstr ""
 "გაცვლის ბუფერის მონაცემების მიღება შეუძლებელია. გადატანის შესაბამისი ფორმატი "
 "ნაპოვნი არაა."
 
-#: gdk/win32/gdkclipdrop-win32.c:963
+#: gdk/win32/gdkclipdrop-win32.c:966
 #, c-format
 msgid "Cannot get clipboard data. GetClipboardData() failed: 0x%lx."
 msgstr ""
 "გაცვლის ბუფერის მონაცემების მიღება შეუძლებელია. GetClipboardData()-ის "
 "შეცდომა: 0x%lx."
 
-#: gdk/win32/gdkdrop-win32.c:945
+#: gdk/win32/gdkdrop-win32.c:941
 #, c-format
 msgid "Cannot get DnD data. GlobalLock(0x%p) failed: 0x%lx."
 msgstr ""
 "DnD-ის მონაცემების მიღების შეცდომა. GlobalLock(0x%p)-ის შეცდომა: 0x%lx."
 
-#: gdk/win32/gdkdrop-win32.c:954
+#: gdk/win32/gdkdrop-win32.c:950
 #, c-format
 msgid "Cannot get DnD data. GlobalSize(0x%p) failed: 0x%lx."
 msgstr ""
 "DnD-ის მონაცემების მიღების შეცდომა. GlobalSize(0x%p)-ის შეცდომა: 0x%lx."
 
-#: gdk/win32/gdkdrop-win32.c:965
+#: gdk/win32/gdkdrop-win32.c:961
 #, c-format
 msgid "Cannot get DnD data. Failed to allocate %s bytes to store the data."
 msgstr ""
 "DnD-ის მონაცემების მიღების შეცდომა. მონაცემების შესანახად საჭირო %s ბაიტის "
 "გამოყოფა შეუძლებელია."
 
-#: gdk/win32/gdkdrop-win32.c:1035
+#: gdk/win32/gdkdrop-win32.c:1031
 #, c-format
 msgid "GDK surface 0x%p is not registered as a drop target"
 msgstr "GDK-ის ზედაპირი 0x%p ვარდნის სამიზნედ რეგისტრირებული არაა"
 
-#: gdk/win32/gdkdrop-win32.c:1043
+#: gdk/win32/gdkdrop-win32.c:1039
 #, c-format
 msgid "Target context record 0x%p has no data object"
 msgstr "სამიზნე კონტექსტის ჩანაწერს 0x%p მონაცემების ობიექტი არ გააჩნია"
 
-#: gdk/win32/gdkdrop-win32.c:1083
+#: gdk/win32/gdkdrop-win32.c:1079
 #, c-format
 msgid "IDataObject_GetData (0x%x) failed, returning 0x%lx"
 msgstr "IDataObject_GetData (0x%x) -ის შეცდომა, დააბრუნა 0x%lx"
 
-#: gdk/win32/gdkdrop-win32.c:1122
+#: gdk/win32/gdkdrop-win32.c:1118
 #, c-format
 msgid "Failed to transmute DnD data W32 format 0x%x to %p (%s)"
 msgstr "DnD-ის W32 მონაცემების ფორმატის 0x%x-დან %p-ში (%s) გადაყვანის შეცდომა"
 
-#: gdk/win32/gdkglcontext-win32-wgl.c:668
+#: gdk/win32/gdkglcontext-win32-wgl.c:591
 msgid "No GL implementation is available"
 msgstr "GL-ის იმპლემენტაცია არ არსებობს"
 
-#: gdk/win32/gdkglcontext-win32-wgl.c:755
+#: gdk/win32/gdkglcontext-win32-wgl.c:675
 #, c-format
 msgid "WGL version %d.%d is too low, need at least %d.%d"
 msgstr "WGL-ის ვერსია %d.%d ძალიან ძველია. საჭიროა მინიმუმ %d.%d"
 
-#: gdk/win32/gdkglcontext-win32-wgl.c:773
+#: gdk/win32/gdkglcontext-win32-wgl.c:694
 #, c-format
 msgid "GL implementation cannot share GL contexts"
 msgstr "GL-ის განხორციელებებს GL-ის კონტექსტების გაზიარება არ შეუძლიათ"
 
-#: gdk/win32/gdkglcontext-win32-wgl.c:1053
+#: gdk/win32/gdkglcontext-win32-wgl.c:853
+#, c-format
+msgid "Unsupported pixel format %d set on Window"
+msgstr "ფანჯარაზე დაყენებულია მხარდაუჭერელი პიქსელის ფორმატი %d"
+
+#: gdk/win32/gdkglcontext-win32-wgl.c:862
 msgid "No available configurations for the given pixel format"
 msgstr "მითითებული პიქსელის ფორმატისთვის ხელმისაწვდომი კონფიგურაციების გარეშე"
 
@@ -846,15 +850,15 @@ msgid "Cannot store clipboard. No clipboard manager is active."
 msgstr ""
 "გაცვლის ბაფერის დამახსოვრება შეუძლებელია. ბაფერის მმართველი აქტიური არაა."
 
-#: gdk/x11/gdkglcontext-glx.c:819
+#: gdk/x11/gdkglcontext-glx.c:820
 msgid "No GLX configurations available"
 msgstr "GLX-ის კონფიგურაციები მიუწვდომელია"
 
-#: gdk/x11/gdkglcontext-glx.c:906
+#: gdk/x11/gdkglcontext-glx.c:907
 msgid "No GLX configuration with required features found"
 msgstr "მოთხოვნილი ფუნქციების მქონე GLX-ის კონფიგურაცია ნაპოვნი არაა"
 
-#: gdk/x11/gdkglcontext-glx.c:982
+#: gdk/x11/gdkglcontext-glx.c:983
 msgid "GLX is not supported"
 msgstr "GLX მხარდაჭერილი არაა"
 
@@ -890,114 +894,118 @@ msgstr "კოდირება \"%s\" მხარდაუჭერელი�
 msgid "OpenGL ES 3.0 is not supported by this renderer."
 msgstr "OpenGL ES 3.0 ამ რენდერერის მიერ მხარდაჭერილი არაა."
 
-#: gsk/gpu/gskglrenderer.c:66
+#: gsk/gpu/gskglrenderer.c:64
 msgid "OpenGL 3.3 required"
 msgstr "აუცილებელია OpenGL 3.3"
 
-#: gtk/a11y/gtkatspiaction.c:285
+#: gsk/gpu/gskvulkanrenderer.c:159
+msgid "Vulkan support disabled during GTK build"
+msgstr "Vulkan-ის მხარდაჭერა გამორთულია GTK-ის აგების დროს"
+
+#: gtk/a11y/gtkatspiaction.c:288
 msgctxt "accessibility"
 msgid "Click"
 msgstr "დააწკაპუნეთ"
 
-#: gtk/a11y/gtkatspiaction.c:286
+#: gtk/a11y/gtkatspiaction.c:289
 msgctxt "accessibility"
 msgid "Clicks the button"
 msgstr "დააწექით ღილაკს"
 
-#: gtk/a11y/gtkatspiaction.c:336
+#: gtk/a11y/gtkatspiaction.c:339
 msgctxt "accessibility"
 msgid "Toggle"
 msgstr "გადართვა"
 
-#: gtk/a11y/gtkatspiaction.c:337
+#: gtk/a11y/gtkatspiaction.c:340
 msgctxt "accessibility"
 msgid "Toggles the switch"
 msgstr "მდგომარეობის გადართვა"
 
-#: gtk/a11y/gtkatspiaction.c:418
+#: gtk/a11y/gtkatspiaction.c:421
 msgctxt "accessibility"
 msgid "Select"
 msgstr "მონიშვნა"
 
-#: gtk/a11y/gtkatspiaction.c:419
+#: gtk/a11y/gtkatspiaction.c:422
 msgctxt "accessibility"
 msgid "Selects the color"
 msgstr "ფერის არჩევა"
 
-#: gtk/a11y/gtkatspiaction.c:426 gtk/a11y/gtkatspiaction.c:487
-#: gtk/a11y/gtkatspiaction.c:543 gtk/a11y/gtkatspiaction.c:651
-#: gtk/a11y/gtkatspiaction.c:738
+#: gtk/a11y/gtkatspiaction.c:429 gtk/a11y/gtkatspiaction.c:490
+#: gtk/a11y/gtkatspiaction.c:546 gtk/a11y/gtkatspiaction.c:654
+#: gtk/a11y/gtkatspiaction.c:741
 msgctxt "accessibility"
 msgid "Activate"
 msgstr "აქტივაცია"
 
-#: gtk/a11y/gtkatspiaction.c:427
+#: gtk/a11y/gtkatspiaction.c:430
 msgctxt "accessibility"
 msgid "Activates the color"
 msgstr "ფერის აქტივაცია"
 
-#: gtk/a11y/gtkatspiaction.c:434
+#: gtk/a11y/gtkatspiaction.c:437
 msgctxt "accessibility"
 msgid "Customize"
 msgstr "მორგება"
 
-#: gtk/a11y/gtkatspiaction.c:435
+#: gtk/a11y/gtkatspiaction.c:438
 msgctxt "accessibility"
 msgid "Customizes the color"
 msgstr "ფერის მორგება"
 
-#: gtk/a11y/gtkatspiaction.c:488
+#: gtk/a11y/gtkatspiaction.c:491
 msgctxt "accessibility"
 msgid "Activates the expander"
 msgstr "გაააქტიურებს გამფართოებელს"
 
-#: gtk/a11y/gtkatspiaction.c:544 gtk/a11y/gtkatspiaction.c:652
-#: gtk/a11y/gtkatspiaction.c:739
+#: gtk/a11y/gtkatspiaction.c:547 gtk/a11y/gtkatspiaction.c:655
+#: gtk/a11y/gtkatspiaction.c:742
 msgctxt "accessibility"
 msgid "Activates the entry"
 msgstr "ელემენტის აქტივაცია"
 
-#: gtk/a11y/gtkatspiaction.c:551
+#: gtk/a11y/gtkatspiaction.c:554
 msgctxt "accessibility"
 msgid "Activate primary icon"
 msgstr "ძირითადი ხატულას აქტივაცია"
 
-#: gtk/a11y/gtkatspiaction.c:552
+#: gtk/a11y/gtkatspiaction.c:555
 msgctxt "accessibility"
 msgid "Activates the primary icon of the entry"
 msgstr "ჩანაწერის ძირითადი ხატულას აქტივაცია"
 
-#: gtk/a11y/gtkatspiaction.c:559
+#: gtk/a11y/gtkatspiaction.c:562
 msgctxt "accessibility"
 msgid "Activate secondary icon"
 msgstr "მეორადი ხატულას აქტივაცია"
 
-#: gtk/a11y/gtkatspiaction.c:560
+#: gtk/a11y/gtkatspiaction.c:563
 msgctxt "accessibility"
 msgid "Activates the secondary icon of the entry"
 msgstr "ჩანაწერის მეორადი ხატულას აქტივაცია"
 
-#: gtk/a11y/gtkatspiaction.c:659
+#: gtk/a11y/gtkatspiaction.c:662
 msgctxt "accessibility"
 msgid "Peek"
 msgstr "ჭვრეტა"
 
-#: gtk/a11y/gtkatspiaction.c:660
+#: gtk/a11y/gtkatspiaction.c:663
 msgctxt "accessibility"
 msgid "Shows the contents of the password entry"
 msgstr "პაროლის ჩვენება"
 
-#: gtk/a11y/gtkatspiaction.c:746
+#: gtk/a11y/gtkatspiaction.c:749
 msgctxt "accessibility"
 msgid "Clear"
 msgstr "გაწმენდა"
 
-#: gtk/a11y/gtkatspiaction.c:747
+#: gtk/a11y/gtkatspiaction.c:750
 msgctxt "accessibility"
 msgid "Clears the contents of the entry"
 msgstr "ელემენტის შიგთავსის გასუფთავება"
 
-#: gtk/a11y/gtkatspiroot.c:263 gtk/gtkaccessible.c:906
+#: gtk/a11y/gtkatspiroot.c:269 gtk/gtkaccessible.c:906
 msgctxt "accessibility"
 msgid "application"
 msgstr "აპლიკაცია"
@@ -1316,7 +1324,7 @@ msgstr ""
 #. * translated on keyboards used for your language, don't translate
 #. * this.
 #.
-#: gtk/gtkaccelgroup.c:839 gtk/deprecated/gtkshortcutlabel.c:103
+#: gtk/gtkaccelgroup.c:846 gtk/deprecated/gtkshortcutlabel.c:103
 #: gtk/deprecated/gtkshortcutlabel.c:139
 msgctxt "keyboard label"
 msgid "Shift"
@@ -1327,7 +1335,7 @@ msgstr "Shift"
 #. * translated on keyboards used for your language, don't translate
 #. * this.
 #.
-#: gtk/gtkaccelgroup.c:858 gtk/deprecated/gtkshortcutlabel.c:106
+#: gtk/gtkaccelgroup.c:865 gtk/deprecated/gtkshortcutlabel.c:106
 #: gtk/deprecated/gtkshortcutlabel.c:141
 msgctxt "keyboard label"
 msgid "Ctrl"
@@ -1338,7 +1346,7 @@ msgstr "Ctrl"
 #. * translated on keyboards used for your language, don't translate
 #. * this.
 #.
-#: gtk/gtkaccelgroup.c:877 gtk/deprecated/gtkshortcutlabel.c:109
+#: gtk/gtkaccelgroup.c:884 gtk/deprecated/gtkshortcutlabel.c:109
 #: gtk/deprecated/gtkshortcutlabel.c:143
 msgctxt "keyboard label"
 msgid "Alt"
@@ -1349,7 +1357,7 @@ msgstr "Alt"
 #. * translated on keyboards used for your language, don't translate
 #. * this.
 #.
-#: gtk/gtkaccelgroup.c:895 gtk/deprecated/gtkshortcutlabel.c:115
+#: gtk/gtkaccelgroup.c:902 gtk/deprecated/gtkshortcutlabel.c:115
 #: gtk/deprecated/gtkshortcutlabel.c:145
 msgctxt "keyboard label"
 msgid "Super"
@@ -1360,7 +1368,7 @@ msgstr "Super"
 #. * translated on keyboards used for your language, don't translate
 #. * this.
 #.
-#: gtk/gtkaccelgroup.c:909 gtk/deprecated/gtkshortcutlabel.c:118
+#: gtk/gtkaccelgroup.c:916 gtk/deprecated/gtkshortcutlabel.c:118
 #: gtk/deprecated/gtkshortcutlabel.c:147
 msgctxt "keyboard label"
 msgid "Hyper"
@@ -1371,7 +1379,7 @@ msgstr "Hyper"
 #. * translated on keyboards used for your language, don't translate
 #. * this.
 #.
-#: gtk/gtkaccelgroup.c:924 gtk/deprecated/gtkshortcutlabel.c:112
+#: gtk/gtkaccelgroup.c:931 gtk/deprecated/gtkshortcutlabel.c:112
 #: gtk/deprecated/gtkshortcutlabel.c:150
 msgctxt "keyboard label"
 msgid "Meta"
@@ -1381,17 +1389,17 @@ msgstr "Meta"
 #. * be used in accelerators such as "Ctrl+Shift+KP 1" in menus,
 #. * and therefore the translation needs to be very short.
 #.
-#: gtk/gtkaccelgroup.c:944
+#: gtk/gtkaccelgroup.c:951
 msgctxt "keyboard label"
 msgid "KP"
 msgstr "KP"
 
-#: gtk/gtkaccelgroup.c:951
+#: gtk/gtkaccelgroup.c:958
 msgctxt "keyboard label"
 msgid "Space"
 msgstr "გამოტოვება"
 
-#: gtk/gtkaccelgroup.c:954 gtk/deprecated/gtkshortcutlabel.c:178
+#: gtk/gtkaccelgroup.c:961 gtk/deprecated/gtkshortcutlabel.c:178
 msgctxt "keyboard label"
 msgid "Backslash"
 msgstr "Backslash"
@@ -1862,7 +1870,7 @@ msgstr "<%s>-ის შიგნით შეუძლებელია, ტე
 #. * first day of the week to calendar:week_start:1 if you want Monday
 #. * to be the first day of the week, and so on.
 #.
-#: gtk/gtkcalendar.c:672
+#: gtk/gtkcalendar.c:693
 msgid "calendar:week_start:0"
 msgstr "calendar:week_start:1"
 
@@ -1876,7 +1884,7 @@ msgstr "calendar:week_start:1"
 #. * text direction of RTL and specify "calendar:YM", then the year
 #. * will appear to the right of the month.
 #.
-#: gtk/gtkcalendar.c:823
+#: gtk/gtkcalendar.c:844
 msgid "calendar:MY"
 msgstr "calendar:MY"
 
@@ -1890,7 +1898,7 @@ msgstr "calendar:MY"
 #. * digits. That needs support from your system and locale definition
 #. * too.
 #.
-#: gtk/gtkcalendar.c:1004
+#: gtk/gtkcalendar.c:1025
 #, c-format
 msgctxt "calendar:day:digits"
 msgid "%d"
@@ -1902,7 +1910,7 @@ msgstr "%d"
 #. *
 #. * "%Y" is appropriate for most locales.
 #.
-#: gtk/gtkcalendar.c:1108
+#: gtk/gtkcalendar.c:1129
 msgctxt "calendar year format"
 msgid "%Y"
 msgstr "%Y"
@@ -1915,7 +1923,7 @@ msgstr "%Y"
 #. * Note that translating this doesn't guarantee that you get localized
 #. * digits. That needs support from your system and locale definition
 #. * too.
-#: gtk/gtkcalendar.c:1154
+#: gtk/gtkcalendar.c:1175
 #, c-format
 msgctxt "calendar:week:digits"
 msgid "%d"
@@ -2239,13 +2247,13 @@ msgstr "გვერდის ველები"
 msgid "_Edit"
 msgstr "_ჩასწორება"
 
-#: gtk/gtkeditablelabel.c:171 gtk/gtklabel.c:5902 gtk/gtktext.c:6322
-#: gtk/gtktextview.c:9320
+#: gtk/gtkeditablelabel.c:171 gtk/gtklabel.c:5906 gtk/gtktext.c:6354
+#: gtk/gtktextview.c:9386
 msgid "_Copy"
 msgstr "_კოპირება"
 
-#: gtk/gtkeditablelabel.c:344 gtk/gtklabel.c:5962 gtk/gtktext.c:2877
-#: gtk/gtktextview.c:9398
+#: gtk/gtkeditablelabel.c:344 gtk/gtklabel.c:5966 gtk/gtktext.c:2891
+#: gtk/gtktextview.c:9464
 msgid "Context menu"
 msgstr "კონტექსტური მენიუ"
 
@@ -2254,7 +2262,7 @@ msgid "Insert Emoji"
 msgstr "ემოჯის ჩასმა"
 
 #. Translators: Label for a search button and entry, should be translated as a verb
-#: gtk/gtkfilechooserdialog.c:481 gtk/ui/gtkfilechooserwidget.ui:123
+#: gtk/gtkfilechooserdialog.c:477 gtk/ui/gtkfilechooserwidget.ui:123
 msgid "Search"
 msgstr "ძებნა"
 
@@ -2319,12 +2327,12 @@ msgid "A file with that name already exists"
 msgstr "ფაილი ამ სახელით უკვე არსებობს"
 
 #: gtk/gtkfilechoosernative.c:521 gtk/gtkfilechoosernative.c:594
-#: gtk/gtkfilechooserwidget.c:1214 gtk/gtkfilechooserwidget.c:4988
+#: gtk/gtkfilechooserwidget.c:1214 gtk/gtkfilechooserwidget.c:5001
 #: gtk/gtkfiledialog.c:913 gtk/gtkmessagedialog.c:173
 #: gtk/gtkmessagedialog.c:182 gtk/gtkmountoperation.c:608
-#: gtk/print/gtkpagesetupunixdialog.c:285 gtk/print/gtkprintbackend.c:638
+#: gtk/print/gtkpagesetupunixdialog.c:285 gtk/print/gtkprintbackend.c:654
 #: gtk/print/gtkprintunixdialog.c:683 gtk/print/gtkprintunixdialog.c:840
-#: gtk/gtkwindow.c:6359 gtk/ui/gtkappchooserdialog.ui:48
+#: gtk/gtkwindow.c:6461 gtk/ui/gtkappchooserdialog.ui:48
 #: gtk/ui/gtkassistant.ui:52 gtk/ui/gtkcolorchooserdialog.ui:36
 #: gtk/ui/gtkfontchooserdialog.ui:29
 msgid "_Cancel"
@@ -2353,7 +2361,7 @@ msgstr "ფაილის ტიპების შერჩევა საჩ
 #. * is a hostname. Nautilus and the panel contain the same string
 #. * to translate.
 #.
-#: gtk/gtkfilechooserutils.c:364
+#: gtk/gtkfilechooserutils.c:365
 #, c-format
 msgid "%1$s on %2$s"
 msgstr "%1$s - %2$s"
@@ -2417,7 +2425,7 @@ msgid "If you delete an item, it will be permanently lost."
 msgstr "თუ წაშლით ელემენტს, ის სამუდამოდ დაიკარგება."
 
 #: gtk/gtkfilechooserwidget.c:1214 gtk/gtkfilechooserwidget.c:1816
-#: gtk/gtklabel.c:5904 gtk/gtktext.c:6330 gtk/gtktextview.c:9328
+#: gtk/gtklabel.c:5908 gtk/gtktext.c:6362 gtk/gtktextview.c:9394
 msgid "_Delete"
 msgstr "_წაშლა"
 
@@ -2480,7 +2488,7 @@ msgid "Home"
 msgstr "სახლი"
 
 #. this is the header for the location column in the print dialog
-#: gtk/gtkfilechooserwidget.c:2196 gtk/gtkfilechooserwidget.c:7420
+#: gtk/gtkfilechooserwidget.c:2196 gtk/gtkfilechooserwidget.c:7433
 #: gtk/inspector/css-node-tree.ui:76 gtk/print/ui/gtkprintunixdialog.ui:111
 msgid "Location"
 msgstr "მდებარეობა"
@@ -2503,8 +2511,8 @@ msgstr "ძებნა"
 msgid "Enter location or URL"
 msgstr "შეიყვანეთ მდებარეობა ან URL-ი"
 
-#: gtk/gtkfilechooserwidget.c:3445 gtk/gtkfilechooserwidget.c:5775
-#: gtk/gtkfilechooserwidget.c:7442
+#: gtk/gtkfilechooserwidget.c:3445 gtk/gtkfilechooserwidget.c:5788
+#: gtk/gtkfilechooserwidget.c:7455
 msgid "Modified"
 msgstr "შეიცვალა"
 
@@ -2547,7 +2555,7 @@ msgstr "პროგრამა"
 msgid "Audio"
 msgstr "აუდიო"
 
-#: gtk/gtkfilechooserwidget.c:3819 gtk/gtkfilefilter.c:1069
+#: gtk/gtkfilechooserwidget.c:3819 gtk/gtkfilefilter.c:1072
 msgid "Image"
 msgstr "გამოსახულება"
 
@@ -2587,59 +2595,59 @@ msgstr "პრეზენტაცია"
 msgid "Spreadsheet"
 msgstr "ელცხრილი"
 
-#: gtk/gtkfilechooserwidget.c:4980 gtk/print/gtkprintunixdialog.c:674
+#: gtk/gtkfilechooserwidget.c:4180 gtk/gtkfilechooserwidget.c:5156
+msgid "You do not have access to the specified folder."
+msgstr "თქვენ არ გაქვთ წვდომა მითითებულ საქაღალდესთან."
+
+#: gtk/gtkfilechooserwidget.c:4993 gtk/print/gtkprintunixdialog.c:674
 #, c-format
 msgid "A file named “%s” already exists.  Do you want to replace it?"
 msgstr "ფაილი %s უკვე არსებობს. გნებავთ გადავაწერო?"
 
-#: gtk/gtkfilechooserwidget.c:4982 gtk/print/gtkprintunixdialog.c:678
+#: gtk/gtkfilechooserwidget.c:4995 gtk/print/gtkprintunixdialog.c:678
 #, c-format
 msgid ""
 "The file already exists in “%s”.  Replacing it will overwrite its contents."
 msgstr ""
 "ფაილი \"%s\"-ში უკვე არსებობს.  მისი ჩანაცვლება არსებულ შემცველობას წაშლის."
 
-#: gtk/gtkfilechooserwidget.c:4988 gtk/print/gtkprintunixdialog.c:686
+#: gtk/gtkfilechooserwidget.c:5001 gtk/print/gtkprintunixdialog.c:686
 msgid "_Replace"
 msgstr "_შეცვლა"
 
-#: gtk/gtkfilechooserwidget.c:5143
-msgid "You do not have access to the specified folder."
-msgstr "თქვენ არ გაქვთ წვდომა მითითებულ საქაღალდესთან."
-
-#: gtk/gtkfilechooserwidget.c:5722
+#: gtk/gtkfilechooserwidget.c:5735
 msgid "Could not send the search request"
 msgstr "შეუძლებელია ძიების მოთხოვნის გაგზავნა"
 
-#: gtk/gtkfilechooserwidget.c:6003
+#: gtk/gtkfilechooserwidget.c:6016
 msgid "Accessed"
 msgstr "ბოლო წვდომა"
 
-#: gtk/gtkfilechooserwidget.c:7398
+#: gtk/gtkfilechooserwidget.c:7411
 msgid "_Size"
 msgstr "_ზომა"
 
-#: gtk/gtkfilechooserwidget.c:7402
+#: gtk/gtkfilechooserwidget.c:7415
 msgid "T_ype"
 msgstr "ტი_პი"
 
-#: gtk/gtkfilechooserwidget.c:7406
+#: gtk/gtkfilechooserwidget.c:7419
 msgid "_Time"
 msgstr "_დრო"
 
-#: gtk/gtkfilechooserwidget.c:7412 gtk/gtkplacessidebar.c:2306
+#: gtk/gtkfilechooserwidget.c:7425 gtk/gtkplacessidebar.c:2306
 #: gtk/inspector/a11y.ui:43 gtk/inspector/actions.ui:18
 #: gtk/inspector/css-node-tree.ui:22 gtk/inspector/prop-list.ui:24
 #: gtk/ui/gtkfilechooserwidget.ui:394 gtk/print/ui/gtkprintunixdialog.ui:80
 msgid "Name"
 msgstr "სახელი"
 
-#: gtk/gtkfilechooserwidget.c:7429 gtk/inspector/resource-list.ui:82
+#: gtk/gtkfilechooserwidget.c:7442 gtk/inspector/resource-list.ui:98
 #: gtk/ui/gtkfontchooserwidget.ui:217 gtk/ui/gtkfontchooserwidget.ui:383
 msgid "Size"
 msgstr "ზომა"
 
-#: gtk/gtkfilechooserwidget.c:7435 gtk/inspector/misc-info.ui:57
+#: gtk/gtkfilechooserwidget.c:7448 gtk/inspector/misc-info.ui:57
 #: gtk/inspector/prop-list.ui:35 gtk/inspector/statistics.ui:36
 msgid "Type"
 msgstr "ტიპი"
@@ -2677,7 +2685,7 @@ msgstr "კოდირება"
 msgid "Line Ending"
 msgstr "ხაზის ბოლო"
 
-#: gtk/gtkfilefilter.c:1082
+#: gtk/gtkfilefilter.c:1085
 msgid "Unspecified"
 msgstr "მიუთითებელი"
 
@@ -2756,7 +2764,7 @@ msgstr "სტილის ვარიაციები"
 msgid "Character Variations"
 msgstr "სიმბოლოების ვარიანტები"
 
-#: gtk/gtkglarea.c:319
+#: gtk/gtkglarea.c:326
 msgid "OpenGL context creation failed"
 msgstr "OpenGL-ის კონტექსტის შექმნის შეცდომა"
 
@@ -2769,23 +2777,23 @@ msgstr "დახურვა"
 msgid "Close the infobar"
 msgstr "საინფორმაციო ზოლის დახურვა"
 
-#: gtk/gtklabel.c:5901 gtk/gtktext.c:6318 gtk/gtktextview.c:9316
+#: gtk/gtklabel.c:5905 gtk/gtktext.c:6350 gtk/gtktextview.c:9382
 msgid "Cu_t"
 msgstr "ამოჭრა"
 
-#: gtk/gtklabel.c:5903 gtk/gtktext.c:6326 gtk/gtktextview.c:9324
+#: gtk/gtklabel.c:5907 gtk/gtktext.c:6358 gtk/gtktextview.c:9390
 msgid "_Paste"
 msgstr "ჩ_ასმა"
 
-#: gtk/gtklabel.c:5909 gtk/gtktext.c:6339 gtk/gtktextview.c:9349
+#: gtk/gtklabel.c:5913 gtk/gtktext.c:6371 gtk/gtktextview.c:9415
 msgid "Select _All"
 msgstr "ყველაფრის _მონიშვნა"
 
-#: gtk/gtklabel.c:5914
+#: gtk/gtklabel.c:5918
 msgid "_Open Link"
 msgstr "_ბმულის გახსნა"
 
-#: gtk/gtklabel.c:5918
+#: gtk/gtklabel.c:5922
 msgid "Copy _Link Address"
 msgstr "დაა_კოპირე ბმულის მისამართი"
 
@@ -2856,7 +2864,7 @@ msgid "Play"
 msgstr "დაკვრა"
 
 #: gtk/gtkmessagedialog.c:165 gtk/gtkmessagedialog.c:183
-#: gtk/print/gtkprintbackend.c:639 gtk/gtkwindow.c:6360
+#: gtk/print/gtkprintbackend.c:655 gtk/gtkwindow.c:6462
 msgid "_OK"
 msgstr "_დიახ"
 
@@ -2949,27 +2957,27 @@ msgid "Cannot kill process with PID %d. Operation is not implemented."
 msgstr "პროცესის, PID-ით %d მოკვლა შეუძლებელია. ოპერაცია განხორციელებული არაა."
 
 #. translators: this string is a name for the 'less' command
-#: gtk/gtkmountoperation-x11.c:988
+#: gtk/gtkmountoperation-x11.c:990
 msgid "Terminal Pager"
 msgstr "ტერმინალის პეიჯერი"
 
-#: gtk/gtkmountoperation-x11.c:989
+#: gtk/gtkmountoperation-x11.c:991
 msgid "Top Command"
 msgstr "ზედა ბრძანება"
 
-#: gtk/gtkmountoperation-x11.c:990
+#: gtk/gtkmountoperation-x11.c:992
 msgid "Bourne Again Shell"
 msgstr "Bourne Again Shell"
 
-#: gtk/gtkmountoperation-x11.c:991
+#: gtk/gtkmountoperation-x11.c:993
 msgid "Bourne Shell"
 msgstr "Bourne Shell"
 
-#: gtk/gtkmountoperation-x11.c:992
+#: gtk/gtkmountoperation-x11.c:994
 msgid "Z Shell"
 msgstr "Z Shell"
 
-#: gtk/gtkmountoperation-x11.c:1092
+#: gtk/gtkmountoperation-x11.c:1094
 #, c-format
 msgid "Cannot end process with PID %d: %s"
 msgstr "პროცესის, PID-ით %d, დასრულების შეცდომა: %s"
@@ -3361,11 +3369,644 @@ msgstr "გათიშვა"
 msgid "Unmount"
 msgstr "მოხსნა"
 
-#: gtk/print/gtkprintbackend.c:637
+#: gtk/print/backends/gtkprintbackendcpdb.c:496
+#: gtk/print/backends/gtkprintbackendcups.c:5715
+msgctxt "Print job priority"
+msgid "Urgent"
+msgstr "გადაუდებელი"
+
+#: gtk/print/backends/gtkprintbackendcpdb.c:497
+#: gtk/print/backends/gtkprintbackendcups.c:5716
+msgctxt "Print job priority"
+msgid "High"
+msgstr "მაღალი"
+
+#: gtk/print/backends/gtkprintbackendcpdb.c:498
+#: gtk/print/backends/gtkprintbackendcups.c:5717
+msgctxt "Print job priority"
+msgid "Medium"
+msgstr "საშუალო"
+
+#: gtk/print/backends/gtkprintbackendcpdb.c:499
+#: gtk/print/backends/gtkprintbackendcups.c:5718
+msgctxt "Print job priority"
+msgid "Low"
+msgstr "დაბალი"
+
+#. Translators, this is the label used for the option in the print
+#. * dialog that controls the front cover page.
+#.
+#: gtk/print/backends/gtkprintbackendcpdb.c:521
+#: gtk/print/backends/gtkprintbackendcups.c:5861
+msgctxt "printer option"
+msgid "Before"
+msgstr "ჯერ"
+
+#. Translators, this is the label used for the option in the print
+#. * dialog that controls the back cover page.
+#.
+#: gtk/print/backends/gtkprintbackendcpdb.c:528
+#: gtk/print/backends/gtkprintbackendcups.c:5876
+msgctxt "printer option"
+msgid "After"
+msgstr "შემდეგ"
+
+#: gtk/print/backends/gtkprintbackendcpdb.c:551
+msgid "Print at"
+msgstr "დაბეჭდვის დრო"
+
+#: gtk/print/backends/gtkprintbackendcpdb.c:561
+msgid "Print at time"
+msgstr "დაბეჭდვის დრო"
+
+#: gtk/print/backends/gtkprintbackendcpdb.c:624
+msgctxt "print option"
+msgid "Borderless"
+msgstr "საზღვრების გარეშე"
+
+#. Translators: this is a printer status.
+#: gtk/print/backends/gtkprintbackendcpdb.c:1483
+#: gtk/print/backends/gtkprintbackendcups.c:2650
+msgid "Paused; Rejecting Jobs"
+msgstr "შეყოვნებულია; დავალებების უარყოფა"
+
+#. Translators: this is a printer status.
+#: gtk/print/backends/gtkprintbackendcpdb.c:1486
+#: gtk/print/backends/gtkprintbackendcups.c:2653
+#: gtk/print/gtkprintoperation-win32.c:630
+msgid "Paused"
+msgstr "შეჩერებულია"
+
+#. Translators: this is a printer status.
+#: gtk/print/backends/gtkprintbackendcpdb.c:1489
+#: gtk/print/backends/gtkprintbackendcups.c:2656
+msgid "Rejecting Jobs"
+msgstr "დავალებების უარყოფა"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1154
+#: gtk/print/backends/gtkprintbackendcups.c:1461
+msgid "Username:"
+msgstr "მომხმარებლის სახელი:"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1155
+#: gtk/print/backends/gtkprintbackendcups.c:1470
+msgid "Password:"
+msgstr "პაროლი:"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1193
+#: gtk/print/backends/gtkprintbackendcups.c:1483
+#, c-format
+msgid "Authentication is required to print document “%s” on printer %s"
+msgstr "დოკუმენტ %s-ის პრინტერზე \"%s\" დასაბეჭდად საჭიროა ავთენტიკაცია"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1195
+#, c-format
+msgid "Authentication is required to print a document on %s"
+msgstr "დოკუმენტ %s-ის დასაბეჭდად საჭიროა ავთენტიკაცია"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1199
+#, c-format
+msgid "Authentication is required to get attributes of job “%s”"
+msgstr "ამოცანის (\"%s\") ატრიბუტების მისაღებად საჭიროა ავთენტიკაცია"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1201
+msgid "Authentication is required to get attributes of a job"
+msgstr "ამოცანის ატრიბუტების მისაღებად საჭიროა ავთენტიკაცია"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1205
+#, c-format
+msgid "Authentication is required to get attributes of printer %s"
+msgstr "პრინტერის (%s) ატრიბუტების მისაღებად საჭიროა ვთენტიკაცია"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1207
+msgid "Authentication is required to get attributes of a printer"
+msgstr "პრინტერის ატრიბუტების მისაღებად საჭიროა ვთენტიკაცია"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1210
+#, c-format
+msgid "Authentication is required to get default printer of %s"
+msgstr "%s-ის ნაგულისხმევი პრინტერის მისაღებად საჭიროა ავთენტიკაცია"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1213
+#, c-format
+msgid "Authentication is required to get printers from %s"
+msgstr "%s-დან პრინტერების მისაღებად საჭიროა ავთენტიკაცია"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1218
+#, c-format
+msgid "Authentication is required to get a file from %s"
+msgstr "ფაილის %s-დან მისაღებად საჭიროა ავთენტიკაცია"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1220
+#, c-format
+msgid "Authentication is required on %s"
+msgstr "%s-ზე ავთენტიკაციაა საჭირო"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1455
+msgid "Domain:"
+msgstr "დომენი:"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1485
+#, c-format
+msgid "Authentication is required to print document “%s”"
+msgstr "დოკუმენტ %s-ის დასაბეჭდად საჭიროა ავთენტიკაცია"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1490
+#, c-format
+msgid "Authentication is required to print this document on printer %s"
+msgstr "ამ დოკუმენტის პრინტერზე \"%s\" დასაბეჭდად საჭიროა ავთენტიკაცია"
+
+#: gtk/print/backends/gtkprintbackendcups.c:1492
+msgid "Authentication is required to print this document"
+msgstr "ამ დოკუმენტის დასაბეჭდად საჭიროა ავთენტიკაცია"
+
+#: gtk/print/backends/gtkprintbackendcups.c:2582
+#, c-format
+msgid "Printer “%s” is low on toner."
+msgstr "პრინტერში %s ტონერი ცოტაღაა."
+
+#: gtk/print/backends/gtkprintbackendcups.c:2586
+#, c-format
+msgid "Printer “%s” has no toner left."
+msgstr "პრინტერში %s ტონერი აღარ დარჩა."
+
+#. Translators: "Developer" like on photo development context
+#: gtk/print/backends/gtkprintbackendcups.c:2591
+#, c-format
+msgid "Printer “%s” is low on developer."
+msgstr "პრინტერში \"%s\" გამამჟღავნებელი ცოტაღაა."
+
+#. Translators: "Developer" like on photo development context
+#: gtk/print/backends/gtkprintbackendcups.c:2596
+#, c-format
+msgid "Printer “%s” is out of developer."
+msgstr "პრინტერში \"%s\" გამამჟღავნებელი აღარ დარჩა."
+
+#. Translators: "marker" is one color bin of the printer
+#: gtk/print/backends/gtkprintbackendcups.c:2601
+#, c-format
+msgid "Printer “%s” is low on at least one marker supply."
+msgstr "პრინტერში \"%s\" ერთ-ერთი ტონერი მთავრდება."
+
+#. Translators: "marker" is one color bin of the printer
+#: gtk/print/backends/gtkprintbackendcups.c:2606
+#, c-format
+msgid "Printer “%s” is out of at least one marker supply."
+msgstr "პრინტერში \"%s\" ერთ-ერთი ტონერი დამთავრდა."
+
+#: gtk/print/backends/gtkprintbackendcups.c:2610
+#, c-format
+msgid "The cover is open on printer “%s”."
+msgstr "პრინტერ %s-ზე თავსახურია ახდილი."
+
+#: gtk/print/backends/gtkprintbackendcups.c:2614
+#, c-format
+msgid "The door is open on printer “%s”."
+msgstr "პრინტერზე %s კარი ღიაა."
+
+#: gtk/print/backends/gtkprintbackendcups.c:2618
+#, c-format
+msgid "Printer “%s” is low on paper."
+msgstr "პრინტერში %s ფურცლები ცოტაღაა."
+
+#: gtk/print/backends/gtkprintbackendcups.c:2622
+#, c-format
+msgid "Printer “%s” is out of paper."
+msgstr "პრინტერში %s ქაღალდი გათავდა."
+
+#: gtk/print/backends/gtkprintbackendcups.c:2626
+#, c-format
+msgid "Printer “%s” is currently offline."
+msgstr "პრინტერი '%s' ამჟამად გათიშულია."
+
+#: gtk/print/backends/gtkprintbackendcups.c:2630
+#, c-format
+msgid "There is a problem on printer “%s”."
+msgstr "%s პრინტერის პრობლემა."
+
+#. Translators: this string connects multiple printer states together.
+#: gtk/print/backends/gtkprintbackendcups.c:2697
+msgid "; "
+msgstr "; "
+
+#: gtk/print/backends/gtkprintbackendcups.c:4645
+#: gtk/print/backends/gtkprintbackendcups.c:4713
+msgctxt "printing option"
+msgid "Two Sided"
+msgstr "ორმხრივი"
+
+#: gtk/print/backends/gtkprintbackendcups.c:4646
+msgctxt "printing option"
+msgid "Paper Type"
+msgstr "ფურცლის ტიპი"
+
+#: gtk/print/backends/gtkprintbackendcups.c:4647
+msgctxt "printing option"
+msgid "Paper Source"
+msgstr "ქაღალდის წყარო"
+
+#: gtk/print/backends/gtkprintbackendcups.c:4648
+#: gtk/print/backends/gtkprintbackendcups.c:4714
+msgctxt "printing option"
+msgid "Output Tray"
+msgstr "გამოტანის თარო"
+
+#: gtk/print/backends/gtkprintbackendcups.c:4649
+msgctxt "printing option"
+msgid "Resolution"
+msgstr "გარჩევადობა"
+
+#: gtk/print/backends/gtkprintbackendcups.c:4650
+msgctxt "printing option"
+msgid "GhostScript pre-filtering"
+msgstr "GhostScript-ის პრეფილტრი"
+
+#: gtk/print/backends/gtkprintbackendcups.c:4659
+msgctxt "printing option value"
+msgid "One Sided"
+msgstr "ერთმხრიანი"
+
+#. Translators: this is an option of "Two Sided"
+#: gtk/print/backends/gtkprintbackendcups.c:4661
+msgctxt "printing option value"
+msgid "Long Edge (Standard)"
+msgstr "გრძელი წიბო (სტანდარტული)"
+
+#. Translators: this is an option of "Two Sided"
+#: gtk/print/backends/gtkprintbackendcups.c:4663
+msgctxt "printing option value"
+msgid "Short Edge (Flip)"
+msgstr "მოკლე წიბო (გადაბრუნება)"
+
+#. Translators: this is an option of "Paper Source"
+#: gtk/print/backends/gtkprintbackendcups.c:4665
+#: gtk/print/backends/gtkprintbackendcups.c:4667
+#: gtk/print/backends/gtkprintbackendcups.c:4675
+msgctxt "printing option value"
+msgid "Auto Select"
+msgstr "ავტომატური არჩევა"
+
+#. Translators: this is an option of "Paper Source"
+#. Translators: this is an option of "Resolution"
+#: gtk/print/backends/gtkprintbackendcups.c:4669
+#: gtk/print/backends/gtkprintbackendcups.c:4671
+#: gtk/print/backends/gtkprintbackendcups.c:4673
+#: gtk/print/backends/gtkprintbackendcups.c:4677
+msgctxt "printing option value"
+msgid "Printer Default"
+msgstr "ნაგულისხმევი პრინტერი"
+
+#. Translators: this is an option of "GhostScript"
+#: gtk/print/backends/gtkprintbackendcups.c:4679
+msgctxt "printing option value"
+msgid "Embed GhostScript fonts only"
+msgstr "მხოლოდ GhostScript-ის ფონტების ჩაშენება"
+
+#. Translators: this is an option of "GhostScript"
+#: gtk/print/backends/gtkprintbackendcups.c:4681
+msgctxt "printing option value"
+msgid "Convert to PS level 1"
+msgstr "პირველი დონის PS-ზე გადაყვანა"
+
+#. Translators: this is an option of "GhostScript"
+#: gtk/print/backends/gtkprintbackendcups.c:4683
+msgctxt "printing option value"
+msgid "Convert to PS level 2"
+msgstr "მეორე დონის PS-ზე გადაყვანა"
+
+#. Translators: this is an option of "GhostScript"
+#: gtk/print/backends/gtkprintbackendcups.c:4685
+msgctxt "printing option value"
+msgid "No pre-filtering"
+msgstr "პრეფილტრის გარეშე"
+
+#. Translators: "Miscellaneous" is the label for a button, that opens
+#. up an extra panel of settings in a print dialog.
+#: gtk/print/backends/gtkprintbackendcups.c:4694
+msgctxt "printing option group"
+msgid "Miscellaneous"
+msgstr "სხვადასხვა"
+
+#: gtk/print/backends/gtkprintbackendcups.c:4722
+msgctxt "sides"
+msgid "One Sided"
+msgstr "ერთმხრიანი"
+
+#. Translators: this is an option of "Two Sided"
+#: gtk/print/backends/gtkprintbackendcups.c:4724
+msgctxt "sides"
+msgid "Long Edge (Standard)"
+msgstr "გრძელი წიბო (სტანდარტული)"
+
+#. Translators: this is an option of "Two Sided"
+#: gtk/print/backends/gtkprintbackendcups.c:4726
+msgctxt "sides"
+msgid "Short Edge (Flip)"
+msgstr "მოკლე წიბო (გადაბრუნება)"
+
+#. Translators: Top output bin
+#: gtk/print/backends/gtkprintbackendcups.c:4729
+msgctxt "output-bin"
+msgid "Top Bin"
+msgstr "ზედა კალათი"
+
+#. Translators: Middle output bin
+#: gtk/print/backends/gtkprintbackendcups.c:4731
+msgctxt "output-bin"
+msgid "Middle Bin"
+msgstr "შუა კალათი"
+
+#. Translators: Bottom output bin
+#: gtk/print/backends/gtkprintbackendcups.c:4733
+msgctxt "output-bin"
+msgid "Bottom Bin"
+msgstr "ქვედა კალათი"
+
+#. Translators: Side output bin
+#: gtk/print/backends/gtkprintbackendcups.c:4735
+msgctxt "output-bin"
+msgid "Side Bin"
+msgstr "გვერდითი კალათი"
+
+#. Translators: Left output bin
+#: gtk/print/backends/gtkprintbackendcups.c:4737
+msgctxt "output-bin"
+msgid "Left Bin"
+msgstr "მარცხენა კალათი"
+
+#. Translators: Right output bin
+#: gtk/print/backends/gtkprintbackendcups.c:4739
+msgctxt "output-bin"
+msgid "Right Bin"
+msgstr "მარჯვენა კალათი"
+
+#. Translators: Center output bin
+#: gtk/print/backends/gtkprintbackendcups.c:4741
+msgctxt "output-bin"
+msgid "Center Bin"
+msgstr "ცენტრალური კალათი"
+
+#. Translators: Rear output bin
+#: gtk/print/backends/gtkprintbackendcups.c:4743
+msgctxt "output-bin"
+msgid "Rear Bin"
+msgstr "უკანა კალათი"
+
+#. Translators: Output bin where one sided output is oriented in the face-up position
+#: gtk/print/backends/gtkprintbackendcups.c:4745
+msgctxt "output-bin"
+msgid "Face Up Bin"
+msgstr "მაღლა მაყურებელი კალათი"
+
+#. Translators: Output bin where one sided output is oriented in the face-down position
+#: gtk/print/backends/gtkprintbackendcups.c:4747
+msgctxt "output-bin"
+msgid "Face Down Bin"
+msgstr "დაბლა მაყურებელი კალათი"
+
+#. Translators: Large capacity output bin
+#: gtk/print/backends/gtkprintbackendcups.c:4749
+msgctxt "output-bin"
+msgid "Large Capacity Bin"
+msgstr "დიდი მოცულობის კალათი"
+
+#. Translators: Output stacker number %d
+#: gtk/print/backends/gtkprintbackendcups.c:4771
+#, c-format
+msgctxt "output-bin"
+msgid "Stacker %d"
+msgstr "დამლაგებელი %d"
+
+#. Translators: Output mailbox number %d
+#: gtk/print/backends/gtkprintbackendcups.c:4775
+#, c-format
+msgctxt "output-bin"
+msgid "Mailbox %d"
+msgstr "საფოსტო ყუთი %d"
+
+#. Translators: Private mailbox
+#: gtk/print/backends/gtkprintbackendcups.c:4779
+msgctxt "output-bin"
+msgid "My Mailbox"
+msgstr "ჩემი საფოსტო ყუთი"
+
+#. Translators: Output tray number %d
+#: gtk/print/backends/gtkprintbackendcups.c:4783
+#, c-format
+msgctxt "output-bin"
+msgid "Tray %d"
+msgstr "თარო %d"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5265
+msgid "Printer Default"
+msgstr "ნაგულისხმევი პრინტერი"
+
+#. Translators: These strings name the possible arrangements of
+#. * multiple pages on a sheet when printing
+#.
+#. Translators: These strings name the possible arrangements of
+#. * multiple pages on a sheet when printing (same as in gtkprintbackendcups.c)
+#.
+#: gtk/print/backends/gtkprintbackendcups.c:5724
+#: gtk/print/gtkprintunixdialog.c:2737
+msgid "Left to right, top to bottom"
+msgstr "მარცხნიდან მარჯვნივ, ქვევიდან ზემოთ"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5724
+#: gtk/print/gtkprintunixdialog.c:2737
+msgid "Left to right, bottom to top"
+msgstr "მარცხნიდან მარჯვნივ, ქვემოდან ზემოთ"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5725
+#: gtk/print/gtkprintunixdialog.c:2738
+msgid "Right to left, top to bottom"
+msgstr "მარჯვნიდან მარცხნივ, ზევიდან ქვემოთ"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5725
+#: gtk/print/gtkprintunixdialog.c:2738
+msgid "Right to left, bottom to top"
+msgstr "მარჯვნიდან მარცხნივ, ქვემოდან ზემოთ"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5726
+#: gtk/print/gtkprintunixdialog.c:2739
+msgid "Top to bottom, left to right"
+msgstr "ზემოდან ქვემოთ, მარცხნიდან მარჯვნივ"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5726
+#: gtk/print/gtkprintunixdialog.c:2739
+msgid "Top to bottom, right to left"
+msgstr "ზემოდან ქვემოთ, მარჯვნიდან მარცხნივ"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5727
+#: gtk/print/gtkprintunixdialog.c:2740
+msgid "Bottom to top, left to right"
+msgstr "ქვემოდან ზემოთ, მარცხნიდან მარჯვნივ"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5727
+#: gtk/print/gtkprintunixdialog.c:2740
+msgid "Bottom to top, right to left"
+msgstr "ქვემოდან ზემოთ, მარჯვნიდან მარცხნივ"
+
+#. Translators, this string is used to label the job priority option
+#. * in the print dialog
+#.
+#: gtk/print/backends/gtkprintbackendcups.c:5749
+msgid "Job Priority"
+msgstr "ამოცანის პრიორიტეტი"
+
+#. Translators, this string is used to label the billing info entry
+#. * in the print dialog
+#.
+#: gtk/print/backends/gtkprintbackendcups.c:5760
+msgid "Billing Info"
+msgstr "ანგარიშთა ინფორმაცია"
+
+#. Translators, these strings are names for various 'standard' cover
+#. * pages that the printing system may support.
+#.
+#: gtk/print/backends/gtkprintbackendcups.c:5784
+msgctxt "cover page"
+msgid "None"
+msgstr "არცერთი"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5785
+msgctxt "cover page"
+msgid "Classified"
+msgstr "საიდუმლო"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5786
+msgctxt "cover page"
+msgid "Confidential"
+msgstr "კონფიდენციალური"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5787
+msgctxt "cover page"
+msgid "Secret"
+msgstr "სამხედრო საიდუმლო"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5788
+msgctxt "cover page"
+msgid "Standard"
+msgstr "სტანდარტული"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5789
+msgctxt "cover page"
+msgid "Top Secret"
+msgstr "უმაღლესი დონის საიდუმლო"
+
+#: gtk/print/backends/gtkprintbackendcups.c:5790
+msgctxt "cover page"
+msgid "Unclassified"
+msgstr "არასაიდუმლო"
+
+#. Translators, this string is used to label the pages-per-sheet option
+#. * in the print dialog
+#.
+#: gtk/print/backends/gtkprintbackendcups.c:5802
+msgctxt "printer option"
+msgid "Pages per Sheet"
+msgstr "გვერდები ფურცელზე"
+
+#. Translators, this string is used to label the option in the print
+#. * dialog that controls in what order multiple pages are arranged
+#.
+#: gtk/print/backends/gtkprintbackendcups.c:5819
+msgctxt "printer option"
+msgid "Page Ordering"
+msgstr "გვერდის დალაგება"
+
+#. Translators: this is the name of the option that controls when
+#. * a print job is printed. Possible values are 'now', a specified time,
+#. * or 'on hold'
+#.
+#: gtk/print/backends/gtkprintbackendcups.c:5896
+msgctxt "printer option"
+msgid "Print at"
+msgstr "დაბეჭდვის დრო"
+
+#. Translators: this is the name of the option that allows the user
+#. * to specify a time when a print job will be printed.
+#.
+#: gtk/print/backends/gtkprintbackendcups.c:5907
+msgctxt "printer option"
+msgid "Print at time"
+msgstr "დაბეჭდვის დრო"
+
+#. Translators: this format is used to display a custom
+#. * paper size. The two placeholders are replaced with
+#. * the width and height in points. E.g: "Custom
+#. * 230.4x142.9"
+#.
+#: gtk/print/backends/gtkprintbackendcups.c:5955
+#, c-format
+msgid "Custom %s×%s"
+msgstr "ხელით %s×%s"
+
+#. TRANSLATORS: this is the ICC color profile to use for this job
+#: gtk/print/backends/gtkprintbackendcups.c:6067
+msgctxt "printer option"
+msgid "Printer Profile"
+msgstr "პრინტერის პროფილი"
+
+#. TRANSLATORS: this is when color profile information is unavailable
+#: gtk/print/backends/gtkprintbackendcups.c:6074
+msgctxt "printer option value"
+msgid "Unavailable"
+msgstr "მიუწვდომელია"
+
+#: gtk/print/backends/gtkprintbackendfile.c:231
+msgid "output"
+msgstr "გამოტანა"
+
+#: gtk/print/backends/gtkprintbackendfile.c:511
+msgid "Print to File"
+msgstr "ფაილში ბეჭდვა"
+
+#: gtk/print/backends/gtkprintbackendfile.c:643
+msgid "PDF"
+msgstr "PDF"
+
+#: gtk/print/backends/gtkprintbackendfile.c:643
+msgid "PostScript"
+msgstr "PostScript"
+
+#: gtk/print/backends/gtkprintbackendfile.c:643
+msgid "SVG"
+msgstr "SVG"
+
+#: gtk/print/backends/gtkprintbackendfile.c:656
+msgid "Pages per _sheet:"
+msgstr "გვერდები _ფურცელზე:"
+
+#: gtk/print/backends/gtkprintbackendfile.c:726
+msgid "File"
+msgstr "ფაილი"
+
+#: gtk/print/backends/gtkprintbackendfile.c:736
+msgid "_Output format"
+msgstr "_გამოტანის ფორმატი"
+
+#. TRANSLATORS: when we're running an old CUPS, and
+#. * it hasn't registered the device with colord
+#: gtk/print/backends/gtkprintercups.c:245
+msgid "Color management unavailable"
+msgstr "ფერების მართვის გარეშე"
+
+#. TRANSLATORS: when there is no color profile available
+#: gtk/print/backends/gtkprintercups.c:257
+msgid "No profile available"
+msgstr "პროფილის გარეშე"
+
+#. TRANSLATORS: when the color profile has no title
+#: gtk/print/backends/gtkprintercups.c:268
+msgid "Unspecified profile"
+msgstr "მიუთითებელი პროფილი"
+
+#: gtk/print/gtkprintbackend.c:653
 msgid "Authentication"
 msgstr "ავთენტიფიკაცია"
 
-#: gtk/print/gtkprintbackend.c:716
+#: gtk/print/gtkprintbackend.c:732
 msgid "_Remember password"
 msgstr "პაროლის დამახსოვრება"
 
@@ -3476,13 +4117,6 @@ msgstr "საბეჭდი გამორთულია"
 msgid "Out of paper"
 msgstr "არ არის ქაღალდი"
 
-#. Translators: this is a printer status.
-#: gtk/print/gtkprintoperation-win32.c:630
-#: modules/printbackends/gtkprintbackendcpdb.c:1521
-#: modules/printbackends/gtkprintbackendcups.c:2639
-msgid "Paused"
-msgstr "შეჩერებულია"
-
 #: gtk/print/gtkprintoperation-win32.c:632
 msgid "Need user intervention"
 msgstr "საჭიროებს მომხმარებლის ჩარევას"
@@ -3542,52 +4176,6 @@ msgstr "პრინტერის ინფორმაციის მიღ�
 msgid "Getting printer information…"
 msgstr "პრინტერის ინფორმაციის მიღება…"
 
-#. Translators: These strings name the possible arrangements of
-#. * multiple pages on a sheet when printing (same as in gtkprintbackendcups.c)
-#.
-#. Translators: These strings name the possible arrangements of
-#. * multiple pages on a sheet when printing
-#.
-#: gtk/print/gtkprintunixdialog.c:2737
-#: modules/printbackends/gtkprintbackendcups.c:5679
-msgid "Left to right, top to bottom"
-msgstr "მარცხნიდან მარჯვნივ, ქვევიდან ზემოთ"
-
-#: gtk/print/gtkprintunixdialog.c:2737
-#: modules/printbackends/gtkprintbackendcups.c:5679
-msgid "Left to right, bottom to top"
-msgstr "მარცხნიდან მარჯვნივ, ქვემოდან ზემოთ"
-
-#: gtk/print/gtkprintunixdialog.c:2738
-#: modules/printbackends/gtkprintbackendcups.c:5680
-msgid "Right to left, top to bottom"
-msgstr "მარჯვნიდან მარცხნივ, ზევიდან ქვემოთ"
-
-#: gtk/print/gtkprintunixdialog.c:2738
-#: modules/printbackends/gtkprintbackendcups.c:5680
-msgid "Right to left, bottom to top"
-msgstr "მარჯვნიდან მარცხნივ, ქვემოდან ზემოთ"
-
-#: gtk/print/gtkprintunixdialog.c:2739
-#: modules/printbackends/gtkprintbackendcups.c:5681
-msgid "Top to bottom, left to right"
-msgstr "ზემოდან ქვემოთ, მარცხნიდან მარჯვნივ"
-
-#: gtk/print/gtkprintunixdialog.c:2739
-#: modules/printbackends/gtkprintbackendcups.c:5681
-msgid "Top to bottom, right to left"
-msgstr "ზემოდან ქვემოთ, მარჯვნიდან მარცხნივ"
-
-#: gtk/print/gtkprintunixdialog.c:2740
-#: modules/printbackends/gtkprintbackendcups.c:5682
-msgid "Bottom to top, left to right"
-msgstr "ქვემოდან ზემოთ, მარცხნიდან მარჯვნივ"
-
-#: gtk/print/gtkprintunixdialog.c:2740
-#: modules/printbackends/gtkprintbackendcups.c:5682
-msgid "Bottom to top, right to left"
-msgstr "ქვემოდან ზემოთ, მარჯვნიდან მარცხნივ"
-
 #: gtk/print/gtkprintunixdialog.c:2744 gtk/print/gtkprintunixdialog.c:2757
 msgid "Page Ordering"
 msgstr "გვერდის დალაგება"
@@ -3608,7 +4196,7 @@ msgstr "ზემოდან ქვემოთ"
 msgid "Bottom to top"
 msgstr "ქვემოდან ზემოთ"
 
-#: gtk/gtkprintdialog.c:1755
+#: gtk/gtkprintdialog.c:1759
 msgid "Failed to create the read file descriptor"
 msgstr "ფაილის დესკრიპტორის შექმნა ჩავარდა"
 
@@ -3705,7 +4293,7 @@ msgid "Search Shortcuts"
 msgstr "ძებნის მალსახმობები"
 
 #. Translators: This is the window title for the shortcuts window in normal mode
-#: gtk/deprecated/gtkshortcutswindow.c:944 gtk/inspector/window.ui:496
+#: gtk/deprecated/gtkshortcutswindow.c:944 gtk/inspector/window.ui:584
 msgid "Shortcuts"
 msgstr "მალსახმობები"
 
@@ -3729,11 +4317,11 @@ msgctxt "accessibility"
 msgid "Sidebar"
 msgstr "გვერდითა ზოლი"
 
-#: gtk/gtktext.c:6344
+#: gtk/gtktext.c:6376
 msgid "Change di_rection"
 msgstr "მიმა_რთულების შეცვლა"
 
-#: gtk/gtktext.c:6349 gtk/gtktextview.c:9354
+#: gtk/gtktext.c:6381 gtk/gtktextview.c:9420
 msgid "Insert _Emoji"
 msgstr "ემოჯის _ჩასმა"
 
@@ -3893,20 +4481,20 @@ msgctxt "Line ending name"
 msgid "Mac OS Classic"
 msgstr "Mac OS Classic"
 
-#: gtk/gtktextview.c:9336
+#: gtk/gtktextview.c:9402
 msgid "_Undo"
 msgstr "_დაბრუნება"
 
-#: gtk/gtktextview.c:9340
+#: gtk/gtktextview.c:9406
 msgid "_Redo"
 msgstr "_გამეორება"
 
-#: gtk/gtkwindow.c:6348
+#: gtk/gtkwindow.c:6450
 #, c-format
 msgid "Do you want to use GTK Inspector?"
 msgstr "გნებავთ GTK-ის ინსპექტორის გამოყენება?"
 
-#: gtk/gtkwindow.c:6350
+#: gtk/gtkwindow.c:6452
 #, c-format
 msgid ""
 "GTK Inspector is an interactive debugger that lets you explore and modify "
@@ -3917,7 +4505,7 @@ msgstr ""
 "ნებისმიერი GTK აპლიკაციის შიდა პარამეტრები დაათვალიეროთ და შეცვალოთ. მისი "
 "გამოყენებით ასევე შეიძლება პროგრამა ავარიულად დასრულდეს."
 
-#: gtk/gtkwindow.c:6355
+#: gtk/gtkwindow.c:6457
 msgid "Don’t show this message again"
 msgstr "მეტჯერ აღარ მაჩვენო ეს გაფრთხილება"
 
@@ -3967,8 +4555,8 @@ msgid "Attribute"
 msgstr "ატრიბუტი"
 
 #: gtk/inspector/a11y.ui:176 gtk/inspector/css-node-tree.ui:70
-#: gtk/inspector/prop-list.ui:57 gtk/inspector/recorder.ui:156
-#: gtk/inspector/recorder.ui:199 gtk/inspector/strv-editor.c:73
+#: gtk/inspector/prop-list.ui:57 gtk/inspector/recorder.ui:207
+#: gtk/inspector/recorder.ui:251 gtk/inspector/strv-editor.c:73
 msgid "Value"
 msgstr "მნიშვნელობა"
 
@@ -4020,7 +4608,7 @@ msgstr "დაშორებული"
 msgid "Drag and hold here"
 msgstr "გადმოათრეთ და აქ გეჭიროთ"
 
-#: gtk/inspector/clipboard.ui:71 gtk/inspector/window.ui:572
+#: gtk/inspector/clipboard.ui:71 gtk/inspector/window.ui:660
 msgid "Clipboard"
 msgstr "გაცვლის ბაფერი"
 
@@ -4078,11 +4666,11 @@ msgstr "CSS-ის შენახვის შეცდომა"
 msgid "Disable this custom CSS"
 msgstr "ხელით მითითებული CSS-ის გამორთვა"
 
-#: gtk/inspector/css-editor.ui:44
+#: gtk/inspector/css-editor.ui:52
 msgid "Save the current CSS"
 msgstr "მიმდინარე CSS-ის შენახვა"
 
-#: gtk/inspector/css-editor.ui:51
+#: gtk/inspector/css-editor.ui:67
 msgid "Show deprecations"
 msgstr "მოძველებების ჩვენება"
 
@@ -4099,154 +4687,154 @@ msgstr "სტილის კლასები"
 msgid "CSS Property"
 msgstr "CSS-ის თვისება"
 
-#: gtk/inspector/general.c:469
+#: gtk/inspector/general.c:470
 msgid "IM Context is hardcoded by GTK_IM_MODULE"
 msgstr "IM-ის კონტექსტი GTK_IM_MODULE-ში ხელითაა ჩაწერილი"
 
-#: gtk/inspector/general.c:644
+#: gtk/inspector/general.c:645
 msgctxt "GL renderer"
 msgid "None"
 msgstr "არცერთი"
 
-#: gtk/inspector/general.c:741
+#: gtk/inspector/general.c:742
 msgctxt "GL version"
 msgid "Unknown"
 msgstr "უცნობი"
 
-#: gtk/inspector/general.c:995 gtk/inspector/general.c:1034
+#: gtk/inspector/general.c:996 gtk/inspector/general.c:1035
 msgctxt "Vulkan device"
 msgid "None"
 msgstr "არცერთი"
 
-#: gtk/inspector/general.ui:13
+#: gtk/inspector/general.ui:21
 msgid "Copy to clipboard as gitlab markdown"
 msgstr "გაცვლის ბუფერში კოპირება gitlab markdown-ის სახით"
 
-#: gtk/inspector/general.ui:45
+#: gtk/inspector/general.ui:53
 msgid "Operating System"
 msgstr "ოპერაციული სისტემა"
 
-#: gtk/inspector/general.ui:71
+#: gtk/inspector/general.ui:79
 msgid "GTK Version"
 msgstr "GTK-ის ვერსია"
 
-#: gtk/inspector/general.ui:97
+#: gtk/inspector/general.ui:105
 msgid "GDK Backend"
 msgstr "GDK უკანაბოლო"
 
-#: gtk/inspector/general.ui:123
+#: gtk/inspector/general.ui:131
 msgid "GSK Renderer"
 msgstr "GSK-ის რენდერერი"
 
-#: gtk/inspector/general.ui:149
+#: gtk/inspector/general.ui:157
 msgid "Pango Fontmap"
 msgstr "Pango-ის ფონტის რუკა"
 
-#: gtk/inspector/general.ui:175
+#: gtk/inspector/general.ui:183
 msgid "Media Backend"
 msgstr "მედიის უკანაბოლო"
 
-#: gtk/inspector/general.ui:201
+#: gtk/inspector/general.ui:209
 msgid "Input Method"
 msgstr "შეტანის მეთოდი"
 
-#: gtk/inspector/general.ui:227
+#: gtk/inspector/general.ui:235
 msgid "Accessibility Backend"
 msgstr "წვდომადობის უკანაბოლო"
 
-#: gtk/inspector/general.ui:264
+#: gtk/inspector/general.ui:272
 msgid "Application ID"
 msgstr "აპლიკაციის ID"
 
-#: gtk/inspector/general.ui:290
+#: gtk/inspector/general.ui:298
 msgid "Resource Path"
 msgstr "ბილიკი რესურსამდე"
 
-#: gtk/inspector/general.ui:327 gtk/ui/gtkplacesview.ui:63
+#: gtk/inspector/general.ui:335 gtk/ui/gtkplacesview.ui:63
 msgid "Prefix"
 msgstr "პრეფიქსი"
 
-#: gtk/inspector/general.ui:354
+#: gtk/inspector/general.ui:362
 msgid "Environment"
 msgstr "გარემო"
 
-#: gtk/inspector/general.ui:457
+#: gtk/inspector/general.ui:465
 msgid "Display"
 msgstr "ეკრანი"
 
-#: gtk/inspector/general.ui:484
+#: gtk/inspector/general.ui:492
 msgid "RGBA Visual"
 msgstr "RGBA-ის ვიზუალი"
 
-#: gtk/inspector/general.ui:510
+#: gtk/inspector/general.ui:522
 msgid "Composited"
 msgstr "კომპოზიტური"
 
-#: gtk/inspector/general.ui:535
+#: gtk/inspector/general.ui:547
 msgid "Protocols"
 msgstr "პროტოკოლები"
 
-#: gtk/inspector/general.ui:591
+#: gtk/inspector/general.ui:603
 msgid "GL Renderer"
 msgstr "GL-ის რენდერერი"
 
-#: gtk/inspector/general.ui:620
+#: gtk/inspector/general.ui:632
 msgid "GL Vendor"
 msgstr "GL-ის მომწოდებელი"
 
-#: gtk/inspector/general.ui:649
+#: gtk/inspector/general.ui:661
 msgid "GL Version"
 msgstr "GL-ის ვერსია"
 
-#: gtk/inspector/general.ui:676
+#: gtk/inspector/general.ui:688
 msgid "GL Backend Vendor"
 msgstr "GL-ის უკანაბოლოს მომწოდებელი"
 
-#: gtk/inspector/general.ui:703
+#: gtk/inspector/general.ui:715
 msgid "GL Backend Version"
 msgstr "GL-ის უკანაბოლოს ვერსია"
 
-#: gtk/inspector/general.ui:753
+#: gtk/inspector/general.ui:765
 msgid "GL Full Version"
 msgstr "GL-ის სრული ვერსია"
 
-#: gtk/inspector/general.ui:782
+#: gtk/inspector/general.ui:794
 msgid "GLSL Version"
 msgstr "GLSL-ის ვერსია"
 
-#: gtk/inspector/general.ui:811
+#: gtk/inspector/general.ui:823
 msgid "GL Extensions"
 msgstr "GL გაფართოებები"
 
-#: gtk/inspector/general.ui:899
+#: gtk/inspector/general.ui:911
 msgid "EGL Extensions"
 msgstr "EGL გაფართოებები"
 
-#: gtk/inspector/general.ui:986
+#: gtk/inspector/general.ui:998
 msgid "GL Features"
 msgstr "GL თვისებები"
 
-#: gtk/inspector/general.ui:1022
+#: gtk/inspector/general.ui:1034
 msgid "Vulkan Device"
 msgstr "Vulkan-ის მოწყობილობა"
 
-#: gtk/inspector/general.ui:1049
+#: gtk/inspector/general.ui:1061
 msgid "Vulkan API Version"
 msgstr "Vulkan API-ის ვერსია"
 
-#: gtk/inspector/general.ui:1076
+#: gtk/inspector/general.ui:1088
 msgid "Vulkan Driver Version"
 msgstr "Vulkan-ის დრაივერის ვერსია"
 
-#: gtk/inspector/general.ui:1125
+#: gtk/inspector/general.ui:1137
 msgid "Vulkan Layers"
 msgstr "Vulkan-ის ფენები"
 
-#: gtk/inspector/general.ui:1194
+#: gtk/inspector/general.ui:1206
 msgid "Vulkan Extensions"
 msgstr "Vulkan გაფართოებები"
 
-#: gtk/inspector/general.ui:1281
+#: gtk/inspector/general.ui:1293
 msgid "Vulkan Features"
 msgstr "Vulkan-ის თვისებები"
 
@@ -4311,8 +4899,8 @@ msgid "Surface"
 msgstr "ზედაპირი"
 
 #: gtk/inspector/misc-info.ui:365 gtk/inspector/misc-info.ui:400
-#: gtk/inspector/misc-info.ui:435 gtk/inspector/prop-editor.c:1199
-#: gtk/inspector/prop-editor.c:1594 gtk/inspector/window.ui:394
+#: gtk/inspector/misc-info.ui:435 gtk/inspector/prop-editor.c:1634
+#: gtk/inspector/window.ui:482
 msgid "Properties"
 msgstr "თვისებები"
 
@@ -4328,39 +4916,39 @@ msgstr "კადრების საათი"
 msgid "Tick Callback"
 msgstr "რბილი უკუგამოძახება"
 
-#: gtk/inspector/misc-info.ui:477
+#: gtk/inspector/misc-info.ui:481
 msgid "Frame Count"
 msgstr "კადრების რაოდენობა"
 
-#: gtk/inspector/misc-info.ui:502
+#: gtk/inspector/misc-info.ui:506
 msgid "Frame Rate"
 msgstr "კადრების სიხშირე"
 
-#: gtk/inspector/misc-info.ui:527 gtk/inspector/visual.ui:314
+#: gtk/inspector/misc-info.ui:531 gtk/inspector/visual.ui:314
 msgid "Scale"
 msgstr "მასშტაბი"
 
-#: gtk/inspector/misc-info.ui:552
+#: gtk/inspector/misc-info.ui:556
 msgid "Color state"
 msgstr "ფერის მდგომარეობა"
 
-#: gtk/inspector/misc-info.ui:577
+#: gtk/inspector/misc-info.ui:581
 msgid "Mapped"
 msgstr "მიმაგრებულია"
 
-#: gtk/inspector/misc-info.ui:603
+#: gtk/inspector/misc-info.ui:607
 msgid "Realized"
 msgstr "რეალიზებულია"
 
-#: gtk/inspector/misc-info.ui:629
+#: gtk/inspector/misc-info.ui:633
 msgid "Is Toplevel"
 msgstr "თავშია"
 
-#: gtk/inspector/misc-info.ui:655
+#: gtk/inspector/misc-info.ui:659
 msgid "Child Visible"
 msgstr "ხილული შვილი"
 
-#: gtk/inspector/prop-editor.c:748
+#: gtk/inspector/prop-editor.c:749
 #, c-format
 msgid "Pointer: %p"
 msgstr "მაჩვენებელი: %p"
@@ -4368,7 +4956,7 @@ msgstr "მაჩვენებელი: %p"
 #. Translators: %s is a type name, for example
 #. * GtkPropertyExpression with value \"2.5\"
 #.
-#: gtk/inspector/prop-editor.c:873
+#: gtk/inspector/prop-editor.c:874
 #, c-format
 msgid "%s with value \"%s\""
 msgstr "%s მნიშვნელობით \"%s\""
@@ -4376,7 +4964,7 @@ msgstr "%s მნიშვნელობით \"%s\""
 #. Translators: Both %s are type names, for example
 #. * GtkPropertyExpression with type GObject
 #.
-#: gtk/inspector/prop-editor.c:884
+#: gtk/inspector/prop-editor.c:885
 #, c-format
 msgid "%s with type %s"
 msgstr "%s ტიპით %s"
@@ -4384,7 +4972,7 @@ msgstr "%s ტიპით %s"
 #. Translators: Both %s are type names, for example
 #. * GtkObjectExpression for GtkStringObject 0x23456789
 #.
-#: gtk/inspector/prop-editor.c:897
+#: gtk/inspector/prop-editor.c:898
 #, c-format
 msgid "%s for %s %p"
 msgstr "%s %s-თვის %p"
@@ -4392,71 +4980,71 @@ msgstr "%s %s-თვის %p"
 #. Translators: Both %s are type names, for example
 #. * GtkPropertyExpression with value type: gchararray
 #.
-#: gtk/inspector/prop-editor.c:927
+#: gtk/inspector/prop-editor.c:928
 #, c-format
 msgid "%s with value type %s"
 msgstr "%s მნიშვნელობის ტიპით %s"
 
-#: gtk/inspector/prop-editor.c:1288
+#: gtk/inspector/prop-editor.c:1328
 #, c-format
 msgid "Uneditable property type: %s"
 msgstr "თვისების არაჩასწორებადი ტიპი: %s"
 
-#: gtk/inspector/prop-editor.c:1446
+#: gtk/inspector/prop-editor.c:1486
 msgctxt "column number"
 msgid "None"
 msgstr "არცერთი"
 
-#: gtk/inspector/prop-editor.c:1483
+#: gtk/inspector/prop-editor.c:1523
 msgid "Attribute:"
 msgstr "ატრიბუტი:"
 
-#: gtk/inspector/prop-editor.c:1486
+#: gtk/inspector/prop-editor.c:1526
 msgid "Model"
 msgstr "მოდელი"
 
-#: gtk/inspector/prop-editor.c:1491
+#: gtk/inspector/prop-editor.c:1531
 msgid "Column:"
 msgstr "სვეტი:"
 
 #. Translators: %s is a type name, for example
 #. * Action from 0x2345678 (GtkApplicationWindow)
 #.
-#: gtk/inspector/prop-editor.c:1590
+#: gtk/inspector/prop-editor.c:1630
 #, c-format
 msgid "Action from: %p (%s)"
 msgstr "ქმედების საწყისი: %p(%s)"
 
-#: gtk/inspector/prop-editor.c:1645
+#: gtk/inspector/prop-editor.c:1685
 msgid "Reset"
 msgstr "განულება"
 
-#: gtk/inspector/prop-editor.c:1653
+#: gtk/inspector/prop-editor.c:1693
 msgctxt "GtkSettings source"
 msgid "Default"
 msgstr "ნაგულისხმევი"
 
-#: gtk/inspector/prop-editor.c:1656
+#: gtk/inspector/prop-editor.c:1696
 msgctxt "GtkSettings source"
 msgid "Theme"
 msgstr "გაფორმების თემა"
 
-#: gtk/inspector/prop-editor.c:1659
+#: gtk/inspector/prop-editor.c:1699
 msgctxt "GtkSettings source"
 msgid "XSettings"
 msgstr "XSettings"
 
-#: gtk/inspector/prop-editor.c:1663
+#: gtk/inspector/prop-editor.c:1703
 msgctxt "GtkSettings source"
 msgid "Application"
 msgstr "აპლიკაცია"
 
-#: gtk/inspector/prop-editor.c:1666
+#: gtk/inspector/prop-editor.c:1706
 msgctxt "GtkSettings source"
 msgid "Unknown"
 msgstr "უცნობი"
 
-#: gtk/inspector/prop-editor.c:1669
+#: gtk/inspector/prop-editor.c:1709
 msgid "Source:"
 msgstr "წყარო:"
 
@@ -4464,68 +5052,68 @@ msgstr "წყარო:"
 msgid "Defined At"
 msgstr "აღწერის წერტილი"
 
-#: gtk/inspector/recorder.c:2059
+#: gtk/inspector/recorder.c:2188
 #, c-format
 msgid "Saving RenderNode failed"
 msgstr "RenderNode-ის შენახვის შეცდომა"
 
-#: gtk/inspector/recorder.ui:20
+#: gtk/inspector/recorder.ui:28
 msgid "Recording Options"
 msgstr "ჩაწერის მორგება"
 
-#: gtk/inspector/recorder.ui:24
+#: gtk/inspector/recorder.ui:32
 msgid "Record events"
 msgstr "მოვლენების ჩასწერა"
 
-#: gtk/inspector/recorder.ui:28
+#: gtk/inspector/recorder.ui:36
 msgid "Add debug nodes"
 msgstr "გამართვის კვანძების დამატება"
 
-#: gtk/inspector/recorder.ui:32
+#: gtk/inspector/recorder.ui:40
 msgid "Highlight event sequences"
 msgstr "მოვლენების თანამიმდევრობის გამოკვეთა"
 
-#: gtk/inspector/recorder.ui:42
+#: gtk/inspector/recorder.ui:58
 msgid "Record frames"
 msgstr "კადრების ჩაწერა"
 
-#: gtk/inspector/recorder.ui:49
+#: gtk/inspector/recorder.ui:73
 msgid "Clear recorded frames"
 msgstr "ჩაწერილი კადრების გასუფთავება"
 
-#: gtk/inspector/recorder.ui:58
+#: gtk/inspector/recorder.ui:90
 msgid "Use a dark background"
 msgstr "მუქი ფონის გამოყენება"
 
-#: gtk/inspector/recorder.ui:66
+#: gtk/inspector/recorder.ui:106
 msgid "Save selected node"
 msgstr "მონიშნული კვანძის შენახვა"
 
-#: gtk/inspector/recorder.ui:74
+#: gtk/inspector/recorder.ui:122
 msgid "Copy to clipboard"
 msgstr "გაცვლის ბუფერში კოპირება"
 
-#: gtk/inspector/recorder.ui:151 gtk/inspector/recorder.ui:194
+#: gtk/inspector/recorder.ui:202 gtk/inspector/recorder.ui:246
 msgid "Property"
 msgstr "თვისება"
 
-#: gtk/inspector/resource-list.ui:59
+#: gtk/inspector/resource-list.ui:75
 msgid "Path"
 msgstr "ბილიკი"
 
-#: gtk/inspector/resource-list.ui:71
+#: gtk/inspector/resource-list.ui:87
 msgid "Count"
 msgstr "რაოდენობა"
 
-#: gtk/inspector/resource-list.ui:121
+#: gtk/inspector/resource-list.ui:137
 msgid "Name:"
 msgstr "სახელი:"
 
-#: gtk/inspector/resource-list.ui:143
+#: gtk/inspector/resource-list.ui:159
 msgid "Type:"
 msgstr "ტიპი:"
 
-#: gtk/inspector/resource-list.ui:164 tools/gtk-image-tool-info.c:56
+#: gtk/inspector/resource-list.ui:180 tools/gtk-image-tool-info.c:56
 msgid "Size:"
 msgstr "ზომა:"
 
@@ -4594,7 +5182,7 @@ msgstr "ჩართეთ სტატისტიკა პარამეტ�
 msgid "Remove %s"
 msgstr "%s-ის წაშლა"
 
-#: gtk/inspector/strv-editor.c:115
+#: gtk/inspector/strv-editor.c:114
 msgid "Add"
 msgstr "დამატება"
 
@@ -4609,10 +5197,6 @@ msgstr "იერარქია"
 #: gtk/inspector/type-info.ui:35
 msgid "Implements"
 msgstr "იმპლემენტაციას უკეთებს"
-
-#: gtk/inspector/visual.c:690 gtk/inspector/visual.c:708
-msgid "Theme is hardcoded by GTK_THEME"
-msgstr "თემა ჩადგმულია GTK_THEME-ის მიერ"
 
 #: gtk/inspector/visual.ui:34
 msgid "GTK Theme"
@@ -4697,35 +5281,39 @@ msgstr "საბაზისო ხაზების ჩვენება"
 msgid "Show Layout Borders"
 msgstr "განლაგების საზღვრების ჩვენება"
 
-#: gtk/inspector/visual.ui:564
+#: gtk/inspector/visual.ui:572
 msgid "CSS Padding"
 msgstr "CSS-ის შეწევა"
 
-#: gtk/inspector/visual.ui:574
+#: gtk/inspector/visual.ui:582
 msgid "CSS Border"
 msgstr "CSS-ის საზღვარი"
 
-#: gtk/inspector/visual.ui:584
+#: gtk/inspector/visual.ui:592
 msgid "CSS Margin"
 msgstr "CSS-ის შეწევა"
 
-#: gtk/inspector/visual.ui:594
+#: gtk/inspector/visual.ui:602
 msgid "Widget Margin"
 msgstr "ვიჯეტის შეწევა"
 
-#: gtk/inspector/visual.ui:629
+#: gtk/inspector/visual.ui:637
 msgid "Show Focus"
 msgstr "ფოკუსის ჩვენება"
 
-#: gtk/inspector/visual.ui:654
+#: gtk/inspector/visual.ui:662
 msgid "Show Accessibility warnings"
 msgstr "წვდომადობის გაფრთხილებების ჩვენება"
 
-#: gtk/inspector/visual.ui:679
+#: gtk/inspector/visual.ui:687
 msgid "Show Graphics Offload"
 msgstr "გრაფიკის რენდერის გატანის ჩვენება"
 
-#: gtk/inspector/visual.ui:711
+#: gtk/inspector/visual.ui:722
+msgid "Show Touch UI"
+msgstr "სენსორული ინტერფეისის ჩვენება"
+
+#: gtk/inspector/visual.ui:753
 msgid "Inspect Inspector"
 msgstr "კონტროლის ინსპექტორი"
 
@@ -4733,123 +5321,123 @@ msgstr "კონტროლის ინსპექტორი"
 msgid "Select an Object"
 msgstr "აირჩიეთ ობიექტი"
 
-#: gtk/inspector/window.ui:42 gtk/inspector/window.ui:107
+#: gtk/inspector/window.ui:50 gtk/inspector/window.ui:131
 msgid "Show Details"
 msgstr "დეტალების ჩვენება"
 
-#: gtk/inspector/window.ui:57
+#: gtk/inspector/window.ui:73
 msgid "Show all Objects"
 msgstr "ყველა ობიექტის ჩვენება"
 
-#: gtk/inspector/window.ui:121
+#: gtk/inspector/window.ui:149
 msgid "Show all Resources"
 msgstr "ყველა რესურსის ჩვენება"
 
-#: gtk/inspector/window.ui:147
+#: gtk/inspector/window.ui:179
 msgid "Collect Statistics"
 msgstr "სტატისტიკის მოგროვება"
 
-#: gtk/inspector/window.ui:199
+#: gtk/inspector/window.ui:239
 msgid "Objects"
 msgstr "ობიექტები"
 
-#: gtk/inspector/window.ui:231
+#: gtk/inspector/window.ui:279
 msgid "Toggle Sidebar"
 msgstr "გვერდითი პანელი ჩვენების ჩართ/გამორთ"
 
-#: gtk/inspector/window.ui:253
+#: gtk/inspector/window.ui:309
 msgid "Refresh action state"
 msgstr "ქმედების მდგომარეობის განახლება"
 
-#: gtk/inspector/window.ui:327
+#: gtk/inspector/window.ui:391
 msgid "Previous object"
 msgstr "წინა ობიექტი"
 
-#: gtk/inspector/window.ui:334
+#: gtk/inspector/window.ui:406
 msgid "Child object"
 msgstr "შვილობილი ობიექტი"
 
-#: gtk/inspector/window.ui:341
+#: gtk/inspector/window.ui:421
 msgid "Previous sibling"
 msgstr "წინა და"
 
-#: gtk/inspector/window.ui:347
+#: gtk/inspector/window.ui:427
 msgid "List Position"
 msgstr "მდგომარეობის სია"
 
-#: gtk/inspector/window.ui:354
+#: gtk/inspector/window.ui:442
 msgid "Next sibling"
 msgstr "შემდეგი და"
 
-#: gtk/inspector/window.ui:384
+#: gtk/inspector/window.ui:472
 msgid "Miscellaneous"
 msgstr "სხვადასხვა"
 
-#: gtk/inspector/window.ui:405 gtk/print/ui/gtkprintunixdialog.ui:451
+#: gtk/inspector/window.ui:493 gtk/print/ui/gtkprintunixdialog.ui:451
 msgid "Layout"
 msgstr "განლაგება"
 
-#: gtk/inspector/window.ui:416
+#: gtk/inspector/window.ui:504
 msgid "CSS Nodes"
 msgstr "CSS-ის კვანძები"
 
-#: gtk/inspector/window.ui:427
+#: gtk/inspector/window.ui:515
 msgid "Size Groups"
 msgstr "ჯგუფების ზომა"
 
-#: gtk/inspector/window.ui:436 gtk/inspector/window.ui:445
+#: gtk/inspector/window.ui:524 gtk/inspector/window.ui:533
 msgid "Data"
 msgstr "მონაცემები"
 
-#: gtk/inspector/window.ui:455
+#: gtk/inspector/window.ui:543
 msgid "Actions"
 msgstr "ქმედებები"
 
-#: gtk/inspector/window.ui:466
+#: gtk/inspector/window.ui:554
 msgid "Menu"
 msgstr "მენიუ"
 
-#: gtk/inspector/window.ui:475
+#: gtk/inspector/window.ui:563
 msgid "Controllers"
 msgstr "კონტროლერები"
 
-#: gtk/inspector/window.ui:485
+#: gtk/inspector/window.ui:573
 msgid "Magnifier"
 msgstr "გამადიდებელი"
 
-#: gtk/inspector/window.ui:506
+#: gtk/inspector/window.ui:594
 msgid "Accessibility"
 msgstr "წვდომადობა"
 
-#: gtk/inspector/window.ui:530
+#: gtk/inspector/window.ui:618
 msgid "Global"
 msgstr "გლობალური"
 
-#: gtk/inspector/window.ui:543
+#: gtk/inspector/window.ui:631
 msgid "Information"
 msgstr "ინფორმაცია"
 
-#: gtk/inspector/window.ui:552
+#: gtk/inspector/window.ui:640
 msgid "Settings"
 msgstr "მორგება"
 
-#: gtk/inspector/window.ui:561
+#: gtk/inspector/window.ui:649
 msgid "Resources"
 msgstr "რესურსები"
 
-#: gtk/inspector/window.ui:582
+#: gtk/inspector/window.ui:670
 msgid "Statistics"
 msgstr "სტატისტიკა"
 
-#: gtk/inspector/window.ui:593
+#: gtk/inspector/window.ui:681
 msgid "Logging"
 msgstr "ჟურნალი"
 
-#: gtk/inspector/window.ui:608
+#: gtk/inspector/window.ui:696
 msgid "CSS"
 msgstr "CSS"
 
-#: gtk/inspector/window.ui:617
+#: gtk/inspector/window.ui:705
 msgid "Recorder"
 msgstr "ჩამწერი"
 
@@ -6455,6 +7043,10 @@ msgstr "წაშლა"
 msgid "Select All"
 msgstr "ყველაფრის _მონიშვნა"
 
+#: gtk/ui/gtkapplication-quartz.ui:85
+msgid "_Window"
+msgstr "_ფანჯარა"
+
 #: gtk/ui/gtkassistant.ui:64
 msgid "_Finish"
 msgstr "დასასრული"
@@ -6919,613 +7511,28 @@ msgstr "კონფლიქტი ფანჯრის რამდენი�
 msgid "Play"
 msgstr "დაკვრა"
 
-#: modules/printbackends/gtkprintbackendcpdb.c:531
-#: modules/printbackends/gtkprintbackendcups.c:5670
-msgctxt "Print job priority"
-msgid "Urgent"
-msgstr "გადაუდებელი"
-
-#: modules/printbackends/gtkprintbackendcpdb.c:532
-#: modules/printbackends/gtkprintbackendcups.c:5671
-msgctxt "Print job priority"
-msgid "High"
-msgstr "მაღალი"
-
-#: modules/printbackends/gtkprintbackendcpdb.c:533
-#: modules/printbackends/gtkprintbackendcups.c:5672
-msgctxt "Print job priority"
-msgid "Medium"
-msgstr "საშუალო"
-
-#: modules/printbackends/gtkprintbackendcpdb.c:534
-#: modules/printbackends/gtkprintbackendcups.c:5673
-msgctxt "Print job priority"
-msgid "Low"
-msgstr "დაბალი"
-
-#. Translators, this is the label used for the option in the print
-#. * dialog that controls the front cover page.
-#.
-#: modules/printbackends/gtkprintbackendcpdb.c:556
-#: modules/printbackends/gtkprintbackendcups.c:5816
-msgctxt "printer option"
-msgid "Before"
-msgstr "ჯერ"
-
-#. Translators, this is the label used for the option in the print
-#. * dialog that controls the back cover page.
-#.
-#: modules/printbackends/gtkprintbackendcpdb.c:563
-#: modules/printbackends/gtkprintbackendcups.c:5831
-msgctxt "printer option"
-msgid "After"
-msgstr "შემდეგ"
-
-#: modules/printbackends/gtkprintbackendcpdb.c:586
-msgid "Print at"
-msgstr "დაბეჭდვის დრო"
-
-#: modules/printbackends/gtkprintbackendcpdb.c:596
-msgid "Print at time"
-msgstr "დაბეჭდვის დრო"
-
-#: modules/printbackends/gtkprintbackendcpdb.c:659
-msgctxt "print option"
-msgid "Borderless"
-msgstr "საზღვრების გარეშე"
-
-#. Translators: this is a printer status.
-#: modules/printbackends/gtkprintbackendcpdb.c:1518
-#: modules/printbackends/gtkprintbackendcups.c:2636
-msgid "Paused; Rejecting Jobs"
-msgstr "შეყოვნებულია; დავალებების უარყოფა"
-
-#. Translators: this is a printer status.
-#: modules/printbackends/gtkprintbackendcpdb.c:1524
-#: modules/printbackends/gtkprintbackendcups.c:2642
-msgid "Rejecting Jobs"
-msgstr "დავალებების უარყოფა"
-
-#: modules/printbackends/gtkprintbackendcups.c:1142
-#: modules/printbackends/gtkprintbackendcups.c:1449
-msgid "Username:"
-msgstr "მომხმარებლის სახელი:"
-
-#: modules/printbackends/gtkprintbackendcups.c:1143
-#: modules/printbackends/gtkprintbackendcups.c:1458
-msgid "Password:"
-msgstr "პაროლი:"
-
-#: modules/printbackends/gtkprintbackendcups.c:1181
-#: modules/printbackends/gtkprintbackendcups.c:1471
-#, c-format
-msgid "Authentication is required to print document “%s” on printer %s"
-msgstr "დოკუმენტ %s-ის პრინტერზე \"%s\" დასაბეჭდად საჭიროა ავთენტიკაცია"
-
-#: modules/printbackends/gtkprintbackendcups.c:1183
-#, c-format
-msgid "Authentication is required to print a document on %s"
-msgstr "დოკუმენტ %s-ის დასაბეჭდად საჭიროა ავთენტიკაცია"
-
-#: modules/printbackends/gtkprintbackendcups.c:1187
-#, c-format
-msgid "Authentication is required to get attributes of job “%s”"
-msgstr "ამოცანის (\"%s\") ატრიბუტების მისაღებად საჭიროა ავთენტიკაცია"
-
-#: modules/printbackends/gtkprintbackendcups.c:1189
-msgid "Authentication is required to get attributes of a job"
-msgstr "ამოცანის ატრიბუტების მისაღებად საჭიროა ავთენტიკაცია"
-
-#: modules/printbackends/gtkprintbackendcups.c:1193
-#, c-format
-msgid "Authentication is required to get attributes of printer %s"
-msgstr "პრინტერის (%s) ატრიბუტების მისაღებად საჭიროა ვთენტიკაცია"
-
-#: modules/printbackends/gtkprintbackendcups.c:1195
-msgid "Authentication is required to get attributes of a printer"
-msgstr "პრინტერის ატრიბუტების მისაღებად საჭიროა ვთენტიკაცია"
-
-#: modules/printbackends/gtkprintbackendcups.c:1198
-#, c-format
-msgid "Authentication is required to get default printer of %s"
-msgstr "%s-ის ნაგულისხმევი პრინტერის მისაღებად საჭიროა ავთენტიკაცია"
-
-#: modules/printbackends/gtkprintbackendcups.c:1201
-#, c-format
-msgid "Authentication is required to get printers from %s"
-msgstr "%s-დან პრინტერების მისაღებად საჭიროა ავთენტიკაცია"
-
-#: modules/printbackends/gtkprintbackendcups.c:1206
-#, c-format
-msgid "Authentication is required to get a file from %s"
-msgstr "ფაილის %s-დან მისაღებად საჭიროა ავთენტიკაცია"
-
-#: modules/printbackends/gtkprintbackendcups.c:1208
-#, c-format
-msgid "Authentication is required on %s"
-msgstr "%s-ზე ავთენტიკაციაა საჭირო"
-
-#: modules/printbackends/gtkprintbackendcups.c:1443
-msgid "Domain:"
-msgstr "დომენი:"
-
-#: modules/printbackends/gtkprintbackendcups.c:1473
-#, c-format
-msgid "Authentication is required to print document “%s”"
-msgstr "დოკუმენტ %s-ის დასაბეჭდად საჭიროა ავთენტიკაცია"
-
-#: modules/printbackends/gtkprintbackendcups.c:1478
-#, c-format
-msgid "Authentication is required to print this document on printer %s"
-msgstr "ამ დოკუმენტის პრინტერზე \"%s\" დასაბეჭდად საჭიროა ავთენტიკაცია"
-
-#: modules/printbackends/gtkprintbackendcups.c:1480
-msgid "Authentication is required to print this document"
-msgstr "ამ დოკუმენტის დასაბეჭდად საჭიროა ავთენტიკაცია"
-
-#: modules/printbackends/gtkprintbackendcups.c:2568
-#, c-format
-msgid "Printer “%s” is low on toner."
-msgstr "პრინტერში %s ტონერი ცოტაღაა."
-
-#: modules/printbackends/gtkprintbackendcups.c:2572
-#, c-format
-msgid "Printer “%s” has no toner left."
-msgstr "პრინტერში %s ტონერი აღარ დარჩა."
-
-#. Translators: "Developer" like on photo development context
-#: modules/printbackends/gtkprintbackendcups.c:2577
-#, c-format
-msgid "Printer “%s” is low on developer."
-msgstr "პრინტერში \"%s\" გამამჟღავნებელი ცოტაღაა."
-
-#. Translators: "Developer" like on photo development context
-#: modules/printbackends/gtkprintbackendcups.c:2582
-#, c-format
-msgid "Printer “%s” is out of developer."
-msgstr "პრინტერში \"%s\" გამამჟღავნებელი აღარ დარჩა."
-
-#. Translators: "marker" is one color bin of the printer
-#: modules/printbackends/gtkprintbackendcups.c:2587
-#, c-format
-msgid "Printer “%s” is low on at least one marker supply."
-msgstr "პრინტერში \"%s\" ერთ-ერთი ტონერი მთავრდება."
-
-#. Translators: "marker" is one color bin of the printer
-#: modules/printbackends/gtkprintbackendcups.c:2592
-#, c-format
-msgid "Printer “%s” is out of at least one marker supply."
-msgstr "პრინტერში \"%s\" ერთ-ერთი ტონერი დამთავრდა."
-
-#: modules/printbackends/gtkprintbackendcups.c:2596
-#, c-format
-msgid "The cover is open on printer “%s”."
-msgstr "პრინტერ %s-ზე თავსახურია ახდილი."
-
-#: modules/printbackends/gtkprintbackendcups.c:2600
-#, c-format
-msgid "The door is open on printer “%s”."
-msgstr "პრინტერზე %s კარი ღიაა."
-
-#: modules/printbackends/gtkprintbackendcups.c:2604
-#, c-format
-msgid "Printer “%s” is low on paper."
-msgstr "პრინტერში %s ფურცლები ცოტაღაა."
-
-#: modules/printbackends/gtkprintbackendcups.c:2608
-#, c-format
-msgid "Printer “%s” is out of paper."
-msgstr "პრინტერში %s ქაღალდი გათავდა."
-
-#: modules/printbackends/gtkprintbackendcups.c:2612
-#, c-format
-msgid "Printer “%s” is currently offline."
-msgstr "პრინტერი '%s' ამჟამად გათიშულია."
-
-#: modules/printbackends/gtkprintbackendcups.c:2616
-#, c-format
-msgid "There is a problem on printer “%s”."
-msgstr "%s პრინტერის პრობლემა."
-
-#. Translators: this string connects multiple printer states together.
-#: modules/printbackends/gtkprintbackendcups.c:2683
-msgid "; "
-msgstr "; "
-
-#: modules/printbackends/gtkprintbackendcups.c:4611
-#: modules/printbackends/gtkprintbackendcups.c:4678
-msgctxt "printing option"
-msgid "Two Sided"
-msgstr "ორმხრივი"
-
-#: modules/printbackends/gtkprintbackendcups.c:4612
-msgctxt "printing option"
-msgid "Paper Type"
-msgstr "ფურცლის ტიპი"
-
-#: modules/printbackends/gtkprintbackendcups.c:4613
-msgctxt "printing option"
-msgid "Paper Source"
-msgstr "ქაღალდის წყარო"
-
-#: modules/printbackends/gtkprintbackendcups.c:4614
-#: modules/printbackends/gtkprintbackendcups.c:4679
-msgctxt "printing option"
-msgid "Output Tray"
-msgstr "გამოტანის თარო"
-
-#: modules/printbackends/gtkprintbackendcups.c:4615
-msgctxt "printing option"
-msgid "Resolution"
-msgstr "გარჩევადობა"
-
-#: modules/printbackends/gtkprintbackendcups.c:4616
-msgctxt "printing option"
-msgid "GhostScript pre-filtering"
-msgstr "GhostScript-ის პრეფილტრი"
-
-#: modules/printbackends/gtkprintbackendcups.c:4625
-msgctxt "printing option value"
-msgid "One Sided"
-msgstr "ერთმხრიანი"
-
-#. Translators: this is an option of "Two Sided"
-#: modules/printbackends/gtkprintbackendcups.c:4627
-msgctxt "printing option value"
-msgid "Long Edge (Standard)"
-msgstr "გრძელი წიბო (სტანდარტული)"
-
-#. Translators: this is an option of "Two Sided"
-#: modules/printbackends/gtkprintbackendcups.c:4629
-msgctxt "printing option value"
-msgid "Short Edge (Flip)"
-msgstr "მოკლე წიბო (გადაბრუნება)"
-
-#. Translators: this is an option of "Paper Source"
-#: modules/printbackends/gtkprintbackendcups.c:4631
-#: modules/printbackends/gtkprintbackendcups.c:4633
-#: modules/printbackends/gtkprintbackendcups.c:4641
-msgctxt "printing option value"
-msgid "Auto Select"
-msgstr "ავტომატური არჩევა"
-
-#. Translators: this is an option of "Paper Source"
-#. Translators: this is an option of "Resolution"
-#: modules/printbackends/gtkprintbackendcups.c:4635
-#: modules/printbackends/gtkprintbackendcups.c:4637
-#: modules/printbackends/gtkprintbackendcups.c:4639
-#: modules/printbackends/gtkprintbackendcups.c:4643
-msgctxt "printing option value"
-msgid "Printer Default"
-msgstr "ნაგულისხმევი პრინტერი"
-
-#. Translators: this is an option of "GhostScript"
-#: modules/printbackends/gtkprintbackendcups.c:4645
-msgctxt "printing option value"
-msgid "Embed GhostScript fonts only"
-msgstr "მხოლოდ GhostScript-ის ფონტების ჩაშენება"
-
-#. Translators: this is an option of "GhostScript"
-#: modules/printbackends/gtkprintbackendcups.c:4647
-msgctxt "printing option value"
-msgid "Convert to PS level 1"
-msgstr "პირველი დონის PS-ზე გადაყვანა"
-
-#. Translators: this is an option of "GhostScript"
-#: modules/printbackends/gtkprintbackendcups.c:4649
-msgctxt "printing option value"
-msgid "Convert to PS level 2"
-msgstr "მეორე დონის PS-ზე გადაყვანა"
-
-#. Translators: this is an option of "GhostScript"
-#: modules/printbackends/gtkprintbackendcups.c:4651
-msgctxt "printing option value"
-msgid "No pre-filtering"
-msgstr "პრეფილტრის გარეშე"
-
-#. Translators: "Miscellaneous" is the label for a button, that opens
-#. up an extra panel of settings in a print dialog.
-#: modules/printbackends/gtkprintbackendcups.c:4660
-msgctxt "printing option group"
-msgid "Miscellaneous"
-msgstr "სხვადასხვა"
-
-#: modules/printbackends/gtkprintbackendcups.c:4687
-msgctxt "sides"
-msgid "One Sided"
-msgstr "ერთმხრიანი"
-
-#. Translators: this is an option of "Two Sided"
-#: modules/printbackends/gtkprintbackendcups.c:4689
-msgctxt "sides"
-msgid "Long Edge (Standard)"
-msgstr "გრძელი წიბო (სტანდარტული)"
-
-#. Translators: this is an option of "Two Sided"
-#: modules/printbackends/gtkprintbackendcups.c:4691
-msgctxt "sides"
-msgid "Short Edge (Flip)"
-msgstr "მოკლე წიბო (გადაბრუნება)"
-
-#. Translators: Top output bin
-#: modules/printbackends/gtkprintbackendcups.c:4694
-msgctxt "output-bin"
-msgid "Top Bin"
-msgstr "ზედა კალათი"
-
-#. Translators: Middle output bin
-#: modules/printbackends/gtkprintbackendcups.c:4696
-msgctxt "output-bin"
-msgid "Middle Bin"
-msgstr "შუა კალათი"
-
-#. Translators: Bottom output bin
-#: modules/printbackends/gtkprintbackendcups.c:4698
-msgctxt "output-bin"
-msgid "Bottom Bin"
-msgstr "ქვედა კალათი"
-
-#. Translators: Side output bin
-#: modules/printbackends/gtkprintbackendcups.c:4700
-msgctxt "output-bin"
-msgid "Side Bin"
-msgstr "გვერდითი კალათი"
-
-#. Translators: Left output bin
-#: modules/printbackends/gtkprintbackendcups.c:4702
-msgctxt "output-bin"
-msgid "Left Bin"
-msgstr "მარცხენა კალათი"
-
-#. Translators: Right output bin
-#: modules/printbackends/gtkprintbackendcups.c:4704
-msgctxt "output-bin"
-msgid "Right Bin"
-msgstr "მარჯვენა კალათი"
-
-#. Translators: Center output bin
-#: modules/printbackends/gtkprintbackendcups.c:4706
-msgctxt "output-bin"
-msgid "Center Bin"
-msgstr "ცენტრალური კალათი"
-
-#. Translators: Rear output bin
-#: modules/printbackends/gtkprintbackendcups.c:4708
-msgctxt "output-bin"
-msgid "Rear Bin"
-msgstr "უკანა კალათი"
-
-#. Translators: Output bin where one sided output is oriented in the face-up position
-#: modules/printbackends/gtkprintbackendcups.c:4710
-msgctxt "output-bin"
-msgid "Face Up Bin"
-msgstr "მაღლა მაყურებელი კალათი"
-
-#. Translators: Output bin where one sided output is oriented in the face-down position
-#: modules/printbackends/gtkprintbackendcups.c:4712
-msgctxt "output-bin"
-msgid "Face Down Bin"
-msgstr "დაბლა მაყურებელი კალათი"
-
-#. Translators: Large capacity output bin
-#: modules/printbackends/gtkprintbackendcups.c:4714
-msgctxt "output-bin"
-msgid "Large Capacity Bin"
-msgstr "დიდი მოცულობის კალათი"
-
-#. Translators: Output stacker number %d
-#: modules/printbackends/gtkprintbackendcups.c:4736
-#, c-format
-msgctxt "output-bin"
-msgid "Stacker %d"
-msgstr "დამლაგებელი %d"
-
-#. Translators: Output mailbox number %d
-#: modules/printbackends/gtkprintbackendcups.c:4740
-#, c-format
-msgctxt "output-bin"
-msgid "Mailbox %d"
-msgstr "საფოსტო ყუთი %d"
-
-#. Translators: Private mailbox
-#: modules/printbackends/gtkprintbackendcups.c:4744
-msgctxt "output-bin"
-msgid "My Mailbox"
-msgstr "ჩემი საფოსტო ყუთი"
-
-#. Translators: Output tray number %d
-#: modules/printbackends/gtkprintbackendcups.c:4748
-#, c-format
-msgctxt "output-bin"
-msgid "Tray %d"
-msgstr "თარო %d"
-
-#: modules/printbackends/gtkprintbackendcups.c:5225
-msgid "Printer Default"
-msgstr "ნაგულისხმევი პრინტერი"
-
-#. Translators, this string is used to label the job priority option
-#. * in the print dialog
-#.
-#: modules/printbackends/gtkprintbackendcups.c:5704
-msgid "Job Priority"
-msgstr "ამოცანის პრიორიტეტი"
-
-#. Translators, this string is used to label the billing info entry
-#. * in the print dialog
-#.
-#: modules/printbackends/gtkprintbackendcups.c:5715
-msgid "Billing Info"
-msgstr "ანგარიშთა ინფორმაცია"
-
-#. Translators, these strings are names for various 'standard' cover
-#. * pages that the printing system may support.
-#.
-#: modules/printbackends/gtkprintbackendcups.c:5739
-msgctxt "cover page"
-msgid "None"
-msgstr "არცერთი"
-
-#: modules/printbackends/gtkprintbackendcups.c:5740
-msgctxt "cover page"
-msgid "Classified"
-msgstr "საიდუმლო"
-
-#: modules/printbackends/gtkprintbackendcups.c:5741
-msgctxt "cover page"
-msgid "Confidential"
-msgstr "კონფიდენციალური"
-
-#: modules/printbackends/gtkprintbackendcups.c:5742
-msgctxt "cover page"
-msgid "Secret"
-msgstr "სამხედრო საიდუმლო"
-
-#: modules/printbackends/gtkprintbackendcups.c:5743
-msgctxt "cover page"
-msgid "Standard"
-msgstr "სტანდარტული"
-
-#: modules/printbackends/gtkprintbackendcups.c:5744
-msgctxt "cover page"
-msgid "Top Secret"
-msgstr "უმაღლესი დონის საიდუმლო"
-
-#: modules/printbackends/gtkprintbackendcups.c:5745
-msgctxt "cover page"
-msgid "Unclassified"
-msgstr "არასაიდუმლო"
-
-#. Translators, this string is used to label the pages-per-sheet option
-#. * in the print dialog
-#.
-#: modules/printbackends/gtkprintbackendcups.c:5757
-msgctxt "printer option"
-msgid "Pages per Sheet"
-msgstr "გვერდები ფურცელზე"
-
-#. Translators, this string is used to label the option in the print
-#. * dialog that controls in what order multiple pages are arranged
-#.
-#: modules/printbackends/gtkprintbackendcups.c:5774
-msgctxt "printer option"
-msgid "Page Ordering"
-msgstr "გვერდის დალაგება"
-
-#. Translators: this is the name of the option that controls when
-#. * a print job is printed. Possible values are 'now', a specified time,
-#. * or 'on hold'
-#.
-#: modules/printbackends/gtkprintbackendcups.c:5851
-msgctxt "printer option"
-msgid "Print at"
-msgstr "დაბეჭდვის დრო"
-
-#. Translators: this is the name of the option that allows the user
-#. * to specify a time when a print job will be printed.
-#.
-#: modules/printbackends/gtkprintbackendcups.c:5862
-msgctxt "printer option"
-msgid "Print at time"
-msgstr "დაბეჭდვის დრო"
-
-#. Translators: this format is used to display a custom
-#. * paper size. The two placeholders are replaced with
-#. * the width and height in points. E.g: "Custom
-#. * 230.4x142.9"
-#.
-#: modules/printbackends/gtkprintbackendcups.c:5909
-#, c-format
-msgid "Custom %s×%s"
-msgstr "ხელით %s×%s"
-
-#. TRANSLATORS: this is the ICC color profile to use for this job
-#: modules/printbackends/gtkprintbackendcups.c:6020
-msgctxt "printer option"
-msgid "Printer Profile"
-msgstr "პრინტერის პროფილი"
-
-#. TRANSLATORS: this is when color profile information is unavailable
-#: modules/printbackends/gtkprintbackendcups.c:6027
-msgctxt "printer option value"
-msgid "Unavailable"
-msgstr "მიუწვდომელია"
-
-#: modules/printbackends/gtkprintbackendfile.c:263
-msgid "output"
-msgstr "გამოტანა"
-
-#: modules/printbackends/gtkprintbackendfile.c:543
-msgid "Print to File"
-msgstr "ფაილში ბეჭდვა"
-
-#: modules/printbackends/gtkprintbackendfile.c:675
-msgid "PDF"
-msgstr "PDF"
-
-#: modules/printbackends/gtkprintbackendfile.c:675
-msgid "PostScript"
-msgstr "PostScript"
-
-#: modules/printbackends/gtkprintbackendfile.c:675
-msgid "SVG"
-msgstr "SVG"
-
-#: modules/printbackends/gtkprintbackendfile.c:688
-msgid "Pages per _sheet:"
-msgstr "გვერდები _ფურცელზე:"
-
-#: modules/printbackends/gtkprintbackendfile.c:758
-msgid "File"
-msgstr "ფაილი"
-
-#: modules/printbackends/gtkprintbackendfile.c:768
-msgid "_Output format"
-msgstr "_გამოტანის ფორმატი"
-
-#. TRANSLATORS: when we're running an old CUPS, and
-#. * it hasn't registered the device with colord
-#: modules/printbackends/gtkprintercups.c:272
-msgid "Color management unavailable"
-msgstr "ფერების მართვის გარეშე"
-
-#. TRANSLATORS: when there is no color profile available
-#: modules/printbackends/gtkprintercups.c:284
-msgid "No profile available"
-msgstr "პროფილის გარეშე"
-
-#. TRANSLATORS: when the color profile has no title
-#: modules/printbackends/gtkprintercups.c:295
-msgid "Unspecified profile"
-msgstr "მიუთითებელი პროფილი"
-
-#: tools/encodesymbolic.c:41
+#: tools/encodesymbolic.c:42
 msgid "Output to this directory instead of cwd"
 msgstr "მიმდინარის მაგიერ ამ საქაღალდეში გამოტანა"
 
-#: tools/encodesymbolic.c:42
+#: tools/encodesymbolic.c:43
 msgid "Generate debug output"
 msgstr "პროგრამის გამართვის ინფორმაციის გენერაცია"
 
-#: tools/encodesymbolic.c:95
+#: tools/encodesymbolic.c:93
 #, c-format
 msgid "Invalid size %s\n"
 msgstr "არასწორი ზომა: %s\n"
 
-#: tools/encodesymbolic.c:107 tools/encodesymbolic.c:116
+#: tools/encodesymbolic.c:107
 #, c-format
 msgid "Can’t load file: %s\n"
 msgstr "ფაილის ჩატვირთვა შეუძლებელია: \"%s\"\n"
 
-#: tools/encodesymbolic.c:144 tools/encodesymbolic.c:162
+#: tools/encodesymbolic.c:144
 #, c-format
 msgid "Can’t save file %s: %s\n"
 msgstr "ფაილის შენახვა შეუძლებელია: \"%s\": %s\n"
-
-#: tools/encodesymbolic.c:168
-#, c-format
-msgid "Can’t close stream"
-msgstr "ნაკადის დახურვა შეუძლებელია"
 
 #: tools/gtk-builder-tool.c:36
 #, c-format
@@ -7561,9 +7568,9 @@ msgstr ""
 #: tools/gtk-builder-tool-preview.c:180 tools/gtk-builder-tool-screenshot.c:360
 #: tools/gtk-builder-tool-simplify.c:2709 tools/gtk-builder-tool-validate.c:267
 #: tools/gtk-image-tool-compare.c:43 tools/gtk-image-tool-info.c:79
-#: tools/gtk-path-tool-render.c:121 tools/gtk-rendernode-tool-compare.c:67
+#: tools/gtk-path-tool-render.c:63 tools/gtk-rendernode-tool-compare.c:67
 #: tools/gtk-rendernode-tool-extract.c:294 tools/gtk-rendernode-tool-info.c:226
-#: tools/gtk-rendernode-tool-show.c:116
+#: tools/gtk-rendernode-tool-show.c:122
 msgid "FILE"
 msgstr "FILE"
 
@@ -7597,7 +7604,7 @@ msgstr "სტილის CSS ფაილიდან გამოყენე
 #: tools/gtk-builder-tool-preview.c:187 tools/gtk-builder-tool-screenshot.c:370
 #: tools/gtk-builder-tool-validate.c:274
 #: tools/gtk-rendernode-tool-benchmark.c:108
-#: tools/gtk-rendernode-tool-render.c:262 tools/gtk-rendernode-tool-show.c:123
+#: tools/gtk-rendernode-tool-render.c:279 tools/gtk-rendernode-tool-show.c:129
 #, c-format
 msgid "Could not initialize windowing system\n"
 msgstr "ფანჯრული სისტემის ინიციალიზაციის შეცდომა\n"
@@ -7642,13 +7649,13 @@ msgstr ""
 "თავზე გადასაწერად გამოიყენეთ --force.\n"
 
 #: tools/gtk-builder-tool-screenshot.c:332
-#: tools/gtk-rendernode-tool-render.c:230
+#: tools/gtk-rendernode-tool-render.c:245
 #, c-format
 msgid "Output written to %s.\n"
 msgstr "გამოტანილი ინფორმაცია ჩაწერილია %s-ში.\n"
 
 #: tools/gtk-builder-tool-screenshot.c:336
-#: tools/gtk-rendernode-tool-render.c:234
+#: tools/gtk-rendernode-tool-render.c:249
 #, c-format
 msgid "Failed to save %s: %s\n"
 msgstr "\"%s'-ის შენახვის შეცდომა: %s\n"
@@ -7666,9 +7673,9 @@ msgid "Overwrite existing file"
 msgstr "არსებულ ფაილზე გადაწერა"
 
 #: tools/gtk-builder-tool-screenshot.c:363 tools/gtk-image-tool-compare.c:46
-#: tools/gtk-image-tool-convert.c:89 tools/gtk-image-tool-relabel.c:86
+#: tools/gtk-image-tool-convert.c:112 tools/gtk-image-tool-relabel.c:86
 #: tools/gtk-image-tool-show.c:119 tools/gtk-rendernode-tool-benchmark.c:99
-#: tools/gtk-rendernode-tool-render.c:255
+#: tools/gtk-rendernode-tool-render.c:272
 msgid "FILE…"
 msgstr "FILE…"
 
@@ -7816,7 +7823,7 @@ msgstr "გამოტანის ფაილი"
 msgid "Compare two images"
 msgstr "ორი გამოსახულების შედარება"
 
-#: tools/gtk-image-tool-compare.c:70 tools/gtk-image-tool-convert.c:113
+#: tools/gtk-image-tool-compare.c:70 tools/gtk-image-tool-convert.c:136
 #: tools/gtk-image-tool-info.c:101 tools/gtk-image-tool-relabel.c:109
 #: tools/gtk-image-tool-show.c:141
 #, c-format
@@ -7830,69 +7837,64 @@ msgstr ""
 "იღებს, მხოლოდ, ორ გამოსახულების ფაილს\n"
 "\n"
 
-#: tools/gtk-image-tool-compare.c:85 tools/gtk-rendernode-tool-compare.c:111
-#, c-format
-msgid "Failed to load %s: %s\n"
-msgstr "\"%s'-ის ჩატვირთვა ჩავარდა: %s\n"
-
-#: tools/gtk-image-tool-compare.c:96 tools/gtk-rendernode-tool-compare.c:122
+#: tools/gtk-image-tool-compare.c:89 tools/gtk-rendernode-tool-compare.c:122
 #, c-format
 msgid "Could not save diff image to %s\n"
 msgstr ""
 "ვერ ჩავწერე სხვაობის გამოსახულება %s-ში\n"
 "\n"
 
-#: tools/gtk-image-tool-compare.c:106 tools/gtk-rendernode-tool-compare.c:132
+#: tools/gtk-image-tool-compare.c:99 tools/gtk-rendernode-tool-compare.c:132
 #, c-format
 msgid "Differences witten to %s.\n"
 msgstr "განსხვავებები ჩაწერილია %s-ში.\n"
 
-#: tools/gtk-image-tool-compare.c:108 tools/gtk-rendernode-tool-compare.c:134
+#: tools/gtk-image-tool-compare.c:101 tools/gtk-rendernode-tool-compare.c:134
 #, c-format
 msgid "The images are different.\n"
 msgstr "გამოსახულებები განსხვავდება.\n"
 
-#: tools/gtk-image-tool-compare.c:111 tools/gtk-rendernode-tool-compare.c:137
+#: tools/gtk-image-tool-compare.c:104 tools/gtk-rendernode-tool-compare.c:137
 #, c-format
 msgid "No differences.\n"
 msgstr "განსხვავებების გარეშე.\n"
 
-#: tools/gtk-image-tool-convert.c:86
+#: tools/gtk-image-tool-convert.c:109
 msgid "Format to use"
 msgstr "გამოსაყენებელი ფორმატი"
 
-#: tools/gtk-image-tool-convert.c:86
+#: tools/gtk-image-tool-convert.c:109
 msgid "FORMAT"
 msgstr "ფორმატი"
 
-#: tools/gtk-image-tool-convert.c:87 tools/gtk-image-tool-relabel.c:84
+#: tools/gtk-image-tool-convert.c:110 tools/gtk-image-tool-relabel.c:84
 msgid "Color state to use"
 msgstr "ფერის მდგომარეობა გამოსაყენებლად"
 
-#: tools/gtk-image-tool-convert.c:87 tools/gtk-image-tool-relabel.c:84
+#: tools/gtk-image-tool-convert.c:110 tools/gtk-image-tool-relabel.c:84
 msgid "COLORSTATE"
 msgstr "ფერისმდგომარეობა"
 
-#: tools/gtk-image-tool-convert.c:88 tools/gtk-image-tool-relabel.c:85
+#: tools/gtk-image-tool-convert.c:111 tools/gtk-image-tool-relabel.c:85
 msgid "Color state to use, as cicp tuple"
 msgstr "გამოსაყენებელი ფერის მდგომარეობა, cicp კორტეჟის ფორმით"
 
-#: tools/gtk-image-tool-convert.c:88 tools/gtk-image-tool-relabel.c:85
+#: tools/gtk-image-tool-convert.c:111 tools/gtk-image-tool-relabel.c:85
 msgid "CICP"
 msgstr "CICP"
 
-#: tools/gtk-image-tool-convert.c:100
+#: tools/gtk-image-tool-convert.c:123
 msgid "Convert the image to a different format or color state."
 msgstr "გადაიყვანეთ გამოსახულება სხვა ფორმატში ან ფერის მდგომარეობაში."
 
-#: tools/gtk-image-tool-convert.c:119 tools/gtk-image-tool-relabel.c:115
+#: tools/gtk-image-tool-convert.c:142 tools/gtk-image-tool-relabel.c:115
 #, c-format
 msgid "Can only accept a single image file and output file\n"
 msgstr ""
 "მისაღებია ერთი გამოსახულების ფაილი და გამოტანის ფაილი\n"
 "\n"
 
-#: tools/gtk-image-tool-convert.c:133
+#: tools/gtk-image-tool-convert.c:156
 #, c-format
 msgid ""
 "Not a memory format: %s\n"
@@ -7903,7 +7905,7 @@ msgstr ""
 "შესაძლო მნიშვნელობებია:\n"
 "  %s\n"
 
-#: tools/gtk-image-tool-convert.c:150
+#: tools/gtk-image-tool-convert.c:173
 #, c-format
 msgid ""
 "Not a color state: %s\n"
@@ -7914,12 +7916,12 @@ msgstr ""
 "შესაძლო მნიშვნელობებია:\n"
 "  %s\n"
 
-#: tools/gtk-image-tool-convert.c:160 tools/gtk-image-tool-relabel.c:140
+#: tools/gtk-image-tool-convert.c:183 tools/gtk-image-tool-relabel.c:140
 #, c-format
 msgid "Can't specify both --color-state and --cicp\n"
 msgstr "ორივე პარამეტრს, --color-stateდა --cicp, ერთად ვერ მიუთითებთ\n"
 
-#: tools/gtk-image-tool-convert.c:168 tools/gtk-image-tool-relabel.c:148
+#: tools/gtk-image-tool-convert.c:191 tools/gtk-image-tool-relabel.c:148
 #, c-format
 msgid "Not a supported cicp tuple: %s\n"
 msgstr "მხარდაჭერილი არაა cicp კორტეჟის მიერ: %s\n"
@@ -7961,7 +7963,7 @@ msgstr ""
 "ფერის მდგომარეობა არაა: %s\n"
 "შესაძლო მნიშვნელობებია: %s\n"
 
-#: tools/gtk-image-tool-show.c:117 tools/gtk-rendernode-tool-show.c:115
+#: tools/gtk-image-tool-show.c:117 tools/gtk-rendernode-tool-show.c:121
 msgid "Don't add a titlebar"
 msgstr "სათაურის ზოლი არ დაემატება"
 
@@ -7969,7 +7971,22 @@ msgstr "სათაურის ზოლი არ დაემატება
 msgid "Show one or more images."
 msgstr "ერთი ან მეტი გამოსახულების ჩვენება."
 
-#: tools/gtk-image-tool-utils.c:255
+#: tools/gtk-image-tool-utils.c:50 tools/gtk-rendernode-tool-utils.c:54
+#, c-format
+msgid "Error at %s: %s\n"
+msgstr "შეცდომა მისამართზე %s: %s\n"
+
+#: tools/gtk-image-tool-utils.c:68 tools/gtk-rendernode-tool-utils.c:72
+#, c-format
+msgid "Failed to load node file: %s\n"
+msgstr "შეცდომა კვანძის ფაილის ჩატვირთვისას: %s\n"
+
+#: tools/gtk-image-tool-utils.c:89
+#, c-format
+msgid "%s is not a texture node\n"
+msgstr "%s ტექსტურის კვანძი არაა\n"
+
+#: tools/gtk-image-tool-utils.c:315
 #, c-format
 msgid "cicp must be 4 numbers, separated by /\n"
 msgstr "cicp 4 რიცხვი უნდა იყოს, გამოყოფილი სიმბოლოთი /\n"
@@ -8074,8 +8091,7 @@ msgid "Allow conic Bézier curves"
 msgstr "კონუსური ბეზიეს მრუდების დაშვება"
 
 #: tools/gtk-path-tool-decompose.c:87 tools/gtk-path-tool-info.c:88
-#: tools/gtk-path-tool-render.c:125 tools/gtk-path-tool-restrict.c:38
-#: tools/gtk-path-tool-reverse.c:34 tools/gtk-path-tool-show.c:147
+#: tools/gtk-path-tool-restrict.c:38 tools/gtk-path-tool-reverse.c:34
 msgid "PATH"
 msgstr "ბილიკი"
 
@@ -8139,132 +8155,150 @@ msgstr "%d კუბი"
 msgid "%d conics"
 msgstr "%d კონუსი"
 
-#: tools/gtk-path-tool-render.c:117 tools/gtk-path-tool-show.c:140
+#: tools/gtk-path-tool-render.c:58 tools/gtk-path-tool-show.c:112
 msgid "Fill the path (the default)"
 msgstr "კონტურის შევსება (ნაგულისხმევი)"
 
-#: tools/gtk-path-tool-render.c:118 tools/gtk-path-tool-show.c:141
+#: tools/gtk-path-tool-render.c:59 tools/gtk-path-tool-show.c:113
 msgid "Stroke the path"
 msgstr "კონტურის სვლა"
 
-#: tools/gtk-path-tool-render.c:119 tools/gtk-path-tool-show.c:142
+#: tools/gtk-path-tool-render.c:60 tools/gtk-path-tool-show.c:114
 msgid "Show path points"
 msgstr "ბილიკის წერტილების ჩვენება"
 
-#: tools/gtk-path-tool-render.c:120 tools/gtk-path-tool-show.c:143
+#: tools/gtk-path-tool-render.c:61 tools/gtk-path-tool-show.c:115
 msgid "Show control points"
 msgstr "საკონტროლო წერტილების ჩვენება"
 
-#: tools/gtk-path-tool-render.c:121
+#: tools/gtk-path-tool-render.c:62 tools/gtk-path-tool-show.c:116
+msgid "Show intersections"
+msgstr "კვეთების ჩვენება"
+
+#: tools/gtk-path-tool-render.c:63
 msgid "The output file"
 msgstr "გამოტანის ფაილი"
 
-#: tools/gtk-path-tool-render.c:122 tools/gtk-path-tool-show.c:144
+#: tools/gtk-path-tool-render.c:64 tools/gtk-path-tool-show.c:117
 msgid "Foreground color"
 msgstr "წინა პლანის ფერი"
 
-#: tools/gtk-path-tool-render.c:122 tools/gtk-path-tool-render.c:123
-#: tools/gtk-path-tool-render.c:124 tools/gtk-path-tool-show.c:144
-#: tools/gtk-path-tool-show.c:145 tools/gtk-path-tool-show.c:146
+#: tools/gtk-path-tool-render.c:64 tools/gtk-path-tool-render.c:65
+#: tools/gtk-path-tool-render.c:66 tools/gtk-path-tool-render.c:67
+#: tools/gtk-path-tool-show.c:117 tools/gtk-path-tool-show.c:118
+#: tools/gtk-path-tool-show.c:119 tools/gtk-path-tool-show.c:120
 msgid "COLOR"
 msgstr "ფერი"
 
-#: tools/gtk-path-tool-render.c:123 tools/gtk-path-tool-show.c:145
+#: tools/gtk-path-tool-render.c:65 tools/gtk-path-tool-show.c:118
 msgid "Background color"
 msgstr "ფონის ფერი"
 
-#: tools/gtk-path-tool-render.c:124 tools/gtk-path-tool-show.c:146
+#: tools/gtk-path-tool-render.c:66 tools/gtk-path-tool-show.c:119
 msgid "Point color"
 msgstr "წერტილის ფერი"
 
-#: tools/gtk-path-tool-render.c:129 tools/gtk-path-tool-show.c:151
-msgid "Fill rule (winding, even-odd)"
-msgstr "შევსების წესი (winding, even-odd)"
+#: tools/gtk-path-tool-render.c:67 tools/gtk-path-tool-show.c:120
+msgid "Intersection color"
+msgstr "კვეთის ფერი"
 
-#: tools/gtk-path-tool-render.c:129 tools/gtk-path-tool-render.c:133
-#: tools/gtk-path-tool-render.c:134 tools/gtk-path-tool-render.c:135
-#: tools/gtk-path-tool-render.c:136 tools/gtk-path-tool-render.c:137
-#: tools/gtk-path-tool-render.c:138 tools/gtk-path-tool-show.c:151
-#: tools/gtk-path-tool-show.c:155 tools/gtk-path-tool-show.c:156
-#: tools/gtk-path-tool-show.c:157 tools/gtk-path-tool-show.c:158
-#: tools/gtk-path-tool-show.c:159 tools/gtk-path-tool-show.c:160
+#: tools/gtk-path-tool-render.c:68 tools/gtk-path-tool-show.c:121
+msgid "Zoom level (number)"
+msgstr "გადიდების დონე (რიცხვი)"
+
+#: tools/gtk-path-tool-render.c:68 tools/gtk-path-tool-render.c:73
+#: tools/gtk-path-tool-render.c:77 tools/gtk-path-tool-render.c:78
+#: tools/gtk-path-tool-render.c:79 tools/gtk-path-tool-render.c:80
+#: tools/gtk-path-tool-render.c:81 tools/gtk-path-tool-render.c:82
+#: tools/gtk-path-tool-show.c:121 tools/gtk-path-tool-show.c:126
+#: tools/gtk-path-tool-show.c:130 tools/gtk-path-tool-show.c:131
+#: tools/gtk-path-tool-show.c:132 tools/gtk-path-tool-show.c:133
+#: tools/gtk-path-tool-show.c:134 tools/gtk-path-tool-show.c:135
 msgid "VALUE"
 msgstr "მნიშვნელობა"
 
-#: tools/gtk-path-tool-render.c:133 tools/gtk-path-tool-show.c:155
+#: tools/gtk-path-tool-render.c:69 tools/gtk-path-tool-show.c:122
+msgid "PATH…"
+msgstr "ბილიკი…"
+
+#: tools/gtk-path-tool-render.c:73 tools/gtk-path-tool-show.c:126
+msgid "Fill rule (winding, even-odd)"
+msgstr "შევსების წესი (winding, even-odd)"
+
+#: tools/gtk-path-tool-render.c:77 tools/gtk-path-tool-show.c:130
 msgid "Line width (number)"
 msgstr "ხაზის სიგანე (რიცხვი)"
 
-#: tools/gtk-path-tool-render.c:134 tools/gtk-path-tool-show.c:156
+#: tools/gtk-path-tool-render.c:78 tools/gtk-path-tool-show.c:131
 msgid "Line cap (butt, round, square)"
 msgstr "ხაზის თავი (ისარი, მრგვალი, კვადრატი)"
 
-#: tools/gtk-path-tool-render.c:135 tools/gtk-path-tool-show.c:157
+#: tools/gtk-path-tool-render.c:79
 msgid "Line join (miter, miter-clip, round, bevel, arcs)"
 msgstr "ხაზების შეერთება (miter, miter-clip, round, bevel, arcs)"
 
-#: tools/gtk-path-tool-render.c:136 tools/gtk-path-tool-show.c:158
+#: tools/gtk-path-tool-render.c:80 tools/gtk-path-tool-show.c:133
 msgid "Miter limit (number)"
 msgstr "Miter-ის ლიმიტი (რიცხვი)"
 
-#: tools/gtk-path-tool-render.c:137 tools/gtk-path-tool-show.c:159
+#: tools/gtk-path-tool-render.c:81 tools/gtk-path-tool-show.c:134
 msgid "Dash pattern (comma-separated numbers)"
 msgstr "პუნქტირის ნიმუში (მძიმით გამოყოფილი რიცხვები)"
 
-#: tools/gtk-path-tool-render.c:138 tools/gtk-path-tool-show.c:160
+#: tools/gtk-path-tool-render.c:82 tools/gtk-path-tool-show.c:135
 msgid "Dash offset (number)"
 msgstr "პუნქტირის წანაცვლება (რიცხვი)"
 
-#: tools/gtk-path-tool-render.c:161 tools/gtk-path-tool-show.c:172
+#: tools/gtk-path-tool-render.c:110 tools/gtk-path-tool-show.c:148
 msgid "Could not initialize windowing system"
 msgstr "ფანჯრული სისტემის ინიციალიზაციის შეცდომა"
 
-#: tools/gtk-path-tool-render.c:168
+#: tools/gtk-path-tool-render.c:117
 msgid "Render the path to a png image."
 msgstr "ბილიკის რენდერი png გამოსახულებაში."
 
-#: tools/gtk-path-tool-render.c:173 tools/gtk-path-tool-show.c:183
+#: tools/gtk-path-tool-render.c:122 tools/gtk-path-tool-show.c:159
 msgid "Options related to filling"
 msgstr "შევსების პარამეტრები"
 
-#: tools/gtk-path-tool-render.c:174 tools/gtk-path-tool-show.c:184
+#: tools/gtk-path-tool-render.c:123 tools/gtk-path-tool-show.c:160
 msgid "Show help for fill options"
 msgstr "დახმარების ჩვენება შევსების პარამეტრებისთვის"
 
-#: tools/gtk-path-tool-render.c:181 tools/gtk-path-tool-show.c:191
+#: tools/gtk-path-tool-render.c:130 tools/gtk-path-tool-show.c:167
 msgid "Options related to stroking"
 msgstr "სვლის პარამეტრები"
 
-#: tools/gtk-path-tool-render.c:182 tools/gtk-path-tool-show.c:192
+#: tools/gtk-path-tool-render.c:131 tools/gtk-path-tool-show.c:168
 msgid "Show help for stroke options"
 msgstr "დახმარების ჩვენება სვლის პარამეტრებისთვის"
 
-#: tools/gtk-path-tool-render.c:199 tools/gtk-path-tool-show.c:209
+#: tools/gtk-path-tool-render.c:148 tools/gtk-path-tool-show.c:185
 msgid "No path specified"
 msgstr "ბილიკი მითითებული არაა"
 
-#: tools/gtk-path-tool-render.c:205
+#: tools/gtk-path-tool-render.c:154
 msgid "Can only render a single path"
 msgstr "შესაძლებელია მხოლოდ ერთ ბილიკის რენდერი"
 
-#: tools/gtk-path-tool-render.c:250 tools/gtk-path-tool-show.c:221
+#: tools/gtk-path-tool-render.c:188 tools/gtk-path-tool-show.c:201
 msgid "fill rule"
 msgstr "შევსების წესი"
 
-#: tools/gtk-path-tool-render.c:255 tools/gtk-path-tool-show.c:226
+#: tools/gtk-path-tool-render.c:194 tools/gtk-path-tool-show.c:207
 msgid "line cap"
 msgstr "ხაზის თავი"
 
-#: tools/gtk-path-tool-render.c:256 tools/gtk-path-tool-show.c:227
+#: tools/gtk-path-tool-render.c:195 tools/gtk-path-tool-show.c:208
 msgid "line join"
 msgstr "ხაზების შეერთება"
 
-#: tools/gtk-path-tool-render.c:310
+#: tools/gtk-path-tool-render.c:271
 #, c-format
 msgid "Saving png to '%s' failed"
 msgstr "PNG-ის '%s'-ში შენახვა შეუძლებელია"
 
-#: tools/gtk-path-tool-render.c:317
+#: tools/gtk-path-tool-render.c:278
 #, c-format
 msgid "Output written to '%s'."
 msgstr "გამოტანილი ინფორმაცია ჩაწერილია %s-ში."
@@ -8289,17 +8323,21 @@ msgstr "სეგმენტამდე ბილიკის შეზღუ�
 msgid "Reverse a path."
 msgstr "ბილიკის შებრუნება."
 
-#: tools/gtk-path-tool-show.c:46 tools/gtk-path-tool-show.c:88
+#: tools/gtk-path-tool-show.c:53
 msgid "Path Preview"
 msgstr "ბილიკის მინიატურა"
 
-#: tools/gtk-path-tool-show.c:180
+#: tools/gtk-path-tool-show.c:132
+msgid "Line join (miter, miter-clip, round, bevel)"
+msgstr "ხაზის შეერთება (miter, miter-clip, round, bevel)"
+
+#: tools/gtk-path-tool-show.c:156
 msgid "Display the path."
 msgstr "ბილიკის ჩვენება."
 
-#: tools/gtk-path-tool-show.c:215
-msgid "Can only show a single path"
-msgstr "შესაძლებელია მხოლოდ ერთი ბილიკის ჩვენება"
+#: tools/gtk-path-tool-show.c:191
+msgid "Can only show one or two paths"
+msgstr "შესაძლებელია მხოლოდ ერთი, ან ორი ბილიკის ჩვენება"
 
 #: tools/gtk-path-tool-utils.c:58
 #, c-format
@@ -8346,6 +8384,7 @@ msgid ""
 "Commands:\n"
 "  benchmark    Benchmark rendering of a node\n"
 "  compare      Compare nodes or images\n"
+"  convert      Convert into nodes\n"
 "  extract      Extract data urls\n"
 "  info         Provide information about the node\n"
 "  show         Show the node\n"
@@ -8360,6 +8399,7 @@ msgstr ""
 "ბრძანებები:\n"
 "  benchmark   კვანძის რენდერის წარმადობის გაზომვა\n"
 "  compare   კვანძების ან გამოსახულებების შედარება\n"
+"  convert     გადაყვანა კვანძებში\n"
 "  extract   მონაცემების url-ების გაშლა\n"
 "  info     ამ კვანძის შესახებ ინფორმაციის გამოტანა\n"
 "  show     ამ კვანძის ჩვენება\n"
@@ -8372,7 +8412,7 @@ msgstr "რენდერერის დამატება ტესტი�
 
 #: tools/gtk-rendernode-tool-benchmark.c:96
 #: tools/gtk-rendernode-tool-compare.c:65
-#: tools/gtk-rendernode-tool-render.c:254
+#: tools/gtk-rendernode-tool-render.c:270
 msgid "RENDERER"
 msgstr "რენდერერი"
 
@@ -8394,7 +8434,7 @@ msgstr ".node ფაილის სატესტო რენდერი."
 
 #: tools/gtk-rendernode-tool-benchmark.c:129
 #: tools/gtk-rendernode-tool-extract.c:316 tools/gtk-rendernode-tool-info.c:248
-#: tools/gtk-rendernode-tool-render.c:283 tools/gtk-rendernode-tool-show.c:144
+#: tools/gtk-rendernode-tool-render.c:300 tools/gtk-rendernode-tool-show.c:150
 #, c-format
 msgid "No .node file specified\n"
 msgstr ".ui ფაილი მითითებული არაა\n"
@@ -8405,7 +8445,7 @@ msgid "Can only benchmark a single .node file\n"
 msgstr "შეგიძლიათ მხოლოდ ერთი .node ფაილის დატესტვა\n"
 
 #: tools/gtk-rendernode-tool-compare.c:65
-#: tools/gtk-rendernode-tool-render.c:254
+#: tools/gtk-rendernode-tool-render.c:270
 msgid "Renderer to use"
 msgstr "გამოყენებული რენდერერი"
 
@@ -8423,10 +8463,15 @@ msgid "Must specify two files\n"
 msgstr "აუცილებელია ორი ფაილის მითითება\n"
 
 #: tools/gtk-rendernode-tool-compare.c:102
-#: tools/gtk-rendernode-tool-render.c:209
+#: tools/gtk-rendernode-tool-render.c:211
 #, c-format
 msgid "Failed to create renderer: %s\n"
 msgstr "რენდერერის შექმნა ჩავარდა: %s\n"
+
+#: tools/gtk-rendernode-tool-compare.c:111
+#, c-format
+msgid "Failed to load %s: %s\n"
+msgstr "\"%s'-ის ჩატვირთვა ჩავარდა: %s\n"
 
 #: tools/gtk-rendernode-tool-extract.c:73
 #: tools/gtk-rendernode-tool-extract.c:149
@@ -8479,7 +8524,7 @@ msgstr "გაუმჭვირვალე ნაწილი:"
 msgid "Provide information about the render node."
 msgstr "შეიყვანეთ ინფორმაცია რენდერის კვანძის შესახებ."
 
-#: tools/gtk-rendernode-tool-render.c:170
+#: tools/gtk-rendernode-tool-render.c:171
 #, c-format
 msgid ""
 "File %s exists.\n"
@@ -8489,39 +8534,37 @@ msgstr ""
 "თუ გნებავთ, თავზე გადააწეროთ, ფაილის სახელი მიუთითეთ.\n"
 "\n"
 
-#: tools/gtk-rendernode-tool-render.c:184
-#: tools/gtk-rendernode-tool-render.c:196
+#: tools/gtk-rendernode-tool-render.c:185
+#: tools/gtk-rendernode-tool-render.c:197
 #, c-format
 msgid "Failed to generate SVG: %s\n"
 msgstr "შეცდომა SVG-ის გენერაციისას: %s\n"
 
-#: tools/gtk-rendernode-tool-render.c:270
+#: tools/gtk-rendernode-tool-render.c:271
+msgid "Keep node position unchanged"
+msgstr "კვანძის მდებარეობის უცვლელად შენარჩუნება"
+
+#: tools/gtk-rendernode-tool-render.c:287
 msgid "Render a .node file to an image."
 msgstr ".ui ფაილის რენდერი გამოსახულებაში."
 
-#: tools/gtk-rendernode-tool-render.c:289
+#: tools/gtk-rendernode-tool-render.c:306
 #, c-format
 msgid "Can only render a single .node file to a single output file\n"
 msgstr "ერთი .node ფაილის მხოლოდ ერთ გამოტანის ფაილში რენდერი შეგიძლიათ\n"
 
-#: tools/gtk-rendernode-tool-show.c:131
+#: tools/gtk-rendernode-tool-show.c:120
+msgid "Put node into offload container"
+msgstr "კვანძის განტავსება დატვირთვის გატანის კონტეინერში"
+
+#: tools/gtk-rendernode-tool-show.c:137
 msgid "Show the render node."
 msgstr "რენდერის კვანძის ჩვენება."
 
-#: tools/gtk-rendernode-tool-show.c:150
+#: tools/gtk-rendernode-tool-show.c:156
 #, c-format
 msgid "Can only preview a single .node file\n"
 msgstr "შეგიძლიათ მხოლოდ ერთი .node ფაილის გადახედვა\n"
-
-#: tools/gtk-rendernode-tool-utils.c:54
-#, c-format
-msgid "Error at %s: %s\n"
-msgstr "შეცდომა მისამართზე %s: %s\n"
-
-#: tools/gtk-rendernode-tool-utils.c:72
-#, c-format
-msgid "Failed to load node file: %s\n"
-msgstr "შეცდომა კვანძის ფაილის ჩატვირთვისას: %s\n"
 
 #: tools/updateiconcache.c:1402
 #, c-format
@@ -8630,6 +8673,17 @@ msgstr ""
 "\"%s\"-ში თემის ინდექსის ფაილი აღმოჩენილი არაა.\n"
 "თუ მართლა გნებავთ, ხატულების კეში აქ შექმნათ, --ignore-theme-index "
 "გამოიყენეთ.\n"
+
+#, c-format
+#~ msgid "cicp: Narrow range or YUV not supported"
+#~ msgstr "cicp: ვიწრო შუალედი, ან YUV მხარდაჭერილი არაა"
+
+#~ msgid "Theme is hardcoded by GTK_THEME"
+#~ msgstr "თემა ჩადგმულია GTK_THEME-ის მიერ"
+
+#, c-format
+#~ msgid "Can’t close stream"
+#~ msgstr "ნაკადის დახურვა შეუძლებელია"
 
 #, c-format
 #~ msgid "The create-folder action is not supported with portals"
@@ -9821,9 +9875,6 @@ msgstr ""
 #~ msgid "\"%s\" is not a valid attribute type"
 #~ msgstr "\"%s\" ატრიბუტის უმართებლო ტიპია"
 
-#~ msgid "\"%s\" is not a valid attribute name"
-#~ msgstr "\"%s\" ატრიბუტის უმართებლო სახელია"
-
 #~ msgid ""
 #~ "\"%s\" could not be converted to a value of type \"%s\" for attribute "
 #~ "\"%s\""
@@ -10509,9 +10560,6 @@ msgstr ""
 
 #~ msgid "Couldn't load metafile"
 #~ msgstr "შეუძლებელი გახდა მეტაფაილის ჩატვირთვა"
-
-#~ msgid "Unsupported image format for GDI+"
-#~ msgstr "მოცემული გამოსახულების ფორმატი GDI+ თვის მიუღებელია"
 
 #~ msgid "Couldn't save"
 #~ msgstr "შეუძლებელია დამახსოვრება"

@@ -82,6 +82,9 @@ A number of keys are influencing behavior instead of just logging:
 `no-css-cache`
 : Bypass caching for CSS style properties
 
+`touch-ui`
+: Show touch ui elements for pointer events
+
 `snapshot`
 : Include debug render nodes in the generated snapshots
 
@@ -213,6 +216,9 @@ print out different types of debugging information.
 
 `dmabuf`
 : Information about dmabuf handling (Linux-only)
+
+`d3d12`
+: Information about Direct3D12 (Windows-only)
 
 `offload`
 : Information about subsurfaces and graphics offload (Wayland-only)
@@ -361,7 +367,10 @@ disable certain features.
 : Disable graphics offload to subsurfaces
 
 `threads`
-: Disabled the use of threads where possible
+: Disables the use of threads where possible
+
+`icon-nodes`
+: Disables the svg-to-node conversion for symbolic icons
 
 ### `GDK_GL_DISABLE`
 
@@ -413,6 +422,17 @@ does not support them.
 The special value `all` can be used to turn on all values. The special
 value `help` can be used to obtain a list of all supported values.
 
+### `GDK_WAYLAND_DISABLE`
+
+This variable can be set to a list of values, which cause the GDK Wayland
+backend to not use certain Wayland interfaces, even if the compositor advertises
+them.
+
+The special value `help` can be used to obtain help.
+
+To see a list of Wayland interface names, use `GDK_DEBUG=misc` and look for
+`global` in the output.
+
 ### `GSK_RENDERER`
 
 If set, selects the GSK renderer to use. The following renderers can
@@ -429,9 +449,6 @@ using and the GDK backend supports them:
 : Selects the fallback Cairo renderer
 
 `opengl`
-: Selects the OpenGL renderer
-
-`ngl`
 : Selects the OpenGL renderer
 
 `gl`:
@@ -574,8 +591,9 @@ set the `GTK_DEBUG=interactive` environment variable.
 After opening the inspector, it listens for a few keyboard shortcuts that
 let you use its frame and event recording functionality without moving the
 focus away from the application window: <kbd>Super</kbd>+<kbd>R</kbd> turns
-the recording on and off, and <kbd>Super</kbd>+<kbd>C</kbd> records a single
-frame.
+the recording on and off, <kbd>Super</kbd>+<kbd>C</kbd> records a single
+frame and <kbd>Super</kbd>+<kbd>F</kbd> records a single frame and saves
+it to a `.node` file.
 
 There are a few more environment variables that can be set to influence
 how the inspector renders its UI. `GTK_INSPECTOR_DISPLAY` and

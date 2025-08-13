@@ -32,6 +32,7 @@ import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.DragEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -43,6 +44,9 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
@@ -77,10 +81,16 @@ public class ToplevelActivity extends Activity {
 
 			private RectF[] inputRegion = null;
 
+			private ImContext activeImContext = null;
+
 			@GlibContext.GtkThread
 			private native void bindNative(long identifier) throws UnregisteredSurfaceException;
 			@GlibContext.GtkThread
 			private native void notifyAttached();
+			@GlibContext.GtkThread
+			private native void notifyLayoutSurface(int width, int height, float scale);
+			@GlibContext.GtkThread
+			private native void notifyLayoutPosition(int x, int y);
 			@GlibContext.GtkThread
 			private native void notifyDetached();
 
@@ -94,8 +104,6 @@ public class ToplevelActivity extends Activity {
 			@GlibContext.GtkThread
 			private native boolean notifyDragEvent(DragEvent event);
 
-			@UiThread
-			private native void notifyLayout(int x, int y, int width, int height, float scale);
 			@UiThread
 			private native void notifyVisibility(boolean visible);
 
@@ -131,12 +139,15 @@ public class ToplevelActivity extends Activity {
 					boolean imeKeyboardState = queuedImeKeyboardState > 0;
 					queuedImeKeyboardState = 0;
 					runOnUiThread(() -> {
-						if (imeKeyboardState)
-							getWindowInsetsController().show(WindowInsets.Type.ime());
-						else
-							getWindowInsetsController().hide(WindowInsets.Type.ime());
+						WindowInsetsController controller = getWindowInsetsController();
+						if (imeKeyboardState) {
+							requestFocus();
+							if (controller != null)
+								controller.show(WindowInsets.Type.ime());
+						 } else if (controller != null) {
+							controller.hide(WindowInsets.Type.ime());
+						 }
 					});
-
 				});
 			}
 
@@ -171,6 +182,14 @@ public class ToplevelActivity extends Activity {
 			}
 			public void cancelDND() {
 				runOnUiThread(() -> cancelDragAndDrop());
+			}
+
+			public void setActiveImContext(ImContext context) {
+				if (activeImContext == context)
+					return;
+				activeImContext = context;
+				InputMethodManager imm = getSystemService(InputMethodManager.class);
+				imm.restartInput(this);
 			}
 
 			public void reposition(int x, int y, int width, int height) {
@@ -222,8 +241,15 @@ public class ToplevelActivity extends Activity {
 			private boolean keyEventProxy(KeyEvent event) {
 				if (event == null)
 					return false;
-				// interestingly, calling MotionEvent.obtain translates it into the current View
-				// space. No idea where it gets that information from
+				/* For some *mystical* reason, once we have an IME (InputConnection)
+				 * attached, we receive back presses via onKeyDown/-Up, which we did
+				 * not receive before. As we always return true, this results in
+				 * onBackPressed() not being called, preventing us from closing the
+				 * activity. Early exit in such cases, to ensure to have this handled
+				 * via the onBackPressed callback instead.
+				 */
+				if (event.getKeyCode() == KeyEvent.KEYCODE_BACK)
+					return false;
 				GlibContext.runOnMain(() -> notifyKeyEvent(event));
 				return true;
 			}
@@ -243,6 +269,21 @@ public class ToplevelActivity extends Activity {
 			}
 
 			@Override
+			public boolean onCheckIsTextEditor() {
+				return this.activeImContext != null;
+			}
+			@Override
+			public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+				if (activeImContext == null)
+					return null;
+				outAttrs.contentMimeTypes = new String[] { "text/plain" };
+				//outAttrs.inputType = GlibContext.blockForMain(() -> activeImContext.getInputType());
+				outAttrs.inputType = InputType.TYPE_NULL;
+				outAttrs.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN;
+				return activeImContext.new ImeConnection(this);
+			}
+
+			@Override
 			protected void onAttachedToWindow() {
 				super.onAttachedToWindow();
 				GlibContext.runOnMain(this::notifyAttached);
@@ -257,11 +298,10 @@ public class ToplevelActivity extends Activity {
 			@Override
 			protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
 				if (changed)
-					notifyLayout(
+					GlibContext.runOnMain(() -> notifyLayoutPosition(
 						left - ToplevelView.this.insets.left,
-						top - ToplevelView.this.insets.top,
-						-1, -1, -1.f
-					);
+						top - ToplevelView.this.insets.top
+					));
 				super.onLayout(changed, left, top, right, bottom);
 			}
 
@@ -276,7 +316,7 @@ public class ToplevelActivity extends Activity {
 						ToplevelActivity.this.getWindowManager().getCurrentWindowMetrics().getDensity() :
 						getResources().getDisplayMetrics().density;
 
-				notifyLayout(-1, -1, width, height, scale);
+				GlibContext.blockForMain(() -> notifyLayoutSurface(width, height, scale));
 			}
 
 			@Override
@@ -384,9 +424,6 @@ public class ToplevelActivity extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		System.loadLibrary(GlueLibraryContext.getGlueLibraryName());
-		GlueLibraryContext.runApplication(this);
-
 		this.fullscreenState = false;
 
 		super.onCreate(savedInstanceState);
@@ -413,13 +450,9 @@ public class ToplevelActivity extends Activity {
 					GdkContext.activate();
 				}
 
-				if (nativeIdentifier == 0) {
+				if (nativeIdentifier == 0)
 					Logger.getLogger("Toplevel").log(Level.SEVERE, "Call to activate did not spawn a new window");
-					return null;
-				}
 			}
-
-			return null;
 		});
 	}
 

@@ -20,28 +20,33 @@
 #include <glib.h>
 #include "gdkwaylandmonitor.h"
 #include "gdkmonitorprivate.h"
-#include "gdkprivate-wayland.h"
 
 struct _GdkWaylandMonitor {
   GdkMonitor parent;
 
   guint32 id;
-  guint32 version;
   struct wl_output *output;
   gboolean added;
 
   struct zxdg_output_v1 *xdg_output;
-  /* Raw wl_output data */
+
+  /* Raw wl_output and xdg_output data */
   GdkRectangle output_geometry;
-  /* Raw xdg_output data */
-  GdkRectangle xdg_output_geometry;
-  char *name;
-  char *description;
-  gboolean wl_output_done;
-  gboolean xdg_output_done;
+  GdkRectangle logical_geometry;
 };
 
 struct _GdkWaylandMonitorClass {
   GdkMonitorClass parent_class;
 };
 
+void gdk_wayland_display_init_xdg_output (GdkWaylandDisplay *display_wayland);
+void gdk_wayland_monitor_get_xdg_output  (GdkWaylandMonitor *monitor);
+
+GdkMonitor *gdk_wayland_display_get_monitor (GdkWaylandDisplay *display,
+                                             struct wl_output  *output);
+
+void gdk_wayland_display_add_output      (GdkWaylandDisplay *display_wayland,
+                                          guint32            id,
+                                          struct wl_output  *output);
+void gdk_wayland_display_remove_output   (GdkWaylandDisplay *self,
+                                          guint32            id);

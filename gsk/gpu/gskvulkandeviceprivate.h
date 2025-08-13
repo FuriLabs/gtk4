@@ -13,6 +13,7 @@ G_BEGIN_DECLS
 
 /* forward declaration */
 typedef struct _GskVulkanYcbcr GskVulkanYcbcr;
+typedef struct _GskVulkanYcbcrInfo GskVulkanYcbcrInfo;
 
 #define GSK_TYPE_VULKAN_DEVICE (gsk_vulkan_device_get_type ())
 
@@ -46,11 +47,6 @@ VkPipelineLayout        gsk_vulkan_device_get_vk_pipeline_layout        (GskVulk
 VkSampler               gsk_vulkan_device_get_vk_sampler                (GskVulkanDevice        *self,
                                                                          GskGpuSampler           sampler) G_GNUC_PURE;
 
-GskVulkanYcbcr *        gsk_vulkan_device_get_ycbcr                     (GskVulkanDevice        *self,
-                                                                         VkFormat                vk_format);
-void                    gsk_vulkan_device_remove_ycbcr                  (GskVulkanDevice        *self,
-                                                                         VkFormat                vk_format);
-
 VkRenderPass            gsk_vulkan_device_get_vk_render_pass            (GskVulkanDevice        *self,
                                                                          VkFormat                format,
                                                                          VkAttachmentLoadOp      vk_load_op,
@@ -67,10 +63,14 @@ VkPipeline              gsk_vulkan_device_get_vk_pipeline               (GskVulk
                                                                          VkRenderPass            render_pass);
 
 GskVulkanAllocator *    gsk_vulkan_device_get_external_allocator        (GskVulkanDevice        *self);
-GskVulkanAllocator *    gsk_vulkan_device_find_allocator                (GskVulkanDevice        *self,
+GskVulkanAllocator *    gsk_vulkan_device_get_allocator                 (GskVulkanDevice        *self,
+                                                                         gsize                   index);
+
+gsize                   gsk_vulkan_device_find_allocator                (GskVulkanDevice        *self,
                                                                          uint32_t                allowed_types,
                                                                          VkMemoryPropertyFlags   required_flags,
                                                                          VkMemoryPropertyFlags   desired_flags);
+
 static inline VkResult
 gsk_vulkan_handle_result (VkResult    res,
                           const char *called_function)

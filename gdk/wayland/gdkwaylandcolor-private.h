@@ -6,7 +6,9 @@
 
 typedef struct _GdkWaylandColor GdkWaylandColor;
 
-GdkWaylandColor * gdk_wayland_color_new                         (GdkWaylandDisplay      *display,
+GdkWaylandColor * gdk_wayland_color_new                         (GdkWaylandDisplay      *display);
+
+void              gdk_wayland_color_set_color_manager           (GdkWaylandColor        *color,
                                                                  struct wl_registry     *registry,
                                                                  uint32_t                id,
                                                                  uint32_t                version);
@@ -17,6 +19,12 @@ gboolean          gdk_wayland_color_prepare                     (GdkWaylandColor
 
 struct wl_proxy * gdk_wayland_color_get_color_manager           (GdkWaylandColor        *color);
 
+void              gdk_wayland_color_set_color_representation    (GdkWaylandColor        *color,
+                                                                 struct wl_registry     *registry,
+                                                                 uint32_t                id,
+                                                                 uint32_t                version);
+struct wl_proxy * gdk_wayland_color_get_color_representation_manager
+                                                                (GdkWaylandColor        *color);
 
 typedef struct _GdkWaylandColorSurface GdkWaylandColorSurface;
 
@@ -32,8 +40,13 @@ GdkWaylandColorSurface *
 
 void              gdk_wayland_color_surface_free                (GdkWaylandColorSurface *self);
 
+gboolean          gdk_wayland_color_surface_can_set_color_state (GdkWaylandColorSurface  *self,
+                                                                 GdkColorState           *cs,
+                                                                 guint32                  fourcc,
+                                                                 gboolean                 premultiplied,
+                                                                 GError                 **error);
 void              gdk_wayland_color_surface_set_color_state     (GdkWaylandColorSurface *self,
-                                                                 GdkColorState          *cs);
-
-gboolean          gdk_wayland_color_surface_can_set_color_state (GdkWaylandColorSurface *self,
-                                                                 GdkColorState          *cs);
+                                                                 GdkColorState          *cs,
+                                                                 guint32                 fourcc,
+                                                                 gboolean                premultiplied);
+void              gdk_wayland_color_surface_unset_color_state   (GdkWaylandColorSurface *self);

@@ -89,6 +89,7 @@ static gboolean
 gsk_renderer_real_realize (GskRenderer  *self,
                            GdkDisplay   *display,
                            GdkSurface   *surface,
+                           gboolean      attach,
                            GError      **error)
 {
   GSK_RENDERER_WARN_NOT_IMPLEMENTED_METHOD (self, realize);
@@ -242,14 +243,17 @@ static gboolean
 gsk_renderer_do_realize (GskRenderer  *renderer,
                          GdkDisplay   *display,
                          GdkSurface   *surface,
+                         gboolean      attach,
                          GError      **error)
 {
   GskRendererPrivate *priv = gsk_renderer_get_instance_private (renderer);
 
+  g_assert (surface != NULL || !attach);
+
   if (surface)
     priv->surface = g_object_ref (surface);
 
-  if (!GSK_RENDERER_GET_CLASS (renderer)->realize (renderer, display, surface, error))
+  if (!GSK_RENDERER_GET_CLASS (renderer)->realize (renderer, display, surface, attach, error))
     {
       g_clear_object (&priv->surface);
       return FALSE;
@@ -297,6 +301,7 @@ gsk_renderer_realize (GskRenderer  *renderer,
       return gsk_renderer_do_realize (renderer,
                                       gdk_display_get_default (),
                                       NULL,
+                                      FALSE,
                                       error);
     }
   else
@@ -304,6 +309,7 @@ gsk_renderer_realize (GskRenderer  *renderer,
       return gsk_renderer_do_realize (renderer,
                                       gdk_surface_get_display (surface),
                                       surface,
+                                      FALSE,
                                       error);
     }
 }
@@ -333,7 +339,7 @@ gsk_renderer_realize_for_display (GskRenderer  *renderer,
   g_return_val_if_fail (display == NULL || GDK_IS_DISPLAY (display), FALSE);
   g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-  return gsk_renderer_do_realize (renderer, display, NULL, error);
+  return gsk_renderer_do_realize (renderer, display, NULL, FALSE,error);
 }
 
 /**
@@ -489,12 +495,12 @@ get_renderer_for_name (const char *renderer_name)
 #endif
   else if (g_ascii_strcasecmp (renderer_name, "cairo") == 0)
     return GSK_TYPE_CAIRO_RENDERER;
-  else if (g_ascii_strcasecmp (renderer_name, "ngl") == 0 ||
+  else if (g_ascii_strcasecmp (renderer_name, "gl") == 0 ||
            g_ascii_strcasecmp (renderer_name, "opengl") == 0)
     return GSK_TYPE_GL_RENDERER;
-  else if (g_ascii_strcasecmp (renderer_name, "gl") == 0)
+  else if (g_ascii_strcasecmp (renderer_name, "ngl") == 0)
     {
-      g_warning ("The old GL renderer has been removed. Try GSK_RENDERER=help");
+      g_warning ("The new GL renderer has been renamed to gl. Try GSK_RENDERER=help");
       return GSK_TYPE_GL_RENDERER;
     }
 #ifdef GDK_RENDERING_VULKAN
@@ -511,7 +517,6 @@ get_renderer_for_name (const char *renderer_name)
 #endif
                         "     cairo - Use the Cairo fallback renderer\n"
                         "    opengl - Use the OpenGL renderer\n"
-                        "       ngl - Use the OpenGL renderer\n"
                         "        gl - Use the OpenGL renderer\n"
 #ifdef GDK_RENDERING_VULKAN
                         "    vulkan - Use the Vulkan renderer\n"
@@ -718,29 +723,14 @@ static struct {
   { get_renderer_fallback },
 };
 
-/**
- * gsk_renderer_new_for_surface:
- * @surface: a surface
- *
- * Creates an appropriate `GskRenderer` instance for the given surface.
- *
- * If the `GSK_RENDERER` environment variable is set, GSK will
- * try that renderer first, before trying the backend-specific
- * default. The ultimate fallback is the cairo renderer.
- *
- * The renderer will be realized before it is returned.
- *
- * Returns: (transfer full) (nullable): the realized renderer
- */
 GskRenderer *
-gsk_renderer_new_for_surface (GdkSurface *surface)
+gsk_renderer_new_for_surface_full (GdkSurface *surface,
+                                   gboolean    attach)
 {
   GType renderer_type;
   GskRenderer *renderer;
   GError *error = NULL;
   guint i;
-
-  g_return_val_if_fail (GDK_IS_SURFACE (surface), NULL);
 
   for (i = 0; i < G_N_ELEMENTS (renderer_possibilities); i++)
     {
@@ -750,7 +740,7 @@ gsk_renderer_new_for_surface (GdkSurface *surface)
 
       renderer = g_object_new (renderer_type, NULL);
 
-      if (gsk_renderer_realize (renderer, surface, &error))
+      if (gsk_renderer_do_realize (renderer, gdk_surface_get_display (surface), surface, attach, &error))
         {
           GSK_DEBUG (RENDERER,
                      "Using renderer '%s' for surface '%s'",
@@ -771,6 +761,28 @@ gsk_renderer_new_for_surface (GdkSurface *surface)
 
   g_assert_not_reached ();
   return NULL;
+}
+
+/**
+ * gsk_renderer_new_for_surface:
+ * @surface: a surface
+ *
+ * Creates an appropriate `GskRenderer` instance for the given surface.
+ *
+ * If the `GSK_RENDERER` environment variable is set, GSK will
+ * try that renderer first, before trying the backend-specific
+ * default. The ultimate fallback is the cairo renderer.
+ *
+ * The renderer will be realized before it is returned.
+ *
+ * Returns: (transfer full) (nullable): the realized renderer
+ */
+GskRenderer *
+gsk_renderer_new_for_surface (GdkSurface *surface)
+{
+  g_return_val_if_fail (GDK_IS_SURFACE (surface), NULL);
+
+  return gsk_renderer_new_for_surface_full (surface, FALSE);
 }
 
 GskDebugFlags

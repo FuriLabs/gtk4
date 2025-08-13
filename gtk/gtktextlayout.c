@@ -463,20 +463,20 @@ gtk_text_layout_set_cursor_direction (GtkTextLayout   *layout,
 }
 
 /**
- * gtk_text_layout_set_keyboard_direction:
- * @keyboard_dir: the current direction of the keyboard.
+ * gtk_text_layout_set_default_direction:
+ * @default_dir: the defaule direction.
  *
- * Sets the keyboard direction; this is used as for the bidirectional
+ * Sets the default direction; this is used as for the bidirectional
  * base direction for the line with the cursor if the line contains
  * only neutral characters.
  */
 void
-gtk_text_layout_set_keyboard_direction (GtkTextLayout   *layout,
-					GtkTextDirection keyboard_dir)
+gtk_text_layout_set_default_direction (GtkTextLayout   *layout,
+				       GtkTextDirection default_dir)
 {
-  if (keyboard_dir != layout->keyboard_direction)
+  if (default_dir != layout->default_direction)
     {
-      layout->keyboard_direction = keyboard_dir;
+      layout->default_direction = default_dir;
       gtk_text_layout_invalidate_cursor_line (layout, TRUE);
     }
 }
@@ -2260,7 +2260,7 @@ gtk_text_layout_create_display (GtkTextLayout *layout,
   if (line == priv->cursor_line &&
       line->dir_strong == PANGO_DIRECTION_NEUTRAL)
     {
-      base_dir = (layout->keyboard_direction == GTK_TEXT_DIR_LTR) ?
+      base_dir = (layout->default_direction == GTK_TEXT_DIR_LTR) ?
          PANGO_DIRECTION_LTR : PANGO_DIRECTION_RTL;
     }
 
@@ -3834,12 +3834,12 @@ render_para (GskPangoRenderer   *crenderer,
           selection_end_index > pango_layout_line_get_length (line) + byte_offset &&
           gdk_color_is_opaque (selection_color))
         {
-          gtk_snapshot_append_color2 (crenderer->snapshot,
-                                      selection_color,
-                                      &GRAPHENE_RECT_INIT (line_display->left_margin,
-                                                          selection_y,
-                                                          screen_width,
-                                                          selection_height));
+          gtk_snapshot_add_color (crenderer->snapshot,
+                                  selection_color,
+                                  &GRAPHENE_RECT_INIT (line_display->left_margin,
+                                                       selection_y,
+                                                       screen_width,
+                                                       selection_height));
 
           if (draw_selection_text)
             {
@@ -3901,7 +3901,7 @@ render_para (GskPangoRenderer   *crenderer,
                                            PANGO_PIXELS (line_rect.width) -
                                            bounds.origin.x);
 
-                  gtk_snapshot_append_color2 (crenderer->snapshot, selection_color, &bounds);
+                  gtk_snapshot_add_color (crenderer->snapshot, selection_color, &bounds);
 
                   if (draw_selection_text)
                     {
@@ -3920,12 +3920,12 @@ render_para (GskPangoRenderer   *crenderer,
               if (line_rect.x > line_display->left_margin * PANGO_SCALE &&
                   ((line_display->direction == GTK_TEXT_DIR_LTR && selection_start_index < byte_offset) ||
                    (line_display->direction == GTK_TEXT_DIR_RTL && selection_end_index > byte_offset + pango_layout_line_get_length (line))))
-                gtk_snapshot_append_color2 (crenderer->snapshot,
-                                            selection_color,
-                                            &GRAPHENE_RECT_INIT (line_display->left_margin,
-                                                                 selection_y,
-                                                                 PANGO_PIXELS (line_rect.x) - line_display->left_margin,
-                                                                 selection_height));
+                gtk_snapshot_add_color (crenderer->snapshot,
+                                        selection_color,
+                                        &GRAPHENE_RECT_INIT (line_display->left_margin,
+                                                             selection_y,
+                                                             PANGO_PIXELS (line_rect.x) - line_display->left_margin,
+                                                             selection_height));
 
               if (line_rect.x + line_rect.width <
                   (screen_width + line_display->left_margin) * PANGO_SCALE &&
@@ -3936,12 +3936,12 @@ render_para (GskPangoRenderer   *crenderer,
                                       + screen_width
                                       - PANGO_PIXELS (line_rect.x)
                                       - PANGO_PIXELS (line_rect.width);
-                  gtk_snapshot_append_color2 (crenderer->snapshot,
-                                              selection_color,
-                                              &GRAPHENE_RECT_INIT (PANGO_PIXELS (line_rect.x) + PANGO_PIXELS (line_rect.width),
-                                                                  selection_y,
-                                                                  nonlayout_width,
-                                                                  selection_height));
+                  gtk_snapshot_add_color (crenderer->snapshot,
+                                          selection_color,
+                                          &GRAPHENE_RECT_INIT (PANGO_PIXELS (line_rect.x) + PANGO_PIXELS (line_rect.width),
+                                                               selection_y,
+                                                               nonlayout_width,
+                                                               selection_height));
                 }
             }
           else if (line_display->has_block_cursor &&
@@ -3971,7 +3971,7 @@ render_para (GskPangoRenderer   *crenderer,
                                       &cursor_color);
 
               gtk_snapshot_push_opacity (crenderer->snapshot, cursor_alpha);
-              gtk_snapshot_append_color2 (crenderer->snapshot, &cursor_color, &bounds);
+              gtk_snapshot_add_color (crenderer->snapshot, &cursor_color, &bounds);
 
               /* draw text under the cursor if any */
               if (!line_display->cursor_at_line_end)

@@ -1,5 +1,3 @@
-subdir('cursor')
-
 gdk_wayland_sources = files([
   'gdkapplaunchcontext-wayland.c',
   'gdkcairocontext-wayland.c',
@@ -18,6 +16,8 @@ gdk_wayland_sources = files([
   'gdkmonitor-wayland.c',
   'gdkprimary-wayland.c',
   'gdkseat-wayland.c',
+  'gdksettings-wayland.c',
+  'gdkshm.c',
   'gdksurface-wayland.c',
   'gdksubsurface-wayland.c',
   'gdktoplevel-wayland.c',
@@ -94,7 +94,7 @@ proto_sources = [
   },
   {
     'name': 'tablet',
-    'stability': 'unstable',
+    'stability': 'stable',
     'version': 2,
   },
   {
@@ -134,7 +134,6 @@ proto_sources = [
   {
     'name': 'presentation-time',
     'stability': 'stable',
-    'version': 1,
   },
   {
     'name': 'single-pixel-buffer',
@@ -158,7 +157,17 @@ proto_sources = [
   },
   {
     'name': 'cursor-shape',
-    'stability': 'private',
+    'stability': 'staging',
+    'version': 1,
+  },
+  {
+    'name': 'xdg-toplevel-icon',
+    'stability': 'staging',
+    'version': 1,
+  },
+  {
+    'name': 'color-representation',
+    'stability': 'staging',
     'version': 1,
   },
 ]
@@ -175,9 +184,16 @@ foreach p: proto_sources
         proto_file = 'protocol/@0@.xml'.format(p.get('name'))
       endif
     elif p.get('stability') == 'stable'
-      proto_file = wlmod.find_protocol(p.get('name'),
-        state: p.get('stability'),
-      )
+      if (p.has_key('version'))
+        proto_file = wlmod.find_protocol(p.get('name'),
+          state: p.get('stability'),
+          version: p.get('version'),
+        )
+      else
+        proto_file = wlmod.find_protocol(p.get('name'),
+          state: p.get('stability'),
+        )
+      endif
     else
       proto_file = wlmod.find_protocol(p.get('name'),
         state: p.get('stability'),
@@ -200,7 +216,6 @@ libgdk_wayland = static_library('gdk-wayland',
     '-DGTK_COMPILATION',
     '-DG_LOG_DOMAIN="Gdk"',
   ] + common_cflags,
-  link_with: [ libwayland_cursor, ],
   dependencies: [ gdk_deps, gdk_wayland_deps ],
 )
 

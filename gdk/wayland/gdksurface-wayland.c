@@ -17,8 +17,9 @@
 
 #include "config.h"
 
-#include "gdksurface-wayland.h"
+#include "gdksubsurface-wayland-private.h"
 
+#include "gdkwaylandtoplevel.h"
 #include "gdkdeviceprivate.h"
 #include "gdkdisplay-wayland.h"
 #include "gdkdragsurfaceprivate.h"
@@ -27,7 +28,6 @@
 #include "gdkglcontext-wayland.h"
 #include "gdkmonitor-wayland.h"
 #include "gdkpopupprivate.h"
-#include "gdkprivate-wayland.h"
 #include "gdkrectangleprivate.h"
 #include "gdkseat-wayland.h"
 #include "gdksurfaceprivate.h"
@@ -35,7 +35,7 @@
 #include "gdkdevice-wayland-private.h"
 #include "gdkdmabuftextureprivate.h"
 #include "gdksubsurfaceprivate.h"
-#include "gdksubsurface-wayland-private.h"
+#include "gdkshm-private.h"
 
 #include <wayland/xdg-shell-unstable-v6-client-protocol.h>
 #include <wayland/xdg-foreign-unstable-v2-client-protocol.h>
@@ -53,6 +53,8 @@
 
 #include "linux-dmabuf-unstable-v1-client-protocol.h"
 #include "presentation-time-client-protocol.h"
+
+#include "gdkdmabuffourccprivate.h"
 
 #include "gsk/gskrectprivate.h"
 
@@ -233,18 +235,6 @@ gdk_wayland_surface_update_size (GdkSurface               *surface,
   if (width_changed || height_changed)
     impl->viewport_dirty = TRUE;
 
-  if (impl->display_server.egl_window)
-    {
-      guint w, h;
-      gdk_wayland_surface_get_buffer_size (surface, NULL, &w, &h);
-      GDK_DISPLAY_DEBUG (gdk_surface_get_display (surface), OPENGL,
-                         "Using fractional scale %g for EGL window (%d %d => %d %d)",
-                         gdk_fractional_scale_to_double (&impl->scale),
-                         surface->width, surface->height,
-                         w, h);
-      wl_egl_window_resize (impl->display_server.egl_window, w, h, 0, 0);
-    }
-
   gdk_surface_invalidate_rect (surface, NULL);
 
   if (width_changed)
@@ -306,10 +296,12 @@ gdk_wayland_surface_frame_callback (GdkSurface *surface,
   if (impl->display_server.outputs)
     {
       /* We pick a random output out of the outputs that the surface touches
-       * The rate here is in milli-hertz */
-      int refresh_rate =
-        gdk_wayland_display_get_output_refresh_rate (display_wayland,
-                                                     impl->display_server.outputs->data);
+       * The rate here is in milli-hertz
+       */
+      GdkMonitor *monitor =
+         gdk_wayland_display_get_monitor (display_wayland,
+                                          impl->display_server.outputs->data);
+      int refresh_rate = monitor ? gdk_monitor_get_refresh_rate (monitor) : 0;
       if (refresh_rate != 0)
         timings->refresh_interval = G_GINT64_CONSTANT(1000000000) / refresh_rate;
     }
@@ -582,7 +574,6 @@ static void
 gdk_wayland_surface_sync_shadow (GdkSurface *surface)
 {
   GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (surface);
-  GdkWaylandDisplay *display_wayland = GDK_WAYLAND_DISPLAY (gdk_surface_get_display (surface));
   GdkRectangle geometry;
 
   if (!is_realized_shell_surface (impl))
@@ -598,25 +589,7 @@ gdk_wayland_surface_sync_shadow (GdkSurface *surface)
   if (gdk_rectangle_equal (&geometry, &impl->last_sent_window_geometry))
     return;
 
-  switch (display_wayland->shell_variant)
-    {
-    case GDK_WAYLAND_SHELL_VARIANT_XDG_SHELL:
-      xdg_surface_set_window_geometry (impl->display_server.xdg_surface,
-                                       geometry.x,
-                                       geometry.y,
-                                       geometry.width,
-                                       geometry.height);
-      break;
-    case GDK_WAYLAND_SHELL_VARIANT_ZXDG_SHELL_V6:
-      zxdg_surface_v6_set_window_geometry (impl->display_server.zxdg_surface_v6,
-                                           geometry.x,
-                                           geometry.y,
-                                           geometry.width,
-                                           geometry.height);
-      break;
-    default:
-      g_assert_not_reached ();
-    }
+  XDG_SHELL_CALL (xdg_surface, set_window_geometry, impl, geometry.x, geometry.y, geometry.width, geometry.height);
 
   impl->last_sent_window_geometry = geometry;
 }
@@ -747,8 +720,24 @@ gdk_wayland_surface_sync_color_state (GdkSurface *surface)
   if (!self->color_state_changed)
     return;
 
-  gdk_wayland_color_surface_set_color_state (self->display_server.color,
-                                             gdk_surface_get_color_state (surface));
+  /* Note that we don't have the actual fourcc here (since thats up
+   * up to mesa) so we just pass DRM_FORMAT_RGBA8888.
+   */
+  if (gdk_wayland_color_surface_can_set_color_state (self->display_server.color,
+                                                     gdk_surface_get_color_state (surface),
+                                                     DRM_FORMAT_RGBA8888,
+                                                     TRUE,
+                                                     NULL))
+    {
+      gdk_wayland_color_surface_set_color_state (self->display_server.color,
+                                                 gdk_surface_get_color_state (surface),
+                                                 DRM_FORMAT_RGBA8888,
+                                                 TRUE);
+    }
+  else
+    {
+      gdk_wayland_color_surface_unset_color_state (self->display_server.color);
+    }
 
   self->color_state_changed = FALSE;
 }
@@ -829,7 +818,7 @@ surface_enter (void              *data,
 
   impl->display_server.outputs = g_slist_prepend (impl->display_server.outputs, output);
 
-  monitor = gdk_wayland_display_get_monitor_for_output (display, output);
+  monitor = gdk_wayland_display_get_monitor (GDK_WAYLAND_DISPLAY (display), output);
   gdk_surface_enter_monitor (surface, monitor);
 }
 
@@ -848,7 +837,7 @@ surface_leave (void              *data,
 
   impl->display_server.outputs = g_slist_remove (impl->display_server.outputs, output);
 
-  monitor = gdk_wayland_display_get_monitor_for_output (display, output);
+  monitor = gdk_wayland_display_get_monitor (GDK_WAYLAND_DISPLAY (display), output);
   gdk_surface_leave_monitor (surface, monitor);
 }
 
@@ -932,11 +921,10 @@ gdk_wayland_surface_create_wl_surface (GdkSurface *surface)
           wp_viewporter_get_viewport (display_wayland->viewporter, wl_surface);
     }
 
-  if (display_wayland->color)
-    self->display_server.color = gdk_wayland_color_surface_new (display_wayland->color,
-                                                                wl_surface,
-                                                                preferred_changed,
-                                                                self);
+  self->display_server.color = gdk_wayland_color_surface_new (display_wayland->color,
+                                                              wl_surface,
+                                                              preferred_changed,
+                                                              self);
 
   self->display_server.wl_surface = wl_surface;
 }
@@ -969,12 +957,6 @@ gdk_wayland_surface_constructed (GObject *object)
 static void
 gdk_wayland_surface_destroy_wl_surface (GdkWaylandSurface *self)
 {
-  if (self->display_server.egl_window)
-    {
-      gdk_surface_set_egl_native_window (GDK_SURFACE (self), NULL);
-      g_clear_pointer (&self->display_server.egl_window, wl_egl_window_destroy);
-    }
-
   g_clear_pointer (&self->display_server.viewport, wp_viewport_destroy);
   g_clear_pointer (&self->display_server.fractional_scale, wp_fractional_scale_v1_destroy);
   g_clear_pointer (&self->display_server.color, gdk_wayland_color_surface_free);
@@ -1042,6 +1024,22 @@ static const struct xdg_surface_listener xdg_surface_listener = {
 };
 
 static void
+xdg_surface_create_resources (gpointer unused,
+                              GdkWaylandSurface *impl)
+{
+  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (gdk_surface_get_display (GDK_SURFACE (impl)));
+
+  impl->display_server.xdg_surface =
+    xdg_wm_base_get_xdg_surface (display->xdg_wm_base,
+                                 impl->display_server.wl_surface);
+  wl_proxy_set_queue ((struct wl_proxy *) impl->display_server.xdg_surface,
+                      impl->event_queue);
+  xdg_surface_add_listener (impl->display_server.xdg_surface,
+                            &xdg_surface_listener,
+                            impl);
+}
+
+static void
 zxdg_surface_v6_configure (void                   *data,
                            struct zxdg_surface_v6 *xdg_surface,
                            uint32_t                serial)
@@ -1053,36 +1051,26 @@ static const struct zxdg_surface_v6_listener zxdg_surface_v6_listener = {
   zxdg_surface_v6_configure,
 };
 
+static void
+zxdg_surface_v6_create_resources (gpointer unused,
+                                  GdkWaylandSurface *impl)
+{
+  GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY (gdk_surface_get_display (GDK_SURFACE (impl)));
+
+  impl->display_server.zxdg_surface_v6 =
+    zxdg_shell_v6_get_xdg_surface (display->zxdg_shell_v6,
+                                   impl->display_server.wl_surface);
+  zxdg_surface_v6_add_listener (impl->display_server.zxdg_surface_v6,
+                                &zxdg_surface_v6_listener,
+                                impl);
+}
+
 void
 gdk_wayland_surface_create_xdg_surface_resources (GdkSurface *surface)
 {
-  GdkWaylandDisplay *display =
-    GDK_WAYLAND_DISPLAY (gdk_surface_get_display (surface));
   GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (surface);
 
-  switch (display->shell_variant)
-    {
-    case GDK_WAYLAND_SHELL_VARIANT_XDG_SHELL:
-      impl->display_server.xdg_surface =
-        xdg_wm_base_get_xdg_surface (display->xdg_wm_base,
-                                     impl->display_server.wl_surface);
-      wl_proxy_set_queue ((struct wl_proxy *) impl->display_server.xdg_surface,
-                          impl->event_queue);
-      xdg_surface_add_listener (impl->display_server.xdg_surface,
-                                &xdg_surface_listener,
-                                surface);
-      break;
-    case GDK_WAYLAND_SHELL_VARIANT_ZXDG_SHELL_V6:
-      impl->display_server.zxdg_surface_v6 =
-        zxdg_shell_v6_get_xdg_surface (display->zxdg_shell_v6,
-                                       impl->display_server.wl_surface);
-      zxdg_surface_v6_add_listener (impl->display_server.zxdg_surface_v6,
-                                    &zxdg_surface_v6_listener,
-                                    surface);
-      break;
-    default:
-      g_assert_not_reached ();
-    }
+  XDG_SHELL_CALL (xdg_surface, create_resources, impl, impl);
 }
 
 static void
@@ -1407,21 +1395,6 @@ _gdk_wayland_surface_offset_next_wl_buffer (GdkSurface *surface,
 
   impl->pending_buffer_offset_x = x;
   impl->pending_buffer_offset_y = y;
-}
-
-void
-gdk_wayland_surface_ensure_wl_egl_window (GdkSurface *surface)
-{
-  GdkWaylandSurface *impl = GDK_WAYLAND_SURFACE (surface);
-  guint width, height;
-
-  if (impl->display_server.egl_window != NULL)
-    return;
-
-  gdk_wayland_surface_get_buffer_size (surface, NULL, &width, &height);
-  impl->display_server.egl_window =
-    wl_egl_window_create (impl->display_server.wl_surface, width, height);
-  gdk_surface_set_egl_native_window (surface, impl->display_server.egl_window);
 }
 
 /* }}} */

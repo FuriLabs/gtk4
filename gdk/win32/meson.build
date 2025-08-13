@@ -1,5 +1,7 @@
 gdk_win32_public_sources = files([
   'gdkcursor-win32.c',
+  'gdkd3d12texture.c',
+  'gdkd3d12texturebuilder.c',
   'gdkdisplay-win32.c',
   'gdkdisplaymanager-win32.c',
   'gdkdrag-win32.c',
@@ -9,13 +11,13 @@ gdk_win32_public_sources = files([
   'gdksurface-win32.c',
   'gdkevents-win32.c',
   'gdkmonitor-win32.c',
-  'gdkscreen-win32.c',
 ])
 
 gdk_win32_sources = gdk_win32_public_sources + files([
   'gdkcairocontext-win32.c',
   'gdkclipboard-win32.c',
   'gdkclipdrop-win32.c',
+  'gdkd3d12utils.c',
   'gdkdevicemanager-win32.c',
   'gdkdevice-virtual.c',
   'gdkdevice-win32.c',
@@ -38,6 +40,8 @@ gdk_win32_sources = gdk_win32_public_sources + files([
 ])
 
 gdk_win32_public_headers = files([
+  'gdkd3d12texture.h',
+  'gdkd3d12texturebuilder.h',
   'gdkwin32cursor.h',
   'gdkwin32display.h',
   'gdkwin32displaymanager.h',
@@ -45,7 +49,6 @@ gdk_win32_public_headers = files([
   'gdkwin32glcontext.h',
   'gdkwin32misc.h',
   'gdkwin32monitor.h',
-  'gdkwin32screen.h',
   'gdkwin32surface.h',
 ])
 
@@ -55,10 +58,21 @@ if have_egl
   gdk_win32_sources += ['gdkglcontext-win32-egl.c']
 endif
 
+d3d12_dep = [
+  cc.find_library('d3d11'),
+  cc.find_library('d3d12'),
+  cc.find_library('dcomp'),
+  cc.find_library('dxgi'),
+  cc.find_library('dxguid'),
+  dependency('DirectX-Headers', version: '>= 1.611'),
+]
+
 gdk_win32_deps = [
   pangowin32_dep, # FIXME
   cc.find_library('hid'),
   cc.find_library('opengl32'),
+  cc.find_library('shcore'),
+  d3d12_dep,
 ]
 
 libgdk_win32 = static_library('gdk-win32',

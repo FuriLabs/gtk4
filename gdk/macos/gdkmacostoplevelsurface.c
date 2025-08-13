@@ -522,6 +522,17 @@ _gdk_macos_toplevel_surface_get_property (GObject    *object,
       g_value_set_boolean (value, surface->shortcuts_inhibited);
       break;
 
+    case LAST_PROP + GDK_TOPLEVEL_PROP_CAPABILITIES:
+      g_value_set_flags (value, GDK_TOPLEVEL_CAPABILITIES_MAXIMIZE |
+                                GDK_TOPLEVEL_CAPABILITIES_FULLSCREEN |
+                                GDK_TOPLEVEL_CAPABILITIES_MINIMIZE |
+                                GDK_TOPLEVEL_CAPABILITIES_LOWER);
+      break;
+
+    case LAST_PROP + GDK_TOPLEVEL_PROP_GRAVITY:
+      g_value_set_enum (value, GDK_GRAVITY_NORTH_EAST);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -574,6 +585,9 @@ _gdk_macos_toplevel_surface_set_property (GObject      *object,
       break;
 
     case LAST_PROP + GDK_TOPLEVEL_PROP_SHORTCUTS_INHIBITED:
+      break;
+
+    case LAST_PROP + GDK_TOPLEVEL_PROP_GRAVITY:
       break;
 
     default:

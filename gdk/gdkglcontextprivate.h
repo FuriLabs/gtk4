@@ -32,6 +32,8 @@ typedef enum {
   GDK_GL_FEATURE_DEBUG                      = 1 << 0,
   GDK_GL_FEATURE_BASE_INSTANCE              = 1 << 1,
   GDK_GL_FEATURE_BUFFER_STORAGE             = 1 << 2,
+  GDK_GL_FEATURE_EXTERNAL_OBJECTS           = 1 << 3,
+  GDK_GL_FEATURE_EXTERNAL_OBJECTS_WIN32     = 1 << 4,
 } GdkGLFeatures;
 
 #define GDK_GL_N_FEATURES 3
@@ -154,6 +156,11 @@ void                    gdk_gl_context_get_matching_version     (GdkGLContext   
                                                                  gboolean                legacy,
                                                                  GdkGLVersion           *out_version);
 
+#ifdef HAVE_EGL
+void                    gdk_gl_context_set_egl_native_window    (GdkGLContext           *self,
+                                                                 gpointer                native_window);
+#endif
+
 void                    gdk_gl_context_push_debug_group         (GdkGLContext    *context,
                                                                  const char      *message);
 void                    gdk_gl_context_push_debug_group_printf  (GdkGLContext    *context,
@@ -186,17 +193,8 @@ void                    gdk_gl_context_download                 (GdkGLContext   
                                                                  GdkMemoryFormat  tex_format,
                                                                  GdkColorState   *tex_color_state,
                                                                  guchar          *dest_data,
-                                                                 gsize            dest_stride,
-                                                                 GdkMemoryFormat  dest_format,
-                                                                 GdkColorState   *dest_color_state,
-                                                                 gsize            width,
-                                                                 gsize            height);
-
-guint                   gdk_gl_context_import_dmabuf            (GdkGLContext    *self,
-                                                                 int              width,
-                                                                 int              height,
-                                                                 const GdkDmabuf *dmabuf,
-                                                                 gboolean        *external);
+                                                                 const GdkMemoryLayout *dest_layout,
+                                                                 GdkColorState   *dest_color_state);
 
 gboolean                gdk_gl_context_export_dmabuf            (GdkGLContext    *self,
                                                                  unsigned int     texture_id,

@@ -54,12 +54,16 @@ G_BEGIN_DECLS
 struct _GdkWin32GLContext
 {
   GdkGLContext parent_instance;
+
+  HWND handle;
 };
 
 struct _GdkWin32GLContextClass
 {
   GdkGLContextClass parent_class;
 };
+
+ATOM            gdk_win32_gl_context_get_class          (void);
 
 /* WGL */
 #define GDK_TYPE_WIN32_GL_CONTEXT_WGL     (gdk_win32_gl_context_wgl_get_type())
@@ -70,10 +74,8 @@ typedef struct _GdkWin32GLContextWGL      GdkWin32GLContextWGL;
 
 GdkGLContext *  gdk_win32_display_init_wgl              (GdkDisplay             *display,
                                                          GError                **error);
-void            gdk_win32_gl_context_wgl_bind_surface   (GdkWin32GLContextWGL   *ctx,
-                                                         GdkWin32Surface        *win32_surface);
 
-GType     gdk_win32_gl_context_wgl_get_type         (void) G_GNUC_CONST;
+GType           gdk_win32_gl_context_wgl_get_type       (void) G_GNUC_CONST;
 
 /* EGL */
 #define GDK_TYPE_WIN32_GL_CONTEXT_EGL     (gdk_win32_gl_context_egl_get_type())
@@ -82,14 +84,7 @@ GType     gdk_win32_gl_context_wgl_get_type         (void) G_GNUC_CONST;
 
 typedef struct _GdkWin32GLContextEGL      GdkWin32GLContextEGL;
 
-gboolean  gdk_win32_display_init_egl                (GdkDisplay  *display,
-                                                     GError     **error);
-void      gdk_win32_surface_destroy_egl_surface     (GdkWin32Surface *self);
-
 GType     gdk_win32_gl_context_egl_get_type         (void) G_GNUC_CONST;
-
-void
-_gdk_win32_surface_invalidate_egl_framebuffer (GdkSurface *surface);
 
 #endif /* !DONT_INCLUDE_LIBEPOXY */
 

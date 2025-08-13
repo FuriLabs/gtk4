@@ -114,6 +114,13 @@ endif
 
 # Tests that test private apis and therefore are linked against libgtk-4.a
 internal_tests = [
+  {
+    'name': 'symbolic2',
+    'sources': [
+      'symbolic2.c',
+      '../reftests/reftest-compare.c',
+    ],
+  },
   { 'name': 'bitmask' },
   {
     'name': 'composetable',
@@ -134,6 +141,12 @@ internal_tests = [
   { 'name': 'a11y' },
   { 'name': 'listitemmanager' },
   { 'name': 'colorutils' },
+  { 'name': 'symbolic',
+    'sources': [
+      'symbolic.c',
+      '../reftests/reftest-compare.c',
+    ],
+  },
 ]
 
 is_debug = get_option('buildtype').startswith('debug')
@@ -278,3 +291,12 @@ make_pot = find_program ('make-pot', dirs: meson.project_source_root())
 test('potfiles', make_pot,
      workdir: meson.project_source_root(),
      suite: ['gtk', 'translations' ])
+
+if host_machine.system() in ['linux']
+  test_link = find_program ('test-link')
+
+  test('rsvg', test_link,
+       args: [ libgtk.full_path() ],
+       workdir: meson.project_source_root(),
+       suite: ['gtk', 'gtk'])
+endif

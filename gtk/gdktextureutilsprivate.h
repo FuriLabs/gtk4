@@ -18,16 +18,9 @@
 #pragma once
 
 #include <gdk/gdk.h>
+#include <gsk/gsk.h>
 
 G_BEGIN_DECLS
-
-GdkPixbuf *gtk_make_symbolic_pixbuf_from_data       (const char    *data,
-                                                     gsize          len,
-                                                     int            width,
-                                                     int            height,
-                                                     double         scale,
-                                                     const char    *debug_output_to,
-                                                     GError       **error);
 
 GdkTexture *gdk_texture_new_from_filename_with_fg   (const char    *filename,
                                                      gboolean      *only_fg,
@@ -41,38 +34,35 @@ GdkTexture *gdk_texture_new_from_stream_with_fg     (GInputStream  *stream,
 GdkTexture *gdk_texture_new_from_stream_at_scale    (GInputStream  *stream,
                                                      int            width,
                                                      int            height,
-                                                     gboolean       aspect,
                                                      gboolean      *only_fg,
                                                      GCancellable  *cancellable,
                                                      GError       **error);
 GdkTexture *gdk_texture_new_from_resource_at_scale  (const char    *path,
                                                      int            width,
                                                      int            height,
-                                                     gboolean       aspect,
+                                                     gboolean      *only_fg,
+                                                     GError       **error);
+GdkTexture *gdk_texture_new_from_filename_at_scale  (const char    *filename,
+                                                     int            width,
+                                                     int            height,
                                                      gboolean      *only_fg,
                                                      GError       **error);
 
 GdkTexture *gdk_texture_new_from_filename_symbolic  (const char    *path,
                                                      int            width,
                                                      int            height,
-                                                     double         scale,
                                                      gboolean      *only_fg,
                                                      GError       **error);
 GdkTexture *gdk_texture_new_from_file_symbolic      (GFile         *file,
                                                      int            width,
                                                      int            height,
-                                                     double         scale,
                                                      gboolean      *only_fg,
                                                      GError       **error);
 GdkTexture *gdk_texture_new_from_resource_symbolic  (const char    *path,
                                                      int            width,
                                                      int            height,
-                                                     double         scale,
                                                      gboolean      *only_fg,
                                                      GError       **error);
-
-GdkTexture *gtk_load_symbolic_texture_from_file     (GFile         *file);
-GdkTexture *gtk_load_symbolic_texture_from_resource (const char    *path);
 
 GdkPaintable *gdk_paintable_new_from_filename_scaled (const char    *filename,
                                                       double         scale);
@@ -80,5 +70,22 @@ GdkPaintable *gdk_paintable_new_from_resource_scaled (const char    *path,
                                                       double         scale);
 GdkPaintable *gdk_paintable_new_from_file_scaled     (GFile         *file,
                                                       double         scale);
+
+GskRenderNode *gsk_render_node_new_from_resource_symbolic (const char *path,
+                                                           gboolean   *only_fg,
+                                                           gboolean   *single_path,
+                                                           double     *width,
+                                                           double     *height);
+GskRenderNode *gsk_render_node_new_from_filename_symbolic (const char *filename,
+                                                           gboolean   *only_fg,
+                                                           gboolean   *single_path,
+                                                           double     *width,
+                                                           double     *height);
+
+gboolean gsk_render_node_recolor (GskRenderNode  *node,
+                                  const GdkRGBA  *colors,
+                                  gsize           n_colors,
+                                  GskRenderNode **recolored);
+
 
 G_END_DECLS

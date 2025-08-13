@@ -25,6 +25,7 @@
 #include "gdk/gdkcursor.h"
 
 #include <windows.h>
+#include "gdk/win32/dcomp.h"
 #include <directmanipulation.h>
 
 #ifdef HAVE_EGL
@@ -115,70 +116,8 @@ struct _GdkW32DragMoveResizeContext
   /* Not used */
   guint32            timestamp;
 
-  /* TRUE if during the next redraw we should call SetWindowPos() to push
-   * the surface size and position to the native HWND.
-   */
-  gboolean           native_move_resize_pending;
-
   /* The cursor we should use while the operation is running. */
   GdkCursor         *cursor;
-
-  /* This HWND looks like an outline and is drawn under the surface
-   * that is being dragged. It indicates the shape the dragged surface
-   * will take if released at a particular point.
-   * Indicator HWND size always matches the target indicator shape,
-   * the actual indicator drawn on it might not, depending on
-   * how much time elapsed since the animation started.
-   */
-  HWND               shape_indicator;
-
-  /* Used to draw the indicator */
-  cairo_surface_t   *indicator_surface;
-  int                indicator_surface_width;
-  int                indicator_surface_height;
-
-  /* Size/position of shape_indicator */
-  GdkRectangle       indicator_surface_rect;
-
-  /* Indicator will animate to occupy this rectangle */
-  GdkRectangle       indicator_target;
-
-  /* Indicator will start animating from this rectangle */
-  GdkRectangle       indicator_start;
-
-  /* Timestamp of the animation start */
-  gint64             indicator_start_time;
-
-  /* Timer that drives the animation */
-  guint              timer;
-
-  /* A special timestamp, if we want to draw not how
-   * the animation should look *now*, but how it should
-   * look at arbitrary moment of time.
-   * Set to 0 to tell GDK to use current time.
-   */
-  gint64             draw_timestamp;
-
-  /* Indicates that a transformation was revealed:
-   *
-   * For drag-resize: If it's FALSE,
-   * then the pointer have not yet hit a trigger that triggers fullup.
-   * If TRUE, then the pointer did hit a trigger that triggers fullup
-   * at some point during this drag op.
-   * This is used to prevent drag-resize from triggering
-   * a transformation when first approaching a trigger of the work area -
-   * one must drag it all the way to the very trigger to trigger; afterwards
-   * a transformation will start triggering at some distance from the trigger
-   * for as long as the op is still running. This is how AeroSnap works.
-   *
-   * For drag-move: If it's FALSE,
-   * then the pointer have not yet hit a trigger, even if it is
-   * already within an edge region.
-   * If it's TRUE, then the pointer did hit a trigger within an
-   * edge region, and have not yet left an edge region
-   * (passing from one edge region into another doesn't count).
-   */
-  gboolean           revealed;
 };
 
 typedef struct _GdkW32DragMoveResizeContext GdkW32DragMoveResizeContext;
@@ -191,6 +130,9 @@ struct _GdkWin32Surface
   GdkSurface parent_instance;
 
   HANDLE handle;
+
+  IDCompositionTarget *dcomp_target;
+  IDCompositionVisual *dcomp_visual;
 
   HICON   hicon_big;
   HICON   hicon_small;
@@ -213,17 +155,10 @@ struct _GdkWin32Surface
   int initial_x;
   int initial_y;
 
-  /* left/right/top/bottom width of the shadow/resize-grip around the surface HWND */
+  /* left/right/top/bottom width of the shadow/resize-grip around the surface HWND 
+     in application units, not device pixels */
   RECT shadow;
 
-  /* left+right and top+bottom from @shadow */
-  int shadow_x;
-  int shadow_y;
-
-  /* Set to TRUE when GTK tells us that shadow are 0 everywhere.
-   * We don't actually set shadow to 0, we just set this bit.
-   */
-  guint zero_shadow : 1;
   guint inhibit_configure : 1;
 
   /* If TRUE, the @temp_styles is set to the styles that were temporarily
@@ -236,8 +171,6 @@ struct _GdkWin32Surface
    * and is unset when WM_WINDOWPOSCHANGING is handled.
    */
   guint maximizing : 1;
-
-  HDC hdc;
 
   GdkW32DragMoveResizeContext drag_move_resize_context;
 
@@ -263,10 +196,6 @@ struct _GdkWin32Surface
 
   IDirectManipulationViewport *dmanipulation_viewport_pan;
   IDirectManipulationViewport *dmanipulation_viewport_zoom;
-
-#ifdef HAVE_EGL
-  guint egl_force_redraw_all : 1;
-#endif
 };
 
 struct _GdkWin32SurfaceClass
@@ -278,12 +207,6 @@ GType _gdk_win32_surface_get_type (void);
 
 void  _gdk_win32_surface_update_style_bits   (GdkSurface *surface);
 
-int   _gdk_win32_surface_get_scale_factor    (GdkSurface *surface);
-
-void  _gdk_win32_get_window_client_area_rect (GdkSurface *surface,
-                                              int         scale,
-                                              RECT       *rect);
-
 void gdk_win32_surface_move (GdkSurface *surface,
                              int         x,
                              int         y);
@@ -294,10 +217,10 @@ void gdk_win32_surface_move_resize (GdkSurface *surface,
                                     int         width,
                                     int         height);
 
-GdkSurface *gdk_win32_drag_surface_new       (GdkDisplay *display);
+GdkSurface *    gdk_win32_drag_surface_new                      (GdkDisplay             *display);
 
-RECT
-gdk_win32_surface_handle_queued_move_resize (GdkDrawContext *draw_context);
+void            gdk_win32_surface_set_dcomp_content             (GdkWin32Surface        *self,
+                                                                 IUnknown               *dcomp_content);
 
 #ifdef HAVE_EGL
 EGLSurface gdk_win32_surface_get_egl_surface (GdkSurface *surface,

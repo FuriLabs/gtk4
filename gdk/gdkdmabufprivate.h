@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gdkdmabufformatsbuilderprivate.h"
+#include "gdkmemorylayoutprivate.h"
 
 #ifdef GDK_RENDERING_VULKAN
 #include <vulkan/vulkan.h>
@@ -24,14 +25,22 @@ struct _GdkDmabuf
 
 void                        gdk_dmabuf_close_fds                (GdkDmabuf                      *dmabuf);
 
+gboolean                    gdk_memory_layout_init_from_dmabuf  (GdkMemoryLayout                *self,
+                                                                 const GdkDmabuf                *dmabuf,
+                                                                 gboolean                        premultiplied,
+                                                                 gsize                           width,
+                                                                 gsize                           height);
+
 #ifdef HAVE_DMABUF
+
+int                         gdk_dmabuf_new_for_bytes            (GBytes                         *bytes,
+                                                                 GError                        **error);
 
 GdkDmabufFormats *          gdk_dmabuf_get_mmap_formats         (void) G_GNUC_CONST;
 gboolean                    gdk_dmabuf_download_mmap            (GdkTexture                     *texture,
-                                                                 GdkMemoryFormat                 format,
-                                                                 GdkColorState                  *color_state,
                                                                  guchar                         *data,
-                                                                 gsize                           stride);
+                                                                 const GdkMemoryLayout          *layout,
+                                                                 GdkColorState                  *color_state);
 
 int                         gdk_dmabuf_ioctl                    (int                             fd,
                                                                  unsigned long                   request,
@@ -41,6 +50,12 @@ gboolean                    gdk_dmabuf_import_sync_file         (int            
                                                                  int                             sync_file_fd);
 int                         gdk_dmabuf_export_sync_file         (int                             dmabuf_fd,
                                                                  guint32                         flags);
+const guchar *              gdk_dmabuf_mmap                     (int                             dmabuf_fd,
+                                                                 gsize                          *out_size);
+void                        gdk_dmabuf_munmap                   (int                             dmabuf_fd,
+                                                                 const guchar *                  addr,
+                                                                 gsize                           size);
+
 
 gboolean                    gdk_dmabuf_sanitize                 (GdkDmabuf                      *dest,
                                                                  gsize                           width,
@@ -49,18 +64,4 @@ gboolean                    gdk_dmabuf_sanitize                 (GdkDmabuf      
                                                                  GError                        **error);
 
 gboolean                    gdk_dmabuf_is_disjoint              (const GdkDmabuf                *dmabuf);
-
-gboolean                    gdk_dmabuf_fourcc_is_yuv            (guint32                         fourcc,
-                                                                 gboolean                       *is_yuv);
-gboolean                    gdk_dmabuf_get_memory_format        (guint32                         fourcc,
-                                                                 gboolean                        premultiplied,
-                                                                 GdkMemoryFormat                *out_format);
-#ifdef GDK_RENDERING_VULKAN
-gboolean                    gdk_dmabuf_vk_get_nth               (gsize                           n,
-                                                                 guint32                        *fourcc,
-                                                                 VkFormat                       *vk_format);
-VkFormat                    gdk_dmabuf_get_vk_format            (guint32                         fourcc,
-                                                                 VkComponentMapping             *out_components);
-#endif
-
 #endif

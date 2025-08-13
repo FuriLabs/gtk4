@@ -30,6 +30,7 @@
 
 #include "gdkconstructorprivate.h"
 #include "gdkdebugprivate.h"
+#include "gdkcontentformatsprivate.h"
 #include "gdkdisplayprivate.h"
 #include "gdkglcontextprivate.h"
 #include <glib/gi18n-lib.h>
@@ -132,6 +133,7 @@ static const GdkDebugKey gdk_debug_keys[] = {
   { "selection",       GDK_DEBUG_SELECTION, "Information about selections" },
   { "clipboard",       GDK_DEBUG_CLIPBOARD, "Information about clipboards" },
   { "dmabuf",          GDK_DEBUG_DMABUF, "Information about dmabuf buffers" },
+  { "d3d12",           GDK_DEBUG_D3D12, "Information about Direct3D12" },
   { "offload",         GDK_DEBUG_OFFLOAD, "Information about subsurfaces and graphics offload" },
 
   { "linear",          GDK_DEBUG_LINEAR, "Enable linear rendering" },
@@ -156,8 +158,12 @@ static const GdkDebugKey gdk_feature_keys[] = {
   { "wgl",        GDK_FEATURE_WGL,              "Disable WGL" },
   { "vulkan",     GDK_FEATURE_VULKAN,           "Disable Vulkan support" },
   { "dmabuf",     GDK_FEATURE_DMABUF,           "Disable dmabuf support" },
+  { "d3d11",      GDK_FEATURE_D3D11,            "Disable Direct3D 11" },
+  { "d3d12",      GDK_FEATURE_D3D12,            "Disable Direct3D 12" },
+  { "dcomp",      GDK_FEATURE_DCOMP,            "Disable Direct Composition" },
   { "offload",    GDK_FEATURE_OFFLOAD,          "Disable graphics offload" },
   { "threads",    GDK_FEATURE_THREADS,          "Disable threads where possible" },
+  { "icon-nodes", GDK_FEATURE_ICON_NODES,       "Disable svg->node conversion for symbolic icons" },
 };
 
 static GdkFeatures gdk_features;
@@ -346,6 +352,9 @@ gdk_pre_parse (void)
 #ifndef G_HAS_CONSTRUCTORS
   stash_and_unset_environment ();
 #endif
+
+  gdk_content_init_serializers ();
+  gdk_content_init_deserializers ();
 }
 
 /*< private >
@@ -487,8 +496,6 @@ gdk_display_should_use_portal (GdkDisplay *display,
                                const char *portal_interface,
                                guint       min_version)
 {
-  g_assert (display != NULL);
-
   if (gdk_display_get_debug_flags (display) & GDK_DEBUG_NO_PORTALS)
     return FALSE;
 

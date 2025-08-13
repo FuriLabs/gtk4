@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "gdkwin32screen.h"
 #include "gdkwin32cursor.h"
 #include "gdkprivate-win32.h"
  
@@ -29,6 +28,12 @@
 
 /* Used for active language or text service change notifications */
 #include <msctf.h>
+
+/* Used for PROCESS_DPI_AWARENESS */
+#include <shellscalingapi.h>
+#include <dxgi1_4.h>
+#include <d3d11.h>
+#include "gdk/win32/dcomp.h"
 
 #ifdef HAVE_EGL
 # include <epoxy/egl.h>
@@ -54,12 +59,6 @@ struct _GdkWin32CbDnDItems
 typedef struct _GdkWin32CbDnDItems GdkWin32CbDnDItems;
 
 /* Define values used to set DPI-awareness */
-typedef enum _GdkWin32ProcessDpiAwareness {
-  PROCESS_DPI_UNAWARE = 0,
-  PROCESS_SYSTEM_DPI_AWARE = 1,
-  PROCESS_PER_MONITOR_DPI_AWARE = 2,
-  PROCESS_PER_MONITOR_DPI_AWARE_V2 = 3, /* Newer HiDPI type for Windows 10 1607+ */
-} GdkWin32ProcessDpiAwareness;
 
 /* From https://docs.microsoft.com/en-US/windows/win32/hidpi/dpi-awareness-context */
 /* DPI_AWARENESS_CONTEXT is declared by DEFINE_HANDLE */
@@ -75,34 +74,9 @@ typedef enum _GdkWin32ProcessDpiAwareness {
 #define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 (HANDLE)-4
 #endif
 
-typedef enum _GdkWin32MonitorDpiType { 
-  MDT_EFFECTIVE_DPI  = 0,
-  MDT_ANGULAR_DPI    = 1,
-  MDT_RAW_DPI        = 2,
-  MDT_DEFAULT        = MDT_EFFECTIVE_DPI
-} GdkWin32MonitorDpiType;
-
-/* APIs from shcore.dll */
-typedef HRESULT (WINAPI *funcSetProcessDpiAwareness) (GdkWin32ProcessDpiAwareness value);
-typedef HRESULT (WINAPI *funcGetProcessDpiAwareness) (HANDLE handle, GdkWin32ProcessDpiAwareness *awareness);
-typedef HRESULT (WINAPI *funcGetDpiForMonitor)       (HMONITOR                monitor,
-                                                      GdkWin32MonitorDpiType  dpi_type,
-                                                      UINT                   *dpi_x,
-                                                      UINT                   *dpi_y);
-
-typedef struct _GdkWin32ShcoreFuncs
-{
-  HMODULE hshcore;
-  funcSetProcessDpiAwareness setDpiAwareFunc;
-  funcGetProcessDpiAwareness getDpiAwareFunc;
-  funcGetDpiForMonitor getDpiForMonitorFunc;
-} GdkWin32ShcoreFuncs;
-
-/* DPI awareness APIs from user32.dll */
-typedef BOOL (WINAPI *funcSetProcessDPIAware) (void);
-typedef BOOL (WINAPI *funcIsProcessDPIAware)  (void);
-
 /*
+ * DPI awareness APIs from user32.dll, on later releases of Windows 10
+ *
  * funcSPDAC is SetProcessDpiAwarenessContext() and
  * funcGTDAC is GetThreadDpiAwarenessContext() and
  * funcADACE is AreDpiAwarenessContextsEqual() provided by user32.dll, on
@@ -116,8 +90,6 @@ typedef BOOL (WINAPI *funcADACE) (void *, void *);
 
 typedef struct _GdkWin32User32DPIFuncs
 {
-  funcSetProcessDPIAware setDpiAwareFunc;
-  funcIsProcessDPIAware isDpiAwareFunc;
   funcSPDAC setPDAC;
   funcGTDAC getTDAC;
   funcADACE areDACEqual;
@@ -128,13 +100,6 @@ typedef enum {
   GDK_WIN32_TABLET_INPUT_API_WINTAB,
   GDK_WIN32_TABLET_INPUT_API_WINPOINTER
 } GdkWin32TabletInputAPI;
-
-typedef struct
-{
-  HWND hwnd;
-  HDC hdc;
-  HGLRC hglrc;
-} GdkWin32GLDummyContextWGL;
 
 /* for Direct Manipulation support */
 typedef struct
@@ -181,8 +146,6 @@ struct _GdkWin32Display
 {
   GdkDisplay display;
 
-  GdkWin32Screen *screen;
-
   Win32CursorTheme *cursor_theme;
   char *cursor_theme_name;
   int cursor_theme_size;
@@ -199,11 +162,15 @@ struct _GdkWin32Display
 
   dmanip_items *dmanip_items;
 
+  /* D3D12 */
+  IDCompositionDevice *dcomp_device;
+  IDXGIFactory4 *dxgi_factory;
+  ID3D11Device *d3d11_device;
+  ID3D12Device *d3d12_device;
+
   /* WGL/OpenGL Items */
-  GdkWin32GLDummyContextWGL dummy_context_wgl;
+  int wgl_pixel_format;
   guint hasWglARBCreateContext : 1;
-  guint hasWglEXTSwapControl : 1;
-  guint hasWglOMLSyncControl : 1;
   guint hasWglARBPixelFormat : 1;
   guint hasGlWINSwapHint : 1;
 
@@ -218,12 +185,9 @@ struct _GdkWin32Display
 #endif
 
   /* HiDPI Items */
-  guint have_at_least_win81 : 1;
-  GdkWin32ProcessDpiAwareness dpi_aware_type;
-  guint has_fixed_scale : 1;
+  PROCESS_DPI_AWARENESS dpi_aware_type;
   guint surface_scale;
 
-  GdkWin32ShcoreFuncs shcore_funcs;
   GdkWin32User32DPIFuncs user32_dpi_funcs;
 
   GdkWin32TabletInputAPI tablet_input_api;
@@ -252,17 +216,18 @@ struct _GdkWin32DisplayClass
   GdkDisplayClass display_class;
 };
 
-void       _gdk_win32_display_init_monitors    (GdkWin32Display *display);
+GPtrArray *             _gdk_win32_display_get_monitor_list             (GdkWin32Display        *display);
 
-GPtrArray *_gdk_win32_display_get_monitor_list (GdkWin32Display *display);
+IDCompositionDevice *   gdk_win32_display_get_dcomp_device              (GdkWin32Display        *self);
+IDXGIFactory4 *         gdk_win32_display_get_dxgi_factory              (GdkWin32Display        *self);
+ID3D11Device *          gdk_win32_display_get_d3d11_device              (GdkWin32Display        *self);
+ID3D12Device *          gdk_win32_display_get_d3d12_device              (GdkWin32Display        *self);
 
-void        gdk_win32_display_check_composited (GdkWin32Display *display);
+guint                   gdk_win32_display_get_monitor_scale_factor      (GdkWin32Display        *display_win32,
+                                                                         GdkSurface             *surface,
+                                                                         HMONITOR                hmonitor);
 
-guint      gdk_win32_display_get_monitor_scale_factor  (GdkWin32Display *display_win32,
-                                                        GdkSurface      *surface,
-                                                        HMONITOR         hmonitor);
-
-GdkWin32Clipdrop *gdk_win32_display_get_clipdrop       (GdkDisplay *display);
+GdkWin32Clipdrop *      gdk_win32_display_get_clipdrop                  (GdkDisplay             *display);
 
 typedef struct _GdkWin32MessageFilter GdkWin32MessageFilter;
 

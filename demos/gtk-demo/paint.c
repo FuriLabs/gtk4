@@ -38,6 +38,7 @@ static GtkPadActionEntry pad_actions[] = {
   { GTK_PAD_ACTION_BUTTON, 5, -1, N_("Purple"), "pad.purple" },
   { GTK_PAD_ACTION_BUTTON, 6, -1, N_("Orange"), "pad.orange" },
   { GTK_PAD_ACTION_STRIP, -1, -1, N_("Brush size"), "pad.brush_size" },
+  { GTK_PAD_ACTION_DIAL,  -1, -1, N_("Brush size"), "pad.change_brush_size" },
 };
 
 static const char *pad_colors[] = {
@@ -169,6 +170,16 @@ on_pad_knob_change (GSimpleAction *action,
 }
 
 static void
+on_pad_dial_change (GSimpleAction *action,
+                    GVariant      *parameter,
+                    DrawingArea   *area)
+{
+  double value = g_variant_get_double (parameter);
+
+  area->brush_size += value / 120.0;
+}
+
+static void
 drawing_area_unroot (GtkWidget *widget)
 {
   DrawingArea *area = (DrawingArea *) widget;
@@ -210,6 +221,13 @@ drawing_area_root (GtkWidget *widget)
                              (gpointer) pad_colors[i]);
           g_signal_connect (action, "activate",
                             G_CALLBACK (on_pad_button_activate), area);
+        }
+      else if (pad_actions[i].type == GTK_PAD_ACTION_DIAL)
+        {
+          action = g_simple_action_new_stateful (pad_actions[i].action_name,
+                                                 G_VARIANT_TYPE_DOUBLE, NULL);
+          g_signal_connect (action, "activate",
+                            G_CALLBACK (on_pad_dial_change), area);
         }
       else
         {
@@ -379,6 +397,22 @@ drawing_area_color_set (DrawingArea          *area,
   gtk_color_dialog_button_set_rgba (button, color);
 }
 
+static void
+drawing_area_clear (GtkButton   *button,
+                    DrawingArea *area)
+{
+  int width, height;
+
+  g_clear_pointer (&area->cr, cairo_destroy);
+  g_clear_pointer (&area->surface, cairo_surface_destroy);
+
+  width = gtk_widget_get_width (GTK_WIDGET (area));
+  height = gtk_widget_get_height (GTK_WIDGET (area));
+
+  drawing_area_ensure_surface (area, width, height);
+  gtk_widget_queue_draw (GTK_WIDGET (area));
+}
+
 static GtkGesture *
 drawing_area_get_gesture (DrawingArea *area)
 {
@@ -408,6 +442,12 @@ do_paint (GtkWidget *toplevel)
                         G_CALLBACK (drawing_area_color_set), button);
       gtk_color_dialog_button_set_rgba (GTK_COLOR_DIALOG_BUTTON (button),
                                         &(GdkRGBA) { 0, 0, 0, 1 });
+
+      gtk_header_bar_pack_end (GTK_HEADER_BAR (headerbar), button);
+
+      button = gtk_button_new_from_icon_name ("view-refresh-symbolic");
+      g_signal_connect (button, "clicked",
+                        G_CALLBACK (drawing_area_clear), draw_area);
 
       gtk_header_bar_pack_end (GTK_HEADER_BAR (headerbar), button);
 

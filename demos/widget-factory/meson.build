@@ -66,7 +66,7 @@ endif
 executable('gtk4-widget-factory',
   sources: ['widget-factory.c', widgetfactory_resources],
   c_args: common_cflags,
-  dependencies: [ libgtk_dep, profile_conf_h ],
+  dependencies: [ libgtk_dep, gmodule_headers_dep, profile_conf_h ],
   include_directories: confinc,
   win_subsystem: 'windows',
   link_args: extra_demo_ldflags,
@@ -90,3 +90,11 @@ configure_file(
   configuration: appdata_config,
   install_dir: gtk_appdatadir
 )
+
+if bash.found()
+  install_data([ 'completion' ],
+    rename: [ 'gtk4-widget-factory' ],
+    install_dir: bash_comp_inst_dir,
+    install_tag: 'bin',
+  )
+endif

@@ -18,6 +18,11 @@ void            main_clip_rounded               (void);
 #endif
 
 #define GSK_SHADER_CLIP (GSK_FLAGS & 3u)
+/* Defined by the shader compilers directly */
+/* #define GSK_TEXTURE0_IS_EXTERNAL ((GSK_FLAGS >> 2u) & 1u) */
+/* #define GSK_TEXTURE1_IS_EXTERNAL ((GSK_FLAGS >> 3u) & 1u) */
+#define GSK_TEXTURE0_SAMPLE_OP ((GSK_FLAGS >> 4u) & 7u)
+#define GSK_TEXTURE1_SAMPLE_OP ((GSK_FLAGS >> 8u) & 7u)
 
 #include "color.glsl"
 #include "rect.glsl"
@@ -55,7 +60,7 @@ rect_get_position (Rect rect)
 {
   Rect r = rect_round_larger (rect_clip (rect));
 
-  vec2 pos = mix (r.bounds.xy, r.bounds.zw, offsets[GSK_VERTEX_INDEX]);
+  vec2 pos = mix (rect_bounds (r).xy, rect_bounds (r).zw, offsets[GSK_VERTEX_INDEX]);
 
   return pos;
 }
@@ -73,7 +78,7 @@ border_get_position (RoundedRect outside,
     {
     case SLICE_TOP_LEFT:
       rect = rect_round_larger (rect);
-      rect.bounds = rect.bounds.xwzy;
+      rect = Rect (rect_bounds (rect).xwzy);
       break;
     case SLICE_TOP:
       rect = rect_round_smaller_larger (rect);
@@ -86,21 +91,21 @@ border_get_position (RoundedRect outside,
       break;
     case SLICE_BOTTOM_RIGHT:
       rect = rect_round_larger (rect);
-      rect.bounds = rect.bounds.zyxw;
+      rect = Rect (rect_bounds (rect).zyxw);
       break;
     case SLICE_BOTTOM:
       rect = rect_round_smaller_larger (rect);
       break;
     case SLICE_BOTTOM_LEFT:
       rect = rect_round_larger (rect);
-      rect.bounds = rect.bounds.zwxy;
+      rect = Rect (rect_bounds (rect).zwxy);
       break;
     case SLICE_LEFT:
       rect = rect_round_larger_smaller (rect);
       break;
     }
 
-  vec2 pos = mix (rect.bounds.xy, rect.bounds.zw, offsets[vert_index]);
+  vec2 pos = mix (rect_bounds (rect).xy, rect_bounds (rect).zw, offsets[vert_index]);
 
   return pos;
 }
@@ -110,7 +115,7 @@ scale_tex_coord (vec2 in_pos,
                  Rect in_rect,
                  vec4 tex_rect)
 {
-  return tex_rect.xy + (in_pos - in_rect.bounds.xy) / rect_size (in_rect) * tex_rect.zw;
+  return tex_rect.xy + (in_pos - rect_pos (in_rect)) / rect_size (in_rect) * tex_rect.zw;
 }
 
 void            run                             (out vec2 pos);
@@ -151,6 +156,60 @@ gsk_texture_straight_alpha (sampler2D tex,
   br.rgb *= br.a;
   return mix (mix (tl, tr, pos.x), mix (bl, br, pos.x), pos.y);
 }
+
+#if GSK_N_TEXTURES > 0
+vec4
+gsk_texture0 (vec2 pos)
+{
+  if (GSK_TEXTURE0_SAMPLE_OP == GDK_SHADER_DEFAULT)
+    return texture (GSK_TEXTURE0, pos);
+  else if (GSK_TEXTURE0_SAMPLE_OP == GDK_SHADER_STRAIGHT)
+    return gsk_texture_straight_alpha (GSK_TEXTURE0, pos);
+  else if (GSK_TEXTURE0_SAMPLE_OP == GDK_SHADER_2_PLANES)
+    return vec4 (texture (GSK_TEXTURE0, pos).x, texture (GSK_TEXTURE0_1, pos).xy, 1.0).brga;
+  else if (GSK_TEXTURE0_SAMPLE_OP == GDK_SHADER_3_PLANES)
+    return vec4 (texture (GSK_TEXTURE0_2, pos).x, texture (GSK_TEXTURE0, pos).x, texture (GSK_TEXTURE0_1, pos).x, 1.0);
+  else if (GSK_TEXTURE0_SAMPLE_OP == GDK_SHADER_3_PLANES_10BIT_LSB)
+    /* 65535.0 / 1023.0 ~= 64.061583578 */
+    return vec4 (clamp (texture (GSK_TEXTURE0_2, pos).x * 64.061583578, 0.0, 1.0),
+                 clamp (texture (GSK_TEXTURE0, pos).x * 64.061583578, 0.0, 1.0),
+                 clamp (texture (GSK_TEXTURE0_1, pos).x * 64.061583578, 0.0, 1.0),
+                 1.0);
+  else if (GSK_TEXTURE0_SAMPLE_OP == GDK_SHADER_3_PLANES_12BIT_LSB)
+    /* 65535.0 / 4095.0 ~= 16.003663004 */
+    return vec4 (clamp (texture (GSK_TEXTURE0_2, pos).x * 16.003663004, 0.0, 1.0),
+                 clamp (texture (GSK_TEXTURE0, pos).x * 16.003663004, 0.0, 1.0),
+                 clamp (texture (GSK_TEXTURE0_1, pos).x * 16.003663004, 0.0, 1.0),
+                 1.0);
+}
+#endif
+
+#if GSK_N_TEXTURES > 1
+vec4
+gsk_texture1 (vec2 pos)
+{
+  if (GSK_TEXTURE1_SAMPLE_OP == GDK_SHADER_DEFAULT)
+    return texture (GSK_TEXTURE1, pos);
+  else if (GSK_TEXTURE1_SAMPLE_OP == GDK_SHADER_STRAIGHT)
+    return gsk_texture_straight_alpha (GSK_TEXTURE1, pos);
+  else if (GSK_TEXTURE1_SAMPLE_OP == GDK_SHADER_2_PLANES)
+    return vec4 (texture (GSK_TEXTURE1, pos).x, texture (GSK_TEXTURE1_1, pos).xy, 1.0).brga;
+  else if (GSK_TEXTURE1_SAMPLE_OP == GDK_SHADER_3_PLANES)
+    return vec4 (texture (GSK_TEXTURE1_2, pos).x, texture (GSK_TEXTURE1, pos).x, texture (GSK_TEXTURE1_1, pos).x, 1.0);
+  else if (GSK_TEXTURE1_SAMPLE_OP == GDK_SHADER_3_PLANES_10BIT_LSB)
+    /* 65535.0 / 1023.0 ~= 64.061583578 */
+    return vec4 (clamp (texture (GSK_TEXTURE1_2, pos).x * 64.061583578, 0.0, 1.0),
+                 clamp (texture (GSK_TEXTURE1, pos).x * 64.061583578, 0.0, 1.0),
+                 clamp (texture (GSK_TEXTURE1_1, pos).x * 64.061583578, 0.0, 1.0),
+                 1.0);
+  else if (GSK_TEXTURE1_SAMPLE_OP == GDK_SHADER_3_PLANES_12BIT_LSB)
+    /* 65535.0 / 4095.0 ~= 16.003663004 */
+    return vec4 (clamp (texture (GSK_TEXTURE1_2, pos).x * 16.003663004, 0.0, 1.0),
+                 clamp (texture (GSK_TEXTURE1, pos).x * 16.003663004, 0.0, 1.0),
+                 clamp (texture (GSK_TEXTURE1_1, pos).x * 16.003663004, 0.0, 1.0),
+                 1.0);
+}
+#endif
 
 void            run                             (out vec4 color,
                                                  out vec2 pos);

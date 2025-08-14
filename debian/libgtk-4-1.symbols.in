@@ -64,6 +64,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_clipboard_store_finish@Base 4.0.0
  gdk_color_state_create_cicp_params@Base 4.15.4
  gdk_color_state_equal@Base 4.15.4
+ gdk_color_state_equivalent@Base 4.19.3
  gdk_color_state_get_oklab@Base 4.17.1
  gdk_color_state_get_oklch@Base 4.17.1
  gdk_color_state_get_rec2100_linear@Base 4.15.4
@@ -441,7 +442,9 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_memory_texture_builder_get_color_state@Base 4.15.4
  gdk_memory_texture_builder_get_format@Base 4.15.4
  gdk_memory_texture_builder_get_height@Base 4.15.4
+ gdk_memory_texture_builder_get_offset@Base 4.19.3
  gdk_memory_texture_builder_get_stride@Base 4.15.4
+ gdk_memory_texture_builder_get_stride_for_plane@Base 4.19.3
  gdk_memory_texture_builder_get_type@Base 4.15.4
  gdk_memory_texture_builder_get_update_region@Base 4.15.4
  gdk_memory_texture_builder_get_update_texture@Base 4.15.4
@@ -451,7 +454,9 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_memory_texture_builder_set_color_state@Base 4.15.4
  gdk_memory_texture_builder_set_format@Base 4.15.4
  gdk_memory_texture_builder_set_height@Base 4.15.4
+ gdk_memory_texture_builder_set_offset@Base 4.19.3
  gdk_memory_texture_builder_set_stride@Base 4.15.4
+ gdk_memory_texture_builder_set_stride_for_plane@Base 4.19.3
  gdk_memory_texture_builder_set_update_region@Base 4.15.4
  gdk_memory_texture_builder_set_update_texture@Base 4.15.4
  gdk_memory_texture_builder_set_width@Base 4.15.4
@@ -586,6 +591,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_texture_download@Base 4.0.0
  gdk_texture_downloader_copy@Base 4.10.0
  gdk_texture_downloader_download_bytes@Base 4.10.0
+ gdk_texture_downloader_download_bytes_with_planes@Base 4.19.3
  gdk_texture_downloader_download_into@Base 4.10.0
  gdk_texture_downloader_free@Base 4.10.0
  gdk_texture_downloader_get_color_state@Base 4.15.4
@@ -615,7 +621,10 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_titlebar_gesture_get_type@Base 4.4.0
  gdk_toplevel_begin_move@Base 4.0.0
  gdk_toplevel_begin_resize@Base 4.0.0
+ gdk_toplevel_capabilities_get_type@Base 4.19.3
  gdk_toplevel_focus@Base 4.0.0
+ gdk_toplevel_get_capabilities@Base 4.19.3
+ gdk_toplevel_get_gravity@Base 4.19.3
  gdk_toplevel_get_state@Base 4.0.0
  gdk_toplevel_get_type@Base 4.0.0
  gdk_toplevel_inhibit_system_shortcuts@Base 4.0.0
@@ -638,6 +647,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_toplevel_restore_system_shortcuts@Base 4.0.0
  gdk_toplevel_set_decorated@Base 4.0.0
  gdk_toplevel_set_deletable@Base 4.0.0
+ gdk_toplevel_set_gravity@Base 4.19.3
  gdk_toplevel_set_icon_list@Base 4.0.0
  gdk_toplevel_set_modal@Base 4.0.0
  gdk_toplevel_set_startup_id@Base 4.0.0
@@ -800,6 +810,20 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_color_node_get_color@Base 4.0.0
  gsk_color_node_get_type@Base 4.0.0
  gsk_color_node_new@Base 4.0.0
+ gsk_component_transfer_copy@Base 4.19.3
+ gsk_component_transfer_equal@Base 4.19.3
+ gsk_component_transfer_free@Base 4.19.3
+ gsk_component_transfer_get_type@Base 4.19.3
+ gsk_component_transfer_new_discrete@Base 4.19.3
+ gsk_component_transfer_new_gamma@Base 4.19.3
+ gsk_component_transfer_new_identity@Base 4.19.3
+ gsk_component_transfer_new_levels@Base 4.19.3
+ gsk_component_transfer_new_linear@Base 4.19.3
+ gsk_component_transfer_new_table@Base 4.19.3
+ gsk_component_transfer_node_get_child@Base 4.19.3
+ gsk_component_transfer_node_get_transfer@Base 4.19.3
+ gsk_component_transfer_node_get_type@Base 4.19.3
+ gsk_component_transfer_node_new@Base 4.19.3
  gsk_conic_gradient_node_get_angle@Base 4.3.1
  gsk_conic_gradient_node_get_center@Base 4.0.0
  gsk_conic_gradient_node_get_color_stops@Base 4.0.0
@@ -930,6 +954,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_path_direction_get_type@Base 4.13.5
  gsk_path_foreach@Base 4.13.5
  gsk_path_foreach_flags_get_type@Base 4.13.5
+ gsk_path_foreach_intersection@Base 4.19.3
  gsk_path_get_bounds@Base 4.13.5
  gsk_path_get_closest_point@Base 4.13.5
  gsk_path_get_end_point@Base 4.13.5
@@ -937,6 +962,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_path_get_stroke_bounds@Base 4.13.5
  gsk_path_get_type@Base 4.13.5
  gsk_path_in_fill@Base 4.13.5
+ gsk_path_intersection_get_type@Base 4.19.3
  gsk_path_is_closed@Base 4.13.5
  gsk_path_is_empty@Base 4.13.5
  gsk_path_measure_get_length@Base 4.13.5
@@ -1085,6 +1111,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_transform_get_type@Base 4.0.0
  gsk_transform_invert@Base 4.0.0
  gsk_transform_matrix@Base 4.0.0
+ gsk_transform_matrix_2d@Base 4.19.3
  gsk_transform_new@Base 4.0.0
  gsk_transform_node_get_child@Base 4.0.0
  gsk_transform_node_get_transform@Base 4.0.0
@@ -1537,6 +1564,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_calendar_mark_day@Base 4.0.0
  gtk_calendar_new@Base 4.0.0
  gtk_calendar_select_day@Base 4.0.0
+ gtk_calendar_set_date@Base 4.19.3
  gtk_calendar_set_day@Base 4.13.8
  gtk_calendar_set_month@Base 4.13.8
  gtk_calendar_set_show_day_names@Base 4.0.0
@@ -2177,6 +2205,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_entry_get_input_purpose@Base 4.0.0
  gtk_entry_get_invisible_char@Base 4.0.0
  gtk_entry_get_max_length@Base 4.0.0
+ gtk_entry_get_menu_entry_icon_text@Base 4.19.3
  gtk_entry_get_overwrite_mode@Base 4.0.0
  gtk_entry_get_placeholder_text@Base 4.0.0
  gtk_entry_get_progress_fraction@Base 4.0.0
@@ -2210,6 +2239,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_entry_set_input_purpose@Base 4.0.0
  gtk_entry_set_invisible_char@Base 4.0.0
  gtk_entry_set_max_length@Base 4.0.0
+ gtk_entry_set_menu_entry_icon_text@Base 4.19.3
  gtk_entry_set_overwrite_mode@Base 4.0.0
  gtk_entry_set_placeholder_text@Base 4.0.0
  gtk_entry_set_progress_fraction@Base 4.0.0
@@ -2393,10 +2423,12 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_filter_list_model_get_model@Base 4.0.0
  gtk_filter_list_model_get_pending@Base 4.0.0
  gtk_filter_list_model_get_type@Base 4.0.0
+ gtk_filter_list_model_get_watch_items@Base 4.19.3
  gtk_filter_list_model_new@Base 4.0.0
  gtk_filter_list_model_set_filter@Base 4.0.0
  gtk_filter_list_model_set_incremental@Base 4.0.0
  gtk_filter_list_model_set_model@Base 4.0.0
+ gtk_filter_list_model_set_watch_items@Base 4.19.3
  gtk_filter_match@Base 4.0.0
  gtk_filter_match_get_type@Base 4.0.0
  gtk_fixed_get_child_position@Base 4.0.0
@@ -2904,6 +2936,8 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_inscription_set_wrap_mode@Base 4.7.2
  gtk_inscription_set_xalign@Base 4.7.2
  gtk_inscription_set_yalign@Base 4.7.2
+ gtk_interface_color_scheme_get_type@Base 4.19.3
+ gtk_interface_contrast_get_type@Base 4.19.3
  gtk_is_initialized@Base 4.0.0
  gtk_justification_get_type@Base 4.0.0
  gtk_keyval_trigger_get_keyval@Base 4.0.0
@@ -4164,6 +4198,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_snapshot_push_blur@Base 4.0.0
  gtk_snapshot_push_clip@Base 4.0.0
  gtk_snapshot_push_color_matrix@Base 4.0.0
+ gtk_snapshot_push_component_transfer@Base 4.19.3
  gtk_snapshot_push_cross_fade@Base 4.0.0
  gtk_snapshot_push_debug@Base 4.0.0
  gtk_snapshot_push_fill@Base 4.13.5
@@ -5037,6 +5072,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_tree_view_unset_rows_drag_dest@Base 4.0.0
  gtk_tree_view_unset_rows_drag_source@Base 4.0.0
  gtk_unit_get_type@Base 4.0.0
+ gtk_uri_launcher_can_launch@Base 4.19.3
  gtk_uri_launcher_get_type@Base 4.9.3
  gtk_uri_launcher_get_uri@Base 4.9.3
  gtk_uri_launcher_launch@Base 4.9.3
@@ -5288,6 +5324,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_window_get_destroy_with_parent@Base 4.0.0
  gtk_window_get_focus@Base 4.0.0
  gtk_window_get_focus_visible@Base 4.0.0
+ gtk_window_get_gravity@Base 4.19.3
  gtk_window_get_group@Base 4.0.0
  gtk_window_get_handle_menubar_accel@Base 4.3.1
  gtk_window_get_hide_on_close@Base 4.0.0
@@ -5300,6 +5337,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_window_get_toplevels@Base 4.0.0
  gtk_window_get_transient_for@Base 4.0.0
  gtk_window_get_type@Base 4.0.0
+ gtk_window_gravity_get_type@Base 4.19.3
  gtk_window_group_add_window@Base 4.0.0
  gtk_window_group_get_type@Base 4.0.0
  gtk_window_group_list_windows@Base 4.0.0
@@ -5332,6 +5370,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_window_set_display@Base 4.0.0
  gtk_window_set_focus@Base 4.0.0
  gtk_window_set_focus_visible@Base 4.0.0
+ gtk_window_set_gravity@Base 4.19.3
  gtk_window_set_handle_menubar_accel@Base 4.3.1
  gtk_window_set_hide_on_close@Base 4.0.0
  gtk_window_set_icon_name@Base 4.0.0

@@ -1,6 +1,6 @@
 From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
 Date: Fri, 17 Mar 2023 20:01:40 +0100
-Subject: media: Use gstplayer from meson subproject
+Subject: media: Use gst-play-1.0 from meson subproject
 
 Origin: https://gitlab.gnome.org/3v1n0/gtk/-/commits/gst-player-subproject
 Forwarded: not-needed
@@ -9,17 +9,17 @@ Forwarded: not-needed
  1 file changed, 4 insertions(+)
 
 diff --git a/meson.build b/meson.build
-index b9659b8..6b3f74d 100644
+index b59df5e..196a783 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -443,6 +443,10 @@ if win32_enabled
+@@ -485,6 +485,10 @@ if win32_enabled
    pangowin32_dep = dependency('pangowin32')
  endif
  
-+subproject('gstreamer-player-1.0',
++subproject('gst-play-1.0',
 +           required: get_option('media-gstreamer'),
 +           default_options: 'default_library=static')
 +
  pangocairo_dep    = dependency('pangocairo', version: pango_req)
  pixbuf_dep        = dependency('gdk-pixbuf-2.0', version: gdk_pixbuf_req,
-                                default_options: ['png=enabled', 'jpeg=enabled', 'gif=enabled', 'builtin_loaders=all', 'man=false'])
+                                default_options: ['png=enabled', 'jpeg=enabled', 'gif=enabled', 'glycin=disabled', 'builtin_loaders=all', 'man=false'])

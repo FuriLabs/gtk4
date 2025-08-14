@@ -115,6 +115,7 @@
  * - <kbd>Ctrl</kbd>+<kbd>Y</kbd> or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>
  *   redoes the last undone modification.
  * - <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> toggles the text direction.
+ * - <kbd>Clear</kbd> clears the content.
  *
  * Additionally, the following signals have default keybindings:
  *
@@ -144,6 +145,7 @@
  * - `selection.select-all` selects all of the widgets content.
  * - `text.redo` redoes the last change to the contents.
  * - `text.undo` undoes the last change to the contents.
+ * - `text.clear` removes all content.
  *
  * # CSS nodes
  *
@@ -614,6 +616,7 @@ static void         emit_changed                       (GtkText *self);
 static void         gtk_text_update_history           (GtkText *self);
 static void         gtk_text_update_clipboard_actions (GtkText *self);
 static void         gtk_text_update_emoji_action      (GtkText *self);
+static void         gtk_text_update_clear_action      (GtkText *self);
 static void         gtk_text_update_handles           (GtkText *self);
 
 static void gtk_text_activate_clipboard_cut          (GtkWidget  *widget,
@@ -629,6 +632,9 @@ static void gtk_text_activate_selection_delete       (GtkWidget  *widget,
                                                       const char *action_name,
                                                       GVariant   *parameter);
 static void gtk_text_activate_selection_select_all   (GtkWidget  *widget,
+                                                      const char *action_name,
+                                                      GVariant   *parameter);
+static void gtk_text_clear                           (GtkWidget  *widget,
                                                       const char *action_name,
                                                       GVariant   *parameter);
 static void gtk_text_activate_misc_toggle_direction  (GtkWidget  *widget,
@@ -1334,6 +1340,8 @@ gtk_text_class_init (GtkTextClass *class)
   gtk_widget_class_install_action (widget_class, "selection.select-all", NULL,
                                    gtk_text_activate_selection_select_all);
 
+  gtk_widget_class_install_action (widget_class, "text.clear", NULL, gtk_text_clear);
+
   /**
    * GtkText|misc.insert-emoji:
    *
@@ -1358,6 +1366,7 @@ gtk_text_class_init (GtkTextClass *class)
   gtk_widget_class_install_property_action (widget_class,
                                             "misc.toggle-visibility",
                                             "visibility");
+
 
   /**
    * GtkText|text.undo:
@@ -1396,6 +1405,11 @@ gtk_text_class_init (GtkTextClass *class)
   gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_t, GDK_CONTROL_MASK | GDK_SHIFT_MASK,
                                        "misc.toggle-direction",
+                                       NULL);
+
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_Clear, GDK_NO_MODIFIER_MASK,
+                                       "text.clear",
                                        NULL);
 
   /* Moving the insertion point */
@@ -2950,6 +2964,7 @@ gtk_text_click_gesture_pressed (GtkGestureClick *gesture,
     {
       gboolean have_selection;
       gboolean is_touchscreen, extend_selection;
+      GdkDisplay *display;
       GdkDevice *source;
       guint state;
 
@@ -2959,8 +2974,10 @@ gtk_text_click_gesture_pressed (GtkGestureClick *gesture,
       sel_end = priv->current_pos;
       have_selection = sel_start != sel_end;
 
+      display = gtk_widget_get_display (widget);
       source = gdk_event_get_device (event);
-      is_touchscreen = gdk_device_get_source (source) == GDK_SOURCE_TOUCHSCREEN;
+      is_touchscreen = GTK_DISPLAY_DEBUG_CHECK (display, TOUCHSCREEN) ||
+                       gdk_device_get_source (source) == GDK_SOURCE_TOUCHSCREEN;
 
       priv->text_handles_enabled = is_touchscreen;
 
@@ -3261,6 +3278,7 @@ gtk_text_drag_gesture_update (GtkGestureDrag *gesture,
   else
     {
       GdkInputSource input_source;
+      GdkDisplay *display;
       GdkDevice *source;
       guint length;
       int tmp_pos;
@@ -3275,6 +3293,7 @@ gtk_text_drag_gesture_update (GtkGestureDrag *gesture,
       else
         tmp_pos = gtk_text_find_position (self, x);
 
+      display = gtk_widget_get_display (GTK_WIDGET (self));
       source = gdk_event_get_device (event);
       input_source = gdk_device_get_source (source);
 
@@ -3325,7 +3344,8 @@ gtk_text_drag_gesture_update (GtkGestureDrag *gesture,
       gtk_text_set_positions (self, pos, bound);
 
       /* Update touch handles' position */
-      if (input_source == GDK_SOURCE_TOUCHSCREEN)
+      if (GTK_DISPLAY_DEBUG_CHECK (display, TOUCHSCREEN) ||
+          input_source == GDK_SOURCE_TOUCHSCREEN)
         {
           priv->text_handles_enabled = TRUE;
           gtk_text_update_handles (self);
@@ -4904,7 +4924,6 @@ gtk_text_draw_cursor (GtkText     *self,
   GtkCssStyle *style;
   PangoRectangle cursor_rect;
   int cursor_index;
-  gboolean block;
   gboolean block_at_line_end;
   PangoLayout *layout;
   const char *text;
@@ -4923,13 +4942,9 @@ gtk_text_draw_cursor (GtkText     *self,
   else
     cursor_index = g_utf8_offset_to_pointer (text, priv->current_pos + priv->preedit_cursor) - text;
 
-  if (!priv->overwrite_mode)
-    block = FALSE;
-  else
-    block = _gtk_text_util_get_block_cursor_location (layout,
-                                                      cursor_index, &cursor_rect, &block_at_line_end);
-
-  if (!block)
+  if (!priv->overwrite_mode ||
+      !_gtk_text_util_get_block_cursor_location (layout,
+                                                 cursor_index, &cursor_rect, &block_at_line_end))
     {
       gtk_css_boxes_init (&boxes, widget);
       gtk_css_style_snapshot_caret (&boxes, display, snapshot,
@@ -5747,6 +5762,7 @@ gtk_text_set_editable (GtkText  *self,
       gtk_text_update_history (self);
       gtk_text_update_clipboard_actions (self);
       gtk_text_update_emoji_action (self);
+      gtk_text_update_clear_action (self);
 
       gtk_accessible_update_property (GTK_ACCESSIBLE (self),
                                       GTK_ACCESSIBLE_PROPERTY_READ_ONLY, !priv->editable,
@@ -6234,6 +6250,14 @@ gtk_text_activate_selection_select_all (GtkWidget  *widget,
 }
 
 static void
+gtk_text_clear (GtkWidget  *widget,
+                const char *action_name,
+                GVariant   *parameter)
+{
+  gtk_editable_delete_text (GTK_EDITABLE (widget), 0, -1);
+}
+
+static void
 gtk_text_activate_misc_insert_emoji (GtkWidget  *widget,
                                      const char *action_name,
                                      GVariant   *parameter)
@@ -6301,6 +6325,14 @@ gtk_text_update_emoji_action (GtkText *self)
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "misc.insert-emoji",
                                  priv->editable &&
                                  (gtk_text_get_input_hints (self) & GTK_INPUT_HINT_NO_EMOJI) == 0);
+}
+
+static void
+gtk_text_update_clear_action (GtkText *self)
+{
+  GtkTextPrivate *priv = gtk_text_get_instance_private (self);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "text.clear", priv->editable);
 }
 
 static GMenuModel *
@@ -6636,7 +6668,7 @@ gtk_text_drag_accept (GtkDropTarget *dest,
   if (!priv->editable)
     return FALSE;
 
-  if ((gdk_drop_get_actions (drop) & gtk_drop_target_get_actions (dest)) == 0)
+  if ((gdk_drop_get_actions (drop) & gtk_drop_target_get_actions (dest)) == GDK_ACTION_NONE)
     return FALSE;
 
   return gdk_content_formats_match (gtk_drop_target_get_formats (dest), gdk_drop_get_formats (drop));

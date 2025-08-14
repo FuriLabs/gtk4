@@ -18,7 +18,9 @@
 #include "config.h"
 
 #include "gdkdevice-wayland-private.h"
+#include "gdksurface-wayland-private.h"
 
+#include "gdkeventsource.h"
 #include "gdkclipboard-wayland.h"
 #include "gdkclipboardprivate.h"
 #include "gdkcursorprivate.h"
@@ -30,7 +32,8 @@
 #include "gdkkeysprivate.h"
 #include "gdkkeysyms.h"
 #include "gdkprimary-wayland.h"
-#include "gdkprivate-wayland.h"
+#include "gdkkeymap-wayland.h"
+#include "gdkdrop-wayland.h"
 #include "gdkseat-wayland.h"
 #include "gdkseatprivate.h"
 #include "gdksurfaceprivate.h"
@@ -39,7 +42,7 @@
 #include "gdkprivate.h"
 
 #include "pointer-gestures-unstable-v1-client-protocol.h"
-#include "tablet-unstable-v2-client-protocol.h"
+#include "tablet-v2-client-protocol.h"
 #include "cursor-shape-v1-client-protocol.h"
 
 #include <xkbcommon/xkbcommon.h>
@@ -49,6 +52,8 @@
 #elif defined(HAVE_LINUX_INPUT_H)
 #include <linux/input.h>
 #endif
+
+#define WL_POINTER_HAS_FRAME 5
 
 /**
  * GdkWaylandDevice:
@@ -86,32 +91,14 @@
 
 G_DEFINE_TYPE (GdkWaylandSeat, gdk_wayland_seat, GDK_TYPE_SEAT)
 
-static void init_pointer_data (GdkWaylandPointerData *pointer_data,
-                               GdkDisplay            *display_wayland,
-                               GdkDevice             *logical_device);
-
 #define GDK_SLOT_TO_EVENT_SEQUENCE(s) ((GdkEventSequence *) GUINT_TO_POINTER((s) + 1))
 #define GDK_EVENT_SEQUENCE_TO_SLOT(s) (GPOINTER_TO_UINT(s) - 1)
 
-static void deliver_key_event (GdkWaylandSeat       *seat,
-                               uint32_t              time_,
-                               uint32_t              key,
-                               uint32_t              state,
-                               gboolean              from_key_repeat);
+static void init_pointer_data (GdkWaylandPointerData *pointer_data,
+                               GdkDisplay            *display,
+                               GdkDevice             *logical_device);
 
-void
-gdk_wayland_seat_stop_cursor_animation (GdkWaylandSeat        *seat,
-                                        GdkWaylandPointerData *pointer)
-{
-  if (pointer->cursor_timeout_id > 0)
-    {
-      g_source_remove (pointer->cursor_timeout_id);
-      pointer->cursor_timeout_id = 0;
-      pointer->cursor_image_delay = 0;
-    }
-
-  pointer->cursor_image_index = 0;
-}
+/* {{{ Utilities */
 
 GdkWaylandTabletData *
 gdk_wayland_seat_find_tablet (GdkWaylandSeat *seat,
@@ -226,6 +213,27 @@ gdk_wayland_actions_to_gdk_actions (uint32_t dnd_actions)
   return actions;
 }
 
+static const char *
+get_axis_source_name (enum wl_pointer_axis_source source)
+{
+  switch (source)
+    {
+    case WL_POINTER_AXIS_SOURCE_WHEEL:
+      return "wheel";
+    case WL_POINTER_AXIS_SOURCE_FINGER:
+      return "finger";
+    case WL_POINTER_AXIS_SOURCE_CONTINUOUS:
+      return "continuous";
+    case WL_POINTER_AXIS_SOURCE_WHEEL_TILT:
+      return "wheel-tilt";
+    default:
+      return "unknown";
+    }
+}
+
+/* }}} */
+/* {{{ Data offer listener */
+
 static void
 data_offer_offer (void                 *data,
                   struct wl_data_offer *offer,
@@ -303,6 +311,9 @@ static const struct wl_data_offer_listener data_offer_listener = {
   data_offer_source_actions,
   data_offer_action
 };
+
+/* }}} */
+/* {{{ Data device listener */
 
 static void
 data_device_data_offer (void                  *data,
@@ -503,6 +514,9 @@ static const struct wl_data_device_listener data_device_listener = {
   data_device_selection
 };
 
+/* }}} */
+/* {{{ Scroll event utilities */
+
 static GdkDevice * get_scroll_device (GdkWaylandSeat              *seat,
                                       enum wl_pointer_axis_source  source);
 
@@ -618,6 +632,9 @@ flush_scroll_event (GdkWaylandSeat             *seat,
   pointer_frame->is_scroll_stop = FALSE;
 }
 
+/* }}} */
+/* {{{ Frame event utilities */
+
 static void
 gdk_wayland_seat_flush_frame_event (GdkWaylandSeat *seat)
 {
@@ -644,6 +661,9 @@ gdk_wayland_seat_set_frame_event (GdkWaylandSeat *seat,
 
   seat->pointer_info.frame.event = event;
 }
+
+/* }}} */
+/* {{{ Pointer listener */
 
 static void
 pointer_handle_enter (void              *data,
@@ -742,8 +762,6 @@ pointer_handle_leave (void              *data,
   g_object_unref (seat->pointer_info.focus);
   seat->pointer_info.focus = NULL;
   seat->pointer_info.cursor_shape = 0;
-  if (seat->cursor)
-    gdk_wayland_seat_stop_cursor_animation (seat, &seat->pointer_info);
 
   seat->pointer_info.has_cursor_surface = FALSE;
 
@@ -931,24 +949,6 @@ pointer_handle_frame (void              *data,
   gdk_wayland_seat_flush_frame_event (seat);
 }
 
-static const char *
-get_axis_source_name (enum wl_pointer_axis_source source)
-{
-  switch (source)
-    {
-    case WL_POINTER_AXIS_SOURCE_WHEEL:
-      return "wheel";
-    case WL_POINTER_AXIS_SOURCE_FINGER:
-      return "finger";
-    case WL_POINTER_AXIS_SOURCE_CONTINUOUS:
-      return "continuous";
-    case WL_POINTER_AXIS_SOURCE_WHEEL_TILT:
-      return "wheel-tilt";
-    default:
-      return "unknown";
-    }
-}
-
 static void
 pointer_handle_axis_source (void                        *data,
                             struct wl_pointer           *pointer,
@@ -1056,147 +1056,21 @@ pointer_handle_axis_value120 (void              *data,
                   get_axis_name (axis), value, seat);
 }
 
-static void
-keyboard_handle_keymap (void               *data,
-                        struct wl_keyboard *keyboard,
-                        uint32_t            format,
-                        int                 fd,
-                        uint32_t            size)
-{
-  GdkWaylandSeat *seat = data;
-  PangoDirection direction;
-  gboolean bidi;
-  gboolean caps_lock;
-  gboolean num_lock;
-  gboolean scroll_lock;
-  GdkModifierType modifiers;
-  int layout_index;
-  GStrv old_layout_names, new_layout_names;
+static const struct wl_pointer_listener pointer_listener = {
+  pointer_handle_enter,
+  pointer_handle_leave,
+  pointer_handle_motion,
+  pointer_handle_button,
+  pointer_handle_axis,
+  pointer_handle_frame,
+  pointer_handle_axis_source,
+  pointer_handle_axis_stop,
+  pointer_handle_axis_discrete,
+  pointer_handle_axis_value120,
+};
 
-  direction = gdk_keymap_get_direction (seat->keymap);
-  bidi = gdk_keymap_have_bidi_layouts (seat->keymap);
-  caps_lock = gdk_keymap_get_caps_lock_state (seat->keymap);
-  num_lock = gdk_keymap_get_num_lock_state (seat->keymap);
-  scroll_lock = gdk_keymap_get_scroll_lock_state (seat->keymap);
-  modifiers = gdk_keymap_get_modifier_state (seat->keymap);
-  layout_index = gdk_keymap_get_active_layout_index (seat->keymap);
-  old_layout_names = gdk_keymap_get_layout_names (seat->keymap);
-
-  _gdk_wayland_keymap_update_from_fd (seat->keymap, format, fd, size);
-
-  new_layout_names = gdk_keymap_get_layout_names (seat->keymap);
-  if (new_layout_names)
-    {
-      if (GDK_DISPLAY_DEBUG_CHECK (seat->keymap->display, INPUT))
-        {
-          int n_layouts = g_strv_length (new_layout_names);
-          GString *s = g_string_new ("");
-          for (int i = 0; i < n_layouts; i++)
-            {
-              if (s->len > 0)
-                g_string_append (s, ", ");
-              if (i == layout_index)
-                g_string_append (s, "*");
-              g_string_append (s, new_layout_names[i]);
-            }
-          gdk_debug_message ("layouts: %s", s->str);
-          g_string_free (s, TRUE);
-        }
-    }
-  g_signal_emit_by_name (seat->keymap, "keys-changed");
-  g_signal_emit_by_name (seat->keymap, "state-changed");
-  if (direction != gdk_keymap_get_direction (seat->keymap))
-    g_signal_emit_by_name (seat->keymap, "direction-changed");
-
-  if (direction != gdk_keymap_get_direction (seat->keymap))
-    g_object_notify (G_OBJECT (seat->logical_keyboard), "direction");
-  if (bidi != gdk_keymap_have_bidi_layouts (seat->keymap))
-    g_object_notify (G_OBJECT (seat->logical_keyboard), "has-bidi-layouts");
-  if (caps_lock != gdk_keymap_get_caps_lock_state (seat->keymap))
-    g_object_notify (G_OBJECT (seat->logical_keyboard), "caps-lock-state");
-  if (num_lock != gdk_keymap_get_num_lock_state (seat->keymap))
-    g_object_notify (G_OBJECT (seat->logical_keyboard), "num-lock-state");
-  if (scroll_lock != gdk_keymap_get_scroll_lock_state (seat->keymap))
-    g_object_notify (G_OBJECT (seat->logical_keyboard), "scroll-lock-state");
-  if (modifiers != gdk_keymap_get_modifier_state (seat->keymap))
-    g_object_notify (G_OBJECT (seat->logical_keyboard), "modifier-state");
-  if (layout_index != gdk_keymap_get_active_layout_index (seat->keymap))
-      g_object_notify (G_OBJECT (seat->logical_keyboard), "active-layout-index");
-  if (!g_strv_equal ((const gchar * const *) old_layout_names,
-                     (const gchar * const *) new_layout_names))
-      g_object_notify (G_OBJECT (seat->logical_keyboard), "layout-names");
-
-  g_strfreev (old_layout_names);
-  g_strfreev (new_layout_names);
-
-}
-
-static void
-keyboard_handle_enter (void               *data,
-                       struct wl_keyboard *keyboard,
-                       uint32_t            serial,
-                       struct wl_surface  *surface,
-                       struct wl_array    *keys)
-{
-  GdkWaylandSeat *seat = data;
-  GdkEvent *event;
-
-  if (!surface)
-    return;
-
-  if (!GDK_IS_SURFACE (wl_surface_get_user_data (surface)))
-    return;
-
-  seat->keyboard_focus = wl_surface_get_user_data (surface);
-  g_object_ref (seat->keyboard_focus);
-  seat->repeat_key = 0;
-
-  event = gdk_focus_event_new (seat->keyboard_focus,
-                               seat->logical_keyboard,
-                               TRUE);
-
-  GDK_SEAT_DEBUG (seat, EVENTS,
-                  "focus in, seat %p surface %p",
-                  seat, seat->keyboard_focus);
-
-  _gdk_wayland_display_deliver_event (seat->display, event);
-}
-
-static void stop_key_repeat (GdkWaylandSeat *seat);
-
-static void
-keyboard_handle_leave (void               *data,
-                       struct wl_keyboard *keyboard,
-                       uint32_t            serial,
-                       struct wl_surface  *surface)
-{
-  GdkWaylandSeat *seat = data;
-  GdkEvent *event;
-
-  if (!seat->keyboard_focus)
-    return;
-
-  /* gdk_surface_is_destroyed() might already return TRUE for
-   * seat->keyboard_focus here, which would happen if we destroyed the
-   * surface before losing keyboard focus.
-   */
-  stop_key_repeat (seat);
-
-  event = gdk_focus_event_new (seat->keyboard_focus,
-                               seat->logical_keyboard,
-                               FALSE);
-
-  g_object_unref (seat->keyboard_focus);
-  seat->keyboard_focus = NULL;
-  seat->repeat_key = 0;
-  seat->key_modifiers = 0;
-
-  GDK_SEAT_DEBUG (seat, EVENTS,
-                  "focus out, seat %p surface %p",
-                  seat, gdk_event_get_surface (event));
-
-  _gdk_wayland_display_deliver_event (seat->display, event);
-}
+/* }}} */
+/* {{{ Key event utilities */
 
 static gboolean keyboard_repeat (gpointer data);
 
@@ -1413,6 +1287,149 @@ keyboard_repeat (gpointer data)
   return G_SOURCE_REMOVE;
 }
 
+/* }}} */
+/* {{{ Keyboard listener */
+
+static void
+keyboard_handle_keymap (void               *data,
+                        struct wl_keyboard *keyboard,
+                        uint32_t            format,
+                        int                 fd,
+                        uint32_t            size)
+{
+  GdkWaylandSeat *seat = data;
+  PangoDirection direction;
+  gboolean bidi;
+  gboolean caps_lock;
+  gboolean num_lock;
+  gboolean scroll_lock;
+  GdkModifierType modifiers;
+  int layout_index;
+  GStrv old_layout_names, new_layout_names;
+
+  direction = gdk_keymap_get_direction (seat->keymap);
+  bidi = gdk_keymap_have_bidi_layouts (seat->keymap);
+  caps_lock = gdk_keymap_get_caps_lock_state (seat->keymap);
+  num_lock = gdk_keymap_get_num_lock_state (seat->keymap);
+  scroll_lock = gdk_keymap_get_scroll_lock_state (seat->keymap);
+  modifiers = gdk_keymap_get_modifier_state (seat->keymap);
+  layout_index = gdk_keymap_get_active_layout_index (seat->keymap);
+  old_layout_names = gdk_keymap_get_layout_names (seat->keymap);
+
+  _gdk_wayland_keymap_update_from_fd (seat->keymap, format, fd, size);
+
+  new_layout_names = gdk_keymap_get_layout_names (seat->keymap);
+  if (new_layout_names)
+    {
+      if (GDK_DISPLAY_DEBUG_CHECK (seat->keymap->display, INPUT))
+        {
+          int n_layouts = g_strv_length (new_layout_names);
+          GString *s = g_string_new ("");
+          for (int i = 0; i < n_layouts; i++)
+            {
+              if (s->len > 0)
+                g_string_append (s, ", ");
+              if (i == layout_index)
+                g_string_append (s, "*");
+              g_string_append (s, new_layout_names[i]);
+            }
+          gdk_debug_message ("layouts: %s", s->str);
+          g_string_free (s, TRUE);
+        }
+    }
+  g_signal_emit_by_name (seat->keymap, "keys-changed");
+  g_signal_emit_by_name (seat->keymap, "state-changed");
+  if (direction != gdk_keymap_get_direction (seat->keymap))
+    g_signal_emit_by_name (seat->keymap, "direction-changed");
+
+  if (direction != gdk_keymap_get_direction (seat->keymap))
+    g_object_notify (G_OBJECT (seat->logical_keyboard), "direction");
+  if (bidi != gdk_keymap_have_bidi_layouts (seat->keymap))
+    g_object_notify (G_OBJECT (seat->logical_keyboard), "has-bidi-layouts");
+  if (caps_lock != gdk_keymap_get_caps_lock_state (seat->keymap))
+    g_object_notify (G_OBJECT (seat->logical_keyboard), "caps-lock-state");
+  if (num_lock != gdk_keymap_get_num_lock_state (seat->keymap))
+    g_object_notify (G_OBJECT (seat->logical_keyboard), "num-lock-state");
+  if (scroll_lock != gdk_keymap_get_scroll_lock_state (seat->keymap))
+    g_object_notify (G_OBJECT (seat->logical_keyboard), "scroll-lock-state");
+  if (modifiers != gdk_keymap_get_modifier_state (seat->keymap))
+    g_object_notify (G_OBJECT (seat->logical_keyboard), "modifier-state");
+  if (layout_index != gdk_keymap_get_active_layout_index (seat->keymap))
+      g_object_notify (G_OBJECT (seat->logical_keyboard), "active-layout-index");
+  if (!g_strv_equal ((const gchar * const *) old_layout_names,
+                     (const gchar * const *) new_layout_names))
+      g_object_notify (G_OBJECT (seat->logical_keyboard), "layout-names");
+
+  g_strfreev (old_layout_names);
+  g_strfreev (new_layout_names);
+
+}
+
+static void
+keyboard_handle_enter (void               *data,
+                       struct wl_keyboard *keyboard,
+                       uint32_t            serial,
+                       struct wl_surface  *surface,
+                       struct wl_array    *keys)
+{
+  GdkWaylandSeat *seat = data;
+  GdkEvent *event;
+
+  if (!surface)
+    return;
+
+  if (!GDK_IS_SURFACE (wl_surface_get_user_data (surface)))
+    return;
+
+  seat->keyboard_focus = wl_surface_get_user_data (surface);
+  g_object_ref (seat->keyboard_focus);
+  seat->repeat_key = 0;
+
+  event = gdk_focus_event_new (seat->keyboard_focus,
+                               seat->logical_keyboard,
+                               TRUE);
+
+  GDK_SEAT_DEBUG (seat, EVENTS,
+                  "focus in, seat %p surface %p",
+                  seat, seat->keyboard_focus);
+
+  _gdk_wayland_display_deliver_event (seat->display, event);
+}
+
+static void
+keyboard_handle_leave (void               *data,
+                       struct wl_keyboard *keyboard,
+                       uint32_t            serial,
+                       struct wl_surface  *surface)
+{
+  GdkWaylandSeat *seat = data;
+  GdkEvent *event;
+
+  if (!seat->keyboard_focus)
+    return;
+
+  /* gdk_surface_is_destroyed() might already return TRUE for
+   * seat->keyboard_focus here, which would happen if we destroyed the
+   * surface before losing keyboard focus.
+   */
+  stop_key_repeat (seat);
+
+  event = gdk_focus_event_new (seat->keyboard_focus,
+                               seat->logical_keyboard,
+                               FALSE);
+
+  g_object_unref (seat->keyboard_focus);
+  seat->keyboard_focus = NULL;
+  seat->repeat_key = 0;
+  seat->key_modifiers = 0;
+
+  GDK_SEAT_DEBUG (seat, EVENTS,
+                  "focus out, seat %p surface %p",
+                  seat, gdk_event_get_surface (event));
+
+  _gdk_wayland_display_deliver_event (seat->display, event);
+}
+
 static void
 keyboard_handle_key (void               *data,
                      struct wl_keyboard *keyboard,
@@ -1533,6 +1550,18 @@ keyboard_handle_repeat_info (void               *data,
   seat->server_repeat_delay = delay;
 }
 
+static const struct wl_keyboard_listener keyboard_listener = {
+  keyboard_handle_keymap,
+  keyboard_handle_enter,
+  keyboard_handle_leave,
+  keyboard_handle_key,
+  keyboard_handle_modifiers,
+  keyboard_handle_repeat_info,
+};
+
+/* }}} */
+/* {{{ Touch event utilities */
+
 static GdkWaylandTouchData *
 gdk_wayland_seat_add_touch (GdkWaylandSeat    *seat,
                             uint32_t           id,
@@ -1620,6 +1649,9 @@ touch_handle_logical_pointer_crossing (GdkWaylandSeat      *seat,
                               GDK_ENTER_NOTIFY, GDK_CROSSING_NORMAL, time);
     }
 }
+
+/* }}} */
+/* {{{ Touch listener */
 
 static void
 touch_handle_down (void              *data,
@@ -1810,6 +1842,19 @@ touch_handle_orientation (void            *data,
 {
 }
 
+static const struct wl_touch_listener touch_listener = {
+  touch_handle_down,
+  touch_handle_up,
+  touch_handle_motion,
+  touch_handle_frame,
+  touch_handle_cancel,
+  touch_handle_shape,
+  touch_handle_orientation,
+};
+
+/* }}} */
+/* {{{ Swipe gesture listener */
+
 static void
 emit_gesture_swipe_event (GdkWaylandSeat          *seat,
                           GdkTouchpadGesturePhase  phase,
@@ -1901,6 +1946,15 @@ gesture_swipe_end (void                                *data,
   emit_gesture_swipe_event (seat, phase, time,
                             seat->gesture_n_fingers, 0, 0);
 }
+
+static const struct zwp_pointer_gesture_swipe_v1_listener gesture_swipe_listener = {
+  gesture_swipe_begin,
+  gesture_swipe_update,
+  gesture_swipe_end
+};
+
+/* }}} */
+/* {{{ Pinch gesture listener */
 
 static void
 emit_gesture_pinch_event (GdkWaylandSeat          *seat,
@@ -2002,6 +2056,15 @@ gesture_pinch_end (void                                *data,
                             0, 0, 1, 0);
 }
 
+static const struct zwp_pointer_gesture_pinch_v1_listener gesture_pinch_listener = {
+  gesture_pinch_begin,
+  gesture_pinch_update,
+  gesture_pinch_end
+};
+
+/* }}} */
+/* {{{ Hold gesture listener */
+
 static void
 emit_gesture_hold_event (GdkWaylandSeat          *seat,
                          GdkTouchpadGesturePhase  phase,
@@ -2074,6 +2137,14 @@ gesture_hold_end (void                               *data,
   emit_gesture_hold_event (seat, phase, time,
                            seat->gesture_n_fingers);
 }
+
+static const struct zwp_pointer_gesture_hold_v1_listener gesture_hold_listener = {
+  gesture_hold_begin,
+  gesture_hold_end
+};
+
+/* }}} */
+/* {{{ Tablet utilities */
 
 static void
 _gdk_wayland_seat_remove_tool (GdkWaylandSeat           *seat,
@@ -2154,6 +2225,9 @@ tablet_pad_lookup_button_group (GdkWaylandTabletPadData *pad,
 
   return NULL;
 }
+
+/* }}} */
+/* {{{ Tablet listener */
 
 static void
 tablet_handle_name (void                 *data,
@@ -2248,54 +2322,15 @@ tablet_handle_removed (void                 *data,
   _gdk_wayland_seat_remove_tablet (GDK_WAYLAND_SEAT (tablet->seat), tablet);
 }
 
-static const struct wl_pointer_listener pointer_listener = {
-  pointer_handle_enter,
-  pointer_handle_leave,
-  pointer_handle_motion,
-  pointer_handle_button,
-  pointer_handle_axis,
-  pointer_handle_frame,
-  pointer_handle_axis_source,
-  pointer_handle_axis_stop,
-  pointer_handle_axis_discrete,
-  pointer_handle_axis_value120,
-};
+static void
+tablet_handle_bustype (void                 *data,
+                       struct zwp_tablet_v2 *wp_tablet,
+                       uint32_t              bustype)
+{
+  GdkWaylandTabletData *tablet = data;
 
-static const struct wl_keyboard_listener keyboard_listener = {
-  keyboard_handle_keymap,
-  keyboard_handle_enter,
-  keyboard_handle_leave,
-  keyboard_handle_key,
-  keyboard_handle_modifiers,
-  keyboard_handle_repeat_info,
-};
-
-static const struct wl_touch_listener touch_listener = {
-  touch_handle_down,
-  touch_handle_up,
-  touch_handle_motion,
-  touch_handle_frame,
-  touch_handle_cancel,
-  touch_handle_shape,
-  touch_handle_orientation,
-};
-
-static const struct zwp_pointer_gesture_swipe_v1_listener gesture_swipe_listener = {
-  gesture_swipe_begin,
-  gesture_swipe_update,
-  gesture_swipe_end
-};
-
-static const struct zwp_pointer_gesture_pinch_v1_listener gesture_pinch_listener = {
-  gesture_pinch_begin,
-  gesture_pinch_update,
-  gesture_pinch_end
-};
-
-static const struct zwp_pointer_gesture_hold_v1_listener gesture_hold_listener = {
-  gesture_hold_begin,
-  gesture_hold_end
-};
+  tablet->bustype = bustype;
+}
 
 static const struct zwp_tablet_v2_listener tablet_listener = {
   tablet_handle_name,
@@ -2303,7 +2338,11 @@ static const struct zwp_tablet_v2_listener tablet_listener = {
   tablet_handle_path,
   tablet_handle_done,
   tablet_handle_removed,
+  tablet_handle_bustype,
 };
+
+/* }}} */
+/* {{{ Seat listener */
 
 static void
 seat_handle_capabilities (void                    *data,
@@ -2552,6 +2591,9 @@ static const struct wl_seat_listener seat_listener = {
   seat_handle_capabilities,
   seat_handle_name,
 };
+
+/* }}} */
+/* {{{ Tablet tool listener */
 
 static void
 tablet_tool_handle_type (void                      *data,
@@ -2809,6 +2851,7 @@ tablet_tool_handle_proximity_in (void                      *data,
   tablet->pointer_info.enter_serial = serial;
 
   tablet->pointer_info.focus = g_object_ref (surface);
+  tablet->pointer_info.cursor_shape = 0;
 
   gdk_device_update_tool (tablet->stylus_device, tool->tool);
   gdk_wayland_device_tablet_clone_tool_axes (tablet, tool->tool);
@@ -2848,9 +2891,6 @@ tablet_tool_handle_proximity_out (void                      *data,
                                    tool->tool,
                                    tablet->pointer_info.time);
   gdk_wayland_tablet_set_frame_event (tablet, event);
-
-  gdk_wayland_seat_stop_cursor_animation (GDK_WAYLAND_SEAT (tool->seat),
-                                          &tablet->pointer_info);
 
   g_object_unref (tablet->pointer_info.focus);
   tablet->pointer_info.focus = NULL;
@@ -3196,6 +3236,9 @@ static const struct zwp_tablet_tool_v2_listener tablet_tool_listener = {
   tablet_tool_handle_frame,
 };
 
+/* }}} */
+/* {{{ Tablet pad ring listener */
+
 static void
 tablet_pad_ring_handle_source (void                          *data,
                                struct zwp_tablet_pad_ring_v2 *wp_tablet_pad_ring,
@@ -3267,6 +3310,9 @@ static const struct zwp_tablet_pad_ring_v2_listener tablet_pad_ring_listener = {
   tablet_pad_ring_handle_stop,
   tablet_pad_ring_handle_frame,
 };
+
+/* }}} */
+/* {{{ Tablet pad strip listener */
 
 static void
 tablet_pad_strip_handle_source (void                           *data,
@@ -3341,6 +3387,9 @@ static const struct zwp_tablet_pad_strip_v2_listener tablet_pad_strip_listener =
   tablet_pad_strip_handle_stop,
   tablet_pad_strip_handle_frame,
 };
+
+/* }}} */
+/* {{{ Tablet pad group listener */
 
 static void
 tablet_pad_group_handle_buttons (void                           *data,
@@ -3456,6 +3505,69 @@ tablet_pad_group_handle_mode (void                           *data,
                                       event);
 }
 
+static void
+tablet_pad_dial_handle_delta (void                          *data,
+                              struct zwp_tablet_pad_dial_v2 *wp_tablet_pad_dial,
+                              int32_t                        v120)
+{
+  GdkWaylandTabletPadGroupData *group = data;
+
+  GDK_SEAT_DEBUG (group->pad->seat, EVENTS,
+                  "tablet pad dial handle delta, dial = %p delta = %d",
+                  wp_tablet_pad_dial, v120);
+
+  group->axis_tmp_info.value = v120;
+}
+
+static void
+tablet_pad_dial_handle_frame (void                          *data,
+                              struct zwp_tablet_pad_dial_v2 *wp_tablet_pad_dial,
+                              uint32_t                       time)
+{
+  GdkWaylandTabletPadGroupData *group = data;
+  GdkWaylandTabletPadData *pad = group->pad;
+  GdkWaylandSeat *seat = GDK_WAYLAND_SEAT (pad->seat);
+  GdkEvent *event;
+
+  GDK_SEAT_DEBUG (seat, EVENTS,
+                  "tablet pad dial handle frame, dial = %p", wp_tablet_pad_dial);
+
+  event = gdk_pad_event_new_dial (seat->keyboard_focus,
+                                  pad->device,
+                                  time,
+                                  g_list_index (pad->mode_groups, group),
+                                  g_list_index (pad->dials, wp_tablet_pad_dial),
+                                  group->current_mode,
+                                  group->axis_tmp_info.value);
+
+  _gdk_wayland_display_deliver_event (gdk_seat_get_display (pad->seat),
+                                      event);
+}
+
+static const struct zwp_tablet_pad_dial_v2_listener tablet_pad_dial_listener = {
+  tablet_pad_dial_handle_delta,
+  tablet_pad_dial_handle_frame,
+};
+
+static void
+tablet_pad_group_handle_dial (void                           *data,
+                              struct zwp_tablet_pad_group_v2 *wp_tablet_pad_group,
+                              struct zwp_tablet_pad_dial_v2  *wp_tablet_pad_dial)
+{
+  GdkWaylandTabletPadGroupData *group = data;
+
+  GDK_SEAT_DEBUG (group->pad->seat, EVENTS,
+                  "tablet pad group handle dial, pad group = %p, dial = %p",
+                  wp_tablet_pad_group, wp_tablet_pad_dial);
+
+  zwp_tablet_pad_dial_v2_add_listener (wp_tablet_pad_dial,
+                                       &tablet_pad_dial_listener, group);
+  zwp_tablet_pad_dial_v2_set_user_data (wp_tablet_pad_dial, group);
+
+  group->dials = g_list_append (group->dials, wp_tablet_pad_dial);
+  group->pad->dials = g_list_append (group->pad->dials, wp_tablet_pad_dial);
+}
+
 static const struct zwp_tablet_pad_group_v2_listener tablet_pad_group_listener = {
   tablet_pad_group_handle_buttons,
   tablet_pad_group_handle_ring,
@@ -3463,7 +3575,11 @@ static const struct zwp_tablet_pad_group_v2_listener tablet_pad_group_listener =
   tablet_pad_group_handle_modes,
   tablet_pad_group_handle_done,
   tablet_pad_group_handle_mode,
+  tablet_pad_group_handle_dial,
 };
+
+/* }}} */
+/* {{{ Tablet pad listener */
 
 static void
 tablet_pad_handle_group (void                           *data,
@@ -3668,6 +3784,9 @@ static const struct zwp_tablet_pad_v2_listener tablet_pad_listener = {
   tablet_pad_handle_removed,
 };
 
+/* }}} */
+/* {{{ Tablet seat listener */
+
 static void
 tablet_seat_handle_tablet_added (void                      *data,
                                  struct zwp_tablet_seat_v2 *wp_tablet_seat,
@@ -3737,38 +3856,8 @@ static const struct zwp_tablet_seat_v2_listener tablet_seat_listener = {
   tablet_seat_handle_pad_added,
 };
 
-static void
-init_devices (GdkWaylandSeat *seat)
-{
-  /* pointer */
-  seat->logical_pointer = g_object_new (GDK_TYPE_WAYLAND_DEVICE,
-                                       "name", "Core Pointer",
-                                       "source", GDK_SOURCE_MOUSE,
-                                       "has-cursor", TRUE,
-                                       "display", seat->display,
-                                       "seat", seat,
-                                       NULL);
-
-  gdk_wayland_device_set_pointer (GDK_WAYLAND_DEVICE (seat->logical_pointer),
-                                  &seat->pointer_info);
-
-  /* keyboard */
-  seat->logical_keyboard = g_object_new (GDK_TYPE_WAYLAND_DEVICE,
-                                        "name", "Core Keyboard",
-                                        "source", GDK_SOURCE_KEYBOARD,
-                                        "has-cursor", FALSE,
-                                        "display", seat->display,
-                                        "seat", seat,
-                                        NULL);
-  _gdk_device_reset_axes (seat->logical_keyboard);
-
-  /* link both */
-  _gdk_device_set_associated_device (seat->logical_pointer, seat->logical_keyboard);
-  _gdk_device_set_associated_device (seat->logical_keyboard, seat->logical_pointer);
-
-  gdk_seat_device_added (GDK_SEAT (seat), seat->logical_pointer);
-  gdk_seat_device_added (GDK_SEAT (seat), seat->logical_keyboard);
-}
+/* }}} */
+/* {{{ Pointer surface listener */
 
 static void
 pointer_surface_enter (void              *data,
@@ -3826,6 +3915,9 @@ static const struct wl_surface_listener pointer_surface_listener = {
   pointer_surface_preferred_buffer_transform,
 };
 
+/* }}} */
+/* {{{ Pointer surface fractional scale listener */
+
 static void
 pointer_surface_fractional_scale_preferred_scale_cb (void *data,
                                                      struct wp_fractional_scale_v1 *fractional_scale,
@@ -3841,6 +3933,70 @@ pointer_surface_fractional_scale_preferred_scale_cb (void *data,
 static const struct wp_fractional_scale_v1_listener fractional_scale_listener = {
   pointer_surface_fractional_scale_preferred_scale_cb,
 };
+
+/* }}} */
+/* {{{ GObject boilerplate */
+
+static void
+init_devices (GdkWaylandSeat *seat)
+{
+  /* pointer */
+  seat->logical_pointer = g_object_new (GDK_TYPE_WAYLAND_DEVICE,
+                                       "name", "Core Pointer",
+                                       "source", GDK_SOURCE_MOUSE,
+                                       "has-cursor", TRUE,
+                                       "display", seat->display,
+                                       "seat", seat,
+                                       NULL);
+
+  gdk_wayland_device_set_pointer (GDK_WAYLAND_DEVICE (seat->logical_pointer),
+                                  &seat->pointer_info);
+
+  /* keyboard */
+  seat->logical_keyboard = g_object_new (GDK_TYPE_WAYLAND_DEVICE,
+                                        "name", "Core Keyboard",
+                                        "source", GDK_SOURCE_KEYBOARD,
+                                        "has-cursor", FALSE,
+                                        "display", seat->display,
+                                        "seat", seat,
+                                        NULL);
+  _gdk_device_reset_axes (seat->logical_keyboard);
+
+  /* link both */
+  _gdk_device_set_associated_device (seat->logical_pointer, seat->logical_keyboard);
+  _gdk_device_set_associated_device (seat->logical_keyboard, seat->logical_pointer);
+
+  gdk_seat_device_added (GDK_SEAT (seat), seat->logical_pointer);
+  gdk_seat_device_added (GDK_SEAT (seat), seat->logical_keyboard);
+}
+
+static void
+init_pointer_data (GdkWaylandPointerData *pointer_data,
+                   GdkDisplay            *display,
+                   GdkDevice             *logical_device)
+{
+  GdkWaylandDisplay *display_wayland;
+
+  display_wayland = GDK_WAYLAND_DISPLAY (display);
+
+  pointer_data->pointer_surface =
+    wl_compositor_create_surface (display_wayland->compositor);
+  wl_surface_add_listener (pointer_data->pointer_surface,
+                           &pointer_surface_listener,
+                           logical_device);
+  if (display_wayland->viewporter)
+    pointer_data->pointer_surface_viewport = wp_viewporter_get_viewport (display_wayland->viewporter, pointer_data->pointer_surface);
+
+  pointer_data->preferred_scale = GDK_FRACTIONAL_SCALE_INIT_INT (1);
+  if (display_wayland->fractional_scale)
+    {
+      pointer_data->fractional_scale =
+          wp_fractional_scale_manager_v1_get_fractional_scale (display_wayland->fractional_scale,
+                                                               pointer_data->pointer_surface);
+      wp_fractional_scale_v1_add_listener (pointer_data->fractional_scale,
+                                           &fractional_scale_listener, logical_device);
+    }
+}
 
 static void
 gdk_wayland_pointer_data_finalize (GdkWaylandPointerData *pointer)
@@ -4222,38 +4378,13 @@ gdk_wayland_seat_init (GdkWaylandSeat *seat)
 {
 }
 
-static void
-init_pointer_data (GdkWaylandPointerData *pointer_data,
-                   GdkDisplay            *display,
-                   GdkDevice             *logical_device)
-{
-  GdkWaylandDisplay *display_wayland;
-
-  display_wayland = GDK_WAYLAND_DISPLAY (display);
-
-  pointer_data->pointer_surface =
-    wl_compositor_create_surface (display_wayland->compositor);
-  wl_surface_add_listener (pointer_data->pointer_surface,
-                           &pointer_surface_listener,
-                           logical_device);
-  if (display_wayland->viewporter)
-    pointer_data->pointer_surface_viewport = wp_viewporter_get_viewport (display_wayland->viewporter, pointer_data->pointer_surface);
-
-  pointer_data->preferred_scale = GDK_FRACTIONAL_SCALE_INIT_INT (1);
-  if (display_wayland->fractional_scale)
-    {
-      pointer_data->fractional_scale =
-          wp_fractional_scale_manager_v1_get_fractional_scale (display_wayland->fractional_scale,
-                                                               pointer_data->pointer_surface);
-      wp_fractional_scale_v1_add_listener (pointer_data->fractional_scale,
-                                           &fractional_scale_listener, logical_device);
-    }
-}
+/* }}} */
+/* {{{ Private API */
 
 void
-_gdk_wayland_display_create_seat (GdkWaylandDisplay *display_wayland,
-                                  guint32            id,
-				  struct wl_seat    *wl_seat)
+gdk_wayland_display_create_seat (GdkWaylandDisplay *display_wayland,
+                                 guint32            id,
+                                 struct wl_seat    *wl_seat)
 {
   GdkDisplay *display = GDK_DISPLAY (display_wayland);
   GdkWaylandSeat *seat;
@@ -4309,8 +4440,8 @@ _gdk_wayland_display_create_seat (GdkWaylandDisplay *display_wayland,
 }
 
 void
-_gdk_wayland_display_remove_seat (GdkWaylandDisplay *display_wayland,
-                                  guint32            id)
+gdk_wayland_display_remove_seat (GdkWaylandDisplay *display_wayland,
+                                 guint32            id)
 {
   GdkDisplay *display = GDK_DISPLAY (display_wayland);
   GList *l, *seats;
@@ -4443,6 +4574,9 @@ gdk_wayland_seat_set_drag (GdkSeat *seat,
   g_set_object (&wayland_seat->drag, drag);
 }
 
+/* }}} */
+/* {{{ Public API */
+
 /**
  * gdk_wayland_seat_get_wl_seat: (skip)
  * @seat: (type GdkWaylandSeat): a `GdkSeat`
@@ -4458,3 +4592,6 @@ gdk_wayland_seat_get_wl_seat (GdkSeat *seat)
 
   return GDK_WAYLAND_SEAT (seat)->wl_seat;
 }
+
+/* }}} */
+/* vim:set foldmethod=marker: */

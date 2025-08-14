@@ -32,6 +32,19 @@ application with [`Application.set_accels_for_action()`](method.Application.set_
 The menubar can be configured via [`Application.set_menubar()`](method.Application.set_menubar.html).
 Those actions can then be activated from the menu.
 
+### Window menu
+
+The Window menu is special in macOS: it provides a list of open windows and has options for moving and resizing
+windows. To automatically add those options to the Window menu, add the property `gtk-macos-special` with
+value `window-submenu`:
+
+```xml
+<submenu>
+  <attribute name="label" translatable="yes">_Window</attribute>
+  <attribute name="gtk-macos-special">window-submenu</attribute>
+</submenu>
+```
+
 ## Native window controls
 
 By default, GTK applications use common window decorators (close/minimize/maximize) on all platforms.
@@ -64,3 +77,28 @@ If you create a macOS app for your application, you can provide
 custom UTI/MIME types mappings in the
 [Information Property List](https://developer.apple.com/documentation/bundleresources/information_property_list)
 for your application.
+
+## Vulkan support
+
+GTK can be compiled with Vulkan support on macOS, via
+[MoltenVK](https://github.com/KhronosGroup/MoltenVK).
+
+The macOS version links with the Vulkan loader library, and not with
+the vulkan library (MoltenVK) directly.
+
+### Homebrew
+
+Install the following packages to enable Vulkan support:
+
+```sh
+brew install vulkan-loader shaderc molten-vk
+```
+
+### Vulkan SDK
+
+Download the [Vulkan SDK for macOS](https://vulkan.lunarg.com/sdk/home) from LunarG.
+Set it up according to their
+[instructions](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html).
+Pay special attention to the environment variables that need to be set: `VULKAN_SDK`,
+`DYLD_LIBRARY_PATH`, `VK_ICD_FILENAMES`, and `VK_LAYER_PATH`. You can also use the provided
+`setup-env.sh` script in the SDK root folder.

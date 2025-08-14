@@ -6,3 +6,7 @@ usr/bin/gtk4-launch
 usr/bin/gtk4-path-tool
 usr/bin/gtk4-query-settings
 usr/bin/gtk4-rendernode-tool
+usr/share/bash-completion/completions/gtk4-builder-tool
+usr/share/bash-completion/completions/gtk4-image-tool
+usr/share/bash-completion/completions/gtk4-path-tool
+usr/share/bash-completion/completions/gtk4-rendernode-tool

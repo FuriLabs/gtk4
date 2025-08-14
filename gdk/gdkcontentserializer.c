@@ -21,7 +21,7 @@
 
 #include "gdkcontentserializer.h"
 
-#include "gdkcontentformats.h"
+#include "gdkcontentformatsprivate.h"
 #include "deprecated/gdkpixbuf.h"
 #include "filetransferportalprivate.h"
 #include "gdktextureprivate.h"
@@ -64,8 +64,6 @@ struct _Serializer
 };
 
 GQueue serializers = G_QUEUE_INIT;
-
-static void init (void);
 
 #define GDK_CONTENT_SERIALIZER_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_CONTENT_SERIALIZER, GdkContentSerializerClass))
 #define GDK_IS_CONTENT_SERIALIZER_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_CONTENT_SERIALIZER))
@@ -402,6 +400,10 @@ gdk_content_serializer_return_error (GdkContentSerializer *serializer,
  * @notify: destroy notify for @data
  *
  * Registers a function to serialize objects of a given type.
+ *
+ * Since 4.20, when looking up a serializer to use, GTK will
+ * use the last registered serializer for a given mime type,
+ * so applications can override the built-in serializers.
  */
 void
 gdk_content_register_serializer (GType                    type,
@@ -434,11 +436,9 @@ lookup_serializer (const char *mime_type,
 
   g_return_val_if_fail (mime_type != NULL, NULL);
 
-  init ();
-
   mime_type = g_intern_string (mime_type);
 
-  for (l = g_queue_peek_head_link (&serializers); l; l = l->next)
+  for (l = g_queue_peek_tail_link (&serializers); l; l = l->prev)
     {
       Serializer *serializer = l->data;
 
@@ -466,8 +466,6 @@ gdk_content_formats_union_serialize_gtypes (GdkContentFormats *formats)
   GList *l;
 
   g_return_val_if_fail (formats != NULL, NULL);
-
-  init ();
 
   builder = gdk_content_formats_builder_new ();
   gdk_content_formats_builder_add_formats (builder, formats);
@@ -501,8 +499,6 @@ gdk_content_formats_union_serialize_mime_types (GdkContentFormats *formats)
   GList *l;
 
   g_return_val_if_fail (formats != NULL, NULL);
-
-  init ();
 
   builder = gdk_content_formats_builder_new ();
   gdk_content_formats_builder_add_formats (builder, formats);
@@ -691,7 +687,7 @@ serialize_texture_in_thread (GTask        *task,
   texture = g_value_get_object (value);
 
   if (strcmp (gdk_content_serializer_get_mime_type (serializer), "image/png") == 0)
-    bytes = gdk_save_png (texture);
+    bytes = gdk_save_png (texture, NULL);
   else if (strcmp (gdk_content_serializer_get_mime_type (serializer), "image/tiff") == 0)
     bytes = gdk_save_tiff (texture);
   else if (strcmp (gdk_content_serializer_get_mime_type (serializer), "image/jpeg") == 0)
@@ -966,8 +962,8 @@ color_serializer (GdkContentSerializer *serializer)
   gdk_content_serializer_set_task_data (serializer, data, g_free);
 }
 
-static void
-init (void)
+void
+gdk_content_init_serializers (void)
 {
   static gboolean initialized = FALSE;
   GSList *formats, *f;
@@ -977,6 +973,8 @@ init (void)
     return;
 
   initialized = TRUE;
+
+  /* Textures */
 
   gdk_content_register_serializer (GDK_TYPE_TEXTURE,
                                    "image/png",
@@ -1029,37 +1027,35 @@ init (void)
 
   g_slist_free (formats);
 
+  /* Files */
+
+  gdk_content_register_serializer (G_TYPE_FILE,
+                                   "text/plain;charset=utf-8",
+                                   file_text_serializer,
+                                   NULL,
+                                   NULL);
+  gdk_content_register_serializer (G_TYPE_FILE,
+                                   "text/uri-list",
+                                   file_uri_serializer,
+                                   NULL,
+                                   NULL);
+  gdk_content_register_serializer (GDK_TYPE_FILE_LIST,
+                                   "text/plain;charset=utf-8",
+                                   file_text_serializer,
+                                   NULL,
+                                   NULL);
+  gdk_content_register_serializer (GDK_TYPE_FILE_LIST,
+                                   "text/uri-list",
+                                   file_uri_serializer,
+                                   NULL,
+                                   NULL);
+
 #if defined(G_OS_UNIX) && !defined(__APPLE__)
   file_transfer_portal_register ();
 #endif
 
-  gdk_content_register_serializer (G_TYPE_FILE,
-                                   "text/uri-list",
-                                   file_uri_serializer,
-                                   NULL,
-                                   NULL);
-  gdk_content_register_serializer (G_TYPE_FILE,
-                                   "text/plain;charset=utf-8",
-                                   file_text_serializer,
-                                   NULL,
-                                   NULL);
+  /* Strings */
 
-  gdk_content_register_serializer (GDK_TYPE_FILE_LIST,
-                                   "text/uri-list",
-                                   file_uri_serializer,
-                                   NULL,
-                                   NULL);
-  gdk_content_register_serializer (GDK_TYPE_FILE_LIST,
-                                   "text/plain;charset=utf-8",
-                                   file_text_serializer,
-                                   NULL,
-                                   NULL);
-
-  gdk_content_register_serializer (G_TYPE_STRING,
-                                   "text/plain;charset=utf-8",
-                                   string_serializer,
-                                   (gpointer) "utf-8",
-                                   NULL);
   if (!g_get_charset (&charset))
     {
       char *mime = g_strdup_printf ("text/plain;charset=%s", charset);
@@ -1075,6 +1071,14 @@ init (void)
                                    string_serializer,
                                    (gpointer) "ASCII",
                                    NULL);
+
+  gdk_content_register_serializer (G_TYPE_STRING,
+                                   "text/plain;charset=utf-8",
+                                   string_serializer,
+                                   (gpointer) "utf-8",
+                                   NULL);
+
+  /* Colors */
 
   gdk_content_register_serializer (GDK_TYPE_RGBA,
                                    "application/x-color",

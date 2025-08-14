@@ -13,6 +13,36 @@ gsk_gpu_print_indent (GString *string,
   g_string_append_printf (string, "%*s", 2 * indent, "");
 }
 
+static void
+gsk_gpu_print_shader_op (GString     *string,
+                         GdkShaderOp  op)
+{
+  switch (op)
+    {
+      case GDK_SHADER_DEFAULT:
+        g_string_append (string, " ");
+        break;
+      case GDK_SHADER_STRAIGHT:
+        g_string_append (string, "-");
+        break;
+      case GDK_SHADER_2_PLANES:
+        g_string_append (string, "2");
+        break;
+      case GDK_SHADER_3_PLANES:
+        g_string_append (string, "3");
+        break;
+      case GDK_SHADER_3_PLANES_10BIT_LSB:
+        g_string_append (string, "A");
+        break;
+      case GDK_SHADER_3_PLANES_12BIT_LSB:
+        g_string_append (string, "C");
+        break;
+      default:
+        g_assert_not_reached ();
+        break;
+    }
+}
+
 void
 gsk_gpu_print_shader_flags (GString           *string,
                             GskGpuShaderFlags  flags,
@@ -29,18 +59,23 @@ gsk_gpu_print_shader_flags (GString           *string,
   switch (clip)
     {
       case GSK_GPU_SHADER_CLIP_NONE:
-        g_string_append (string, "⬚ ");
+        g_string_append (string, "⬚");
         break;
       case GSK_GPU_SHADER_CLIP_RECT:
-        g_string_append (string, "□ ");
+        g_string_append (string, "□");
         break;
       case GSK_GPU_SHADER_CLIP_ROUNDED:
-        g_string_append (string, "▢ ");
+        g_string_append (string, "▢");
         break;
       default:
         g_assert_not_reached ();
         break;
     }
+
+  gsk_gpu_print_shader_op (string, gsk_gpu_shader_flags_get_texture0_op (flags));
+  gsk_gpu_print_shader_op (string, gsk_gpu_shader_flags_get_texture1_op (flags));
+
+  g_string_append_c (string, ' ');
 }
 
 void
@@ -162,6 +197,33 @@ gsk_gpu_print_newline (GString *string)
     g_string_append_c (string, '\n');
 }
 
+static const char *
+gsk_gpu_print_get_conversion_string (GskGpuConversion conv)
+{
+  switch (conv)
+    {
+    case GSK_GPU_CONVERSION_NONE:
+      return "";
+    case GSK_GPU_CONVERSION_SRGB:
+      return "srgb";
+    case GSK_GPU_CONVERSION_BT601:
+      return "bt601";
+    case GSK_GPU_CONVERSION_BT601_NARROW:
+      return "bt601n";
+    case GSK_GPU_CONVERSION_BT709:
+      return "bt709";
+    case GSK_GPU_CONVERSION_BT709_NARROW:
+      return "bt709n";
+    case GSK_GPU_CONVERSION_BT2020:
+      return "bt2020";
+    case GSK_GPU_CONVERSION_BT2020_NARROW:
+      return "bt2020n";
+    default:
+      g_assert_not_reached ();
+      return "";
+  }
+}
+
 void
 gsk_gpu_print_image (GString     *string,
                      GskGpuImage *image)
@@ -169,7 +231,7 @@ gsk_gpu_print_image (GString     *string,
   g_string_append_printf (string, "%zux%zu %s%s ",
                           gsk_gpu_image_get_width (image),
                           gsk_gpu_image_get_height (image),
-                          gsk_gpu_image_get_flags (image) & GSK_GPU_IMAGE_SRGB ? "S" : "",
-                          gdk_memory_format_get_name (gsk_gpu_image_get_format (image)));
+                          gdk_memory_format_get_name (gsk_gpu_image_get_format (image)),
+                          gsk_gpu_print_get_conversion_string (gsk_gpu_image_get_conversion (image)));
 }
 

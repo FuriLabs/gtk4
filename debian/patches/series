@@ -1,12 +1,9 @@
-workarounds/testsuite-tools-validate-Use-softpipe-driver-for-validate.patch
 debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
-insttests/Revert-tests-Stop-copying-the-tool-tests.patch
 insttests/Revert-build-Drop-the-install-tests-option.patch
 insttests/Revert-testsuite-Remove-leftover-test.in-files.patch
-gstplayer/subprojects-Add-gst-player-1.0-as-subproject.patch
-gstplayer/gstreamer-player-1.0-Do-not-install-it-if-it-s-a-subproje.patch
-gstplayer/media-Use-gstplayer-from-meson-subproject.patch
-gstplayer/gstreamer-player-Use-GtkName-Prefix-to-avoid-issues-if-ac.patch
+gstplay/subprojects-Add-gst-play-1.0-as-subproject.patch
+gstplay/gst-play-1.0-Do-not-install-it-if-it-s-a-subproject.patch
+gstplay/media-Use-gst-play-1.0-from-meson-subproject.patch
 gstplayer/Revert-build-Add-wrap-file-for-GStreamer.patch
 workarounds/reftests-Allow-minor-differences-to-be-tolerated.patch
 workarounds/Disable-inscription-markup.ui-reftest.patch
@@ -16,3 +13,4 @@ workarounds/nodeparser-Adjust-test-for-pango-1.52.0.patch
 workarounds/testsuite-skip-color-mix.patch
 workarounds/gtkcssnumbervalue-Don-t-use-fesetround-on-ARM-softfloat.patch
 workarounds/scaling-test-Skip-floating-point-pixel-formats-with-Cairo.patch
+print-Fix-finding-cpdb-headers.patch

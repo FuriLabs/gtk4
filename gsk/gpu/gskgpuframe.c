@@ -12,6 +12,7 @@
 #include "gskgpuopprivate.h"
 #include "gskgpurendererprivate.h"
 #include "gskgpuuploadopprivate.h"
+#include "gskgpuutilsprivate.h"
 
 #include "gskdebugprivate.h"
 #include "gskrendererprivate.h"
@@ -93,14 +94,19 @@ gsk_gpu_frame_default_begin (GskGpuFrame           *self,
                              const cairo_region_t  *region,
                              const graphene_rect_t *opaque)
 {
-  gdk_draw_context_begin_frame_full (context, depth, region, opaque);
+  gdk_draw_context_begin_frame_full (context, NULL, depth, region, opaque);
 }
 
 static void
 gsk_gpu_frame_default_end (GskGpuFrame    *self,
                            GdkDrawContext *context)
 {
-  gdk_draw_context_end_frame_full (context);
+  gdk_draw_context_end_frame_full (context, NULL);
+}
+
+static void
+gsk_gpu_frame_default_sync (GskGpuFrame *self)
+{
 }
 
 static gboolean
@@ -164,6 +170,7 @@ gsk_gpu_frame_class_init (GskGpuFrameClass *klass)
   klass->cleanup = gsk_gpu_frame_default_cleanup;
   klass->begin = gsk_gpu_frame_default_begin;
   klass->end = gsk_gpu_frame_default_end;
+  klass->sync = gsk_gpu_frame_default_sync;
   klass->upload_texture = gsk_gpu_frame_default_upload_texture;
 
   object_class->dispose = gsk_gpu_frame_dispose;
@@ -226,11 +233,31 @@ gsk_gpu_frame_begin (GskGpuFrame          *self,
   GSK_GPU_FRAME_GET_CLASS (self)->begin (self, context, depth, region, opaque);
 }
 
+/* Must do equivalent of gsk_gpu_frame_sync() */
 void
 gsk_gpu_frame_end (GskGpuFrame    *self,
                    GdkDrawContext *context)
 {
   GSK_GPU_FRAME_GET_CLASS (self)->end (self, context);
+}
+
+/*<private>
+ * gsk_gpu_frame_sync:
+ * @self: the frame that should install a sync point.
+ * 
+ * Installs a sync point after submit()ing commands.
+ * 
+ * After the installation of a sync point, the application
+ * must call gsk_gpu_frame_wait() before it can install a sync
+ * point again.
+ * 
+ * Another method to install a sync point is via
+ * gsk_gpu_frame_end().
+ */
+void
+gsk_gpu_frame_sync (GskGpuFrame *self)
+{
+  GSK_GPU_FRAME_GET_CLASS (self)->sync (self);
 }
 
 GskGpuDevice *
@@ -801,13 +828,12 @@ image_is_uploaded (GskGpuImage *image)
 }
 
 gboolean
-gsk_gpu_frame_download_texture (GskGpuFrame     *self,
-                                gint64           timestamp,
-                                GdkTexture      *texture,
-                                GdkMemoryFormat  format,
-                                GdkColorState   *color_state,
-                                guchar          *data,
-                                gsize            stride)
+gsk_gpu_frame_download_texture (GskGpuFrame           *self,
+                                gint64                 timestamp,
+                                GdkTexture            *texture,
+                                guchar                *data,
+                                const GdkMemoryLayout *layout,
+                                GdkColorState         *color_state)
 {
   GskGpuFramePrivate *priv = gsk_gpu_frame_get_instance_private (self);
   const GdkDmabuf *dmabuf;
@@ -832,16 +858,23 @@ gsk_gpu_frame_download_texture (GskGpuFrame     *self,
 
   gsk_gpu_frame_cleanup (self);
 
-  if (gdk_memory_format_get_dmabuf_fourcc (gsk_gpu_image_get_format (image)) != dmabuf->fourcc ||
+  if ((gdk_memory_format_get_dmabuf_rgb_fourcc (gsk_gpu_image_get_format (image)) != dmabuf->fourcc &&
+       gdk_memory_format_get_dmabuf_yuv_fourcc (gsk_gpu_image_get_format (image)) != dmabuf->fourcc) ||
+      !(gsk_gpu_image_get_flags (image) & GSK_GPU_IMAGE_DOWNLOADABLE) ||
       image_cs != color_state)
     {
       GskGpuImage *converted;
 
+      image_cs = gsk_gpu_color_state_apply_conversion (gdk_texture_get_color_state (texture),
+                                                       gsk_gpu_image_get_conversion (image));
+      g_assert (image_cs);
+
       converted = gsk_gpu_node_processor_convert_image (self,
-                                                        format,
+                                                        layout->format,
                                                         color_state,
                                                         image,
                                                         image_cs);
+      gdk_color_state_unref (image_cs);
       if (converted == NULL)
         {
           g_object_unref (image);
@@ -855,12 +888,13 @@ gsk_gpu_frame_download_texture (GskGpuFrame     *self,
   gsk_gpu_download_into_op (self,
                             image,
                             image_cs,
-                            format,
-                            color_state,
                             data,
-                            stride);
+                            layout,
+                            color_state);
 
   gsk_gpu_frame_submit (self, GSK_RENDER_PASS_EXPORT);
+  gsk_gpu_frame_sync (self);
+
   g_object_unref (image);
 
   return TRUE;

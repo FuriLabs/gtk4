@@ -15,10 +15,10 @@ Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7685
  1 file changed, 20 insertions(+)
 
 diff --git a/testsuite/gsk/scaling.c b/testsuite/gsk/scaling.c
-index 41a98fb..b4ea8bd 100644
+index eec5ea8..53902ab 100644
 --- a/testsuite/gsk/scaling.c
 +++ b/testsuite/gsk/scaling.c
-@@ -278,6 +278,16 @@ test_linear_filtering (gconstpointer data,
+@@ -302,6 +302,16 @@ test_linear_filtering (gconstpointer data,
  
    decode_renderer_format (data, &renderer, &format);
  
@@ -32,10 +32,10 @@ index 41a98fb..b4ea8bd 100644
 +      return;
 +    }
 +
-   input = create_stipple_texture (format, width, height, colors, &average_color);
-   node = gsk_texture_scale_node_new (input, &GRAPHENE_RECT_INIT (0, 0, width / 2, height / 2), GSK_SCALING_FILTER_LINEAR);
-   output = gsk_renderer_render_texture (renderer, node, NULL);
-@@ -306,6 +316,16 @@ test_mipmaps (gconstpointer data)
+   width = MAX (width, gdk_memory_format_get_block_width (format));
+   height = MAX (height, gdk_memory_format_get_block_height (format));
+ 
+@@ -334,6 +344,16 @@ test_mipmaps (gconstpointer data)
  
    decode_renderer_format (data, &renderer, &format);
  
@@ -49,6 +49,6 @@ index 41a98fb..b4ea8bd 100644
 +      return;
 +    }
 +
-   input = create_stipple_texture (format, 2, 2, colors, &average_color);
-   node = gsk_texture_scale_node_new (input, &GRAPHENE_RECT_INIT (0, 0, 1, 1), GSK_SCALING_FILTER_TRILINEAR);
-   output = gsk_renderer_render_texture (renderer, node, NULL);
+   width = MAX (2, gdk_memory_format_get_block_width (format));
+   height = MAX (2, gdk_memory_format_get_block_height (format));
+ 

@@ -238,7 +238,7 @@ typedef struct
   float threshold;
   gsize idx;
   gsize best_idx;
-  gsize best_t;
+  float best_t;
 } ClosestPointData;
 
 static gboolean
@@ -1518,10 +1518,14 @@ gsk_circle_contour_get_closest_point (const GskContour       *contour,
                                       float                  *out_dist)
 {
   const GskCircleContour *self = (const GskCircleContour *) contour;
-  float dist, angle, t;
+  float d, dist, angle, t;
   gsize idx;
 
-  dist = fabsf (graphene_point_distance (&self->center, point, NULL, NULL) - self->radius);
+  d = graphene_point_distance (&self->center, point, NULL, NULL);
+  if (d > self->radius)
+    dist = d - self->radius;
+  else
+    dist = self->radius - d;
 
   if (dist > threshold)
     return FALSE;
@@ -1547,6 +1551,8 @@ gsk_circle_contour_get_closest_point (const GskContour       *contour,
 
   result->idx = idx;
   result->t = t;
+
+  *out_dist = dist;
 
   return TRUE;
 }
@@ -1604,7 +1610,10 @@ gsk_circle_contour_get_tangent (const GskContour   *contour,
 
   gsk_circle_contour_get_position (contour, point, &p);
 
-  graphene_vec2_init (tangent, - p.y + self->center.y, p.x - self->center.x);
+  if (direction == GSK_PATH_TO_END || direction == GSK_PATH_FROM_START)
+    graphene_vec2_init (tangent, - p.y + self->center.y, p.x - self->center.x);
+  else
+    graphene_vec2_init (tangent, p.y - self->center.y, - p.x + self->center.x);
   graphene_vec2_normalize (tangent, tangent);
 }
 
@@ -1765,6 +1774,19 @@ gsk_circle_contour_new (const graphene_point_t *center,
   self->ccw = FALSE;
 
   return (GskContour *) self;
+}
+
+void
+gsk_circle_contour_get_params (const GskContour *contour,
+                               graphene_point_t *center,
+                               float            *radius,
+                               gboolean         *ccw)
+{
+  const GskCircleContour *self = (const GskCircleContour *) contour;
+
+  *center = self->center;
+  *radius = self->radius;
+  *ccw = self->ccw;
 }
 
 /* }}} */

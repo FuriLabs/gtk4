@@ -26,6 +26,7 @@
 #include "gdkmacosdisplay-private.h"
 #include "gdkmacosdragsurface-private.h"
 #include "gdkmacospasteboard-private.h"
+#include "gdkmacosutils-private.h"
 
 #include "gdk/gdkdeviceprivate.h"
 #include "gdk/gdkeventsprivate.h"
@@ -170,11 +171,10 @@ gdk_macos_drag_drop_done (GdkDrag  *drag,
   g_object_unref (drag);
 }
 
-static void
-gdk_macos_drag_set_cursor (GdkDrag   *drag,
-                           GdkCursor *cursor)
+void
+gdk_macos_drag_set_cursor (GdkMacosDrag *self,
+                           GdkCursor    *cursor)
 {
-  GdkMacosDrag *self = (GdkMacosDrag *)drag;
   NSCursor *nscursor;
 
   g_assert (GDK_IS_MACOS_DRAG (self));
@@ -186,6 +186,16 @@ gdk_macos_drag_set_cursor (GdkDrag   *drag,
 
   if (nscursor != NULL)
     [nscursor set];
+}
+
+static void
+gdk_macos_drag_update_cursor (GdkDrag *drag)
+{
+  GdkMacosDrag *self = (GdkMacosDrag *)drag;
+  GdkCursor *cursor;
+
+  cursor = gdk_drag_get_cursor (drag, gdk_drag_get_selected_action (drag));
+  gdk_macos_drag_set_cursor (self, cursor);
 }
 
 static void
@@ -339,7 +349,7 @@ gdk_macos_drag_class_init (GdkMacosDragClass *klass)
   drag_class->get_drag_surface = gdk_macos_drag_get_drag_surface;
   drag_class->set_hotspot = gdk_macos_drag_set_hotspot;
   drag_class->drop_done = gdk_macos_drag_drop_done;
-  drag_class->set_cursor = gdk_macos_drag_set_cursor;
+  drag_class->update_cursor = gdk_macos_drag_update_cursor;
   drag_class->cancel = gdk_macos_drag_cancel;
   drag_class->drop_performed = gdk_macos_drag_drop_performed;
 
@@ -419,7 +429,7 @@ _gdk_macos_drag_ns_operation_to_action (NSDragOperation operation)
     return GDK_ACTION_MOVE;
   if (operation & NSDragOperationLink)
     return GDK_ACTION_LINK;
-  return 0;
+  return GDK_ACTION_NONE;
 }
 
 void

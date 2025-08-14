@@ -41,6 +41,7 @@ demos = files([
   'iconscroll.c',
   'iconview.c',
   'iconview_edit.c',
+  'image_filtering.c',
   'image_scaling.c',
   'images.c',
   'infobar.c',
@@ -73,9 +74,11 @@ demos = files([
   'paintable_symbolic.c',
   'panes.c',
   'password_entry.c',
+  'path_explorer_demo.c',
   'path_fill.c',
   'path_maze.c',
   'path_spinner.c',
+  'path_sweep.c',
   'path_text.c',
   'path_walk.c',
   'peg_solitaire.c',
@@ -86,7 +89,6 @@ demos = files([
   'rotated_text.c',
   'scale.c',
   'search_entry.c',
-  'search_entry2.c',
   'shadertoy.c',
   'shortcuts.c',
   'shortcut_triggers.c',
@@ -109,7 +111,7 @@ demos = files([
   'video_player.c',
 ])
 
-gtkdemo_deps = [ libgtk_dep, ]
+gtkdemo_deps = [ libgtk_dep, gmodule_headers_dep ]
 
 extra_demo_sources = files([
   'bluroverlay.c',
@@ -121,6 +123,7 @@ extra_demo_sources = files([
   'demo2layout.c',
   'demo2widget.c',
   'demo4widget.c',
+  'filter_paintable.c',
   'fontify.c',
   'fontplane.c',
   'four_point_transform.c',
@@ -133,6 +136,7 @@ extra_demo_sources = files([
   'language-names.c',
   'main.c',
   'nodewidget.c',
+  'path_explorer.c',
   'pixbufpaintable.c',
   'puzzlepiece.c',
   'script-names.c',
@@ -140,6 +144,8 @@ extra_demo_sources = files([
   'singular_value_decomposition.c',
   'suggestionentry.c',
   'unicode-names.c',
+  'symbolicpaintable.c',
+  '../../gtk/gtkrendernodepaintable.c'
 ])
 
 if os_unix
@@ -233,6 +239,8 @@ foreach flag: common_cflags
   endif
 endforeach
 
+demo_cflags += [ '-DGTK_COMPILATION=1' ]
+
 gtkdemo_deps += [ profile_conf_h ]
 
 executable('gtk4-demo',
@@ -276,3 +284,11 @@ configure_file(
   configuration: appdata_config,
   install_dir: gtk_appdatadir
 )
+
+if bash.found()
+  install_data([ 'completion' ],
+    rename: [ 'gtk4-demo' ],
+    install_dir: bash_comp_inst_dir,
+    install_tag: 'bin',
+  )
+endif

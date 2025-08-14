@@ -61,6 +61,7 @@ gdk/x11/gdkselectioninputstream-x11.c
 gdk/x11/gdktextlistconverter-x11.c
 gsk/gpu/gskgldevice.c
 gsk/gpu/gskglrenderer.c
+gsk/gpu/gskvulkanrenderer.c
 gsk/gskrendernodeimpl.c
 gtk/a11y/gtkatspiaction.c
 gtk/a11y/gtkatspiroot.c
@@ -236,6 +237,7 @@ gtk/gtklistitemwidget.c
 gtk/gtklistview.c
 gtk/gtkmagnifier.c
 gtk/gtkmaplistmodel.c
+gtk/media/gtkgstsink.c
 gtk/gtkmediacontrols.c
 gtk/gtkmediafile.c
 gtk/gtkmediastream.c
@@ -272,6 +274,10 @@ gtk/gtkpopover.c
 gtk/gtkpopovercontent.c
 gtk/gtkpopovermenubar.c
 gtk/gtkpopovermenu.c
+gtk/print/backends/gtkprintbackendcpdb.c
+gtk/print/backends/gtkprintbackendcups.c
+gtk/print/backends/gtkprintbackendfile.c
+gtk/print/backends/gtkprintercups.c
 gtk/print/gtkprintbackend.c
 gtk/print/gtkprinter.c
 gtk/print/gtkprinteroption.c
@@ -420,11 +426,6 @@ gtk/ui/gtksidebarrow.ui
 gtk/ui/gtkstatusbar.ui
 gtk/ui/gtkvideo.ui
 gtk/ui/gtkvolumebutton.ui
-modules/media/gtkgstsink.c
-modules/printbackends/gtkprintbackendcpdb.c
-modules/printbackends/gtkprintbackendcups.c
-modules/printbackends/gtkprintbackendfile.c
-modules/printbackends/gtkprintercups.c
 tools/encodesymbolic.c
 tools/gtk-builder-tool.c
 tools/gtk-builder-tool-enumerate.c

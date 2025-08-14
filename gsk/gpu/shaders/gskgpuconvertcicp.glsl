@@ -3,8 +3,7 @@
 #include "common.glsl"
 
 #define VARIATION_OPACITY              (1u << 0)
-#define VARIATION_STRAIGHT_ALPHA       (1u << 1)
-#define VARIATION_REVERSE              (1u << 2)
+#define VARIATION_REVERSE              (1u << 1)
 
 #define HAS_VARIATION(var) ((GSK_VARIATION & var) == var)
 
@@ -14,6 +13,9 @@ PASS(2) vec2 _tex_coord;
 PASS_FLAT(3) float _opacity;
 PASS_FLAT(4) uint _transfer_function;
 PASS_FLAT(5) mat3 _mat;
+PASS_FLAT(8) mat3 _yuv;
+PASS_FLAT(11) vec3 _yuv_add;
+PASS_FLAT(12) uint _range;
 
 #ifdef GSK_VERTEX_SHADER
 
@@ -22,6 +24,8 @@ IN(1) vec4 in_tex_rect;
 IN(2) float in_opacity;
 IN(3) uint in_color_primaries;
 IN(4) uint in_transfer_function;
+IN(5) uint in_matrix_coefficients;
+IN(6) uint in_range;
 
 
 const mat3 identity = mat3(
@@ -90,6 +94,42 @@ const mat3 xyz_to_p3 = mat3(
  -0.4027108,  0.0236247,  0.9568845
 );
 
+const mat3 rgb_to_bt601 = mat3(
+  0.500000, 0.299000, -0.168736,
+  -0.418688, 0.587000, -0.331264,
+  -0.081312, 0.114000, 0.500000
+);
+
+const mat3 bt601_to_rgb = mat3(
+  1.402000, -0.714136, 0.000000,
+  1.000000, 1.000000, 1.000000,
+  0.000000, -0.344136, 1.772000
+);
+
+const mat3 rgb_to_bt709 = mat3(
+  0.500000, 0.212600, -0.114572,
+  -0.454153, 0.715200, -0.385428,
+  -0.045847, 0.072200, 0.500000
+);
+
+const mat3 bt709_to_rgb = mat3(
+  1.574800, -0.468124, -0.000000,
+  1.000000, 1.000000, 1.000000,
+  0.000000, -0.187324, 1.855600
+);
+
+const mat3 rgb_to_bt2020 = mat3(
+  0.500000, 0.262700, -0.139630,
+  -0.459786, 0.678000, -0.360370,
+  -0.040214, 0.059300, 0.500000
+);
+
+const mat3 bt2020_to_rgb = mat3(
+  1.474600, -0.571353, -0.000000,
+  1.000000, 1.000000, 1.000000,
+  -0.000000, -0.164553, 1.881400
+);
+
 mat3
 cicp_to_xyz (uint cp)
 {
@@ -97,7 +137,8 @@ cicp_to_xyz (uint cp)
     {
     case 1u: return srgb_to_xyz;
     case 5u: return pal_to_xyz;
-    case 6u: return ntsc_to_xyz;
+    case 6u:
+    case 7u: return ntsc_to_xyz;
     case 9u: return rec2020_to_xyz;
     case 10u: return identity;
     case 12u: return p3_to_xyz;
@@ -112,7 +153,8 @@ cicp_from_xyz (uint cp)
     {
     case 1u: return xyz_to_srgb;
     case 5u: return xyz_to_pal;
-    case 6u: return xyz_to_ntsc;
+    case 6u:
+    case 7u: return xyz_to_ntsc;
     case 9u: return xyz_to_rec2020;
     case 10u: return identity;
     case 12u: return xyz_to_p3;
@@ -120,6 +162,44 @@ cicp_from_xyz (uint cp)
     }
 }
 
+
+mat3
+yuv_to_rgb (uint mc, out vec3 yuv_add)
+{
+  if (mc == 0u)
+    yuv_add = vec3(0.0, 0.0, 0.0);
+  else
+    yuv_add = vec3(-0.5, 0.0, -0.5);
+
+  switch (mc)
+    {
+    case 0u: return identity;
+    case 1u: return bt709_to_rgb;
+    case 5u:
+    case 6u: return bt601_to_rgb;
+    case 9u: return bt2020_to_rgb;
+    }
+  return mat3(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0);
+}
+
+mat3
+rgb_to_yuv (uint mc, out vec3 yuv_add)
+{
+  if (mc == 0u)
+    yuv_add = vec3(0.0, 0.0, 0.0);
+  else
+    yuv_add = vec3(0.5, 0.0, 0.5);
+
+  switch (mc)
+    {
+    case 0u: return identity;
+    case 1u: return rgb_to_bt709;
+    case 5u:
+    case 6u: return rgb_to_bt601;
+    case 9u: return rgb_to_bt2020;
+    }
+  return mat3(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0);
+}
 
 void
 run (out vec2 pos)
@@ -133,6 +213,7 @@ run (out vec2 pos)
   _tex_coord = rect_get_coord (rect_from_gsk (in_tex_rect), pos);
   _opacity = in_opacity;
   _transfer_function = in_transfer_function;
+  _range = in_range;
 
   if (HAS_VARIATION (VARIATION_REVERSE))
     {
@@ -141,6 +222,8 @@ run (out vec2 pos)
         _mat = cicp_from_xyz (in_color_primaries) * srgb_to_xyz;
       else
         _mat = cicp_from_xyz (in_color_primaries) * rec2020_to_xyz;
+
+      _yuv = rgb_to_yuv (in_matrix_coefficients, _yuv_add);
     }
   else
     {
@@ -149,6 +232,8 @@ run (out vec2 pos)
         _mat = xyz_to_srgb * cicp_to_xyz (in_color_primaries);
       else
         _mat = xyz_to_rec2020 * cicp_to_xyz (in_color_primaries);
+
+      _yuv = yuv_to_rgb (in_matrix_coefficients, _yuv_add);
     }
 }
 
@@ -335,6 +420,15 @@ convert_color_from_cicp (vec4 color,
   if (from_premul)
     color = color_unpremultiply (color);
 
+  if (_range == 0u)
+    {
+      color.r = clamp ((color.r - 16.0/255.0) * 255.0/224.0, 0.0, 1.0);
+      color.g = clamp ((color.g - 16.0/255.0) * 255.0/219.0, 0.0, 1.0);
+      color.b = clamp ((color.b - 16.0/255.0) * 255.0/224.0, 0.0, 1.0);
+    }
+
+  color.rgb = _yuv * (color.rgb + _yuv_add);
+
   color.rgb = apply_cicp_eotf (color.rgb, _transfer_function);
   color.rgb = _mat * color.rgb;
   color.rgb = apply_oetf (color.rgb, to);
@@ -358,6 +452,17 @@ convert_color_to_cicp (vec4 color,
   color.rgb = _mat * color.rgb;
   color.rgb = apply_cicp_oetf (color.rgb, _transfer_function);
 
+  color.rgb = _yuv * color.rgb + _yuv_add;
+
+  color.rgb = clamp (color.rgb, 0.0, 1.0);
+
+  if (_range == 0u)
+    {
+      color.r = color.r * 224.0/255.0 + 16.0/255.0;
+      color.g = color.g * 219.0/255.0 + 16.0/255.0;
+      color.b = color.b * 224.0/255.0 + 16.0/255.0;
+    }
+
   if (to_premul)
     color = color_premultiply (color);
 
@@ -368,12 +473,7 @@ void
 run (out vec4 color,
      out vec2 position)
 {
-  vec4 pixel;
-
-  if (HAS_VARIATION (VARIATION_STRAIGHT_ALPHA))
-    pixel = gsk_texture_straight_alpha (GSK_TEXTURE0, _tex_coord);
-  else
-    pixel = texture (GSK_TEXTURE0, _tex_coord);
+  vec4 pixel = gsk_texture0 (_tex_coord);
 
   if (HAS_VARIATION (VARIATION_REVERSE))
     pixel = convert_color_to_cicp (pixel,

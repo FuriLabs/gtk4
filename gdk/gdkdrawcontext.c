@@ -66,8 +66,31 @@ static GParamSpec *pspecs[LAST_PROP] = { NULL, };
 
 G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (GdkDrawContext, gdk_draw_context, G_TYPE_OBJECT)
 
+static gboolean
+gdk_draw_context_is_attached (GdkDrawContext *self)
+{
+  GdkDrawContextPrivate *priv = gdk_draw_context_get_instance_private (self);
+
+  if (priv->surface == NULL)
+    return FALSE;
+
+  return gdk_surface_get_attached_context (priv->surface) == self;
+}
+
 static void
 gdk_draw_context_default_surface_resized (GdkDrawContext *context)
+{
+}
+
+static gboolean
+gdk_draw_context_default_surface_attach (GdkDrawContext  *context,
+                                         GError         **error)
+{
+  return TRUE;
+}
+
+static void
+gdk_draw_context_default_surface_detach (GdkDrawContext *context)
 {
 }
 
@@ -80,12 +103,17 @@ gdk_draw_context_default_empty_frame (GdkDrawContext *context)
 static void
 gdk_draw_context_dispose (GObject *gobject)
 {
-  GdkDrawContext *context = GDK_DRAW_CONTEXT (gobject);
-  GdkDrawContextPrivate *priv = gdk_draw_context_get_instance_private (context);
+  GdkDrawContext *self = GDK_DRAW_CONTEXT (gobject);
+  GdkDrawContextPrivate *priv = gdk_draw_context_get_instance_private (self);
 
   if (priv->surface)
     {
-      priv->surface->draw_contexts = g_slist_remove (priv->surface->draw_contexts, context);
+      if (gdk_draw_context_is_attached (self))
+        {
+          g_warning ("%s %p is still attached for rendering on disposal, detaching it.",
+                     G_OBJECT_TYPE_NAME (self), self);
+          gdk_draw_context_detach (self);
+        }
       g_clear_object (&priv->surface);
     }
   g_clear_object (&priv->display);
@@ -119,7 +147,6 @@ gdk_draw_context_set_property (GObject      *gobject,
       priv->surface = g_value_dup_object (value);
       if (priv->surface)
         {
-          priv->surface->draw_contexts = g_slist_prepend (priv->surface->draw_contexts, context);
           if (priv->display)
             {
               g_assert (priv->display == gdk_surface_get_display (priv->surface));
@@ -170,6 +197,8 @@ gdk_draw_context_class_init (GdkDrawContextClass *klass)
   gobject_class->dispose = gdk_draw_context_dispose;
 
   klass->surface_resized = gdk_draw_context_default_surface_resized;
+  klass->surface_attach = gdk_draw_context_default_surface_attach;
+  klass->surface_detach = gdk_draw_context_default_surface_detach;
   klass->empty_frame = gdk_draw_context_default_empty_frame;
 
   /**
@@ -331,7 +360,7 @@ gdk_draw_context_begin_frame (GdkDrawContext       *context,
   g_return_if_fail (priv->surface != NULL);
   g_return_if_fail (region != NULL);
 
-  gdk_draw_context_begin_frame_full (context, GDK_MEMORY_U8, region, NULL);
+  gdk_draw_context_begin_frame_full (context, NULL, GDK_MEMORY_U8, region, NULL);
 }
 
 /*
@@ -360,6 +389,7 @@ gdk_draw_context_begin_frame (GdkDrawContext       *context,
  */
 void
 gdk_draw_context_begin_frame_full (GdkDrawContext        *context,
+                                   gpointer               context_data,
                                    GdkMemoryDepth         depth,
                                    const cairo_region_t  *region,
                                    const graphene_rect_t *opaque)
@@ -370,6 +400,37 @@ gdk_draw_context_begin_frame_full (GdkDrawContext        *context,
 
   if (GDK_SURFACE_DESTROYED (priv->surface))
     return;
+
+  if (!gdk_draw_context_is_attached (context))
+    {
+      GdkDrawContext *prev = gdk_surface_get_attached_context (priv->surface);
+      GError *error = NULL;
+
+      /* This should be a return_if_fail() but we handle it somewhat gracefully
+       * for backwards compat */
+
+      if (prev)
+        {
+          g_warning ("%s %p is already rendered to by %s %p. "
+                     "Replacing it to render with %s %p now.",
+                     G_OBJECT_TYPE_NAME (priv->surface), priv->surface,
+                     G_OBJECT_TYPE_NAME (prev), prev,
+                     G_OBJECT_TYPE_NAME (context), context);
+          gdk_draw_context_detach (prev);
+        }
+      else
+        {
+          g_warning ("%s %p has not been set up for rendering. "
+                     "Attaching %s %p for rendering now.",
+                     G_OBJECT_TYPE_NAME (priv->surface), priv->surface,
+                     G_OBJECT_TYPE_NAME (context), context);
+        }
+      if (!gdk_draw_context_attach (context, &error))
+        {
+          g_critical ("Failed to attach context: %s", error->message);
+          return;
+        }
+    }
 
   if (priv->surface->paint_context != NULL)
     {
@@ -401,6 +462,7 @@ gdk_draw_context_begin_frame_full (GdkDrawContext        *context,
   g_assert (priv->color_state == NULL);
 
   GDK_DRAW_CONTEXT_GET_CLASS (context)->begin_frame (context,
+                                                     context_data,
                                                      depth,
                                                      priv->render_region,
                                                      &priv->color_state,
@@ -438,11 +500,12 @@ region_get_pixels (cairo_region_t *region)
 #endif
 
 void
-gdk_draw_context_end_frame_full (GdkDrawContext *context)
+gdk_draw_context_end_frame_full (GdkDrawContext *context,
+                                 gpointer        context_data)
 {
   GdkDrawContextPrivate *priv = gdk_draw_context_get_instance_private (context);
 
-  GDK_DRAW_CONTEXT_GET_CLASS (context)->end_frame (context, priv->render_region);
+  GDK_DRAW_CONTEXT_GET_CLASS (context)->end_frame (context, context_data, priv->render_region);
 
   gdk_profiler_set_int_counter (pixels_counter, region_get_pixels (priv->render_region));
 
@@ -494,7 +557,7 @@ gdk_draw_context_end_frame (GdkDrawContext *context)
       return;
     }
 
-  gdk_draw_context_end_frame_full (context);
+  gdk_draw_context_end_frame_full (context, NULL);
 }
 
 /**
@@ -629,3 +692,56 @@ gdk_draw_context_get_buffer_size (GdkDrawContext *self,
                                                           out_width, out_height);
 }
 
+/*<private>
+ * gdk_draw_context_attach:
+ * @self: the context 
+ * @error: Return location for an error
+ *
+ * Makes the context the one used for drawing to its surface.
+ * Surface must not have an attached context.
+ *
+ * gdk_draw_context_detach() must be called to undo this operation.
+ * Implementations can rely on that.
+ *
+ * This function is intended to set up window rendering resources like swapchains.
+ *
+ * Only one context can be used for drawing to a surface at any given
+ * point in time.
+ *
+ * Returns: TRUE if attaching was successful
+ **/
+gboolean
+gdk_draw_context_attach (GdkDrawContext  *self,
+                         GError         **error)
+{
+  GdkDrawContextPrivate *priv = gdk_draw_context_get_instance_private (self);
+
+  g_return_val_if_fail (priv->surface != NULL, FALSE);
+  g_return_val_if_fail (gdk_surface_get_attached_context (priv->surface) == NULL, FALSE);
+
+  if (!GDK_DRAW_CONTEXT_GET_CLASS (self)->surface_attach (self, error))
+    return FALSE;
+
+  gdk_surface_set_attached_context (priv->surface, self);
+  return TRUE;
+}
+
+/*<private>
+ * gdk_draw_context_detach:
+ * @self: the context
+ *
+ * Undoes a previous successful call to gdk_draw_context_attach().
+ *
+ * If the draw context is not attached, this function does nothing.
+ **/
+void
+gdk_draw_context_detach (GdkDrawContext *self)
+{
+  GdkDrawContextPrivate *priv = gdk_draw_context_get_instance_private (self);
+
+  if (!gdk_draw_context_is_attached (self))
+    return;
+
+  GDK_DRAW_CONTEXT_GET_CLASS (self)->surface_detach (self);
+  gdk_surface_set_attached_context (priv->surface, NULL);
+}

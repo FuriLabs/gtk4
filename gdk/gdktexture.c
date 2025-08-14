@@ -271,11 +271,10 @@ G_DEFINE_ABSTRACT_TYPE_WITH_CODE (GdkTexture, gdk_texture, G_TYPE_OBJECT,
   g_critical ("Texture of type '%s' does not implement GdkTexture::" # method, G_OBJECT_TYPE_NAME (obj))
 
 static void
-gdk_texture_default_download (GdkTexture      *texture,
-                              GdkMemoryFormat  format,
-                              GdkColorState   *color_state,
-                              guchar          *data,
-                              gsize            stride)
+gdk_texture_default_download (GdkTexture            *texture,
+                              guchar                *data,
+                              const GdkMemoryLayout *layout,
+                              GdkColorState         *color_state)
 {
   GDK_TEXTURE_WARN_NOT_IMPLEMENTED_METHOD (texture, download);
 }
@@ -527,10 +526,13 @@ gdk_texture_new_for_surface (cairo_surface_t *surface)
  * Creates a new texture object representing the `GdkPixbuf`.
  *
  * This function is threadsafe, so that you can e.g. use GTask
- * and [method@Gio.Task.run_in_thread] to avoid blocking the main thread
- * while loading a big image.
+ * and [method@Gio.Task.run_in_thread] to avoid blocking the main
+ * thread while loading a big image.
  *
  * Returns: a new `GdkTexture`
+ *
+ * Deprecated: 4.20: Use e.g. libglycin, which can load many image
+ *   formats into a `GdkTexture`
  */
 GdkTexture *
 gdk_texture_new_for_pixbuf (GdkPixbuf *pixbuf)
@@ -565,7 +567,7 @@ gdk_texture_new_for_pixbuf (GdkPixbuf *pixbuf)
  * Creates a new texture by loading an image from a resource.
  *
  * The file format is detected automatically. The supported formats
- * are PNG and JPEG, though more formats might be available.
+ * are PNG, JPEG and TIFF, though more formats might be available.
  *
  * It is a fatal error if @resource_path does not specify a valid
  * image resource and the program will abort if that happens.
@@ -612,11 +614,16 @@ gdk_texture_new_from_resource (const char *resource_path)
  * The file format is detected automatically. The supported formats
  * are PNG, JPEG and TIFF, though more formats might be available.
  *
- * If %NULL is returned, then @error will be set.
+ * If `NULL` is returned, then @error will be set.
  *
  * This function is threadsafe, so that you can e.g. use GTask
  * and [method@Gio.Task.run_in_thread] to avoid blocking the main thread
  * while loading a big image.
+ *
+ * ::: warning
+ *     Note that this function should not be used with untrusted data.
+ *     Use a proper image loading framework such as libglycin, which can
+ *     load many image formats into a `GdkTexture`.
  *
  * Return value: A newly-created `GdkTexture`
  */
@@ -688,7 +695,9 @@ gdk_texture_new_from_bytes_pixbuf (GBytes  *bytes,
   if (pixbuf == NULL)
     return NULL;
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   texture = gdk_texture_new_for_pixbuf (pixbuf);
+G_GNUC_END_IGNORE_DEPRECATIONS
   g_object_unref (pixbuf);
 
   return texture;
@@ -705,11 +714,16 @@ gdk_texture_new_from_bytes_pixbuf (GBytes  *bytes,
  * The file format is detected automatically. The supported formats
  * are PNG, JPEG and TIFF, though more formats might be available.
  *
- * If %NULL is returned, then @error will be set.
+ * If `NULL` is returned, then @error will be set.
  *
  * This function is threadsafe, so that you can e.g. use GTask
  * and [method@Gio.Task.run_in_thread] to avoid blocking the main thread
  * while loading a big image.
+ *
+ * ::: warning
+ *     Note that this function should not be used with untrusted data.
+ *     Use a proper image loading framework such as libglycin, which can
+ *     load many image formats into a `GdkTexture`.
  *
  * Return value: A newly-created `GdkTexture`
  *
@@ -751,11 +765,16 @@ gdk_texture_new_from_bytes (GBytes  *bytes,
  * The file format is detected automatically. The supported formats
  * are PNG, JPEG and TIFF, though more formats might be available.
  *
- * If %NULL is returned, then @error will be set.
+ * If `NULL` is returned, then @error will be set.
  *
  * This function is threadsafe, so that you can e.g. use GTask
  * and [method@Gio.Task.run_in_thread] to avoid blocking the main thread
  * while loading a big image.
+ *
+ * ::: warning
+ *     Note that this function should not be used with untrusted data.
+ *     Use a proper image loading framework such as libglycin, which can
+ *     load many image formats into a `GdkTexture`.
  *
  * Return value: A newly-created `GdkTexture`
  *
@@ -831,13 +850,39 @@ gdk_texture_get_color_state (GdkTexture *self)
 }
 
 void
-gdk_texture_do_download (GdkTexture      *texture,
-                         GdkMemoryFormat  format,
-                         GdkColorState   *color_state,
-                         guchar          *data,
-                         gsize            stride)
+gdk_texture_do_download (GdkTexture            *texture,
+                         guchar                *data,
+                         const GdkMemoryLayout *layout,
+                         GdkColorState         *color_state)
 {
-  GDK_TEXTURE_GET_CLASS (texture)->download (texture, format, color_state, data, stride);
+  GDK_TEXTURE_GET_CLASS (texture)->download (texture, data, layout, color_state);
+}
+
+GBytes *
+gdk_texture_download_bytes (GdkTexture      *self,
+                            GdkMemoryLayout *out_layout)
+{
+  if (GDK_IS_MEMORY_TEXTURE (self))
+    {
+      GdkMemoryTexture *memtex = GDK_MEMORY_TEXTURE (self);
+
+      *out_layout = *gdk_memory_texture_get_layout (memtex);
+      return g_bytes_ref (gdk_memory_texture_get_bytes (memtex));
+    }
+  else
+    {
+      guchar *data;
+
+      gdk_memory_layout_init (out_layout,
+                              self->format,
+                              self->width,
+                              self->height,
+                              1);
+      data = g_malloc (out_layout->size);
+      
+      gdk_texture_do_download (self, data, out_layout, self->color_state);
+      return g_bytes_new_take (data, out_layout->size);
+    }
 }
 
 static gboolean
@@ -1018,10 +1063,14 @@ gdk_texture_download (GdkTexture *texture,
   g_return_if_fail (stride >= gdk_texture_get_width (texture) * 4);
 
   gdk_texture_do_download (texture,
-                           GDK_MEMORY_DEFAULT,
-                           GDK_COLOR_STATE_SRGB,
                            data,
-                           stride);
+                           &GDK_MEMORY_LAYOUT_SIMPLE (
+                              GDK_MEMORY_DEFAULT,
+                              texture->width,
+                              texture->height,
+                              stride
+                           ),
+                           GDK_COLOR_STATE_SRGB);
 }
 
 /**
@@ -1113,9 +1162,9 @@ gdk_texture_get_render_data (GdkTexture  *self,
  *
  * This is a utility function intended for debugging and testing.
  * If you want more control over formats, proper error handling or
- * want to store to a [iface@Gio.File] or other location, you might want to
- * use [method@Gdk.Texture.save_to_png_bytes] or look into the
- * gdk-pixbuf library.
+ * want to store to a [iface@Gio.File] or other location, you might
+ * want to use [method@Gdk.Texture.save_to_png_bytes] or look into
+ * the libglycin library.
  *
  * Returns: %TRUE if saving succeeded, %FALSE on failure.
  */
@@ -1129,7 +1178,7 @@ gdk_texture_save_to_png (GdkTexture *texture,
   g_return_val_if_fail (GDK_IS_TEXTURE (texture), FALSE);
   g_return_val_if_fail (filename != NULL, FALSE);
 
-  bytes = gdk_save_png (texture);
+  bytes = gdk_save_png (texture, NULL);
   result = g_file_set_contents (filename,
                                 g_bytes_get_data (bytes, NULL),
                                 g_bytes_get_size (bytes),
@@ -1152,7 +1201,7 @@ gdk_texture_save_to_png (GdkTexture *texture,
  *
  * If you need more control over the generated image, such as
  * attaching metadata, you should look into an image handling
- * library such as the gdk-pixbuf library.
+ * library such as the libglycin library.
  *
  * If you are dealing with high dynamic range float data, you
  * might also want to consider [method@Gdk.Texture.save_to_tiff_bytes]
@@ -1167,7 +1216,7 @@ gdk_texture_save_to_png_bytes (GdkTexture *texture)
 {
   g_return_val_if_fail (GDK_IS_TEXTURE (texture), NULL);
 
-  return gdk_save_png (texture);
+  return gdk_save_png (texture, NULL);
 }
 
 /**

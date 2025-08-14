@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <wayland-client.h>
 #include <wayland-egl.h>
-#include <gdk/wayland/tablet-unstable-v2-client-protocol.h>
+#include <gdk/wayland/tablet-v2-client-protocol.h>
 #include <gdk/wayland/gtk-shell-client-protocol.h>
 #include <gdk/wayland/xdg-shell-client-protocol.h>
 #include <gdk/wayland/xdg-shell-unstable-v6-client-protocol.h>
@@ -44,22 +44,21 @@
 #include <gdk/wayland/xdg-dialog-v1-client-protocol.h>
 #include <gdk/wayland/xdg-system-bell-v1-client-protocol.h>
 #include <gdk/wayland/cursor-shape-v1-client-protocol.h>
+#include <gdk/wayland/xdg-toplevel-icon-v1-client-protocol.h>
 
 #include <glib.h>
 #include <gdk/gdkkeys.h>
 #include <gdk/gdksurface.h>
-#include <gdk/gdk.h>		/* For gdk_get_program_class() */
+#include <gdk/gdk.h>
 
 #include "gdkdisplayprivate.h"
 #include "gdkwaylanddevice.h"
+#include "gdkwaylanddisplay.h"
 #include "gdkdmabuf-wayland-private.h"
-#include "cursor/wayland-cursor.h"
 
 #include <epoxy/egl.h>
 
 G_BEGIN_DECLS
-
-#define GDK_ZWP_POINTER_GESTURES_V1_VERSION 3
 
 typedef struct _GdkWaylandColor GdkWaylandColor;
 typedef struct _GdkWaylandSelection GdkWaylandSelection;
@@ -86,6 +85,9 @@ struct _GdkWaylandDisplay
   GHashTable *settings;
   GsdXftSettings xft_settings;
   GDBusProxy *settings_portal;
+
+  gboolean list_protocols;
+  char **skip_protocols;
 
   guint32    shell_capabilities;
 
@@ -128,6 +130,7 @@ struct _GdkWaylandDisplay
   struct wp_presentation *presentation;
   struct wp_single_pixel_buffer_manager_v1 *single_pixel_buffer;
   struct wp_cursor_shape_manager_v1 *cursor_shape;
+  struct xdg_toplevel_icon_manager_v1 *toplevel_icon;
   GdkWaylandColor *color;
 
   GList *async_roundtrips;
@@ -144,10 +147,7 @@ struct _GdkWaylandDisplay
   GList *current_popups;
   GList *current_grabbing_popups;
 
-  struct wl_cursor_theme *cursor_theme;
-  char *cursor_theme_name;
   int cursor_theme_size;
-  GHashTable *cursor_surface_cache;
 
   GSource *event_source;
   GSource *poll_source;
@@ -166,10 +166,15 @@ struct _GdkWaylandDisplayClass
   GdkDisplayClass parent_class;
 };
 
-gboolean                gdk_wayland_display_prefers_ssd         (GdkDisplay *display);
+gboolean   gdk_wayland_display_prefers_ssd    (GdkDisplay            *display);
 
-void gdk_wayland_display_dispatch_queue (GdkDisplay            *display,
-                                         struct wl_event_queue *event_queue);
+void       gdk_wayland_display_system_bell    (GdkDisplay            *display,
+                                               GdkSurface            *surface);
+
+void       gdk_wayland_display_dispatch_queue (GdkDisplay            *display,
+                                               struct wl_event_queue *event_queue);
+
+GdkDisplay *_gdk_wayland_display_open (const char *display_name);
 
 G_END_DECLS
 

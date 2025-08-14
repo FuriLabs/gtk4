@@ -23,12 +23,14 @@ Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/3195
 Applied-upstream: no, upstream want reftests to be a strict pass/fail with identical results required
 ---
  testsuite/gsk/compare-render.c     | 41 +++++++++++++++++++++++++++++++++++++-
+ testsuite/gtk/symbolic.c           |  2 +-
+ testsuite/gtk/symbolic2.c          |  2 +-
  testsuite/reftests/gtk-reftest.c   | 32 ++++++++++++++++++++++++++++-
  testsuite/reftests/image-compare.c |  2 +-
- 3 files changed, 72 insertions(+), 3 deletions(-)
+ 5 files changed, 74 insertions(+), 5 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index 5af5320..11516cb 100644
+index 555a845..1f86b38 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
 @@ -113,6 +113,37 @@ get_output_file (const char *file,
@@ -69,17 +71,14 @@ index 5af5320..11516cb 100644
  static void
  save_image (GdkTexture *texture,
              const char *test_name,
-@@ -698,10 +729,18 @@ run_single_test (const TestSetup *setup,
+@@ -718,7 +749,15 @@ run_single_test (const TestSetup *setup,
                                     &max_diff, &pixels_changed, &pixels);
    if (diff)
      {
+-      g_test_fail ();
 +      guint64 tolerated_diff = 0;
 +      guint64 tolerated_pixels = 0;
 +
-       g_print ("%u (out of %u) pixels differ from reference by up to %u levels\n",
-                pixels_changed, pixels, max_diff);
-       save_image (diff, file_name, setup->name, ".diff.png");
--      g_test_fail ();
 +      load_test_settings (file_name, &tolerated_diff, &tolerated_pixels);
 +
 +      if (max_diff <= tolerated_diff && pixels_changed <= tolerated_pixels)
@@ -88,7 +87,33 @@ index 5af5320..11516cb 100644
 +        g_test_fail ();
      }
  
-   g_clear_object (&diff);
+   if (diff || g_test_verbose ())
+diff --git a/testsuite/gtk/symbolic.c b/testsuite/gtk/symbolic.c
+index 742c7ec..1f8f4b0 100644
+--- a/testsuite/gtk/symbolic.c
++++ b/testsuite/gtk/symbolic.c
+@@ -187,7 +187,7 @@ test_symbolic (gconstpointer data)
+       return;
+     }
+ 
+-  diff = reftest_compare_textures (reference, texture);
++  diff = reftest_compare_textures (reference, texture, NULL, NULL, NULL);
+   if (diff)
+     {
+       save_image (texture, filename, NULL, ".out.png");
+diff --git a/testsuite/gtk/symbolic2.c b/testsuite/gtk/symbolic2.c
+index f79bfaf..26e2980 100644
+--- a/testsuite/gtk/symbolic2.c
++++ b/testsuite/gtk/symbolic2.c
+@@ -151,7 +151,7 @@ compare_nodes (GskRenderNode *node1,
+   texture1 = gsk_renderer_render_texture (get_renderer (), node1, &bounds);
+   texture2 = gsk_renderer_render_texture (get_renderer (), node2, &bounds);
+ 
+-  diff = reftest_compare_textures (texture1, texture2);
++  diff = reftest_compare_textures (texture1, texture2, NULL, NULL, NULL);
+   if (diff)
+     {
+       g_print ("Test failed for %s (%s)\n", path, variant);
 diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
 index 9dd53df..2321b88 100644
 --- a/testsuite/reftests/gtk-reftest.c

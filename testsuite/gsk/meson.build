@@ -11,7 +11,7 @@ node_parser = executable('node-parser',
 )
 
 compare_render_tests = [
-  'big-box-glyph-nocairo',
+  'big-box-glyph',
   'big-checkerboard',
   'big-checkerboard-scaled-down',
   'big-checkerboard-scaled-down-nearest',
@@ -32,6 +32,8 @@ compare_render_tests = [
   'border-zero-width-color',
   'borders-rotated',
   'borders-scaled',
+  'cairo-coordinates',
+  'cairo-translations',
   'clip-all-clipped-issue-7044',
   'clip-contained',
   'clip-coordinates-2d',
@@ -50,6 +52,8 @@ compare_render_tests = [
   'color-matrix-merge',
   'color-matrix-parsing',
   'color-states',
+  'component-transfer-levels',
+  'component-transfer-linear',
   'conic-gradient-premultiplied-nocairo',
   'conic-gradient-with-64-colorstops',
   'container-single-child-offscreen-for-opacity',
@@ -60,7 +64,6 @@ compare_render_tests = [
   'css-background',
   'dihedral',
   'dihedral-f',
-  'eagain',
   'empty-blend',
   'empty-blur',
   'empty-border',
@@ -87,8 +90,15 @@ compare_render_tests = [
   'fill-clipped',
   'fill-fractional-translate-gradient',
   'fill-fractional-translate',
+  'fill-huge-path',
+  'fill-node-without-path',
   'fill-opacity',
+  'fill-scale-alignment-nocairo',
   'fill-scaled-up',
+  'fill-scale-up-with-bad-clip',
+  'fill-subpixel-offsets-horizontal-nocairo',
+  'fill-subpixel-offsets-vertical-nocairo',
+  'fill-subpixel-shift-nocairo',
   'fill-with-3d-contents-nocairo',
   'glyph-cache-overflow',
   'glyph-cache-overflow-slices',
@@ -185,11 +195,14 @@ compare_render_tests = [
   'shadow-replay-nocairo',
   'shadow-texture-formats',
   'shrink-rounded-border',
+  'small-cairo-node-fractional-edge-case',
   'stroke',
   'stroke-clipped',
   'stroke-fractional-translate-gradient',
   'stroke-fractional-translate',
+  'stroke-huge-path',
   'stroke-opacity',
+  'stroke-scale-alignment-nocairo',
   'stroke-with-3d-contents-nocairo',
   'subpixel-positioning',
   'subpixel-positioning-hidpi-nocairo',
@@ -211,7 +224,21 @@ compare_render_tests = [
   'transform-huge-child-3d-nocairo',
   'transform-in-transform',
   'transform-in-transform-in-transform',
+  'yuv-matrix-d3d12',
+  'yuv-matrix-dmabuf',
+  'yuv-matrix-memory',
   'z-transform-clipping-bounds-nocairo',
+]
+
+# These tests are either slow or need lots of memory.
+# So we don't run them in parallel with other such tests to not
+# cause CI failures
+demanding_tests = [
+  'huge-height',
+  'huge-height-hdr',
+  'huge-width',
+  'huge-width-hdr',
+  'lots-of-offscreens',
 ]
 
 # these are too sensitive to differences in the renderers
@@ -225,11 +252,19 @@ informative_render_tests = [
 ]
 
 renderers = [
-  { 'name': 'broadway' },
   { 'name': 'cairo' },
-  { 'name': 'ngl' },
-  { 'name': 'vulkan' },
+  { 'name': 'gl' },
 ]
+if broadway_enabled
+  renderers += [
+    { 'name': 'broadway' }
+  ]
+endif
+if have_vulkan
+  renderers += [
+    { 'name': 'vulkan' }
+  ]
+endif
 
 variants = {
   'plain': '--plain',
@@ -243,30 +278,25 @@ variants = {
 }
 
 compare_xfails = {
-  'ngl': {
-    # the gradients are prone to rounding errors which become
-    # more pronounced in small clips, it seems
-    'radial-gradient-with-64-colorstops': ['plain','flip','rotate','repeate','mask','replay','clip','colorflip'],
-    'conic-gradient-with-64-colorstops': ['plain','flip','rotate','repeate','mask','replay','clip','colorflip'],
+  'gl': {
     'blur-child-bounds-oversize': ['clip'], # 6450
     'rounded-clip-with-huge-bounds': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'], # 6532
     'big-checkerboard': ['clipped'], # 6444
-    'inter-optical-scaling': ['flip', 'rotate', 'mask', 'colorflip'],
   },
   'vulkan': {
-    'radial-gradient-with-64-colorstops': ['clip', 'colorflip'],
-    'conic-gradient-with-64-colorstops': ['clip', 'colorflip'],
     'blur-child-bounds-oversize': ['clip'], # 6450
     'repeat-repeats-nested': ['clip'], # 6522
     'repeating-radial-gradient-edge-colors': ['colorflip'],
     'rounded-clip-with-huge-bounds': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'], # 6532
     'big-checkerboard': ['clip'], # 6444
-    'inter-optical-scaling': ['flip', 'rotate', 'mask', 'colorflip'],
   },
   'cairo': {
     'inter-hinting': ['flip', 'rotate'],
-    'inter-optical-scaling': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'],
-    'eagain': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'],
+    'inter-optical-scaling': ['flip', 'rotate'],
+    'fill-fractional-translate': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'],
+    'fill-fractional-translate-gradient': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'],
+    'stroke-fractional-translate': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'],
+    'stroke-fractional-translate-gradient': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'],
   }
 }
 
@@ -293,9 +323,7 @@ foreach renderer : renderers
       'TEST_FONT_DIR=@0@/fonts'.format(meson.current_source_dir())
     ]
 
-    if ((not testname.contains(exclude_term)) and
-        (renderer_name != 'broadway' or broadway_enabled) and
-        (renderer_name != 'vulkan' or have_vulkan))
+    if ((not testname.contains(exclude_term)))
 
       foreach variant : variants.keys()
         extra_suites = [ 'gsk-compare-' + variant + '-' + renderer_name ]
@@ -313,7 +341,8 @@ foreach renderer : renderers
             join_paths(meson.current_source_dir(), 'compare', testname + '.png'),
           ],
           env: test_env,
-          suite: suites + extra_suites
+          suite: suites + extra_suites,
+          is_parallel: not demanding_tests.contains (testname),
         )
       endforeach
     endif
@@ -328,10 +357,15 @@ node_parser_tests = [
   'blend-unknown-mode.ref.node',
   'border.node',
   'box-shadow.node',
+  'cairo.node',
   'color.node',
   'color2.node',
   'color3.node',
   'color4.node',
+  'color-matrix.node',
+  'color-matrix.ref.node',
+  'component-transfer.node',
+  'component-transfer.ref.node',
   'conic-gradient.node',
   'conic-gradient.ref.node',
   'crash1.errors',
@@ -363,6 +397,8 @@ node_parser_tests = [
   'empty-color.ref.node',
   'empty-color-matrix.node',
   'empty-color-matrix.ref.node',
+  'empty-component-transfer.node',
+  'empty-component-transfer.ref.node',
   'empty-container.node',
   'empty-container.ref.node',
   'empty-cross-fade.node',
@@ -393,7 +429,9 @@ node_parser_tests = [
   'empty-subsurface.ref.node',
   'empty-text.node',
   'empty-text.ref.node',
+  'empty-texture.node',
   'empty-texture.ref.node',
+  'empty-texture-scale.node',
   'empty-texture-scale.ref.node',
   'empty-transform.node',
   'empty-transform.ref.node',
@@ -409,6 +447,8 @@ node_parser_tests = [
   'gradient-fail.errors',
   'gradients.node',
   'gradients.ref.node',
+  'huge-angle.node',
+  'huge-angle.ref.node',
   'mask-modes.node',
   'mask-modes.ref.node',
   'node-names.node',
@@ -453,10 +493,14 @@ node_parser_tests = [
   'text-font-options-error.ref.node',
   'text-font-options-error.ref.errors',
   'text-no-color.node',
+  'texture-fail.node',
   'texture-fail.ref.node',
   'texture-fail.errors',
+  'texture-names.node',
+  'texture-scale-filters.node',
   'texture-scale-filters.ref.node',
   'texture-scale-unknown-filter.errors',
+  'texture-scale-unknown-filter.node',
   'texture-scale-unknown-filter.ref.node',
   'transform-fail.node',
   'transform-fail.ref.node',
@@ -464,18 +508,6 @@ node_parser_tests = [
   # this fails in f40 since libpng changes the pngs while reencoding
   #'widgetfactory.node',
 ]
-
-# libpng 1.6.45 changes the chunk order. These ref tests can only pass on libpng >=1.6.45
-if png_dep.version().version_compare('>=1.6.45')
-node_parser_tests += [
-  'empty-texture-scale.node',
-  'empty-texture.node',
-  'texture-fail.node',
-  'texture-names.node',
-  'texture-scale-filters.node',
-  'texture-scale-unknown-filter.node',
-]
-endif
 
 foreach test : node_parser_tests
   if test.endswith('.node') and not test.endswith('.ref.node')
@@ -538,6 +570,50 @@ if os_linux
       )
     endif
   endforeach
+
+  no_color_offload_tests = [
+    'default-cs.node',
+    'yuv-variants-without-color.node',
+  ]
+
+  foreach test : no_color_offload_tests
+    test('offload ' + test, offload,
+      args: [
+        join_paths(meson.current_source_dir(), 'offload', test)
+      ],
+      env: [
+        'GTK_A11Y=test',
+        'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
+        'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
+        'GDK_DEBUG=force-offload:default-settings:no-portals',
+        'GDK_WAYLAND_DISABLE=wp_color_manager_v1,wp_color_representation_manager_v1',
+      ],
+      protocol: 'exitcode',
+      suite: ['gsk', 'offload'],
+    )
+  endforeach
+
+  color_offload_tests = [
+    'yuv-variants-with-color.node',
+  ]
+
+  foreach test : color_offload_tests
+    test('offload ' + test, offload,
+      args: [
+        join_paths(meson.current_source_dir(), 'offload', test)
+      ],
+      env: [
+        'GTK_A11Y=test',
+        'G_TEST_SRCDIR=@0@'.format(meson.current_source_dir()),
+        'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
+        'GDK_DEBUG=force-offload:color-mgmt:default-settings:no-portals',
+        'REQUIRE_COLOR_PROTOCOLS=1',
+      ],
+      protocol: 'exitcode',
+      suite: ['gsk', 'offload'],
+    )
+  endforeach
+
 endif
 
 tests = [
@@ -546,6 +622,7 @@ tests = [
   [ 'opaque' ],
   [ 'path', [ 'path-utils.c' ], [ 'flaky'] ],
   [ 'path-special-cases' ],
+  ['path-intersect'],
 ]
 
 test_cargs = []
@@ -577,6 +654,7 @@ internal_tests = [
   [ 'boundingbox'],
   [ 'curve', [ ], [ 'flaky' ]],
   [ 'curve-special-cases' ],
+  [ 'curve-intersect' ],
   [ 'half-float' ],
   [ 'not-diff' ],
   [ 'misc'],

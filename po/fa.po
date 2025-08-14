@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gtk+ 2.6\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2025-04-08 02:27+0000\n"
-"PO-Revision-Date: 2025-04-08 15:07+0330\n"
+"POT-Creation-Date: 2025-03-30 20:40+0000\n"
+"PO-Revision-Date: 2025-03-31 05:08+0330\n"
 "Last-Translator: Danial Behzadi <dani.behzi@ubuntu.com>\n"
 "Language-Team: Persian <>\n"
 "Language: fa\n"
@@ -681,7 +681,7 @@ msgstr "نتوانست دادهٔ تخته‌گیره را تنظیم کند. م
 #, c-format
 msgid "Cannot get clipboard data. Clipboard data changed before we could get it."
 msgstr ""
-"نتوانست دادهٔ تخته‌گیره را بگیرد. داده‌های تخته‌گیره پیش از این که بتوانیم بگیریمشان "
+"نتوانست دادهٔ تخته‌گیره را بگیرد. داده‌ّای تخته‌گیره پیش از این که بتوانیم بگیریمشان "
 "عوض شدند."
 
 #: gdk/win32/gdkclipdrop-win32.c:928
@@ -1817,7 +1817,7 @@ msgstr "عنصر <%s> درون <%s> مجاز نیست"
 msgid "Element <%s> not allowed at toplevel"
 msgstr "عنصر <%s> به عنوان سطح بالا (toplevel) مجاز نیست"
 
-#: gtk/gtkbuilder-menus.c:329
+#: gtk/gtkbuilder-menus.c:327
 #, c-format
 msgid "Text may not appear inside <%s>"
 msgstr "متن ممکن است درون «%s» نمایان نشود"
@@ -2285,7 +2285,7 @@ msgstr "یک پرونده با همان نام در حال حاضر وجود د�
 #: gtk/gtkfiledialog.c:913 gtk/gtkmessagedialog.c:173 gtk/gtkmessagedialog.c:182
 #: gtk/gtkmountoperation.c:608 gtk/print/gtkpagesetupunixdialog.c:285
 #: gtk/print/gtkprintbackend.c:638 gtk/print/gtkprintunixdialog.c:683
-#: gtk/print/gtkprintunixdialog.c:840 gtk/gtkwindow.c:6359
+#: gtk/print/gtkprintunixdialog.c:840 gtk/gtkwindow.c:6334
 #: gtk/ui/gtkappchooserdialog.ui:48 gtk/ui/gtkassistant.ui:52
 #: gtk/ui/gtkcolorchooserdialog.ui:36 gtk/ui/gtkfontchooserdialog.ui:29
 msgid "_Cancel"
@@ -2720,7 +2720,7 @@ msgstr "دگرگونه‌های نویسه"
 msgid "OpenGL context creation failed"
 msgstr "ساخت زمینه OpenGL شکست خورد"
 
-#: gtk/deprecated/gtkinfobar.c:501 gtk/gtkwindowcontrols.c:412
+#: gtk/deprecated/gtkinfobar.c:501 gtk/gtkwindowcontrols.c:409
 #: gtk/gtkwindowhandle.c:253
 msgid "Close"
 msgstr "بستن"
@@ -2816,7 +2816,7 @@ msgid "Play"
 msgstr "پخش"
 
 #: gtk/gtkmessagedialog.c:165 gtk/gtkmessagedialog.c:183
-#: gtk/print/gtkprintbackend.c:639 gtk/gtkwindow.c:6360
+#: gtk/print/gtkprintbackend.c:639 gtk/gtkwindow.c:6335
 msgid "_OK"
 msgstr "_تأیید"
 
@@ -3851,12 +3851,12 @@ msgstr "بر_گردان"
 msgid "_Redo"
 msgstr "_انجام دوباره"
 
-#: gtk/gtkwindow.c:6348
+#: gtk/gtkwindow.c:6323
 #, c-format
 msgid "Do you want to use GTK Inspector?"
 msgstr "می‌خواهید از بازرس +GTK استفاده کنید؟"
 
-#: gtk/gtkwindow.c:6350
+#: gtk/gtkwindow.c:6325
 #, c-format
 msgid ""
 "GTK Inspector is an interactive debugger that lets you explore and modify the "
@@ -3866,27 +3866,27 @@ msgstr ""
 "بازرس +GTK یک بازرس تعاملی است که به شما اجازه پیمایش و تغییر هسته برنامه‌های +GTK "
 "را می‌دهد. استفاده از آن ممکن است باعث شود که برنامه‌ها قفل کنند یا از هم بپاشند."
 
-#: gtk/gtkwindow.c:6355
+#: gtk/gtkwindow.c:6330
 msgid "Don’t show this message again"
 msgstr "این پیام را دوباره نشان نده"
 
-#: gtk/gtkwindowcontrols.c:362 gtk/gtkwindowhandle.c:237
+#: gtk/gtkwindowcontrols.c:361 gtk/gtkwindowhandle.c:237
 msgid "Minimize"
 msgstr "حداقل کردن"
 
-#: gtk/gtkwindowcontrols.c:364
+#: gtk/gtkwindowcontrols.c:363
 msgid "Minimize the window"
 msgstr "کمینه کردن پنجره"
 
-#: gtk/gtkwindowcontrols.c:389 gtk/gtkwindowhandle.c:243
+#: gtk/gtkwindowcontrols.c:387 gtk/gtkwindowhandle.c:243
 msgid "Maximize"
 msgstr "حداکثر کردن"
 
-#: gtk/gtkwindowcontrols.c:391
+#: gtk/gtkwindowcontrols.c:389
 msgid "Maximize the window"
 msgstr "بیشینه کردن پنجره"
 
-#: gtk/gtkwindowcontrols.c:414
+#: gtk/gtkwindowcontrols.c:411
 msgid "Close the window"
 msgstr "بستن پنجره"
 
@@ -4048,23 +4048,23 @@ msgstr "سبک کلاس‌ها"
 msgid "CSS Property"
 msgstr "مشخصه CSS"
 
-#: gtk/inspector/general.c:469
+#: gtk/inspector/general.c:447
 msgid "IM Context is hardcoded by GTK_IM_MODULE"
 msgstr "بافتار IM به دست GTK_IM_MODULE به صورت سخت رمز شده است"
 
 # farmaan
-#: gtk/inspector/general.c:644
+#: gtk/inspector/general.c:622
 msgctxt "GL renderer"
 msgid "None"
 msgstr "هیچ‌کدام"
 
-#: gtk/inspector/general.c:741
+#: gtk/inspector/general.c:719
 msgctxt "GL version"
 msgid "Unknown"
 msgstr "ناشناخته"
 
 # farmaan
-#: gtk/inspector/general.c:995 gtk/inspector/general.c:1034
+#: gtk/inspector/general.c:973 gtk/inspector/general.c:1012
 msgctxt "Vulkan device"
 msgid "None"
 msgstr "هیچ‌کدام"
@@ -4074,130 +4074,126 @@ msgid "Copy to clipboard as gitlab markdown"
 msgstr "رونوشت در تخته‌گیره به شکل مارک‌دون گیت‌لب"
 
 #: gtk/inspector/general.ui:45
-msgid "Operating System"
-msgstr "سیستم‌عامل"
-
-#: gtk/inspector/general.ui:71
 msgid "GTK Version"
 msgstr "نگارش GTK"
 
-#: gtk/inspector/general.ui:97
+#: gtk/inspector/general.ui:71
 msgid "GDK Backend"
-msgstr "پسانهٔ GDK"
+msgstr "پسانه GDK"
 
-#: gtk/inspector/general.ui:123
+#: gtk/inspector/general.ui:97
 msgid "GSK Renderer"
 msgstr "پرداختگر GSK"
 
-#: gtk/inspector/general.ui:149
+#: gtk/inspector/general.ui:123
 msgid "Pango Fontmap"
 msgstr "نگاشت قلم پنگو"
 
-#: gtk/inspector/general.ui:175
+#: gtk/inspector/general.ui:149
 msgid "Media Backend"
 msgstr "پسانهٔ رسانه"
 
-#: gtk/inspector/general.ui:201
+#: gtk/inspector/general.ui:175
 msgid "Input Method"
 msgstr "روش ورودی"
 
-#: gtk/inspector/general.ui:227
+#: gtk/inspector/general.ui:201
 msgid "Accessibility Backend"
 msgstr "پسانهٔ دسترسی‌پذیری"
 
-#: gtk/inspector/general.ui:264
+#: gtk/inspector/general.ui:238
 msgid "Application ID"
 msgstr "شناسهٔ برنامه"
 
-#: gtk/inspector/general.ui:290
+#: gtk/inspector/general.ui:264
 msgid "Resource Path"
 msgstr "مسیر منبع"
 
-#: gtk/inspector/general.ui:327 gtk/ui/gtkplacesview.ui:63
+#: gtk/inspector/general.ui:301 gtk/ui/gtkplacesview.ui:63
 msgid "Prefix"
 msgstr "پیشوند"
 
-#: gtk/inspector/general.ui:354
+#: gtk/inspector/general.ui:328
 msgid "Environment"
 msgstr "محیط"
 
-#: gtk/inspector/general.ui:457
+#: gtk/inspector/general.ui:431
 msgid "Display"
 msgstr "نمایشگر"
 
-#: gtk/inspector/general.ui:484
+#: gtk/inspector/general.ui:458
 msgid "RGBA Visual"
 msgstr "RGBA بصری"
 
-#: gtk/inspector/general.ui:510
+#: gtk/inspector/general.ui:484
 msgid "Composited"
 msgstr "مرکب"
 
-#: gtk/inspector/general.ui:535
+#: gtk/inspector/general.ui:509
 msgid "Protocols"
 msgstr "شیوه‌نامه‌ها"
 
-#: gtk/inspector/general.ui:591
+#: gtk/inspector/general.ui:565
 msgid "GL Renderer"
 msgstr "پرداختگر GL"
 
-#: gtk/inspector/general.ui:620
+#: gtk/inspector/general.ui:594
 msgid "GL Vendor"
 msgstr "تولیدکننده GL"
 
-#: gtk/inspector/general.ui:649
+#: gtk/inspector/general.ui:623
 msgid "GL Version"
 msgstr "نسخهٔ GL"
 
-#: gtk/inspector/general.ui:676
+#: gtk/inspector/general.ui:650
 msgid "GL Backend Vendor"
 msgstr "سازندهٔ پسانهٔ GL"
 
-#: gtk/inspector/general.ui:703
+#: gtk/inspector/general.ui:677
 msgid "GL Backend Version"
 msgstr "نگارش پسانهٔ GL"
 
-#: gtk/inspector/general.ui:753
+#: gtk/inspector/general.ui:727
 msgid "GL Full Version"
 msgstr "نگارش کمل GL"
 
-#: gtk/inspector/general.ui:782
+#: gtk/inspector/general.ui:756
 msgid "GLSL Version"
 msgstr "نگارش GLSL"
 
-#: gtk/inspector/general.ui:811
+#: gtk/inspector/general.ui:785
 msgid "GL Extensions"
 msgstr "افزونه‌های GL"
 
-#: gtk/inspector/general.ui:899
+#: gtk/inspector/general.ui:873
 msgid "EGL Extensions"
 msgstr "افزونه‌های EGL"
 
-#: gtk/inspector/general.ui:986
+#: gtk/inspector/general.ui:960
 msgid "GL Features"
 msgstr "ویژگی‌های GL"
 
-#: gtk/inspector/general.ui:1022
+#: gtk/inspector/general.ui:996
 msgid "Vulkan Device"
 msgstr "افزارهٔ ولکان"
 
-#: gtk/inspector/general.ui:1049
+#: gtk/inspector/general.ui:1023
 msgid "Vulkan API Version"
 msgstr "نگارش API ولکان"
 
-#: gtk/inspector/general.ui:1076
+#: gtk/inspector/general.ui:1050
 msgid "Vulkan Driver Version"
 msgstr "نگارش راه‌انداز ولکان"
 
-#: gtk/inspector/general.ui:1125
+#: gtk/inspector/general.ui:1099
 msgid "Vulkan Layers"
 msgstr "لایه‌های ولکان"
 
-#: gtk/inspector/general.ui:1194
+#: gtk/inspector/general.ui:1168
 msgid "Vulkan Extensions"
 msgstr "افزونه‌های ولکان"
 
-#: gtk/inspector/general.ui:1281
+#: gtk/inspector/general.ui:1255
 msgid "Vulkan Features"
 msgstr "ویژگی‌های ولکان"
 

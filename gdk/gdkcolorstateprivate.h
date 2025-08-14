@@ -95,6 +95,7 @@ extern GdkBuiltinColorState gdk_builtin_color_states[GDK_BUILTIN_COLOR_STATE_N_I
 #define GDK_COLOR_STATE_REC2100_LINEAR ((GdkColorState *) &gdk_default_color_states[GDK_COLOR_STATE_ID_REC2100_LINEAR])
 #define GDK_COLOR_STATE_OKLAB          ((GdkColorState *) &gdk_builtin_color_states[GDK_BUILTIN_COLOR_STATE_ID_OKLAB])
 #define GDK_COLOR_STATE_OKLCH          ((GdkColorState *) &gdk_builtin_color_states[GDK_BUILTIN_COLOR_STATE_ID_OKLCH])
+#define GDK_COLOR_STATE_YUV            (gdk_color_state_yuv ())
 
 #define GDK_IS_DEFAULT_COLOR_STATE(c) ((GdkDefaultColorState *) (c) >= &gdk_default_color_states[0] && \
                                        (GdkDefaultColorState *) (c) < &gdk_default_color_states[GDK_COLOR_STATE_N_IDS])
@@ -103,6 +104,7 @@ extern GdkBuiltinColorState gdk_builtin_color_states[GDK_BUILTIN_COLOR_STATE_N_I
                                        (GdkBuiltinColorState *) (c) < &gdk_builtin_color_states[GDK_BUILTIN_COLOR_STATE_N_IDS])
 #define GDK_BUILTIN_COLOR_STATE_ID(c) ((GdkBuiltinColorStateId) (((GdkBuiltinColorState *) c) - gdk_builtin_color_states))
 
+GdkColorState * gdk_color_state_yuv                     (void);
 const char *    gdk_color_state_get_name                (GdkColorState          *self);
 GdkColorState * gdk_color_state_get_no_srgb_tf          (GdkColorState          *self);
 
@@ -179,6 +181,23 @@ _gdk_color_state_equal (GdkColorState *self,
   return self->klass->equal (self, other);
 }
 
+#define gdk_color_state_equivalent(a,b) _gdk_color_state_equivalent ((a), (b))
+static inline gboolean
+_gdk_color_state_equivalent (GdkColorState *self,
+                             GdkColorState *other)
+{
+  const GdkCicp *cicp1;
+  const GdkCicp *cicp2;
+
+  if (self == other)
+    return TRUE;
+
+  cicp1 = self->klass->get_cicp (self);
+  cicp2 = self->klass->get_cicp (other);
+
+  return gdk_cicp_equivalent (cicp1, cicp2);
+}
+
 /* Note: the functions returned from this expect the source
  * color state to be passed as self
  */
@@ -251,3 +270,4 @@ gdk_color_state_from_rgba (GdkColorState *self,
                                  self,
                                  out_color);
 }
+

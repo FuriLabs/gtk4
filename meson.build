@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.18.6',
+        version: '4.19.3',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -7,12 +7,22 @@ project('gtk', 'c',
           # https://github.com/mesonbuild/meson/issues/2289
           'c_std=gnu11',
           'cpp_std=c++11',
-        ],
-        meson_version : '>= 1.2.0',
+        ] + (meson.version().version_compare('>= 1.8.0') ? [
+          # rsvg subproject options
+          # meson < 1.8 had issues with parsing default_options
+          # keys for subprojects, if the project being evaluated
+          # also was a subproject.
+          # We'll just not pass them along in that case.
+          # TODO: move this back once we require meson >= 1.8
+          'librsvg:default_library=static',
+          'librsvg:rsvg-convert=disabled',
+          'librsvg:rsvg-view-3=disabled',
+        ] : []),
+        meson_version : '>= 1.5.0',
         license: 'LGPL-2.1-or-later')
 
 glib_major_req = 2
-glib_minor_req = 80
+glib_minor_req = 82
 
 pango_major_req = 1
 pango_minor_req = 56
@@ -24,7 +34,7 @@ harfbuzz_req       = '>= 8.4.0'
 fribidi_req        = '>= 1.0.6'
 cairo_req          = '>= 1.18.2'
 gdk_pixbuf_req     = '>= 2.30.0'
-wayland_proto_req  = '>= 1.41'
+wayland_proto_req  = '>= 1.44'
 wayland_req        = '>= 1.23.0'
 graphene_req       = '>= 1.10.0'
 epoxy_req          = '>= 1.4'
@@ -33,6 +43,8 @@ xkbcommon_req      = '>= 0.2.0'
 sysprof_req        = '>= 3.38.0'
 vulkan_req         = '>= 1.3'
 gstreamer_req      = '>= 1.24.0'
+gi_req             = '>= 1.84'
+rsvg_req           = '>= 2.48'
 
 fs = import('fs')
 gnome = import('gnome')
@@ -77,6 +89,7 @@ if host_machine.system() == 'windows'
   add_project_arguments(['-DUNICODE',
                          '-D_UNICODE',
                          '-DCOBJMACROS',
+                         '-DWINVER=_WIN32_WINNT_WIN10',
                          '-D_WIN32_WINNT=_WIN32_WINNT_WIN10'], language: 'c')
 endif
 
@@ -109,13 +122,6 @@ gtk_soversion = '1'
 gtk_library_version = '1.@0@.@1@'.format(gtk_binary_age - gtk_interface_age, gtk_interface_age)
 
 gtk_api_version = '4.0'
-
-module_suffix = []
-# GModule requires file extension to be .so, not .dylib on Mac.
-# https://gitlab.gnome.org/GNOME/glib/issues/520
-if host_machine.system() == 'darwin'
-  module_suffix = 'so'
-endif
 
 x11_enabled      = get_option('x11-backend')
 wayland_enabled  = get_option('wayland-backend')
@@ -162,7 +168,7 @@ os_unix = not os_win32
 
 if os_darwin
   wayland_enabled = false
-  vulkan_enabled = false
+  x11_enabled = false
 else
   macos_enabled = false
 endif
@@ -292,9 +298,24 @@ if cc.get_id() == 'msvc'
   # Extra warning flags and those that should be disabled because they are too common or
   # break features.
   test_cflags += [
+    '/wd4018', # signed/unsigned mismatch, gcc/clang don't warn about it so the codes littered with it
     '/wd4068', # unknown pragma, triggers for all gcc/clang pragmas
-    '/wd4116', # breaks G_ALIGNOF()
     '/wd4090', # VC2017 is way too aggressive with this
+    '/wd4100', # same as -Wunused-parameter
+    '/wd4116', # breaks G_ALIGNOF()
+    '/wd4127', # conditional expression is constant - also triggers in macros...
+    '/wd4152', # nonstandard function to data covnversion - g_task_set_source_tag() uses it
+    '/wd4189', # MSVC can't handle G_GNUC_UNUSED
+    '/wd4200', # zero-sized array in struct/union
+    '/wd4201', # nameless struct/union is required with GTK
+    '/wd4206', # empty file - gdkkeys-win32-impl-wow64.c qualifies
+    '/wd4232', # non-static DLL imports - we do that in lots of places with functions, particularly get_type()
+    '/wd4245', # conversion from signed to unsigned (no gcc warning, so GTK's littered with it)
+    '/wd4267', # conversion from $64BIT to $32BIT, possible loss of data (no gcc warning, so GTK's littered with it)
+    '/wd4324', # structure was padded due to alignment specifier - why are you warning about doing what I told you?!
+    '/wd4334', # '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
+    '/wd4389', # comparison between signed and unsigned (no gcc warning, so GTK's littered with it)
+    '/wd4702', # unreachable code, triggers after assert_not_reached() which can be compiled out
   ]
 
   msvc_supported_cflags = cc.get_supported_arguments(test_cflags)
@@ -414,8 +435,29 @@ gskinc = include_directories('gsk')
 gtkinc = include_directories('gtk')
 testinc = include_directories('tests')
 
+harfbuzz_fallback_options = [
+  'coretext=enabled',
+  'directwrite=enabled',
+  'gdi=enabled',
+  'freetype=disabled',
+  'cairo=disabled',
+  'docs=disabled',
+  'utilities=disabled',
+  'tests=disabled',
+]
+
+# Enable FreeType support in HarfBuzz if building it as a
+# subproject and FontConfig support is required or requested
+if os_linux
+  harfbuzz_fallback_options += 'freetype=enabled'
+else
+endif
+
 # Dependencies
 glib_dep       = dependency('glib-2.0', version: glib_req)
+if not meson.version().version_compare('>= 1.9.0')
+  dependency('gobject-introspection-1.0', version: gi_req, required: get_option('introspection').enabled())
+endif
 gobject_dep    = dependency('gobject-2.0', version: glib_req)
 if os_win32
   giowin32_dep = dependency('gio-windows-2.0', version: glib_req, required: win32_enabled)
@@ -431,7 +473,7 @@ pango_dep      = dependency('pango', version: pango_req)
 fribidi_dep    = dependency('fribidi', version: fribidi_req,
                             default_options: ['docs=false'])
 harfbuzz_dep   = dependency('harfbuzz', version: harfbuzz_req,
-                            default_options: ['coretext=enabled'])
+                            default_options: harfbuzz_fallback_options)
 hb_subset_dep  = dependency('harfbuzz-subset', version: harfbuzz_req)
 
 # Require PangoFT2 if on X11 or wayland
@@ -445,17 +487,20 @@ endif
 
 pangocairo_dep    = dependency('pangocairo', version: pango_req)
 pixbuf_dep        = dependency('gdk-pixbuf-2.0', version: gdk_pixbuf_req,
-                               default_options: ['png=enabled', 'jpeg=enabled', 'gif=enabled', 'builtin_loaders=all', 'man=false'])
+                               default_options: ['png=enabled', 'jpeg=enabled', 'gif=enabled', 'glycin=disabled', 'builtin_loaders=all', 'man=false'])
 png_dep           = dependency('libpng', 'png')
 tiff_dep          = dependency('libtiff-4', 'tiff')
 jpeg_dep          = dependency('libjpeg', 'jpeg')
-
+rsvg_dep          = dependency('librsvg-2.0', version: rsvg_req, required: false)
+if not rsvg_dep.found()
+  rsvg_dep        = dependency('librsvg-2.0', version: ['>= 2.40.23', '< 2.41'])
+endif
 epoxy_dep         = dependency('epoxy', version: epoxy_req)
 xkbdep            = dependency('xkbcommon', version: xkbcommon_req, required: wayland_enabled)
 graphene_dep      = dependency('graphene-gobject-1.0', version: graphene_req,
                                default_options: ['tests=false', 'gobject_types=true'])
 iso_codes_dep     = dependency('iso-codes', required: false)
-gstplayer_dep     = dependency('gstreamer-player-1.0', version: gstreamer_req,
+gstplay_dep       = dependency('gstreamer-play-1.0', version: gstreamer_req,
                                required: get_option('media-gstreamer'),
                                default_options: [
                                  'python=disabled',
@@ -464,6 +509,13 @@ gstgl_dep         = dependency('gstreamer-gl-1.0', version: gstreamer_req,
                                required: get_option('media-gstreamer'))
 gstallocators_dep = dependency('gstreamer-allocators-1.0', version: gstreamer_req,
                                required: get_option('media-gstreamer'))
+if os_win32
+  gstd3d12_dep    = dependency('gstreamer-d3d12-1.0', version: gstreamer_req,
+                               required: get_option('media-gstreamer'))
+else
+  gstd3d12_dep = dependency('', required: false)
+endif
+
 
 fontconfig_dep = [] # only used in x11 backend
 
@@ -547,10 +599,6 @@ if wayland_enabled
     'xkbcommon @0@'.format(xkbcommon_req),
     'wayland-egl',
   ]
-
-  if wlprotocolsdep.version().version_compare('>=1.32')
-    cdata.set('HAVE_TOPLEVEL_STATE_SUSPENDED', 1)
-  endif
 endif
 
 x11_pkgs = []
@@ -799,11 +847,34 @@ endif
 
 if os_unix
   cpdb_dep = dependency('cpdb-frontend', version : '>=2.0', required: get_option('print-cpdb'))
-  cups_dep = dependency('cups', version : '>=2.0', required: get_option('print-cups'))
+  cups_dep = dependency('cups', version : ['>=2.0', '<3.0'], required: false)
+  if not cups_dep.found()
+    cups_dep = dependency('cups3', version : '>=3.0', required: false)
+    if not cups_dep.found() and get_option('print-cups').enabled()
+      error('CUPS >= 2.0 required')
+    endif
+  endif
+endif
+
+# Shell completion
+bash = find_program('bash', required : false)
+
+if bash.found()
+  bash_comp_dep = dependency('bash-completion', version: '>=2.0', required: false)
+  bash_comp_inst_dir = ''
+  if bash_comp_dep.found()
+    bash_comp_dir_override = bash_comp_dep.version().version_compare('>= 2.10') ? ['datadir', get_option('datadir')] : ['prefix', get_option('prefix')]
+    bash_comp_inst_dir = bash_comp_dep.get_variable('completionsdir', pkgconfig_define: bash_comp_dir_override)
+  endif
+
+  if bash_comp_inst_dir == ''
+    message('Found bash-completion but the .pc file did not set \'completionsdir\', fallback to a predefined path')
+    bash_comp_inst_dir = join_paths(get_option('datadir'), 'bash-completion/completions')
+  endif
 endif
 
 # Introspection
-gir = find_program('g-ir-scanner', required : get_option('introspection'))
+gir = find_program('g-ir-scanner', required : get_option('introspection'), native: true)
 
 if not gir.found() and get_option('introspection').enabled()
   error('Introspection enabled, but g-ir-scanner not found.')
@@ -865,13 +936,10 @@ subdir('gtk/css')
 subdir('gdk')
 subdir('gsk')
 subdir('gtk')
-subdir('modules')
+
 subdir('tools')
 subdir('po')
 subdir('docs/reference')
-if os_android
-  subdir('gdk/android/glue')
-endif
 if get_option('build-demos')
   subdir('demos')
 endif
@@ -971,14 +1039,9 @@ if os_unix
 endif
 
 
-devenv = environment()
-devenv.set('GTK_PATH', meson.current_build_dir() / 'modules')
-meson.add_devenv(devenv)
-
 if not meson.is_cross_build()
   gnome.post_install(
     glib_compile_schemas: true,
-    gio_querymodules: gio_module_dirs,
     gtk_update_icon_cache: get_option('build-demos'),
   )
 else

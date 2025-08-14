@@ -12,16 +12,16 @@ It duplicates our gstreamer-player subproject
 
 diff --git a/subprojects/gstreamer-full.wrap b/subprojects/gstreamer-full.wrap
 deleted file mode 100644
-index 1ca3757..0000000
+index 93d20c6..0000000
 --- a/subprojects/gstreamer-full.wrap
 +++ /dev/null
 @@ -1,8 +0,0 @@
 -[wrap-git]
 -directory=gstreamer
 -url=https://gitlab.freedesktop.org/gstreamer/gstreamer.git
--revision=1.24
+-revision=1.26
 -depth=1
 -
 -[provide]
--dependency_names = gstreamer-1.0, gstreamer-player-1.0, gstreamer-gl-1.0
+-dependency_names = gstreamer-1.0, gstreamer-play-1.0, gstreamer-gl-1.0
 \ No newline at end of file

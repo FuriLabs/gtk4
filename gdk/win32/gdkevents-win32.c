@@ -1,3 +1,4 @@
+
 /* GDK - The GIMP Drawing Kit
  * Copyright (C) 1995-1997 Peter Mattis, Spencer Kimball and Josh MacDonald
  * Copyright (C) 1998-2002 Tor Lillqvist
@@ -588,7 +589,6 @@ _gdk_win32_print_event (GdkEvent *event)
   GdkCrossingMode mode;
   GdkNotifyType detail;
   GdkScrollDirection direction;
-  GdkSurface *surface = gdk_event_get_surface (event);
   GdkWin32Display *display = GDK_WIN32_DISPLAY (gdk_surface_get_display (gdk_event_get_surface (event)));
   int debug_indent = display->event_record->debug_indent_surface_events;
 
@@ -1342,17 +1342,12 @@ handle_dpi_changed (GdkSurface *surface,
                     MSG        *msg)
 {
   GdkWin32Surface *impl = GDK_WIN32_SURFACE (surface);
-  GdkDisplay *display = gdk_display_get_default ();
-  GdkWin32Display *win32_display = GDK_WIN32_DISPLAY (display);
+  GdkDisplay *display = gdk_surface_get_display (surface);
   RECT *rect = (RECT *)msg->lParam;
   guint old_scale = impl->surface_scale;
 
   /* MSDN for WM_DPICHANGED: dpi_x == dpi_y here, so LOWORD (msg->wParam) == HIWORD (msg->wParam) */
   guint dpi = LOWORD (msg->wParam);
-
-  /* Don't bother if we use a fixed scale */
-  if (win32_display->has_fixed_scale)
-    return;
 
   impl->surface_scale = dpi / USER_DEFAULT_SCREEN_DPI;
 
@@ -1590,8 +1585,8 @@ _gdk_win32_surface_fill_min_max_info (GdkSurface *surface,
           mmi->ptMaxSize.y = nearest_info.rcWork.bottom - nearest_info.rcWork.top;
         }
 
-      mmi->ptMaxTrackSize.x = GetSystemMetrics (SM_CXVIRTUALSCREEN) + impl->shadow_x * impl->surface_scale;
-      mmi->ptMaxTrackSize.y = GetSystemMetrics (SM_CYVIRTUALSCREEN) + impl->shadow_y * impl->surface_scale;
+      mmi->ptMaxTrackSize.x = GetSystemMetrics (SM_CXVIRTUALSCREEN) + (impl->shadow.left + impl->shadow.right) * impl->surface_scale;
+      mmi->ptMaxTrackSize.y = GetSystemMetrics (SM_CYVIRTUALSCREEN) + (impl->shadow.left + impl->shadow.right) * impl->surface_scale;
     }
 
   return TRUE;
@@ -2728,20 +2723,17 @@ gdk_event_translate (MSG *msg,
        * To obtain the correct result when testing the value of wParam,
        * an application must combine the value 0xFFF0 with the wParam value by using the bitwise AND operator. */
       switch (msg->wParam & 0xFFF0)
-	{
-	case SC_MINIMIZE:
-	case SC_RESTORE:
+        {
+        case SC_MINIMIZE:
+        case SC_RESTORE:
           do_show_surface (surface, msg->wParam == SC_MINIMIZE ? TRUE : FALSE);
+          break;
 
-          if (msg->wParam == SC_RESTORE)
-            _gdk_win32_surface_invalidate_egl_framebuffer (surface);
-
-	  break;
         case SC_MAXIMIZE:
           impl = GDK_WIN32_SURFACE (surface);
           impl->maximizing = TRUE;
-	  break;
-	}
+          break;
+        }
 
       break;
 
@@ -2928,9 +2920,9 @@ gdk_event_translate (MSG *msg,
 
       /* Show, New size or position => configure event */
       if (!(hwndpos->flags & SWP_NOCLIENTMOVE) ||
-	  !(hwndpos->flags & SWP_NOCLIENTSIZE) ||
-	  (hwndpos->flags & SWP_SHOWWINDOW))
-	{
+          !(hwndpos->flags & SWP_NOCLIENTSIZE) ||
+          (hwndpos->flags & SWP_SHOWWINDOW))
+	      {
           if (!IsIconic (msg->hwnd) && !GDK_SURFACE_DESTROYED (surface))
             {
               if (!_gdk_win32_surface_lacks_wm_decorations (surface) &&
@@ -2943,13 +2935,7 @@ gdk_event_translate (MSG *msg,
 
               gdk_surface_request_layout (surface);
             }
-	}
-
-      if (!(hwndpos->flags & SWP_NOCLIENTSIZE))
-	{
-	  if (surface->resize_count > 1)
-	    surface->resize_count -= 1;
-	}
+        }
 
       /* Call modal timer immediate so that we repaint faster after a resize. */
       if (GDK_WIN32_DISPLAY (gdk_surface_get_display (surface))->display_surface_record->modal_operation_in_progress & GDK_WIN32_MODAL_OP_SIZEMOVE_MASK)
@@ -3066,8 +3052,7 @@ gdk_event_translate (MSG *msg,
       break;
 
     case WM_DWMCOMPOSITIONCHANGED:
-      gdk_win32_display_check_composited (GDK_WIN32_DISPLAY (display));
-      _gdk_win32_surface_enable_transparency (surface);
+      gdk_win32_surface_enable_transparency (surface);
       break;
 
     case WM_ACTIVATE:

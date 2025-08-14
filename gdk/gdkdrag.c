@@ -140,7 +140,7 @@ gdk_drag_get_actions (GdkDrag *drag)
 {
   GdkDragPrivate *priv = gdk_drag_get_instance_private (drag);
 
-  g_return_val_if_fail (GDK_IS_DRAG (drag), 0);
+  g_return_val_if_fail (GDK_IS_DRAG (drag), GDK_ACTION_NONE);
 
   return priv->actions;
 }
@@ -158,7 +158,7 @@ gdk_drag_get_selected_action (GdkDrag *drag)
 {
   GdkDragPrivate *priv = gdk_drag_get_instance_private (drag);
 
-  g_return_val_if_fail (GDK_IS_DRAG (drag), 0);
+  g_return_val_if_fail (GDK_IS_DRAG (drag), GDK_ACTION_NONE);
 
   return priv->selected_action;
 }
@@ -433,7 +433,7 @@ gdk_drag_class_init (GdkDragClass *klass)
   properties[PROP_ACTIONS] =
     g_param_spec_flags ("actions", NULL, NULL,
                         GDK_TYPE_DRAG_ACTION,
-                        0,
+                        GDK_ACTION_NONE,
                         G_PARAM_READWRITE |
                         G_PARAM_STATIC_STRINGS |
                         G_PARAM_EXPLICIT_NOTIFY);
@@ -641,15 +641,13 @@ gdk_drag_set_selected_action (GdkDrag       *drag,
                               GdkDragAction  action)
 {
   GdkDragPrivate *priv = gdk_drag_get_instance_private (drag);
-  GdkCursor *cursor;
 
   if (priv->selected_action == action)
     return;
 
   priv->selected_action = action;
 
-  cursor = gdk_drag_get_cursor (drag, action);
-  gdk_drag_set_cursor (drag, cursor);
+  gdk_drag_update_cursor (drag);
 
   g_object_notify_by_pspec (G_OBJECT (drag), properties[PROP_SELECTED_ACTION]);
 }
@@ -736,13 +734,12 @@ gdk_drag_drop_done (GdkDrag  *drag,
 }
 
 void
-gdk_drag_set_cursor (GdkDrag   *drag,
-                     GdkCursor *cursor)
+gdk_drag_update_cursor (GdkDrag *drag)
 {
   g_return_if_fail (GDK_IS_DRAG (drag));
 
-  if (GDK_DRAG_GET_CLASS (drag)->set_cursor)
-    GDK_DRAG_GET_CLASS (drag)->set_cursor (drag, cursor);
+  if (GDK_DRAG_GET_CLASS (drag)->update_cursor)
+    GDK_DRAG_GET_CLASS (drag)->update_cursor (drag);
 }
 
 void
@@ -811,7 +808,7 @@ gdk_drag_get_cursor (GdkDrag       *drag,
  * Checks if @action represents a single action or includes
  * multiple actions.
  *
- * When @action is 0 - ie no action was given, %TRUE
+ * When @action is `GDK_ACTION_NONE` - ie no action was given, `TRUE`
  * is returned.
  *
  * Returns: %TRUE if exactly one action was given

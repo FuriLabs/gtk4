@@ -22,7 +22,7 @@
 #include <glib/gi18n-lib.h>
 #include "gdkcolorstateprivate.h"
 #include "gdkmemoryformatprivate.h"
-#include "gdkmemorytexturebuilder.h"
+#include "gdkmemorytextureprivate.h"
 #include "gdkprofilerprivate.h"
 #include "gdktexturedownloaderprivate.h"
 
@@ -245,7 +245,7 @@ gdk_png_get_color_state (png_struct  *png,
   return GDK_COLOR_STATE_SRGB;
 }
 
-static void
+static GdkColorState *
 gdk_png_set_color_state (png_struct    *png,
                          png_info      *info,
                          GdkColorState *color_state,
@@ -289,6 +289,8 @@ gdk_png_set_color_state (png_struct    *png,
   /* For good measure, we add an sRGB chunk too */
   if (gdk_color_state_equal (color_state, GDK_COLOR_STATE_SRGB))
     png_set_sRGB (png, info, PNG_sRGB_INTENT_PERCEPTUAL);
+
+  return color_state;
 }
 
 /* }}} */
@@ -305,17 +307,16 @@ gdk_load_png (GBytes      *bytes,
   png_textp text;
   int num_texts;
   guint width, height;
-  gsize i, stride;
+  gsize i;
   int depth, color_type;
   int interlace;
-  GdkMemoryTextureBuilder *builder;
   GdkMemoryFormat format;
+  GdkMemoryLayout layout;
   guchar *buffer = NULL;
   guchar **row_pointers = NULL;
   GBytes *out_bytes;
   GdkColorState *color_state;
   GdkTexture *texture;
-  int bpp;
 #if PNG_LIBPNG_VER < 10645
   CICPData cicp = { FALSE, };
 #endif
@@ -444,9 +445,7 @@ gdk_load_png (GBytes      *bytes,
   if (color_state == NULL)
     return NULL;
 
-  bpp = gdk_memory_format_bytes_per_pixel (format);
-  if (!g_size_checked_mul (&stride, width, bpp) ||
-      !g_size_checked_add (&stride, stride, (8 - stride % 8) % 8))
+  if (!gdk_memory_layout_try_init (&layout, format, width, height, 1))
     {
       g_set_error (error,
                    GDK_TEXTURE_ERROR, GDK_TEXTURE_ERROR_TOO_LARGE,
@@ -454,7 +453,7 @@ gdk_load_png (GBytes      *bytes,
       return NULL;
     }
 
-  buffer = g_try_malloc_n (height, stride);
+  buffer = g_try_malloc (layout.size);
   row_pointers = g_try_malloc_n (height, sizeof (char *));
 
   if (!buffer || !row_pointers)
@@ -470,21 +469,13 @@ gdk_load_png (GBytes      *bytes,
     }
 
   for (i = 0; i < height; i++)
-    row_pointers[i] = &buffer[i * stride];
+    row_pointers[i] = &buffer[gdk_memory_layout_offset (&layout, 0, 0, i)];
 
   png_read_image (png, row_pointers);
   png_read_end (png, info);
 
-  out_bytes = g_bytes_new_take (buffer, height * stride);
-  builder = gdk_memory_texture_builder_new ();
-  gdk_memory_texture_builder_set_format (builder, format);
-  gdk_memory_texture_builder_set_color_state (builder, color_state);
-  gdk_memory_texture_builder_set_width (builder, width);
-  gdk_memory_texture_builder_set_height (builder, height);
-  gdk_memory_texture_builder_set_bytes (builder, out_bytes);
-  gdk_memory_texture_builder_set_stride (builder, stride);
-  texture = gdk_memory_texture_builder_build (builder);
-  g_object_unref (builder);
+  out_bytes = g_bytes_new_take (buffer, layout.size);
+  texture = gdk_memory_texture_new_from_layout (out_bytes, &layout, color_state, NULL, NULL);
   g_bytes_unref (out_bytes);
   gdk_color_state_unref (color_state);
 
@@ -513,7 +504,8 @@ gdk_load_png (GBytes      *bytes,
 }
 
 GBytes *
-gdk_save_png (GdkTexture *texture)
+gdk_save_png (GdkTexture *texture,
+              GHashTable *options)
 {
   png_struct *png = NULL;
   png_info *info;
@@ -529,6 +521,7 @@ gdk_save_png (GdkTexture *texture)
   int png_format;
   int depth;
   png_byte chunk_data[4];
+  png_textp text_ptr = NULL;
 
   width = gdk_texture_get_width (texture);
   height = gdk_texture_get_height (texture);
@@ -556,11 +549,31 @@ gdk_save_png (GdkTexture *texture)
     case GDK_MEMORY_X8R8G8B8:
     case GDK_MEMORY_B8G8R8X8:
     case GDK_MEMORY_X8B8G8R8:
+    case GDK_MEMORY_G8_B8R8_420:
+    case GDK_MEMORY_G8_R8B8_420:
+    case GDK_MEMORY_G8_B8R8_422:
+    case GDK_MEMORY_G8_R8B8_422:
+    case GDK_MEMORY_G8_B8R8_444:
+    case GDK_MEMORY_G8_R8B8_444:
+    case GDK_MEMORY_G8_B8_R8_410:
+    case GDK_MEMORY_G8_R8_B8_410:
+    case GDK_MEMORY_G8_B8_R8_411:
+    case GDK_MEMORY_G8_R8_B8_411:
+    case GDK_MEMORY_G8_B8_R8_420:
+    case GDK_MEMORY_G8_R8_B8_420:
+    case GDK_MEMORY_G8_B8_R8_422:
+    case GDK_MEMORY_G8_R8_B8_422:
+    case GDK_MEMORY_G8_B8_R8_444:
+    case GDK_MEMORY_G8_R8_B8_444:
+    case GDK_MEMORY_G8B8G8R8_422:
+    case GDK_MEMORY_G8R8G8B8_422:
+    case GDK_MEMORY_R8G8B8G8_422:
+    case GDK_MEMORY_B8G8R8G8_422:
       format = GDK_MEMORY_R8G8B8;
       png_format = PNG_COLOR_TYPE_RGB;
       depth = 8;
       break;
-
+ 
     case GDK_MEMORY_R16G16B16A16:
     case GDK_MEMORY_R16G16B16A16_PREMULTIPLIED:
     case GDK_MEMORY_R16G16B16A16_FLOAT:
@@ -575,6 +588,18 @@ gdk_save_png (GdkTexture *texture)
     case GDK_MEMORY_R16G16B16:
     case GDK_MEMORY_R16G16B16_FLOAT:
     case GDK_MEMORY_R32G32B32_FLOAT:
+    case GDK_MEMORY_G10X6_B10X6R10X6_420:
+    case GDK_MEMORY_G12X4_B12X4R12X4_420:
+    case GDK_MEMORY_G16_B16R16_420:
+    case GDK_MEMORY_X6G10_X6B10_X6R10_420:
+    case GDK_MEMORY_X6G10_X6B10_X6R10_422:
+    case GDK_MEMORY_X6G10_X6B10_X6R10_444:
+    case GDK_MEMORY_X4G12_X4B12_X4R12_420:
+    case GDK_MEMORY_X4G12_X4B12_X4R12_422:
+    case GDK_MEMORY_X4G12_X4B12_X4R12_444:
+    case GDK_MEMORY_G16_B16_R16_420:
+    case GDK_MEMORY_G16_B16_R16_422:
+    case GDK_MEMORY_G16_B16_R16_444:
       format = GDK_MEMORY_R16G16B16;
       png_format = PNG_COLOR_TYPE_RGB;
       depth = 16;
@@ -656,9 +681,44 @@ gdk_save_png (GdkTexture *texture)
                 PNG_COMPRESSION_TYPE_DEFAULT,
                 PNG_FILTER_TYPE_DEFAULT);
 
-  gdk_png_set_color_state (png, info, color_state, chunk_data);
+  color_state = gdk_png_set_color_state (png, info, color_state, chunk_data);
 
   png_write_info (png, info);
+
+  if (options)
+    {
+      GHashTableIter iter;
+      char *key, *value;
+      GArray *text_data;
+      int n_keys;
+
+      text_data = g_array_sized_new (FALSE, TRUE, sizeof (png_text), g_hash_table_size (options));
+      g_hash_table_iter_init (&iter, options);
+
+      while (g_hash_table_iter_next (&iter, (gpointer *) &key, (gpointer *) &value))
+        {
+          png_text text;
+          int len;
+
+          len = strlen (key);
+          if (len < 1 || len > 79)
+            continue;
+
+          text.key = key;
+          text.compression = PNG_TEXT_COMPRESSION_NONE;
+          text.text = value;
+          text.text_length = strlen (value);
+          text.itxt_length = 0;
+          text.lang = NULL;
+          text.lang_key = NULL;
+
+          g_array_append_val (text_data, text);
+        }
+
+      n_keys = text_data->len;
+      text_ptr = (png_textp) g_array_free (text_data, FALSE);
+      png_set_text (png, info, text_ptr, n_keys);
+    }
 
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
   png_set_swap (png);
@@ -666,6 +726,7 @@ gdk_save_png (GdkTexture *texture)
 
   gdk_texture_downloader_init (&downloader, texture);
   gdk_texture_downloader_set_format (&downloader, format);
+  gdk_texture_downloader_set_color_state (&downloader, color_state);
   bytes = gdk_texture_downloader_download_bytes (&downloader, &stride);
   gdk_texture_downloader_finish (&downloader);
   data = g_bytes_get_data (bytes, NULL);
@@ -679,6 +740,8 @@ gdk_save_png (GdkTexture *texture)
 
   gdk_color_state_unref (color_state);
   g_bytes_unref (bytes);
+
+  g_free (text_ptr);
 
   return g_bytes_new_take (io.data, io.size);
 }

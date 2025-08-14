@@ -30,17 +30,29 @@
 #include "gskstroke.h"
 #include "gsktransformprivate.h"
 #include "gskenumtypes.h"
+#include "gskcomponenttransferprivate.h"
 #include "gskprivate.h"
 
 #include "gdk/gdkcolorstateprivate.h"
 #include "gdk/gdkcolorprivate.h"
+#include "gdk/gdkdmabufprivate.h"
+#include "gdk/gdkdmabuffourccprivate.h"
+#include "gdk/gdkdmabuftextureprivate.h"
+#include "gdk/gdkdmabuftexturebuilderprivate.h"
+#include "gdk/gdkmemoryformatprivate.h"
+#include "gdk/gdkmemorytextureprivate.h"
 #include "gdk/gdkrgbaprivate.h"
 #include "gdk/gdktextureprivate.h"
-#include "gdk/gdkmemoryformatprivate.h"
 #include <gtk/css/gtkcss.h>
 #include "gtk/css/gtkcssdataurlprivate.h"
 #include "gtk/css/gtkcssparserprivate.h"
 #include "gtk/css/gtkcssserializerprivate.h"
+
+#ifdef GDK_WINDOWING_WIN32
+#include "gdk/win32/gdkd3d12texturebuilder.h"
+#include "gdk/win32/gdkd3d12textureprivate.h"
+#include "gdk/win32/gdkd3d12utilsprivate.h"
+#endif
 
 #ifdef CAIRO_HAS_SCRIPT_SURFACE
 #include <cairo-script.h>
@@ -188,6 +200,46 @@ parse_unsigned (GtkCssParser *parser,
 }
 
 static gboolean
+parse_size (GtkCssParser *parser,
+            Context      *context,
+            gpointer      out)
+{
+  if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_SIGNLESS_INTEGER))
+    {
+      double d;
+
+      if (!gtk_css_parser_consume_number (parser, &d))
+        return FALSE;
+
+      *(gsize *) out = d;
+      return TRUE;
+    }
+
+  gtk_css_parser_error_value (parser, "Not an allowed value here");
+  return FALSE;
+}
+
+static gboolean
+parse_boolean (GtkCssParser *parser,
+               Context      *context,
+               gpointer      boolean)
+{
+  if (gtk_css_parser_try_ident (parser, "true"))
+    {
+      *(gboolean *) boolean = TRUE;
+      return TRUE;
+    }
+  else if (gtk_css_parser_try_ident (parser, "false"))
+    {
+      *(gboolean *) boolean = FALSE;
+      return TRUE;
+    }
+
+  gtk_css_parser_error_syntax (parser, "Boolean value must be \"true\" or \"false\"");
+  return FALSE;
+}
+
+static gboolean
 parse_enum (GtkCssParser *parser,
             GType         type,
             gpointer      out_value)
@@ -309,15 +361,719 @@ consume_bytes (GtkCssParser *parser)
   return bytes;
 }
 
+static void
+clear_bytes (gpointer inout_bytes)
+{
+  g_clear_pointer ((GBytes **) inout_bytes, g_bytes_unref);
+}
+
+static gboolean
+parse_bytes (GtkCssParser *parser,
+             Context      *context,
+             gpointer      out_data)
+{
+  GBytes **out_bytes = out_data;
+  GBytes *bytes;
+
+  bytes = consume_bytes (parser);
+  if (bytes == NULL)
+    return FALSE;
+
+  *out_bytes = bytes;
+
+  return TRUE;
+}
+
+static gboolean
+parse_compressed_bytes (GtkCssParser *parser,
+                        Context      *context,
+                        gpointer      out_data)
+{
+  GZlibDecompressor *decompressor;
+  GError *error = NULL;
+  GBytes *decompressed_bytes, *data_bytes;
+
+  if (!parse_bytes (parser, context, &data_bytes))
+    return FALSE;
+
+  decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
+  decompressed_bytes = g_converter_convert_bytes (G_CONVERTER (decompressor), data_bytes, &error);
+  g_object_unref (decompressor);
+  g_bytes_unref (data_bytes);
+  if (decompressed_bytes == NULL)
+    {
+      gtk_css_parser_emit_error (parser,
+                                 gtk_css_parser_get_start_location (parser),
+                                 gtk_css_parser_get_end_location (parser),
+                                 error);
+      g_clear_error (&error);
+      return FALSE;
+    }
+  
+  *(GBytes **) out_data = decompressed_bytes;
+
+  return TRUE;
+}
+
+static gboolean
+parse_texture_data (GtkCssParser *parser,
+                    Context      *context,
+                    gpointer      out_data)
+{
+  if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_STRING))
+    {
+      char *s;
+      gsize i, j, len;
+      guchar *data;
+
+      s = gtk_css_parser_consume_string (parser);
+      if (s == NULL)
+        return FALSE;
+
+      len = strlen (s);
+
+      data = g_malloc (len);
+      j = 0;
+      for (i = 0; i < len; i++)
+        {
+          int v1, v2;
+
+          if (g_ascii_isspace (s[i]))
+            continue;
+
+          v1 = g_ascii_xdigit_value (s[i]);
+          if (v1 < 0)
+            {
+              gtk_css_parser_error_syntax (parser, "Invalid hex character at position %zu", i);
+              continue;
+            }
+          i++;
+          v2 = g_ascii_xdigit_value (s[i]);
+          if (v2 < 0)
+            {
+              gtk_css_parser_error_syntax (parser, "Invalid hex character at position %zu", i);
+              continue;
+            }
+
+          data[j++] = v1 * 16 + v2;
+        }
+
+      *(GBytes **) out_data = g_bytes_new_take (data, j);
+      return TRUE;
+    }
+
+  return parse_compressed_bytes (parser, context, out_data);
+}
+
+static gboolean
+parse_color_state (GtkCssParser *parser,
+                   Context      *context,
+                   gpointer      color_state)
+{
+  GdkColorState *cs = NULL;
+
+  if (gtk_css_parser_try_ident (parser, "srgb"))
+    cs = gdk_color_state_get_srgb ();
+  else if (gtk_css_parser_try_ident (parser, "srgb-linear"))
+    cs = gdk_color_state_get_srgb_linear ();
+  else if (gtk_css_parser_try_ident (parser, "rec2100-pq"))
+    cs = gdk_color_state_get_rec2100_pq ();
+  else if (gtk_css_parser_try_ident (parser, "rec2100-linear"))
+    cs = gdk_color_state_get_rec2100_linear ();
+  else if (gtk_css_parser_try_ident (parser, "oklab"))
+    cs = gdk_color_state_get_oklab ();
+  else if (gtk_css_parser_try_ident (parser, "oklch"))
+    cs = gdk_color_state_get_oklch ();
+  else if (gtk_css_token_is (gtk_css_parser_get_token (parser), GTK_CSS_TOKEN_STRING))
+    {
+      char *name = gtk_css_parser_consume_string (parser);
+
+      if (context->named_color_states)
+        cs = g_hash_table_lookup (context->named_color_states, name);
+
+      if (!cs)
+        {
+          gtk_css_parser_error_value (parser, "No color state named \"%s\"", name);
+          g_free (name);
+          return FALSE;
+        }
+
+      g_free (name);
+    }
+  else
+    {
+      gtk_css_parser_error_syntax (parser, "Expected a valid color state");
+      return FALSE;
+    }
+
+  *(GdkColorState **) color_state = gdk_color_state_ref (cs);
+  return TRUE;
+}
+
+static void
+clear_color_state (gpointer inout_color_state)
+{
+  GdkColorState **cs = inout_color_state;
+
+  if (*cs)
+    {
+      gdk_color_state_unref (*cs);
+      *cs = NULL;
+    }
+}
+
+static gboolean
+parse_dmabuf_fourcc (GtkCssParser *parser,
+                     Context      *context,
+                     gpointer      data)
+{
+  guint32 fourcc;
+
+  if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_STRING))
+    {
+      char *fourcc_str = gtk_css_parser_consume_string (parser);
+
+      if (strlen (fourcc_str) != 4)
+        {
+          gtk_css_parser_error_value (parser, "fourccs must be 4 characters long");
+          return FALSE;
+        }
+
+      fourcc = (fourcc_str[0] <<  0) |
+               (fourcc_str[1] <<  8) |
+               (fourcc_str[2] << 16) |
+               (fourcc_str[3] << 24);
+    }
+  else if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_SIGNLESS_INTEGER))
+    {
+      double tmp;
+      if (!gtk_css_parser_consume_number (parser, &tmp))
+        return FALSE;
+
+      fourcc = tmp;
+    }
+  else
+    {
+      gtk_css_parser_error_value (parser, "fourccs must be specified as strings or integers");
+      return FALSE;
+    }
+
+  *(guint32 *) data = fourcc;
+  return TRUE;
+}
+
+static gboolean
+parse_4_unsigned (GtkCssParser *parser,
+                  Context      *context,
+                  gpointer      data)
+{
+  unsigned *u = data;
+
+  if (!parse_unsigned (parser, context, &u[0]))
+    return FALSE;
+  if (!gtk_css_parser_try_token (parser, GTK_CSS_TOKEN_COMMA))
+    return TRUE;
+  if (!parse_unsigned (parser, context, &u[1]))
+    return FALSE;
+  if (!gtk_css_parser_try_token (parser, GTK_CSS_TOKEN_COMMA))
+    return TRUE;
+  if (!parse_unsigned (parser, context, &u[2]))
+    return FALSE;
+  if (!gtk_css_parser_try_token (parser, GTK_CSS_TOKEN_COMMA))
+    return TRUE;
+  if (!parse_unsigned (parser, context, &u[3]))
+    return FALSE;
+
+  return TRUE;
+}
+
+#ifdef HAVE_DMABUF
+static void
+destroy_fd (gpointer data)
+{
+  close (GPOINTER_TO_INT (data));
+}
+#endif
+
+static GdkTexture *
+parse_dmabuf_texture (GtkCssParser *parser,
+                      Context      *context)
+{
+  GBytes *bytes = NULL;
+  GdkTexture *texture;
+  GError *error = NULL;
+  GtkCssLocation start_location;
+  guint width = 0;
+  guint height = 0;
+  GdkDmabuf dmabuf = { 0, };
+  gboolean premultiplied = FALSE;
+  GdkColorState *color_state = NULL;
+  unsigned offsets[4] = { 0, }, strides[4] = { 0, };
+  const Declaration declarations[] = {
+    { "data", parse_texture_data, clear_bytes, &bytes },
+    { "width", parse_unsigned, NULL, &width },
+    { "height", parse_unsigned , NULL, &height },
+    { "fourcc", parse_dmabuf_fourcc, NULL, &dmabuf.fourcc },
+    { "premultiplied", parse_boolean, NULL, &premultiplied },
+    { "offset", parse_4_unsigned, NULL, offsets },
+    { "stride", parse_4_unsigned, NULL, strides },
+    { "color-state", parse_color_state, clear_color_state, &color_state }
+  };
+  guint parse_result;
+#ifdef HAVE_DMABUF
+  int dmabuf_fd;
+#endif
+
+  if (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
+    {
+      gtk_css_parser_error_syntax (parser, "Expected '{' for \"dmabuf\"");
+      return NULL;
+    }
+
+  start_location = *gtk_css_parser_get_start_location (parser);
+  gtk_css_parser_end_block_prelude (parser);
+
+  parse_result = parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+
+  /* deduce number of planes from given amount of strides */
+  while (dmabuf.n_planes < GDK_DMABUF_MAX_PLANES && strides[dmabuf.n_planes] > 0)
+    {
+      dmabuf.planes[dmabuf.n_planes].offset = offsets[dmabuf.n_planes];
+      dmabuf.planes[dmabuf.n_planes].stride = strides[dmabuf.n_planes];
+      dmabuf.n_planes++;
+    }
+
+  if (dmabuf.fourcc == 0)
+    {
+      g_set_error (&error,
+                   GTK_CSS_PARSER_ERROR,
+                   GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                   "Cannot create a dmabuf texture without fourcc");
+    }
+  else if (dmabuf.n_planes == 0)
+    {
+      g_set_error (&error,
+                   GTK_CSS_PARSER_ERROR,
+                   GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                   "No stride specified");
+    }
+  else if (bytes == NULL && !(parse_result & (1 << 0)))
+    {
+      g_set_error (&error,
+                   GTK_CSS_PARSER_ERROR,
+                   GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                   "Cannot create a dmabuf texture without data");
+    }
+  else if (width == 0 && !(parse_result & (1 << 1)))
+    {
+      g_set_error (&error,
+                   GTK_CSS_PARSER_ERROR,
+                   GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                   "No width specified");
+    }
+  else if (height == 0 && !(parse_result & (1 << 2)))
+    {
+      g_set_error (&error,
+                   GTK_CSS_PARSER_ERROR,
+                   GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                   "No height specified");
+    }
+  if (error)
+    {
+      gtk_css_parser_emit_error (parser,
+                                 &start_location,
+                                 gtk_css_parser_get_end_location (parser),
+                                 error);
+      g_clear_pointer (&bytes, g_bytes_unref);
+      g_clear_pointer (&color_state, gdk_color_state_unref);
+      g_clear_error (&error);
+      return NULL;
+    }
+
+#ifdef HAVE_DMABUF
+  dmabuf_fd = gdk_dmabuf_new_for_bytes (bytes, &error);
+  if (dmabuf_fd >= 0)
+    {
+      GdkDmabufTextureBuilder *builder = gdk_dmabuf_texture_builder_new ();
+      gsize i;
+
+      for (i = 0; i < dmabuf.n_planes; i++)
+        dmabuf.planes[i].fd = dmabuf_fd;
+
+      gdk_dmabuf_texture_builder_set_dmabuf (builder, &dmabuf);
+      gdk_dmabuf_texture_builder_set_premultiplied (builder, premultiplied);
+      gdk_dmabuf_texture_builder_set_width (builder, width);
+      gdk_dmabuf_texture_builder_set_height (builder, height);
+      gdk_dmabuf_texture_builder_set_color_state (builder, color_state);
+      texture = gdk_dmabuf_texture_builder_build (builder, destroy_fd, GINT_TO_POINTER (dmabuf_fd), &error);
+      if (texture == NULL)
+        close (dmabuf_fd);
+
+      g_object_unref (builder);
+    }
+  else
+    texture = NULL;
+  if (error)
+    {
+      gtk_css_parser_emit_error (parser,
+                                 &start_location,
+                                 gtk_css_parser_get_end_location (parser),
+                                 error);
+      g_clear_error (&error);
+    }
+#else
+  gtk_css_parser_warn (parser,
+                       GTK_CSS_PARSER_WARNING_UNIMPLEMENTED,
+                       &start_location,
+                       gtk_css_parser_get_end_location (parser),
+                       "No dmabuf support available. Using fallback.");
+  texture = NULL;
+#endif
+
+  if (texture == NULL)
+    {
+      GdkMemoryLayout layout;
+
+      if (gdk_memory_layout_init_from_dmabuf (&layout, &dmabuf, premultiplied, width, height) && 
+          g_bytes_get_size (bytes) >= layout.size)
+        {
+          if (color_state == NULL)
+            {
+              if (gdk_memory_format_get_dmabuf_yuv_fourcc (layout.format) == dmabuf.fourcc)
+                color_state = gdk_color_state_ref (gdk_color_state_yuv ());
+              else
+                color_state = gdk_color_state_ref (gdk_color_state_get_srgb ());
+            }
+          texture = gdk_memory_texture_new_from_layout (bytes, &layout, color_state, NULL, NULL);
+        }
+      else
+        {
+          gtk_css_parser_error (parser,
+                                GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                                &start_location,
+                                gtk_css_parser_get_end_location (parser),
+                                "Cannot create fallback texture for this fourcc");
+        }
+    }
+
+  g_bytes_unref (bytes);
+  g_clear_pointer (&color_state, gdk_color_state_unref);
+
+  return texture;
+}
+
+static gboolean
+parse_memory_format (GtkCssParser *parser,
+                     Context      *context,
+                     gpointer      out)
+{
+  gsize i;
+
+  for (i = 0; i < GDK_MEMORY_N_FORMATS; i++)
+    {
+      if (gtk_css_parser_try_ident (parser, gdk_memory_format_get_name (i)))
+        {
+          *(GdkMemoryFormat *) out = i;
+          return TRUE;
+        }
+    }
+
+  return parse_enum (parser, GDK_TYPE_MEMORY_FORMAT, out);
+}
+
+static GdkTexture *
+parse_memory_texture (GtkCssParser *parser,
+                      Context      *context)
+{
+  GBytes *bytes = NULL;
+  GdkTexture *texture;
+  GError *error = NULL;
+  GtkCssLocation start_location;
+  GdkMemoryLayout layout = { 0, };
+  GdkColorState *color_state = NULL;
+  unsigned offsets[4] = { 0, }, strides[4] = { 0, };
+  const Declaration declarations[] = {
+    { "data", parse_texture_data, clear_bytes, &bytes },
+    { "width", parse_size, NULL, &layout.width },
+    { "height", parse_size, NULL, &layout.height },
+    { "format", parse_memory_format, NULL, &layout.format },
+    { "offset", parse_4_unsigned, NULL, offsets },
+    { "stride", parse_4_unsigned, NULL, strides },
+    { "color-state", parse_color_state, clear_color_state, &color_state }
+  };
+  guint parse_result;
+  gsize i, n_planes;
+
+  if (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
+    {
+      gtk_css_parser_error_syntax (parser, "Expected '{' for \"memory\"");
+      return NULL;
+    }
+
+  start_location = *gtk_css_parser_get_start_location (parser);
+  gtk_css_parser_end_block_prelude (parser);
+
+  parse_result = parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+
+  n_planes = gdk_memory_format_get_n_planes (layout.format);
+  for (i = 0; i < n_planes; i++)
+    {
+      layout.planes[i].offset = offsets[i];
+      layout.planes[i].stride = strides[i];
+    }
+
+  if (bytes == NULL)
+    {
+      if (!(parse_result & (1 << 0)))
+        gtk_css_parser_error_value (parser, "Cannot create a memory texture without data");
+    }
+  else
+    layout.size = g_bytes_get_size (bytes);
+
+  if (!gdk_memory_layout_is_valid (&layout, &error))
+    {
+      gtk_css_parser_emit_error (parser,
+                                 &start_location,
+                                 gtk_css_parser_get_end_location (parser),
+                                 error);
+      g_clear_error (&error);
+      g_clear_pointer (&bytes, g_bytes_unref);
+    }
+
+  if (color_state == NULL)
+    color_state = gdk_color_state_ref (gdk_color_state_get_srgb ());
+  
+  if (bytes)
+    {
+      texture = gdk_memory_texture_new_from_layout (bytes, &layout, color_state, NULL, NULL);
+      g_bytes_unref (bytes);
+    }
+  else
+    texture = NULL;
+
+  gdk_color_state_unref (color_state);
+
+  return texture;
+}
+
+static gboolean
+parse_dxgi_format (GtkCssParser *parser,
+                   Context      *context,
+                   gpointer      out)
+{
+  GdkMemoryFormat format;
+  guint value;
+
+  if (!parse_unsigned (parser, context, &value))
+    return FALSE;
+
+  /* We can ignore premultiplied here, we just need to update the format later */
+  if (!gdk_memory_format_find_by_dxgi_format (value, FALSE, &format))
+    {
+      gtk_css_parser_error_value (parser, "Unhandled DXGI format");
+      return FALSE;
+    }
+
+  *((GdkMemoryFormat *) out) = format;
+  return TRUE;
+}
+
+#ifdef GDK_WINDOWING_WIN32
+static void
+destroy_d3d12_resource (gpointer data)
+{
+  ID3D12Resource *resource = data;
+
+  ID3D12Resource_Release (resource);
+}
+#endif
+
+static GdkTexture *
+parse_d3d12_texture (GtkCssParser *parser,
+                     Context      *context)
+{
+  GBytes *bytes = NULL;
+  GdkTexture *texture;
+  GError *error = NULL;
+  GtkCssLocation start_location;
+  GdkMemoryFormat format = GDK_MEMORY_N_FORMATS;
+  guint width = 0;
+  guint height = 0;
+  gboolean premultiplied = FALSE;
+  GdkColorState *color_state = NULL;
+  GdkMemoryLayout layout;
+#ifdef GDK_WINDOWING_WIN32
+  ID3D12Resource *resource;
+  GdkD3D12TextureBuilder *builder;
+#endif
+  const Declaration declarations[] = {
+    { "data", parse_texture_data, clear_bytes, &bytes },
+    { "width", parse_unsigned, NULL, &width },
+    { "height", parse_unsigned , NULL, &height },
+    { "format", parse_dxgi_format, NULL, &format },
+    { "premultiplied", parse_boolean, NULL, &premultiplied },
+    { "color-state", parse_color_state, clear_color_state, &color_state }
+  };
+  guint parse_result;
+
+  if (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
+    {
+      gtk_css_parser_error_syntax (parser, "Expected '{' for \"d3d12\"");
+      return NULL;
+    }
+
+  start_location = *gtk_css_parser_get_start_location (parser);
+  gtk_css_parser_end_block_prelude (parser);
+
+  parse_result = parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+
+  if (format == GDK_MEMORY_N_FORMATS)
+    {
+      if (!(parse_result & (1 << 3)))
+        g_set_error (&error,
+                    GTK_CSS_PARSER_ERROR,
+                    GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                    "Cannot create a dmabuf texture without data");
+      g_clear_pointer (&bytes, g_bytes_unref);
+    }
+  else if (bytes == NULL && !(parse_result & (1 << 0)))
+    {
+      g_set_error (&error,
+                   GTK_CSS_PARSER_ERROR,
+                   GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                   "Cannot create a dmabuf texture without data");
+    }
+  else if (width == 0)
+    {
+      if (!(parse_result & (1 << 1)))
+        g_set_error (&error,
+                     GTK_CSS_PARSER_ERROR,
+                     GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                     "No width specified");
+      g_clear_pointer (&bytes, g_bytes_unref);
+    }
+  else if (height == 0)
+    {
+      if (!(parse_result & (1 << 2)))
+        g_set_error (&error,
+                     GTK_CSS_PARSER_ERROR,
+                     GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                     "No height specified");
+      g_clear_pointer (&bytes, g_bytes_unref);
+    }
+  else
+    {
+      gdk_memory_layout_init (&layout, format, width, height, gdk_memory_format_alignment (format));
+      if (layout.size > g_bytes_get_size (bytes))
+        {
+          g_set_error (&error,
+                      GTK_CSS_PARSER_ERROR,
+                      GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                      "Not enough data for texture. Expected %zu bytes, got %zu",
+                      layout.size, g_bytes_get_size (bytes));
+        }
+    }
+  if (error || bytes == NULL || width == 0 || height == 0)
+    {
+      if (error)
+        {
+          gtk_css_parser_emit_error (parser,
+                                    &start_location,
+                                    gtk_css_parser_get_end_location (parser),
+                                    error);
+          g_clear_error (&error);
+        }
+      g_clear_pointer (&bytes, g_bytes_unref);
+      g_clear_pointer (&color_state, gdk_color_state_unref);
+      return NULL;
+    }
+
+  if (premultiplied)
+    format = gdk_memory_format_get_premultiplied (format);
+  if (color_state == NULL)
+    color_state = gdk_color_state_ref (gdk_color_state_get_srgb ());
+
+#ifdef GDK_WINDOWING_WIN32
+  resource = gdk_d3d12_resource_new_from_bytes (g_bytes_get_data (bytes, NULL),
+                                                &layout,
+                                                &error);
+  if (resource == NULL)
+    {
+      gtk_css_parser_emit_error (parser,
+                                &start_location,
+                                gtk_css_parser_get_end_location (parser),
+                                error);
+      g_bytes_unref (bytes);
+      gdk_color_state_unref (color_state);
+      return FALSE;
+    }
+
+  builder = gdk_d3d12_texture_builder_new();
+  gdk_d3d12_texture_builder_set_resource (builder, resource);
+  gdk_d3d12_texture_builder_set_premultiplied (builder, premultiplied);
+  gdk_d3d12_texture_builder_set_color_state (builder, color_state);
+  texture = gdk_d3d12_texture_builder_build (builder, destroy_d3d12_resource, resource, &error);
+  if (texture)
+    {
+      g_clear_pointer (&bytes, g_bytes_unref);
+      g_clear_pointer (&color_state, gdk_color_state_unref);
+      return texture;
+    }
+
+  gtk_css_parser_emit_error (parser,
+                            &start_location,
+                            gtk_css_parser_get_end_location (parser),
+                            error);
+  g_clear_error (&error);
+#else
+  gtk_css_parser_warn (parser,
+                       GTK_CSS_PARSER_WARNING_UNIMPLEMENTED,
+                       &start_location,
+                       gtk_css_parser_get_end_location (parser),
+                       "No D3D12 support available. Using fallback.");
+#endif
+
+  texture = gdk_memory_texture_new_from_layout (bytes, &layout, color_state, NULL, NULL);
+  g_bytes_unref (bytes);
+  gdk_color_state_unref (color_state);
+  return texture;
+}
+
+static GdkTexture *
+parse_default_texture (GtkCssParser *parser,
+                       Context      *context)
+{
+  GdkTexture *texture;
+  GError *error = NULL;
+  GtkCssLocation start_location;
+  GBytes *bytes;
+
+  start_location = *gtk_css_parser_get_start_location (parser);
+  bytes = consume_bytes (parser);
+  if (bytes == NULL)
+    return NULL;
+
+  texture = gdk_texture_new_from_bytes (bytes, &error);
+  g_bytes_unref (bytes);
+  if (texture == NULL)
+    {
+      gtk_css_parser_emit_error (parser,
+                                 &start_location,
+                                 gtk_css_parser_get_end_location (parser),
+                                 error);
+      g_clear_error (&error);
+      return NULL;
+    }
+
+  return texture;
+}
+
 static gboolean
 parse_texture (GtkCssParser *parser,
                Context      *context,
                gpointer      out_data)
 {
   GdkTexture *texture;
-  GError *error = NULL;
-  GtkCssLocation start_location;
-  GBytes *bytes;
   char *texture_name;
 
   if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_STRING))
@@ -351,27 +1107,21 @@ parse_texture (GtkCssParser *parser,
   else
     texture_name = NULL;
 
-  start_location = *gtk_css_parser_get_start_location (parser);
-  bytes = consume_bytes (parser);
-  if (bytes == NULL)
-    {
-      g_free (texture_name);
-      return FALSE;
-    }
+  if (gtk_css_parser_try_ident (parser, "memory"))
+    texture = parse_memory_texture (parser, context);
+  else if (gtk_css_parser_try_ident (parser, "dmabuf"))
+    texture = parse_dmabuf_texture (parser, context);
+  else if (gtk_css_parser_try_ident (parser, "d3d12"))
+    texture = parse_d3d12_texture (parser, context);
+  else
+    texture = parse_default_texture (parser, context);
 
-  texture = gdk_texture_new_from_bytes (bytes, &error);
-  g_bytes_unref (bytes);
   if (texture == NULL)
     {
-      gtk_css_parser_emit_error (parser,
-                                 &start_location,
-                                 gtk_css_parser_get_end_location (parser),
-                                 error);
-      g_clear_error (&error);
       g_free (texture_name);
       return FALSE;
     }
-
+    
   if (texture_name)
     {
       if (context->named_textures == NULL)
@@ -390,6 +1140,14 @@ clear_texture (gpointer inout_texture)
   g_clear_object ((GdkTexture **) inout_texture);
 }
 
+typedef struct _CairoHookData CairoHookData;
+struct _CairoHookData
+{
+  GtkCssParser *parser;
+  graphene_rect_t node_bounds;
+  cairo_surface_t *surface;
+};
+
 static cairo_surface_t *
 csi_hooks_surface_create (void            *closure,
                           cairo_content_t  content,
@@ -397,92 +1155,79 @@ csi_hooks_surface_create (void            *closure,
                           double           height,
                           long             uid)
 {
-  return cairo_surface_create_similar (closure, content, width, height);
+  CairoHookData *hook = closure;
+
+  if (hook->surface != NULL)
+    {
+      return cairo_surface_create_similar (hook->surface,
+                                           content,
+                                           width,
+                                           height);
+    }
+
+  if (width != hook->node_bounds.size.width || height != hook->node_bounds.size.height)
+    {
+      gtk_css_parser_error (hook->parser,
+                            GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                            gtk_css_parser_get_block_location (hook->parser),
+                            gtk_css_parser_get_start_location (hook->parser),
+                            "Node size %gx%g does not match script size %gx%g",
+                            hook->node_bounds.size.width, hook->node_bounds.size.height,
+                            width, height);
+    }
+
+  hook->surface = cairo_recording_surface_create (content,
+                                                  &(cairo_rectangle_t) {
+                                                      hook->node_bounds.origin.x,
+                                                      hook->node_bounds.origin.y,
+                                                      hook->node_bounds.size.width,
+                                                      hook->node_bounds.size.height
+                                                  });
+
+  return cairo_surface_reference (hook->surface);
 }
 
-static const cairo_user_data_key_t csi_hooks_key;
-
-static cairo_t *
-csi_hooks_context_create (void            *closure,
-                          cairo_surface_t *surface)
-{
-  cairo_t *cr = cairo_create (surface);
-
-  cairo_set_user_data (cr,
-                       &csi_hooks_key,
-                       cairo_surface_reference (surface),
-                       (cairo_destroy_func_t) cairo_surface_destroy);
-
-  return cr;
-}
-
-static void
-csi_hooks_context_destroy (void *closure,
-                           void *ptr)
-{
-  cairo_surface_t *surface;
-  cairo_t *cr;
-
-  surface = cairo_get_user_data (ptr, &csi_hooks_key);
-  cr = cairo_create (closure);
-  cairo_set_source_surface (cr, surface, 0, 0);
-  cairo_paint (cr);
-  cairo_destroy (cr);
-}
-
-static gboolean
-parse_script (GtkCssParser *parser,
-              Context      *context,
-              gpointer      out_data)
+static cairo_surface_t *
+interpret_cairo_script (GtkCssParser          *parser,
+                        const graphene_rect_t *bounds,
+                        GBytes                *script)
 {
 #ifdef HAVE_CAIRO_SCRIPT_INTERPRETER
-  GBytes *bytes;
   cairo_script_interpreter_t *csi;
+  CairoHookData hook = { parser, *bounds, NULL };
   cairo_script_interpreter_hooks_t hooks = {
+    .closure = &hook,
     .surface_create = csi_hooks_surface_create,
-    .context_create = csi_hooks_context_create,
-    .context_destroy = csi_hooks_context_destroy,
   };
 
-  bytes = consume_bytes (parser);
-  if (bytes == NULL)
-    return FALSE;
-
-  hooks.closure = cairo_recording_surface_create (CAIRO_CONTENT_COLOR_ALPHA, NULL);
   csi = cairo_script_interpreter_create ();
   cairo_script_interpreter_install_hooks (csi, &hooks);
-  cairo_script_interpreter_feed_string (csi, g_bytes_get_data (bytes, NULL), g_bytes_get_size (bytes));
-  g_bytes_unref (bytes);
-  if (cairo_surface_status (hooks.closure) != CAIRO_STATUS_SUCCESS)
+  cairo_script_interpreter_feed_string (csi, g_bytes_get_data (script, NULL), g_bytes_get_size (script));
+  if (hook.surface == NULL)
     {
-      gtk_css_parser_error_value (parser, "Invalid Cairo script: %s", cairo_status_to_string (cairo_surface_status (hooks.closure)));
+      gtk_css_parser_error_value (parser, "Cairo script did not create a surface");
+    }
+  else if (cairo_surface_status (hook.surface) != CAIRO_STATUS_SUCCESS)
+    {
+      gtk_css_parser_error_value (parser, "Invalid Cairo script: %s", cairo_status_to_string (cairo_surface_status (hook.surface)));
       cairo_script_interpreter_destroy (csi);
-      return FALSE;
+      g_clear_pointer (&hook.surface, cairo_surface_destroy);
     }
   if (cairo_script_interpreter_destroy (csi) != CAIRO_STATUS_SUCCESS)
     {
       gtk_css_parser_error_value (parser, "Invalid Cairo script");
-      cairo_surface_destroy (hooks.closure);
-      return FALSE;
+      g_clear_pointer (&hook.surface, cairo_surface_destroy);
     }
 
-  *(cairo_surface_t **) out_data = hooks.closure;
-  return TRUE;
+  return hook.surface;
 #else
   gtk_css_parser_warn (parser,
                        GTK_CSS_PARSER_WARNING_UNIMPLEMENTED,
                        gtk_css_parser_get_block_location (parser),
                        gtk_css_parser_get_start_location (parser),
-                       "GTK was compiled with script interpreter support. Using fallback pixel data for Cairo node.");
-  *(cairo_surface_t **) out_data = NULL;
-  return TRUE;
+                       "GTK was compiled without script interpreter support. Using fallback pixel data for Cairo node.");
+  return NULL;
 #endif
-}
-
-static void
-clear_surface (gpointer inout_surface)
-{
-  g_clear_pointer ((cairo_surface_t **) inout_surface, cairo_surface_destroy);
 }
 
 static gboolean
@@ -678,63 +1423,6 @@ clear_string (gpointer inout_string)
   g_clear_pointer ((char **) inout_string, g_free);
 }
 
-static gboolean
-parse_color_state (GtkCssParser *parser,
-                   Context      *context,
-                   gpointer      color_state)
-{
-  GdkColorState *cs = NULL;
-
-  if (gtk_css_parser_try_ident (parser, "srgb"))
-    cs = gdk_color_state_get_srgb ();
-  else if (gtk_css_parser_try_ident (parser, "srgb-linear"))
-    cs = gdk_color_state_get_srgb_linear ();
-  else if (gtk_css_parser_try_ident (parser, "rec2100-pq"))
-    cs = gdk_color_state_get_rec2100_pq ();
-  else if (gtk_css_parser_try_ident (parser, "rec2100-linear"))
-    cs = gdk_color_state_get_rec2100_linear ();
-  else if (gtk_css_parser_try_ident (parser, "oklab"))
-    cs = gdk_color_state_get_oklab ();
-  else if (gtk_css_parser_try_ident (parser, "oklch"))
-    cs = gdk_color_state_get_oklch ();
-  else if (gtk_css_token_is (gtk_css_parser_get_token (parser), GTK_CSS_TOKEN_STRING))
-    {
-      char *name = gtk_css_parser_consume_string (parser);
-
-      if (context->named_color_states)
-        cs = g_hash_table_lookup (context->named_color_states, name);
-
-      if (!cs)
-        {
-          gtk_css_parser_error_value (parser, "No color state named \"%s\"", name);
-          g_free (name);
-          return FALSE;
-        }
-
-      g_free (name);
-    }
-  else
-    {
-      gtk_css_parser_error_syntax (parser, "Expected a valid color state");
-      return FALSE;
-    }
-
-  *(GdkColorState **) color_state = gdk_color_state_ref (cs);
-  return TRUE;
-}
-
-static void
-clear_color_state (gpointer inout_color_state)
-{
-  GdkColorState **cs = inout_color_state;
-
-  if (*cs)
-    {
-      gdk_color_state_unref (*cs);
-      *cs = NULL;
-    }
-}
-
 typedef struct {
   Context *context;
   GdkColor *color;
@@ -824,9 +1512,9 @@ parse_stops (GtkCssParser *parser,
              gpointer      out_stops)
 {
   GArray *stops;
-  GskColorStop2 stop;
+  GskGradientStop stop;
 
-  stops = g_array_new (FALSE, FALSE, sizeof (GskColorStop2));
+  stops = g_array_new (FALSE, FALSE, sizeof (GskGradientStop));
 
   for (;;)
     {
@@ -837,12 +1525,22 @@ parse_stops (GtkCssParser *parser,
 
       stop.offset = dval;
 
+      if (gtk_css_parser_has_number (parser))
+        {
+          if (!gtk_css_parser_consume_number (parser, &dval))
+            goto error;
+
+          stop.transition_hint = dval;
+        }
+      else
+        stop.transition_hint = 0.5;
+
       if (!parse_color (parser, context, &stop.color))
         goto error;
 
       if (stops->len == 0 && stop.offset < 0)
         gtk_css_parser_error_value (parser, "Color stop offset must be >= 0");
-      else if (stops->len > 0 && stop.offset < g_array_index (stops, GskColorStop2, stops->len - 1).offset)
+      else if (stops->len > 0 && stop.offset < g_array_index (stops, GskGradientStop, stops->len - 1).offset)
         gtk_css_parser_error_value (parser, "Color stop offset must be >= previous value");
       else if (stop.offset > 1)
         gtk_css_parser_error_value (parser, "Color stop offset must be <= 1");
@@ -881,7 +1579,7 @@ clear_stops (gpointer inout_stops)
     {
       for (int i = 0; i < (*stops)->len; i++)
         {
-          GskColorStop2 *stop = &g_array_index (*stops, GskColorStop2, i);
+          GskGradientStop *stop = &g_array_index (*stops, GskGradientStop, i);
           gdk_color_finish (&stop->color);
         }
 
@@ -931,7 +1629,7 @@ parse_shadows (GtkCssParser *parser,
 
   do
     {
-      GskShadow2 shadow;
+      GskShadowEntry shadow;
       GdkColor color = GDK_COLOR_SRGB (0, 0, 0, 1);
       double dx = 0, dy = 0, radius = 0;
 
@@ -970,7 +1668,7 @@ clear_shadows (gpointer inout_shadows)
 
   for (gsize i = 0; i < shadows->len; i++)
     {
-      GskShadow2 *shadow = &g_array_index (shadows, GskShadow2, i);
+      GskShadowEntry *shadow = &g_array_index (shadows, GskShadowEntry, i);
       gdk_color_finish (&shadow->color);
     }
 
@@ -1326,10 +2024,11 @@ parse_font (GtkCssParser *parser,
             }
           else
             {
-              gtk_css_parser_emit_error (parser,
-                                         &start_location,
-                                         gtk_css_parser_get_end_location (parser),
-                                         error);
+              gtk_css_parser_error (parser,
+                                    GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                                    &start_location,
+                                    gtk_css_parser_get_end_location (parser),
+                                    "%s", error->message);
               g_clear_error (&error);
             }
 
@@ -1367,7 +2066,7 @@ clear_font (gpointer inout_font)
   g_clear_object ((PangoFont **) inout_font);
 }
 
-#define GLYPH_NEEDS_WIDTH (1 << 15)
+#define GLYPH_NEEDS_WIDTH ((PangoGlyphUnit) -1)
 
 static gboolean
 parse_glyphs (GtkCssParser *parser,
@@ -1395,7 +2094,7 @@ parse_glyphs (GtkCssParser *parser,
                   gtk_css_parser_error_value (parser, "Unsupported character %d in string", i);
                 }
               gi.glyph = PANGO_GLYPH_INVALID_INPUT - MAX_ASCII_GLYPH + s[i];
-              *(unsigned int *) &gi.attr |= GLYPH_NEEDS_WIDTH;
+              gi.geometry.width = GLYPH_NEEDS_WIDTH;
               pango_glyph_string_set_size (glyph_string, glyph_string->num_glyphs + 1);
               glyph_string->glyphs[glyph_string->num_glyphs - 1] = gi;
             }
@@ -1418,7 +2117,7 @@ parse_glyphs (GtkCssParser *parser,
             }
           else
             {
-              *(unsigned int *) &gi.attr |= GLYPH_NEEDS_WIDTH;
+              gi.geometry.width = GLYPH_NEEDS_WIDTH;
             }
 
           if (gtk_css_parser_has_number (parser))
@@ -1731,10 +2430,18 @@ parse_linear_gradient_node_internal (GtkCssParser *parser,
   parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
   if (stops == NULL)
     {
-      GskColorStop2 from = { 0.0, GDK_COLOR_SRGB (0.667, 1, 0, 1) };
-      GskColorStop2 to = { 1.0, GDK_COLOR_SRGB (1, 0, 0.8, 1) };
+      GskGradientStop from = {
+        .offset = 0.0,
+        .transition_hint = 0.5,
+        .color = GDK_COLOR_SRGB (0.667, 1, 0, 1)
+      };
+      GskGradientStop to = {
+        .offset = 1.0,
+        .transition_hint = 0.5,
+        .color = GDK_COLOR_SRGB (1, 0, 0.8, 1)
+      };
 
-      stops = g_array_new (FALSE, FALSE, sizeof (GskColorStop2));
+      stops = g_array_new (FALSE, FALSE, sizeof (GskGradientStop));
       g_array_append_val (stops, from);
       g_array_append_val (stops, to);
     }
@@ -1747,14 +2454,14 @@ parse_linear_gradient_node_internal (GtkCssParser *parser,
                                                       &start, &end,
                                                       interpolation,
                                                       hue_interpolation,
-                                                      (GskColorStop2 *) stops->data,
+                                                      (GskGradientStop *) stops->data,
                                                       stops->len);
   else
     result = gsk_linear_gradient_node_new2 (&bounds,
                                             &start, &end,
                                             interpolation,
                                             hue_interpolation,
-                                            (GskColorStop2 *) stops->data,
+                                            (GskGradientStop *) stops->data,
                                             stops->len);
 
   clear_stops (&stops);
@@ -1807,10 +2514,18 @@ parse_radial_gradient_node_internal (GtkCssParser *parser,
   parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
   if (stops == NULL)
     {
-      GskColorStop2 from = { 0.0, GDK_COLOR_SRGB (0.667, 1, 0, 1) };
-      GskColorStop2 to = { 1.0, GDK_COLOR_SRGB (1, 0, 0.8, 1) };
+      GskGradientStop from = {
+        .offset = 0.0,
+        .transition_hint = 0.5,
+        .color = GDK_COLOR_SRGB (0.667, 1, 0, 1)
+      };
+      GskGradientStop to = {
+        .offset = 1.0,
+        .transition_hint = 0.5,
+        .color = GDK_COLOR_SRGB (1, 0, 0.8, 1)
+      };
 
-      stops = g_array_new (FALSE, FALSE, sizeof (GskColorStop2));
+      stops = g_array_new (FALSE, FALSE, sizeof (GskGradientStop));
       g_array_append_val (stops, from);
       g_array_append_val (stops, to);
     }
@@ -1833,7 +2548,7 @@ parse_radial_gradient_node_internal (GtkCssParser *parser,
                                                       start, end,
                                                       interpolation,
                                                       hue_interpolation,
-                                                      (GskColorStop2 *) stops->data,
+                                                      (GskGradientStop *) stops->data,
                                                       stops->len);
   else
     result = gsk_radial_gradient_node_new2 (&bounds, &center,
@@ -1841,7 +2556,7 @@ parse_radial_gradient_node_internal (GtkCssParser *parser,
                                             start, end,
                                             interpolation,
                                             hue_interpolation,
-                                            (GskColorStop2 *) stops->data,
+                                            (GskGradientStop *) stops->data,
                                             stops->len);
 
   clear_stops (&stops);
@@ -1887,10 +2602,18 @@ parse_conic_gradient_node (GtkCssParser *parser,
   parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
   if (stops == NULL)
     {
-      GskColorStop2 from = { 0.0, GDK_COLOR_SRGB (0.667, 1, 0, 1) };
-      GskColorStop2 to = { 1.0, GDK_COLOR_SRGB (1, 0, 0.8, 1) };
+      GskGradientStop from = {
+        .offset = 0.0,
+        .transition_hint = 0.5,
+        .color = GDK_COLOR_SRGB (0.667, 1, 0, 1)
+      };
+      GskGradientStop to = {
+        .offset = 1.0,
+        .transition_hint = 0.5,
+        .color = GDK_COLOR_SRGB (1, 0, 0.8, 1)
+      };
 
-      stops = g_array_new (FALSE, FALSE, sizeof (GskColorStop2));
+      stops = g_array_new (FALSE, FALSE, sizeof (GskGradientStop));
       g_array_append_val (stops, from);
       g_array_append_val (stops, to);
     }
@@ -1902,7 +2625,7 @@ parse_conic_gradient_node (GtkCssParser *parser,
                                          &center, rotation,
                                          interpolation,
                                          hue_interpolation,
-                                         (GskColorStop2 *) stops->data,
+                                         (GskGradientStop *) stops->data,
                                          stops->len);
 
   clear_stops (&stops);
@@ -2287,11 +3010,12 @@ parse_cairo_node (GtkCssParser *parser,
 {
   graphene_rect_t bounds = GRAPHENE_RECT_INIT (0, 0, 50, 50);
   GdkTexture *pixels = NULL;
-  cairo_surface_t *surface = NULL;
+  cairo_surface_t *surface;
+  GBytes *bytes = NULL;
   const Declaration declarations[] = {
     { "bounds", parse_rect, NULL, &bounds },
     { "pixels", parse_texture, clear_texture, &pixels },
-    { "script", parse_script, clear_surface, &surface }
+    { "script", parse_bytes, clear_bytes, &bytes }
   };
   GskRenderNode *node;
 
@@ -2299,12 +3023,17 @@ parse_cairo_node (GtkCssParser *parser,
 
   node = gsk_cairo_node_new (&bounds);
 
+  if (bytes != NULL)
+    {
+      surface = interpret_cairo_script (parser, &bounds, bytes);
+      g_bytes_unref (bytes);
+    }
+  else
+    surface = NULL;
+
   if (surface != NULL)
     {
-      cairo_t *cr = gsk_cairo_node_get_draw_context (node);
-      cairo_set_source_surface (cr, surface, 0, 0);
-      cairo_paint (cr);
-      cairo_destroy (cr);
+      gsk_cairo_node_set_surface (node, surface);
     }
   else if (pixels != NULL)
     {
@@ -2531,13 +3260,8 @@ unpack_glyphs (PangoFont        *font,
     {
       PangoGlyphInfo *gi = &glyphs->glyphs[i];
 
-      if (((*(unsigned int *) &gi->attr) & GLYPH_NEEDS_WIDTH) == 0)
-        continue;
-
-      *(unsigned int *) &gi->attr &= ~GLYPH_NEEDS_WIDTH;
-
-     if (gi->glyph >= PANGO_GLYPH_INVALID_INPUT - MAX_ASCII_GLYPH &&
-         gi->glyph < PANGO_GLYPH_INVALID_INPUT)
+      if (gi->glyph >= PANGO_GLYPH_INVALID_INPUT - MAX_ASCII_GLYPH &&
+          gi->glyph < PANGO_GLYPH_INVALID_INPUT)
         {
           PangoGlyph idx = gi->glyph - (PANGO_GLYPH_INVALID_INPUT - MAX_ASCII_GLYPH) - MIN_ASCII_GLYPH;
 
@@ -2557,7 +3281,8 @@ unpack_glyphs (PangoFont        *font,
           gi->glyph = ascii->glyphs[idx].glyph;
           gi->geometry.width = ascii->glyphs[idx].geometry.width;
         }
-      else
+      
+      if (gi->geometry.width == GLYPH_NEEDS_WIDTH)
         {
           PangoRectangle rect;
 
@@ -2657,7 +3382,7 @@ parse_text_node (GtkCssParser *parser,
 
   if (font == NULL)
     {
-      font = font_from_string (pango_cairo_font_map_get_default (), "Cantarell 15px", TRUE);
+      font = font_from_string (pango_cairo_font_map_get_default (), "Sans 15px", TRUE);
       g_assert (font);
     }
 
@@ -2676,7 +3401,7 @@ parse_text_node (GtkCssParser *parser,
       for (i = 0; i < strlen (text); i++)
         {
           gi.glyph = PANGO_GLYPH_INVALID_INPUT - MAX_ASCII_GLYPH + text[i];
-          *(unsigned int *) &gi.attr |= GLYPH_NEEDS_WIDTH;
+          gi.geometry.width = GLYPH_NEEDS_WIDTH;
           glyphs->glyphs[i] = gi;
         }
     }
@@ -2884,8 +3609,10 @@ parse_fill_node (GtkCssParser *parser,
   if (child == NULL)
     {
       graphene_rect_t bounds;
-      gsk_path_get_bounds (path, &bounds);
-      child = create_default_render_node_with_bounds (&bounds);
+      if (gsk_path_get_bounds (path, &bounds))
+        child = create_default_render_node_with_bounds (&bounds);
+      else
+        child = gsk_container_node_new (NULL, 0);
     }
 
   result = gsk_fill_node_new (child, path, rule);
@@ -2975,7 +3702,7 @@ parse_shadow_node (GtkCssParser *parser,
                    Context      *context)
 {
   GskRenderNode *child = NULL;
-  GArray *shadows = g_array_new (FALSE, TRUE, sizeof (GskShadow2));
+  GArray *shadows = g_array_new (FALSE, TRUE, sizeof (GskShadowEntry));
   const Declaration declarations[] = {
     { "child", parse_node, clear_node, &child },
     { "shadows", parse_shadows, clear_shadows, shadows },
@@ -2988,11 +3715,11 @@ parse_shadow_node (GtkCssParser *parser,
 
   if (shadows->len == 0)
     {
-      GskShadow2 default_shadow = { GDK_COLOR_SRGB (0, 0, 0, 1), GRAPHENE_POINT_INIT (1, 1), 0 };
+      GskShadowEntry default_shadow = { GDK_COLOR_SRGB (0, 0, 0, 1), GRAPHENE_POINT_INIT (1, 1), 0 };
       g_array_append_val (shadows, default_shadow);
     }
 
-  result = gsk_shadow_node_new2 (child, (GskShadow2 *)shadows->data, shadows->len);
+  result = gsk_shadow_node_new2 (child, (GskShadowEntry *)shadows->data, shadows->len);
 
   clear_shadows (shadows);
   g_array_free (shadows, TRUE);
@@ -3046,6 +3773,62 @@ parse_subsurface_node (GtkCssParser *parser,
 }
 
 static gboolean
+parse_component_transfer (GtkCssParser *parser,
+                          Context      *context,
+                          gpointer      out_transfer)
+{
+  return gsk_component_transfer_parser_parse (parser, out_transfer);
+}
+
+static void
+clear_component_transfer (gpointer inout_transfer)
+{
+  g_clear_pointer ((GskComponentTransfer **) inout_transfer, gsk_component_transfer_free);
+}
+
+static GskRenderNode *
+parse_component_transfer_node (GtkCssParser *parser,
+                               Context      *context)
+{
+  GskRenderNode *child = NULL;
+  GskComponentTransfer *red = NULL;
+  GskComponentTransfer *green = NULL;
+  GskComponentTransfer *blue = NULL;
+  GskComponentTransfer *alpha = NULL;
+  const Declaration declarations[] = {
+    { "child", parse_node, clear_node, &child },
+    { "red", parse_component_transfer, clear_component_transfer, &red },
+    { "green", parse_component_transfer, clear_component_transfer, &green },
+    { "blue", parse_component_transfer, clear_component_transfer, &blue },
+    { "alpha", parse_component_transfer, clear_component_transfer, &alpha },
+  };
+  GskRenderNode *result;
+
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+  if (child == NULL)
+    child = create_default_render_node ();
+  if (red == NULL)
+    red = gsk_component_transfer_new_identity ();
+  if (green == NULL)
+    green = gsk_component_transfer_new_identity ();
+  if (blue == NULL)
+    blue = gsk_component_transfer_new_identity ();
+  if (alpha == NULL)
+    alpha = gsk_component_transfer_new_identity ();
+
+  result = gsk_component_transfer_node_new (child, red, green, blue, alpha);
+
+  gsk_component_transfer_free (red);
+  gsk_component_transfer_free (green);
+  gsk_component_transfer_free (blue);
+  gsk_component_transfer_free (alpha);
+
+  gsk_render_node_unref (child);
+
+  return result;
+}
+
+static gboolean
 parse_node (GtkCssParser *parser,
             Context      *context,
             gpointer      out_node)
@@ -3084,6 +3867,7 @@ parse_node (GtkCssParser *parser,
     { "glshader", parse_glshader_node },
     { "mask", parse_mask_node },
     { "subsurface", parse_subsurface_node },
+    { "component-transfer", parse_component_transfer_node },
   };
   GskRenderNode **node_p = out_node;
   guint i;
@@ -3272,23 +4056,6 @@ printer_init_check_texture (Printer    *printer,
     g_hash_table_insert (printer->named_textures, texture, g_strdup (""));
 }
 
-static void
-printer_init_check_color_state (Printer       *printer,
-                                GdkColorState *cs)
-{
-  gpointer name;
-
-  if (GDK_IS_DEFAULT_COLOR_STATE (cs) ||
-      GDK_IS_BUILTIN_COLOR_STATE (cs))
-    return;
-
-  if (!g_hash_table_lookup_extended (printer->named_color_states, cs, NULL, &name))
-    {
-      name = g_strdup_printf ("cicp%zu", ++printer->named_color_state_counter);
-      g_hash_table_insert (printer->named_color_states, cs, name);
-    }
-}
-
 typedef struct {
   hb_face_t *face;
   hb_subset_input_t *input;
@@ -3362,58 +4129,17 @@ printer_init_duplicates_for_node (Printer       *printer,
     {
     case GSK_TEXT_NODE:
       printer_init_collect_font_info (printer, node);
-      printer_init_check_color_state (printer, gsk_text_node_get_color2 (node)->color_state);
       break;
 
     case GSK_COLOR_NODE:
-      printer_init_check_color_state (printer, gsk_color_node_get_color2 (node)->color_state);
-      break;
-
     case GSK_BORDER_NODE:
-      {
-        const GdkColor *colors = gsk_border_node_get_colors2 (node);
-        for (int i = 0; i < 4; i++)
-          printer_init_check_color_state (printer, colors[i].color_state);
-      }
-      break;
-
     case GSK_INSET_SHADOW_NODE:
-      printer_init_check_color_state (printer, gsk_inset_shadow_node_get_color2 (node)->color_state);
-      break;
-
     case GSK_OUTSET_SHADOW_NODE:
-      printer_init_check_color_state (printer, gsk_outset_shadow_node_get_color2 (node)->color_state);
-      break;
-
     case GSK_LINEAR_GRADIENT_NODE:
     case GSK_REPEATING_LINEAR_GRADIENT_NODE:
-      {
-        const GskColorStop2 *stops = gsk_linear_gradient_node_get_color_stops2 (node);
-        for (int i = 0; i < gsk_linear_gradient_node_get_n_color_stops (node); i++)
-          printer_init_check_color_state (printer, stops[i].color.color_state);
-        printer_init_check_color_state (printer, gsk_linear_gradient_node_get_interpolation_color_state (node));
-      }
-      break;
-
     case GSK_RADIAL_GRADIENT_NODE:
     case GSK_REPEATING_RADIAL_GRADIENT_NODE:
-      {
-        const GskColorStop2 *stops = gsk_radial_gradient_node_get_color_stops2 (node);
-        for (int i = 0; i < gsk_radial_gradient_node_get_n_color_stops (node); i++)
-          printer_init_check_color_state (printer, stops[i].color.color_state);
-        printer_init_check_color_state (printer, gsk_radial_gradient_node_get_interpolation_color_state (node));
-      }
-      break;
-
     case GSK_CONIC_GRADIENT_NODE:
-      {
-        const GskColorStop2 *stops = gsk_conic_gradient_node_get_color_stops2 (node);
-        for (int i = 0; i < gsk_conic_gradient_node_get_n_color_stops (node); i++)
-          printer_init_check_color_state (printer, stops[i].color.color_state);
-        printer_init_check_color_state (printer, gsk_conic_gradient_node_get_interpolation_color_state (node));
-      }
-      break;
-
     case GSK_CAIRO_NODE:
       /* no children */
       break;
@@ -3456,11 +4182,6 @@ printer_init_duplicates_for_node (Printer       *printer,
 
     case GSK_SHADOW_NODE:
       printer_init_duplicates_for_node (printer, gsk_shadow_node_get_child (node));
-      for (int i = 0; i < gsk_shadow_node_get_n_shadows (node); i++)
-        {
-          const GskShadow2 * shadow = gsk_shadow_node_get_shadow2 (node, i);
-          printer_init_check_color_state (printer, shadow->color.color_state);
-        }
       break;
 
     case GSK_DEBUG_NODE:
@@ -3518,6 +4239,10 @@ G_GNUC_END_IGNORE_DEPRECATIONS
       printer_init_duplicates_for_node (printer, gsk_subsurface_node_get_child (node));
       break;
 
+    case GSK_COMPONENT_TRANSFER_NODE:
+      printer_init_duplicates_for_node (printer, gsk_component_transfer_node_get_child (node));
+      break;
+
     default:
     case GSK_NOT_A_RENDER_NODE:
       g_assert_not_reached ();
@@ -3546,8 +4271,7 @@ printer_init (Printer       *self,
 static void
 printer_clear (Printer *self)
 {
-  if (self->str)
-    g_string_free (self->str, TRUE);
+  g_string_free (self->str, TRUE);
   g_hash_table_unref (self->named_nodes);
   g_hash_table_unref (self->named_textures);
   g_hash_table_unref (self->named_color_states);
@@ -3720,6 +4444,15 @@ append_unsigned_param (Printer    *p,
 }
 
 static void
+append_boolean_param (Printer    *p,
+                      const char *param_name,
+                      gboolean    value)
+{
+  _indent (p);
+  g_string_append_printf (p->str, "%s: %s;\n", param_name, value ? "true" : "false");
+}
+
+static void
 print_color_state (Printer       *p,
                    GdkColorState *color_state)
 {
@@ -3730,9 +4463,13 @@ print_color_state (Printer       *p,
     }
   else
     {
-      const char *name;
+      gpointer name;
 
-      name = g_hash_table_lookup (p->named_color_states, color_state);
+      if (!g_hash_table_lookup_extended (p->named_color_states, color_state, NULL, &name))
+        {
+          name = g_strdup_printf ("cicp%zu", ++p->named_color_state_counter);
+          g_hash_table_insert (p->named_color_states, color_state, name);
+        }
       g_assert (name != NULL);
       g_string_append_c (p->str, '"');
       g_string_append (p->str, name);
@@ -3899,6 +4636,15 @@ append_transform_param (Printer      *p,
   g_string_append_c (p->str, '\n');
 }
 
+static void
+append_memory_format_param (Printer         *p,
+                            const char      *param_name,
+                            GdkMemoryFormat  format)
+{
+  _indent (p);
+  g_string_append_printf (p->str, "%s: %s;\n", param_name, gdk_memory_format_get_name (format));
+}
+
 static void render_node_print (Printer       *p,
                                GskRenderNode *node);
 
@@ -3913,10 +4659,10 @@ append_node_param (Printer       *p,
 }
 
 static void
-append_stops_param (Printer             *p,
-                    const char          *param_name,
-                    const GskColorStop2 *stops,
-                    gsize                n_stops)
+append_stops_param (Printer               *p,
+                    const char            *param_name,
+                    const GskGradientStop *stops,
+                    gsize                  n_stops)
 {
   gsize i;
 
@@ -3930,6 +4676,13 @@ append_stops_param (Printer             *p,
         g_string_append (p->str, ", ");
 
       string_append_double (p->str, stops[i].offset);
+
+      if (i > 0 && stops[i].transition_hint != 0.5)
+        {
+          g_string_append_c (p->str, ' ');
+          string_append_double (p->str, stops[i].transition_hint);
+        }
+
       g_string_append_c (p->str, ' ');
       print_color (p, &stops[i].color);
     }
@@ -4054,6 +4807,218 @@ append_bytes_param (Printer    *p,
 }
 
 static void
+append_compressed_bytes_param (Printer    *p,
+                               const char *param_name,
+                               GBytes     *bytes)
+{
+  GZlibCompressor *compressor;
+  GBytes *compressed_bytes;
+
+  compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, 9);
+#if GLIB_CHECK_VERSION (2, 85, 0)
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  g_zlib_compressor_set_os (compressor, 3);
+G_GNUC_END_IGNORE_DEPRECATIONS
+#endif
+
+  compressed_bytes = g_converter_convert_bytes (G_CONVERTER (compressor), bytes, NULL);
+  g_assert (compressed_bytes != NULL);
+
+#if !GLIB_CHECK_VERSION (2, 85, 0)
+  /* fallback for above */
+  ((guchar *) g_bytes_get_data (compressed_bytes, NULL))[9] = 3;
+#endif
+
+  append_bytes_param (p, param_name, compressed_bytes, "application/gzip");
+
+  g_object_unref (compressor);
+  g_bytes_unref (compressed_bytes);
+}
+
+static void
+append_memory_texture (Printer    *p,
+                       GdkTexture *texture)
+{
+  const GdkMemoryLayout *layout;
+  gsize i;
+
+  layout = gdk_memory_texture_get_layout (GDK_MEMORY_TEXTURE (texture));
+
+  g_string_append_printf (p->str, "memory {\n");
+  p->indentation_level ++;
+
+  append_memory_format_param (p, "format", layout->format);
+  append_unsigned_param (p, "width", layout->width);
+  append_unsigned_param (p, "height", layout->height);
+
+  if (gdk_memory_format_get_n_planes (layout->format) > 0 ||
+      layout->planes[0].offset != 0)
+    {
+      _indent (p);
+      g_string_append (p->str, "offset: ");
+      for (i = 0; i < gdk_memory_format_get_n_planes (layout->format); i++)
+        {
+          if (i > 0)
+            g_string_append_printf (p->str, ", ");
+          g_string_append_printf (p->str, "%zu", layout->planes[i].offset);
+        }
+      g_string_append (p->str, ";\n");
+    }
+  _indent (p);
+  g_string_append (p->str, "stride: ");
+  for (i = 0; i < gdk_memory_format_get_n_planes (layout->format); i++)
+    {
+      if (i > 0)
+        g_string_append_printf (p->str, ", ");
+      g_string_append_printf (p->str, "%zu", layout->planes[i].stride);
+    }
+  g_string_append (p->str, ";\n");
+
+  append_color_state_param (p, "color-state", gdk_texture_get_color_state (texture), GDK_COLOR_STATE_SRGB);
+  append_compressed_bytes_param (p, "data", gdk_memory_texture_get_bytes (GDK_MEMORY_TEXTURE (texture)));
+
+  p->indentation_level --;
+  _indent (p);
+  g_string_append_printf (p->str, "}\n");
+}
+
+static void
+append_dmabuf_texture (Printer    *p,
+                       GdkTexture *texture)
+{
+  GdkMemoryLayout layout;
+  GBytes *bytes;
+  gsize i, n_planes;
+  char fourcc_str[5];
+  GdkColorState *default_color_state;
+  const GdkDmabuf *dmabuf;
+
+  dmabuf = gdk_dmabuf_texture_get_dmabuf (GDK_DMABUF_TEXTURE (texture));
+
+  gdk_memory_layout_init (&layout,
+                          gdk_texture_get_format (texture),
+                          gdk_texture_get_width (texture),
+                          gdk_texture_get_height (texture),
+                          1);
+
+  bytes = gdk_texture_download_bytes (texture, &layout);
+
+  n_planes = gdk_memory_format_get_n_planes (layout.format);
+  default_color_state = GDK_COLOR_STATE_SRGB;
+
+  g_string_append_printf (p->str, "dmabuf {\n");
+  p->indentation_level ++;
+
+  if (dmabuf->fourcc == gdk_memory_format_get_dmabuf_rgb_fourcc (layout.format))
+    default_color_state = GDK_COLOR_STATE_SRGB;
+  else if (dmabuf->fourcc == gdk_memory_format_get_dmabuf_yuv_fourcc (layout.format))
+    default_color_state = GDK_COLOR_STATE_YUV;
+  else
+    {
+      g_assert_not_reached ();
+    }
+
+  fourcc_str[0] = dmabuf->fourcc >> 0;
+  fourcc_str[1] = dmabuf->fourcc >> 8;
+  fourcc_str[2] = dmabuf->fourcc >> 16;
+  fourcc_str[3] = dmabuf->fourcc >> 24;
+  fourcc_str[4] = 0;
+  if (g_ascii_isalnum (fourcc_str[0]) &&
+      g_ascii_isalnum (fourcc_str[1]) &&
+      g_ascii_isalnum (fourcc_str[2]) &&
+      g_ascii_isalnum (fourcc_str[3]))
+    {
+      append_string_param (p, "fourcc", fourcc_str);
+    }
+  else
+    {
+      append_unsigned_param (p, "fourcc", dmabuf->fourcc);
+    }
+  if (dmabuf->modifier != DRM_FORMAT_MOD_LINEAR)
+    {
+      _indent (p);
+      g_string_append_printf (p->str, "/* modifier: %llu (0x%0llX) */\n",
+                              (unsigned long long) dmabuf->modifier, (unsigned long long) dmabuf->modifier);
+    }
+  append_unsigned_param (p, "width", layout.width);
+  append_unsigned_param (p, "height", layout.height);
+  if (gdk_memory_format_alpha (gdk_texture_get_format (texture)) == GDK_MEMORY_ALPHA_STRAIGHT)
+    append_boolean_param (p, "premultiplied", FALSE);
+
+  if (n_planes > 0 || layout.planes[0].offset != 0)
+    {
+      _indent (p);
+      g_string_append (p->str, "offset: ");
+      for (i = 0; i < n_planes; i++)
+        {
+          if (i > 0)
+            g_string_append_printf (p->str, ", ");
+          g_string_append_printf (p->str, "%zu", layout.planes[i].offset);
+        }
+      g_string_append (p->str, ";\n");
+    }
+  for (i = 0; i < n_planes; i++)
+    {
+      _indent (p);
+      g_string_append (p->str, "stride: ");
+      for (i = 0; i < n_planes; i++)
+        {
+          if (i > 0)
+            g_string_append_printf (p->str, ", ");
+          g_string_append_printf (p->str, "%zu", layout.planes[i].stride);
+        }
+      g_string_append (p->str, ";\n");
+    }
+
+  append_color_state_param (p, "color-state", gdk_texture_get_color_state (texture), default_color_state);
+  append_compressed_bytes_param (p, "data", bytes);
+
+  p->indentation_level --;
+  _indent (p);
+  g_string_append_printf (p->str, "}\n");
+
+  g_bytes_unref (bytes);
+}
+
+#ifdef GDK_WINDOWING_WIN32
+static void
+append_d3d12_texture (Printer    *p,
+                      GdkTexture *texture)
+{
+  GdkMemoryLayout layout;
+  GBytes *bytes;
+  D3D12_RESOURCE_DESC desc;
+
+  gdk_memory_layout_init (&layout,
+                          gdk_texture_get_format (texture),
+                          gdk_texture_get_width (texture),
+                          gdk_texture_get_height (texture),
+                          gdk_memory_format_alignment (gdk_texture_get_format (texture)));
+
+  bytes = gdk_texture_download_bytes (texture, &layout);
+
+  g_string_append_printf (p->str, "d3d12 {\n");
+  p->indentation_level ++;
+
+  ID3D12Resource_GetDesc (gdk_d3d12_texture_get_resource (GDK_D3D12_TEXTURE (texture)), &desc);
+  append_unsigned_param (p, "format", desc.Format);
+  append_unsigned_param (p, "width", layout.width);
+  append_unsigned_param (p, "height", layout.height);
+  if (gdk_memory_format_alpha (gdk_texture_get_format (texture)) == GDK_MEMORY_ALPHA_STRAIGHT)
+    append_boolean_param (p, "premultiplied", FALSE);
+
+  append_color_state_param (p, "color-state", gdk_texture_get_color_state (texture), GDK_COLOR_STATE_SRGB);
+  append_compressed_bytes_param (p, "data", bytes);
+
+  p->indentation_level --;
+  _indent (p);
+  g_string_append_printf (p->str, "}\n");
+
+  g_bytes_unref (bytes);
+}
+#endif
+
+static void
 append_texture_param (Printer    *p,
                       const char *param_name,
                       GdkTexture *texture)
@@ -4086,29 +5051,46 @@ append_texture_param (Printer    *p,
       g_hash_table_insert (p->named_textures, texture, new_name);
     }
 
-  switch (gdk_texture_get_depth (texture))
+  if (GDK_IS_MEMORY_TEXTURE (texture))
     {
-    case GDK_MEMORY_U8:
-    case GDK_MEMORY_U8_SRGB:
-    case GDK_MEMORY_U16:
-      bytes = gdk_texture_save_to_png_bytes (texture);
-      append_bytes_url (p, bytes, "image/png");
-      g_bytes_unref (bytes);
-      g_string_append (p->str, ";\n");
-      break;
+      append_memory_texture (p, texture);
+    }
+  else if (GDK_IS_DMABUF_TEXTURE (texture))
+    {
+      append_dmabuf_texture (p, texture);
+    }
+#ifdef GDK_WINDOWING_WIN32
+  else if (GDK_IS_D3D12_TEXTURE (texture))
+    {
+      append_d3d12_texture (p, texture);
+    }
+#endif
+  else
+    {
+      switch (gdk_texture_get_depth (texture))
+        {
+        case GDK_MEMORY_U8:
+        case GDK_MEMORY_U8_SRGB:
+        case GDK_MEMORY_U16:
+          bytes = gdk_texture_save_to_png_bytes (texture);
+          append_bytes_url (p, bytes, "image/png");
+          g_bytes_unref (bytes);
+          g_string_append (p->str, ";\n");
+          break;
 
-    case GDK_MEMORY_FLOAT16:
-    case GDK_MEMORY_FLOAT32:
-      bytes = gdk_texture_save_to_tiff_bytes (texture);
-      append_bytes_url (p, bytes, "image/tiff");
-      g_bytes_unref (bytes);
-      g_string_append (p->str, ";\n");
-      break;
+        case GDK_MEMORY_FLOAT16:
+        case GDK_MEMORY_FLOAT32:
+          bytes = gdk_texture_save_to_tiff_bytes (texture);
+          append_bytes_url (p, bytes, "image/tiff");
+          g_bytes_unref (bytes);
+          g_string_append (p->str, ";\n");
+          break;
 
-    case GDK_MEMORY_NONE:
-    case GDK_N_DEPTHS:
-    default:
-      g_assert_not_reached ();
+        case GDK_MEMORY_NONE:
+        case GDK_N_DEPTHS:
+        default:
+          g_assert_not_reached ();
+        }
     }
 }
 
@@ -4350,6 +5332,20 @@ append_hue_interpolation_param (Printer             *p,
 }
 
 static void
+append_component_transfer_param (Printer                    *p,
+                                 const char                 *param_name,
+                                 const GskComponentTransfer *transfer)
+{
+  if (transfer->kind == GSK_COMPONENT_TRANSFER_IDENTITY)
+    return;
+
+  _indent (p);
+  g_string_append_printf (p->str, "%s: ", param_name);
+  gsk_component_transfer_print (transfer, p->str);
+  g_string_append (p->str, ";\n");
+}
+
+static void
 render_node_print (Printer       *p,
                    GskRenderNode *node)
 {
@@ -4398,7 +5394,7 @@ render_node_print (Printer       *p,
       {
         start_node (p, "color", node_name);
         append_rect_param (p, "bounds", &node->bounds);
-        append_color_param (p, "color", gsk_color_node_get_color2 (node));
+        append_color_param (p, "color", gsk_color_node_get_gdk_color (node));
         end_node (p);
       }
       break;
@@ -4418,8 +5414,6 @@ render_node_print (Printer       *p,
     case GSK_REPEATING_LINEAR_GRADIENT_NODE:
     case GSK_LINEAR_GRADIENT_NODE:
       {
-        GdkColorState *interpolation;
-
         if (gsk_render_node_get_node_type (node) == GSK_REPEATING_LINEAR_GRADIENT_NODE)
           start_node (p, "repeating-linear-gradient", node_name);
         else
@@ -4428,13 +5422,14 @@ render_node_print (Printer       *p,
         append_rect_param (p, "bounds", &node->bounds);
         append_point_param (p, "start", gsk_linear_gradient_node_get_start (node));
         append_point_param (p, "end", gsk_linear_gradient_node_get_end (node));
-        append_stops_param (p, "stops", gsk_linear_gradient_node_get_color_stops2 (node),
-                                        gsk_linear_gradient_node_get_n_color_stops (node));
+        append_stops_param (p, "stops", gsk_gradient_node_get_stops (node),
+                                        gsk_gradient_node_get_n_stops (node));
 
-        interpolation = gsk_linear_gradient_node_get_interpolation_color_state (node);
-        append_color_state_param (p, "interpolation", interpolation, GDK_COLOR_STATE_SRGB);
+        append_color_state_param (p, "interpolation",
+                                  gsk_gradient_node_get_interpolation (node),
+                                  GDK_COLOR_STATE_SRGB);
         append_hue_interpolation_param (p, "hue-interpolation",
-                                        gsk_linear_gradient_node_get_hue_interpolation (node),
+                                        gsk_gradient_node_get_hue_interpolation (node),
                                         GSK_HUE_INTERPOLATION_SHORTER);
 
         end_node (p);
@@ -4444,8 +5439,6 @@ render_node_print (Printer       *p,
     case GSK_REPEATING_RADIAL_GRADIENT_NODE:
     case GSK_RADIAL_GRADIENT_NODE:
       {
-        GdkColorState *interpolation;
-
         if (gsk_render_node_get_node_type (node) == GSK_REPEATING_RADIAL_GRADIENT_NODE)
           start_node (p, "repeating-radial-gradient", node_name);
         else
@@ -4458,13 +5451,14 @@ render_node_print (Printer       *p,
         append_float_param (p, "start", gsk_radial_gradient_node_get_start (node), 0.0f);
         append_float_param (p, "end", gsk_radial_gradient_node_get_end (node), 1.0f);
 
-        append_stops_param (p, "stops", gsk_radial_gradient_node_get_color_stops2 (node),
-                                        gsk_radial_gradient_node_get_n_color_stops (node));
+        append_stops_param (p, "stops", gsk_gradient_node_get_stops (node),
+                                        gsk_gradient_node_get_n_stops (node));
 
-        interpolation = gsk_radial_gradient_node_get_interpolation_color_state (node);
-        append_color_state_param (p, "interpolation", interpolation, GDK_COLOR_STATE_SRGB);
+        append_color_state_param (p, "interpolation",
+                                  gsk_gradient_node_get_interpolation (node),
+                                  GDK_COLOR_STATE_SRGB);
         append_hue_interpolation_param (p, "hue-interpolation",
-                                        gsk_radial_gradient_node_get_hue_interpolation (node),
+                                        gsk_gradient_node_get_hue_interpolation (node),
                                         GSK_HUE_INTERPOLATION_SHORTER);
 
         end_node (p);
@@ -4473,21 +5467,20 @@ render_node_print (Printer       *p,
 
     case GSK_CONIC_GRADIENT_NODE:
       {
-        GdkColorState *interpolation;
-
         start_node (p, "conic-gradient", node_name);
 
         append_rect_param (p, "bounds", &node->bounds);
         append_point_param (p, "center", gsk_conic_gradient_node_get_center (node));
         append_float_param (p, "rotation", gsk_conic_gradient_node_get_rotation (node), 0.0f);
 
-        append_stops_param (p, "stops", gsk_conic_gradient_node_get_color_stops2 (node),
-                                        gsk_conic_gradient_node_get_n_color_stops (node));
+        append_stops_param (p, "stops", gsk_gradient_node_get_stops (node),
+                                        gsk_gradient_node_get_n_stops (node));
 
-        interpolation = gsk_conic_gradient_node_get_interpolation_color_state (node);
-        append_color_state_param (p, "interpolation", interpolation, GDK_COLOR_STATE_SRGB);
+        append_color_state_param (p, "interpolation",
+                                  gsk_gradient_node_get_interpolation (node),
+                                  GDK_COLOR_STATE_SRGB);
         append_hue_interpolation_param (p, "hue-interpolation",
-                                        gsk_conic_gradient_node_get_hue_interpolation (node),
+                                        gsk_gradient_node_get_hue_interpolation (node),
                                         GSK_HUE_INTERPOLATION_SHORTER);
 
         end_node (p);
@@ -4510,8 +5503,8 @@ render_node_print (Printer       *p,
         start_node (p, "outset-shadow", node_name);
 
         append_float_param (p, "blur", gsk_outset_shadow_node_get_blur_radius (node), 0.0f);
-        if (!gdk_color_equal (gsk_outset_shadow_node_get_color2 (node), &GDK_COLOR_SRGB (0, 0, 0, 1)))
-          append_color_param (p, "color", gsk_outset_shadow_node_get_color2 (node));
+        if (!gdk_color_equal (gsk_outset_shadow_node_get_gdk_color (node), &GDK_COLOR_SRGB (0, 0, 0, 1)))
+          append_color_param (p, "color", gsk_outset_shadow_node_get_gdk_color (node));
         append_float_param (p, "dx", gsk_outset_shadow_node_get_dx (node), 1.0f);
         append_float_param (p, "dy", gsk_outset_shadow_node_get_dy (node), 1.0f);
         append_rounded_rect_param (p, "outline", gsk_outset_shadow_node_get_outline (node));
@@ -4609,7 +5602,7 @@ render_node_print (Printer       *p,
 
     case GSK_BORDER_NODE:
       {
-        const GdkColor *colors = gsk_border_node_get_colors2 (node);
+        const GdkColor *colors = gsk_border_node_get_gdk_colors (node);
         const float *widths = gsk_border_node_get_widths (node);
         guint i, n;
         start_node (p, "border", node_name);
@@ -4679,7 +5672,7 @@ render_node_print (Printer       *p,
         g_string_append (p->str, "shadows: ");
         for (i = 0; i < n_shadows; i ++)
           {
-            const GskShadow2 *s = gsk_shadow_node_get_shadow2 (node, i);
+            const GskShadowEntry *s = gsk_shadow_node_get_shadow_entry (node, i);
 
             if (i > 0)
               g_string_append (p->str, ", ");
@@ -4709,8 +5702,8 @@ render_node_print (Printer       *p,
         start_node (p, "inset-shadow", node_name);
 
         append_float_param (p, "blur", gsk_inset_shadow_node_get_blur_radius (node), 0.0f);
-        if (!gdk_color_equal (gsk_inset_shadow_node_get_color2 (node), &GDK_COLOR_SRGB (0, 0, 0, 1)))
-          append_color_param (p, "color", gsk_inset_shadow_node_get_color2 (node));
+        if (!gdk_color_equal (gsk_inset_shadow_node_get_gdk_color (node), &GDK_COLOR_SRGB (0, 0, 0, 1)))
+          append_color_param (p, "color", gsk_inset_shadow_node_get_gdk_color (node));
         append_float_param (p, "dx", gsk_inset_shadow_node_get_dx (node), 1.0f);
         append_float_param (p, "dy", gsk_inset_shadow_node_get_dy (node), 1.0f);
         append_rounded_rect_param (p, "outline", gsk_inset_shadow_node_get_outline (node));
@@ -4759,7 +5752,7 @@ render_node_print (Printer       *p,
     case GSK_TEXT_NODE:
       {
         const graphene_point_t *offset = gsk_text_node_get_offset (node);
-        const GdkColor *color = gsk_text_node_get_color2 (node);
+        const GdkColor *color = gsk_text_node_get_gdk_color (node);
 
         start_node (p, "text", node_name);
 
@@ -5015,7 +6008,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 #ifdef CAIRO_HAS_SCRIPT_SURFACE
             if (cairo_surface_get_type (surface) == CAIRO_SURFACE_TYPE_RECORDING)
               {
-                static const cairo_user_data_key_t cairo_is_stupid_key;
+                static const cairo_user_data_key_t cairo_is_stupid_key = { 0, };
                 cairo_device_t *script;
 
                 array = g_byte_array_new ();
@@ -5026,7 +6019,6 @@ G_GNUC_END_IGNORE_DEPRECATIONS
                     g_byte_array_ref (array); /* Cairo... see below */
                     bytes = g_byte_array_free_to_bytes (array);
                     append_bytes_param (p, "script", bytes, NULL);
-                    g_string_append (p->str, "\");\n");
                     g_bytes_unref (bytes);
                   }
 
@@ -5056,6 +6048,20 @@ G_GNUC_END_IGNORE_DEPRECATIONS
       }
       break;
 
+    case GSK_COMPONENT_TRANSFER_NODE:
+      {
+        start_node (p, "component-transfer", node_name);
+
+        append_node_param (p, "child", gsk_component_transfer_node_get_child (node));
+        append_component_transfer_param (p, "red", gsk_component_transfer_node_get_transfer (node, 0));
+        append_component_transfer_param (p, "green", gsk_component_transfer_node_get_transfer (node, 1));
+        append_component_transfer_param (p, "blue", gsk_component_transfer_node_get_transfer (node, 2));
+        append_component_transfer_param (p, "alpha", gsk_component_transfer_node_get_transfer (node, 3));
+
+        end_node (p);
+      }
+      break;
+
     default:
       g_error ("Unhandled node: %s", g_type_name_from_instance ((GTypeInstance *) node));
       break;
@@ -5063,21 +6069,19 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 }
 
 static void
-serialize_color_state (Printer       *p,
+serialize_color_state (GString       *str,
                        GdkColorState *color_state,
                        const char    *name)
 {
   const GdkCicp *cicp = gdk_color_state_get_cicp (color_state);
 
-  g_string_append_printf (p->str, "@cicp \"%s\" {\n", name);
-  p->indentation_level ++;
-  append_unsigned_param (p, "primaries", cicp->color_primaries);
-  append_unsigned_param (p, "transfer", cicp->transfer_function);
-  append_unsigned_param (p, "matrix", cicp->matrix_coefficients);
+  g_string_append_printf (str, "@cicp \"%s\" {\n", name);
+  g_string_append_printf (str, "  primaries: %u;\n", cicp->color_primaries);
+  g_string_append_printf (str, "  transfer: %u;\n", cicp->transfer_function);
+  g_string_append_printf (str, "  matrix: %u;\n", cicp->matrix_coefficients);
   if (cicp->range != GDK_CICP_RANGE_FULL)
-    append_enum_param (p, "range", GDK_TYPE_CICP_RANGE, cicp->range);
-  p->indentation_level --;
-  g_string_append (p->str, "}\n");
+    g_string_append_printf (str, "  range: %s;\n", enum_to_nick (GDK_TYPE_CICP_RANGE, cicp->range));
+  g_string_append (str, "}\n");
 }
 
 /**
@@ -5100,16 +6104,12 @@ GBytes *
 gsk_render_node_serialize (GskRenderNode *node)
 {
   Printer p;
-  GBytes *res;
   GHashTableIter iter;
   GdkColorState *cs;
   const char *name;
+  GString *str;
 
   printer_init (&p, node);
-
-  g_hash_table_iter_init (&iter, p.named_color_states);
-  while (g_hash_table_iter_next (&iter, (gpointer *)&cs, (gpointer *)&name))
-    serialize_color_state (&p, cs, name);
 
   if (gsk_render_node_get_node_type (node) == GSK_CONTAINER_NODE)
     {
@@ -5127,9 +6127,15 @@ gsk_render_node_serialize (GskRenderNode *node)
       render_node_print (&p, node);
     }
 
-  res = g_string_free_to_bytes (g_steal_pointer (&p.str));
+  str = g_string_new (NULL);
+
+  g_hash_table_iter_init (&iter, p.named_color_states);
+  while (g_hash_table_iter_next (&iter, (gpointer *)&cs, (gpointer *)&name))
+    serialize_color_state (str, cs, name);
+
+  g_string_append_len (str, p.str->str, p.str->len);
 
   printer_clear (&p);
 
-  return res;
+  return g_string_free_to_bytes (str);
 }

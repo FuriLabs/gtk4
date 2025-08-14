@@ -1,0 +1,41 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Thu, 14 Aug 2025 10:45:48 +0200
+Subject: print: Fix finding cpdb headers
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/8853
+---
+ gtk/print/backends/gtkprintbackendcpdb.c | 2 +-
+ gtk/print/backends/gtkprintercpdb.c      | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gtk/print/backends/gtkprintbackendcpdb.c b/gtk/print/backends/gtkprintbackendcpdb.c
+index 0841b9b..8418fff 100644
+--- a/gtk/print/backends/gtkprintbackendcpdb.c
++++ b/gtk/print/backends/gtkprintbackendcpdb.c
+@@ -25,12 +25,12 @@
+ #include <gtk/gtkmodulesprivate.h>
+ #include "gtkprintbackendcpdb.h"
+ #include "gtkprintbackendutils.h"
++#include "gtkprintercpdb.h"
+ 
+ #include <cairo.h>
+ #include <cairo-pdf.h>
+ 
+ #include <glib/gi18n-lib.h>
+-#include <gtkprintercpdb.h>
+ 
+ #define GTK_PRINT_BACKEND_CPDB_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_PRINT_BACKEND_CPDB, GtkPrintBackendCpdbClass))
+ #define GTK_IS_PRINT_BACKEND_CPDB_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_PRINT_BACKEND_CPDB))
+diff --git a/gtk/print/backends/gtkprintercpdb.c b/gtk/print/backends/gtkprintercpdb.c
+index 3a98dd7..3913935 100644
+--- a/gtk/print/backends/gtkprintercpdb.c
++++ b/gtk/print/backends/gtkprintercpdb.c
+@@ -16,7 +16,7 @@
+  */
+  
+ 
+-#include <gtkprintercpdb.h>
++#include "gtkprintercpdb.h"
+ 
+ enum {
+   PROP_0,

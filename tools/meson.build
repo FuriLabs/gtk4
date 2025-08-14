@@ -43,6 +43,7 @@ gtk_tools = [
   ['gtk4-rendernode-tool', ['gtk-rendernode-tool.c',
                         'gtk-rendernode-tool-benchmark.c',
                         'gtk-rendernode-tool-compare.c',
+                        'gtk-rendernode-tool-convert.c',
                         'gtk-rendernode-tool-extract.c',
                         'gtk-rendernode-tool-info.c',
                         'gtk-rendernode-tool-render.c',
@@ -91,3 +92,15 @@ install_data([
   ],
   install_dir: gtk_datadir / 'gettext/its',
 )
+
+if bash.found()
+  install_data([
+      'completions/gtk4-builder-tool',
+      'completions/gtk4-image-tool',
+      'completions/gtk4-path-tool',
+      'completions/gtk4-rendernode-tool',
+    ],
+    install_dir: bash_comp_inst_dir,
+    install_tag: 'bin',
+  )
+endif

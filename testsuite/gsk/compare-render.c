@@ -161,7 +161,10 @@ deserialize_error_func (const GskParseLocation *start,
       g_string_append_printf (string, "%zu", end->line_chars + 1);
     }
 
-  g_warning ("Error at %s: %s", string->str, error->message);
+  if (error->domain == GTK_CSS_PARSER_WARNING)
+    g_test_message ("Warning at %s: %s", string->str, error->message);
+  else
+    g_warning ("Error at %s: %s", string->str, error->message);
 
   g_string_free (string, TRUE);
 }
@@ -197,6 +200,26 @@ make_random_clip (cairo_rectangle_int_t *int_clip,
                   int                    width,
                   int                    height)
 {
+  const char *clip = g_getenv ("OVERRIDE_CLIP");
+
+  if (clip)
+    {
+      char **str = g_strsplit (clip, ",", -1);
+
+      if (g_strv_length (str) == 4)
+        {
+          int_clip->width = CLAMP (atoi (str[2]), 1, width);
+          int_clip->height = CLAMP (atoi (str[3]), 1, height);
+          int_clip->x = CLAMP (atoi (str[0]), 0, width - int_clip->width);
+          int_clip->y = CLAMP (atoi (str[1]), 0, height - int_clip->height);
+
+          g_strfreev (str);
+          return;
+        }
+
+      g_strfreev (str);
+    }
+
   int_clip->width = g_test_rand_int_range (1, width);
   int_clip->height = g_test_rand_int_range (1, height);
 
@@ -477,6 +500,8 @@ clip_setup (GskRenderNode *node)
   else
     make_random_clip (result, ceil (bounds.size.width), ceil (bounds.size.height));
 
+  g_print ("Node bounds %g %g %g %g\n",
+           bounds.origin.x, bounds.origin.y, bounds.size.width, bounds.size.height);
   g_print ("Random clip rectangle %d %d %d %d\n",
            result->x, result->y, result->width, result->height);
 
@@ -672,19 +697,14 @@ run_single_test (const TestSetup *setup,
   if (setup->create_test)
     {
       test = setup->create_test (org_test, test_data);
-      save_node (test, file_name, setup->name, ".node");
     }
   else
     test = gsk_render_node_ref (org_test);
 
   rendered = gsk_renderer_render_texture (renderer, test, render_bounds);
-  save_image (rendered, file_name, setup->name, ".out.png");
 
   if (setup->create_reference)
-    {
-      reference = setup->create_reference (renderer, org_reference, test_data);
-      save_image (reference, file_name, setup->name, ".ref.png");
-    }
+    reference = setup->create_reference (renderer, org_reference, test_data);
   else
     reference = g_object_ref (org_reference);
 
@@ -694,8 +714,16 @@ run_single_test (const TestSetup *setup,
   diff = reftest_compare_textures (reference, rendered);
   if (diff)
     {
-      save_image (diff, file_name, setup->name, ".diff.png");
       g_test_fail ();
+    }
+
+  if (diff || g_test_verbose ())
+    {
+      save_node (test, file_name, setup->name, ".node");
+      save_image (reference, file_name, setup->name, ".ref.png");
+      save_image (rendered, file_name, setup->name, ".out.png");
+      if (diff)
+        save_image (diff, file_name, setup->name, ".diff.png");
     }
 
   g_clear_object (&diff);

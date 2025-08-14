@@ -1,10 +1,12 @@
 gsk_public_sources = files([
   'gskcairorenderer.c',
+  'gskcomponenttransfer.c',
   'gskdiff.c',
   'gskglshader.c',
   'gskoffload.c',
   'gskpath.c',
   'gskpathbuilder.c',
+  'gskpathintersect.c',
   'gskpathmeasure.c',
   'gskpathparser.c',
   'gskpathpoint.c',
@@ -23,6 +25,7 @@ gsk_private_sources = files([
   'gskcairoblur.c',
   'gskcontour.c',
   'gskcurve.c',
+  'gskcurveintersect.c',
   'gskdebug.c',
   'gskprivate.c',
   'gl/fp16.c',
@@ -38,10 +41,14 @@ gsk_private_sources = files([
   'gpu/gskgpuboxshadowop.c',
   'gpu/gskgpubuffer.c',
   'gpu/gskgpucache.c',
+  'gpu/gskgpucachedfill.c',
+  'gpu/gskgpucachedglyph.c',
+  'gpu/gskgpucachedstroke.c',
   'gpu/gskgpuclearop.c',
   'gpu/gskgpuclip.c',
   'gpu/gskgpucolorizeop.c',
   'gpu/gskgpucolormatrixop.c',
+  'gpu/gskgpucomponenttransferop.c',
   'gpu/gskgpucolorop.c',
   'gpu/gskgpuconicgradientop.c',
   'gpu/gskgpuconvertop.c',
@@ -66,6 +73,7 @@ gsk_private_sources = files([
   'gpu/gskgpushaderop.c',
   'gpu/gskgpuscissorop.c',
   'gpu/gskgputextureop.c',
+  'gpu/gskgpuutils.c',
   'gpu/gskgpuuploadop.c',
 ])
 
@@ -75,6 +83,7 @@ gsk_f16c_sources = files([
 
 gsk_public_headers = files([
   'gskcairorenderer.h',
+  'gskcomponenttransfer.h',
   'gskenums.h',
   'gskglshader.h',
   'gskpath.h',

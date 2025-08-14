@@ -21,7 +21,7 @@
 
 #include "gdkcontentdeserializer.h"
 
-#include "gdkcontentformats.h"
+#include "gdkcontentformatsprivate.h"
 #include "filetransferportalprivate.h"
 #include "gdktexture.h"
 #include "gdkrgbaprivate.h"
@@ -59,8 +59,6 @@ struct _Deserializer
 };
 
 GQueue deserializers = G_QUEUE_INIT;
-
-static void init (void);
 
 #define GDK_CONTENT_DESERIALIZER_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_CONTENT_DESERIALIZER, GdkContentDeserializerClass))
 #define GDK_IS_CONTENT_DESERIALIZER_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_CONTENT_DESERIALIZER))
@@ -396,6 +394,10 @@ gdk_content_deserializer_return_error (GdkContentDeserializer *deserializer,
  * @notify: destroy notify for @data
  *
  * Registers a function to deserialize object of a given type.
+ *
+ * Since 4.20, when looking up a deserializer to use, GTK will
+ * use the last registered deserializer for a given mime type,
+ * so applications can override the built-in deserializers.
  */
 void
 gdk_content_register_deserializer (const char                *mime_type,
@@ -428,11 +430,9 @@ lookup_deserializer (const char *mime_type,
 
   g_return_val_if_fail (mime_type != NULL, NULL);
 
-  init ();
-
   mime_type = g_intern_string (mime_type);
 
-  for (l = g_queue_peek_head_link (&deserializers); l; l = l->next)
+  for (l = g_queue_peek_tail_link (&deserializers); l; l = l->prev)
     {
       Deserializer *deserializer = l->data;
 
@@ -466,8 +466,6 @@ gdk_content_formats_union_deserialize_gtypes (GdkContentFormats *formats)
 
   if (!gdk_content_formats_is_empty (formats))
     {
-      init ();
-
       for (l = g_queue_peek_head_link (&deserializers); l; l = l->next)
         {
           Deserializer *deserializer = l->data;
@@ -504,8 +502,6 @@ gdk_content_formats_union_deserialize_mime_types (GdkContentFormats *formats)
 
   if (!gdk_content_formats_is_empty (formats))
     {
-      init ();
-
       for (l = g_queue_peek_head_link (&deserializers); l; l = l->next)
         {
           Deserializer *deserializer = l->data;
@@ -640,7 +636,9 @@ pixbuf_deserializer_finish (GObject      *source,
   else if (G_VALUE_HOLDS (value, GDK_TYPE_TEXTURE))
     {
       GdkTexture *texture;
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       texture = gdk_texture_new_for_pixbuf (pixbuf);
+G_GNUC_END_IGNORE_DEPRECATIONS
       g_object_unref (pixbuf);
       g_value_take_object (value, texture);
     }
@@ -906,8 +904,8 @@ color_deserializer (GdkContentDeserializer *deserializer)
   g_object_unref (output);
 }
 
-static void
-init (void)
+void
+gdk_content_init_deserializers (void)
 {
   static gboolean initialized = FALSE;
   GSList *formats, *f;
@@ -917,6 +915,8 @@ init (void)
     return;
 
   initialized = TRUE;
+
+  /* Textures */
 
   gdk_content_register_deserializer ("image/png",
                                      GDK_TYPE_TEXTURE,
@@ -968,9 +968,7 @@ init (void)
 
   g_slist_free (formats);
 
-#if defined(G_OS_UNIX) && !defined(__APPLE__)
-  file_transfer_portal_register ();
-#endif
+  /* Files */
 
   gdk_content_register_deserializer ("text/uri-list",
                                      GDK_TYPE_FILE_LIST,
@@ -984,11 +982,12 @@ init (void)
                                      NULL,
                                      NULL);
 
-  gdk_content_register_deserializer ("text/plain;charset=utf-8",
-                                     G_TYPE_STRING,
-                                     string_deserializer,
-                                     (gpointer) "utf-8",
-                                     NULL);
+#if defined(G_OS_UNIX) && !defined(__APPLE__)
+  file_transfer_portal_register ();
+#endif
+
+  /* Strings */
+
   if (!g_get_charset (&charset))
     {
       char *mime = g_strdup_printf ("text/plain;charset=%s", charset);
@@ -1006,10 +1005,17 @@ init (void)
                                      (gpointer) "ASCII",
                                      NULL);
 
+  gdk_content_register_deserializer ("text/plain;charset=utf-8",
+                                     G_TYPE_STRING,
+                                     string_deserializer,
+                                     (gpointer) "utf-8",
+                                     NULL);
+
+  /* Colors */
+
   gdk_content_register_deserializer ("application/x-color",
                                      GDK_TYPE_RGBA,
                                      color_deserializer,
                                      NULL,
                                      NULL);
 }
-

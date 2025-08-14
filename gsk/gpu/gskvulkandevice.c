@@ -27,7 +27,6 @@ struct _GskVulkanDevice
   GskVulkanAllocator *external_allocator;
   GdkVulkanFeatures features;
 
-  GHashTable *ycbcr_cache;
   GHashTable *render_pass_cache;
   GHashTable *pipeline_cache;
 
@@ -151,7 +150,7 @@ gsk_vulkan_device_create_vk_image_set_layout (GskVulkanDevice *self)
                                                      {
                                                          .binding = 0,
                                                          .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                                                         .descriptorCount = 1,
+                                                         .descriptorCount = 3,
                                                          .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
                                                      }
                                                  },
@@ -226,19 +225,19 @@ gsk_vulkan_device_create_atlas_image (GskGpuDevice *device,
 }
 
 static GskGpuImage *
-gsk_vulkan_device_create_upload_image (GskGpuDevice    *device,
-                                       gboolean         with_mipmap,
-                                       GdkMemoryFormat  format,
-                                       gboolean         try_srgb,
-                                       gsize            width,
-                                       gsize            height)
+gsk_vulkan_device_create_upload_image (GskGpuDevice     *device,
+                                       gboolean          with_mipmap,
+                                       GdkMemoryFormat   format,
+                                       GskGpuConversion  conv,
+                                       gsize             width,
+                                       gsize             height)
 {
   GskVulkanDevice *self = GSK_VULKAN_DEVICE (device);
 
   return gsk_vulkan_image_new_for_upload (self,
                                           with_mipmap,
                                           format,
-                                          try_srgb,
+                                          conv,
                                           width,
                                           height);
 }
@@ -292,9 +291,6 @@ gsk_vulkan_device_finalize (GObject *object)
   vk_device = gsk_vulkan_device_get_vk_device (self);
 
   g_object_steal_data (G_OBJECT (display), "-gsk-vulkan-device");
-
-  g_assert (g_hash_table_size (self->ycbcr_cache) == 0);
-  g_hash_table_unref (self->ycbcr_cache);
 
   g_hash_table_iter_init (&iter, self->pipeline_cache);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -364,7 +360,6 @@ gsk_vulkan_device_class_init (GskVulkanDeviceClass *klass)
 static void
 gsk_vulkan_device_init (GskVulkanDevice *self)
 {
-  self->ycbcr_cache = g_hash_table_new (g_direct_hash, g_direct_equal);
   self->render_pass_cache = g_hash_table_new (render_pass_cache_key_hash, render_pass_cache_key_equal);
   self->pipeline_cache = g_hash_table_new (pipeline_cache_key_hash, pipeline_cache_key_equal);
 
@@ -684,28 +679,6 @@ gsk_vulkan_device_get_vk_sampler (GskVulkanDevice     *self,
     }
 
   return self->vk_samplers[sampler];
-}
-
-GskVulkanYcbcr *
-gsk_vulkan_device_get_ycbcr (GskVulkanDevice *self,
-                             VkFormat         vk_format)
-{
-  GskVulkanYcbcr *ycbcr;
-
-  ycbcr = g_hash_table_lookup (self->ycbcr_cache, GSIZE_TO_POINTER(vk_format));
-  if (ycbcr)
-    return ycbcr;
-
-  ycbcr = gsk_vulkan_ycbcr_new (self, vk_format);
-  g_hash_table_insert (self->ycbcr_cache, GSIZE_TO_POINTER(vk_format), ycbcr);
-  return ycbcr;
-}
-
-void
-gsk_vulkan_device_remove_ycbcr (GskVulkanDevice *self,
-                                VkFormat         vk_format)
-{
-  g_hash_table_remove (self->ycbcr_cache, GSIZE_TO_POINTER(vk_format));
 }
 
 VkRenderPass
@@ -1032,16 +1005,20 @@ gsk_vulkan_device_get_vk_pipeline (GskVulkanDevice           *self,
   return vk_pipeline;
 }
 
-static GskVulkanAllocator *
+GskVulkanAllocator *
 gsk_vulkan_device_get_allocator (GskVulkanDevice    *self,
-                                 gsize               index,
-                                 const VkMemoryType *type)
+                                 gsize               index)
 {
   if (self->allocators[index] == NULL)
     {
+      VkPhysicalDeviceMemoryProperties properties;
+
+      vkGetPhysicalDeviceMemoryProperties (gsk_vulkan_device_get_vk_physical_device (self),
+                                           &properties);
+
       self->allocators[index] = gsk_vulkan_direct_allocator_new (gsk_vulkan_device_get_vk_device (self),
                                                                  index,
-                                                                 type);
+                                                                 &properties.memoryTypes[index]);
       self->allocators[index] = gsk_vulkan_buddy_allocator_new (self->allocators[index],
                                                                 1024 * 1024);
       //allocators[index] = gsk_vulkan_stats_allocator_new (allocators[index]);
@@ -1052,11 +1029,11 @@ gsk_vulkan_device_get_allocator (GskVulkanDevice    *self,
 
 /* following code found in
  * https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceMemoryProperties.html */
-GskVulkanAllocator *
-gsk_vulkan_device_find_allocator (GskVulkanDevice       *self,
-                                  uint32_t               allowed_types,
-                                  VkMemoryPropertyFlags  required_flags,
-                                  VkMemoryPropertyFlags  desired_flags)
+ gsize
+ gsk_vulkan_device_find_allocator (GskVulkanDevice        *self,
+                                   uint32_t                allowed_types,
+                                   VkMemoryPropertyFlags   required_flags,
+                                   VkMemoryPropertyFlags   desired_flags)
 {
   VkPhysicalDeviceMemoryProperties properties;
   uint32_t i, found;
@@ -1084,7 +1061,7 @@ gsk_vulkan_device_find_allocator (GskVulkanDevice       *self,
 
   g_assert (found < properties.memoryTypeCount);
 
-  return gsk_vulkan_allocator_ref (gsk_vulkan_device_get_allocator (self, found, &properties.memoryTypes[found]));
+  return found;
 }
 
 GskVulkanAllocator *

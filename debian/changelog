@@ -1,3 +1,18 @@
+gtk4 (4.19.3+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+  * d/p/insttests: Rebase and temporarily drop tool tests, needs rework
+  * d/p/workarounds: Drop softpipe patch, it doesn't apply and should be obsolete
+  * d/p/gstplay{,er}: Rework for porting from gst-player to gst-play
+  * d/p: Rebase all other patches
+  * d/p: Add proposed patch to fix compiling with cpdb
+  * d/control, d/install: Adapt to modules being statically linked in libgtk
+  * d/install: Add new bash completions
+  * d/libgtk-4-1.symbols: Add new symbols
+  * d/p/d: Drop GSK renderer patch, use Vulkan by default like upstream
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 14 Aug 2025 16:57:12 +0200
+
 gtk4 (4.18.6+ds-2ubuntu1) questing; urgency=medium
 
   * Merge with Debian. Remaining changes:

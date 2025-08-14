@@ -84,7 +84,8 @@
  * - <kbd>Shift</kbd>+<kbd>F10</kbd> or <kbd>Menu</kbd> opens the context menu.
  * - <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes the last modification.
  * - <kbd>Ctrl</kbd>+<kbd>Y</kbd> or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>
- *   redoes the last undone modification.
+ *    redoes the last undone modification.
+ * - <kbd>Clear</kbd> clears the content.
  *
  * Additionally, the following signals have default keybindings:
  *
@@ -113,6 +114,7 @@
  * - `selection.select-all` selects all of the widgets content.
  * - `text.redo` redoes the last change to the contents.
  * - `text.undo` undoes the last change to the contents.
+ * - `text.clear` clears the content.
  *
  * ## CSS nodes
  *
@@ -664,6 +666,7 @@ static void extend_selection (GtkTextView          *text_view,
 
 static void gtk_text_view_update_clipboard_actions (GtkTextView *text_view);
 static void gtk_text_view_update_emoji_action      (GtkTextView *text_view);
+static void gtk_text_view_update_clear_action      (GtkTextView *text_view);
 
 static void gtk_text_view_activate_clipboard_cut        (GtkWidget  *widget,
                                                          const char *action_name,
@@ -683,6 +686,10 @@ static void gtk_text_view_activate_selection_select_all (GtkWidget  *widget,
 static void gtk_text_view_activate_misc_insert_emoji    (GtkWidget  *widget,
                                                          const char *action_name,
                                                          GVariant   *parameter);
+
+static void gtk_text_view_clear (GtkWidget  *widget,
+                                 const char *action_name,
+                                 GVariant   *parameter);
 
 static void gtk_text_view_real_undo (GtkWidget   *widget,
                                      const char *action_name,
@@ -1649,6 +1656,9 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
   gtk_widget_class_install_action (widget_class, "misc.insert-emoji", NULL,
                                    gtk_text_view_activate_misc_insert_emoji);
 
+  gtk_widget_class_install_action (widget_class, "text.clear", NULL,
+                                   gtk_text_view_clear);
+
   /**
    * GtkTextView|text.undo:
    *
@@ -1681,6 +1691,11 @@ gtk_text_view_class_init (GtkTextViewClass *klass)
   gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_Menu, 0,
                                        "menu.popup",
+                                       NULL);
+
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_Clear, GDK_NO_MODIFIER_MASK,
+                                       "text.clear",
                                        NULL);
 
   /* Moving the insertion point */
@@ -3478,6 +3493,7 @@ gtk_text_view_set_editable (GtkTextView *text_view,
                                       GTK_ACCESSIBLE_PROPERTY_READ_ONLY, !setting,
                                       -1);
       gtk_text_view_update_emoji_action (text_view);
+      gtk_text_view_update_clear_action (text_view);
 
       g_object_notify (G_OBJECT (text_view), "editable");
     }
@@ -4885,6 +4901,12 @@ gtk_text_view_size_allocate (GtkWidget *widget,
 
   text_window_size_allocate (priv->text_window, &text_rect);
 
+  /* Update adjustments */
+  if (!gtk_adjustment_is_animating (priv->hadjustment))
+    gtk_text_view_set_hadjustment_values (text_view);
+  if (!gtk_adjustment_is_animating (priv->vadjustment))
+    gtk_text_view_set_vadjustment_values (text_view);
+
   if (priv->center_child)
     {
       gtk_text_view_child_set_offset (priv->center_child, priv->xoffset, priv->yoffset);
@@ -4919,12 +4941,6 @@ gtk_text_view_size_allocate (GtkWidget *widget,
 
   /* Note that this will do some layout validation */
   gtk_text_view_allocate_children (text_view);
-
-  /* Update adjustments */
-  if (!gtk_adjustment_is_animating (priv->hadjustment))
-    gtk_text_view_set_hadjustment_values (text_view);
-  if (!gtk_adjustment_is_animating (priv->vadjustment))
-    gtk_text_view_set_vadjustment_values (text_view);
 
   /* Optimize display cache size */
   layout = gtk_widget_create_pango_layout (widget, "X");
@@ -5190,7 +5206,7 @@ changed_handler (GtkTextLayout     *layout,
 
       if (new_first_para_top != old_first_para_top)
         {
-          priv->yoffset += new_first_para_top - old_first_para_top;
+          priv->yoffset += new_first_para_top - old_first_para_top + priv->top_margin;
 
           gtk_adjustment_set_value (text_view->priv->vadjustment, priv->yoffset);
         }
@@ -5814,15 +5830,17 @@ gtk_text_view_click_gesture_pressed (GtkGestureClick *gesture,
                                      double           y,
                                      GtkTextView     *text_view)
 {
+  GdkDisplay *display;
   GdkEventSequence *sequence;
   GtkTextViewPrivate *priv;
   GdkEvent *event;
-  gboolean is_touchscreen;
   GdkDevice *device;
+  gboolean is_touchscreen;
   GtkTextIter iter;
   guint button;
 
   priv = text_view->priv;
+  display = gtk_widget_get_display (GTK_WIDGET (text_view));
   sequence = gtk_gesture_single_get_current_sequence (GTK_GESTURE_SINGLE (gesture));
   button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (gesture));
   event = gtk_gesture_get_last_event (GTK_GESTURE (gesture), sequence);
@@ -5832,7 +5850,8 @@ gtk_text_view_click_gesture_pressed (GtkGestureClick *gesture,
   gtk_text_view_reset_blink_time (text_view);
 
   device = gdk_event_get_device ((GdkEvent *) event);
-  is_touchscreen = gdk_device_get_source (device) == GDK_SOURCE_TOUCHSCREEN;
+  is_touchscreen = GTK_DISPLAY_DEBUG_CHECK (display, TOUCHSCREEN) ||
+                   gdk_device_get_source (device) == GDK_SOURCE_TOUCHSCREEN;
 
   if (n_press == 1)
     {
@@ -7748,15 +7767,18 @@ gtk_text_view_drag_gesture_update (GtkGestureDrag *gesture,
                                    GtkTextView    *text_view)
 {
   int start_x, start_y, x, y;
+  GdkDisplay *display;
   GdkEventSequence *sequence;
-  gboolean is_touchscreen;
   GdkEvent *event;
   SelectionData *data;
   GdkDevice *device;
+  gboolean is_touchscreen;
   GtkTextIter cursor;
   GtkTextIter orig_start, orig_end;
   GtkTextIter start, end;
   GtkTextBuffer *buffer;
+
+  display = gtk_widget_get_display (GTK_WIDGET (text_view));
 
   data = g_object_get_qdata (G_OBJECT (gesture), quark_text_selection_data);
   sequence = gtk_gesture_single_get_current_sequence (GTK_GESTURE_SINGLE (gesture));
@@ -7768,7 +7790,8 @@ gtk_text_view_drag_gesture_update (GtkGestureDrag *gesture,
 
   device = gdk_event_get_device (event);
 
-  is_touchscreen = gdk_device_get_source (device) == GDK_SOURCE_TOUCHSCREEN;
+  is_touchscreen = GTK_DISPLAY_DEBUG_CHECK (display, TOUCHSCREEN) ||
+                   gdk_device_get_source (device) == GDK_SOURCE_TOUCHSCREEN;
 
   get_iter_from_gesture (text_view, text_view->priv->drag_gesture,
                          &cursor, NULL, NULL);
@@ -7879,6 +7902,7 @@ gtk_text_view_drag_gesture_end (GtkGestureDrag *gesture,
   int start_x, start_y, x, y;
   GdkEventSequence *sequence;
   GtkTextViewPrivate *priv;
+  GdkDisplay *display;
   GdkEvent *event;
   GdkDevice *device;
   guint32 timestamp = GDK_CURRENT_TIME;
@@ -7909,9 +7933,11 @@ gtk_text_view_drag_gesture_end (GtkGestureDrag *gesture,
   if (!gtk_gesture_handles_sequence (GTK_GESTURE (gesture), sequence))
     return;
 
+  display = gtk_widget_get_display (GTK_WIDGET (text_view));
   event = gtk_gesture_get_last_event (GTK_GESTURE (gesture), sequence);
   device = gdk_event_get_device (event);
-  is_touchscreen = gdk_device_get_source (device) == GDK_SOURCE_TOUCHSCREEN;
+  is_touchscreen = GTK_DISPLAY_DEBUG_CHECK (display, TOUCHSCREEN) ||
+    gdk_device_get_source (device) == GDK_SOURCE_TOUCHSCREEN;
 
   if ((is_touchscreen || clicked_in_selection) &&
       !gtk_drag_check_threshold_double (GTK_WIDGET (text_view), 0, 0, offset_x, offset_y))
@@ -8182,7 +8208,8 @@ gtk_text_view_check_keymap_direction (GtkTextView *text_view)
     new_cursor_dir = new_keyboard_dir;
 
   gtk_text_layout_set_cursor_direction (priv->layout, new_cursor_dir);
-  gtk_text_layout_set_keyboard_direction (priv->layout, new_keyboard_dir);
+  gtk_text_layout_set_default_direction(priv->layout,
+    gtk_widget_get_direction (GTK_WIDGET (text_view)));
 }
 
 static void
@@ -8809,7 +8836,12 @@ gtk_text_view_value_changed (GtkAdjustment *adjustment,
 
   gtk_text_view_update_handles (text_view);
 
-  if (priv->anchored_children.length > 0)
+  if (priv->anchored_children.length > 0 ||
+      priv->left_child != NULL ||
+      priv->right_child != NULL ||
+      priv->top_child != NULL ||
+      priv->bottom_child != NULL ||
+      priv->center_child != NULL)
     gtk_widget_queue_allocate (GTK_WIDGET (text_view));
   else
     gtk_widget_queue_draw (GTK_WIDGET (text_view));
@@ -9106,30 +9138,39 @@ gtk_text_view_get_virtual_cursor_pos (GtkTextView *text_view,
 
   priv = text_view->priv;
 
-  if (cursor)
-    insert = *cursor;
-  else
-    gtk_text_buffer_get_iter_at_mark (get_buffer (text_view), &insert,
-                                      gtk_text_buffer_get_insert (get_buffer (text_view)));
-
   if ((x && priv->virtual_cursor_x == -1) ||
       (y && priv->virtual_cursor_y == -1))
-    gtk_text_layout_get_cursor_locations (priv->layout, &insert, &pos, NULL);
-
-  if (x)
     {
-      if (priv->virtual_cursor_x != -1)
-        *x = priv->virtual_cursor_x;
+      if (cursor)
+        insert = *cursor;
       else
-        *x = pos.x;
+        gtk_text_buffer_get_iter_at_mark (get_buffer (text_view), &insert,
+                                          gtk_text_buffer_get_insert (get_buffer (text_view)));
+
+      gtk_text_layout_get_cursor_locations (priv->layout, &insert, &pos, NULL);
+
+      if (x)
+        {
+          if (priv->virtual_cursor_x != -1)
+            *x = priv->virtual_cursor_x;
+          else
+            *x = pos.x;
+        }
+
+      if (y)
+        {
+          if (priv->virtual_cursor_y != -1)
+            *y = priv->virtual_cursor_y;
+          else
+            *y = pos.y + pos.height / 2;
+        }
     }
-
-  if (y)
+  else
     {
-      if (priv->virtual_cursor_y != -1)
+      if (x)
+        *x = priv->virtual_cursor_x;
+      if (y)
         *y = priv->virtual_cursor_y;
-      else
-        *y = pos.y + pos.height / 2;
     }
 }
 
@@ -9144,10 +9185,16 @@ gtk_text_view_set_virtual_cursor_pos (GtkTextView *text_view,
     return;
 
   if (x == -1 || y == -1)
-    gtk_text_view_get_cursor_locations (text_view, NULL, &pos, NULL);
+    {
+      gtk_text_view_get_cursor_locations (text_view, NULL, &pos, NULL);
+      if (x == -1)
+        x = pos.x;
+      if (y == -1)
+        y = pos.y + pos.height / 2;
+    }
 
-  text_view->priv->virtual_cursor_x = (x == -1) ? pos.x : x;
-  text_view->priv->virtual_cursor_y = (y == -1) ? pos.y + pos.height / 2 : y;
+  text_view->priv->virtual_cursor_x = x;
+  text_view->priv->virtual_cursor_y = y;
 }
 
 static void
@@ -9250,6 +9297,19 @@ gtk_text_view_activate_selection_delete (GtkWidget  *widget,
 }
 
 static void
+gtk_text_view_clear (GtkWidget  *widget,
+                     const char *action_name,
+                     GVariant   *parameter)
+{
+  GtkTextView *text_view = GTK_TEXT_VIEW (widget);
+  GtkTextIter start, end;
+
+  gtk_text_buffer_get_bounds (get_buffer (text_view), &start, &end);
+  gtk_text_buffer_delete (get_buffer (text_view), &start, &end);
+
+}
+
+static void
 gtk_text_view_activate_misc_insert_emoji (GtkWidget  *widget,
                                           const char *action_name,
                                           GVariant   *parameter)
@@ -9298,6 +9358,12 @@ gtk_text_view_update_emoji_action (GtkTextView *text_view)
   gtk_widget_action_set_enabled (GTK_WIDGET (text_view), "misc.insert-emoji",
                                  (gtk_text_view_get_input_hints (text_view) & GTK_INPUT_HINT_NO_EMOJI) == 0 &&
                                  text_view->priv->editable);
+}
+
+static void
+gtk_text_view_update_clear_action (GtkTextView *text_view)
+{
+  gtk_widget_action_set_enabled (GTK_WIDGET (text_view), "text.clear", text_view->priv->editable);
 }
 
 static GMenuModel *

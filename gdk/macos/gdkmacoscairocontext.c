@@ -26,6 +26,8 @@
 #include <QuartzCore/QuartzCore.h>
 #include <CoreGraphics/CoreGraphics.h>
 
+#import "GdkMacosLayer.h"
+
 #include "gdkmacosbuffer-private.h"
 #include "gdkmacoscairocontext-private.h"
 #include "gdkmacossurface-private.h"
@@ -158,6 +160,7 @@ copy_surface_data (GdkMacosBuffer       *from,
 
 static void
 _gdk_macos_cairo_context_begin_frame (GdkDrawContext  *draw_context,
+                                      gpointer         context_data,
                                       GdkMemoryDepth   depth,
                                       cairo_region_t  *region,
                                       GdkColorState  **out_color_state,
@@ -214,6 +217,7 @@ _gdk_macos_cairo_context_begin_frame (GdkDrawContext  *draw_context,
 
 static void
 _gdk_macos_cairo_context_end_frame (GdkDrawContext *draw_context,
+                                    gpointer        context_data,
                                     cairo_region_t *painted)
 {
   GdkMacosCairoContext *self = (GdkMacosCairoContext *)draw_context;
@@ -245,6 +249,20 @@ _gdk_macos_cairo_context_surface_resized (GdkDrawContext *draw_context)
   /* Do nothing, next begin_frame will get new buffer */
 }
 
+static gboolean
+_gdk_macos_cairo_context_surface_attach (GdkDrawContext  *context,
+                                         GError         **error)
+{
+  GdkSurface *surface = gdk_draw_context_get_surface (context);
+  NSView *view = _gdk_macos_surface_get_view (GDK_MACOS_SURFACE (surface));
+
+  [view setLayerContentsRedrawPolicy:NSViewLayerContentsRedrawNever];
+  [view setLayer:[GdkMacosLayer layer]];
+  [view setWantsLayer:YES];
+
+  return TRUE;
+}
+
 static void
 _gdk_macos_cairo_context_class_init (GdkMacosCairoContextClass *klass)
 {
@@ -255,6 +273,7 @@ _gdk_macos_cairo_context_class_init (GdkMacosCairoContextClass *klass)
   draw_context_class->end_frame = _gdk_macos_cairo_context_end_frame;
   draw_context_class->empty_frame = _gdk_macos_cairo_context_empty_frame;
   draw_context_class->surface_resized = _gdk_macos_cairo_context_surface_resized;
+  draw_context_class->surface_attach = _gdk_macos_cairo_context_surface_attach;
 
   cairo_context_class->cairo_create = _gdk_macos_cairo_context_cairo_create;
 }

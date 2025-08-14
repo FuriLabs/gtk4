@@ -48,6 +48,8 @@ static const JNINativeMethod clipboard_provider_change_listener_natives[] = {
 static const JNINativeMethod surface_natives[] = {
   { .name = "bindNative", .signature = "(J)V", .fnPtr = _gdk_android_surface_bind_native },
   { .name = "notifyAttached", .signature = "()V", .fnPtr = _gdk_android_surface_on_attach },
+  { .name = "notifyLayoutSurface", .signature = "(IIF)V", .fnPtr = _gdk_android_surface_on_layout_surface },
+  { .name = "notifyLayoutPosition", .signature = "(II)V", .fnPtr = _gdk_android_surface_on_layout_position },
   { .name = "notifyDetached", .signature = "()V", .fnPtr = _gdk_android_surface_on_detach },
 
   { .name = "notifyDNDStartFailed", .signature = "(Lorg/gtk/android/ClipboardProvider$NativeDragIdentifier;)V", .fnPtr = _gdk_android_surface_on_dnd_start_failed },
@@ -56,7 +58,6 @@ static const JNINativeMethod surface_natives[] = {
   { .name = "notifyKeyEvent", .signature = "(Landroid/view/KeyEvent;)V", .fnPtr = _gdk_android_surface_on_key_event },
   { .name = "notifyDragEvent", .signature = "(Landroid/view/DragEvent;)Z", .fnPtr = _gdk_android_surface_on_drag_event },
 
-  { .name = "notifyLayout", .signature = "(IIIIF)V", .fnPtr = _gdk_android_surface_on_layout_ui_thread },
   { .name = "notifyVisibility", .signature = "(Z)V", .fnPtr = _gdk_android_surface_on_visibility_ui_thread },
 };
 static const JNINativeMethod toplevel_natives[] = {
@@ -92,7 +93,8 @@ _gdk_android_gdk_context_open (JNIEnv *env, jclass this, jobject uri, jstring jh
 }
 
 static JavaVM *gdk_android_vm = NULL;
-static jobject *gdk_android_activity = NULL;
+static jobject gdk_android_activity = NULL;
+static jobject gdk_android_user_classloader = NULL;
 
 static GdkAndroidJavaCache gdk_android_java_cache;
 
@@ -134,7 +136,7 @@ static GdkAndroidJavaCache gdk_android_java_cache;
     g_hash_table_insert (gdk_android_java_cache.a_pointericon.gdk_type_mapping, cssname, GINT_TO_POINTER (gdk_android_java_cache.a_pointericon.cname)); \
   }
 
-static jclass
+jclass
 gdk_android_init_find_class_using_classloader (JNIEnv *env,
                                                jobject class_loader,
                                                const gchar *klass)
@@ -157,13 +159,25 @@ gdk_android_set_latest_activity (JNIEnv *env, jobject activity)
       if ((*env)->IsSameObject (env, gdk_android_activity, activity))
         return;
 
-      if ((*env)->GetLongField (env, gdk_android_activity, gdk_android_get_java_cache ()->toplevel.native_identifier) == 0) // previously set activity was stil unbound
-        (*env)->CallVoidMethod (env, gdk_android_activity, gdk_android_get_java_cache ()->a_activity.finish);
+      if ((*env)->IsInstanceOf (env, gdk_android_activity, gdk_android_get_java_cache ()->toplevel.klass))
+        if ((*env)->GetLongField (env, gdk_android_activity, gdk_android_get_java_cache ()->toplevel.native_identifier) == 0) // previously set activity was stil unbound
+          (*env)->CallVoidMethod (env, gdk_android_activity, gdk_android_get_java_cache ()->a_activity.finish);
       (*env)->DeleteGlobalRef(env, gdk_android_activity);
     }
-  gdk_android_activity = (*env)->NewGlobalRef(env, activity);
+  gdk_android_activity = activity ? (*env)->NewGlobalRef(env, activity) : NULL;
 }
 
+/**
+ * gdk_android_initialize: (skip)
+ * @env: the JNI environment for the current thread
+ * @application_classloader: the classloader used to resolve GTK classes
+ * @activity: (nullable): the android.content.Context object
+ *
+ * Initializes the android backend.
+ *
+ * Returns: %TRUE if successful, %FALSE otherwise
+ * Since: 4.18
+ */
 gboolean
 gdk_android_initialize (JNIEnv *env, jobject application_classloader, jobject activity)
 {
@@ -174,6 +188,7 @@ gdk_android_initialize (JNIEnv *env, jobject application_classloader, jobject ac
       return FALSE;
     }
   gdk_android_set_latest_activity (env, activity);
+  gdk_android_user_classloader = (*env)->NewGlobalRef (env, application_classloader);
 
   (*env)->PushLocalFrame (env, 16);
 
@@ -220,6 +235,7 @@ gdk_android_initialize (JNIEnv *env, jobject application_classloader, jobject ac
   gdk_android_java_cache.surface.start_dnd = (*env)->GetMethodID (env, gdk_android_java_cache.surface.klass, "startDND", "(Landroid/content/ClipData;Landroid/view/View$DragShadowBuilder;Lorg/gtk/android/ClipboardProvider$NativeDragIdentifier;I)V");
   gdk_android_java_cache.surface.update_dnd = (*env)->GetMethodID (env, gdk_android_java_cache.surface.klass, "updateDND", "(Landroid/view/View$DragShadowBuilder;)V");
   gdk_android_java_cache.surface.cancel_dnd = (*env)->GetMethodID (env, gdk_android_java_cache.surface.klass, "cancelDND", "()V");
+  gdk_android_java_cache.surface.set_active_im_context = (*env)->GetMethodID (env, gdk_android_java_cache.surface.klass, "setActiveImContext", "(Lorg/gtk/android/ImContext;)V");
   gdk_android_java_cache.surface.reposition = (*env)->GetMethodID (env, gdk_android_java_cache.surface.klass, "reposition", "(IIII)V");
   gdk_android_java_cache.surface.drop = (*env)->GetMethodID (env, gdk_android_java_cache.surface.klass, "drop", "()V");
   (*env)->RegisterNatives (env, surface_class, surface_natives, sizeof surface_natives / sizeof (JNINativeMethod));
@@ -243,10 +259,6 @@ gdk_android_initialize (JNIEnv *env, jobject application_classloader, jobject ac
   jclass surface_exception_class = gdk_android_init_find_class_using_classloader (env, application_classloader, "org/gtk/android/ToplevelActivity$UnregisteredSurfaceException");
   gdk_android_java_cache.surface_exception.klass = (*env)->NewGlobalRef (env, surface_exception_class);
   gdk_android_java_cache.surface_exception.constructor = (*env)->GetMethodID (env, gdk_android_java_cache.surface_exception.klass, "<init>", "(Ljava/lang/Object;)V");
-
-  jclass glue_lib_provider = gdk_android_init_find_class_using_classloader (env, application_classloader, "org/gtk/android/GlueLibraryProvider");
-  gdk_android_java_cache.glue_library_provider.klass = (*env)->NewGlobalRef (env, glue_lib_provider);
-  gdk_android_java_cache.glue_library_provider.get_glue_lib_name = (*env)->GetMethodID (env, gdk_android_java_cache.glue_library_provider.klass, "getGlueLibraryName", "()Ljava/lang/String;");
 
   jclass android_activity_class = (*env)->FindClass (env, "android/app/Activity");
   gdk_android_java_cache.a_activity.klass = (*env)->NewGlobalRef (env, android_activity_class);
@@ -619,6 +631,14 @@ gdk_android_initialize (JNIEnv *env, jobject application_classloader, jobject ac
   return TRUE;
 }
 
+/**
+ * gdk_android_finalize: (skip)
+ *
+ * Frees all allocated resources and references associated with the
+ * android backend.
+ *
+ * Since: 4.18
+ */
 void
 gdk_android_finalize (void)
 {
@@ -632,7 +652,6 @@ gdk_android_finalize (void)
   (*env)->DeleteGlobalRef (env, gdk_android_java_cache.toplevel.toplevel_identifier_key);
   (*env)->DeleteGlobalRef (env, gdk_android_java_cache.toplevel_view.klass);
   (*env)->DeleteGlobalRef (env, gdk_android_java_cache.surface_exception.klass);
-  (*env)->DeleteGlobalRef (env, gdk_android_java_cache.glue_library_provider.klass);
   (*env)->DeleteGlobalRef (env, gdk_android_java_cache.a_activity.klass);
   (*env)->DeleteGlobalRef (env, gdk_android_java_cache.a_context.klass);
   (*env)->DeleteGlobalRef (env, gdk_android_java_cache.a_context.activity_service);
@@ -732,6 +751,8 @@ gdk_android_get_env (void)
 {
   if (gdk_android_thread_env)
     return gdk_android_thread_env;
+  if (G_UNLIKELY (!gdk_android_vm))
+    return NULL;
   gint rc = (*gdk_android_vm)->GetEnv (gdk_android_vm, (void **) &gdk_android_thread_env, JNI_VERSION_1_6);
   if (G_UNLIKELY (rc != JNI_OK))
     g_critical ("Unable to get env for the current thread. Is is attached?");
@@ -787,10 +808,16 @@ gdk_android_drop_thread_env (GdkAndroidThreadGuard *self)
     }
 }
 
-jobject *
+jobject
 gdk_android_get_activity (void)
 {
   return gdk_android_activity;
+}
+
+jobject
+gdk_android_init_get_user_classloader (void)
+{
+  return gdk_android_user_classloader;
 }
 
 const GdkAndroidJavaCache *

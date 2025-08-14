@@ -1,4 +1,3 @@
-workarounds/testsuite-tools-validate-Use-softpipe-driver-for-validate.patch
 debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
 insttests/Revert-build-Drop-the-install-tests-option.patch
 insttests/Revert-testsuite-Remove-leftover-test.in-files.patch

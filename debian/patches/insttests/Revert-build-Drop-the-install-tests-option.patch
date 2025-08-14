@@ -18,14 +18,13 @@ This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
  testsuite/gdk/meson.build        | 37 +++++++++++++++++++--
  testsuite/gsk/meson.build        | 21 +++++++++---
  testsuite/gtk/meson.build        | 45 ++++++++++++++++++++++++++
- testsuite/tools/meson.build      | 36 ++++++++++++++++++---
- 12 files changed, 330 insertions(+), 13 deletions(-)
+ 11 files changed, 298 insertions(+), 9 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index 5c8b20a..b9659b8 100644
+index 228f398..b59df5e 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -1020,6 +1020,7 @@ summary('Documentation', get_option('documentation'), section: 'Build')
+@@ -1083,6 +1083,7 @@ summary('Documentation', get_option('documentation'), section: 'Build')
  summary('Man pages', get_option('man-pages'), section: 'Build')
  summary('Testsuite', get_option('build-testsuite'), section: 'Build')
  summary('Tests', get_option('build-tests'), section: 'Build')
@@ -34,10 +33,10 @@ index 5c8b20a..b9659b8 100644
  summary('Examples', get_option('build-examples'), section: 'Build')
  
 diff --git a/meson.options b/meson.options
-index a8a95fd..375e6a4 100644
+index 0c0412d..5534f3d 100644
 --- a/meson.options
 +++ b/meson.options
-@@ -144,3 +144,8 @@ option('build-tests',
+@@ -149,3 +149,8 @@ option('build-tests',
         type: 'boolean',
         value: true,
         description : 'Build tests')
@@ -278,7 +277,7 @@ index f682cdb..b737386 100644
 +  install_data(test_data, install_dir: testexecdir)
 +endif
 diff --git a/testsuite/css/parser/meson.build b/testsuite/css/parser/meson.build
-index fefd25c..d20b355 100644
+index 73b490b..621c80f 100644
 --- a/testsuite/css/parser/meson.build
 +++ b/testsuite/css/parser/meson.build
 @@ -1,7 +1,12 @@
@@ -294,7 +293,7 @@ index fefd25c..d20b355 100644
  )
  
  test_data = [
-@@ -667,3 +672,15 @@ foreach testname : test_data
+@@ -674,3 +679,15 @@ foreach testname : test_data
           suite: 'css')
    endif
  endforeach
@@ -383,7 +382,7 @@ index 04f8822..4d48ba4 100644
 +  install_data(test_data, install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index 1e558b4..20b0268 100644
+index 64a2ecd..1a2a1fd 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
 @@ -1,9 +1,13 @@
@@ -401,7 +400,7 @@ index 1e558b4..20b0268 100644
  )
  
  tests = [
-@@ -49,7 +53,8 @@ foreach t : tests
+@@ -55,7 +59,8 @@ foreach t : tests
      sources: [ '@0@.c'.format(test_name) ] + t.get('sources', []),
      c_args: common_cflags,
      dependencies: libgtk_dep,
@@ -411,7 +410,7 @@ index 1e558b4..20b0268 100644
    )
  
    suites = ['gdk'] + t.get('suites', [])
-@@ -90,7 +95,8 @@ foreach t : internal_tests
+@@ -97,7 +102,8 @@ foreach t : internal_tests
      sources: [ '@0@.c'.format(test_name) ] + t.get('sources', []),
      c_args: common_cflags + ['-DGTK_COMPILATION'],
      dependencies: libgtk_static_dep,
@@ -421,7 +420,7 @@ index 1e558b4..20b0268 100644
    )
  
    suites = ['gdk'] + t.get('suites', [])
-@@ -106,3 +112,28 @@ foreach t : internal_tests
+@@ -113,3 +119,28 @@ foreach t : internal_tests
      suite: suites,
    )
  endforeach
@@ -451,7 +450,7 @@ index 1e558b4..20b0268 100644
 +  install_subdir('image-data', install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
-index ea887d2..5eacd6b 100644
+index 0eb0db8..c049a94 100644
 --- a/testsuite/gsk/meson.build
 +++ b/testsuite/gsk/meson.build
 @@ -1,13 +1,20 @@
@@ -475,7 +474,7 @@ index ea887d2..5eacd6b 100644
  )
  
  compare_render_tests = [
-@@ -555,9 +562,12 @@ foreach t : tests
+@@ -632,9 +639,12 @@ foreach t : tests
    test_srcs = ['@0@.c'.format(test_name)] + t.get(1, [])
    test_extra_suites = t.get(2, [])
  
@@ -490,7 +489,7 @@ index ea887d2..5eacd6b 100644
    )
  
    test(test_name, test_exe,
-@@ -591,10 +601,11 @@ foreach t : internal_tests
+@@ -669,10 +679,11 @@ foreach t : internal_tests
    test_srcs = ['@0@.c'.format(test_name)] + t.get(1, [])
    test_extra_suites = t.get(2, [])
  
@@ -506,7 +505,7 @@ index ea887d2..5eacd6b 100644
  
    test(test_name, test_exe,
 diff --git a/testsuite/gtk/meson.build b/testsuite/gtk/meson.build
-index 0cd7780..6c220fb 100644
+index 9f9ebc7..5dd1ddf 100644
 --- a/testsuite/gtk/meson.build
 +++ b/testsuite/gtk/meson.build
 @@ -1,3 +1,6 @@
@@ -516,7 +515,7 @@ index 0cd7780..6c220fb 100644
  gtk_tests_export_dynamic_ldflag = []
  
  if cc.get_id() != 'msvc'
-@@ -173,6 +176,8 @@ foreach t : tests
+@@ -186,6 +189,8 @@ foreach t : tests
      c_args: test_cargs + test_extra_cargs,
      link_args: test_extra_ldflags,
      dependencies: libgtk_dep,
@@ -525,7 +524,7 @@ index 0cd7780..6c220fb 100644
    )
  
    if test_extra_suites.contains('slow')
-@@ -201,6 +206,8 @@ foreach t : internal_tests
+@@ -214,6 +219,8 @@ foreach t : internal_tests
      c_args: test_cargs + test_extra_cargs + ['-DGTK_COMPILATION'],
      link_args: test_extra_ldflags,
      dependencies: libgtk_static_dep,
@@ -534,7 +533,7 @@ index 0cd7780..6c220fb 100644
    )
  
    if test_extra_suites.contains('slow')
-@@ -221,6 +228,8 @@ if add_languages('cpp', required: false, native: false)
+@@ -234,6 +241,8 @@ if add_languages('cpp', required: false, native: false)
    test_exe = executable('autotestkeywords',
      sources: ['autotestkeywords.cc'],
      dependencies: libgtk_dep,
@@ -543,7 +542,7 @@ index 0cd7780..6c220fb 100644
    )
    test('c++ keywords', test_exe,
      args: [ '--tap', '-k' ],
-@@ -228,6 +237,16 @@ if add_languages('cpp', required: false, native: false)
+@@ -241,6 +250,16 @@ if add_languages('cpp', required: false, native: false)
      env: test_env,
      suite: 'gtk',
    )
@@ -560,7 +559,7 @@ index 0cd7780..6c220fb 100644
  endif
  
  
-@@ -257,6 +276,8 @@ focus_chain = executable('test-focus-chain',
+@@ -270,6 +289,8 @@ focus_chain = executable('test-focus-chain',
    sources: ['test-focus-chain.c', '../testutils.c'],
    dependencies: libgtk_dep,
    c_args: common_cflags,
@@ -569,10 +568,10 @@ index 0cd7780..6c220fb 100644
  )
  
  foreach test : focus_chain_tests
-@@ -278,3 +299,27 @@ make_pot = find_program ('make-pot', dirs: meson.project_source_root())
- test('potfiles', make_pot,
-      workdir: meson.project_source_root(),
-      suite: ['gtk', 'translations' ])
+@@ -300,3 +321,27 @@ if host_machine.system() in ['linux']
+        workdir: meson.project_source_root(),
+        suite: ['gtk', 'gtk'])
+ endif
 +
 +if get_option('install-tests')
 +  foreach t : tests
@@ -596,57 +595,4 @@ index 0cd7780..6c220fb 100644
 +  install_subdir('icons', install_dir: testexecdir)
 +  install_subdir('icons2', install_dir: testexecdir)
 +  install_subdir('ui', install_dir: testexecdir)
-+endif
-diff --git a/testsuite/tools/meson.build b/testsuite/tools/meson.build
-index e19a819..54ede78 100644
---- a/testsuite/tools/meson.build
-+++ b/testsuite/tools/meson.build
-@@ -1,12 +1,23 @@
-+testexecdir = join_paths(installed_test_bindir, 'tools')
-+testdatadir = join_paths(installed_test_datadir, 'tools')
-+
- bash = find_program('bash', required : false)
- if bash.found()
-   test_env = environment()
- 
-   foreach t : ['simplify', 'simplify-3to4', 'validate', 'enumerate', 'settings']
--    configure_file(output: t,
--      input: '@0@.in'.format(t),
--      copy: true,
--    )
-+    if get_option('install-tests')
-+      configure_file(output: t,
-+        input: '@0@.in'.format(t),
-+        copy: true,
-+        install_dir: testexecdir,
-+      )
-+    else
-+      configure_file(output: t,
-+        input: '@0@.in'.format(t),
-+        copy: true,
-+      )
-+    endif
-     test(t, bash,
-       args: t,
-       workdir: meson.current_build_dir(),
-@@ -23,3 +34,20 @@ if bash.found()
-     )
-   endforeach
- endif
-+
-+if get_option('install-tests')
-+  foreach t : ['simplify', 'settings']
-+    test_conf = configuration_data()
-+    test_conf.set('testexecdir', testexecdir)
-+    test_conf.set('test', t)
-+    configure_file(output: '@0@.test'.format(t),
-+      input: 'tools.test.in',
-+      configuration: test_conf,
-+      install_dir: testdatadir,
-+    )
-+  endforeach
-+
-+  install_subdir('simplify-data', install_dir: testexecdir)
-+  install_subdir('simplify-data-3to4', install_dir: testexecdir)
-+  install_subdir('validate-data', install_dir: testexecdir)
 +endif

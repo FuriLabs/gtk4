@@ -7,6 +7,10 @@ usr/share/applications/org.gtk.Demo4.desktop
 usr/share/applications/org.gtk.PrintEditor4.desktop
 usr/share/applications/org.gtk.WidgetFactory4.desktop
 usr/share/applications/org.gtk.gtk4.NodeEditor.desktop
+usr/share/bash-completion/completions/gtk4-demo
+usr/share/bash-completion/completions/gtk4-node-editor
+usr/share/bash-completion/completions/gtk4-print-editor
+usr/share/bash-completion/completions/gtk4-widget-factory
 usr/share/glib-2.0/schemas/org.gtk.Demo4.gschema.xml
 usr/share/icons/hicolor/*/*/org.gtk.Demo4*
 usr/share/icons/hicolor/*/*/org.gtk.PrintEditor4*

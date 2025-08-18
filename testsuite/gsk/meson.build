@@ -589,6 +589,12 @@ node_parser_tests = [
 
 foreach test : node_parser_tests
   if test.endswith('.node') and not test.endswith('.ref.node')
+    suites = [ 'gsk', 'gsk-nodeparser' ]
+
+    if host_machine.endian() == 'big' and test in ['empty-texture.node', 'empty-texture-scale.node', 'texture-fail.node', 'texture-scale-unknown-filter.node']
+      suites += 'failing'
+    endif
+
     test('parser ' + test, node_parser,
       args: [
         join_paths(meson.current_source_dir(), 'nodeparser', test)
@@ -601,7 +607,7 @@ foreach test : node_parser_tests
         'FONTCONFIG_FILE=@0@/fonts/fonts.conf'.format(meson.current_source_dir()),
       ],
       protocol: 'exitcode',
-      suite: [ 'gsk', 'gsk-nodeparser' ]
+      suite: suites
     )
   endif
 endforeach

@@ -1,0 +1,36 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Mon, 18 Aug 2025 11:20:19 +0200
+Subject: nodeparser: Mark failing tests on s390x
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/7707
+Forwarded: not-needed, workaround
+---
+ testsuite/gsk/meson.build | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
+index c049a94..8f0e5d8 100644
+--- a/testsuite/gsk/meson.build
++++ b/testsuite/gsk/meson.build
+@@ -518,6 +518,12 @@ node_parser_tests = [
+ 
+ foreach test : node_parser_tests
+   if test.endswith('.node') and not test.endswith('.ref.node')
++    suites = [ 'gsk', 'gsk-nodeparser' ]
++
++    if host_machine.endian() == 'big' and test in ['empty-texture.node', 'empty-texture-scale.node', 'texture-fail.node', 'texture-scale-unknown-filter.node']
++      suites += 'failing'
++    endif
++
+     test('parser ' + test, node_parser,
+       args: [
+         join_paths(meson.current_source_dir(), 'nodeparser', test)
+@@ -530,7 +536,7 @@ foreach test : node_parser_tests
+         'FONTCONFIG_FILE=@0@/fonts/fonts.conf'.format(meson.current_source_dir()),
+       ],
+       protocol: 'exitcode',
+-      suite: [ 'gsk', 'gsk-nodeparser' ]
++      suite: suites
+     )
+   endif
+ endforeach

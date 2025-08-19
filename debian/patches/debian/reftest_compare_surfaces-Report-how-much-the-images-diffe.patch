@@ -81,7 +81,7 @@ index 5ca51f3..4ca5fe2 100644
  
    g_object_unref (texture1);
 diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
-index 154a2a6..9dd53df 100644
+index f8ab45f..4ad5c56 100644
 --- a/testsuite/reftests/gtk-reftest.c
 +++ b/testsuite/reftests/gtk-reftest.c
 @@ -341,6 +341,9 @@ test_ui_file (GFile *file)

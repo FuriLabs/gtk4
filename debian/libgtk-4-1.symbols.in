@@ -543,9 +543,11 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_scroll_direction_get_type@Base 4.0.0
  gdk_scroll_event_get_deltas@Base 4.0.0
  gdk_scroll_event_get_direction@Base 4.0.0
+ gdk_scroll_event_get_relative_direction@Base 4.19.4
  gdk_scroll_event_get_type@Base 4.0.0
  gdk_scroll_event_get_unit@Base 4.7.2
  gdk_scroll_event_is_stop@Base 4.0.0
+ gdk_scroll_relative_direction_get_type@Base 4.19.4
  gdk_scroll_unit_get_type@Base 4.7.2
  gdk_seat_capabilities_get_type@Base 4.0.0
  gdk_seat_get_capabilities@Base 4.0.0

@@ -145,6 +145,7 @@ struct _GtkCssProviderPrivate
   GtkCssSelectorTree *tree;
 
   GBytes *source;
+  GFile *source_file;
   gboolean needs_rerender;
 
   GResource *resource;
@@ -184,6 +185,8 @@ static void gtk_css_style_provider_iface_init (GtkStyleProviderInterface *iface)
 static void gtk_css_style_provider_emit_error (GtkStyleProvider *provider,
                                                GtkCssSection    *section,
                                                const GError     *error);
+static void gtk_css_provider_reset            (GtkCssProvider        *css_provider);
+
 
 static void gtk_css_provider_load_internal (GtkCssProvider *css_provider,
                                             GtkCssScanner  *scanner,
@@ -746,17 +749,6 @@ gtk_css_style_provider_has_section (GtkStyleProvider *provider,
   return priv->bytes == gtk_css_section_get_bytes (section);
 }
 
-static gboolean
-gtk_css_style_provider_get_color_scheme (GtkStyleProvider        *provider,
-                                         GtkInterfaceColorScheme *color_scheme)
-{
-  GtkCssProvider *self = GTK_CSS_PROVIDER (provider);
-  GtkCssProviderPrivate *priv = gtk_css_provider_get_instance_private (self);
-
-  *color_scheme = priv->prefers_color_scheme;
-  return TRUE;
-}
-
 static void
 gtk_css_style_provider_iface_init (GtkStyleProviderInterface *iface)
 {
@@ -765,7 +757,6 @@ gtk_css_style_provider_iface_init (GtkStyleProviderInterface *iface)
   iface->lookup = gtk_css_style_provider_lookup;
   iface->emit_error = gtk_css_style_provider_emit_error;
   iface->has_section = gtk_css_style_provider_has_section;
-  iface->get_color_scheme = gtk_css_style_provider_get_color_scheme;
 }
 
 static void
@@ -785,6 +776,7 @@ gtk_css_provider_finalize (GObject *object)
   g_hash_table_destroy (priv->keyframes);
 
   g_clear_pointer (&priv->source, g_bytes_unref);
+  g_clear_object (&priv->source_file);
 
   if (priv->resource)
     {
@@ -863,8 +855,18 @@ maybe_rerender_style_sheet (GtkCssProvider *css_provider)
   if (priv->needs_rerender && priv->source != NULL)
     {
       GBytes *source = g_bytes_ref (priv->source);
-      gtk_css_provider_load_from_bytes (css_provider, source);
-      g_bytes_unref (source);
+      GFile *source_file = NULL;
+
+      if (priv->source_file != NULL)
+        source_file = g_object_ref (priv->source_file);
+
+      gtk_css_provider_reset (css_provider);
+      gtk_css_provider_load_internal (css_provider, NULL, source_file, source);
+
+      priv->source = source;
+      priv->source_file = source_file;
+
+      gtk_style_provider_changed (GTK_STYLE_PROVIDER (css_provider));
     }
 
   priv->needs_rerender = FALSE;
@@ -933,6 +935,7 @@ gtk_css_provider_reset (GtkCssProvider *css_provider)
   guint i;
 
   g_clear_pointer (&priv->source, g_bytes_unref);
+  g_clear_object (&priv->source_file);
 
   if (priv->resource)
     {
@@ -1119,7 +1122,10 @@ parse_color_definition (GtkCssScanner *scanner)
   if (gtk_css_scanner_should_commit (scanner))
     g_hash_table_insert (priv->symbolic_colors, name, color);
   else
-    gtk_css_value_unref (color);
+    {
+      gtk_css_value_unref (color);
+      g_free (name);
+    }
 
   return TRUE;
 }
@@ -1447,6 +1453,13 @@ parse_ruleset (GtkCssScanner *scanner)
 
   if (gtk_css_scanner_should_commit (scanner))
     css_provider_commit (scanner->provider, &selectors, &ruleset);
+  else
+    {
+      guint i;
+
+      for (i = 0; i < gtk_css_selectors_get_size (&selectors); i++)
+        _gtk_css_selector_free (gtk_css_selectors_get (&selectors, i));
+    }
 
   gtk_css_ruleset_clear (&ruleset);
 
@@ -1655,6 +1668,7 @@ gtk_css_provider_load_from_bytes (GtkCssProvider *css_provider,
   gtk_css_provider_load_internal (css_provider, NULL, NULL, data);
 
   priv->source = g_bytes_ref (data);
+  priv->source_file = NULL;
 
   gtk_style_provider_changed (GTK_STYLE_PROVIDER (css_provider));
 }
@@ -1700,6 +1714,7 @@ gtk_css_provider_load_from_file (GtkCssProvider  *css_provider,
       gtk_css_provider_load_internal (css_provider, NULL, file, bytes);
 
       priv->source = bytes;
+      priv->source_file = g_object_ref (file);
     }
 
   gtk_style_provider_changed (GTK_STYLE_PROVIDER (css_provider));

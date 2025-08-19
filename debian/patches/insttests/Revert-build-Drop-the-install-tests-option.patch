@@ -21,10 +21,10 @@ This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
  11 files changed, 298 insertions(+), 9 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index 228f398..b59df5e 100644
+index e53611e..0febedb 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -1083,6 +1083,7 @@ summary('Documentation', get_option('documentation'), section: 'Build')
+@@ -1085,6 +1085,7 @@ summary('Documentation', get_option('documentation'), section: 'Build')
  summary('Man pages', get_option('man-pages'), section: 'Build')
  summary('Testsuite', get_option('build-testsuite'), section: 'Build')
  summary('Tests', get_option('build-tests'), section: 'Build')
@@ -277,7 +277,7 @@ index f682cdb..b737386 100644
 +  install_data(test_data, install_dir: testexecdir)
 +endif
 diff --git a/testsuite/css/parser/meson.build b/testsuite/css/parser/meson.build
-index 73b490b..621c80f 100644
+index b41200c..5fc6d7f 100644
 --- a/testsuite/css/parser/meson.build
 +++ b/testsuite/css/parser/meson.build
 @@ -1,7 +1,12 @@
@@ -293,7 +293,7 @@ index 73b490b..621c80f 100644
  )
  
  test_data = [
-@@ -674,3 +679,15 @@ foreach testname : test_data
+@@ -672,3 +677,15 @@ foreach testname : test_data
           suite: 'css')
    endif
  endforeach

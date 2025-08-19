@@ -5,14 +5,14 @@ gtk4 (4.19.4+ds-1) UNRELEASED; urgency=medium
   * d/p/workarounds: Drop softpipe patch, it doesn't apply and should be obsolete
   * d/p/gstplay{,er}: Rework for porting from gst-player to gst-play
   * d/p: Rebase all other patches
-  * d/p: Add proposed patch to fix compiling with cpdb
   * d/control, d/install: Adapt to modules being statically linked in libgtk
   * d/install: Add new bash completions
   * d/libgtk-4-1.symbols: Add new symbols
   * d/p/d: Drop GSK renderer patch, use Vulkan by default like upstream
   * d/p/workarounds: Skip failing nodeparser tests on s390x
+  * d/control: Bump minimum libwayland version
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 19 Aug 2025 13:29:47 +0200
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 19 Aug 2025 14:40:07 +0200
 
 gtk4 (4.18.6+ds-2) unstable; urgency=medium
 

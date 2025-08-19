@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.19.3',
+        version: '4.19.4',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -35,7 +35,7 @@ fribidi_req        = '>= 1.0.6'
 cairo_req          = '>= 1.18.2'
 gdk_pixbuf_req     = '>= 2.30.0'
 wayland_proto_req  = '>= 1.44'
-wayland_req        = '>= 1.23.0'
+wayland_req        = '>= 1.24.0'
 graphene_req       = '>= 1.10.0'
 epoxy_req          = '>= 1.4'
 cloudproviders_req = '>= 0.3.1'
@@ -276,6 +276,8 @@ if cc.compiles(uint128_t_src, name : '__uint128_t available')
   cdata.set('HAVE_UINT128_T', 1)
 endif
 
+cdata.set('HAVE_BACKTRACE', cc.has_function('backtrace', prefix: '#include <execinfo.h>'))
+
 # Disable deprecation checks for all libraries we depend on on stable branches.
 # This is so newer versions of those libraries don't cause more warnings with
 # a stable GTK version.
@@ -466,10 +468,10 @@ if os_unix
   giounix_dep  = dependency('gio-unix-2.0', version: glib_req, required: false)
 endif
 gmodule_dep    = dependency('gmodule-2.0', version: glib_req)
+pango_dep      = dependency('pango', version: pango_req)
 cairo_dep      = dependency('cairo', version: cairo_req,
                             default_options: ['zlib=enabled', 'tests=disabled'])
 cairogobj_dep  = dependency('cairo-gobject', version: cairo_req)
-pango_dep      = dependency('pango', version: pango_req)
 fribidi_dep    = dependency('fribidi', version: fribidi_req,
                             default_options: ['docs=false'])
 harfbuzz_dep   = dependency('harfbuzz', version: harfbuzz_req,

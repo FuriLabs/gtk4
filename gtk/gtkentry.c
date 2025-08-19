@@ -3836,7 +3836,7 @@ gtk_entry_get_text_widget (GtkEntry *entry)
  * Returns: (nullable) (transfer none): the text that will be used in the menu item,
  *   or NULL if no menu item is desired.
  *
- * Since: 4.19
+ * Since: 4.20
  */
 const gchar *
 gtk_entry_get_menu_entry_icon_text (GtkEntry             *entry,
@@ -3863,7 +3863,7 @@ gtk_entry_get_menu_entry_icon_text (GtkEntry             *entry,
  * aren't focusable when using keyboard navigation. This is why Gtk recommends
  * to add the same action to the context menu.
  *
- * Since: 4.19
+ * Since: 4.20
  */
 void
 gtk_entry_set_menu_entry_icon_text (GtkEntry             *entry,
@@ -3962,6 +3962,7 @@ update_extra_menu (GtkEntry *entry)
       gtk_text_set_extra_menu (GTK_TEXT (priv->text), priv->extra_menu);
     }
 
+  g_object_unref (joined);
   g_object_unref (menu);
   g_object_unref (section);
 }

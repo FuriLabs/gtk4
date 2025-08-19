@@ -1,4 +1,4 @@
-gtk4 (4.19.3+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.19.4+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release
   * d/p/insttests: Rebase and temporarily drop tool tests, needs rework
@@ -12,7 +12,7 @@ gtk4 (4.19.3+ds-1) UNRELEASED; urgency=medium
   * d/p/d: Drop GSK renderer patch, use Vulkan by default like upstream
   * d/p/workarounds: Skip failing nodeparser tests on s390x
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Mon, 18 Aug 2025 13:12:55 +0200
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 19 Aug 2025 13:29:47 +0200
 
 gtk4 (4.18.6+ds-2) unstable; urgency=medium
 

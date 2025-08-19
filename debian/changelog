@@ -1,3 +1,13 @@
+gtk4 (4.19.4+ds-0ubuntu1) questing; urgency=medium
+
+  * New upstream release
+  * d/libgtk-4-1.symbols: Add new symbols
+  * d/control: Bump minimum libwayland version
+  * d/p: Rebase patches
+  * d/p/print-Fix-finding-cpdb-headers.patch: Drop patch applied upstream
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 19 Aug 2025 14:46:12 +0200
+
 gtk4 (4.19.3+ds-0ubuntu2) questing; urgency=medium
 
   * d/p/workarounds: Skip failing nodeparser tests on s390x

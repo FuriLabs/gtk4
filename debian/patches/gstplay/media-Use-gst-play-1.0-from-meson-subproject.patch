@@ -9,10 +9,10 @@ Forwarded: not-needed
  1 file changed, 4 insertions(+)
 
 diff --git a/meson.build b/meson.build
-index b59df5e..196a783 100644
+index 0febedb..a6c3ff4 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -485,6 +485,10 @@ if win32_enabled
+@@ -487,6 +487,10 @@ if win32_enabled
    pangowin32_dep = dependency('pangowin32')
  endif
  

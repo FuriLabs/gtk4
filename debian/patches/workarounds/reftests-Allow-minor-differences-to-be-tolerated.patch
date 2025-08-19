@@ -115,7 +115,7 @@ index f79bfaf..26e2980 100644
      {
        g_print ("Test failed for %s (%s)\n", path, variant);
 diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
-index 9dd53df..2321b88 100644
+index 4ad5c56..ad55eab 100644
 --- a/testsuite/reftests/gtk-reftest.c
 +++ b/testsuite/reftests/gtk-reftest.c
 @@ -302,6 +302,12 @@ save_image (GdkTexture *texture,

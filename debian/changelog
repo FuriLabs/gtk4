@@ -1,4 +1,4 @@
-gtk4 (4.19.4+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.19.4+ds-1) experimental; urgency=medium
 
   * New upstream release
   * d/p/insttests: Rebase and temporarily drop tool tests, needs rework

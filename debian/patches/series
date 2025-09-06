@@ -1,3 +1,4 @@
+Fix-a-test-failure.patch
 workarounds/testsuite-tools-validate-Use-softpipe-driver-for-validate.patch
 debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
 insttests/Revert-tests-Stop-copying-the-tool-tests.patch

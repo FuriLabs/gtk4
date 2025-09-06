@@ -1,0 +1,28 @@
+From: Matthias Clasen <mclasen@redhat.com>
+Date: Sat, 29 Mar 2025 20:45:58 -0400
+Subject: Fix a test failure
+
+It seems that the compilers in Fedora 42 have gotten better at
+ignoring initialization. Without this change, we are getting
+occasional segfaults of the rotate3d-crash.css parser test.
+
+Origin: upstream, 4.19.0, commit:b1cb120ec4a2c0b058a40a02a236fc055fd7bf06
+---
+ gtk/gtkcsstransformvalue.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/gtk/gtkcsstransformvalue.c b/gtk/gtkcsstransformvalue.c
+index 7083ef8..ff8a9eb 100644
+--- a/gtk/gtkcsstransformvalue.c
++++ b/gtk/gtkcsstransformvalue.c
+@@ -936,7 +936,9 @@ _gtk_css_transform_value_parse (GtkCssParser *parser)
+ 
+   while (TRUE)
+     {
+-      GtkCssTransform transform = { 0, };
++      GtkCssTransform transform;
++
++      memset (&transform, 0, sizeof (GtkCssTransform));
+ 
+       if (gtk_css_parser_has_function (parser, "matrix"))
+         {

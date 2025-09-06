@@ -1,3 +1,18 @@
+gtk4 (4.20.0+ds-2) UNRELEASED; urgency=medium
+
+  [ Jeremy Bícha ]
+  * Bump minimum wayland-protocols
+
+  [ Simon McVittie ]
+  * Merge packaging from unstable
+    - d/control: Remove Rules-Requires-Root, no longer necessary since
+      trixie
+    - d/control, d/gbp.conf: revert changes for this branch
+    - d/patches: revert changes for this branch, the patch for #1114144
+      was included in 4.19.4 already
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 06 Sep 2025 20:38:21 +0100
+
 gtk4 (4.20.0+ds-1) experimental; urgency=medium
 
   * New upstream release

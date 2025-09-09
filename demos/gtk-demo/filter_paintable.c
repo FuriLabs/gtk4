@@ -14,10 +14,11 @@ struct _GtkFilterPaintable
   float sepia;
   float invert;
   float rotate;
-  int levels;
-
-  float linear_m;
-  float linear_b;
+  float blur;
+  GskComponentTransfer *red_transfer;
+  GskComponentTransfer *green_transfer;
+  GskComponentTransfer *blue_transfer;
+  GskComponentTransfer *alpha_transfer;
 };
 
 struct _GtkFilterPaintableClass
@@ -33,9 +34,11 @@ enum {
   PROP_SEPIA,
   PROP_INVERT,
   PROP_ROTATE,
-  PROP_LEVELS,
-  PROP_LINEAR_M,
-  PROP_LINEAR_B,
+  PROP_BLUR,
+  PROP_RED_TRANSFER,
+  PROP_GREEN_TRANSFER,
+  PROP_BLUE_TRANSFER,
+  PROP_ALPHA_TRANSFER,
   NUM_PROPERTIES
 };
 
@@ -52,6 +55,9 @@ gtk_filter_paintable_snapshot (GdkPaintable *paintable,
                                double        height)
 {
   GtkFilterPaintable *self = GTK_FILTER_PAINTABLE (paintable);
+  GskComponentTransfer *identity;
+
+  identity = gsk_component_transfer_new_identity ();
 
   if (self->brightness != 1)
     {
@@ -138,37 +144,31 @@ gtk_filter_paintable_snapshot (GdkPaintable *paintable,
       gtk_snapshot_push_color_matrix (snapshot, &matrix, graphene_vec4_zero ());
     }
 
-  if (self->levels != 256)
-    {
-      GskComponentTransfer *levels, *identity;
+  if (!gsk_component_transfer_equal (self->red_transfer, identity) ||
+      !gsk_component_transfer_equal (self->green_transfer, identity) ||
+      !gsk_component_transfer_equal (self->blue_transfer, identity) ||
+      !gsk_component_transfer_equal (self->alpha_transfer, identity))
+    gtk_snapshot_push_component_transfer (snapshot,
+                                          self->red_transfer,
+                                          self->green_transfer,
+                                          self->blue_transfer,
+                                          self->alpha_transfer);
 
-      levels = gsk_component_transfer_new_levels (self->levels);
-      identity = gsk_component_transfer_new_identity ();
-      gtk_snapshot_push_component_transfer (snapshot, levels, levels, levels, identity);
-      gsk_component_transfer_free (levels);
-      gsk_component_transfer_free (identity);
-    }
-
-  if (self->linear_m != 1 || self->linear_b != 0)
-    {
-      GskComponentTransfer *linear, *identity;
-
-      linear = gsk_component_transfer_new_linear (self->linear_m, self->linear_b);
-      identity = gsk_component_transfer_new_identity ();
-      gtk_snapshot_push_component_transfer (snapshot, linear, linear, linear, identity);
-      gsk_component_transfer_free (linear);
-      gsk_component_transfer_free (identity);
-    }
+  if (self->blur != 0)
+    gtk_snapshot_push_blur (snapshot, self->blur);
 
   gtk_snapshot_append_texture (snapshot, self->texture,
                                &GRAPHENE_RECT_INIT (0, 0,
                                                     gdk_texture_get_width (self->texture),
                                                     gdk_texture_get_height (self->texture)));
 
-  if (self->levels != 256)
+  if (self->blur != 0)
     gtk_snapshot_pop (snapshot);
 
-  if (self->linear_m != 1 || self->linear_b != 0)
+  if (!gsk_component_transfer_equal (self->red_transfer, identity) ||
+      !gsk_component_transfer_equal (self->green_transfer, identity) ||
+      !gsk_component_transfer_equal (self->blue_transfer, identity) ||
+      !gsk_component_transfer_equal (self->alpha_transfer, identity))
     gtk_snapshot_pop (snapshot);
 
   if (self->saturation != 1)
@@ -188,6 +188,8 @@ gtk_filter_paintable_snapshot (GdkPaintable *paintable,
 
   if (self->rotate != 0)
     gtk_snapshot_pop (snapshot);
+
+  gsk_component_transfer_free (identity);
 }
 
 static int
@@ -249,14 +251,20 @@ gtk_filter_paintable_get_property (GObject    *object,
     case PROP_ROTATE:
       g_value_set_float (value, self->rotate);
       break;
-    case PROP_LEVELS:
-      g_value_set_uint (value, self->levels);
+    case PROP_BLUR:
+      g_value_set_float (value, self->blur);
       break;
-    case PROP_LINEAR_M:
-      g_value_set_float (value, self->linear_m);
+    case PROP_RED_TRANSFER:
+      g_value_set_boxed (value, self->red_transfer);
       break;
-    case PROP_LINEAR_B:
-      g_value_set_float (value, self->linear_b);
+    case PROP_GREEN_TRANSFER:
+      g_value_set_boxed (value, self->green_transfer);
+      break;
+    case PROP_BLUE_TRANSFER:
+      g_value_set_boxed (value, self->blue_transfer);
+      break;
+    case PROP_ALPHA_TRANSFER:
+      g_value_set_boxed (value, self->alpha_transfer);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -295,14 +303,24 @@ gtk_filter_paintable_set_property (GObject      *object,
     case PROP_ROTATE:
       self->rotate = g_value_get_float (value);
       break;
-    case PROP_LEVELS:
-      self->levels = g_value_get_uint (value);
+    case PROP_BLUR:
+      self->blur = g_value_get_float (value);
       break;
-    case PROP_LINEAR_M:
-      self->linear_m = g_value_get_float (value);
+    case PROP_RED_TRANSFER:
+      gsk_component_transfer_free (self->red_transfer);
+      self->red_transfer = gsk_component_transfer_copy (g_value_get_boxed (value));
       break;
-    case PROP_LINEAR_B:
-      self->linear_b = g_value_get_float (value);
+    case PROP_GREEN_TRANSFER:
+      gsk_component_transfer_free (self->green_transfer);
+      self->green_transfer = gsk_component_transfer_copy (g_value_get_boxed (value));
+      break;
+    case PROP_BLUE_TRANSFER:
+      gsk_component_transfer_free (self->blue_transfer);
+      self->blue_transfer = gsk_component_transfer_copy (g_value_get_boxed (value));
+      break;
+    case PROP_ALPHA_TRANSFER:
+      gsk_component_transfer_free (self->alpha_transfer);
+      self->alpha_transfer = gsk_component_transfer_copy (g_value_get_boxed (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -318,6 +336,10 @@ gtk_filter_paintable_finalize (GObject *object)
   GtkFilterPaintable *self = GTK_FILTER_PAINTABLE (object);
 
   g_object_unref (self->texture);
+  gsk_component_transfer_free (self->red_transfer);
+  gsk_component_transfer_free (self->green_transfer);
+  gsk_component_transfer_free (self->blue_transfer);
+  gsk_component_transfer_free (self->alpha_transfer);
 
   G_OBJECT_CLASS (gtk_filter_paintable_parent_class)->finalize (object);
 }
@@ -335,13 +357,13 @@ gtk_filter_paintable_class_init (GtkFilterPaintableClass *klass)
                                                 GDK_TYPE_TEXTURE,
                                                 G_PARAM_READWRITE);
   props[PROP_BRIGHTNESS] = g_param_spec_float ("brightness", NULL, NULL,
-                                               0, 1, 1,
+                                               0, 2, 1,
                                                G_PARAM_READWRITE);
   props[PROP_CONTRAST]   = g_param_spec_float ("contrast", NULL, NULL,
-                                               0, 1, 1,
+                                               0, 2, 1,
                                                G_PARAM_READWRITE);
   props[PROP_SATURATION] = g_param_spec_float ("saturation", NULL, NULL,
-                                               0, 1, 1,
+                                               0, 2, 1,
                                                G_PARAM_READWRITE);
   props[PROP_SEPIA]      = g_param_spec_float ("sepia", NULL, NULL,
                                                0, 1, 1,
@@ -352,15 +374,21 @@ gtk_filter_paintable_class_init (GtkFilterPaintableClass *klass)
   props[PROP_ROTATE]     = g_param_spec_float ("rotate", NULL, NULL,
                                                0, 360, 0,
                                                G_PARAM_READWRITE);
-  props[PROP_LEVELS]     = g_param_spec_uint  ("levels", NULL, NULL,
-                                               1, 256, 256,
+  props[PROP_BLUR]       = g_param_spec_float ("blur", NULL, NULL,
+                                               0, 50, 0,
                                                G_PARAM_READWRITE);
-  props[PROP_LINEAR_M]   = g_param_spec_float ("linear-m", NULL, NULL,
-                                               0, 4, 1,
-                                               G_PARAM_READWRITE);
-  props[PROP_LINEAR_B]   = g_param_spec_float ("linear-b", NULL, NULL,
-                                               -1, 1, 0,
-                                               G_PARAM_READWRITE);
+  props[PROP_RED_TRANSFER] = g_param_spec_boxed ("red-transfer", NULL, NULL,
+                                                 GSK_TYPE_COMPONENT_TRANSFER,
+                                                 G_PARAM_READWRITE);
+  props[PROP_GREEN_TRANSFER] = g_param_spec_boxed ("green-transfer", NULL, NULL,
+                                                   GSK_TYPE_COMPONENT_TRANSFER,
+                                                   G_PARAM_READWRITE);
+  props[PROP_BLUE_TRANSFER] = g_param_spec_boxed ("blue-transfer", NULL, NULL,
+                                                  GSK_TYPE_COMPONENT_TRANSFER,
+                                                  G_PARAM_READWRITE);
+  props[PROP_ALPHA_TRANSFER] = g_param_spec_boxed ("alpha-transfer", NULL, NULL,
+                                                   GSK_TYPE_COMPONENT_TRANSFER,
+                                                   G_PARAM_READWRITE);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, props);
 }
@@ -369,12 +397,14 @@ static void
 gtk_filter_paintable_init (GtkFilterPaintable *image)
 {
   image->texture = gdk_texture_new_from_resource ("/image_filtering/portland-rose.jpg");
-  image->levels = 256;
   image->brightness = 1;
   image->contrast = 1;
   image->saturation = 1;
   image->invert = 0;
   image->rotate = 0;
-  image->linear_m = 1;
-  image->linear_b = 0;
+
+  image->red_transfer = gsk_component_transfer_new_identity ();
+  image->green_transfer = gsk_component_transfer_new_identity ();
+  image->blue_transfer = gsk_component_transfer_new_identity ();
+  image->alpha_transfer = gsk_component_transfer_new_identity ();
 }

@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.20.0',
+        version: '4.20.1',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -317,6 +317,7 @@ if cc.get_id() == 'msvc'
     '/wd4324', # structure was padded due to alignment specifier - why are you warning about doing what I told you?!
     '/wd4334', # '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
     '/wd4389', # comparison between signed and unsigned (no gcc warning, so GTK's littered with it)
+    '/wd4701', # potentially uninitialized variable - triggers all the time in debug builds
     '/wd4702', # unreachable code, triggers after assert_not_reached() which can be compiled out
   ]
 
@@ -487,7 +488,7 @@ endif
 
 pangocairo_dep    = dependency('pangocairo', version: pango_req)
 pixbuf_dep        = dependency('gdk-pixbuf-2.0', version: gdk_pixbuf_req,
-                               default_options: ['png=enabled', 'jpeg=enabled', 'gif=enabled', 'glycin=disabled', 'builtin_loaders=all', 'man=false'])
+                               default_options: ['png=enabled', 'jpeg=enabled', 'gif=enabled', 'glycin=disabled', 'builtin_loaders=all', 'man=false', 'documentation=false'])
 png_dep           = dependency('libpng', 'png')
 tiff_dep          = dependency('libtiff-4', 'tiff')
 jpeg_dep          = dependency('libjpeg', 'jpeg')
@@ -748,7 +749,7 @@ cloudproviders_dep = dependency('cloudproviders',
   ])
 cdata.set('HAVE_CLOUDPROVIDERS', cloudproviders_dep.found())
 
-accesskit_dep = dependency('accesskit-c-0.15', required: get_option('accesskit').enabled())
+accesskit_dep = dependency('accesskit-c-0.17', required: get_option('accesskit').enabled())
 
 cdata.set('HAVE_ACCESSKIT', accesskit_dep.found())
 

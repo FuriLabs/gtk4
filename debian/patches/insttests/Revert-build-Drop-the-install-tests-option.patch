@@ -21,10 +21,10 @@ This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
  11 files changed, 298 insertions(+), 9 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index e53611e..0febedb 100644
+index 09c1851..07a7036 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -1085,6 +1085,7 @@ summary('Documentation', get_option('documentation'), section: 'Build')
+@@ -1084,6 +1084,7 @@ summary('Documentation', get_option('documentation'), section: 'Build')
  summary('Man pages', get_option('man-pages'), section: 'Build')
  summary('Testsuite', get_option('build-testsuite'), section: 'Build')
  summary('Tests', get_option('build-tests'), section: 'Build')

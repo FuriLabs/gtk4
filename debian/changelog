@@ -1,7 +1,8 @@
-gtk4 (4.20.0+ds-2) UNRELEASED; urgency=medium
+gtk4 (4.20.1+ds-1) UNRELEASED; urgency=medium
 
   [ Jeremy Bícha ]
   * Bump minimum wayland-protocols
+  * New upstream release
 
   [ Simon McVittie ]
   * Merge packaging from unstable
@@ -11,7 +12,7 @@ gtk4 (4.20.0+ds-2) UNRELEASED; urgency=medium
     - d/patches: revert changes for this branch, the patch for #1114144
       was included in 4.19.4 already
 
- -- Simon McVittie <smcv@debian.org>  Sat, 06 Sep 2025 20:38:21 +0100
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 09 Sep 2025 11:20:11 -0400
 
 gtk4 (4.20.0+ds-1) experimental; urgency=medium
 

@@ -1,0 +1,61 @@
+From: Sergio Costas Rodriguez <sergio.costas@canonical.com>
+Date: Fri, 12 Sep 2025 12:19:04 +0200
+Subject: build: Fix gtk4 tests on s390x architecture
+
+There are a number of gtk4 tests (build-time, and again at
+autopkgtest time) that are failing on s390x only when run in
+the combination of an updated mesa package
+(25.0.7-0ubuntu0.24.04.1) in Noble.
+
+The problem seems to be in the GtkWidgetPaintable widget, which
+isn't triggering the "invalidate-contents" signal. This signal
+should be triggered every time the canvas has been repainted,
+and it is used in the tests to know when it is safe to capture
+the rendered picture and compare it with the expected results.
+Setting GSK_RENDERER=cairo uses pure software rendering, and
+makes this work again, so this patch adds a new build option
+that, when enabled, forces CAIRO renderer if no renderer has
+been manually selected, and adds that option when building for
+the s390x architecture.
+
+s390x is not a desktop platform, there are no desktop images for
+it, and gtk4 is not seeded in that architecture. While it would
+be best to fully understand what is making these tests fail,
+it's best to use this workaround for now in that architecture
+only, so that users in other architectures can benefit from the
+mesa and gtk4 updates.
+
+This bug affects not only GTK4 build, but also Gnome Control
+Center build.
+
+Bug-Ubuntu: https://launchpad.net/bugs/2122598
+---
+ debian/rules      | 6 ------
+ gsk/gskrenderer.c | 7 +++++++
+ 2 files changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/gsk/gskrenderer.c b/gsk/gskrenderer.c
+index 0db034e..0575380 100644
+--- a/gsk/gskrenderer.c
++++ b/gsk/gskrenderer.c
+@@ -602,6 +602,9 @@ get_renderer_for_display (GdkSurface *surface)
+ {
+   GdkDisplay *display = gdk_surface_get_display (surface);
+   const char *renderer_name;
++#ifdef __s390x__
++  return G_TYPE_INVALID;
++#endif
+ 
+   renderer_name = g_object_get_data (G_OBJECT (display), "gsk-renderer");
+   return get_renderer_for_name (renderer_name);
+@@ -615,6 +618,10 @@ get_renderer_for_env_var (GdkSurface *surface)
+   if (env_var_type == G_TYPE_NONE)
+     {
+       const char *renderer_name = g_getenv ("GSK_RENDERER");
++#ifdef __s390x__
++      if ((renderer_name == NULL) || (renderer_name[0] == 0))
++        renderer_name = "cairo";
++#endif
+       env_var_type = get_renderer_for_name (renderer_name);
+     }
+ 

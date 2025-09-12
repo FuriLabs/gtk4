@@ -18,6 +18,6 @@ orca-read-keybindings-in-actions.patch
 listbase-Factor-out-item-select-action-activation.patch
 listbase-Select-focus-before-moving-cursor.patch
 a11y-Fix-A11Y-groups.patch
-skip-s390-tests-lp2119291.patch
+# skip-s390-tests-lp2119291.patch
 lp2105946-gtklistbase-Do-not-select-invalid-positions.patch
 build-fix-gtk4-tests-on-s390x-architecture.patch

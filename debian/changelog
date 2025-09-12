@@ -1,3 +1,11 @@
+gtk4 (4.20.1+ds-2) unstable; urgency=medium
+
+  * Cherry-pick 2 bug fixes, one for the cursor in gnome-calculator
+    and one for mobile phone cameras
+  * Release to unstable
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 12 Sep 2025 06:03:46 -0400
+
 gtk4 (4.20.1+ds-1) experimental; urgency=medium
 
   [ Jeremy Bícha ]

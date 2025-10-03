@@ -210,7 +210,7 @@ gdk_x11_surface_update_size (GdkX11Surface *self,
   return TRUE;
 }
 
-static void
+static gboolean
 update_shadow_size (GdkSurface *surface,
                     int         shadow_left,
                     int         shadow_right,
@@ -224,13 +224,15 @@ update_shadow_size (GdkSurface *surface,
   if (impl->shadow_left == shadow_left &&
       impl->shadow_right == shadow_right &&
       impl->shadow_top == shadow_top &&
-      impl->shadow_bottom == shadow_bottom)
-    return;
+      impl->shadow_bottom == shadow_bottom &&
+      impl->shadow_scale == impl->surface_scale)
+    return FALSE;
 
   impl->shadow_left = shadow_left;
   impl->shadow_right = shadow_right;
   impl->shadow_top = shadow_top;
   impl->shadow_bottom = shadow_bottom;
+  impl->shadow_scale = impl->surface_scale;
 
   data[0] = shadow_left * impl->surface_scale;
   data[1] = shadow_right * impl->surface_scale;
@@ -244,6 +246,8 @@ update_shadow_size (GdkSurface *surface,
                    frame_extents, XA_CARDINAL,
                    32, PropModeReplace,
                    (guchar *) &data, 4);
+
+  return TRUE;
 }
 
 #define UPDATE_GEOMETRY TRUE
@@ -260,6 +264,7 @@ compute_toplevel_size (GdkSurface *surface,
   GdkMonitor *monitor;
   GdkToplevelSize size;
   int bounds_width, bounds_height;
+  gboolean shadow_updated = FALSE;
 
   monitor = gdk_display_get_monitor_at_surface (display, surface);
   if (monitor)
@@ -281,11 +286,11 @@ compute_toplevel_size (GdkSurface *surface,
 
   if (size.shadow.is_valid)
     {
-      update_shadow_size (surface,
-                          size.shadow.left,
-                          size.shadow.right,
-                          size.shadow.top,
-                          size.shadow.bottom);
+      shadow_updated = update_shadow_size (surface,
+                                           size.shadow.left,
+                                           size.shadow.right,
+                                           size.shadow.top,
+                                           size.shadow.bottom);
     }
 
   if (update_geometry)
@@ -337,6 +342,12 @@ compute_toplevel_size (GdkSurface *surface,
           impl->last_computed_width = size.width;
           impl->last_computed_height = size.height;
 
+          return TRUE;
+        }
+      if (shadow_updated)
+        {
+          *width = size.width;
+          *height = size.height;
           return TRUE;
         }
     }

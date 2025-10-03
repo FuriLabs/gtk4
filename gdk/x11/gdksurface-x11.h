@@ -72,6 +72,7 @@ struct _GdkX11Surface
   int shadow_right;
   int shadow_top;
   int shadow_bottom;
+  int shadow_scale;
 
   /* Width and height not divided by surface_scale - this matters in the
    * corner-case where the window manager assigns us a size that isn't

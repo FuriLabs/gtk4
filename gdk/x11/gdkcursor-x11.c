@@ -290,8 +290,8 @@ _gdk_x11_display_set_cursor_theme (GdkDisplay  *display,
   GdkX11Screen *x11_screen;
   Display *xdisplay;
   char *old_theme;
-  int real_size;
-  int old_size;
+  int new_physical_size, new_logical_size;
+  int old_physical_size, old_scale;
   gpointer cursor, xcursor;
   GHashTableIter iter;
 
@@ -300,19 +300,29 @@ _gdk_x11_display_set_cursor_theme (GdkDisplay  *display,
   x11_screen = gdk_x11_display_get_screen (display);
   xdisplay = GDK_DISPLAY_XDISPLAY (display);
 
-  real_size = size * x11_screen->surface_scale;
+  old_physical_size = XcursorGetDefaultSize (xdisplay);
+  old_scale = x11_screen->cursor_scale;
+
+  new_logical_size = size;
+
+  /* Find out the logical size of previous cursor, if unset */
+  if (new_logical_size <= 0 && old_scale > 0)
+    new_logical_size = old_physical_size / old_scale;
+
+  new_physical_size = new_logical_size * x11_screen->surface_scale;
 
   old_theme = XcursorGetTheme (xdisplay);
-  old_size = XcursorGetDefaultSize (xdisplay);
 
-  if (old_size == real_size &&
+  if (old_physical_size == new_physical_size &&
       (old_theme == theme ||
        (old_theme && theme && strcmp (old_theme, theme) == 0)))
     return;
 
+  x11_screen->cursor_scale = x11_screen->surface_scale;
+
   XcursorSetTheme (xdisplay, theme);
-  if (real_size > 0)
-    XcursorSetDefaultSize (xdisplay, real_size);
+  if (new_physical_size > 0 && old_physical_size != new_physical_size)
+    XcursorSetDefaultSize (xdisplay, new_physical_size);
 
   if (GDK_X11_DISPLAY (display)->cursors == NULL)
     return;

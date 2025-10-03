@@ -963,6 +963,9 @@ _gdk_x11_screen_set_surface_scale (GdkX11Screen *x11_screen,
 
   /* We re-read the monitor sizes so we can apply the new scale */
   process_monitors_change (x11_screen);
+
+  /* Reload cursor theme with new scale */
+  gdk_x11_display_set_cursor_theme (x11_screen->display, NULL, 0);
 }
 
 static void

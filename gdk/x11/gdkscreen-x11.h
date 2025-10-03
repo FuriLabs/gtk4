@@ -40,6 +40,8 @@ struct _GdkX11Screen
   int surface_scale;
   gboolean fixed_surface_scale;
 
+  int cursor_scale;
+
   /* Xft resources for the display, used for default values for
    * the Xft/ XSETTINGS
    */

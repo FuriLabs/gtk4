@@ -35,6 +35,8 @@
 #include "gtkatspiutilsprivate.h"
 #include "gtkatspivalueprivate.h"
 #include "gtkatspicomponentprivate.h"
+#include "gtkatspihypertextprivate.h"
+#include "gtkatspihyperlinkprivate.h"
 #include "a11y/atspi/atspi-accessible.h"
 #include "a11y/atspi/atspi-action.h"
 #include "a11y/atspi/atspi-editabletext.h"
@@ -42,6 +44,8 @@
 #include "a11y/atspi/atspi-value.h"
 #include "a11y/atspi/atspi-selection.h"
 #include "a11y/atspi/atspi-component.h"
+#include "a11y/atspi/atspi-hyperlink.h"
+#include "a11y/atspi/atspi-hypertext.h"
 
 #include "gtkdebug.h"
 #include "gtkprivate.h"
@@ -535,6 +539,14 @@ handle_accessible_method (GDBusConnection       *connection,
       g_variant_builder_open (&builder, G_VARIANT_TYPE ("a{ss}"));
       g_variant_builder_add (&builder, "{ss}", "toolkit", "GTK");
 
+      if (gtk_at_context_has_accessible_property (GTK_AT_CONTEXT (self), GTK_ACCESSIBLE_PROPERTY_VALUE_TEXT))
+        {
+          GtkAccessibleValue *value = gtk_at_context_get_accessible_property (GTK_AT_CONTEXT (self),
+                                                                              GTK_ACCESSIBLE_PROPERTY_VALUE_TEXT);
+          g_variant_builder_add (&builder, "{ss}",
+                                 "valuetext", gtk_string_accessible_value_get (value));
+        }
+
       if (gtk_at_context_has_accessible_property (GTK_AT_CONTEXT (self), GTK_ACCESSIBLE_PROPERTY_LEVEL))
         {
           GtkAccessibleValue *value = gtk_at_context_get_accessible_property (GTK_AT_CONTEXT (self),
@@ -570,6 +582,26 @@ handle_accessible_method (GDBusConnection       *connection,
 
           g_variant_builder_add (&builder, "{ss}",
                                  "rowindextext", gtk_string_accessible_value_get (value));
+        }
+
+      if (gtk_at_context_has_accessible_relation (GTK_AT_CONTEXT (self), GTK_ACCESSIBLE_RELATION_POS_IN_SET))
+        {
+          GtkAccessibleValue *value = gtk_at_context_get_accessible_relation (GTK_AT_CONTEXT (self),
+                                                                              GTK_ACCESSIBLE_RELATION_POS_IN_SET);
+
+          char *pos = g_strdup_printf ("%d", gtk_int_accessible_value_get (value));
+          g_variant_builder_add (&builder, "{ss}", "posinset", pos);
+          g_free (pos);
+        }
+
+      if (gtk_at_context_has_accessible_relation (GTK_AT_CONTEXT (self), GTK_ACCESSIBLE_RELATION_SET_SIZE))
+        {
+          GtkAccessibleValue *value = gtk_at_context_get_accessible_relation (GTK_AT_CONTEXT (self),
+                                                                              GTK_ACCESSIBLE_RELATION_SET_SIZE);
+
+          char *size = g_strdup_printf ("%d", gtk_int_accessible_value_get (value));
+          g_variant_builder_add (&builder, "{ss}", "setsize", size);
+          g_free (size);
         }
 
       if (gtk_at_context_has_accessible_property (GTK_AT_CONTEXT (self), GTK_ACCESSIBLE_PROPERTY_KEY_SHORTCUTS) ||
@@ -1426,6 +1458,36 @@ gtk_at_spi_context_register_object (GtkAtSpiContext *self)
         g_dbus_connection_register_object (self->connection,
                                            self->context_path,
                                            (GDBusInterfaceInfo *) &atspi_action_interface,
+                                           vtable,
+                                           self,
+                                           NULL,
+                                           NULL);
+      self->n_registered_objects++;
+    }
+
+  vtable = gtk_atspi_get_hypertext_vtable (accessible);
+  if (vtable)
+    {
+      g_variant_builder_add (&interfaces, "s", atspi_hypertext_interface.name);
+      self->registration_ids[self->n_registered_objects] =
+        g_dbus_connection_register_object (self->connection,
+                                           self->context_path,
+                                           (GDBusInterfaceInfo *) &atspi_hypertext_interface,
+                                           vtable,
+                                           self,
+                                           NULL,
+                                           NULL);
+      self->n_registered_objects++;
+    }
+
+  vtable = gtk_atspi_get_hyperlink_vtable (accessible);
+  if (vtable)
+    {
+      g_variant_builder_add (&interfaces, "s", atspi_hyperlink_interface.name);
+      self->registration_ids[self->n_registered_objects] =
+        g_dbus_connection_register_object (self->connection,
+                                           self->context_path,
+                                           (GDBusInterfaceInfo *) &atspi_hyperlink_interface,
                                            vtable,
                                            self,
                                            NULL,

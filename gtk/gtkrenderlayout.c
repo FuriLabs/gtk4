@@ -61,42 +61,45 @@ gtk_css_style_snapshot_layout (GtkCssBoxes *boxes,
 
   if (!gtk_css_shadow_value_is_clear (style->used->text_shadow))
     {
-      graphene_point_t offset;
-      GdkColor color;
-      double radius;
-
-      gtk_css_shadow_value_get_offset (style->used->text_shadow, 0, &offset);
-      gtk_css_shadow_value_get_color (style->used->text_shadow, 0, &color);
-      radius = gtk_css_shadow_value_get_radius (style->used->text_shadow, 0);
-
-      gtk_snapshot_save (snapshot);
-      gtk_snapshot_translate (snapshot, &offset);
-
-      if (radius != 0)
-        gtk_snapshot_push_blur (snapshot, radius);
-
-      if (gtk_pango_layout_has_color_glyphs (layout))
+      for (guint i = 0; i < gtk_css_shadow_value_get_n_shadows (style->used->text_shadow); i++)
         {
-          GdkColor black = GDK_COLOR_SRGB (0, 0, 0, 1);
-          graphene_rect_t bounds;
+          graphene_point_t offset;
+          GdkColor color;
+          double radius;
 
-          get_text_bounds (layout, &bounds);
-          gtk_snapshot_push_mask (snapshot, GSK_MASK_MODE_ALPHA);
-          gtk_snapshot_add_layout (snapshot, layout, &black);
-          gtk_snapshot_pop (snapshot);
-          gtk_snapshot_add_color (snapshot, &color, &bounds);
-          gtk_snapshot_pop (snapshot);
-          gdk_color_finish (&black);
+          gtk_css_shadow_value_get_offset (style->used->text_shadow, i, &offset);
+          gtk_css_shadow_value_get_color (style->used->text_shadow, i, &color);
+          radius = gtk_css_shadow_value_get_radius (style->used->text_shadow, i);
+
+          gtk_snapshot_save (snapshot);
+          gtk_snapshot_translate (snapshot, &offset);
+
+          if (radius != 0)
+            gtk_snapshot_push_blur (snapshot, radius);
+
+          if (gtk_pango_layout_has_color_glyphs (layout))
+            {
+              GdkColor black = GDK_COLOR_SRGB (0, 0, 0, 1);
+              graphene_rect_t bounds;
+
+              get_text_bounds (layout, &bounds);
+              gtk_snapshot_push_mask (snapshot, GSK_MASK_MODE_ALPHA);
+              gtk_snapshot_add_layout (snapshot, layout, &black);
+              gtk_snapshot_pop (snapshot);
+              gtk_snapshot_add_color (snapshot, &color, &bounds);
+              gtk_snapshot_pop (snapshot);
+              gdk_color_finish (&black);
+            }
+          else
+            {
+              gtk_snapshot_add_layout (snapshot, layout, &color);
+            }
+
+          if (radius != 0)
+            gtk_snapshot_pop (snapshot);
+
+          gtk_snapshot_restore (snapshot);
         }
-      else
-        {
-          gtk_snapshot_add_layout (snapshot, layout, &color);
-        }
-
-      if (radius != 0)
-        gtk_snapshot_pop (snapshot);
-
-      gtk_snapshot_restore (snapshot);
     }
 
   gtk_snapshot_add_layout (snapshot, layout, &text_color);
@@ -290,6 +293,7 @@ gtk_css_style_snapshot_caret (GtkCssBoxes    *boxes,
   GdkSeat *seat;
   PangoDirection keyboard_direction;
   PangoDirection direction2;
+  gboolean width_was_zero;
 
   g_object_get (gtk_settings_get_for_display (display),
                 "gtk-split-cursor", &split_cursor,
@@ -307,8 +311,19 @@ gtk_css_style_snapshot_caret (GtkCssBoxes    *boxes,
     }
 
   pango_layout_get_caret_pos (layout, index, &strong_pos, &weak_pos);
+
+  /* We special-case a width of zero here, because we don't want
+   * an upright cursor go sloped due to rounding.
+   */
+  width_was_zero = strong_pos.width == 0;
   pango_extents_to_pixels (&strong_pos, NULL);
+  if (width_was_zero)
+    strong_pos.width = 0;
+
+  width_was_zero = weak_pos.width == 0;
   pango_extents_to_pixels (&weak_pos, NULL);
+  if (width_was_zero)
+    weak_pos.width = 0;
 
   direction2 = PANGO_DIRECTION_NEUTRAL;
   cursor2 = NULL; /* poor MSVC */

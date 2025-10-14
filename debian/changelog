@@ -1,8 +1,10 @@
-gtk4 (4.20.2+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.20.2+ds-1) unstable; urgency=medium
 
   * New upstream release
+  * Remove 2 patches applied in new release
+  * debian/watch: Only watch for stable releases
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 13 Oct 2025 19:40:35 -0400
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 13 Oct 2025 21:51:42 -0400
 
 gtk4 (4.20.1+ds-2) unstable; urgency=medium
 

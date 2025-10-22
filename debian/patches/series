@@ -21,3 +21,6 @@ a11y-Fix-A11Y-groups.patch
 # skip-s390-tests-lp2119291.patch
 lp2105946-gtklistbase-Do-not-select-invalid-positions.patch
 build-fix-gtk4-tests-on-s390x-architecture.patch
+x11-touch/xi2-Start-drag-grab-with-pointer-only-event-mask.patch
+x11-touch/xi2-Do-not-discard-emulated-pointer-events-during-drag-an.patch
+x11-touch/xi2-Expose-a-logical-touch-device.patch

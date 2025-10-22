@@ -1,0 +1,36 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Thu, 25 Sep 2025 13:47:37 +0200
+Subject: xi2: Start drag grab with pointer-only event mask
+
+For a touch drag we prefer usin the emulated pointer events. Indeed,
+gdk_x11_drag_handle_event ignores any native touch events.
+
+However, the initial device grab was created with an event mask that still
+allowed touch events, so the server would keep sending native touch events
+while the application would stop responding to touch events.
+
+The device grab added in gdk_x11_drag_update_cursor would correctly set an
+event mask for pointer-only events, but we stop handling inputs before ever
+reaching that point.
+
+We thus change the initial grab event mask to only accept pointer events.
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/8951
+Bug-Ubuntu: https://launchpad.net/bugs/2125309
+---
+ gdk/x11/gdkdrag-x11.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gdk/x11/gdkdrag-x11.c b/gdk/x11/gdkdrag-x11.c
+index 39f3cd7..ccbd1dc 100644
+--- a/gdk/x11/gdkdrag-x11.c
++++ b/gdk/x11/gdkdrag-x11.c
+@@ -1836,7 +1836,7 @@ drag_grab (GdkDrag *drag)
+ 
+   seat = gdk_device_get_seat (gdk_drag_get_device (drag));
+ 
+-  capabilities = GDK_SEAT_CAPABILITY_ALL_POINTING;
++  capabilities = GDK_SEAT_CAPABILITY_POINTER;
+ 
+   cursor = gdk_drag_get_cursor (drag, x11_drag->current_action);
+   g_set_object (&x11_drag->cursor, cursor);

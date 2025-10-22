@@ -1,0 +1,52 @@
+From: =?utf-8?b?IllhbyBXZWkgKOmtj+mKmOW7tyki?= <yao.wei@canonical.com>
+Date: Fri, 3 Oct 2025 17:54:30 +0800
+Subject: gdk/x11: fixes window extent glitch when changing scale
+
+Because update_shadow_size is not updated since the logical size of
+shadow is not changed, the shadow is glitched out, and the position
+of the extent is way off.
+
+This makes sure that the shadow size is recalculated when the scale
+is changed.
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9017
+Bug: https://gitlab.gnome.org/GNOME/gtk/issues/7805
+Bug-Ubuntu: https://launchpad.net/bugs/1924689
+---
+ gdk/x11/gdksurface-x11.c | 4 +++-
+ gdk/x11/gdksurface-x11.h | 1 +
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/gdk/x11/gdksurface-x11.c b/gdk/x11/gdksurface-x11.c
+index fc0cb85..1f36535 100644
+--- a/gdk/x11/gdksurface-x11.c
++++ b/gdk/x11/gdksurface-x11.c
+@@ -220,13 +220,15 @@ update_shadow_size (GdkSurface *surface,
+   if (impl->shadow_left == shadow_left &&
+       impl->shadow_right == shadow_right &&
+       impl->shadow_top == shadow_top &&
+-      impl->shadow_bottom == shadow_bottom)
++      impl->shadow_bottom == shadow_bottom &&
++      impl->shadow_scale == impl->surface_scale)
+     return;
+ 
+   impl->shadow_left = shadow_left;
+   impl->shadow_right = shadow_right;
+   impl->shadow_top = shadow_top;
+   impl->shadow_bottom = shadow_bottom;
++  impl->shadow_scale = impl->surface_scale;
+ 
+   data[0] = shadow_left * impl->surface_scale;
+   data[1] = shadow_right * impl->surface_scale;
+diff --git a/gdk/x11/gdksurface-x11.h b/gdk/x11/gdksurface-x11.h
+index 150920d..ebbbfdc 100644
+--- a/gdk/x11/gdksurface-x11.h
++++ b/gdk/x11/gdksurface-x11.h
+@@ -69,6 +69,7 @@ struct _GdkX11Surface
+   int shadow_right;
+   int shadow_top;
+   int shadow_bottom;
++  int shadow_scale;
+ 
+   /* Width and height not divided by surface_scale - this matters in the
+    * corner-case where the window manager assigns us a size that isn't

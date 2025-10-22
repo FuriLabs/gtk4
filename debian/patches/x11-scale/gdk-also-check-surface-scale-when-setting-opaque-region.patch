@@ -1,0 +1,53 @@
+From: =?utf-8?b?IllhbyBXZWkgKOmtj+mKmOW7tyki?= <yao.wei@canonical.com>
+Date: Tue, 7 Oct 2025 11:31:53 +0800
+Subject: gdk: also check surface scale when setting opaque region
+
+Since in x11 backend the opaque region is related to scale, it is
+necessary to track whether the scale is different so the opaque region
+can be updated without changing the logical size.
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9017
+Bug: https://gitlab.gnome.org/GNOME/gtk/issues/7805
+Bug-Ubuntu: https://launchpad.net/bugs/1924689
+---
+ gdk/gdksurface.c        | 8 +++++++-
+ gdk/gdksurfaceprivate.h | 1 +
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/gdk/gdksurface.c b/gdk/gdksurface.c
+index f2bfa00..740523e 100644
+--- a/gdk/gdksurface.c
++++ b/gdk/gdksurface.c
+@@ -2622,13 +2622,19 @@ gdk_surface_set_opaque_region (GdkSurface      *surface,
+                                cairo_region_t *region)
+ {
+   GdkSurfaceClass *class;
++  int current_scale;
+ 
+   g_return_if_fail (GDK_IS_SURFACE (surface));
+   g_return_if_fail (!GDK_SURFACE_DESTROYED (surface));
+ 
+-  if (cairo_region_equal (surface->opaque_region, region))
++  current_scale = gdk_surface_get_scale (surface);
++
++  if (cairo_region_equal (surface->opaque_region, region) &&
++      surface->opaque_region_scale == current_scale)
+     return;
+ 
++  surface->opaque_region_scale = current_scale;
++
+   g_clear_pointer (&surface->opaque_region, cairo_region_destroy);
+ 
+   if (region != NULL)
+diff --git a/gdk/gdksurfaceprivate.h b/gdk/gdksurfaceprivate.h
+index d06ba31..7c4d623 100644
+--- a/gdk/gdksurfaceprivate.h
++++ b/gdk/gdksurfaceprivate.h
+@@ -95,6 +95,7 @@ struct _GdkSurface
+   GdkDrawContext *paint_context;
+ 
+   cairo_region_t *opaque_region;
++  int opaque_region_scale;
+ 
+   GdkSeat *current_shortcuts_inhibited_seat;
+ 

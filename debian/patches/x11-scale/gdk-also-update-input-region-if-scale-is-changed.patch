@@ -1,0 +1,51 @@
+From: =?utf-8?b?IllhbyBXZWkgKOmtj+mKmOW7tyki?= <yao.wei@canonical.com>
+Date: Tue, 7 Oct 2025 14:41:32 +0800
+Subject: gdk: also update input region if scale is changed
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9017
+Bug: https://gitlab.gnome.org/GNOME/gtk/issues/7805
+Bug-Ubuntu: https://launchpad.net/bugs/1924689
+---
+ gdk/gdksurface.c        | 9 ++++++++-
+ gdk/gdksurfaceprivate.h | 1 +
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/gdk/gdksurface.c b/gdk/gdksurface.c
+index 740523e..281823e 100644
+--- a/gdk/gdksurface.c
++++ b/gdk/gdksurface.c
+@@ -2072,14 +2072,21 @@ void
+ gdk_surface_set_input_region (GdkSurface     *surface,
+                               cairo_region_t *region)
+ {
++  int current_scale;
++
+   g_return_if_fail (GDK_IS_SURFACE (surface));
+ 
++  current_scale = gdk_surface_get_scale (surface);
++
+   if (GDK_SURFACE_DESTROYED (surface))
+     return;
+ 
+-  if (cairo_region_equal (surface->input_region, region))
++  if (cairo_region_equal (surface->input_region, region) &&
++      surface->input_region_scale == current_scale)
+     return;
+ 
++  surface->input_region_scale = current_scale;
++
+   if (surface->input_region)
+     cairo_region_destroy (surface->input_region);
+ 
+diff --git a/gdk/gdksurfaceprivate.h b/gdk/gdksurfaceprivate.h
+index 7c4d623..04ca620 100644
+--- a/gdk/gdksurfaceprivate.h
++++ b/gdk/gdksurfaceprivate.h
+@@ -86,6 +86,7 @@ struct _GdkSurface
+   GHashTable *device_cursor;
+ 
+   cairo_region_t *input_region;
++  int input_region_scale;
+ 
+   GList *devices_inside;
+ 

@@ -282,6 +282,7 @@ skipped_suites += docs
 ifneq ($(filter mips% powerpc sparc%,$(DEB_HOST_ARCH_CPU)),)
 $(info Disabling use of llvmpipe on this CPU)
 export GALLIUM_DRIVER=softpipe
+export DRAW_USE_LLVM=0
 # https://bugs.debian.org/1077178
 ignore_reftests += label-shadows
 # These succeed with llvmpipe, but fail with softpipe

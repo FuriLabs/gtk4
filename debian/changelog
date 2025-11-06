@@ -1,3 +1,9 @@
+gtk4 (4.14.5+ds-0ubuntu0.7) noble; urgency=medium
+
+  * Fix touchscreen issues on Xorg (LP: #2051886, #2119066, #2119065, #2125309)
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 06 Nov 2025 10:01:54 +0100
+
 gtk4 (4.14.5+ds-0ubuntu0.6) noble; urgency=medium
 
   [ Sergio Costas Rodriguez ]

@@ -1,8 +1,13 @@
-gtk4 (4.20.3+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.20.3+ds-1) unstable; urgency=medium
 
   * New upstream release
+  * missing-sources: Update emojibase
+  * missing-sources: Update emoji files to 17.0
+  * Remove sparc64 patch: applied in new release
+  * Remove references to armel & mips since they aren't Debian architectures
+    any more
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 20 Nov 2025 10:23:14 -0500
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 20 Nov 2025 11:29:22 -0500
 
 gtk4 (4.20.2+ds-2) unstable; urgency=medium
 

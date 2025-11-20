@@ -112,7 +112,7 @@ configure_flags_deb += -Dvulkan=disabled
 configure_flags_deb += -Dwayland-backend=false
 endif
 
-ifneq (,$(filter amd64 arm64 armel armhf i386 mips64el ppc64el riscv64 s390x hppa loong64 powerpc ppc64 sh4,$(DEB_HOST_ARCH)))
+ifneq (,$(filter amd64 arm64 armhf i386 ppc64el riscv64 s390x hppa loong64 powerpc ppc64 sh4,$(DEB_HOST_ARCH)))
 configure_flags_deb += -Dsysprof=enabled
 else
 configure_flags_deb += -Dsysprof=disabled
@@ -216,7 +216,7 @@ ifeq (linux,$(DEB_HOST_ARCH_OS))
 	test_backends += wayland
 endif
 
-ifneq ($(filter arm hppa mips% sparc%,$(DEB_HOST_ARCH_CPU)),)
+ifneq ($(filter arm hppa% sparc%,$(DEB_HOST_ARCH_CPU)),)
 $(info Slow architecture detected, increasing test timeout)
 test_timeout_multiplier = 10
 endif
@@ -276,10 +276,9 @@ skipped_suites = \
 # The doc-check tests aren't passing yet
 skipped_suites += docs
 
-# mips*: many tests segfault as of 2024-09-16, see also https://bugs.debian.org/993550
 # powerpc: "LLVM ERROR: Relocation type not implemented yet!" as of 2024-09-16, https://bugs.debian.org/1081947
 # sparc*: "Target has no JIT support" as of 2024-09-16, https://bugs.debian.org/1081943
-ifneq ($(filter mips% powerpc sparc%,$(DEB_HOST_ARCH_CPU)),)
+ifneq ($(filter powerpc sparc%,$(DEB_HOST_ARCH_CPU)),)
 $(info Disabling use of llvmpipe on this CPU)
 export GALLIUM_DRIVER=softpipe
 export DRAW_USE_LLVM=0

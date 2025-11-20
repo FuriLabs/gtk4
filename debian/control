@@ -44,9 +44,9 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libpango1.0-dev (>= 1.56.0),
                libpng-dev (>= 1.6.46-2~),
                libpolkit-gobject-1-dev [linux-any],
-               librsvg2-common [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32] <!nocheck>,
-               librsvg2-dev (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
-               libsysprof-capture-4-dev (>= 3.40.1) [amd64 arm64 armel armhf i386 mips64el ppc64el riscv64 s390x hppa loong64 powerpc ppc64 sh4],
+               librsvg2-common [amd64 arm64 armhf i386 loong64 ppc64el s390x powerpc ppc64 riscv64 sparc64 x32] <!nocheck>,
+               librsvg2-dev (>= 2.52.0) [amd64 arm64 armhf i386 loong64 ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
+               libsysprof-capture-4-dev (>= 3.40.1) [amd64 arm64 armhf i386 ppc64el riscv64 s390x hppa loong64 powerpc ppc64 sh4],
                libtiff-dev,
                libvulkan-dev [linux-any],
                libwayland-dev (>= 1.24.0) [linux-any],
@@ -230,7 +230,7 @@ Depends: ${misc:Depends},
          ${shlibs:Depends},
          libgtk-4-1 (= ${binary:Version})
 Recommends: fonts-cantarell,
-            librsvg2-common (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
+            librsvg2-common (>= 2.52.0) [amd64 arm64 armhf i386 loong64 ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
 Description: example files for GTK 4
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable
@@ -245,7 +245,7 @@ Build-Profiles: <!noinsttest>
 Section: x11
 Architecture: any
 Depends: iso-codes,
-         librsvg2-common (>= 2.52.0) [amd64 arm64 armel armhf i386 loong64 mips64el ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
+         librsvg2-common (>= 2.52.0) [amd64 arm64 armhf i386 loong64 ppc64el s390x powerpc ppc64 riscv64 sparc64 x32],
          ${misc:Depends},
          ${shlibs:Depends},
          libgtk-4-1 (= ${binary:Version}),

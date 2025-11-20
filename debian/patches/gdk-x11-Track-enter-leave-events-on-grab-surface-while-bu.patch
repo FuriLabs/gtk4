@@ -1,0 +1,34 @@
+From: gldrk <me@rarity.fan>
+Date: Sat, 7 Oct 2023 02:59:51 +0300
+Subject: gdk/x11: Track enter/leave events on grab surface while button is
+ held
+
+The X11 backend suppresses normal cross-window motion events while
+an implicit grab is active.  This intentional behavior conflicts
+with the pointer tracking logic introduced in e7f798dc in order
+to detect external clicks emitted for a grabbed pointer.  Update
+internal surface state before dismissing the event.
+
+Origin: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/6462
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/5712
+Bug-Ubuntu: https://launchpad.net/bugs/2130304
+---
+ gdk/x11/gdkdevicemanager-xi2.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/gdk/x11/gdkdevicemanager-xi2.c b/gdk/x11/gdkdevicemanager-xi2.c
+index ee100d9..28a28f3 100644
+--- a/gdk/x11/gdkdevicemanager-xi2.c
++++ b/gdk/x11/gdkdevicemanager-xi2.c
+@@ -2156,7 +2156,10 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
+         if (xev->mode == XINotifyNormal &&
+             (state & (GDK_BUTTON1_MASK | GDK_BUTTON2_MASK | GDK_BUTTON3_MASK |
+                       GDK_BUTTON4_MASK | GDK_BUTTON5_MASK)))
+-          break;
++          {
++            surface->has_pointer = ev->evtype == XI_Enter;
++            break;
++          }
+ 
+         if (ev->evtype == XI_Enter &&
+             xev->detail != XINotifyInferior && xev->mode != XINotifyPassiveUngrab &&

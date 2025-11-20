@@ -30,3 +30,4 @@ x11-scale/gdk-also-check-surface-scale-when-setting-opaque-region.patch
 x11-scale/gdk-also-update-input-region-if-scale-is-changed.patch
 x11-scale/gdk-x11-push-dimensions-if-shadow-size-is-updated.patch
 x11-scale/gdk-wrap-scale-checking-code-with-X11-macros-and-checks.patch
+gdk-x11-Track-enter-leave-events-on-grab-surface-while-bu.patch

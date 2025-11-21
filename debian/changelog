@@ -1,3 +1,9 @@
+gtk4 (4.20.3+ds-2) unstable; urgency=medium
+
+  * Cherry-pick 2 patches to fix 32-bit issues
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 21 Nov 2025 09:46:28 -0500
+
 gtk4 (4.20.3+ds-1) unstable; urgency=medium
 
   * New upstream release

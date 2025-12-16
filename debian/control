@@ -97,6 +97,7 @@ Provides: ${gtk:Provides},
           libgtk-4-media-gstreamer (= ${binary:Version}),
 Recommends: ${local:Recommends},
             libgtk-4-bin,
+            ibus-gtk4,
             iso-codes,
             librsvg2-common (>= 2.48),
 Suggests: gvfs

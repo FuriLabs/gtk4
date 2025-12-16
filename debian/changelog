@@ -1,3 +1,13 @@
+gtk4 (4.20.3+ds-3) unstable; urgency=medium
+
+  * libgtk-4-1: Add Recommends: ibus-gtk4 (Closes: #1115532)
+  * Require librsvg >= 2.48 on all architectures
+  * Remove unnecessary Priority: optional field
+  * Remove unnecessary dh_gnome_clean override
+  * Add dh_gnome override to avoid build log warnings
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 16 Dec 2025 10:55:46 -0500
+
 gtk4 (4.20.3+ds-2) unstable; urgency=medium
 
   * Cherry-pick 2 patches to fix 32-bit issues

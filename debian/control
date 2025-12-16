@@ -165,8 +165,7 @@ Package: libgtk-4-dev
 Section: libdevel
 Architecture: any
 Multi-Arch: same
-Depends: gir1.2-gtk-4.0 (= ${binary:Version}),
-         libcairo2-dev (>= 1.18.2),
+Depends: libcairo2-dev (>= 1.18.2),
          libegl1-mesa-dev [linux-any],
          libepoxy-dev (>= 1.0),
          libfontconfig-dev,
@@ -190,7 +189,6 @@ Depends: gir1.2-gtk-4.0 (= ${binary:Version}),
          wayland-protocols (>= 1.44) [linux-any],
          ${gir:Depends},
          ${misc:Depends},
-         ${shlibs:Depends},
          libgtk-4-common,
          libgtk-4-1 (= ${binary:Version})
 Suggests: libgtk-4-doc,
@@ -266,7 +264,6 @@ Architecture: any
 Multi-Arch: same
 Depends: ${gir:Depends},
          ${misc:Depends},
-         ${shlibs:Depends},
          libgtk-4-common
 Provides: ${gir:Provides},
 Description: GTK graphical user interface library -- gir bindings

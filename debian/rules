@@ -413,5 +413,3 @@ ifneq ($(filter %-udeb,$(built_binaries)),)
 		-Vgtk:Provides=gtk$(APIVER)-binver-$(GTK_BINARY_VERSION)
 endif
 	dh_gencontrol --remaining-packages
-
-override_dh_gnome_clean:

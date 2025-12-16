@@ -1,6 +1,5 @@
 Source: gtk4
 Section: libs
-Priority: optional
 Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
 Uploaders: Simon McVittie <smcv@debian.org>, Amin Bandali <bandali@ubuntu.com>, Jeremy Bícha <jbicha@ubuntu.com>
 Build-Depends: adwaita-icon-theme <!nocheck>,

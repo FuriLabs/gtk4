@@ -125,6 +125,8 @@ struct _GdkSurfaceClass
                                          double          *x,
                                          double          *y,
                                          GdkModifierType *mask);
+  gboolean     (* should_set_input_region) (GdkSurface      *surface,
+                                            cairo_region_t  *shape_region);
   void         (* set_input_region)     (GdkSurface      *surface,
                                          cairo_region_t  *shape_region);
 
@@ -158,6 +160,12 @@ struct _GdkSurfaceClass
                                            guint           *out_width,
                                            guint           *out_height);
 
+  gboolean     (* should_set_opaque_region) (GdkSurface      *surface,
+                                             cairo_region_t  *orig_region,
+                                             cairo_region_t  *region);
+  gboolean     (* should_set_opaque_rect) (GdkSurface      *surface,
+                                             cairo_rectangle_int_t  *orig_rect,
+                                             cairo_rectangle_int_t  *rect);
   void         (* set_opaque_region)      (GdkSurface      *surface,
                                            cairo_region_t *region);
   void         (* request_layout)         (GdkSurface     *surface);
@@ -357,5 +365,17 @@ void                    gdk_surface_set_color_state                     (GdkSurf
 void                    gdk_surface_set_attached_context                (GdkSurface             *self,
                                                                          GdkDrawContext         *context);
 GdkDrawContext *        gdk_surface_get_attached_context                (GdkSurface             *self);
+
+gboolean   gdk_surface_real_should_set_input_region (GdkSurface     *surface,
+                                                     cairo_region_t *region);
+
+gboolean   gdk_surface_real_should_set_opaque_region (GdkSurface *surface,
+                                                      cairo_region_t *orig_region,
+                                                      cairo_region_t *region);
+
+gboolean   gdk_surface_real_should_set_opaque_rect (GdkSurface *surface,
+                                                    cairo_rectangle_int_t *orig_rect,
+                                                    cairo_rectangle_int_t *rect);
+
 
 G_END_DECLS

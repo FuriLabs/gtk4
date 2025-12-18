@@ -65,6 +65,9 @@ struct _GdkX11Surface
 
   int surface_scale;
 
+  int opaque_region_scale;
+  int input_region_scale;
+
   int shadow_left;
   int shadow_right;
   int shadow_top;

@@ -2982,6 +2982,21 @@ gdk_x11_surface_get_device_state (GdkSurface     *surface,
   return *x >= 0 && *y >= 0 && *x < surface->width && *y < surface->height;
 }
 
+static gboolean
+gdk_x11_surface_should_set_input_region (GdkSurface *surface,
+                                         cairo_region_t *region)
+{
+  GdkX11Surface *impl = GDK_X11_SURFACE (surface);
+
+  if (!cairo_region_equal (surface->input_region, region))
+    return TRUE;
+
+  if (impl->input_region_scale != impl->surface_scale)
+    return TRUE;
+
+  return FALSE;
+}
+
 static void 
 gdk_x11_surface_set_input_region (GdkSurface     *surface,
                                   cairo_region_t *input_region)
@@ -2994,6 +3009,8 @@ gdk_x11_surface_set_input_region (GdkSurface     *surface,
 
   if (!gdk_display_supports_input_shapes (GDK_SURFACE_DISPLAY (surface)))
     return;
+
+  impl->input_region_scale = impl->surface_scale;
 
   if (input_region == NULL)
     {
@@ -4751,6 +4768,38 @@ gdk_x11_surface_set_frame_sync_enabled (GdkSurface *surface,
   GDK_X11_SURFACE (surface)->frame_sync_enabled = FALSE;
 }
 
+static gboolean
+gdk_x11_surface_should_set_opaque_region (GdkSurface *surface,
+                                          cairo_region_t *orig_region,
+                                          cairo_region_t *region)
+{
+  GdkX11Surface *impl = GDK_X11_SURFACE (surface);
+
+  if (!cairo_region_equal (orig_region, region))
+    return TRUE;
+
+  if (impl->opaque_region_scale != impl->surface_scale)
+    return TRUE;
+
+  return FALSE;
+}
+
+static gboolean
+gdk_x11_surface_should_set_opaque_rect (GdkSurface *surface,
+                                        cairo_rectangle_int_t *orig_rect,
+                                        cairo_rectangle_int_t *rect)
+{
+  GdkX11Surface *impl = GDK_X11_SURFACE (surface);
+
+  if (!gdk_rectangle_equal (orig_rect, rect))
+    return TRUE;
+
+  if (impl->opaque_region_scale != impl->surface_scale)
+    return TRUE;
+
+  return FALSE;
+}
+
 static void
 gdk_x11_surface_set_opaque_region (GdkSurface      *surface,
                                   cairo_region_t *region)
@@ -4762,6 +4811,8 @@ gdk_x11_surface_set_opaque_region (GdkSurface      *surface,
 
   if (GDK_SURFACE_DESTROYED (surface))
     return;
+
+  impl->opaque_region_scale = impl->surface_scale;
 
   if (region != NULL)
     {
@@ -4863,6 +4914,7 @@ gdk_x11_surface_class_init (GdkX11SurfaceClass *klass)
   impl_class->get_geometry = gdk_x11_surface_get_geometry;
   impl_class->get_root_coords = gdk_x11_surface_get_root_coords;
   impl_class->get_device_state = gdk_x11_surface_get_device_state;
+  impl_class->should_set_input_region = gdk_x11_surface_should_set_input_region;
   impl_class->set_input_region = gdk_x11_surface_set_input_region;
   impl_class->destroy = gdk_x11_surface_destroy;
   impl_class->beep = gdk_x11_surface_beep;
@@ -4870,6 +4922,8 @@ gdk_x11_surface_class_init (GdkX11SurfaceClass *klass)
   impl_class->destroy_notify = gdk_x11_surface_destroy_notify;
   impl_class->drag_begin = _gdk_x11_surface_drag_begin;
   impl_class->get_scale = gdk_x11_surface_get_scale;
+  impl_class->should_set_opaque_region = gdk_x11_surface_should_set_opaque_region;
+  impl_class->should_set_opaque_rect = gdk_x11_surface_should_set_opaque_rect;
   impl_class->set_opaque_region = gdk_x11_surface_set_opaque_region;
   impl_class->request_layout = gdk_x11_surface_request_layout;
   impl_class->compute_size = gdk_x11_surface_compute_size;

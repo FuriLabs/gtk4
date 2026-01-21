@@ -1,0 +1,108 @@
+From: =?utf-8?b?IllhbyBXZWkgKOmtj+mKmOW7tyki?= <yao.wei@canonical.com>
+Date: Fri, 3 Oct 2025 17:54:30 +0800
+Subject: gdk/x11: update correct shadow size according to window size change
+
+Because update_shadow_size is not updated since the logical size of
+shadow is not changed, the shadow is glitched out.
+
+This makes sure that the shadow size is recalculated when the scale
+is changed.
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9017
+Bug: https://gitlab.gnome.org/GNOME/gtk/issues/7805
+Bug-Ubuntu: https://launchpad.net/bugs/1924689
+---
+ gdk/x11/gdksurface-x11.c | 27 +++++++++++++++++++--------
+ gdk/x11/gdksurface-x11.h |  1 +
+ 2 files changed, 20 insertions(+), 8 deletions(-)
+
+diff --git a/gdk/x11/gdksurface-x11.c b/gdk/x11/gdksurface-x11.c
+index d1b9098..33b704c 100644
+--- a/gdk/x11/gdksurface-x11.c
++++ b/gdk/x11/gdksurface-x11.c
+@@ -206,7 +206,7 @@ gdk_x11_surface_update_size (GdkX11Surface *self,
+   return TRUE;
+ }
+ 
+-static void
++static gboolean
+ update_shadow_size (GdkSurface *surface,
+                     int         shadow_left,
+                     int         shadow_right,
+@@ -220,13 +220,15 @@ update_shadow_size (GdkSurface *surface,
+   if (impl->shadow_left == shadow_left &&
+       impl->shadow_right == shadow_right &&
+       impl->shadow_top == shadow_top &&
+-      impl->shadow_bottom == shadow_bottom)
+-    return;
++      impl->shadow_bottom == shadow_bottom &&
++      impl->shadow_scale == impl->surface_scale)
++    return FALSE;
+ 
+   impl->shadow_left = shadow_left;
+   impl->shadow_right = shadow_right;
+   impl->shadow_top = shadow_top;
+   impl->shadow_bottom = shadow_bottom;
++  impl->shadow_scale = impl->surface_scale;
+ 
+   data[0] = shadow_left * impl->surface_scale;
+   data[1] = shadow_right * impl->surface_scale;
+@@ -240,6 +242,8 @@ update_shadow_size (GdkSurface *surface,
+                    frame_extents, XA_CARDINAL,
+                    32, PropModeReplace,
+                    (guchar *) &data, 4);
++
++  return TRUE;
+ }
+ 
+ #define UPDATE_GEOMETRY TRUE
+@@ -256,6 +260,7 @@ compute_toplevel_size (GdkSurface *surface,
+   GdkMonitor *monitor;
+   GdkToplevelSize size;
+   int bounds_width, bounds_height;
++  gboolean shadow_updated = FALSE;
+ 
+   monitor = gdk_display_get_monitor_at_surface (display, surface);
+   if (monitor)
+@@ -277,11 +282,11 @@ compute_toplevel_size (GdkSurface *surface,
+ 
+   if (size.shadow.is_valid)
+     {
+-      update_shadow_size (surface,
+-                          size.shadow.left,
+-                          size.shadow.right,
+-                          size.shadow.top,
+-                          size.shadow.bottom);
++      shadow_updated = update_shadow_size (surface,
++                                           size.shadow.left,
++                                           size.shadow.right,
++                                           size.shadow.top,
++                                           size.shadow.bottom);
+     }
+ 
+   if (update_geometry)
+@@ -333,6 +338,12 @@ compute_toplevel_size (GdkSurface *surface,
+           impl->last_computed_width = size.width;
+           impl->last_computed_height = size.height;
+ 
++          return TRUE;
++        }
++      if (shadow_updated)
++        {
++          *width = size.width;
++          *height = size.height;
+           return TRUE;
+         }
+     }
+diff --git a/gdk/x11/gdksurface-x11.h b/gdk/x11/gdksurface-x11.h
+index e1f8c90..08bc76b 100644
+--- a/gdk/x11/gdksurface-x11.h
++++ b/gdk/x11/gdksurface-x11.h
+@@ -72,6 +72,7 @@ struct _GdkX11Surface
+   int shadow_right;
+   int shadow_top;
+   int shadow_bottom;
++  int shadow_scale;
+ 
+   /* Width and height not divided by surface_scale - this matters in the
+    * corner-case where the window manager assigns us a size that isn't

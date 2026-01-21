@@ -1,3 +1,10 @@
+gtk4 (4.14.5+ds-0ubuntu0.8) noble; urgency=medium
+
+  * Fix graphical artifacts after changing display scale in Xorg (LP: #1924689)
+  * Fix clicking context menu actions in Xorg (LP: #2130304)
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Wed, 21 Jan 2026 16:51:37 +0100
+
 gtk4 (4.14.5+ds-0ubuntu0.7) noble; urgency=medium
 
   * Fix touchscreen issues on Xorg (LP: #2051886, #2119066, #2119065, #2125309)

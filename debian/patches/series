@@ -24,10 +24,4 @@ build-fix-gtk4-tests-on-s390x-architecture.patch
 x11-touch/xi2-Start-drag-grab-with-pointer-only-event-mask.patch
 x11-touch/xi2-Do-not-discard-emulated-pointer-events-during-drag-an.patch
 x11-touch/xi2-Expose-a-logical-touch-device.patch
-x11-scale/gdk-x11-fixes-window-extent-glitch-when-changing-scale.patch
-x11-scale/gdk-x11-update-cursor-size-on-the-extent-after-scale-chan.patch
-x11-scale/gdk-also-check-surface-scale-when-setting-opaque-region.patch
-x11-scale/gdk-also-update-input-region-if-scale-is-changed.patch
-x11-scale/gdk-x11-push-dimensions-if-shadow-size-is-updated.patch
-x11-scale/gdk-wrap-scale-checking-code-with-X11-macros-and-checks.patch
 gdk-x11-Track-enter-leave-events-on-grab-surface-while-bu.patch

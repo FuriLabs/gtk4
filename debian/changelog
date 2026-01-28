@@ -1,3 +1,14 @@
+gtk4 (4.20.3+ds-4) UNRELEASED; urgency=medium
+
+  [ Jeremy Bícha ]
+  * Enable sysprof support on all Linux architectures
+  * d/p/gtkcssnumbervalue-Don-t-use-fesetround-on-ARM-softfloat.patch:
+    Remove a patch that was only needed for armel, since Debian doesn't
+    support armel in unstable or forky
+  * Bump Standards Version to 4.7.3
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 28 Jan 2026 11:41:56 +0000
+
 gtk4 (4.20.3+ds-3) unstable; urgency=medium
 
   * libgtk-4-1: Add Recommends: ibus-gtk4 (Closes: #1115532)

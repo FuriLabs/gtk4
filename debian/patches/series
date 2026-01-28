@@ -11,7 +11,6 @@ workarounds/tests-Mark-gltexture-as-expected-to-fail-on-big-endian-ma.patch
 workarounds/tests-Allow-longer-for-a-dialog-to-open.patch
 workarounds/nodeparser-Adjust-test-for-pango-1.52.0.patch
 workarounds/testsuite-skip-color-mix.patch
-workarounds/gtkcssnumbervalue-Don-t-use-fesetround-on-ARM-softfloat.patch
 workarounds/scaling-test-Skip-floating-point-pixel-formats-with-Cairo.patch
 workarounds/nodeparser-Mark-failing-tests-on-s390x.patch
 vulkan-Don-t-treat-Vulkan-objects-as-pointers-or-32bit-br.patch

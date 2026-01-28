@@ -1,0 +1,33 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Wed, 28 Jan 2026 14:50:34 +0100
+Subject: testsuite: Disable vulkan and ngl renderer tests on s390x
+
+Vulkan and NGL renderers are known to be broken on mesa swrast for s390x
+on noble specifically. We already make s390x default to the cairo renderer.
+
+Forwarded: not-needed, workaround
+Bug-Ubuntu: https://launchpad.net/bugs/2140984
+---
+ testsuite/gsk/scaling.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/testsuite/gsk/scaling.c b/testsuite/gsk/scaling.c
+index e247ee9..9773acc 100644
+--- a/testsuite/gsk/scaling.c
++++ b/testsuite/gsk/scaling.c
+@@ -18,6 +18,7 @@ struct {
+     "cairo",
+     gsk_cairo_renderer_new,
+   },
++#ifndef __s390x__
+   {
+     "vulkan",
+     gsk_vulkan_renderer_new,
+@@ -26,6 +27,7 @@ struct {
+     "ngl",
+     gsk_ngl_renderer_new,
+   },
++#endif
+ };
+ 
+ typedef struct _TextureBuilder TextureBuilder;

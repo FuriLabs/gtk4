@@ -1,0 +1,27 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Mon, 3 Nov 2025 01:29:11 +0100
+Subject: gtkfilechoosercell: Actually add long pressure gesture
+
+A part that the gesture was not added, it also lead to a leak that was
+quite noticeable on xdg-desktop-portal-gnome
+
+Part-of: <https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9164>
+
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gtk4/+bug/2085698
+Origin: https://gitlab.gnome.org/GNOME/gtk/-/commit/f96a7af51412dc62e58eca3985
+---
+ gtk/gtkfilechoosercell.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/gtk/gtkfilechoosercell.c b/gtk/gtkfilechoosercell.c
+index af341c0..f883346 100644
+--- a/gtk/gtkfilechoosercell.c
++++ b/gtk/gtkfilechoosercell.c
+@@ -161,6 +161,7 @@ gtk_file_chooser_cell_init (GtkFileChooserCell *self)
+   gesture = gtk_gesture_long_press_new ();
+   gtk_gesture_single_set_touch_only (GTK_GESTURE_SINGLE (gesture), TRUE);
+   g_signal_connect (gesture, "pressed", G_CALLBACK (file_chooser_cell_long_pressed), NULL);
++  gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (gesture));
+
+   drag_source = gtk_drag_source_new ();
+   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (drag_source));

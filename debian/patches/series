@@ -13,5 +13,3 @@ workarounds/nodeparser-Adjust-test-for-pango-1.52.0.patch
 workarounds/testsuite-skip-color-mix.patch
 workarounds/scaling-test-Skip-floating-point-pixel-formats-with-Cairo.patch
 workarounds/nodeparser-Mark-failing-tests-on-s390x.patch
-vulkan-Don-t-treat-Vulkan-objects-as-pointers-or-32bit-br.patch
-Fix-a-few-profiler-messges-for-32bit.patch

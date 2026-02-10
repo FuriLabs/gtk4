@@ -30,7 +30,7 @@ Applied-upstream: no, upstream want reftests to be a strict pass/fail with ident
  5 files changed, 74 insertions(+), 5 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index 555a845..1f86b38 100644
+index 1a4d0f1..bf8ee4d 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
 @@ -113,6 +113,37 @@ get_output_file (const char *file,
@@ -71,7 +71,7 @@ index 555a845..1f86b38 100644
  static void
  save_image (GdkTexture *texture,
              const char *test_name,
-@@ -718,7 +749,15 @@ run_single_test (const TestSetup *setup,
+@@ -842,7 +873,15 @@ run_single_test (const TestSetup *setup,
                                     &max_diff, &pixels_changed, &pixels);
    if (diff)
      {
@@ -102,7 +102,7 @@ index 742c7ec..1f8f4b0 100644
      {
        save_image (texture, filename, NULL, ".out.png");
 diff --git a/testsuite/gtk/symbolic2.c b/testsuite/gtk/symbolic2.c
-index f79bfaf..26e2980 100644
+index 2a49d7f..4358e12 100644
 --- a/testsuite/gtk/symbolic2.c
 +++ b/testsuite/gtk/symbolic2.c
 @@ -151,7 +151,7 @@ compare_nodes (GskRenderNode *node1,

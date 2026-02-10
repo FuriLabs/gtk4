@@ -20,10 +20,10 @@ Applied-upstream: no, upstream want reftests to be a strict pass/fail with ident
  7 files changed, 84 insertions(+), 13 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index c9b2036..555a845 100644
+index 8fd6b7a..1a4d0f1 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
-@@ -680,6 +680,9 @@ run_single_test (const TestSetup *setup,
+@@ -795,6 +795,9 @@ run_single_test (const TestSetup *setup,
    GdkTexture *reference, *rendered, *diff;
    graphene_rect_t test_bounds, *render_bounds;
    gpointer test_data;
@@ -33,7 +33,7 @@ index c9b2036..555a845 100644
  
    if (setup->flags & KEEP_BOUNDS)
      {
-@@ -711,7 +714,8 @@ run_single_test (const TestSetup *setup,
+@@ -835,7 +838,8 @@ run_single_test (const TestSetup *setup,
    if (setup->free)
      setup->free (test_data);
  
@@ -43,7 +43,7 @@ index c9b2036..555a845 100644
    if (diff)
      {
        g_test_fail ();
-@@ -723,7 +727,11 @@ run_single_test (const TestSetup *setup,
+@@ -847,7 +851,11 @@ run_single_test (const TestSetup *setup,
        save_image (reference, file_name, setup->name, ".ref.png");
        save_image (rendered, file_name, setup->name, ".out.png");
        if (diff)

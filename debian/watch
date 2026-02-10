@@ -1,6 +1,6 @@
 Version: 5
 
-Source: https://download.gnome.org/sources/gtk/(\d[\d\.]+[02468])/
+Source: https://download.gnome.org/sources/gtk/(\d[\d\.]+)/
 Matching-Pattern: gtk-@ANY_VERSION@@ARCHIVE_EXT@
 Dversion-Mangle: s/[~+](?:dfsg|ds)[0-9]*//g
 Repack: yes

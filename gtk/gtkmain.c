@@ -201,6 +201,7 @@ static const GdkDebugKey gtk_debug_keys[] = {
   { "invert-text-dir", GTK_DEBUG_INVERT_TEXT_DIR, "Invert the default text direction" },
   { "css", GTK_DEBUG_CSS, "Information about deprecated CSS features" },
   { "builder", GTK_DEBUG_BUILDER, "Information about deprecated GtkBuilder features" },
+  { "session-mgmt", GTK_DEBUG_SESSION, "Information about session saving" },
 };
 
 /* This checks to see if the process is running suid or sgid
@@ -282,7 +283,28 @@ gtk_disable_portals (void)
   if (pre_initialized)
     g_warning ("gtk_disable_portals() must be called before gtk_init()");
 
-  gdk_disable_portals ();
+  gdk_disable_all_portals ();
+}
+
+
+/**
+ * gtk_disable_portal_interfaces:
+ * @portal_interfaces: (array zero-terminated=1) (not nullable):
+ *     a %NULL-terminated array of portal interface names to disable
+ *
+ * Prevents GTK from using the specified portals.
+ *
+ * This should only be used in portal implementations, apps must not call it.
+ *
+ * Since: 4.22
+ */
+void
+gtk_disable_portal_interfaces (const char **portal_interfaces)
+{
+  if (pre_initialized)
+    g_warning ("gtk_disable_portal_interfaces() must be called before gtk_init()");
+
+  gdk_disable_portals (portal_interfaces);
 }
 
 #ifdef G_PLATFORM_WIN32
@@ -1389,10 +1411,7 @@ handle_pointing_event (GdkEvent *event)
   type = gdk_event_get_event_type (event);
   sequence = gdk_event_get_event_sequence (event);
 
-  if (type == GDK_SCROLL &&
-      (gdk_device_get_source (device) == GDK_SOURCE_TOUCHPAD ||
-       gdk_device_get_source (device) == GDK_SOURCE_TRACKPOINT ||
-       gdk_device_get_source (device) == GDK_SOURCE_MOUSE))
+  if (type == GDK_SCROLL && !gdk_event_get_device_tool (event))
     {
       /* A bit of a kludge, resolve target lookups for scrolling devices
        * on the seat pointer.

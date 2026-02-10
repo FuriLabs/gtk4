@@ -6,6 +6,8 @@
 #include "gdkmemoryformatprivate.h"
 #include "gdkmemorytexture.h"
 
+#include "gdkrectangleprivate.h"
+
 #include <cairo.h>
 #include <graphene.h>
 
@@ -19,7 +21,6 @@ gdk_cairo_format_for_depth (GdkMemoryDepth depth)
         return CAIRO_FORMAT_ARGB32;
 
       case GDK_MEMORY_U8_SRGB:
-      case GDK_MEMORY_U16:
       case GDK_MEMORY_FLOAT16:
       case GDK_MEMORY_FLOAT32:
         return CAIRO_FORMAT_RGBA128F;
@@ -43,7 +44,7 @@ gdk_cairo_depth_for_format (cairo_format_t format)
       return GDK_MEMORY_U8;
 
     case CAIRO_FORMAT_RGB30:
-      return GDK_MEMORY_U16;
+      return GDK_MEMORY_FLOAT16;
 
     case CAIRO_FORMAT_RGB96F:
     case CAIRO_FORMAT_RGBA128F:
@@ -231,5 +232,144 @@ gdk_cairo_region_to_debug_string (const cairo_region_t *region)
                           cairo_region_num_rectangles (region));
 
   return g_string_free (string, FALSE);
+}
+
+static inline gboolean
+gdk_cairo_is_all_clipped (cairo_t *cr)
+{
+  double x1, y1, x2, y2;
+
+  cairo_clip_extents (cr, &x1, &y1, &x2, &y2);
+  return x1 >= x2 || y1 >= y2;
+}
+
+/* apply a rectangle that bounds @rect in
+ * pixel-aligned device coordinates.
+ *
+ * This is useful for clipping to minimize the rectangle
+ * in push_group() or when blurring.
+ */
+static inline void
+gdk_cairo_rectangle_snap_to_grid (cairo_t               *cr,
+                                  const graphene_rect_t *rect)
+{
+  double x0, x1, x2, x3;
+  double y0, y1, y2, y3;
+  double xmin, xmax, ymin, ymax;
+
+  x0 = rect->origin.x;
+  y0 = rect->origin.y;
+  cairo_user_to_device (cr, &x0, &y0);
+  x1 = rect->origin.x + rect->size.width;
+  y1 = rect->origin.y;
+  cairo_user_to_device (cr, &x1, &y1);
+  x2 = rect->origin.x;
+  y2 = rect->origin.y + rect->size.height;
+  cairo_user_to_device (cr, &x2, &y2);
+  x3 = rect->origin.x + rect->size.width;
+  y3 = rect->origin.y + rect->size.height;
+  cairo_user_to_device (cr, &x3, &y3);
+
+  xmin = MIN (MIN (x0, x1), MIN (x2, x3));
+  ymin = MIN (MIN (y0, y1), MIN (y2, y3));
+  xmax = MAX (MAX (x0, x1), MAX (x2, x3));
+  ymax = MAX (MAX (y0, y1), MAX (y2, y3));
+
+  xmin = floor (xmin);
+  ymin = floor (ymin);
+  xmax = ceil (xmax);
+  ymax = ceil (ymax);
+
+  cairo_save (cr);
+  cairo_identity_matrix (cr);
+  cairo_rectangle (cr, xmin, ymin, xmax - xmin, ymax - ymin);
+  cairo_restore (cr);
+}
+
+/**
+ * gdk_cairo_create_similar_surface:
+ * @cr: cairo context
+ * @content: the kind of surface to create
+ * @bounds: the bounds to create the surface for
+ *
+ * Creates a surface for offscreen rendering that isn't
+ * confined by Cairo's clipping behavior. So this is
+ * useful as an alternative to cairo_push_group() if
+ * you want a guarantee that the whole area will be
+ * created, for example when blurring and needing a larger
+ * input area.
+ *
+ * This function will set the surface's device scale and offset.
+ *
+ * Once done with rendering to the returned surface, you
+ * can render it to the given bounds with this code:
+ * 
+ * ```c
+ * cairo_set_source_surface (cr, surface);
+ * cairo_paint (cr);
+ * ```
+ * 
+ * Returns: a new cairo surface 
+ **/
+static inline cairo_surface_t *
+gdk_cairo_create_similar_surface (cairo_t               *cr,
+                                  cairo_content_t        content,
+                                  const graphene_rect_t *bounds)
+{
+  cairo_matrix_t matrix;
+  double xscale, yscale, det, width, height;
+  cairo_surface_t *surface;
+
+  cairo_get_matrix (cr, &matrix);
+  cairo_surface_get_device_scale (cairo_get_target (cr), &xscale, &yscale);
+  det = matrix.xx * matrix.yy - matrix.xy * matrix.yx;
+  if (matrix.xx != 0 || matrix.yx != 0)
+    {
+      width = sqrt (matrix.xx * matrix.xx + matrix.yx * matrix.yx);
+      height = det / width;
+    }
+  else if (matrix.yx != 0 || matrix.yy != 0)
+    {
+      height = sqrt (matrix.yx * matrix.yx + matrix.yy * matrix.yy);
+      width = det / height;
+    }
+  else
+    {
+      g_return_val_if_reached (NULL);
+    }
+
+  width = ABS (ceil (width * bounds->size.width * xscale));
+  height = ABS (ceil (height * bounds->size.height * yscale));
+
+  surface = cairo_surface_create_similar (cairo_get_group_target (cr), 
+                                          content,
+                                          width, height);
+  xscale = width / bounds->size.width;
+  yscale = height / bounds->size.height;
+  cairo_surface_set_device_scale (surface, xscale, yscale);
+  cairo_surface_set_device_offset (surface,
+                                   - bounds->origin.x * xscale,
+                                   - bounds->origin.y * yscale);
+
+  return surface;
+}
+
+static inline void
+gdk_cairo_region_union_affine (cairo_region_t       *region,
+                               const cairo_region_t *sub,
+                               float                 scale_x,
+                               float                 scale_y,
+                               float                 offset_x,
+                               float                 offset_y)
+{
+  cairo_rectangle_int_t rect;
+  int i;
+
+  for (i = 0; i < cairo_region_num_rectangles (sub); i++)
+    {
+      cairo_region_get_rectangle (sub, i, &rect);
+      gdk_rectangle_transform_affine (&rect, scale_x, scale_y, offset_x, offset_y, &rect);
+      cairo_region_union_rectangle (region, &rect);
+    }
 }
 

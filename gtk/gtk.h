@@ -33,6 +33,7 @@
 #include <gtk/gtkaboutdialog.h>
 #include <gtk/gtkaccelgroup.h>
 #include <gtk/gtkaccessible.h>
+#include <gtk/gtkaccessiblehypertext.h>
 #include <gtk/gtkaccessiblerange.h>
 #include <gtk/gtkaccessibletext.h>
 #include <gtk/gtkactionable.h>
@@ -211,6 +212,7 @@
 #include <gtk/gtkpasswordentrybuffer.h>
 #include <gtk/gtkpicture.h>
 #include <gtk/gtkpopover.h>
+#include <gtk/gtkpopoverbin.h>
 #include <gtk/gtkpopovermenu.h>
 #include <gtk/gtkpopovermenubar.h>
 #include <gtk/gtkprintdialog.h>
@@ -267,6 +269,7 @@
 #include <gtk/gtkstringsorter.h>
 #include <gtk/deprecated/gtkstylecontext.h>
 #include <gtk/gtkstyleprovider.h>
+#include <gtk/gtksvg.h>
 #include <gtk/gtkswitch.h>
 #include <gtk/gtksymbolicpaintable.h>
 #include <gtk/gtktext.h>

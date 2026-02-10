@@ -1,0 +1,32 @@
+<svg
+        width='64'
+        height='64'
+        xmlns:gpa='https://www.gtk.org/grappa'
+        gpa:version='1'
+        gpa:state='0'>
+  <path
+          id='path0'
+          fill='none'
+          stroke='url("#gpa:foreground") rgb(0,0,0)'
+          stroke-width='8'
+          stroke-linecap='round'
+          stroke-linejoin='round'
+          d='M 43.4344597 25.9671593 L 59.107605 25.9671593 L 59.107605 9.39524651 M 51.7804108 45.6463051 C 45.7045517 56.7752228, 33.0386162 61.8146591, 21.5312366 57.6816559 C 10.0278912 53.5505638, 2.88549352 41.4039192, 4.47101736 28.6683807 C 6.05632019 15.9308281, 15.9306374 6.1511569, 28.0551853 5.31026936 C 40.1805 4.4693799, 51.1788597 12.8026094, 54.3233757 25.2131386'
+          gpa:stroke-width='2 8 12'
+          gpa:stroke='foreground'
+          gpa:fill='none'>
+    <set
+          attributeName='transform'
+          to='rotate(90 31.5 31.5)'
+          begin='gpa:states(1).begin'
+          end='gpa:states(1).end'/>
+    <animateTransform
+          attributeName='transform'
+          type='rotate'
+          begin='gpa:states(2).begin'
+          end='gpa:states(2).end'
+          dur='800ms'
+          repeatCount='indefinite'
+          from='90 31.5 31.5' to='450 31.5 31.5'/>
+  </path>
+</svg>

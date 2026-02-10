@@ -81,6 +81,7 @@ GDK_DEPRECATED_IN_4_18
 GtkShortcutsWindow *
             gtk_application_window_get_help_overlay (GtkApplicationWindow *window);
 
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkApplicationWindow, g_object_unref)
 
 G_END_DECLS

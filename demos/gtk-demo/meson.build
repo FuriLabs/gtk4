@@ -2,6 +2,7 @@
 # demo app, which means alphabetized by demo title, not filename
 demos = files([
   'application_demo.c',
+  'aspect_frame.c',
   'assistant.c',
   'builder.c',
   'clipboard.c',
@@ -71,6 +72,7 @@ demos = files([
   'paintable_animated.c',
   'paintable_emblem.c',
   'paintable_mediastream.c',
+  'paintable_svg.c',
   'paintable_symbolic.c',
   'panes.c',
   'password_entry.c',
@@ -114,7 +116,6 @@ demos = files([
 gtkdemo_deps = [ libgtk_dep, gmodule_headers_dep ]
 
 extra_demo_sources = files([
-  'bluroverlay.c',
   'demochild.c',
   'demoimage.c',
   'demolayout.c',
@@ -145,7 +146,6 @@ extra_demo_sources = files([
   'singular_value_decomposition.c',
   'suggestionentry.c',
   'unicode-names.c',
-  'symbolicpaintable.c',
   '../../gtk/gtkrendernodepaintable.c',
   'component_filter.c',
   'minigraph.c',
@@ -155,83 +155,16 @@ if os_unix
   demos += files('pagesetup.c')
 endif
 
-librsvg_dep = dependency('librsvg-2.0', version: '>= 2.52.0', required: false)
-
-if librsvg_dep.found()
-  demos += files('paintable_svg.c')
-  extra_demo_sources += files(['svgpaintable.c'])
-  gtkdemo_deps += [ librsvg_dep ]
-endif
-
 demos_h = custom_target('gtk4 demo header',
   output: 'demos.h',
   input: demos,
   command: [ find_program('geninclude.py'), '@OUTPUT@', '@INPUT@' ],
 )
 
-if can_use_objcopy_for_resources
-  # Create the resource blob
-  gtkdemo_gresource = custom_target('gtkdemo.gresource',
-      input : 'demo.gresource.xml',
-      output : 'gtkdemo.gresource',
-      depfile : 'gtkdemo.gresource.d',
-      command : [glib_compile_resources,
-                 '--generate',
-                 '--internal',
-                 '--target=@OUTPUT@',
-                 '--dependency-file=@DEPFILE@',
-                 '--sourcedir=' + meson.current_source_dir(),
-                 '--sourcedir=' + meson.current_build_dir(),
-                 '@INPUT@'])
-
-  # Create resource data file
-  gtkdemo_resources_c = custom_target('gtkdemo_resources.c',
-      input : 'demo.gresource.xml',
-      output : 'gtkdemo_resources.c',
-      depfile : 'gtkdemo_resources.c.d',
-      command : [glib_compile_resources,
-                 '--generate-source',
-                 '--internal',
-                 '--target=@OUTPUT@',
-                 '--dependency-file=@DEPFILE@',
-                 '--sourcedir=' + meson.current_source_dir(),
-                 '--sourcedir=' + meson.current_build_dir(),
-                 '--external-data',
-                 '--c-name', '_g_binary_gtkdemo',
-                 '@INPUT@'])
-
-  # Create object file containing resource data
-  gtkdemo_resources_binary = custom_target('gtkdemo_resources.o',
-      input : gtkdemo_gresource,
-      output : 'gtkdemo_resources.o',
-      command : [ld,
-                 '-z', 'noexecstack',
-                 '-r',
-                 '-b','binary',
-                 '@INPUT@',
-                 '-o','@OUTPUT@'])
-
-  # Rename symbol to match the one in the C file
-  gtkdemo_resources_o = custom_target('gtkdemo_resources2.o',
-    input : gtkdemo_resources_binary,
-    output : 'gtkdemo_resources2.o',
-    command : [objcopy,
-                 '--strip-all',
-                 '--set-section-alignment', '.data=8',
-                 '--add-symbol','_g_binary_gtkdemo_resource_data=.data:0',
-                 '@INPUT@',
-                 '@OUTPUT@'])
-
-  gtkdemo_resources = [
-      gtkdemo_resources_c,
-      gtkdemo_resources_o,
-    ]
-else
-  gtkdemo_resources = gnome.compile_resources('gtkdemo_resources',
-    'demo.gresource.xml',
-    source_dir: meson.current_source_dir()
-  )
-endif
+gtkdemo_resources = gnome.compile_resources('gtkdemo_resources',
+  'demo.gresource.xml',
+  source_dir: meson.current_source_dir()
+)
 
 # Use a subset of compiler flags
 demo_cflags = []

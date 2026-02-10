@@ -19,7 +19,7 @@
 
 #include "config.h"
 
-#include "gtkapplicationwindow.h"
+#include "gtkapplicationwindowprivate.h"
 
 #include "gtkapplicationprivate.h"
 #include "gtkwidgetprivate.h"
@@ -28,6 +28,8 @@
 #include "gtksettings.h"
 #include "deprecated/gtkshortcutswindowprivate.h"
 #include "gtktooltipprivate.h"
+#include "gtkprivate.h"
+#include "gtktypebuiltins.h"
 
 #include <glib/gi18n-lib.h>
 
@@ -702,6 +704,7 @@ gtk_application_window_class_init (GtkApplicationWindowClass *class)
   gtk_application_window_properties[PROP_SHOW_MENUBAR] =
     g_param_spec_boolean ("show-menubar", NULL, NULL,
                           FALSE, G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
   g_object_class_install_properties (object_class, N_PROPS, gtk_application_window_properties);
 }
 
@@ -873,4 +876,20 @@ gtk_application_window_get_help_overlay (GtkApplicationWindow *window)
   g_return_val_if_fail (GTK_IS_APPLICATION_WINDOW (window), NULL);
 
   return priv->help_overlay;
+}
+
+/*< private >
+ * gtk_application_window_save:
+ * @window: a `GtkApplicationWindow`
+ * @state: a `GVariantDict` to add state to
+ *
+ * Save the state of @window and its children to a `GVariant`.
+ *
+ * See [signal@Gtk.ApplicationWindow::save-state] for how to override
+ * what state is saved.
+ */
+void
+gtk_application_window_save (GtkApplicationWindow *window,
+                             GVariantDict         *state)
+{
 }

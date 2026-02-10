@@ -1,0 +1,41 @@
+<svg
+        xmlns='http://www.w3.org/2000/svg'
+        xmlns:svg='http://www.w3.org/2000/svg'
+        xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+        xmlns:cc='http://creativecommons.org/ns#'
+        xmlns:dc='http://purl.org/dc/elements/1.1/'
+        xmlns:gpa='https://www.gtk.org/grappa'
+        gpa:version='1'
+        gpa:state='0'
+        gpa:keywords='folder-music note folder sound tune audio-x-generic'
+        width='16'
+        height='16'>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>folder-music note folder sound tune audio-x-generic</rdf:li>
+
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <path
+          id='path0'
+          clip-path='none'
+          fill='none'
+          stroke='url(#gpa:foreground) rgb(0,0,0)'
+          stroke-opacity='1'
+          stroke-width='2'
+          stroke-linecap='round'
+          stroke-linejoin='round'
+          stroke-miterlimit='4'
+          d='M 14 11.4851 L 14 4 C 14 2.89543, 13.1046 2, 12 2 L 8 2 C 6.89548 2, 6.00014 2.89548, 6.00031 4 L 6.00147 11.5386 M 14 11.4851 C 14 12.8576, 12.8874 13.9702, 11.5149 13.9702 C 10.1424 13.9702, 9.02978 12.8576, 9.02978 11.4851 C 9.02978 10.1126, 10.1424 9, 11.5149 9 C 12.8874 9, 14 10.1126, 14 11.4851 Z M 6.00147 11.5386 C 6.00147 12.911, 4.85907 14, 3.48658 14 C 2.11409 14, 1.00147 12.8874, 1.00147 11.5149 C 1.00147 10.1424, 2.11409 9.02978, 3.48658 9.02978 C 4.85907 9.02978, 6.00147 10.1661, 6.00147 11.5386 Z'
+          gpa:stroke-minwidth='0.25'
+          gpa:stroke-maxwidth='1.5'
+          class='transparent-fill foreground-stroke'
+          gpa:stroke='foreground'>
+  </path>
+</svg>

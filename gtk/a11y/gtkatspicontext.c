@@ -800,7 +800,13 @@ handle_accessible_get_property (GDBusConnection       *connection,
   else if (g_strcmp0 (property_name, "Locale") == 0)
     res = g_variant_new_string (setlocale (LC_MESSAGES, NULL));
   else if (g_strcmp0 (property_name, "AccessibleId") == 0)
-    res = g_variant_new_string ("");
+    {
+      char *id = gtk_accessible_get_accessible_id (accessible);
+      if (id)
+        res = g_variant_new_take_string (id);
+      else
+        res = g_variant_new_string ("");
+    }
   else if (g_strcmp0 (property_name, "Parent") == 0)
     res = get_parent_context_ref (accessible);
   else if (g_strcmp0 (property_name, "ChildCount") == 0)
@@ -1107,7 +1113,10 @@ gtk_at_spi_context_state_change (GtkATContext                *ctx,
           emit_state_changed (self, "expanded",gtk_boolean_accessible_value_get (value));
         }
       else
-        emit_state_changed (self, "expandable", FALSE);
+        {
+          emit_state_changed (self, "expanded", FALSE);
+          emit_state_changed (self, "expandable", FALSE);
+        }
     }
 
   if (changed_states & GTK_ACCESSIBLE_STATE_CHANGE_INVALID)

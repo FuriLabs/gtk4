@@ -69,6 +69,7 @@ static const int icon_props[] = {
   GTK_CSS_PROPERTY_ICON_SIZE,
   GTK_CSS_PROPERTY_ICON_SHADOW,
   GTK_CSS_PROPERTY_ICON_STYLE,
+  GTK_CSS_PROPERTY_ICON_WEIGHT,
 };
 
 static const int outline_props[] = {
@@ -92,10 +93,13 @@ static const int font_props[] = {
   GTK_CSS_PROPERTY_LINE_HEIGHT,
 };
 
-static const int font_variant_props[] = {
+static const int text_decoration_props[] = {
   GTK_CSS_PROPERTY_TEXT_DECORATION_LINE,
   GTK_CSS_PROPERTY_TEXT_DECORATION_COLOR,
   GTK_CSS_PROPERTY_TEXT_DECORATION_STYLE,
+};
+
+static const int font_variant_props[] = {
   GTK_CSS_PROPERTY_TEXT_TRANSFORM,
   GTK_CSS_PROPERTY_FONT_KERNING,
   GTK_CSS_PROPERTY_FONT_VARIANT_LIGATURES,
@@ -145,6 +149,7 @@ static const int other_props[] = {
   GTK_CSS_PROPERTY_TRANSFORM,
   GTK_CSS_PROPERTY_TRANSFORM_ORIGIN,
   GTK_CSS_PROPERTY_OPACITY,
+  GTK_CSS_PROPERTY_BACKDROP_FILTER,
   GTK_CSS_PROPERTY_FILTER,
 };
 
@@ -201,10 +206,10 @@ static const int used_props_map[] = {
   10, /* icon-shadow */
   -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1,
   12, /* caret-color */
   13, /* secondary-caret-color */
-  -1, -1, -1,
+  -1, -1, -1, 
 };
 
 G_STATIC_ASSERT (G_N_ELEMENTS (used_props_map) == GTK_CSS_PROPERTY_N_PROPERTIES);

@@ -54,6 +54,9 @@ create_icon (void)
   return image;
 }
 
+extern GtkWidget *create_symbolic (void);
+extern GtkWidget *create_svg (void);
+
 static GtkWidget *
 create_button (void)
 {
@@ -110,7 +113,7 @@ create_spinbutton (void)
 static GtkWidget *
 create_label (void)
 {
-  GtkWidget *w = gtk_label_new ("pLorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.");
+  GtkWidget *w = gtk_label_new ("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.");
 
   gtk_label_set_wrap (GTK_LABEL (w), TRUE);
   gtk_label_set_max_width_chars (GTK_LABEL (w), 100);
@@ -202,6 +205,8 @@ static const struct {
   { "Menubutton", create_menu_button,    NULL },
   { "Tiger",      create_tiger,          NULL },
   { "Graph",      create_graph,          NULL },
+  { "Symbolic",   create_symbolic,       NULL },
+  { "SVG",        create_svg,            NULL },
 };
 
 static int selected_widget_type = -1;
@@ -278,9 +283,9 @@ fishbowl_changes_toggled_cb (GtkToggleButton *button,
   GtkWidget *image;
 
   if (gtk_toggle_button_get_active (button))
-    file = g_file_new_for_uri ("resource:///org/gtk/libgtk/icons/scalable/status/changes-prevent-symbolic.svg");
+    file = g_file_new_for_uri ("resource:///org/gtk/libgtk/icons/changes-prevent-symbolic.svg");
   else
-    file = g_file_new_for_uri ("resource:///org/gtk/libgtk/icons/scalable/status/changes-allow-symbolic.svg");
+    file = g_file_new_for_uri ("resource:///org/gtk/libgtk/icons/changes-allow-symbolic.svg");
 
   paintable = GDK_PAINTABLE (gtk_icon_paintable_new_for_file (file, 16, 1));
   image = gtk_button_get_child (GTK_BUTTON (button));

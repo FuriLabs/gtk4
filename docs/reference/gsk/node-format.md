@@ -158,11 +158,12 @@ The **container** node is a special node that allows specifying a list of child 
 
 ### blend
 
-| property | syntax           | default                | printed     |
-| -------- | ---------------- | ---------------------- | ----------- |
-| bottom   | `<node>`         | color { }              | always      |
-| mode     | `<blend-mode>`   | normal                 | non-default |
-| top      | `<node>`         | color { }              | always      |
+| property    | syntax           | default                | printed     |
+| ----------- | ---------------- | ---------------------- | ----------- |
+| bottom      | `<node>`         | color { }              | always      |
+| mode        | `<blend-mode>`   | normal                 | non-default |
+| top         | `<node>`         | color { }              | always      |
+| color-state | `<color-state>`  | srgb                   | non-default |
 
 Creates a node like `gsk_blend_node_new()` with the given properties.
 
@@ -251,13 +252,14 @@ matrix3d() production to specify all 16 values individually.
 
 ### component-transfer
 
-| property | syntax           | default                | printed     |
-| -------- | ---------------- | ---------------------- | ----------- |
-| child    | `<node>`         | color { }              | always      |
-| red      | `<transfer>`     | none                   | non-default |
-| green    | `<transfer>`     | none                   | non-default |
-| blue     | `<transfer>`     | none                   | non-default |
-| alpha    | `<transfer>`     | none                   | non-default |
+| property    | syntax           | default                | printed     |
+| ----------- | ---------------- | ---------------------- | ----------- |
+| child       | `<node>`         | color { }              | always      |
+| red         | `<transfer>`     | none                   | non-default |
+| green       | `<transfer>`     | none                   | non-default |
+| blue        | `<transfer>`     | none                   | non-default |
+| alpha       | `<transfer>`     | none                   | non-default |
+| color-state | `<color-state>`  | srgb                   | non-default |
 
 Creates a node like `gsk_component_transfer_node_new()` with the given properties.
 
@@ -268,14 +270,15 @@ Possible values for the transfer propertes are:
 
 ### conic-gradient
 
-| property          | syntax          | default        | printed     |
-| ----------------- | --------------- | -------------- | ----------- |
-| bounds            | `<rect>`        | 50             | always      |
-| center            | `<point>`       | 25, 25         | always      |
-| rotation          | `<number>`      | 0              | always      |
-| stops             | `<color-stops>` | 0 #AF0, 1 #F0C | always      |
-| interpolation     | `<color-state>` | srgb           | non-default |
-| hue-interpolation | `<hue-interp>`  | shorter        | non-default |
+| property          | syntax            | default        | printed     |
+| ----------------- | ----------------- | -------------- | ----------- |
+| bounds            | `<rect>`          | 50             | always      |
+| center            | `<point>`         | 25, 25         | always      |
+| rotation          | `<number>`        | 0              | always      |
+| stops             | `<color-stops>`   | 0 #AF0, 1 #F0C | always      |
+| interpolation     | `<color-state>`   | srgb           | non-default |
+| hue-interpolation | `<hue-interp>`    | shorter        | non-default |
+| premultiplied     | `<boolean>`       | true           | non-default |
 
 Creates a node like `gsk_conic_gradient_node_new()` with the given properties.
 
@@ -291,6 +294,35 @@ The syntax for color stops is:
     transition-hint: <number>
 
 The default value for transition hints is 0.5.
+
+The premultiplied property determines whether colors are interpolated
+in premultiplied form (as in CSS) or unpremultiplied form (as in SVG).
+
+### composite
+
+| property | syntax           | default                | printed     |
+| -------- | ---------------- | ---------------------- | ----------- |
+| child    | `<node>`         | color { }              | always      |
+| mask     | `<node>`         | color { }              | always      |
+| operator | `<porter-duff>`  | source-over-dest       | always      |
+
+Creates a node like `gsk_composite_node_new()` with the given properties.
+
+Possible values for the operator property are:
+
+    porter-duff: source | dest | source-over-dest | dest-over-source |
+                 source-in-dest | dest-in-source | source-out-dest |
+                 dest-out-source | source-atop-dest | dest-atop-source |
+                 xor | clear
+
+### copy
+
+| property | syntax           | default                | printed     |
+| -------- | ---------------- | ---------------------- | ----------- |
+| child    | `<node>`         | color { }              | always      |
+
+Creates a copy node that retains the background for pasting by a paste
+node as part of the child.
 
 ### cross-fade
 
@@ -358,18 +390,42 @@ uniforms in the shader.
 
 Creates a node like `gsk_inset_shadow_node_new()` with the given properties.
 
+### isolation
+
+| property | syntax           | default                | printed     |
+| -------- | ---------------- | ---------------------- | ----------- |
+| child    | `<node>`         | color { }              | always      |
+| message  | `<isolations>`   | all                    | non-default |
+
+Creates a node like `gsk_isolation_node_new()` with the given properties.
+
+Possible values for the isolations property are:
+
+    isolations: none | all | <isolation>* | not <isolation>*
+
+    isolation: background | copy-paste
+
 ### linear-gradient
 
-| property          | syntax          | default        | printed     |
-| ----------------- | --------------- | -------------- | ----------- |
-| bounds            | `<rect>`        | 50             | always      |
-| start             | `<point>`       | 0 0            | always      |
-| end               | `<point>`       | 0 50           | always      |
-| stops             | `<color-stops>` | 0 #AF0, 1 #F0C | always      |
-| interpolation     | `<color-state>` | srgb           | non-default |
-| hue-interpolation | `<hue-interp>`  | shorter        | non-default |
+| property          | syntax            | default        | printed     |
+| ----------------- | ----------------- | -------------- | ----------- |
+| bounds            | `<rect>`          | 50             | always      |
+| start             | `<point>`         | 0 0            | always      |
+| end               | `<point>`         | 0 50           | always      |
+| stops             | `<color-stops>`   | 0 #AF0, 1 #F0C | always      |
+| repeat            | `<repeat>`        | pad            | non-default |
+| interpolation     | `<color-state>`   | srgb           | non-default |
+| hue-interpolation | `<hue-interp>`    | shorter        | non-default |
+| premultiplied     | `<boolean>`       | true           | non-default |
 
 Creates a node like `gsk_linear_gradient_node_new()` with the given properties.
+
+Possible values for the repeat property are:
+
+    repeat: none | pad | repeat | reflect
+
+The premultiplied property determines whether colors are interpolated
+in premultiplied form (as in CSS) or unpremultiplied form (as in SVG).
 
 ### mask
 
@@ -407,21 +463,50 @@ Creates a node like `gsk_transform_node_new()` with the given properties.
 
 Creates a node like `gsk_outset_shadow_node_new()` with the given properties.
 
+### paste
+
+| property | syntax           | default                | printed     |
+| -------- | ---------------- | ---------------------- | ----------- |
+| bounds   | `<rect>`         | 50                     | always      |
+| depth    | `<number>`       | 0                      | non-default |
+
+Paste the copied contents of a previous copy node. The 0-indexed depth
+parameter defines the copy node to paste from.
+
 ### radial-gradient
 
-| property          | syntax          | default        | printed     |
-| ----------------- | --------------- | -------------- | ----------- |
-| bounds            | `<rect>`        | 50             | always      |
-| center            | `<point>`       | 25 25          | always      |
-| hradius           | `<number>`      | 25             | always      |
-| vradius           | `<number>`      | 25             | always      |
-| start             | `<number>`      | 0              | always      |
-| end               | `<number>`      | 1              | always      |
-| stops             | `<color-stops>` | 0 #AF0, 1 #F0C | always      |
-| interpolation     | `<color-state>` | srgb           | non-default |
-| hue-interpolation | `<hue-interp>`  | shorter        | non-default |
+| property          | syntax              | default        | printed     |
+| ----------------- | ------------------- | -------------- | ----------- |
+| bounds            | `<rect>`            | 50             | always      |
+|                   |                     |                |             |
+| center            | `<point>`           | 25 25          | never       |
+| hradius           | `<number>`          | 25             | never       |
+| vradius           | `<number>`          | 25             | never       |
+|                   |                     |                |             |
+| start             | `<point>? <number>` | 25 25 0        | always      |
+| end               | `<point>? <number>` | 25 25 25       | always      |
+| aspect-ratio      | `<number>`          | 1              | non-default |
+|                   |                     |                |             |
+| stops             | `<color-stops>`     | 0 #AF0, 1 #F0C | always      |
+| repeat            | `<repeat>`          | pad            | non-default |
+| interpolation     | `<color-state>`     | srgb           | non-default |
+| hue-interpolation | `<hue-interp>`      | shorter        | non-default |
+| premultiplied     | `<boolean>`         | true           | non-default |
 
-Creates a node like `gsk_radial_gradient_node_new()` with the given properties.
+Creates a gradient like the SVG `<radialGradient>` element. The
+`start` and `end` properties specify the start and end circles as
+center point plus radius.
+
+The optional `aspect-ratio` property allows turning both circles into
+ellipses by scaling the X axis of both circles by the given amount.
+
+A deprecated method exists when only using a single center for both
+circles. In that case the `center`, `hradius`, `vradius`, `start` and
+`end` properties are consulted to generate a node like with
+`gsk_radial_gradient_node_new()`.
+
+The premultiplied property determines whether colors are interpolated
+in premultiplied form (as in CSS) or unpremultiplied form (as in SVG).
 
 ### repeat
 
@@ -445,20 +530,34 @@ Creates a node like `gsk_repeat_node_new()` with the given properties.
 Creates a node like `gsk_repeating_linear_gradient_node_new()` with the given
 properties.
 
-### repeating radial-gradient
+This node is deprecated. It is equal to using a linear-gradient, the only
+difference is that the default value for the "repeat" property is "repeat".
 
-| property | syntax           | default                | printed     |
-| -------- | ---------------- | ---------------------- | ----------- |
-| bounds   | `<rect>`         | 50                     | always      |
-| center   | `<point>`        | 25 25                  | always      |
-| hradius  | `<number>`       | 25                     | always      |
-| vradius  | `<number>`       | 25                     | always      |
-| start    | `<number>`       | 0                      | always      |
-| end      | `<number>`       | 1                      | always      |
-| stops    | `<color-stops>`  | 0 #AF0, 1 #F0C         | always      |
+### repeating-radial-gradient
 
-Creates a node like `gsk_repeating_radial_gradient_node_new()` with the given
-properties.
+| property          | syntax              | default                | printed     |
+| ----------------- | ------------------- | ---------------------- | ----------- |
+| bounds            | `<rect>`            | 50                     | always      |
+|                   |                     |                        |             |
+| center            | `<point>`           | 25 25                  | never       |
+| hradius           | `<number>`          | 25                     | never       |
+| vradius           | `<number>`          | 25                     | never       |
+|                   |                     |                        |             |
+| start             | `<point>? <number>` | 25 25 0                | always      |
+| end               | `<point>? <number>` | 25 25 25               | always      |
+| aspect-ratio      | `<number>`          | 1                      | non-default |
+|                   |                     |                        |             |
+| stops             | `<color-stops>`     | 0 #AF0, 1 #F0C         | always      |
+| interpolation     | `<color-state>`     | srgb                   | non-default |
+| hue-interpolation | `<hue-interp>`      | shorter                | non-default |
+| premultiplied     | `<boolean>`         | true                   | non-default |
+
+Creates a repeating radial gradient.
+
+See the `radial-gradient` documentation for details about the properties.
+
+This node is deprecated. It is equal to using a radial-gradient, the only
+difference is that the default value for the "repeat" property is "repeat".
 
 ### rounded-clip
 

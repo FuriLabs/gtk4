@@ -186,7 +186,7 @@ done with
 |:-----------|:----------|:------|
 |color       | [CSS Color Level 3](https://www.w3.org/TR/css3-color/#foreground) | |
 |opacity     | [CSS Color Level 3](https://www.w3.org/TR/css3-color/#opacity) | |
-|filter      | [CSS Filter Effect Level 1](https://drafts.fxtf.org/filters/#FilterProperty) | |
+|filter      | [CSS Filter Effect Level 1](https://www.w3.org/TR/filter-effects-1/#typedef-filter-value-list) | |
 |font-family | [CSS Fonts Level 3](https://www.w3.org/TR/css3-fonts/#font-family-prop) | defaults to gtk-font-name setting |
 |font-size   | [CSS Fonts Level 3](https://www.w3.org/TR/css3-fonts/#font-size-prop) | defaults to gtk-font-name setting |
 |font-style  | [CSS Fonts Level 3](https://www.w3.org/TR/css3-fonts/#font-style-prop) | |
@@ -222,6 +222,7 @@ done with
 |-gtk-icon-palette| Color palette, as explained above | used to recolor symbolic icons |
 |-gtk-icon-shadow| [Shadow](https://www.w3.org/TR/css-backgrounds-3/#typedef-shadow) or `none` | applied to builtin and application-loaded icons |
 |-gtk-icon-filter| [Filter value list](https://www.w3.org/TR/filter-effects-1/#typedef-filter-value-list) or `none` | applied to builtin and application-loaded icons |
+|-gtk-icon-weight | Like [font weight](https://www.w3.org/TR/css3-fonts/#font-weight-prop) | applied to builtin and application-loaded, stroked symbolic icons |
 |transform| [CSS Transforms Level 1](https://www.w3.org/TR/css-transforms-1/#transform-property) | |
 |transform-origin| [CSS Transforms Level 1](https://www.w3.org/TR/css-transforms-1/#transform-origin-property) | CSS allows specifying a z component|
 |min-width| [CSS Box Model Level 3](https://www.w3.org/TR/css3-box/#min-width) | CSS allows percentages |
@@ -304,7 +305,8 @@ Media queries can include `not`, `and`, and `or` expressions.
 
 GTK supports the following media features:
 
-| Media feature        | Reference | Notes |
-|:---------------------|:----------|:------|
-| prefers-color-scheme | [Media Queries Level 5](https://www.w3.org/TR/mediaqueries-5/#prefers-color-scheme) | `light` and `dark` mode |
-| prefers-contrast     | [Media Queries Level 5](https://www.w3.org/TR/mediaqueries-5/#prefers-contrast) | `no-preference`, `more`, and `less` |
+| Media feature          | Reference | Notes |
+|:-----------------------|:----------|:------|
+| prefers-color-scheme   | [Media Queries Level 5](https://www.w3.org/TR/mediaqueries-5/#prefers-color-scheme) | `light` and `dark` mode |
+| prefers-contrast       | [Media Queries Level 5](https://www.w3.org/TR/mediaqueries-5/#prefers-contrast) | `no-preference`, `more`, and `less` |
+| prefers-reduced-motion | [Media Queries Level 5](https://www.w3.org/TR/mediaqueries-5/#prefers-reduced-motion) | `no-preference`, `reduced` |

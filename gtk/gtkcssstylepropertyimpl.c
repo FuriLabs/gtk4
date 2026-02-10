@@ -311,6 +311,30 @@ icon_style_parse (GtkCssStyleProperty *property,
 }
 
 static GtkCssValue *
+icon_weight_parse (GtkCssStyleProperty *property,
+                   GtkCssParser        *parser)
+{
+  GtkCssValue *value;
+
+  value = gtk_css_font_weight_value_try_parse (parser);
+  if (value == NULL)
+    {
+      value = gtk_css_number_value_parse (parser, GTK_CSS_PARSE_NUMBER | GTK_CSS_POSITIVE_ONLY);
+      if (value == NULL)
+        return NULL;
+
+      if (gtk_css_number_value_get (value, 100) < 1 ||
+          gtk_css_number_value_get (value, 100) > 1000)
+        {
+          gtk_css_parser_error_value (parser, "Icon weight values must be between 1 and 1000");
+          g_clear_pointer (&value, gtk_css_value_unref);
+        }
+    }
+
+  return value;
+}
+
+static GtkCssValue *
 parse_letter_spacing (GtkCssStyleProperty *property,
                       GtkCssParser        *parser)
 {
@@ -929,49 +953,49 @@ _gtk_css_style_property_init_properties (void)
                                           _gtk_css_text_decoration_style_value_new (GTK_CSS_TEXT_DECORATION_STYLE_SOLID));
   gtk_css_style_property_register        ("text-transform",
                                           GTK_CSS_PROPERTY_TEXT_TRANSFORM,
-                                          0,
+                                          GTK_STYLE_PROPERTY_INHERIT,
                                           GTK_CSS_AFFECTS_TEXT_ATTRS | GTK_CSS_AFFECTS_TEXT_SIZE,
                                           parse_text_transform,
                                           _gtk_css_text_transform_value_new (GTK_CSS_TEXT_TRANSFORM_NONE));
   gtk_css_style_property_register        ("font-kerning",
                                           GTK_CSS_PROPERTY_FONT_KERNING,
-                                          0,
+                                          GTK_STYLE_PROPERTY_INHERIT,
                                           GTK_CSS_AFFECTS_TEXT_ATTRS | GTK_CSS_AFFECTS_TEXT_SIZE,
                                           parse_font_kerning,
                                           _gtk_css_font_kerning_value_new (GTK_CSS_FONT_KERNING_AUTO));
   gtk_css_style_property_register        ("font-variant-ligatures",
                                           GTK_CSS_PROPERTY_FONT_VARIANT_LIGATURES,
-                                          0,
+                                          GTK_STYLE_PROPERTY_INHERIT,
                                           GTK_CSS_AFFECTS_TEXT_ATTRS,
                                           parse_font_variant_ligatures,
                                           _gtk_css_font_variant_ligature_value_new (GTK_CSS_FONT_VARIANT_LIGATURE_NORMAL));
   gtk_css_style_property_register        ("font-variant-position",
                                           GTK_CSS_PROPERTY_FONT_VARIANT_POSITION,
-                                          0,
+                                          GTK_STYLE_PROPERTY_INHERIT,
                                           GTK_CSS_AFFECTS_TEXT_ATTRS,
                                           parse_font_variant_position,
                                           _gtk_css_font_variant_position_value_new (GTK_CSS_FONT_VARIANT_POSITION_NORMAL));
   gtk_css_style_property_register        ("font-variant-caps",
                                           GTK_CSS_PROPERTY_FONT_VARIANT_CAPS,
-                                          0,
+                                          GTK_STYLE_PROPERTY_INHERIT,
                                           GTK_CSS_AFFECTS_TEXT_ATTRS,
                                           parse_font_variant_caps,
                                           _gtk_css_font_variant_caps_value_new (GTK_CSS_FONT_VARIANT_CAPS_NORMAL));
   gtk_css_style_property_register        ("font-variant-numeric",
                                           GTK_CSS_PROPERTY_FONT_VARIANT_NUMERIC,
-                                          0,
+                                          GTK_STYLE_PROPERTY_INHERIT,
                                           GTK_CSS_AFFECTS_TEXT_ATTRS,
                                           parse_font_variant_numeric,
                                           _gtk_css_font_variant_numeric_value_new (GTK_CSS_FONT_VARIANT_NUMERIC_NORMAL));
   gtk_css_style_property_register        ("font-variant-alternates",
                                           GTK_CSS_PROPERTY_FONT_VARIANT_ALTERNATES,
-                                          0,
+                                          GTK_STYLE_PROPERTY_INHERIT,
                                           GTK_CSS_AFFECTS_TEXT_ATTRS,
                                           parse_font_variant_alternates,
                                           _gtk_css_font_variant_alternate_value_new (GTK_CSS_FONT_VARIANT_ALTERNATE_NORMAL));
   gtk_css_style_property_register        ("font-variant-east-asian",
                                           GTK_CSS_PROPERTY_FONT_VARIANT_EAST_ASIAN,
-                                          0,
+                                          GTK_STYLE_PROPERTY_INHERIT,
                                           GTK_CSS_AFFECTS_TEXT_ATTRS,
                                           parse_font_variant_east_asian,
                                           _gtk_css_font_variant_east_asian_value_new (GTK_CSS_FONT_VARIANT_EAST_ASIAN_NORMAL));
@@ -1283,6 +1307,12 @@ _gtk_css_style_property_init_properties (void)
                                           GTK_CSS_AFFECTS_CONTENT,
                                           filter_value_parse,
                                           gtk_css_filter_value_new_none ());
+  gtk_css_style_property_register        ("-gtk-icon-weight",
+                                          GTK_CSS_PROPERTY_ICON_WEIGHT,
+                                          GTK_STYLE_PROPERTY_INHERIT | GTK_STYLE_PROPERTY_ANIMATED,
+                                          GTK_CSS_AFFECTS_ICON_REDRAW_SYMBOLIC,
+                                          icon_weight_parse,
+                                          gtk_css_number_value_new (PANGO_WEIGHT_NORMAL, GTK_CSS_NUMBER));
   gtk_css_style_property_register        ("border-spacing",
                                           GTK_CSS_PROPERTY_BORDER_SPACING,
                                           GTK_STYLE_PROPERTY_ANIMATED,
@@ -1397,6 +1427,12 @@ _gtk_css_style_property_init_properties (void)
                                           GTK_CSS_AFFECTS_POSTEFFECT,
                                           opacity_parse,
                                           gtk_css_number_value_new (1, GTK_CSS_NUMBER));
+  gtk_css_style_property_register        ("backdrop-filter",
+                                          GTK_CSS_PROPERTY_BACKDROP_FILTER,
+                                          GTK_STYLE_PROPERTY_ANIMATED,
+                                          GTK_CSS_AFFECTS_POSTEFFECT,
+                                          filter_value_parse,
+                                          gtk_css_filter_value_new_none ());
   gtk_css_style_property_register        ("filter",
                                           GTK_CSS_PROPERTY_FILTER,
                                           GTK_STYLE_PROPERTY_ANIMATED,

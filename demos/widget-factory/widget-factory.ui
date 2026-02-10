@@ -523,7 +523,12 @@ Suspendisse feugiat quam quis dolor accumsan cursus.</property>
                                 <property name="enable-emoji-completion">1</property>
                                 <property name="invisible_char">•</property>
                                 <property name="placeholder-text" translatable="1">Click icon to change mode</property>
-                                <property name="secondary-icon-paintable">view-refresh-symbolic</property>
+                                <property name="secondary-icon-paintable">
+                                  <object class="GtkSvg">
+                                    <property name="resource">/org/gtk/WidgetFactory4/icons/view-refresh.gpa</property>
+                                    <property name="playing">1</property>
+                                  </object>
+                                </property>
                                 <property name="secondary-icon-tooltip-text">Change mode</property>
                                 <signal name="icon-release" handler="on_entry_icon_release" swapped="no"/>
                               </object>
@@ -1052,10 +1057,9 @@ Suspendisse feugiat quam quis dolor accumsan cursus.</property>
                             <child>
                               <object class="GtkFrame">
                                 <property name="child">
-                                  <object class="GtkVideo">
+                                  <object class="GtkVideo" id="video">
                                     <property name="autoplay">1</property>
                                     <property name="loop">1</property>
-                                    <property name="file">resource:///org/gtk/WidgetFactory4/gtk-logo.webm</property>
                                   </object>
                                 </property>
                               </object>
@@ -1773,10 +1777,14 @@ microphone-sensitivity-medium-symbolic</property>
                                             </child>
                                             <child>
                                               <object class="GtkImage" id="listboxrow3image">
-                                                <property name="paintable">object-select-symbolic</property>
+                                                <property name="paintable">
+                                                  <object class="GtkSvg">
+                                                    <property name="resource">/org/gtk/WidgetFactory4/icons/checked.gpa</property>
+                                                    <property name="playing">1</property>
+                                                  </object>
+                                                </property>
                                                 <property name="halign">2</property>
                                                 <property name="valign">3</property>
-                                                <property name="opacity">0</property>
                                               </object>
                                             </child>
                                           </object>

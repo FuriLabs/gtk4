@@ -5,7 +5,15 @@ compare_render = executable('compare-render',
 )
 
 node_parser = executable('node-parser', 
-  [ 'node-parser.c', '../testutils.c' ],
+  [ 'node-parser.c' ],
+  link_with: testutils_lib,
+  dependencies: libgtk_dep,
+  c_args: common_cflags,
+)
+
+serialize = executable('serialize',
+  [ 'serialize.c' ],
+  link_with: testutils_lib,
   dependencies: libgtk_dep,
   c_args: common_cflags,
 )
@@ -48,12 +56,19 @@ compare_render_tests = [
   'clip-nested1',
   'clip-translate-offscreen',
   'color-blur0',
+  'color-dodge-nan',
   'color-matrix-identity',
   'color-matrix-merge',
   'color-matrix-parsing',
   'color-states',
+  'composite-rotated-mask',
+  'composite-source-all-opaque-with-complex-mask',
+  'copy-paste',
+  'copy-paste-transformed',
+  'copy-transform-order',
   'component-transfer-levels',
   'component-transfer-linear',
+  'composite-everything',
   'conic-gradient-premultiplied-nocairo',
   'conic-gradient-with-64-colorstops',
   'container-single-child-offscreen-for-opacity',
@@ -72,6 +87,7 @@ compare_render_tests = [
   'empty-color',
   'empty-color-matrix',
   'empty-container',
+  'empty-copy',
   'empty-cross-fade',
   'empty-debug',
   'empty-glshader',
@@ -80,6 +96,7 @@ compare_render_tests = [
   'empty-mask',
   'empty-opacity',
   'empty-outset-shadow',
+  'empty-paste',
   'empty-repeat',
   'empty-rounded-clip',
   'empty-shadow',
@@ -116,11 +133,15 @@ compare_render_tests = [
   'inter-hinting',
   'inter-optical-scaling',
   'invalid-transform',
+  'isolation',
   'issue-3615',
+  'linear-gradient-averages-nocairo',
   'linear-gradient-interpolation-nocairo',
   'linear-gradient-3d-nocairo',
   'linear-gradient-nonorthogonal-scale',
+  'linear-gradient-pad-color',
   'linear-gradient-premultiplied-nocairo',
+  'linear-gradient-unpremultiplied-nocairo',
   'linear-gradient-with-64-colorstops',
   'lots-of-offscreens',
   'mask',
@@ -135,11 +156,13 @@ compare_render_tests = [
   'mipmap-generation-later',
   'mipmap-with-1x1',
   'nested-rounded-clips',
+  'occlusion-wrong-rect-contains',
   'offscreen-forced-downscale',
   'offscreen-forced-downscale-all-clipped',
   'offscreen-fractional-translate',
   'offscreen-pixel-alignment-nocairo',
   'offscreen-pixel-alignment2',
+  'opacity-blocks-clear',
   'opacity_clip',
   'opacity-colormatrix-combinations',
   'opacity-overdraw',
@@ -154,7 +177,11 @@ compare_render_tests = [
   'outset_shadow_rounded_top',
   'outset-shadow-scale-offset',
   'outset_shadow_simple',
+  'paste-behind-clip',
+  'paste-no-porter-duff',
+  'paste-with-depth',
   'premul-color',
+  'radial-gradient-pad-color',
   'radial-gradient-premultiplied-nocairo',
   'radial-gradient-with-64-colorstops',
   'repeat',
@@ -169,6 +196,7 @@ compare_render_tests = [
   'repeat-node-tiling-horizontal',
   'repeat-node-tiling-vertical',
   'repeat-noninteger-nocairo',
+  'repeat-repeat',
   'repeat-repeats',
   'repeat-repeats-nested',
   'repeat-scaling',
@@ -225,9 +253,14 @@ compare_render_tests = [
   'transform-in-transform',
   'transform-in-transform-in-transform',
   'yuv-matrix-d3d12',
-  'yuv-matrix-dmabuf',
-  'yuv-matrix-memory',
+  'yuv-matrix-dmabuf-nv12',
+  'yuv-matrix-dmabuf-rgba',
+  'yuv-matrix-dmabuf-yuyv',
+  'yuv-matrix-memory-nv12',
+  'yuv-matrix-memory-rgba',
+  'yuv-matrix-memory-yuyv',
   'z-transform-clipping-bounds-nocairo',
+  'zero-length-path-stroke',
 ]
 
 # These tests are either slow or need lots of memory.
@@ -275,28 +308,36 @@ variants = {
   'replay': '--replay',
   'clip': '--clip',
   'colorflip': '--colorflip',
+  'opaque': '--opaque',
+  'serialize': '--serialize',
 }
 
 compare_xfails = {
   'gl': {
-    'blur-child-bounds-oversize': ['clip'], # 6450
-    'rounded-clip-with-huge-bounds': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'], # 6532
     'big-checkerboard': ['clipped'], # 6444
+    'blur-child-bounds-oversize': ['clip'], # 6450
+    'cairo-coordinates': ['serialize'],
+    'rounded-clip-with-huge-bounds': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'], # 6532
+    'yuv-matrix-dmabuf-nv12': ['serialize'],
   },
   'vulkan': {
+    'big-checkerboard': ['clip'], # 6444
     'blur-child-bounds-oversize': ['clip'], # 6450
+    'cairo-coordinates': ['serialize'],
     'repeat-repeats-nested': ['clip'], # 6522
     'repeating-radial-gradient-edge-colors': ['colorflip'],
-    'rounded-clip-with-huge-bounds': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'], # 6532
-    'big-checkerboard': ['clip'], # 6444
+    'rounded-clip-with-huge-bounds': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'], # 6532
+    'yuv-matrix-dmabuf-nv12': ['serialize'],
   },
   'cairo': {
+    'cairo-coordinates': ['serialize'],
     'inter-hinting': ['flip', 'rotate'],
     'inter-optical-scaling': ['flip', 'rotate'],
-    'fill-fractional-translate': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'],
-    'fill-fractional-translate-gradient': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'],
-    'stroke-fractional-translate': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'],
-    'stroke-fractional-translate-gradient': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip'],
+    'fill-fractional-translate': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'],
+    'fill-fractional-translate-gradient': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'],
+    'stroke-fractional-translate': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'],
+    'stroke-fractional-translate-gradient': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'],
+    'yuv-matrix-dmabuf-nv12': ['serialize'],
   }
 }
 
@@ -347,6 +388,28 @@ foreach renderer : renderers
       endforeach
     endif
   endforeach
+endforeach
+
+serialize_xfails = [
+  'cairo-coordinates',
+]
+
+foreach testname : compare_render_tests
+  extra_suites = []
+  if serialize_xfails.contains(testname)
+    extra_suites += ['failing']
+  endif
+  test('serialize ' + testname, serialize,
+          protocol: 'tap',
+          args: [
+            '--tap',
+            '-k',
+            join_paths(meson.current_source_dir(), 'compare', testname + '.node'),
+          ],
+          env: test_env,
+          suite: [ 'gsk', 'gsk-serialize', ] + extra_suites,
+        )
+  
 endforeach
 
 node_parser_tests = [
@@ -451,11 +514,11 @@ node_parser_tests = [
   'huge-angle.ref.node',
   'mask-modes.node',
   'mask-modes.ref.node',
+  'no-unnecessary-names.node',
   'node-names.node',
   'node-names-everywhere.errors',
   'node-names-everywhere.node',
   'node-names-everywhere.ref.node',
-  'occlusion-wrong-rect-contains',
   'radial-gradient.node',
   'radial-gradient.ref.node',
   'radial-gradient-start-end.errors',
@@ -531,26 +594,31 @@ endforeach
 # offload does not work outside of linux
 if os_linux
   offload = executable('offload',
-    [ 'offload.c', 'gskrendernodeattach.c', '../testutils.c' ],
+    [ 'offload.c', 'gskrendernodeattach.c' ],
+    link_with: testutils_lib,
     dependencies : libgtk_static_dep,
     c_args: common_cflags + [ '-DGTK_COMPILATION=1' ],
   )
 
   offload_tests = [
-    'simple.node',
-    'transforms.node',
-    'deep.node',
-    'move.node',
-    'start_offloading.node',
-    'stop_offloading.node',
-    'source.node',
-    'nested.node',
-    'clipped.node',
-    'not-clipped.node',
-    'complex-clip.node',
     'background.node',
     'background2.node',
     'bad-transform.node',
+    'clipped.node',
+    'complex-clip.node',
+    'composite-after.node',
+    'composite-before.node',
+    'copied-no-offload.node',
+    'copy-allows-offload.node',
+    'deep.node',
+    'move.node',
+    'nested.node',
+    'not-clipped.node',
+    'simple.node',
+    'source.node',
+    'start_offloading.node',
+    'stop_offloading.node',
+    'transforms.node',
   ]
 
   foreach test : offload_tests
@@ -659,6 +727,7 @@ internal_tests = [
   [ 'not-diff' ],
   [ 'misc'],
   [ 'path-private' ],
+  [ 'rect'],
   [ 'rounded-rect'],
   [ 'scaling', [ 'scaling.c', '../gdk/gdktestutils.c' ] ],
   [ 'transform' ],

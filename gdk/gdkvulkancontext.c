@@ -40,6 +40,8 @@
 
 #ifdef GDK_RENDERING_VULKAN
 const GdkDebugKey gdk_vulkan_feature_keys[] = {
+  { "dual-source-blend", GDK_VULKAN_FEATURE_DUAL_SOURCE_BLEND, "Disable dual source blending" },
+  { "profile", GDK_VULKAN_FEATURE_PROFILE, "Disable profiling support" },
   { "dmabuf", GDK_VULKAN_FEATURE_DMABUF, "Never import Dmabufs" },
   { "win32", GDK_VULKAN_FEATURE_WIN32, "Never import Windows resources" },
   { "ycbcr", GDK_VULKAN_FEATURE_YCBCR, "Do not support Ycbcr textures (also disables dmabufs)" },
@@ -293,6 +295,10 @@ gdk_vulkan_strerror (VkResult result)
       return "The application attempted to create a pipeline binary by querying an internal cache, but the internal cache entry did not exist. (VK_PIPELINE_BINARY_MISSING_KHR)";
     case VK_ERROR_NOT_ENOUGH_SPACE_KHR:
       return "The application did not provide enough space to return all the required data. (VK_ERROR_NOT_ENOUGH_SPACE_KHR)";
+#endif
+#if VK_HEADER_VERSION >= 335
+    case VK_ERROR_PRESENT_TIMING_QUEUE_FULL_EXT:
+      return "The swapchain's internal timing queue is full. (VK_ERROR_PRESENT_TIMING_QUEUE_FULL_EXT)";
 #endif
 
     case VK_RESULT_MAX_ENUM:
@@ -636,6 +642,12 @@ physical_device_check_features (VkPhysicalDevice device)
 
   features = 0;
 
+  if (v10_features.features.dualSrcBlend)
+    features |= GDK_VULKAN_FEATURE_DUAL_SOURCE_BLEND;
+
+  if (v10_features.features.pipelineStatisticsQuery)
+    features |= GDK_VULKAN_FEATURE_PROFILE;
+
   if (ycbcr_features.samplerYcbcrConversion ||
       physical_device_supports_extension (device, VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME))
     features |= GDK_VULKAN_FEATURE_YCBCR;
@@ -688,7 +700,7 @@ gdk_vulkan_present_is_busy (GdkVulkanContext *self,
 {
   VkResult res;
 
-  if (present->vk_swapchain == NULL)
+  if (!present->vk_swapchain)
     return FALSE;
 
   if (!present->vk_fence)
@@ -1100,14 +1112,6 @@ gdk_vulkan_context_surface_attach (GdkDrawContext  *context,
                   }
                 break;
 
-              case VK_FORMAT_R16G16B16A16_UNORM:
-                if (priv->formats[GDK_MEMORY_U16].vk_format.colorSpace != VK_COLOR_SPACE_PASS_THROUGH_EXT)
-                  {
-                    priv->formats[GDK_MEMORY_U16].vk_format = formats[i];
-                    priv->formats[GDK_MEMORY_U16].gdk_format = GDK_MEMORY_R16G16B16A16_PREMULTIPLIED;
-                  }
-                break;
-
               case VK_FORMAT_R16G16B16A16_SFLOAT:
                 if (priv->formats[GDK_MEMORY_FLOAT16].vk_format.colorSpace != VK_COLOR_SPACE_PASS_THROUGH_EXT)
                   {
@@ -1137,21 +1141,17 @@ gdk_vulkan_context_surface_attach (GdkDrawContext  *context,
       /* Ensure all the formats exist:
        * - If a format was found, keep that one.
        * - FLOAT32 chooses the best format we have.
-       * - FLOAT16 and U16 pick the format FLOAT32 uses
+       * - FLOAT16 picks the format FLOAT32 uses
        */
       if (priv->formats[GDK_MEMORY_FLOAT32].vk_format.format == VK_FORMAT_UNDEFINED)
         {
           if (priv->formats[GDK_MEMORY_FLOAT16].vk_format.format != VK_FORMAT_UNDEFINED)
             priv->formats[GDK_MEMORY_FLOAT32] = priv->formats[GDK_MEMORY_FLOAT16];
-          else if (priv->formats[GDK_MEMORY_U16].vk_format.format != VK_FORMAT_UNDEFINED)
-            priv->formats[GDK_MEMORY_FLOAT32] = priv->formats[GDK_MEMORY_U16];
           else
             priv->formats[GDK_MEMORY_FLOAT32] = priv->formats[GDK_MEMORY_U8];
         }
       if (priv->formats[GDK_MEMORY_FLOAT16].vk_format.format == VK_FORMAT_UNDEFINED)
         priv->formats[GDK_MEMORY_FLOAT16] = priv->formats[GDK_MEMORY_FLOAT32];
-      if (priv->formats[GDK_MEMORY_U16].vk_format.format == VK_FORMAT_UNDEFINED)
-        priv->formats[GDK_MEMORY_U16] = priv->formats[GDK_MEMORY_FLOAT32];
       priv->formats[GDK_MEMORY_NONE] = priv->formats[GDK_MEMORY_U8];
 
       vk_device = gdk_vulkan_context_get_device (self);
@@ -1208,7 +1208,7 @@ gdk_vulkan_context_surface_detach (GdkDrawContext *context)
       if (priv->presents[i].vk_swapchain)
         {
           gdk_vulkan_context_unref_swapchain (self, priv->presents[i].vk_swapchain);
-          priv->presents[i].vk_swapchain = NULL;
+          priv->presents[i].vk_swapchain = VK_NULL_HANDLE;
         }
       vkDestroySemaphore (vk_device,
                           priv->presents[i].vk_semaphore,
@@ -1541,7 +1541,7 @@ gdk_vulkan_save_pipeline_cache (GdkDisplay *display)
     }
 
   gdk_profiler_end_markf (begin_time,
-                          "Save Vulkan pipeline cache", "%s size %lu",
+                          "Save Vulkan pipeline cache", "%s size %zu",
                           g_file_peek_path (file), size);
 
   g_object_unref (file);
@@ -1871,6 +1871,10 @@ gdk_display_create_vulkan_device (GdkDisplay  *display,
                                                     },
                                                     .enabledExtensionCount = device_extensions->len,
                                                     .ppEnabledExtensionNames = (const char * const *) device_extensions->pdata,
+                                                    .pEnabledFeatures = &(VkPhysicalDeviceFeatures) {
+                                                        .dualSrcBlend = ENABLE_IF (GDK_VULKAN_FEATURE_DUAL_SOURCE_BLEND),
+                                                        .pipelineStatisticsQuery = ENABLE_IF (GDK_VULKAN_FEATURE_PROFILE),
+                                                    },
                                                     .pNext = &(VkPhysicalDeviceVulkan11Features) {
                                                         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
                                                         .samplerYcbcrConversion = ENABLE_IF (GDK_VULKAN_FEATURE_YCBCR),

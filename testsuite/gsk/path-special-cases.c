@@ -260,6 +260,8 @@ test_rsvg_parse (void)
       "M 10 10 20 30 20 10 10 10 M 40 40 50 50 50 40 Z M 60 40 h 4 v 4 h -4 z" },
     // whitespace at end
     { "M 10 10 z ", "M 10 10 z" },
+    // unexpected char
+    { "M 10 ;", NULL },
   };
   int i;
 
@@ -337,6 +339,9 @@ test_empty_path (void)
   g_assert_false (gsk_path_in_fill (path, &GRAPHENE_POINT_INIT (0, 0), GSK_FILL_RULE_WINDING));
 
   g_assert_false (gsk_path_get_closest_point (path, &GRAPHENE_POINT_INIT (0, 0), INFINITY, &point, NULL));
+
+  g_assert_false (gsk_path_get_start_point (path, &point));
+  g_assert_false (gsk_path_get_end_point (path, &point));
 
   gsk_path_unref (path);
 }
@@ -1329,6 +1334,57 @@ check_path_point (const GskPathPoint     *point,
 }
 
 static void
+test_zero_length (void)
+{
+  GskPathBuilder *builder;
+  GskPath *path;
+  char *s;
+  graphene_rect_t bounds;
+  GskPathPoint point;
+  graphene_vec2_t v1, v2;
+
+  builder = gsk_path_builder_new ();
+  gsk_path_builder_move_to (builder, 10, 10);
+  path = gsk_path_builder_free_to_path (builder);
+
+  g_assert_false (gsk_path_is_empty (path));
+  g_assert_false (gsk_path_is_closed (path));
+
+  s = gsk_path_to_string (path);
+  g_assert_cmpstr (s, ==, "M 10 10");
+  g_free (s);
+
+  g_assert_true (gsk_path_get_bounds (path, &bounds));
+  g_assert_true (graphene_rect_equal (&bounds, &GRAPHENE_RECT_INIT (10, 10, 0, 0)));
+
+  g_assert_false (gsk_path_in_fill (path, &GRAPHENE_POINT_INIT (0, 0), GSK_FILL_RULE_WINDING));
+
+  g_assert_true (gsk_path_get_closest_point (path, &GRAPHENE_POINT_INIT (0, 0), INFINITY, &point, NULL));
+
+  check_path_point (&point, path,
+                    &GRAPHENE_POINT_INIT (10, 10),
+                    graphene_vec2_init (&v1, 0, 0),
+                    graphene_vec2_init (&v2, 0, 0),
+                    0, 0);
+
+  g_assert_true (gsk_path_get_start_point (path, &point));
+  check_path_point (&point, path,
+                    &GRAPHENE_POINT_INIT (10, 10),
+                    graphene_vec2_init (&v1, 0, 0),
+                    graphene_vec2_init (&v2, 0, 0),
+                    0, 0);
+
+  g_assert_true (gsk_path_get_end_point (path, &point));
+  check_path_point (&point, path,
+                    &GRAPHENE_POINT_INIT (10, 10),
+                    graphene_vec2_init (&v1, 0, 0),
+                    graphene_vec2_init (&v2, 0, 0),
+                    0, 0);
+
+  gsk_path_unref (path);
+}
+
+static void
 test_rounded_rect_plain (void)
 {
   GskPathBuilder *builder;
@@ -1711,6 +1767,27 @@ test_circle_zero (void)
   gsk_path_unref (path);
 }
 
+static void
+test_large_coord_conics (void)
+{
+  GskPath *path = gsk_path_parse ("M 2 10 o 0 2, -2 2, 0.707106769 o -2 0, -2 -2, 0.707106769 o 0 -2, 2 -2, 0.707106769 o 2 0, 2 2, 0.707106769 z M 3000002 10 o 0 2, -2 2, 0.707106769 o -2 0, -2 -2, 0.707106769 o 0 -2, 2 -2, 0.70710676");
+  cairo_t *cr;
+  cairo_surface_t *surface;
+
+  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 100, 100);
+  cr = cairo_create (surface);
+
+  /* Check that this does not cause a stack overflow due to
+   * runaway recursion.
+   */
+  gsk_path_to_cairo (path, cr);
+
+  cairo_surface_destroy (surface);
+  cairo_destroy (cr);
+
+  gsk_path_unref (path);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1741,6 +1818,8 @@ main (int argc, char *argv[])
   g_test_add_func ("/path/rounded-rect/parse", test_rounded_rect_parse);
   g_test_add_func ("/path/circle/plain", test_circle_plain);
   g_test_add_func ("/path/circle/zero", test_circle_zero);
+  g_test_add_func ("/path/zero-length", test_zero_length);
+  g_test_add_func ("/path/large-coord-conics", test_large_coord_conics);
 
   return g_test_run ();
 }

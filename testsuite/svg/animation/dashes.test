@@ -1,0 +1,10 @@
+# we animate a dasharray, including none
+input: dashes.svg
+time: 0
+output: dashes-0.svg
+time: 5000
+output: dashes-1.svg
+time: 10000
+output: dashes-2.svg
+time: 11000
+output: dashes-3.svg

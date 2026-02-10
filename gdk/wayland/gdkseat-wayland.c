@@ -2785,7 +2785,7 @@ gdk_wayland_tablet_flush_frame_events (GdkWaylandTabletData *tablet,
 
   for (l = events; l; l = l->next)
     {
-      TabletEvent *tablet_event = events->data;
+      TabletEvent *tablet_event = l->data;
       GdkEvent *event = NULL;
 
       if (!tablet->current_tool)
@@ -3180,6 +3180,10 @@ tablet_tool_handle_button (void                      *data,
     n_button = GDK_BUTTON_SECONDARY;
   else if (button == BTN_STYLUS3)
     n_button = 8; /* Back */
+  else if (button == BTN_BACK)
+    n_button = 8; /* Back */
+  else if (button == BTN_FORWARD)
+    n_button = 9; /* Forward */
   else
     return;
 

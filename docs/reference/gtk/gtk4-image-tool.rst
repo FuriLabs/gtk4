@@ -21,6 +21,7 @@ SYNOPSIS
 |   **gtk4-image-tool** info [OPTIONS...] <FILE>
 |   **gtk4-image-tool** relabel [OPTIONS...] <FILE1> <FILE2>
 |   **gtk4-image-tool** show [OPTIONS...] <FILE>...
+|   **gtk4-image-tool** play [OPTIONS...] <FILE>...
 
 DESCRIPTION
 -----------
@@ -43,8 +44,44 @@ The ``show`` command displays one or more images, side-by-side.
 
 ``--undecorated``
 
-Removes window decorations. This is meant for rendering of exactly the image
-without any titlebar.
+  Removes window decorations. This is meant for rendering of exactly the
+  image without any titlebar.
+
+Playing
+^^^^^^^
+
+The ``play`` command plays one or more SVG animations, side-by-side.
+Clicking on the animation will change the state of the GtkSvg paintable,
+where applicable.
+
+``--undecorated``
+
+  Removes window decorations. This is meant for rendering of exactly the
+  animation without any titlebar.
+
+``--size=SIZE``
+
+  Show the animation at the given size.
+
+``--no-animations``
+
+  Disable animation playback.
+
+``--no-system-resources``
+
+  Disable the use of system fonts. Embedded fonts will still
+  be used.
+
+``--no-external-resources``
+
+  Disable loading of external resources such as images.
+  Embedded images and images that included as resources
+  in the application are still used.
+
+``--no-extensions``
+
+  Disable gpa extensions, such as states, transitions
+  and dynamic stroke weight.
 
 Compare
 ^^^^^^^

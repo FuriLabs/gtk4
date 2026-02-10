@@ -36,6 +36,8 @@ static char *current_file = NULL;
 static GtkWidget *notebook;
 static GtkSingleSelection *selection;
 static GtkWidget *toplevel;
+static GtkWidget *search_bar;
+static GtkWidget *search_entry;
 static char **search_needle;
 
 typedef struct _GtkDemo GtkDemo;
@@ -947,28 +949,35 @@ search_results_update (GObject    *filter_model,
     }
 }
 
-static void
-activate (GApplication *app)
+static gboolean
+close_request_cb (GtkWindow *window)
+{
+  GtkApplication *application;
+
+  application = gtk_window_get_application (window);
+  g_application_quit (G_APPLICATION (application));
+
+  return TRUE;
+}
+
+static GtkWindow *
+create_window (GtkApplication *app)
 {
   GtkBuilder *builder;
   GListModel *listmodel;
   GtkTreeListModel *treemodel;
-  GtkWidget *window, *listview, *search_entry, *search_bar;
+  GtkWidget *window, *listview;
   GtkFilterListModel *filter_model;
   GtkFilter *filter;
   GSimpleAction *action;
-  GList *list;
-
-  if ((list = gtk_application_get_windows (GTK_APPLICATION (app))) != NULL)
-    {
-      gtk_window_present (GTK_WINDOW (list->data));
-      return;
-    }
 
   builder = gtk_builder_new_from_resource ("/ui/main.ui");
 
-  window = (GtkWidget *)gtk_builder_get_object (builder, "window");
-  gtk_application_add_window (GTK_APPLICATION (app), GTK_WINDOW (window));
+  window = (GtkWidget *) gtk_builder_get_object (builder, "window");
+
+  g_signal_connect (window, "close-request", G_CALLBACK (close_request_cb), NULL);
+
+  gtk_application_add_window (app, GTK_WINDOW (window));
 
   if (g_strcmp0 (PROFILE, "devel") == 0)
     gtk_widget_add_css_class (window, "devel");
@@ -1010,9 +1019,25 @@ activate (GApplication *app)
   selection_cb (selection, NULL, NULL);
   g_object_unref (selection);
 
-  gtk_window_present (GTK_WINDOW (window));
-
   g_object_unref (builder);
+
+  return GTK_WINDOW (window);
+}
+
+static void
+activate (GApplication *gapp)
+{
+  GtkApplication *app = GTK_APPLICATION (gapp);
+  GList *list;
+  GtkWindow *window;
+
+  list = gtk_application_get_windows (app);
+  if (list)
+    window = list->data;
+  else
+    window = create_window (app);
+
+  gtk_window_present (window);
 }
 
 static gboolean
@@ -1056,12 +1081,18 @@ command_line (GApplication            *app,
   GDoDemoFunc func = 0;
   GtkWidget *window, *demo;
 
-  activate (app);
-
   options = g_application_command_line_get_options_dict (cmdline);
   g_variant_dict_lookup (options, "run", "&s", &name);
   g_variant_dict_lookup (options, "autoquit", "b", &autoquit);
   g_variant_dict_lookup (options, "list", "b", &list);
+
+  if (!name && !list)
+    {
+      g_application_activate (app);
+      return 0;
+    }
+
+  create_window (GTK_APPLICATION (app));
 
   if (list)
     {
@@ -1156,8 +1187,8 @@ main (int argc, char **argv)
   g_application_add_main_option (G_APPLICATION (app), "list", 0, 0, G_OPTION_ARG_NONE, "List examples", NULL);
   g_application_add_main_option (G_APPLICATION (app), "autoquit", 0, 0, G_OPTION_ARG_NONE, "Quit after a delay", NULL);
 
-  g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
   g_signal_connect (app, "command-line", G_CALLBACK (command_line), NULL);
+  g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
 
   g_application_run (G_APPLICATION (app), argc, argv);
 

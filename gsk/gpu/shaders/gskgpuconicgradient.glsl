@@ -1,8 +1,28 @@
-#define GSK_N_TEXTURES 0
+#ifdef GSK_PREAMBLE
+var_name = "gsk_gpu_conic_gradient";
+struct_name = "GskGpuConicGradient";
+acs_premultiplied = true;
 
-#include "common.glsl"
+graphene_rect_t rect;
+graphene_point_t center;
+float angle;
+GdkColor color0;
+GdkColor color1;
+GdkColor color2;
+GdkColor color3;
+GdkColor color4;
+GdkColor color5;
+GdkColor color6;
+graphene_vec4_t offsets0;
+graphene_vec4_t offsets1;
+graphene_vec4_t hints0;
+graphene_vec4_t hints1;
 
-#define VARIATION_SUPERSAMPLING ((GSK_VARIATION & (1u << 0)) == (1u << 0))
+variation: gboolean supersampling;
+variation: gboolean premultiplied;
+#endif /* GSK_PREAMBLE */
+
+#include "gskgpuconicgradientinstance.glsl"
 
 PASS(0) vec2 _pos;
 PASS_FLAT(1) Rect _rect;
@@ -14,29 +34,14 @@ PASS_FLAT(6) vec4 _color4;
 PASS_FLAT(7) vec4 _color5;
 PASS_FLAT(8) vec4 _color6;
 PASS_FLAT(9) vec4 _offsets0;
-PASS_FLAT(10) vec3 _offsets1;
+PASS_FLAT(10) vec4 _offsets1;
 PASS_FLAT(11) vec4 _hints0;
-PASS_FLAT(12) vec3 _hints1;
+PASS_FLAT(12) vec4 _hints1;
 PASS_FLAT(13) vec2 _center;
 PASS_FLAT(14) float _angle;
 
 
 #ifdef GSK_VERTEX_SHADER
-
-IN(0) vec4 in_rect;
-IN(1) vec4 in_color0;
-IN(2) vec4 in_color1;
-IN(3) vec4 in_color2;
-IN(4) vec4 in_color3;
-IN(5) vec4 in_color4;
-IN(6) vec4 in_color5;
-IN(7) vec4 in_color6;
-IN(8) vec4 in_offsets0;
-IN(9) vec3 in_offsets1;
-IN(10) vec4 in_hints0;
-IN(11) vec3 in_hints1;
-IN(12) vec2 in_center;
-IN(13) float in_angle;
 
 void
 run (out vec2 pos)
@@ -51,13 +56,26 @@ run (out vec2 pos)
   _center = in_center;
   _angle = in_angle;
 
-  _color0 = color_premultiply (in_color0);
-  _color1 = color_premultiply (in_color1);
-  _color2 = color_premultiply (in_color2);
-  _color3 = color_premultiply (in_color3);
-  _color4 = color_premultiply (in_color4);
-  _color5 = color_premultiply (in_color5);
-  _color6 = color_premultiply (in_color6);
+  if (VARIATION_PREMULTIPLIED)
+    {
+      _color0 = color_premultiply (in_color0);
+      _color1 = color_premultiply (in_color1);
+      _color2 = color_premultiply (in_color2);
+      _color3 = color_premultiply (in_color3);
+      _color4 = color_premultiply (in_color4);
+      _color5 = color_premultiply (in_color5);
+      _color6 = color_premultiply (in_color6);
+    }
+  else
+    {
+      _color0 = in_color0;
+      _color1 = in_color1;
+      _color2 = in_color2;
+      _color3 = in_color3;
+      _color4 = in_color4;
+      _color5 = in_color5;
+      _color6 = in_color6;
+    }
   _offsets0 = in_offsets0;
   _offsets1 = in_offsets1;
   _hints0 = in_hints0;
@@ -149,7 +167,11 @@ get_gradient_color (float offset)
             color = _color6;
         }
     }
-  return color;
+
+  if (VARIATION_PREMULTIPLIED)
+    return color;
+  else
+    return color_premultiply (color);
 }
 
 vec4

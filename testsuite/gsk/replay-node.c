@@ -1,6 +1,16 @@
 #include <gtk/gtk.h>
 #include <gtk/gtksnapshotprivate.h>
+#include <gsk/gskarithmeticnodeprivate.h>
+#include <gsk/gskblendnodeprivate.h>
+#include <gsk/gskbordernodeprivate.h>
+#include <gsk/gskcolormatrixnodeprivate.h>
+#include <gsk/gskcolornodeprivate.h>
+#include <gsk/gskcomponenttransfernodeprivate.h>
+#include <gsk/gskinsetshadownodeprivate.h>
+#include <gsk/gskoutsetshadownodeprivate.h>
 #include <gsk/gskrendernodeprivate.h>
+#include <gsk/gskrepeatnodeprivate.h>
+#include <gtk/gtksnapshotprivate.h>
 #include "../gdk/udmabuf.h"
 
 void
@@ -39,30 +49,15 @@ static void
 replay_linear_gradient_node (GskRenderNode *node, GtkSnapshot *snapshot)
 {
   graphene_rect_t bounds;
-  const graphene_point_t *start_point, *end_point;
-  const GskGradientStop *stops;
-  gsize n_stops;
-  GskHueInterpolation hue;
-  GdkColorState *interp;
+  const graphene_point_t *start, *end;
+  const GskGradient *gradient;
 
   gsk_render_node_get_bounds (node, &bounds);
-  start_point = gsk_linear_gradient_node_get_start (node);
-  end_point = gsk_linear_gradient_node_get_end (node);
-  n_stops = gsk_gradient_node_get_n_stops (node);
-  stops = gsk_gradient_node_get_stops (node);
-  interp = gsk_gradient_node_get_interpolation (node);
-  hue = gsk_gradient_node_get_hue_interpolation (node);
+  start = gsk_linear_gradient_node_get_start (node);
+  end = gsk_linear_gradient_node_get_end (node);
+  gradient = gsk_gradient_node_get_gradient (node);
 
-  if (gsk_render_node_get_node_type (node) == GSK_REPEATING_LINEAR_GRADIENT_NODE)
-    gtk_snapshot_add_repeating_linear_gradient (snapshot, &bounds,
-                                                start_point, end_point,
-                                                interp, hue,
-                                                stops, n_stops);
-  else
-    gtk_snapshot_add_linear_gradient (snapshot, &bounds,
-                                      start_point, end_point,
-                                      interp, hue,
-                                      stops, n_stops);
+  gtk_snapshot_add_linear_gradient (snapshot, &bounds, start, end, gradient);
 }
 
 static void
@@ -75,21 +70,13 @@ replay_radial_gradient_node (GskRenderNode *node, GtkSnapshot *snapshot)
   float vradius = gsk_radial_gradient_node_get_vradius (node);
   float start = gsk_radial_gradient_node_get_start (node);
   float end = gsk_radial_gradient_node_get_end (node);
-  gsize n_stops = gsk_gradient_node_get_n_stops (node);
-  const GskGradientStop *stops = gsk_gradient_node_get_stops (node);
-  GskHueInterpolation hue = gsk_gradient_node_get_hue_interpolation (node);
-  GdkColorState *interp = gsk_gradient_node_get_interpolation (node);
+  const GskGradient *gradient = gsk_gradient_node_get_gradient (node);
 
-  if (gsk_render_node_get_node_type (node) == GSK_REPEATING_RADIAL_GRADIENT_NODE)
-    gtk_snapshot_add_repeating_radial_gradient (snapshot, &bounds, center,
-                                                hradius, vradius, start, end,
-                                                interp, hue,
-                                                stops, n_stops);
-  else
-    gtk_snapshot_add_radial_gradient (snapshot, &bounds, center,
-                                      hradius, vradius, start, end,
-                                      interp, hue,
-                                      stops, n_stops);
+  gtk_snapshot_add_radial_gradient (snapshot, &bounds,
+                                    center, hradius * start,
+                                    center, hradius * end,
+                                    hradius / vradius,
+                                    gradient);
 }
 
 static void
@@ -99,15 +86,9 @@ replay_conic_gradient_node (GskRenderNode *node, GtkSnapshot *snapshot)
   gsk_render_node_get_bounds (node, &bounds);
   const graphene_point_t *center = gsk_conic_gradient_node_get_center (node);
   float rotation = gsk_conic_gradient_node_get_rotation (node);
-  gsize n_stops = gsk_gradient_node_get_n_stops (node);
-  const GskGradientStop *stops = gsk_gradient_node_get_stops (node);
-  GskHueInterpolation hue = gsk_gradient_node_get_hue_interpolation (node);
-  GdkColorState *interp = gsk_gradient_node_get_interpolation (node);
+  const GskGradient *gradient = gsk_gradient_node_get_gradient (node);
 
-  gtk_snapshot_add_conic_gradient (snapshot, &bounds, center,
-                                   rotation,
-                                   interp, hue,
-                                   stops, n_stops);
+  gtk_snapshot_add_conic_gradient (snapshot, &bounds, center, rotation, gradient);
 }
 
 static void
@@ -212,10 +193,11 @@ replay_repeat_node (GskRenderNode *node, GtkSnapshot *snapshot)
 {
   GskRenderNode *child = gsk_repeat_node_get_child (node);
   const graphene_rect_t *child_bounds = gsk_repeat_node_get_child_bounds (node);
+  GskRepeat repeat = gsk_repeat_node_get_repeat (node);
   graphene_rect_t bounds;
   gsk_render_node_get_bounds (node, &bounds);
 
-  gtk_snapshot_push_repeat (snapshot, &bounds, child_bounds);
+  gtk_snapshot_push_repeat2 (snapshot, &bounds, child_bounds, repeat);
   replay_node (child, snapshot);
   gtk_snapshot_pop (snapshot);
 }
@@ -261,12 +243,21 @@ replay_blend_node (GskRenderNode *node, GtkSnapshot *snapshot)
   GskRenderNode *bottom_child = gsk_blend_node_get_bottom_child (node);
   GskRenderNode *top_child = gsk_blend_node_get_top_child (node);
   GskBlendMode blend_mode = gsk_blend_node_get_blend_mode (node);
+  GdkColorState *color_state = gsk_blend_node_get_color_state (node);
+  GskRenderNode *child;
 
-  gtk_snapshot_push_blend (snapshot, blend_mode);
+  gtk_snapshot_push_collect (snapshot);
   replay_node (bottom_child, snapshot);
-  gtk_snapshot_pop (snapshot);
+  bottom_child = gtk_snapshot_pop_collect (snapshot);
+  gtk_snapshot_push_collect (snapshot);
   replay_node (top_child, snapshot);
-  gtk_snapshot_pop (snapshot);
+  top_child = gtk_snapshot_pop_collect (snapshot);
+
+  child = gsk_blend_node_new2 (bottom_child, top_child, color_state, blend_mode);
+  gtk_snapshot_append_node (snapshot, child);
+  gsk_render_node_unref (child);
+  gsk_render_node_unref (bottom_child);
+  gsk_render_node_unref (top_child);
 }
 
 static void
@@ -429,13 +420,85 @@ replay_component_transfer_node (GskRenderNode *node, GtkSnapshot *snapshot)
 
   snapshot2 = gtk_snapshot_new ();
   replay_node (gsk_component_transfer_node_get_child (node), snapshot2);
-  node2 = gsk_component_transfer_node_new (gtk_snapshot_free_to_node (snapshot2),
-                                           gsk_component_transfer_node_get_transfer (node, 0),
-                                           gsk_component_transfer_node_get_transfer (node, 1),
-                                           gsk_component_transfer_node_get_transfer (node, 2),
-                                           gsk_component_transfer_node_get_transfer (node, 3));
+  node2 = gsk_component_transfer_node_new2 (gtk_snapshot_free_to_node (snapshot2),
+                                            gsk_component_transfer_node_get_color_state (node),
+                                            gsk_component_transfer_node_get_transfer (node, 0),
+                                            gsk_component_transfer_node_get_transfer (node, 1),
+                                            gsk_component_transfer_node_get_transfer (node, 2),
+                                            gsk_component_transfer_node_get_transfer (node, 3));
   gtk_snapshot_append_node (snapshot, node2);
   gsk_render_node_unref (node2);
+}
+
+static void
+replay_copy_node (GskRenderNode *node, GtkSnapshot *snapshot)
+{
+  gtk_snapshot_push_copy (snapshot);
+  replay_node (gsk_copy_node_get_child (node), snapshot);
+  gtk_snapshot_pop (snapshot);
+}
+
+static void
+replay_paste_node (GskRenderNode *node, GtkSnapshot *snapshot)
+{
+  graphene_rect_t bounds;
+
+  gsk_render_node_get_bounds (node, &bounds);
+
+  gtk_snapshot_append_paste (snapshot,
+                             &bounds,
+                             gsk_paste_node_get_depth (node));
+}
+
+static void
+replay_composite_node (GskRenderNode *node, GtkSnapshot *snapshot)
+{
+  gtk_snapshot_push_composite (snapshot, gsk_composite_node_get_operator (node));
+  replay_node (gsk_composite_node_get_mask (node), snapshot);
+  gtk_snapshot_pop (snapshot);
+  replay_node (gsk_composite_node_get_child (node), snapshot);
+  gtk_snapshot_pop (snapshot);
+}
+
+static void
+replay_isolation_node (GskRenderNode *node, GtkSnapshot *snapshot)
+{
+  gtk_snapshot_push_isolation (snapshot, gsk_isolation_node_get_isolations (node));
+  replay_node (gsk_isolation_node_get_child (node), snapshot);
+  gtk_snapshot_pop (snapshot);
+}
+
+static void
+replay_displacement_node (GskRenderNode *node, GtkSnapshot *snapshot)
+{
+  gtk_snapshot_append_node (snapshot, node);
+}
+
+static void
+replay_arithmetic_node (GskRenderNode *node,
+                        GtkSnapshot   *snapshot)
+{
+  float k1, k2, k3, k4;
+  GtkSnapshot *snap;
+  GskRenderNode *node1, *node2;
+  graphene_rect_t bounds;
+  GdkColorState *color_state;
+
+  gsk_render_node_get_bounds (node, &bounds);
+  gsk_arithmetic_node_get_factors (node, &k1, &k2, &k3, &k4);
+  color_state = gsk_arithmetic_node_get_color_state (node);
+
+  snap = gtk_snapshot_new ();
+  replay_node (gsk_arithmetic_node_get_first_child (node), snap);
+  node1 = gtk_snapshot_free_to_node (snap);
+
+  snap = gtk_snapshot_new ();
+  replay_node (gsk_arithmetic_node_get_second_child (node), snap);
+  node2 = gtk_snapshot_free_to_node (snap);
+
+  node = gsk_arithmetic_node_new (&bounds, node1, node2, color_state, k1, k2, k3, k4);
+  gtk_snapshot_append_node (snapshot, node);
+  gsk_render_node_unref (node);
 }
 
 void
@@ -555,6 +618,30 @@ replay_node (GskRenderNode *node, GtkSnapshot *snapshot)
 
     case GSK_COMPONENT_TRANSFER_NODE:
       replay_component_transfer_node (node, snapshot);
+      break;
+
+    case GSK_COPY_NODE:
+      replay_copy_node (node, snapshot);
+      break;
+
+    case GSK_PASTE_NODE:
+      replay_paste_node (node, snapshot);
+      break;
+
+    case GSK_COMPOSITE_NODE:
+      replay_composite_node (node, snapshot);
+      break;
+
+    case GSK_ISOLATION_NODE:
+      replay_isolation_node (node, snapshot);
+      break;
+
+    case GSK_DISPLACEMENT_NODE:
+      replay_displacement_node (node, snapshot);
+      break;
+
+    case GSK_ARITHMETIC_NODE:
+      replay_arithmetic_node (node, snapshot);
       break;
 
     case GSK_SUBSURFACE_NODE:

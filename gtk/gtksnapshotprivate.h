@@ -21,6 +21,9 @@
 
 #include "gdk/gdksubsurfaceprivate.h"
 #include "gsk/gskrendernodeprivate.h"
+/* for GskRepeat */
+#include "gsk/gskgradientprivate.h"
+#include "gsk/gskshadownodeprivate.h"
 
 G_BEGIN_DECLS
 
@@ -46,6 +49,10 @@ GskRenderNode *         gtk_snapshot_pop_collect                (GtkSnapshot    
 
 void                    gtk_snapshot_push_subsurface            (GtkSnapshot            *snapshot,
                                                                  GdkSubsurface          *subsurface);
+void                    gtk_snapshot_push_repeat2               (GtkSnapshot            *snapshot,
+                                                                 const graphene_rect_t  *bounds,
+                                                                 const graphene_rect_t  *child_bounds,
+                                                                 GskRepeat               repeat);
 
 void                    gtk_snapshot_add_color                  (GtkSnapshot            *snapshot,
                                                                  const GdkColor         *color,
@@ -77,50 +84,21 @@ void                    gtk_snapshot_add_linear_gradient        (GtkSnapshot    
                                                                  const graphene_rect_t   *bounds,
                                                                  const graphene_point_t  *start_point,
                                                                  const graphene_point_t  *end_point,
-                                                                 GdkColorState           *interpolation,
-                                                                 GskHueInterpolation      hue_interpolation,
-                                                                 const GskGradientStop   *stops,
-                                                                 gsize                    n_stops);
-void                    gtk_snapshot_add_repeating_linear_gradient
-                                                                (GtkSnapshot             *snapshot,
-                                                                 const graphene_rect_t   *bounds,
-                                                                 const graphene_point_t  *start_point,
-                                                                 const graphene_point_t  *end_point,
-                                                                 GdkColorState           *interpolation,
-                                                                 GskHueInterpolation      hue_interpolation,
-                                                                 const GskGradientStop   *stops,
-                                                                 gsize                    n_stops);
+                                                                 const GskGradient       *gradient);
 void                    gtk_snapshot_add_radial_gradient        (GtkSnapshot             *snapshot,
                                                                  const graphene_rect_t   *bounds,
-                                                                 const graphene_point_t  *center,
-                                                                 float                    hradius,
-                                                                 float                    vradius,
-                                                                 float                    start,
-                                                                 float                    end,
-                                                                 GdkColorState           *interpolation,
-                                                                 GskHueInterpolation      hue_interpolation,
-                                                                 const GskGradientStop   *stops,
-                                                                 gsize                    n_stops);
-void                    gtk_snapshot_add_repeating_radial_gradient
-                                                                (GtkSnapshot             *snapshot,
-                                                                 const graphene_rect_t   *bounds,
-                                                                 const graphene_point_t  *center,
-                                                                 float                    hradius,
-                                                                 float                    vradius,
-                                                                 float                    start,
-                                                                 float                    end,
-                                                                 GdkColorState           *interpolation,
-                                                                 GskHueInterpolation      hue_interpolation,
-                                                                 const GskGradientStop   *stops,
-                                                                 gsize                    n_stops);
+                                                                 const graphene_point_t  *start_center,
+                                                                 float                    start_radius,
+                                                                 const graphene_point_t  *end_center,
+                                                                 float                    end_radius,
+                                                                 float                    aspect_ratio,
+                                                                 const GskGradient       *gradient);
+
 void                    gtk_snapshot_add_conic_gradient         (GtkSnapshot             *snapshot,
                                                                  const graphene_rect_t   *bounds,
                                                                  const graphene_point_t  *center,
                                                                  float                    rotation,
-                                                                 GdkColorState           *interpolation,
-                                                                 GskHueInterpolation      hue_interpolation,
-                                                                 const GskGradientStop   *stops,
-                                                                 gsize                    n_stops);
+                                                                 const GskGradient       *gradient);
 void                    gtk_snapshot_append_node_scaled         (GtkSnapshot             *snapshot,
                                                                  GskRenderNode           *node,
                                                                  graphene_rect_t         *from,

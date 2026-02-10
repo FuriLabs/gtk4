@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.20.3',
+        version: '4.21.5',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -7,22 +7,12 @@ project('gtk', 'c',
           # https://github.com/mesonbuild/meson/issues/2289
           'c_std=gnu11',
           'cpp_std=c++11',
-        ] + (meson.version().version_compare('>= 1.8.0') ? [
-          # rsvg subproject options
-          # meson < 1.8 had issues with parsing default_options
-          # keys for subprojects, if the project being evaluated
-          # also was a subproject.
-          # We'll just not pass them along in that case.
-          # TODO: move this back once we require meson >= 1.8
-          'librsvg:default_library=static',
-          'librsvg:rsvg-convert=disabled',
-          'librsvg:rsvg-view-3=disabled',
-        ] : []),
+        ],
         meson_version : '>= 1.5.0',
         license: 'LGPL-2.1-or-later')
 
 glib_major_req = 2
-glib_minor_req = 82
+glib_minor_req = 84
 
 pango_major_req = 1
 pango_minor_req = 56
@@ -44,7 +34,6 @@ sysprof_req        = '>= 3.38.0'
 vulkan_req         = '>= 1.3'
 gstreamer_req      = '>= 1.24.0'
 gi_req             = '>= 1.84'
-rsvg_req           = '>= 2.48'
 
 fs = import('fs')
 gnome = import('gnome')
@@ -306,6 +295,7 @@ if cc.get_id() == 'msvc'
     '/wd4100', # same as -Wunused-parameter
     '/wd4116', # breaks G_ALIGNOF()
     '/wd4127', # conditional expression is constant - also triggers in macros...
+    '/wd4146', # unary minus operator applied to unsigned type, result still unsigned
     '/wd4152', # nonstandard function to data covnversion - g_task_set_source_tag() uses it
     '/wd4189', # MSVC can't handle G_GNUC_UNUSED
     '/wd4200', # zero-sized array in struct/union
@@ -458,6 +448,7 @@ endif
 
 # Dependencies
 glib_dep       = dependency('glib-2.0', version: glib_req)
+gio_dep        = dependency('gio-2.0', version: glib_req)
 gi_dep         = dependency('gobject-introspection-1.0', version: gi_req, required: get_option('introspection').enabled())
 gobject_dep    = dependency('gobject-2.0', version: glib_req)
 if os_win32
@@ -492,10 +483,6 @@ pixbuf_dep        = dependency('gdk-pixbuf-2.0', version: gdk_pixbuf_req,
 png_dep           = dependency('libpng', 'png')
 tiff_dep          = dependency('libtiff-4', 'tiff')
 jpeg_dep          = dependency('libjpeg', 'jpeg')
-rsvg_dep          = dependency('librsvg-2.0', version: rsvg_req, required: false)
-if not rsvg_dep.found()
-  rsvg_dep        = dependency('librsvg-2.0', version: ['>= 2.40.23', '< 2.41'])
-endif
 epoxy_dep         = dependency('epoxy', version: epoxy_req)
 xkbdep            = dependency('xkbcommon', version: xkbcommon_req, required: wayland_enabled)
 graphene_dep      = dependency('graphene-gobject-1.0', version: graphene_req,
@@ -740,6 +727,7 @@ if not libdrm_dep.found()
 endif
 
 cdata.set('HAVE_DMABUF', cc.has_header('linux/dma-buf.h'))
+cdata.set('HAVE_UDMABUF', cc.has_header('linux/udmabuf.h'))
 
 cloudproviders_dep = dependency('cloudproviders',
   required: get_option('cloudproviders'),
@@ -749,7 +737,7 @@ cloudproviders_dep = dependency('cloudproviders',
   ])
 cdata.set('HAVE_CLOUDPROVIDERS', cloudproviders_dep.found())
 
-accesskit_dep = dependency('accesskit-c-0.17', required: get_option('accesskit').enabled())
+accesskit_dep = dependency('accesskit-c-0.18', required: get_option('accesskit').enabled())
 
 cdata.set('HAVE_ACCESSKIT', accesskit_dep.found())
 
@@ -886,26 +874,6 @@ build_gir = gir.found() and (get_option('introspection').enabled() or
 
 # Resource building
 glib_compile_resources = find_program('glib-compile-resources')
-
-objcopy_supports_add_symbol = false
-objcopy_supports_section_alignment = false
-objcopy = find_program('objcopy', required : false)
-if objcopy.found()
-  objcopy_supports_add_symbol = run_command(objcopy, '--help', check: false).stdout().contains('--add-symbol')
-  objcopy_supports_section_alignment = run_command(objcopy, '--help', check: false).stdout().contains('--set-section-alignment')
-endif
-
-ld_is_bfd = false
-ld = find_program('ld', required : false)
-if ld.found()
-  ld_is_bfd = run_command(ld, '--version', check: false).stdout().startswith('GNU ld')
-endif
-
-if not meson.is_cross_build() and build_machine.cpu_family() == 'x86_64' and build_machine.system() == 'linux' and objcopy.found() and objcopy_supports_add_symbol and objcopy_supports_section_alignment and ld.found() and ld_is_bfd
-  can_use_objcopy_for_resources = true
-else
-  can_use_objcopy_for_resources = false
-endif
 
 project_build_root = meson.current_build_dir()
 
@@ -1044,6 +1012,7 @@ if not meson.is_cross_build()
   gnome.post_install(
     glib_compile_schemas: true,
     gtk_update_icon_cache: get_option('build-demos'),
+    update_mime_database: os_linux,
   )
 else
   message('Not executing post-install steps automatically when cross compiling')

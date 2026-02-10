@@ -5,16 +5,18 @@
 
 static const GdkDebugKey gsk_debug_keys[] = {
   { "renderer", GSK_DEBUG_RENDERER, "General renderer information" },
-  { "vulkan", GSK_DEBUG_VULKAN, "Vulkan renderer information" },
   { "shaders", GSK_DEBUG_SHADERS, "Information about shaders" },
   { "fallback", GSK_DEBUG_FALLBACK, "Information about fallback usage in renderers" },
   { "cache", GSK_DEBUG_CACHE, "Information about caching" },
   { "verbose", GSK_DEBUG_VERBOSE, "Print verbose output while rendering" },
+  { "diff", GSK_DEBUG_DIFF, "Print the result of diff computations" },
+  { "opacity", GSK_DEBUG_OPACITY, "Print the result of every opacity computation" },
   { "geometry", GSK_DEBUG_GEOMETRY, "Show borders (when using cairo)" },
   { "full-redraw", GSK_DEBUG_FULL_REDRAW, "Force full redraws" },
   { "staging", GSK_DEBUG_STAGING, "Use a staging image for texture upload (Vulkan only)" },
   { "cairo", GSK_DEBUG_CAIRO, "Overlay error pattern over Cairo drawing (finds fallbacks)" },
   { "occlusion", GSK_DEBUG_OCCLUSION, "Overlay highlight over areas optimized via occlusion culling" },
+  { "profile", GSK_DEBUG_PROFILE, "Enable profiling (Vulkan only)" },
 };
 
 static guint gsk_debug_flags;

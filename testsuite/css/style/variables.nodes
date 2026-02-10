@@ -67,7 +67,7 @@ window.background:dir(ltr)
       color: rgb(255,0,0); /* variables.css:88:3-31 */
       -gtk-dpi: 96; /* variables.css:85:3-14 */
       font-size: 13.333333333333334px; /* variables.css:85:3-14 */
-      -gtk-icon-palette: error rgb(255,255,255), success rgb(255,255,255), warning rgb(255,255,255); /* variables.css:85:3-14 */
+      -gtk-icon-palette: error rgb(255,255,255), success rgb(255,255,255), warning rgb(255,255,255), accent rgb(255,255,255); /* variables.css:85:3-14 */
       background-color: rgba(0,0,0,0); /* variables.css:85:3-14 */
       font-family: "Sans"; /* variables.css:85:3-14 */
       font-style: normal; /* variables.css:85:3-14 */
@@ -132,6 +132,7 @@ window.background:dir(ltr)
       -gtk-icon-style: requested; /* variables.css:85:3-14 */
       -gtk-icon-transform: none; /* variables.css:85:3-14 */
       -gtk-icon-filter: none; /* variables.css:85:3-14 */
+      -gtk-icon-weight: 400; /* variables.css:85:3-14 */
       border-spacing: 0 0; /* variables.css:85:3-14 */
       transform: none; /* variables.css:85:3-14 */
       transform-origin: center; /* variables.css:85:3-14 */
@@ -150,6 +151,7 @@ window.background:dir(ltr)
       animation-delay: 0; /* variables.css:85:3-14 */
       animation-fill-mode: none; /* variables.css:85:3-14 */
       opacity: 1; /* variables.css:85:3-14 */
+      backdrop-filter: none; /* variables.css:85:3-14 */
       filter: none; /* variables.css:85:3-14 */
       caret-color: rgb(255,255,255); /* variables.css:85:3-14 */
       -gtk-secondary-caret-color: rgb(255,255,255); /* variables.css:85:3-14 */

@@ -26,6 +26,7 @@
 #include "gskpathprivate.h"
 #include "gskpathpoint.h"
 #include "gskstrokeprivate.h"
+#include "gskroundedrectprivate.h"
 
 #include <float.h>
 
@@ -53,6 +54,8 @@ struct _GskContourClass
   void                  (* print)               (const GskContour       *contour,
                                                  GString                *string);
   gboolean              (* get_bounds)          (const GskContour       *contour,
+                                                 GskBoundingBox         *bounds);
+  gboolean              (* get_tight_bounds)    (const GskContour       *contour,
                                                  GskBoundingBox         *bounds);
   gboolean              (* get_stroke_bounds)   (const GskContour       *contour,
                                                  const GskStroke        *stroke,
@@ -97,6 +100,8 @@ struct _GskContourClass
   float                 (* get_distance)        (const GskContour       *contour,
                                                  const GskPathPoint     *point,
                                                  gpointer                measure_data);
+  gboolean              (* equal)               (const GskContour       *contour1,
+                                                 const GskContour       *contour2);
 };
 
 /* {{{ Utilities */
@@ -671,6 +676,43 @@ gsk_standard_contour_get_bounds (const GskContour *contour,
     return FALSE;
 
   *bounds = self->bounds;
+
+  return bounds->max.x > bounds->min.x && bounds->max.y > bounds->min.y;
+}
+
+static gboolean
+add_tight_bounds (GskPathOperation        op,
+                  const graphene_point_t *pts,
+                  gsize                   n_pts,
+                  float                   weight,
+                  gpointer                user_data)
+{
+  GskBoundingBox *bounds = user_data;
+  GskCurve c;
+  GskBoundingBox b;
+
+  if (op == GSK_PATH_MOVE)
+    return TRUE;
+
+  gsk_curve_init_foreach (&c, op, pts, n_pts, weight);
+  gsk_curve_get_tight_bounds (&c, &b);
+  gsk_bounding_box_union (&b, bounds, bounds);
+
+  return TRUE;
+}
+
+static gboolean
+gsk_standard_contour_get_tight_bounds (const GskContour *contour,
+                                       GskBoundingBox   *bounds)
+{
+  const GskStandardContour *self = (const GskStandardContour *) contour;
+
+  if (self->n_points == 0)
+    return FALSE;
+
+  gsk_bounding_box_init (bounds, &self->points[0].pt, &self->points[0].pt);
+  for (gsize i = 0; i < self->n_ops; i ++)
+    gsk_pathop_foreach (self->ops[i], add_tight_bounds, bounds);
 
   return bounds->max.x > bounds->min.x && bounds->max.y > bounds->min.y;
 }
@@ -1265,6 +1307,32 @@ gsk_standard_contour_get_distance (const GskContour   *contour,
   return p0->length * (1 - fraction) + p1->length * fraction;
 }
 
+static gboolean
+gsk_standard_contour_equal (const GskContour *contour1,
+                            const GskContour *contour2)
+{
+  const GskStandardContour *std1 = (const GskStandardContour *) contour1;
+  const GskStandardContour *std2 = (const GskStandardContour *) contour2;
+
+  if (std1->n_ops != std2->n_ops || std1->n_points != std2->n_points)
+    return FALSE;
+
+  for (gsize i = 0; i < std1->n_ops; i++)
+    {
+      if (gsk_pathop_op (std1->ops[i]) != gsk_pathop_op (std2->ops[i]))
+        return FALSE;
+    }
+
+  for (gsize i = 0; i < std1->n_points; i++)
+    {
+      if (std1->points[i].pt.x != std2->points[i].pt.x ||
+          std1->points[i].pt.y != std2->points[i].pt.y)
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
 static const GskContourClass GSK_STANDARD_CONTOUR_CLASS =
 {
   sizeof (GskStandardContour),
@@ -1274,6 +1342,7 @@ static const GskContourClass GSK_STANDARD_CONTOUR_CLASS =
   gsk_standard_contour_get_flags,
   gsk_contour_print_default,
   gsk_standard_contour_get_bounds,
+  gsk_standard_contour_get_tight_bounds,
   gsk_standard_contour_get_stroke_bounds,
   gsk_standard_contour_foreach,
   gsk_standard_contour_reverse,
@@ -1288,6 +1357,7 @@ static const GskContourClass GSK_STANDARD_CONTOUR_CLASS =
   gsk_standard_contour_free_measure,
   gsk_standard_contour_get_point,
   gsk_standard_contour_get_distance,
+  gsk_standard_contour_equal,
 };
 
 /* You must ensure the contour has enough size allocated,
@@ -1373,7 +1443,10 @@ gsk_circle_contour_copy (const GskContour *contour,
 static GskPathFlags
 gsk_circle_contour_get_flags (const GskContour *contour)
 {
-  return GSK_PATH_CLOSED;
+  const GskCircleContour *self = (const GskCircleContour *) contour;
+
+  return GSK_PATH_CLOSED |
+         (self->radius == 0 ? GSK_PATH_ZERO_LENGTH : 0);
 }
 
 static void
@@ -1731,6 +1804,19 @@ gsk_circle_contour_get_distance (const GskContour   *contour,
   return M_PI_2 * self->radius * (idx - 1 + t);
 }
 
+static gboolean
+gsk_circle_contour_equal (const GskContour *contour1,
+                          const GskContour *contour2)
+{
+  const GskCircleContour *c1 = (const GskCircleContour *) contour1;
+  const GskCircleContour *c2 = (const GskCircleContour *) contour2;
+
+  return c1->radius == c2->radius &&
+         c1->center.x == c2->center.x &&
+         c1->center.y == c2->center.y &&
+         c1->ccw == c2->ccw;
+}
+
 static const GskContourClass GSK_CIRCLE_CONTOUR_CLASS =
 {
   sizeof (GskCircleContour),
@@ -1739,6 +1825,7 @@ static const GskContourClass GSK_CIRCLE_CONTOUR_CLASS =
   gsk_contour_get_size_default,
   gsk_circle_contour_get_flags,
   gsk_circle_contour_print,
+  gsk_circle_contour_get_bounds,
   gsk_circle_contour_get_bounds,
   gsk_circle_contour_get_stroke_bounds,
   gsk_circle_contour_foreach,
@@ -1754,6 +1841,7 @@ static const GskContourClass GSK_CIRCLE_CONTOUR_CLASS =
   gsk_circle_contour_free_measure,
   gsk_circle_contour_get_point,
   gsk_circle_contour_get_distance,
+  gsk_circle_contour_equal,
 };
 
 GskContour *
@@ -1818,7 +1906,11 @@ gsk_rect_contour_copy (const GskContour *contour,
 static GskPathFlags
 gsk_rect_contour_get_flags (const GskContour *contour)
 {
-  return GSK_PATH_FLAT | GSK_PATH_CLOSED;
+  const GskRectContour *self = (const GskRectContour *) contour;
+
+  return GSK_PATH_FLAT |
+         GSK_PATH_CLOSED |
+         (self->width == 0 && self->height == 0 ? GSK_PATH_ZERO_LENGTH : 0);
 }
 
 static void
@@ -2077,6 +2169,19 @@ gsk_rect_contour_get_distance (const GskContour   *contour,
   return distance;
 }
 
+static gboolean
+gsk_rect_contour_equal (const GskContour *contour1,
+                        const GskContour *contour2)
+{
+  const GskRectContour *c1 = (const GskRectContour *) contour1;
+  const GskRectContour *c2 = (const GskRectContour *) contour2;
+
+  return c1->x == c2->x &&
+         c1->y == c2->y &&
+         c1->width == c2->width &&
+         c1->height == c2->height;
+}
+
 static const GskContourClass GSK_RECT_CONTOUR_CLASS =
 {
   sizeof (GskRectContour),
@@ -2085,6 +2190,7 @@ static const GskContourClass GSK_RECT_CONTOUR_CLASS =
   gsk_contour_get_size_default,
   gsk_rect_contour_get_flags,
   gsk_rect_contour_print,
+  gsk_rect_contour_get_bounds,
   gsk_rect_contour_get_bounds,
   gsk_rect_contour_get_stroke_bounds,
   gsk_rect_contour_foreach,
@@ -2100,6 +2206,7 @@ static const GskContourClass GSK_RECT_CONTOUR_CLASS =
   gsk_rect_contour_free_measure,
   gsk_rect_contour_get_point,
   gsk_rect_contour_get_distance,
+  gsk_rect_contour_equal,
 };
 
 GskContour *
@@ -2161,6 +2268,21 @@ gsk_rounded_rect_contour_get_bounds (const GskContour *contour,
   return TRUE;
 }
 
+static gboolean
+gsk_rounded_rect_contour_get_tight_bounds (const GskContour *contour,
+                                           GskBoundingBox   *bounds)
+{
+  GskPath *path;
+  graphene_rect_t b;
+  gboolean ret;
+
+  path = convert_to_standard_contour (contour);
+  ret = gsk_path_get_tight_bounds (path, &b);
+  gsk_bounding_box_init_from_rect (bounds, &b);
+  gsk_path_unref (path);
+
+  return ret;
+}
 static gboolean
 gsk_rounded_rect_contour_get_stroke_bounds (const GskContour *contour,
                                             const GskStroke  *stroke,
@@ -2412,6 +2534,16 @@ gsk_rounded_rect_contour_get_distance (const GskContour   *contour,
   return gsk_standard_contour_get_distance (data->contour, point, data->measure_data);
 }
 
+static gboolean
+gsk_rounded_rect_contour_equal (const GskContour *contour1,
+                                const GskContour *contour2)
+{
+  const GskRoundedRectContour *c1 = (const GskRoundedRectContour *) contour1;
+  const GskRoundedRectContour *c2 = (const GskRoundedRectContour *) contour2;
+
+  return gsk_rounded_rect_equal (&c1->rect, &c2->rect) && c1->ccw == c2->ccw;
+}
+
 static const GskContourClass GSK_ROUNDED_RECT_CONTOUR_CLASS =
 {
   sizeof (GskRoundedRectContour),
@@ -2421,6 +2553,7 @@ static const GskContourClass GSK_ROUNDED_RECT_CONTOUR_CLASS =
   gsk_rounded_rect_contour_get_flags,
   gsk_contour_print_default,
   gsk_rounded_rect_contour_get_bounds,
+  gsk_rounded_rect_contour_get_tight_bounds,
   gsk_rounded_rect_contour_get_stroke_bounds,
   gsk_rounded_rect_contour_foreach,
   gsk_rounded_rect_contour_reverse,
@@ -2435,6 +2568,7 @@ static const GskContourClass GSK_ROUNDED_RECT_CONTOUR_CLASS =
   gsk_rounded_rect_contour_free_measure,
   gsk_rounded_rect_contour_get_point,
   gsk_rounded_rect_contour_get_distance,
+  gsk_rounded_rect_contour_equal,
 };
 
 static gsize
@@ -2555,6 +2689,13 @@ gsk_contour_get_bounds (const GskContour *self,
 }
 
 gboolean
+gsk_contour_get_tight_bounds (const GskContour *self,
+                              GskBoundingBox   *bounds)
+{
+  return self->klass->get_tight_bounds (self, bounds);
+}
+
+gboolean
 gsk_contour_get_stroke_bounds (const GskContour *self,
                                const GskStroke  *stroke,
                                GskBoundingBox   *bounds)
@@ -2670,6 +2811,16 @@ gsk_contour_get_distance (const GskContour   *self,
                           gpointer            measure_data)
 {
   return self->klass->get_distance (self, point, measure_data);
+}
+
+gboolean
+gsk_contour_equal (const GskContour *contour1,
+                   const GskContour *contour2)
+{
+  if (contour1->klass != contour2->klass)
+    return FALSE;
+
+  return contour1->klass->equal (contour1, contour2);
 }
 
 /* }}} */

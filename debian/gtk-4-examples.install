@@ -1,10 +1,12 @@
 usr/bin/gtk4-demo
 usr/bin/gtk4-demo-application
+usr/bin/gtk4-icon-editor
 usr/bin/gtk4-node-editor
 usr/bin/gtk4-print-editor
 usr/bin/gtk4-widget-factory
 usr/share/applications/org.gtk.Demo4.desktop
 usr/share/applications/org.gtk.PrintEditor4.desktop
+usr/share/applications/org.gtk.Shaper.desktop
 usr/share/applications/org.gtk.WidgetFactory4.desktop
 usr/share/applications/org.gtk.gtk4.NodeEditor.desktop
 usr/share/bash-completion/completions/gtk4-demo
@@ -14,9 +16,11 @@ usr/share/bash-completion/completions/gtk4-widget-factory
 usr/share/glib-2.0/schemas/org.gtk.Demo4.gschema.xml
 usr/share/icons/hicolor/*/*/org.gtk.Demo4*
 usr/share/icons/hicolor/*/*/org.gtk.PrintEditor4*
+usr/share/icons/hicolor/*/*/org.gtk.Shaper*
 usr/share/icons/hicolor/*/*/org.gtk.WidgetFactory4*
 usr/share/icons/hicolor/*/*/org.gtk.gtk4.NodeEditor*
 usr/share/metainfo/org.gtk.Demo4.appdata.xml
 usr/share/metainfo/org.gtk.PrintEditor4.appdata.xml
 usr/share/metainfo/org.gtk.WidgetFactory4.appdata.xml
 usr/share/metainfo/org.gtk.gtk4.NodeEditor.appdata.xml
+usr/share/mime/packages/gtk-mime.xml

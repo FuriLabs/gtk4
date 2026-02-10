@@ -101,6 +101,7 @@ Recommends: ${local:Recommends},
             librsvg2-common (>= 2.48),
 Suggests: gvfs
 Breaks: libgtk-4-media-gstreamer (<< 4.19.2),
+        xdg-desktop-portal-gnome (<< 50~),
 Replaces: libgtk-4-media-gstreamer (<< 4.19.2),
 Description: GTK graphical user interface library
  GTK is a multi-platform toolkit for creating graphical user

@@ -486,7 +486,6 @@ gdk_create_dummy_wgl_context (GdkWin32Display *display_win32,
 {
   PIXELFORMATDESCRIPTOR pfd = {0};
   int pixel_format;
-  HGLRC hglrc;
 
   pixel_format = choose_pixel_format_opengl32 (display_win32, hdc);
   if (pixel_format == 0)
@@ -580,7 +579,7 @@ gdk_win32_gl_context_wgl_init_basic (GdkWin32Display  *display_win32,
    * we want to ensure that the HDC of the notification HWND that we will
    * also use for our new dummy HDC will have the correct pixel format set
    */
-  g_clear_pointer (&hglrc, wglDeleteContext);
+  g_clear_pointer (&hglrc, gdk_win32_private_wglDeleteContext);
   ReleaseDC (hwnd, hdc);
   DestroyWindow (hwnd);
 
@@ -707,7 +706,6 @@ create_wgl_context_with_attribs (HDC           hdc,
                                  GdkGLVersion *version)
 {
   HGLRC hglrc;
-  GdkWin32GLContextWGL *context_wgl;
   const GdkGLVersion *supported_versions = gdk_gl_versions_get_for_api (GDK_GL_API_GL);
   guint i;
 
@@ -764,6 +762,7 @@ create_wgl_context (GdkGLContext    *context,
   GdkGLVersion version;
 
   hglrc = NULL;
+  hglrc_base = NULL;
 
   if (display_win32->hasWglARBCreateContext)
     {

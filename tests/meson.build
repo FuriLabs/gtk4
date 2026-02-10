@@ -1,5 +1,6 @@
 gtk_tests = [
   # testname, optional extra sources
+  ['svg-view'],
   ['imagednd'],
   ['testcursor'],
   ['callbackcursor'],
@@ -19,7 +20,7 @@ gtk_tests = [
   ['animated-revealing', ['frame-stats.c', 'variable.c']],
   ['motion-compression'],
   ['scrolling-performance', ['frame-stats.c', 'variable.c']],
-  ['simple'],
+  ['simple', [],[ libgtk_dep ]],
   ['video-timer', ['variable.c']],
   ['testaccel'],
   ['testadjustsize'],
@@ -66,6 +67,7 @@ gtk_tests = [
   ['testlockbutton'],
   ['testmenubutton'],
   ['testmountoperation'],
+  ['testnativecontrols'],
   ['testnotebookdnd'],
   ['testnouiprint'],
   ['testoverlay'],
@@ -132,6 +134,14 @@ if os_unix
     ['testfontchooserdialog'],
     ['parallel', [], [ libgtk_static_dep, libm ] ],
     ['testsymbolic', [], [ libgtk_static_dep ] ],
+  ]
+endif
+
+if os_linux
+  rsvg_dep = dependency('librsvg-2.0', required: false)
+
+  gtk_tests += [
+    ['svg-compare', ['svgpaintable.c' ],[ libgtk_dep, rsvg_dep ]],
   ]
 endif
 

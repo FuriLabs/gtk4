@@ -1,6 +1,0 @@
-color {
-  bounds: 0 0 50 50;
-}
-color {
-  bounds: 1000 0 10 10;
-}

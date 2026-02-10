@@ -44,11 +44,23 @@
 #include <gtk/gtkcolumnviewcolumn.h>
 #include <gtk/gtknative.h>
 #include <gtk/gtkprivate.h>
+#include <gsk/gskarithmeticnodeprivate.h>
+#include <gsk/gskblendnodeprivate.h>
+#include <gsk/gskbordernodeprivate.h>
+#include <gsk/gskcolormatrixnodeprivate.h>
+#include <gsk/gskcolornodeprivate.h>
+#include <gsk/gskcomponenttransfernodeprivate.h>
+#include <gsk/gskcopypasteutilsprivate.h>
+#include <gsk/gskinsetshadownodeprivate.h>
+#include <gsk/gskoutsetshadownodeprivate.h>
 #include <gsk/gskrendererprivate.h>
 #include <gsk/gskrendernodeprivate.h>
 #include <gsk/gskroundedrectprivate.h>
+#include <gsk/gskshadownodeprivate.h>
+#include <gsk/gsktextnodeprivate.h>
 #include <gsk/gsktransformprivate.h>
 #include <gsk/gskcomponenttransferprivate.h>
+#include <gsk/gskdisplacementnodeprivate.h>
 
 #include <cairo-gobject.h>
 #include <glib/gi18n-lib.h>
@@ -61,11 +73,13 @@
 #include <gdk/gdktextureprivate.h>
 #include <gdk/gdkrgbaprivate.h>
 #include <gdk/gdkcolorstateprivate.h>
-#include "gtk/gtkdebug.h"
 #include "gtk/gtkbuiltiniconprivate.h"
+#include "gtk/gtkdebug.h"
+#include "gtk/gtkpopcountprivate.h"
 #include "gtk/gtkrendernodepaintableprivate.h"
 #include "gdk/gdkcairoprivate.h"
 
+#include "nodewrapper.h"
 #include "recording.h"
 #include "renderrecording.h"
 #include "startrecording.h"
@@ -257,169 +271,6 @@ static GParamSpec *props[LAST_PROP] = { NULL, };
 
 G_DEFINE_TYPE (GtkInspectorRecorder, gtk_inspector_recorder, GTK_TYPE_WIDGET)
 
-typedef struct
-{
-  GskRenderNode *node;
-  const char *role;
-} RenderNode;
-
-static GListModel *
-create_render_node_list_model (RenderNode *nodes,
-                               guint       n_nodes)
-{
-  GListStore *store;
-  guint i;
-
-  /* can't put render nodes into list models - they're not GObjects */
-  store = g_list_store_new (GDK_TYPE_PAINTABLE);
-
-  for (i = 0; i < n_nodes; i++)
-    {
-      graphene_rect_t bounds;
-      GdkPaintable *paintable;
-
-      gsk_render_node_get_bounds (nodes[i].node, &bounds);
-      paintable = gtk_render_node_paintable_new (nodes[i].node, &bounds);
-      g_object_set_data (G_OBJECT (paintable), "role", (gpointer) nodes[i].role);
-      g_list_store_append (store, paintable);
-      g_object_unref (paintable);
-    }
-
-  return G_LIST_MODEL (store);
-}
-
-static GListModel *
-create_list_model_for_render_node (GskRenderNode *node)
-{
-  switch (gsk_render_node_get_node_type (node))
-    {
-    default:
-    case GSK_NOT_A_RENDER_NODE:
-      g_assert_not_reached ();
-      return NULL;
-
-    case GSK_CAIRO_NODE:
-    case GSK_TEXT_NODE:
-    case GSK_TEXTURE_NODE:
-    case GSK_TEXTURE_SCALE_NODE:
-    case GSK_COLOR_NODE:
-    case GSK_LINEAR_GRADIENT_NODE:
-    case GSK_REPEATING_LINEAR_GRADIENT_NODE:
-    case GSK_RADIAL_GRADIENT_NODE:
-    case GSK_REPEATING_RADIAL_GRADIENT_NODE:
-    case GSK_CONIC_GRADIENT_NODE:
-    case GSK_BORDER_NODE:
-    case GSK_INSET_SHADOW_NODE:
-    case GSK_OUTSET_SHADOW_NODE:
-      /* no children */
-      return NULL;
-
-    case GSK_TRANSFORM_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_transform_node_get_child (node), NULL }, 1);
-
-    case GSK_OPACITY_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_opacity_node_get_child (node), NULL }, 1);
-
-    case GSK_COLOR_MATRIX_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_color_matrix_node_get_child (node), NULL }, 1);
-
-    case GSK_BLUR_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_blur_node_get_child (node), NULL }, 1);
-
-    case GSK_REPEAT_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_repeat_node_get_child (node), NULL }, 1);
-
-    case GSK_CLIP_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_clip_node_get_child (node), NULL }, 1);
-
-    case GSK_ROUNDED_CLIP_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_rounded_clip_node_get_child (node), NULL }, 1);
-
-    case GSK_FILL_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_fill_node_get_child (node), NULL }, 1);
-
-    case GSK_STROKE_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_stroke_node_get_child (node), NULL }, 1);
-
-    case GSK_SHADOW_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_shadow_node_get_child (node), NULL }, 1);
-
-    case GSK_BLEND_NODE:
-      return create_render_node_list_model ((RenderNode[2]) { { gsk_blend_node_get_bottom_child (node), "Bottom" },
-                                                              { gsk_blend_node_get_top_child (node), "Top" } }, 2);
-
-    case GSK_MASK_NODE:
-      return create_render_node_list_model ((RenderNode[2]) { { gsk_mask_node_get_source (node), "Source" },
-                                                              { gsk_mask_node_get_mask (node), "Mask" } }, 2);
-
-    case GSK_CROSS_FADE_NODE:
-      return create_render_node_list_model ((RenderNode[2]) { { gsk_cross_fade_node_get_start_child (node), "Start" },
-                                                              { gsk_cross_fade_node_get_end_child (node), "End" } }, 2);
-
-    case GSK_GL_SHADER_NODE:
-      {
-G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-        GListStore *store = g_list_store_new (GDK_TYPE_PAINTABLE);
-
-        for (guint i = 0; i < gsk_gl_shader_node_get_n_children (node); i++)
-          {
-            GskRenderNode *child = gsk_gl_shader_node_get_child (node, i);
-            graphene_rect_t bounds;
-            GdkPaintable *paintable;
-
-            gsk_render_node_get_bounds (child, &bounds);
-            paintable = gtk_render_node_paintable_new (child, &bounds);
-            g_list_store_append (store, paintable);
-            g_object_unref (paintable);
-          }
-
-        return G_LIST_MODEL (store);
-G_GNUC_END_IGNORE_DEPRECATIONS
-      }
-
-    case GSK_CONTAINER_NODE:
-      {
-        GListStore *store;
-        guint i;
-
-        /* can't put render nodes into list models - they're not GObjects */
-        store = g_list_store_new (GDK_TYPE_PAINTABLE);
-
-        for (i = 0; i < gsk_container_node_get_n_children (node); i++)
-          {
-            GskRenderNode *child = gsk_container_node_get_child (node, i);
-            graphene_rect_t bounds;
-            GdkPaintable *paintable;
-
-            gsk_render_node_get_bounds (child, &bounds);
-            paintable = gtk_render_node_paintable_new (child, &bounds);
-            g_list_store_append (store, paintable);
-            g_object_unref (paintable);
-          }
-
-        return G_LIST_MODEL (store);
-      }
-
-    case GSK_DEBUG_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_debug_node_get_child (node), NULL }, 1);
-
-    case GSK_SUBSURFACE_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_subsurface_node_get_child (node), NULL }, 1);
-
-    case GSK_COMPONENT_TRANSFER_NODE:
-      return create_render_node_list_model (&(RenderNode) { gsk_component_transfer_node_get_child (node), NULL }, 1);
-    }
-}
-
-static GListModel *
-create_list_model_for_render_node_paintable (gpointer paintable,
-                                             gpointer unused)
-{
-  GskRenderNode *node = gtk_render_node_paintable_get_render_node (paintable);
-
-  return create_list_model_for_render_node (node);
-}
-
 static void
 recordings_clear_all (GtkButton            *button,
                       GtkInspectorRecorder *recorder)
@@ -498,6 +349,18 @@ node_type_name (GskRenderNodeType type)
       return "Subsurface";
     case GSK_COMPONENT_TRANSFER_NODE:
       return "Component Transfer";
+    case GSK_COPY_NODE:
+      return "Copy";
+    case GSK_PASTE_NODE:
+      return "Paste";
+    case GSK_COMPOSITE_NODE:
+      return "Composite";
+    case GSK_ISOLATION_NODE:
+      return "Isolation";
+    case GSK_DISPLACEMENT_NODE:
+      return "Displacement";
+    case GSK_ARITHMETIC_NODE:
+      return "Arithmetic";
     }
 }
 
@@ -536,6 +399,12 @@ node_name (GskRenderNode *node)
     case GSK_GL_SHADER_NODE:
     case GSK_SUBSURFACE_NODE:
     case GSK_COMPONENT_TRANSFER_NODE:
+    case GSK_COPY_NODE:
+    case GSK_PASTE_NODE:
+    case GSK_COMPOSITE_NODE:
+    case GSK_ISOLATION_NODE:
+    case GSK_DISPLACEMENT_NODE:
+    case GSK_ARITHMETIC_NODE:
       return g_strdup (node_type_name (gsk_render_node_get_node_type (node)));
 
     case GSK_DEBUG_NODE:
@@ -564,15 +433,18 @@ prepare_render_node_drag (GtkDragSource  *source,
                           GtkListItem    *list_item)
 {
   GtkTreeListRow *row_item;
-  GdkPaintable *paintable;
+  GtkInspectorNodeWrapper *wrapper;
   GskRenderNode *node;
 
   row_item = gtk_list_item_get_item (list_item);
   if (row_item == NULL)
     return NULL;
 
-  paintable = gtk_tree_list_row_get_item (row_item);
-  node = gtk_render_node_paintable_get_render_node (GTK_RENDER_NODE_PAINTABLE (paintable));
+  wrapper = gtk_tree_list_row_get_item (row_item);
+  node = gtk_inspector_node_wrapper_get_profile_node (wrapper);
+  if (node == NULL)
+    node = gtk_inspector_node_wrapper_get_node (wrapper);
+  g_object_unref (wrapper);
 
   return gdk_content_provider_new_typed (GSK_TYPE_RENDER_NODE, node);
 }
@@ -608,15 +480,18 @@ static void
 bind_widget_for_render_node (GtkSignalListItemFactory *factory,
                              GtkListItem              *list_item)
 {
+  GtkInspectorNodeWrapper *wrapper;
+  GskRenderNode *node, *draw_node;
   GdkPaintable *paintable;
-  GskRenderNode *node;
+  graphene_rect_t bounds;
   GtkTreeListRow *row_item;
   GtkWidget *expander, *box, *child;
   char *name;
 
   row_item = gtk_list_item_get_item (list_item);
-  paintable = gtk_tree_list_row_get_item (row_item);
-  node = gtk_render_node_paintable_get_render_node (GTK_RENDER_NODE_PAINTABLE (paintable));
+  wrapper = gtk_tree_list_row_get_item (row_item);
+  node = gtk_inspector_node_wrapper_get_node (wrapper);
+  draw_node = gtk_inspector_node_wrapper_get_draw_node (wrapper);
 
   /* expander */
   expander = gtk_list_item_get_child (list_item);
@@ -624,8 +499,11 @@ bind_widget_for_render_node (GtkSignalListItemFactory *factory,
   box = gtk_tree_expander_get_child (GTK_TREE_EXPANDER (expander));
 
   /* icon */
+  gsk_render_node_get_bounds (draw_node, &bounds);
+  paintable = gtk_render_node_paintable_new (draw_node, &bounds);
   child = gtk_widget_get_first_child (box);
   gtk_image_set_from_paintable (GTK_IMAGE (child), paintable);
+  g_object_unref (paintable);
 
   /* name */
   name = node_name (node);
@@ -633,34 +511,39 @@ bind_widget_for_render_node (GtkSignalListItemFactory *factory,
   gtk_inscription_set_text (GTK_INSCRIPTION (child), name);
   g_free (name);
 
-  g_object_unref (paintable);
+  g_object_unref (wrapper);
 }
 
 static void
 show_render_node (GtkInspectorRecorder *recorder,
-                  GskRenderNode        *node)
+                  GskRenderNode        *node,
+                  GskRenderNode        *profile_node)
 {
-  graphene_rect_t bounds;
+  GtkInspectorNodeWrapper *wrapper;
+  GskRenderNode *draw_node;
   GdkPaintable *paintable;
-
-  gsk_render_node_get_bounds (node, &bounds);
-  paintable = gtk_render_node_paintable_new (node, &bounds);
+  graphene_rect_t bounds;
 
   if (strcmp (gtk_stack_get_visible_child_name (GTK_STACK (recorder->recording_data_stack)), "frame_data") == 0)
     {
-      gtk_picture_set_paintable (GTK_PICTURE (recorder->render_node_view), paintable);
+      draw_node = gsk_render_node_replace_copy_paste (gsk_render_node_ref (node));
+      wrapper = gtk_inspector_node_wrapper_new (node, profile_node, draw_node, "Root");
 
       g_list_store_splice (recorder->render_node_root_model,
                            0, g_list_model_get_n_items (G_LIST_MODEL (recorder->render_node_root_model)),
-                           (gpointer[1]) { paintable },
+                           (gpointer[1]) { wrapper },
                            1);
+
+      g_object_unref (wrapper);
+      gsk_render_node_unref (draw_node);
     }
   else
     {
+      gsk_render_node_get_bounds (node, &bounds);
+      paintable = gtk_render_node_paintable_new (node, &bounds);
       gtk_picture_set_paintable (GTK_PICTURE (recorder->event_view), paintable);
+      g_object_unref (paintable);
     }
-
-  g_object_unref (paintable);
 }
 
 static void
@@ -816,12 +699,11 @@ recording_selected (GtkSingleSelection   *selection,
 
   if (GTK_INSPECTOR_IS_RENDER_RECORDING (recording))
     {
-      GskRenderNode *node;
-
       gtk_stack_set_visible_child_name (GTK_STACK (recorder->recording_data_stack), "frame_data");
 
-      node = gtk_inspector_render_recording_get_node (GTK_INSPECTOR_RENDER_RECORDING (recording));
-      show_render_node (recorder, node);
+      show_render_node (recorder,
+                        gtk_inspector_render_recording_get_node (GTK_INSPECTOR_RENDER_RECORDING (recording)),
+                        gtk_inspector_render_recording_get_profile_node (GTK_INSPECTOR_RENDER_RECORDING (recording)));
     }
   else if (GTK_INSPECTOR_IS_EVENT_RECORDING (recording))
     {
@@ -847,7 +729,7 @@ recording_selected (GtkSingleSelection   *selection,
                   GskRenderNode *temp;
 
                   temp = make_event_node (event, node, NULL);
-                  show_render_node (recorder, temp);
+                  show_render_node (recorder, temp, NULL);
                   gsk_render_node_unref (temp);
                 }
 
@@ -1118,9 +1000,25 @@ add_texture_rows (GListStore *store,
 }
 
 static void
-populate_render_node_properties (GListStore    *store,
-                                 GskRenderNode *node,
-                                 const char    *role)
+add_rect_row (GListStore            *store,
+              const char            *label,
+              const graphene_rect_t *rect)
+{
+  add_text_row (store, label,
+                       "(%.2f, %.2f) to (%.2f, %.2f) - %.2f x %.2f",
+                       rect->origin.x,
+                       rect->origin.y,
+                       rect->origin.x + rect->size.width,
+                       rect->origin.y + rect->size.height,
+                       rect->size.width,
+                       rect->size.height);
+}
+
+static void
+populate_render_node_properties (GListStore            *store,
+                                 GskRenderNode         *node,
+                                 const char            *role,
+                                 const GskDebugProfile *profile)
 {
   graphene_rect_t bounds, opaque;
 
@@ -1133,24 +1031,10 @@ populate_render_node_properties (GListStore    *store,
 
   add_text_row (store, "Type", "%s", node_type_name (gsk_render_node_get_node_type (node)));
 
-  add_text_row (store, "Bounds",
-                       "(%.2f, %.2f) to (%.2f, %.2f) - %.2f x %.2f",
-                       bounds.origin.x,
-                       bounds.origin.y,
-                       bounds.origin.x + bounds.size.width,
-                       bounds.origin.y + bounds.size.height,
-                       bounds.size.width,
-                       bounds.size.height);
+  add_rect_row (store, "Bounds", &bounds);
 
   if (gsk_render_node_get_opaque_rect (node, &opaque))
-    add_text_row (store, "Opaque",
-                         "(%.2f, %.2f) to (%.2f, %.2f) - %.2f x %.2f",
-                         opaque.origin.x,
-                         opaque.origin.y,
-                         opaque.origin.x + opaque.size.width,
-                         opaque.origin.y + opaque.size.height,
-                         opaque.size.width,
-                         opaque.size.height);
+    add_rect_row (store, "Opaque", &opaque);
   else
     add_text_row (store, "Opaque", "no");
 
@@ -1212,10 +1096,12 @@ populate_render_node_properties (GListStore    *store,
       {
         const graphene_point_t *start = gsk_linear_gradient_node_get_start (node);
         const graphene_point_t *end = gsk_linear_gradient_node_get_end (node);
-        const gsize n_stops = gsk_gradient_node_get_n_stops (node);
-        const GskGradientStop *stops = gsk_gradient_node_get_stops (node);
-        GdkColorState *interpolation = gsk_gradient_node_get_interpolation (node);
-        GskHueInterpolation hue_interpolation = gsk_gradient_node_get_hue_interpolation (node);
+        const GskGradient *gradient = gsk_gradient_node_get_gradient (node);
+        const gsize n_stops = gsk_gradient_get_n_stops (gradient);
+        const GskGradientStop *stops = gsk_gradient_get_stops (gradient);
+        GdkColorState *interpolation = gsk_gradient_get_interpolation (gradient);
+        GskHueInterpolation hue_interpolation = gsk_gradient_get_hue_interpolation (gradient);
+        gboolean premultiplied = gsk_gradient_get_premultiplied (gradient);
         int i;
         GString *s;
         GdkTexture *texture;
@@ -1223,6 +1109,7 @@ populate_render_node_properties (GListStore    *store,
         add_text_row (store, "Direction", "%.2f %.2f ⟶ %.2f %.2f", start->x, start->y, end->x, end->y);
         add_text_row (store, "Interpolation", "%s", gdk_color_state_get_name (interpolation));
         add_text_row (store, "Hue Interpolation", "%s", hue_interpolation_to_string (hue_interpolation));
+        add_boolean_row (store, "Premultiplied", premultiplied);
 
         s = g_string_new ("");
         for (i = 0; i < n_stops; i++)
@@ -1250,10 +1137,13 @@ populate_render_node_properties (GListStore    *store,
         const float end = gsk_radial_gradient_node_get_end (node);
         const float hradius = gsk_radial_gradient_node_get_hradius (node);
         const float vradius = gsk_radial_gradient_node_get_vradius (node);
-        const gsize n_stops = gsk_gradient_node_get_n_stops (node);
-        const GskGradientStop *stops = gsk_gradient_node_get_stops (node);
-        GdkColorState *interpolation = gsk_gradient_node_get_interpolation (node);
-        GskHueInterpolation hue_interpolation = gsk_gradient_node_get_hue_interpolation (node);
+        const GskGradient *gradient = gsk_gradient_node_get_gradient (node);
+        const gsize n_stops = gsk_gradient_get_n_stops (gradient);
+        const GskGradientStop *stops = gsk_gradient_get_stops (gradient);
+        GdkColorState *interpolation = gsk_gradient_get_interpolation (gradient);
+        GskHueInterpolation hue_interpolation = gsk_gradient_get_hue_interpolation (gradient);
+        gboolean premultiplied = gsk_gradient_get_premultiplied (gradient);
+
         int i;
         GString *s;
         GdkTexture *texture;
@@ -1263,6 +1153,7 @@ populate_render_node_properties (GListStore    *store,
         add_text_row (store, "Radius", "%.2f, %.2f", hradius, vradius);
         add_text_row (store, "Interpolation", "%s", gdk_color_state_get_name (interpolation));
         add_text_row (store, "Hue Interpolation", "%s", hue_interpolation_to_string (hue_interpolation));
+        add_boolean_row (store, "Premultiplied", premultiplied);
 
         s = g_string_new ("");
         for (i = 0; i < n_stops; i++)
@@ -1286,10 +1177,12 @@ populate_render_node_properties (GListStore    *store,
       {
         const graphene_point_t *center = gsk_conic_gradient_node_get_center (node);
         const float rotation = gsk_conic_gradient_node_get_rotation (node);
-        const gsize n_stops = gsk_gradient_node_get_n_stops (node);
-        const GskGradientStop *stops = gsk_gradient_node_get_stops (node);
-        GdkColorState *interpolation = gsk_gradient_node_get_interpolation (node);
-        GskHueInterpolation hue_interpolation = gsk_gradient_node_get_hue_interpolation (node);
+        const GskGradient *gradient = gsk_gradient_node_get_gradient (node);
+        const gsize n_stops = gsk_gradient_get_n_stops (gradient);
+        const GskGradientStop *stops = gsk_gradient_get_stops (gradient);
+        GdkColorState *interpolation = gsk_gradient_get_interpolation (gradient);
+        GskHueInterpolation hue_interpolation = gsk_gradient_get_hue_interpolation (gradient);
+        gboolean premultiplied = gsk_gradient_get_premultiplied (gradient);
         gsize i;
         GString *s;
         GdkTexture *texture;
@@ -1298,6 +1191,7 @@ populate_render_node_properties (GListStore    *store,
         add_text_row (store, "Rotation", "%.2f", rotation);
         add_text_row (store, "Interpolation", "%s", gdk_color_state_get_name (interpolation));
         add_text_row (store, "Hue Interpolation", "%s", hue_interpolation_to_string (hue_interpolation));
+        add_boolean_row (store, "Premultiplied", premultiplied);
 
         s = g_string_new ("");
         for (i = 0; i < n_stops; i++)
@@ -1395,6 +1289,7 @@ populate_render_node_properties (GListStore    *store,
       {
         GskBlendMode mode = gsk_blend_node_get_blend_mode (node);
         add_text_row (store, "Blendmode", "%s", enum_to_nick (GSK_TYPE_BLEND_MODE, mode));
+        add_text_row (store, "Color State", "%s", gdk_color_state_get_name (gsk_blend_node_get_color_state (node)));
       }
       break;
 
@@ -1521,9 +1416,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
         float rect[12];
 
         gsk_rounded_rect_to_float (outline, graphene_point_zero (), rect);
-        add_text_row (store, "Outline",
-                             "%.2f x %.2f + %.2f + %.2f",
-                             rect[2], rect[3], rect[0], rect[1]);
+        add_rect_row (store, "Outline", &outline->bounds);
 
         add_color_row (store, "Color", color);
 
@@ -1538,12 +1431,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
       {
         const graphene_rect_t *child_bounds = gsk_repeat_node_get_child_bounds (node);
 
-        add_text_row (store, "Child Bounds",
-                             "%.2f x %.2f + %.2f + %.2f",
-                             child_bounds->size.width,
-                             child_bounds->size.height,
-                             child_bounds->origin.x,
-                             child_bounds->origin.y);
+        add_rect_row (store, "Child Bounds", child_bounds);
       }
       break;
 
@@ -1579,30 +1467,21 @@ G_GNUC_END_IGNORE_DEPRECATIONS
                              graphene_vec4_get_y (offset),
                              graphene_vec4_get_z (offset),
                              graphene_vec4_get_w (offset));
+        add_text_row (store, "Color State", "%s", gdk_color_state_get_name (gsk_color_matrix_node_get_color_state (node)));
       }
       break;
 
     case GSK_CLIP_NODE:
       {
         const graphene_rect_t *clip = gsk_clip_node_get_clip (node);
-        add_text_row (store, "Clip",
-                             "%.2f x %.2f + %.2f + %.2f",
-                             clip->size.width,
-                             clip->size.height,
-                             clip->origin.x,
-                             clip->origin.y);
+        add_rect_row (store, "Clip", clip);
       }
       break;
 
     case GSK_ROUNDED_CLIP_NODE:
       {
         const GskRoundedRect *clip = gsk_rounded_clip_node_get_clip (node);
-        add_text_row (store, "Clip",
-                             "%.2f x %.2f + %.2f + %.2f",
-                             clip->bounds.size.width,
-                             clip->bounds.size.height,
-                             clip->bounds.origin.x,
-                             clip->bounds.origin.y);
+        add_rect_row (store, "Clip", &clip->bounds);
 
         add_text_row (store, "Top Left Corner Size", "%.2f x %.2f", clip->corner[0].width, clip->corner[0].height);
         add_text_row (store, "Top Right Corner Size", "%.2f x %.2f", clip->corner[1].width, clip->corner[1].height);
@@ -1718,14 +1597,79 @@ G_GNUC_END_IGNORE_DEPRECATIONS
             gsk_component_transfer_print (gsk_component_transfer_node_get_transfer (node, i), s);
             add_text_row (store, component[i], "%s", s->str);
           }
+        add_text_row (store, "Color State", "%s", gdk_color_state_get_name (gsk_component_transfer_node_get_color_state (node)));
 
         g_string_free (s, TRUE);
+      }
+      break;
+
+    case GSK_COPY_NODE:
+      break;
+
+    case GSK_PASTE_NODE:
+      add_uint_row (store, "Copy to paste", gsk_paste_node_get_depth (node));
+      break;
+
+    case GSK_COMPOSITE_NODE:
+      {
+        GskPorterDuff operator = gsk_composite_node_get_operator (node);
+        gchar *tmp = g_enum_to_string (GSK_TYPE_PORTER_DUFF, operator);
+        add_text_row (store, "Operator", "%s", tmp);
+        g_free (tmp);
+      }
+      break;
+
+    case GSK_ISOLATION_NODE:
+      {
+        GskIsolation isolations = gsk_isolation_node_get_isolations (node);
+        gchar *tmp;
+        if (gtk_popcount (GSK_ISOLATION_ALL & ~isolations) < gtk_popcount (isolations))
+          {
+            isolations = GSK_ISOLATION_ALL & ~isolations;
+            tmp = g_flags_to_string (GSK_TYPE_ISOLATION, isolations);
+            add_text_row (store, "Disabled features", "%s", tmp);
+          }
+        else
+          {
+            tmp = g_flags_to_string (GSK_TYPE_ISOLATION, isolations);
+            add_text_row (store, "Enabled features", "%s", tmp);
+          }
+        g_free (tmp);
+      }
+      break;
+
+    case GSK_DISPLACEMENT_NODE:
+      {
+      }
+      break;
+
+    case GSK_ARITHMETIC_NODE:
+      {
+        float k1, k2, k3, k4;
+        char *tmp;
+
+        gsk_arithmetic_node_get_factors (node, &k1, &k2, &k3, &k4);
+        tmp = g_strdup_printf ("%f %f %f %f", k1, k2, k3, k4);
+        add_text_row (store, "Factors", "%s", tmp);
+        add_text_row (store, "Color State", "%s", gdk_color_state_get_name (gsk_arithmetic_node_get_color_state (node)));
+        g_free (tmp);
       }
       break;
 
     case GSK_NOT_A_RENDER_NODE:
     default:
       break;
+    }
+
+  if (profile)
+    {
+        add_text_row (store, "Performance", "%s", "");
+        add_text_row (store, "CPU total", "%'lluns", (unsigned long long) profile->total.cpu_ns);
+        add_text_row (store, "CPU self", "%'lluns", (unsigned long long) profile->self.cpu_ns);
+        add_text_row (store, "GPU total", "%'lluns", (unsigned long long) profile->total.gpu_ns);
+        add_text_row (store, "GPU self", "%'lluns", (unsigned long long) profile->self.gpu_ns);
+        add_text_row (store, "pixels total", "%'llu", (unsigned long long) profile->total.gpu_pixels);
+        add_text_row (store, "pixels self", "%'llu", (unsigned long long) profile->self.gpu_pixels);
     }
 }
 
@@ -2124,29 +2068,32 @@ static GskRenderNode *
 get_selected_node (GtkInspectorRecorder *recorder)
 {
   GtkTreeListRow *row_item;
-  GdkPaintable *paintable;
+  GtkInspectorNodeWrapper *wrapper;
   GskRenderNode *node;
 
   row_item = gtk_single_selection_get_selected_item (recorder->render_node_selection);
   if (row_item == NULL)
     return NULL;
 
-  paintable = gtk_tree_list_row_get_item (row_item);
-  node = gtk_render_node_paintable_get_render_node (GTK_RENDER_NODE_PAINTABLE (paintable));
-  g_object_unref (paintable);
+  wrapper = gtk_tree_list_row_get_item (row_item);
+  node = gtk_inspector_node_wrapper_get_profile_node (wrapper);
+  if (node == NULL)
+    node = gtk_inspector_node_wrapper_get_node (wrapper);
+  g_object_unref (wrapper);
 
   return node;
 }
 
 static void
-render_node_list_selection_changed (GtkListBox           *list,
-                                    GtkListBoxRow        *row,
+render_node_list_selection_changed (GtkSingleSelection   *selection,
+                                    GParamSpec           *pspec, 
                                     GtkInspectorRecorder *recorder)
 {
-  GskRenderNode *node;
+  GskRenderNode *draw_node;
   GdkPaintable *paintable;
   GtkTreeListRow *row_item;
-  const char *role;
+  GtkInspectorNodeWrapper *wrapper;
+  graphene_rect_t bounds;
 
   row_item = gtk_single_selection_get_selected_item (recorder->render_node_selection);
 
@@ -2156,14 +2103,21 @@ render_node_list_selection_changed (GtkListBox           *list,
   if (row_item == NULL)
     return;
 
-  paintable = gtk_tree_list_row_get_item (row_item);
+  wrapper = gtk_tree_list_row_get_item (row_item);
+  draw_node = gtk_inspector_node_wrapper_create_heat_map (wrapper);
+  if (draw_node == NULL)
+    draw_node = gsk_render_node_ref (gtk_inspector_node_wrapper_get_draw_node (wrapper));
 
+  gsk_render_node_get_bounds (draw_node, &bounds);
+  paintable = gtk_render_node_paintable_new (draw_node, &bounds);
   gtk_picture_set_paintable (GTK_PICTURE (recorder->render_node_view), paintable);
-  node = gtk_render_node_paintable_get_render_node (GTK_RENDER_NODE_PAINTABLE (paintable));
-  role = g_object_get_data (G_OBJECT (paintable), "role");
-  populate_render_node_properties (recorder->render_node_properties, node, role);
+  populate_render_node_properties (recorder->render_node_properties,
+                                   gtk_inspector_node_wrapper_get_node (wrapper),
+                                   gtk_inspector_node_wrapper_get_role (wrapper),
+                                   gtk_inspector_node_wrapper_get_profile (wrapper));
 
   g_object_unref (paintable);
+  gsk_render_node_unref (draw_node);
 }
 
 static void
@@ -2179,7 +2133,7 @@ event_properties_list_selection_changed (GtkSelectionModel *model,
     return;
 
   if (prop->node)
-    show_render_node (recorder, prop->node);
+    show_render_node (recorder, prop->node, NULL);
 }
 
 static void
@@ -2607,12 +2561,12 @@ gtk_inspector_recorder_init (GtkInspectorRecorder *recorder)
   gtk_list_view_set_factory (GTK_LIST_VIEW (recorder->recordings_list), factory);
   g_object_unref (factory);
 
-  recorder->render_node_root_model = g_list_store_new (GDK_TYPE_PAINTABLE);
+  recorder->render_node_root_model = g_list_store_new (GTK_TYPE_INSPECTOR_NODE_WRAPPER);
   recorder->render_node_model = gtk_tree_list_model_new (g_object_ref (G_LIST_MODEL (recorder->render_node_root_model)),
-                                                     FALSE,
-                                                     TRUE,
-                                                     create_list_model_for_render_node_paintable,
-                                                     NULL, NULL);
+                                                         FALSE,
+                                                         TRUE,
+                                                         (GtkTreeListModelCreateModelFunc) gtk_inspector_node_wrapper_create_children_model,
+                                                         NULL, NULL);
   recorder->render_node_selection = gtk_single_selection_new (g_object_ref (G_LIST_MODEL (recorder->render_node_model)));
   g_signal_connect (recorder->render_node_selection, "notify::selected-item", G_CALLBACK (render_node_list_selection_changed), recorder);
 
@@ -2924,6 +2878,31 @@ gtk_inspector_recorder_set_selected_sequence (GtkInspectorRecorder *recorder,
   recorder->selected_sequence = sequence;
 
   g_object_notify_by_pspec (G_OBJECT (recorder), props[PROP_SELECTED_SEQUENCE]);
+}
+
+void
+gtk_inspector_recorder_add_profile_node (GtkInspectorRecorder *self,
+                                         GskRenderNode        *node,
+                                         GskRenderNode        *profile_node)
+{
+  guint i;
+
+  for (i = g_list_model_get_n_items (self->recordings);
+       i-- > 0;)
+    {
+      GtkInspectorRecording *rec = g_list_model_get_item (self->recordings, i);
+
+      if (!GTK_INSPECTOR_IS_RENDER_RECORDING (rec))
+        {
+          g_object_unref (rec);
+          continue;
+        }
+
+      if (node == gtk_inspector_render_recording_get_node (GTK_INSPECTOR_RENDER_RECORDING (rec)))
+        gtk_inspector_render_recording_set_profile_node (GTK_INSPECTOR_RENDER_RECORDING (rec), profile_node);
+
+      g_object_unref (rec);
+    }
 }
 
 /* vim:set foldmethod=marker: */

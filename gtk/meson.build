@@ -320,6 +320,7 @@ gtk_public_sources = files([
   'gtkpasswordentrybuffer.c',
   'gtkpicture.c',
   'gtkpopover.c',
+  'gtkpopoverbin.c',
   'gtkpopovermenu.c',
   'gtkpopovermenubar.c',
   'gtkprintdialog.c',
@@ -372,6 +373,7 @@ gtk_public_sources = files([
   'gtkstringlist.c',
   'gtkstringsorter.c',
   'gtkstyleprovider.c',
+  'gtksvg.c',
   'gtkswitch.c',
   'gtksymbolicpaintable.c',
   'gtktestatcontext.c',
@@ -416,6 +418,7 @@ gtk_private_sources += print_backend_sources
 
 gtk_private_type_headers = files([
   'gtkcsstypesprivate.h',
+  'gtkenumsprivate.h',
   'gtkfontfilterprivate.h',
   'gtktexthandleprivate.h',
   'gtkplacessidebarprivate.h',
@@ -425,6 +428,7 @@ gtk_public_headers = files([
   'gtkaboutdialog.h',
   'gtkaccelgroup.h',
   'gtkaccessible.h',
+  'gtkaccessiblehypertext.h',
   'gtkaccessiblerange.h',
   'gtkaccessibletext.h',
   'gtkactionable.h',
@@ -561,6 +565,7 @@ gtk_public_headers = files([
   'gtkpasswordentrybuffer.h',
   'gtkpicture.h',
   'gtkpopover.h',
+  'gtkpopoverbin.h',
   'gtkpopovermenu.h',
   'gtkpopovermenubar.h',
   'gtkprintdialog.h',
@@ -604,6 +609,7 @@ gtk_public_headers = files([
   'gtkstringlist.h',
   'gtkstringsorter.h',
   'gtkstyleprovider.h',
+  'gtksvg.h',
   'gtkswitch.h',
   'gtksymbolicpaintable.h',
   'gtktestatcontext.h',
@@ -657,6 +663,7 @@ endif
 if os_win32
   gtk_sources += gtk_win32_print_sources
   gtk_sources += [
+    'gtkapplication-win32.c',
     'gtkcolorpickerwin32.c',
     'gtkimcontextime.c',
     'gtkfilechoosernativewin32.c',
@@ -741,98 +748,17 @@ if not fs.exists('theme/Default/Default-light.css')
   ]
 endif
 
-
-if can_use_objcopy_for_resources
-  # Create the resource blob
-  gtk_gresource = custom_target('gtk.gresource',
-      input : gtk_gresources_xml,
-      depends : theme_deps,
-      output : 'gtk.gresource',
-      depfile : 'gtk.gresource.d',
-      command : [glib_compile_resources,
-                 '--generate',
-                 '--internal',
-                 '--target=@OUTPUT@',
-                 '--dependency-file=@DEPFILE@',
-                 '--sourcedir=' + meson.current_source_dir(),
-                 '--sourcedir=' + meson.current_build_dir(),
-                 '@INPUT@'])
-
-  # Create resource data file
-  gtk_resources_c = custom_target('gtkresources.c',
-      input : gtk_gresources_xml,
-      depends : theme_deps,
-      output : 'gtkresources.c',
-      depfile : 'gtkresources.c.d',
-      command : [glib_compile_resources,
-                 '--generate-source',
-                 '--internal',
-                 '--target=@OUTPUT@',
-                 '--dependency-file=@DEPFILE@',
-                 '--sourcedir=' + meson.current_source_dir(),
-                 '--sourcedir=' + meson.current_build_dir(),
-                 '--external-data',
-                 '--c-name', '_gtk',
-                 '--manual-register',
-                 '@INPUT@'])
-
-  gtk_resources_h = custom_target('gtkresources.h',
-      input : gtk_gresources_xml,
-      depends : theme_deps,
-      output : 'gtkresources.h',
-      depfile : 'gtkresources.h.d',
-      command : [glib_compile_resources,
-                 '--generate-header',
-                 '--internal',
-                 '--target=@OUTPUT@',
-                 '--dependency-file=@DEPFILE@',
-                 '--sourcedir=' + meson.current_source_dir(),
-                 '--sourcedir=' + meson.current_build_dir(),
-                 '--external-data',
-                 '--c-name', '_gtk',
-                 '--manual-register',
-                 '@INPUT@'])
-
-  # Create object file containing resource data
-  gtk_resources_binary = custom_target('gtkresources_blob.o',
-      input : gtk_gresource,
-      output : 'gtkresources_blob.o',
-      command : [ld,
-                 '-z', 'noexecstack',
-                 '-r',
-                 '-b','binary',
-                 '@INPUT@',
-                 '-o','@OUTPUT@'])
-
-  # Rename symbol to match the one in the C file
-  gtk_resources_o = custom_target('gtkresources_blob2.o',
-    input : gtk_resources_binary,
-    output : 'gtkresources_blob2.o',
-    command : [objcopy,
-                 '--strip-all',
-                 '--rename-section', '.data=.gresource.gtk',
-                 '--add-symbol','_gtk_resource_data=.gresource.gtk:0',
-                 '@INPUT@',
-                 '@OUTPUT@'])
-
-  gtkresources = [
-      gtk_resources_c,
-      gtk_resources_h,
-      gtk_resources_o,
-    ]
-else
-  gtkresources = gnome.compile_resources('gtkresources',
-    gtk_gresources_xml,
-    dependencies: theme_deps,
-    source_dir: [
-      # List in order of preference
-      meson.current_build_dir(),
-      meson.current_source_dir(),
-    ],
-    c_name: '_gtk',
-    extra_args: '--manual-register',
-  )
-endif
+gtkresources = gnome.compile_resources('gtkresources',
+  gtk_gresources_xml,
+  dependencies: theme_deps,
+  source_dir: [
+    # List in order of preference
+    meson.current_build_dir(),
+    meson.current_source_dir(),
+  ],
+  c_name: '_gtk',
+  extra_args: '--manual-register',
+)
 
 foreach lang : [
     'bn',
@@ -1018,7 +944,6 @@ gtk_deps = [
   pixbuf_dep,
   epoxy_dep,
   media_deps,
-  rsvg_dep,
   libm,
   graphene_dep,
   accesskit_dep,
@@ -1094,6 +1019,10 @@ endif
 # Unconditional. If libintl isn't found,
 # the object just does nothing being in the deplist
 gtk_deps += libintl_dep
+
+if os_linux
+  install_data('gtk-mime.xml', install_dir: join_paths (gtk_datadir, 'mime/packages'), install_tag: 'runtime')
+endif
 
 gtk_settings_schemas = [
   'org.gtk.gtk4.Settings.FileChooser.gschema.xml',
@@ -1224,7 +1153,8 @@ if build_gir
       dependencies: libgdk_dep,
       header: 'gdk/win32/gdkwin32.h',
       extra_args: gir_args,
-      fatal_warnings: get_option('werror'),
+      # https://gitlab.gnome.org/GNOME/gobject-introspection/-/issues/574
+      fatal_warnings: false,
     )
     gtk_dep_sources += gdk_win32_gir
   endif

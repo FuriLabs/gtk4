@@ -30,11 +30,13 @@
 #endif
 
 #include "gtkapplicationprivate.h"
+#include "gtkapplicationwindowprivate.h"
 #include "gtkmarshalers.h"
 #include "gtkmain.h"
 #include "gtkicontheme.h"
 #include "gtkbuilder.h"
 #include "gtkprivate.h"
+#include "gtktypebuiltins.h"
 
 /* NB: please do not add backend-specific GDK headers here.  This should
  * be abstracted via GtkApplicationImpl.
@@ -68,6 +70,31 @@
  *
  * While `GtkApplication` works fine with plain [class@Gtk.Window]s,
  * it is recommended to use it together with [class@Gtk.ApplicationWindow].
+ *
+ * ## Initialization
+ *
+ * A typical `GtkApplication` will create a window in its
+ * [signal@GIO.Application::activate], [signal@GIO.Application::open]
+ * or [signal@GIO.Application::command-line] handlers. Note that all
+ * of these signals may be emitted multiple times, so handlers must
+ * be careful to take existing windows into account.
+ *
+ * A typical ::activate handler should look like this:
+ *
+ * ```
+ * static void
+ * activate (GApplication *gapp)
+ * {
+ *   GtkApplication *app = GTK_APPLICATION (gapp);
+ *   GtkWindow *window;
+ *
+ *   window = gtk_application_get_active_window (app);
+ *   if (!window)
+ *     window = create_window (app);
+ *
+ *   gtk_window_present (window);
+ * }
+ * ```
  *
  * ## Automatic resources
  *
@@ -104,13 +131,7 @@
  * default window icon. Use [func@Gtk.Window.set_default_icon_name] or
  * [property@Gtk.Window:icon-name] to override that behavior.
  *
- * ## A simple application
- *
- * [A simple example](https://gitlab.gnome.org/GNOME/gtk/tree/main/examples/bp/bloatpad.c)
- * is available in the GTK source code repository
- *
- * `GtkApplication` registers with a session manager if possible and
- * offers various functionality related to the session life-cycle.
+ * # Inhibiting
  *
  * An application can block various ways to end the session with
  * the [method@Gtk.Application.inhibit] function. Typical use cases for
@@ -119,6 +140,11 @@
  * manager may not honor the inhibitor, but it can be expected to
  * inform the user about the negative consequences of ending the
  * session while inhibitors are present.
+ *
+ * ## A simple application
+ *
+ * [A simple example](https://gitlab.gnome.org/GNOME/gtk/tree/main/examples/bp/bloatpad.c)
+ * is available in the GTK source code repository
  *
  * ## See Also
  *
@@ -161,9 +187,19 @@ typedef struct
   GtkActionMuxer  *muxer;
   GtkBuilder      *menus_builder;
   char            *help_overlay_path;
+  gboolean         support_save;
+  guint            autosave_interval;
+  guint            autosave_id;
+  GVariant        *pending_window_state;
+  GVariant        *kept_window_state;
+  gboolean         restored;
+  gboolean         forgotten;
 } GtkApplicationPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GtkApplication, gtk_application, G_TYPE_APPLICATION)
+
+static void
+schedule_autosave (GtkApplication *application);
 
 static void
 gtk_application_window_active_cb (GtkWindow      *window,
@@ -172,6 +208,8 @@ gtk_application_window_active_cb (GtkWindow      *window,
 {
   GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
   GList *link;
+
+  schedule_autosave (application);
 
   if (!gtk_window_is_active (window))
     return;
@@ -276,41 +314,6 @@ gtk_application_set_window_icon (GtkApplication *application)
   gtk_window_set_default_icon_name (appid);
 }
 
-#if defined(GDK_WINDOWING_WAYLAND) || defined(GDK_WINDOWING_X11)
-static void
-gtk_application_identify_to_portal (GtkApplication *application)
-{
-  GVariantBuilder builder;
-  GApplication *g_application = G_APPLICATION (application);
-  GDBusConnection *session_bus;
-  const char *application_id;
-
-  session_bus = g_application_get_dbus_connection (g_application);
-  if (!session_bus)
-    return;
-
-  application_id = g_application_get_application_id (g_application);
-  if (!application_id)
-    return;
-
-  g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
-
-  /* Intentionally ignore errors */
-  g_dbus_connection_call (session_bus,
-                          PORTAL_BUS_NAME,
-                          PORTAL_OBJECT_PATH,
-                          "org.freedesktop.host.portal.Registry",
-                          "Register",
-                          g_variant_new ("(sa{sv})",
-                                         application_id,
-                                         &builder),
-                          NULL,
-                          G_DBUS_CALL_FLAGS_NO_AUTO_START,
-                          -1,
-                          NULL, NULL, NULL);
-}
-#endif
-
 static void
 gtk_application_startup (GApplication *g_application)
 {
@@ -325,17 +328,15 @@ gtk_application_startup (GApplication *g_application)
 
   gtk_action_muxer_insert (priv->muxer, "app", G_ACTION_GROUP (application));
 
-#if defined(GDK_WINDOWING_WAYLAND) || defined(GDK_WINDOWING_X11)
-  if (!gdk_running_in_sandbox ())
-    gtk_application_identify_to_portal (application);
-#endif
+  gdk_set_portals_app_id (g_application_get_application_id (g_application));
 
   before2 = GDK_PROFILER_CURRENT_TIME;
   gtk_init ();
   gdk_profiler_end_mark (before2, "gtk_init", NULL);
 
   priv->impl = gtk_application_impl_new (application, gdk_display_get_default ());
-  gtk_application_impl_startup (priv->impl);
+
+  gtk_application_impl_startup (priv->impl, priv->support_save);
 
   gtk_application_load_resources (application);
   gtk_application_set_window_icon (application);
@@ -351,6 +352,9 @@ gtk_application_shutdown (GApplication *g_application)
 
   if (priv->impl == NULL)
     return;
+
+  if (!priv->forgotten)
+    gtk_application_save (application);
 
   gtk_application_impl_shutdown (priv->impl);
   g_clear_object (&priv->impl);
@@ -404,14 +408,24 @@ gtk_application_add_platform_data (GApplication    *application,
     }
 }
 
+static gboolean
+gtk_application_restore (GtkApplication   *application);
+
 static void
-gtk_application_before_emit (GApplication *g_application,
+gtk_application_before_emit (GApplication *app,
                              GVariant     *platform_data)
 {
-  GtkApplication *application = GTK_APPLICATION (g_application);
+  GtkApplication *application = GTK_APPLICATION (app);
   GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
 
   gtk_application_impl_before_emit (priv->impl, platform_data);
+
+  if (priv->support_save && !priv->restored)
+    {
+      gtk_application_restore (application);
+      schedule_autosave (application);
+      priv->restored = TRUE;
+    }
 }
 
 static void
@@ -428,6 +442,8 @@ gtk_application_init (GtkApplication *application)
   priv->muxer = gtk_action_muxer_new (NULL);
 
   priv->accels = gtk_application_accels_new ();
+
+  priv->autosave_interval = 15;
 }
 
 static void
@@ -455,6 +471,8 @@ G_GNUC_END_IGNORE_DEPRECATIONS
         }
     }
 
+  g_clear_pointer (&priv->kept_window_state, g_variant_unref);
+
   priv->windows = g_list_prepend (priv->windows, window);
   gtk_window_set_application (window, application);
   g_application_hold (G_APPLICATION (application));
@@ -463,12 +481,44 @@ G_GNUC_END_IGNORE_DEPRECATIONS
                     G_CALLBACK (gtk_application_window_active_cb),
                     application);
 
-  gtk_application_impl_window_added (priv->impl, window);
+  gtk_application_impl_window_added (priv->impl, window, priv->pending_window_state);
+  priv->pending_window_state = NULL;
 
   gtk_application_impl_active_window_changed (priv->impl, window);
 
   g_object_notify_by_pspec (G_OBJECT (application), gtk_application_props[PROP_ACTIVE_WINDOW]);
 }
+
+static gboolean
+should_remove_from_session (GtkApplication *application,
+                            GtkWindow      *window)
+{
+  GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
+
+  if (gtk_window_get_transient_for (window))
+    {
+      GTK_DEBUG (SESSION, "Removing transient toplevel from session state");
+      return TRUE;
+    }
+
+  for (GList *l = priv->windows; l != NULL; l = l->next)
+    {
+      GtkWindow *candidate = GTK_WINDOW (l->data);
+      if (candidate != window && !gtk_window_get_transient_for (candidate))
+        {
+          /* This isn't the last non-transient toplevel in the session */
+          GTK_DEBUG (SESSION, "Removing toplevel from session state");
+          return TRUE;
+        }
+    }
+
+  GTK_DEBUG (SESSION, "Keeping last toplevel in session state");
+  return FALSE;
+}
+
+static GVariant *
+collect_window_state (GtkApplication *application,
+                      GtkWindow      *window);
 
 static void
 gtk_application_window_removed (GtkApplication *application,
@@ -476,11 +526,32 @@ gtk_application_window_removed (GtkApplication *application,
 {
   GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
   gpointer old_active;
+  gboolean remove_from_session;
 
   old_active = priv->windows;
 
+  remove_from_session = should_remove_from_session (application, window);
+
+  if (!remove_from_session)
+    {
+      g_assert (!priv->kept_window_state);
+      priv->kept_window_state = collect_window_state (application, window);
+
+      /* If we're keeping around the last window, and the window is now gone,
+       * from the user's perspective the app is now gone even if it hasn't
+       * technically quit yet. In case the user relaunches the app before
+       * it manages to quit, let's re-restore state on next startup. */
+      priv->restored = FALSE;
+      gtk_application_impl_clear_restore_reason (priv->impl);
+    }
+
   if (priv->impl)
-    gtk_application_impl_window_removed (priv->impl, window);
+    {
+      gtk_application_impl_window_removed (priv->impl, window);
+
+      if (remove_from_session)
+        gtk_application_impl_window_forget (priv->impl, window);
+    }
 
   g_signal_handlers_disconnect_by_func (window,
                                         gtk_application_window_active_cb,
@@ -565,6 +636,9 @@ gtk_application_finalize (GObject *object)
   g_clear_object (&priv->menubar);
   g_clear_object (&priv->muxer);
   g_clear_object (&priv->accels);
+
+  g_clear_pointer (&priv->kept_window_state, g_variant_unref);
+  g_clear_handle_id (&priv->autosave_id, g_source_remove);
 
   g_free (priv->help_overlay_path);
 
@@ -667,7 +741,7 @@ gtk_application_class_init (GtkApplicationClass *class)
    * This will make GTK track the session state (such as the
    * [property@Gtk.Application:screensaver-active] property).
    *
-   * Deprecated: 4.20: This property is ignored. GTK always registers
+   * Deprecated: 4.22: This property is ignored. GTK always registers
    * with the session manager
    */
   gtk_application_props[PROP_REGISTER_SESSION] =
@@ -1296,4 +1370,336 @@ gtk_application_set_screensaver_active (GtkApplication *application,
       priv->screensaver_active = active;
       g_object_notify (G_OBJECT (application), "screensaver-active");
     }
+}
+
+static GVariant *
+collect_window_state (GtkApplication *application,
+                      GtkWindow      *window)
+{
+  GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
+  GVariantBuilder builder;
+  GVariantDict *dict;
+  GVariant *state;
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
+  gtk_application_impl_collect_window_state (priv->impl, window, &builder);
+
+  dict = g_variant_dict_new (NULL);
+  if (GTK_IS_APPLICATION_WINDOW (window))
+    gtk_application_window_save (GTK_APPLICATION_WINDOW (window), dict);
+
+  state = g_variant_new ("(a{sv}@a{sv})", &builder, g_variant_dict_end (dict));
+  g_variant_dict_unref (dict);
+
+  g_variant_ref_sink (state);
+  return state;
+}
+
+/* State saving.
+ *
+ * The state is stored in a GVariant of the following form:
+ *
+ * (a{sv}a{sv}a(a{sv}a{sv}))
+ *
+ *  - the first a{sv} contains global GTK state
+ *  - the second a{sv} contains global application state
+ *  - the last array contains per-window state. For each
+ *    window there is a tuple of per-window GTK state and
+ *    application state
+ *
+ *  Global GTK state is applied during startup (since it contains
+ *  IDs that are needed for session registration). All other state
+ *  is applied during activate.
+ */
+static GVariant *
+collect_state (GtkApplication *application)
+{
+  GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
+  GVariantBuilder win_builder;
+  GVariant *state;
+  GVariantBuilder global_builder;
+  GVariantDict *global_dict;
+
+  g_variant_builder_init (&win_builder, G_VARIANT_TYPE ("a(a{sv}a{sv})"));
+
+  if (priv->kept_window_state)
+    {
+      GTK_DEBUG (SESSION, "Using state of kept last window");
+      g_variant_builder_add_value (&win_builder, priv->kept_window_state);
+    }
+  else
+    {
+      GTK_DEBUG (SESSION, "Collecting state for %d windows", g_list_length (priv->windows));
+
+      for (GList *l = priv->windows; l != NULL; l = l->next)
+        {
+          GtkWindow *window = GTK_WINDOW (l->data);
+          GVariant *win_state;
+
+          win_state = collect_window_state (application, window);
+          g_variant_builder_add_value (&win_builder, win_state);
+
+          g_variant_unref (win_state);
+        }
+    }
+
+  g_variant_builder_init (&global_builder, G_VARIANT_TYPE_VARDICT);
+  gtk_application_impl_collect_global_state (priv->impl, &global_builder);
+
+  global_dict = g_variant_dict_new (NULL);
+
+  state = g_variant_new ("(a{sv}@a{sv}a(a{sv}a{sv}))",
+                         &global_builder,
+                         g_variant_dict_end (global_dict),
+                         &win_builder);
+
+  g_variant_dict_unref (global_dict);
+
+  g_variant_ref_sink (state);
+
+  return state;
+}
+
+/**<private>
+ * gtk_application_save:
+ * @application: a `GtkApplication`
+ *
+ * Saves the state of application.
+ *
+ * See [method@Gtk.Application.forget] for a way to forget the state.
+ *
+ * If [property@Gtk.Application:register-session] is set, `GtkApplication`
+ * calls this function automatically when the application is closed or
+ * the session ends.
+ *
+ * Since: 4.22
+ */
+void
+gtk_application_save (GtkApplication *application)
+{
+  GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
+  GVariant *state;
+
+  g_return_if_fail (GTK_IS_APPLICATION (application));
+
+  if (!priv->support_save)
+    return;
+
+  state = collect_state (application);
+  gtk_application_impl_store_state (priv->impl, state);
+  g_variant_unref (state);
+
+  priv->forgotten = FALSE;
+  schedule_autosave (application);
+}
+
+/**<private>
+ * gtk_application_forget:
+ * @application: a `GtkApplication`
+ *
+ * Forget state that has been previously saved and prevent
+ * further automatic state saving.
+ *
+ * In order to reenable state saving, call
+ * [method@Gtk.Application.save].
+ *
+ * Since: 4.22
+ */
+void
+gtk_application_forget (GtkApplication *application)
+{
+  GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
+
+  if (!priv->support_save)
+    return;
+
+  if (priv->kept_window_state)
+    {
+      // TODO: Tell compositor to forget the window state
+      //       (currently impossible due to https://gitlab.freedesktop.org/wayland/wayland-protocols/-/merge_requests/18#note_3171587)
+      g_clear_pointer (&priv->kept_window_state, g_variant_unref);
+    }
+
+  for (GList *l = priv->windows; l != NULL; l = l->next)
+    {
+      GtkWindow *window = GTK_WINDOW (l->data);
+      gtk_application_impl_window_forget (priv->impl, window);
+    }
+
+  gtk_application_impl_forget_state (priv->impl);
+
+  if (priv->autosave_id)
+    GTK_DEBUG (SESSION, "State forgotten, cancelling autosave");
+  g_clear_handle_id (&priv->autosave_id, g_source_remove);
+
+  priv->forgotten = TRUE;
+}
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-noreturn"
+static void
+restore_window (GtkApplication   *application,
+                GtkRestoreReason  reason,
+                GVariant         *app_state,
+                GVariant         *gtk_state)
+{
+  GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
+
+  priv->pending_window_state = gtk_state;
+
+  if (priv->pending_window_state)
+    {
+      GTK_DEBUG (SESSION, "App didn't restore a toplevel, removing it from session");
+      // TODO: Tell compositor to forget the window state
+      // (currently impossible due to https://gitlab.freedesktop.org/wayland/wayland-protocols/-/merge_requests/18#note_3171587)
+      priv->pending_window_state = NULL;
+    }
+}
+#pragma GCC diagnostic pop
+
+static void
+restore_file_state (GtkApplication   *application,
+                    GtkRestoreReason  reason,
+                    GVariant         *state)
+{
+  GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
+  GVariant *gtk_state;
+  GVariant *app_state;
+  GVariantIter *iter;
+
+  g_return_if_fail (g_variant_is_of_type (state, G_VARIANT_TYPE ("(a{sv}a{sv}a(a{sv}a{sv}))")));
+
+  GTK_DEBUG (SESSION, "Restoring state, reason %s", g_enum_get_value (g_type_class_get (GTK_TYPE_RESTORE_REASON), reason)->value_nick);
+
+  g_variant_get (state, "(@a{sv}@a{sv}a(a{sv}a{sv}))", &gtk_state, &app_state, NULL);
+
+  gtk_application_impl_restore_global_state (priv->impl, gtk_state);
+
+  g_variant_unref (gtk_state);
+  g_variant_unref (app_state);
+
+  g_variant_get (state, "(a{sv}a{sv}a(a{sv}a{sv}))", NULL, NULL, &iter);
+
+  while (g_variant_iter_next (iter, "(@a{sv}@a{sv})", &gtk_state, &app_state))
+    {
+      GTK_DEBUG (SESSION, "Restoring window");
+
+      restore_window (application, reason, app_state, gtk_state);
+
+      g_variant_unref (gtk_state);
+      g_variant_unref (app_state);
+    }
+
+  g_variant_iter_free (iter);
+}
+
+static void
+restore_kept_state (GtkApplication   *application,
+                    GtkRestoreReason  reason)
+{
+  GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
+  GVariant *gtk_state;
+  GVariant *app_state;
+
+  GTK_DEBUG (SESSION, "Restoring kept toplevel, reason %s", g_enum_get_value (g_type_class_get (GTK_TYPE_RESTORE_REASON), reason)->value_nick);
+
+  g_variant_get (priv->kept_window_state, "(@a{sv}@a{sv})", &gtk_state, &app_state);
+
+  restore_window (application, reason, app_state, gtk_state);
+
+  g_variant_unref (gtk_state);
+  g_variant_unref (app_state);
+}
+
+static gboolean
+gtk_application_restore (GtkApplication   *application)
+{
+  GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
+  GtkRestoreReason reason;
+  GVariant *state;
+
+  reason = gtk_application_impl_get_restore_reason (priv->impl);
+
+  if (reason == GTK_RESTORE_REASON_PRISTINE)
+    {
+      GTK_DEBUG (SESSION, "Pristine start, not restoring state");
+      return FALSE;
+    }
+
+  if (priv->kept_window_state)
+    {
+      restore_kept_state (application, reason);
+      return TRUE;
+    }
+
+  state = gtk_application_impl_retrieve_state (priv->impl);
+  if (state)
+    {
+      restore_file_state (application, reason, state);
+      g_variant_unref (state);
+      return TRUE;
+    }
+  else
+    {
+      GTK_DEBUG (SESSION, "No saved state, not restoring");
+      return FALSE;
+    }
+}
+
+static gboolean
+any_window_active (GtkApplication *application)
+{
+  GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
+
+  for (GList *l = priv->windows; l != NULL; l = l->next)
+    {
+      GtkWindow *candidate = GTK_WINDOW (l->data);
+      if (gtk_window_is_active (candidate))
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static gboolean
+autosave_cb (gpointer data)
+{
+  GtkApplication *application = GTK_APPLICATION (data);
+  GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
+
+  GTK_DEBUG (SESSION, "Autosaving");
+  gtk_application_save (application);
+
+  if (!any_window_active (application))
+    {
+      GTK_DEBUG (SESSION, "App no longer focused, stopping autosave");
+      priv->autosave_id = 0;
+      return G_SOURCE_REMOVE;
+    }
+
+  return G_SOURCE_CONTINUE;
+}
+
+static void
+schedule_autosave (GtkApplication *application)
+{
+  GtkApplicationPrivate *priv = gtk_application_get_instance_private (application);
+
+  if (!priv->support_save)
+    return;
+
+  if (priv->forgotten)
+    return;
+
+  if (priv->autosave_interval == 0)
+    return;
+
+  if (priv->autosave_id != 0)
+    return;
+
+  if (!any_window_active (application))
+    return;
+
+  GTK_DEBUG (SESSION, "Scheduling autosave");
+  priv->autosave_id = g_timeout_add_seconds (priv->autosave_interval, autosave_cb, application);
 }

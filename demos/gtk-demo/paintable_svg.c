@@ -1,20 +1,29 @@
 /* Paintable/SVG
  *
- * This demo shows wrapping a librsvg RsvgHandle in a GdkPaintable
- * to display an SVG image in a GtkPicture that can be scaled by
- * resizing the window.
- *
- * It also demonstrates an implementation of GtkSymbolicPaintable
- * for rendering symbolic SVG icons. Note that symbolic recoloring
- * requires using a GtkImage as a widget.
+ * This demo shows using GtkSvg to display an SVG image in
+ * a GtkPicture that can be scaled by resizing the window.
  */
 
 #include <gtk/gtk.h>
-#include <librsvg/rsvg.h>
 
-#include "svgpaintable.h"
-#include "symbolicpaintable.h"
+static void
+image_clicked (GtkGestureClick *click,
+               int n_press,
+               double x,
+               double y,
+               GtkImage *image)
+{
+  GtkSvg *paintable = GTK_SVG (gtk_image_get_paintable (image));
+  guint state = gtk_svg_get_state (paintable);
+  guint n_states = gtk_svg_get_n_states (paintable);
 
+  if (state == GTK_SVG_STATE_EMPTY)
+    gtk_svg_set_state (paintable, 0);
+  else if (state + 1 < n_states)
+    gtk_svg_set_state (paintable, state + 1);
+  else
+    gtk_svg_set_state (paintable, GTK_SVG_STATE_EMPTY);
+}
 
 static void
 open_response_cb (GObject      *source,
@@ -28,35 +37,24 @@ open_response_cb (GObject      *source,
   file = gtk_file_dialog_open_finish (dialog, result, NULL);
   if (file)
     {
+      GBytes *bytes;
       GdkPaintable *paintable;
       GtkWidget *image;
+      GtkEventController *controller;
 
-      image = gtk_window_get_child (GTK_WINDOW (window));
+      bytes = g_file_load_bytes (file, NULL, NULL, NULL);
+      paintable = GDK_PAINTABLE (gtk_svg_new_from_bytes (bytes));
+      g_bytes_unref (bytes);
 
-      if (strstr (g_file_peek_path (file), "symbolic"))
-        {
-          paintable = GDK_PAINTABLE (symbolic_paintable_new (file));
-          if (!GTK_IS_IMAGE (image))
-            {
-              image = gtk_image_new ();
-              gtk_image_set_pixel_size (GTK_IMAGE (image), 64);
-              gtk_window_set_child (GTK_WINDOW (window), image);
-            }
+      image = gtk_picture_new ();
+      gtk_window_set_child (GTK_WINDOW (window), image);
 
-          gtk_image_set_from_paintable (GTK_IMAGE (image), paintable);
-        }
-      else
-        {
-          paintable = GDK_PAINTABLE (svg_paintable_new (file));
-          if (!GTK_IS_PICTURE (image))
-            {
-              image = gtk_picture_new ();
-              gtk_widget_set_size_request (image, 16, 16);
-              gtk_window_set_child (GTK_WINDOW (window), image);
-            }
+      controller = GTK_EVENT_CONTROLLER (gtk_gesture_click_new ());
+      g_signal_connect (controller, "pressed",
+                        G_CALLBACK (image_clicked), image);
+      gtk_widget_add_controller (image, controller);
 
-          gtk_picture_set_paintable (GTK_PICTURE (image), paintable);
-        }
+      gtk_picture_set_paintable (GTK_PICTURE (image), paintable);
 
       g_object_unref (paintable);
       g_object_unref (file);
@@ -76,6 +74,8 @@ show_file_open (GtkWidget *button,
 
   filter = gtk_file_filter_new ();
   gtk_file_filter_add_mime_type (filter, "image/svg+xml");
+  gtk_file_filter_add_mime_type (filter, "image/x-gtk-path-animation");
+  gtk_file_filter_add_pattern (filter, "*.gpa");
   filters = g_list_store_new (GTK_TYPE_FILE_FILTER);
   g_list_store_append (filters, filter);
   g_object_unref (filter);
@@ -96,7 +96,6 @@ do_paintable_svg (GtkWidget *do_widget)
   GtkWidget *header;
   GtkWidget *image;
   GtkWidget *button;
-  GFile *file;
   GdkPaintable *paintable;
 
   if (!window)
@@ -118,11 +117,9 @@ do_paintable_svg (GtkWidget *do_widget)
 
       gtk_window_set_child (GTK_WINDOW (window), image);
 
-      file = g_file_new_for_uri ("resource:///paintable_svg/org.gtk.gtk4.NodeEditor.Devel.svg");
-      paintable = GDK_PAINTABLE (svg_paintable_new (file));
+      paintable = GDK_PAINTABLE (gtk_svg_new_from_resource ("/paintable_svg/org.gtk.gtk4.NodeEditor.Devel.svg"));
       gtk_picture_set_paintable (GTK_PICTURE (image), paintable);
       g_object_unref (paintable);
-      g_object_unref (file);
     }
 
   if (!gtk_widget_get_visible (window))

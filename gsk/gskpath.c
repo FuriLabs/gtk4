@@ -77,7 +77,7 @@ gsk_path_new_from_contours (const GSList *contours)
   guint8 *contour_data;
   GskPathFlags flags;
 
-  flags = GSK_PATH_CLOSED | GSK_PATH_FLAT;
+  flags = GSK_PATH_CLOSED | GSK_PATH_FLAT | GSK_PATH_ZERO_LENGTH;
   size = 0;
   n_contours = 0;
   for (l = contours; l; l = l->next)
@@ -352,7 +352,8 @@ gsk_path_is_closed (GskPath *self)
  *
  * The returned bounds may be larger than necessary, because this
  * function aims to be fast, not accurate. The bounds are guaranteed
- * to contain the path.
+ * to contain the path. For accurate bounds, use
+ * [method@Gsk.Path.get_tight_bounds].
  *
  * It is possible that the returned rectangle has 0 width and/or height.
  * This can happen when the path only describes a point or an
@@ -390,6 +391,51 @@ gsk_path_get_bounds (GskPath         *self,
       GskBoundingBox tmp;
 
       gsk_contour_get_bounds (self->contours[i], &tmp);
+      gsk_bounding_box_union (&b, &tmp, &b);
+    }
+
+  gsk_bounding_box_to_rect (&b, bounds);
+
+  return TRUE;
+}
+
+/**
+ * gsk_path_get_tight_bounds:
+ * @self: a path
+ * @bounds: (out caller-allocates): return location for the bounds
+ *
+ * Computes the tight bounds of the given path.
+ *
+ * This function works harder than [method@Gsk.Path.get_bounds] to
+ * produce the smallest possible bounds.
+ *
+ * Returns: true if the path has bounds, false if the path is known
+ *   to be empty and have no bounds
+ *
+ * Since: 4.22
+ */
+gboolean
+gsk_path_get_tight_bounds (GskPath         *self,
+                           graphene_rect_t *bounds)
+{
+  GskBoundingBox b;
+
+  g_return_val_if_fail (self != NULL, FALSE);
+  g_return_val_if_fail (bounds != NULL, FALSE);
+
+  if (self->n_contours == 0)
+    {
+      graphene_rect_init_from_rect (bounds, graphene_rect_zero ());
+      return FALSE;
+    }
+
+  gsk_contour_get_tight_bounds (self->contours[0], &b);
+
+  for (gsize i = 1; i < self->n_contours; i++)
+    {
+      GskBoundingBox tmp;
+
+      gsk_contour_get_tight_bounds (self->contours[i], &tmp);
       gsk_bounding_box_union (&b, &tmp, &b);
     }
 
@@ -514,6 +560,7 @@ gsk_path_get_start_point (GskPath      *self,
    */
   result->contour = 0;
   result->idx = 1;
+  result->idx = MIN (1, gsk_contour_get_n_ops (self->contours[0]) - 1);
   result->t = 0;
 
   return TRUE;
@@ -546,6 +593,98 @@ gsk_path_get_end_point (GskPath      *self,
   result->contour = self->n_contours - 1;
   result->idx = gsk_contour_get_n_ops (self->contours[self->n_contours - 1]) - 1;
   result->t = 1;
+
+  return TRUE;
+}
+
+/**
+ * gsk_path_get_next:
+ * @self: a path
+ * @point: (inout): the current point
+ *
+ * Moves @point to the next vertex.
+ *
+ * An empty path has no points, so false
+ * is returned in this case.
+ *
+ * Returns: true if @point was set
+ *
+ * Since: 4.22
+ */
+gboolean
+gsk_path_get_next (GskPath      *self,
+                   GskPathPoint *point)
+{
+  g_return_val_if_fail (self != NULL, FALSE);
+  g_return_val_if_fail (point != NULL, FALSE);
+
+  if (self->n_contours == 0)
+    return FALSE;
+
+  if (point->t < 1)
+    {
+      point->t = 1;
+    }
+  else if (point->idx < gsk_contour_get_n_ops (self->contours[point->contour]) - 1)
+    {
+      point->idx++;
+    }
+  else if (point->contour < self->n_contours - 1)
+    {
+      point->contour++;
+      point->idx = 0;
+      point->t = 0;
+    }
+  else
+    {
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+/**
+ * gsk_path_get_previous:
+ * @self: a path
+ * @point: (inout): the current point
+ *
+ * Moves @point to the previous vertex.
+ *
+ * An empty path has no points, so false
+ * is returned in this case.
+ *
+ * Returns: true if @point was set
+ *
+ * Since: 4.22
+ */
+gboolean
+gsk_path_get_previous (GskPath      *self,
+                       GskPathPoint *point)
+{
+  g_return_val_if_fail (self != NULL, FALSE);
+  g_return_val_if_fail (point != NULL, FALSE);
+
+  if (self->n_contours == 0)
+    return FALSE;
+
+  if (point->t > 0)
+    {
+      point->t = 0;
+    }
+  else if (point->idx > 0)
+    {
+      point->idx--;
+    }
+  else if (point->contour > 0)
+    {
+      point->contour--;
+      point->idx = gsk_contour_get_n_ops (self->contours[point->contour]) - 1;
+      point->t = 1;
+    }
+  else
+    {
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -601,6 +740,37 @@ gsk_path_get_closest_point (GskPath                *self,
     }
 
   return found;
+}
+
+/**
+ * gsk_path_equal:
+ * @path1: a path
+ * @path2: another path
+ *
+ * Returns whether two paths have identical structure.
+ *
+ * Note that it is possible to construct paths that render
+ * identical even though they don't have the same structure.
+ *
+ * Returns: true if @path1 and @path2 have identical structure
+ *
+ * Since: 4.22
+ */
+gboolean
+gsk_path_equal (const GskPath *path1,
+                const GskPath *path2)
+{
+  if (path1 == path2)
+    return TRUE;
+
+  if (path1->n_contours != path2->n_contours)
+    return FALSE;
+
+  for (int i = 0; i < path1->n_contours; i++)
+    if (!gsk_contour_equal (path1->contours[i], path2->contours[i]))
+      return FALSE;
+
+  return TRUE;
 }
 
 /* }}} */

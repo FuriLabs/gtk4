@@ -99,6 +99,14 @@ G_BEGIN_DECLS
   *
   * Since: 4.20
   */
+
+/**
+ * GTK_DEBUG_SESSION:
+ *
+ * Information about session saving.
+ *
+ * Since: 4.22
+ */
 typedef enum {
   GTK_DEBUG_TEXT            = 1 <<  0,
   GTK_DEBUG_TREE            = 1 <<  1,
@@ -122,6 +130,7 @@ typedef enum {
   GTK_DEBUG_INVERT_TEXT_DIR = 1 << 19,
   GTK_DEBUG_CSS             = 1 << 20,
   GTK_DEBUG_BUILDER         = 1 << 21,
+  GTK_DEBUG_SESSION         = 1 << 22,
 } GtkDebugFlags;
 
 /**

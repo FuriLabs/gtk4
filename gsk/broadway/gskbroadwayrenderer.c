@@ -4,10 +4,30 @@
 
 #include "broadway/gdkprivate-broadway.h"
 
+#include "gskarithmeticnodeprivate.h"
+#include "gskblendnode.h"
+#include "gskblurnode.h"
+#include "gskbordernode.h"
+#include "gskcaironode.h"
+#include "gskclipnode.h"
+#include "gskcolormatrixnode.h"
+#include "gskcolornode.h"
+#include "gskcontainernode.h"
+#include "gskdebugnode.h"
 #include "gskdebugprivate.h"
+#include "gskinsetshadownode.h"
+#include "gsklineargradientnode.h"
+#include "gskmasknode.h"
+#include "gskopacitynode.h"
+#include "gskoutsetshadownode.h"
+#include "gskroundedclipnode.h"
 #include "gsktransformprivate.h"
 #include "gskrendererprivate.h"
 #include "gskrendernodeprivate.h"
+#include "gskshadownode.h"
+#include "gsksubsurfacenode.h"
+#include "gsktransformnode.h"
+#include "gsktexturenode.h"
 #include "gdk/gdkcolorstateprivate.h"
 #include "gdk/gdktextureprivate.h"
 
@@ -293,6 +313,12 @@ collect_reused_child_nodes (GskRenderer *renderer,
     case GSK_STROKE_NODE:
     case GSK_SUBSURFACE_NODE:
     case GSK_COMPONENT_TRANSFER_NODE:
+    case GSK_COPY_NODE:
+    case GSK_PASTE_NODE:
+    case GSK_COMPOSITE_NODE:
+    case GSK_ISOLATION_NODE:
+    case GSK_DISPLACEMENT_NODE:
+    case GSK_ARITHMETIC_NODE:
 
     default:
 
@@ -892,6 +918,12 @@ gsk_broadway_renderer_add_node (GskRenderer *renderer,
     case GSK_FILL_NODE:
     case GSK_STROKE_NODE:
     case GSK_COMPONENT_TRANSFER_NODE:
+    case GSK_COPY_NODE:
+    case GSK_PASTE_NODE:
+    case GSK_COMPOSITE_NODE:
+    case GSK_ISOLATION_NODE:
+    case GSK_DISPLACEMENT_NODE:
+    case GSK_ARITHMETIC_NODE:
     default:
       break; /* Fallback */
     }

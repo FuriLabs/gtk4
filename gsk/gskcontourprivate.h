@@ -55,6 +55,8 @@ void                    gsk_contour_print                       (const GskContou
                                                                  GString                *string);
 gboolean                gsk_contour_get_bounds                  (const GskContour       *self,
                                                                  GskBoundingBox         *bounds);
+gboolean                gsk_contour_get_tight_bounds            (const GskContour       *self,
+                                                                 GskBoundingBox         *bounds);
 gboolean                gsk_contour_get_stroke_bounds           (const GskContour       *self,
                                                                  const GskStroke        *stroke,
                                                                  GskBoundingBox         *bounds);
@@ -98,5 +100,7 @@ void                    gsk_contour_get_point                   (const GskContou
 float                   gsk_contour_get_distance                (const GskContour       *self,
                                                                  const GskPathPoint     *point,
                                                                  gpointer                measure_data);
+gboolean                gsk_contour_equal                       (const GskContour *contour1,
+                                                                 const GskContour *contour2);
 
 G_END_DECLS

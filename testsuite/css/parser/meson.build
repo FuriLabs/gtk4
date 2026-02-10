@@ -1,6 +1,7 @@
 test_parser = executable('test-css-parser',
-  sources: ['test-css-parser.c', '../../testutils.c'],
+  sources: ['test-css-parser.c'],
   c_args: common_cflags,
+  link_with: testutils_lib,
   dependencies: libgtk_dep,
 )
 
@@ -356,6 +357,7 @@ test_data = [
   'filter-invalid9.css',
   'filter-invalid9.errors',
   'filter-invalid9.ref.css',
+  'filter-svg.css',
   'font-family.css',
   'font-family.ref.css',
   'font-features.css',

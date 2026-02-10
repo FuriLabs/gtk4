@@ -33,18 +33,11 @@
           <class name="toolbar"/>
         </style>
         <child>
-          <object class="GtkToggleButton" id="disable_button">
-            <property name="tooltip-text" translatable="yes">Disable this custom CSS</property>
-            <property name="child">
-              <object class="GtkImage">
-                <property name="paintable">
-                  <object class="GtkIconPaintable">
-                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/actions/media-playback-pause-symbolic.svg</property>
-                  </object>
-                </property>
-              </object>
-            </property>
-            <signal name="toggled" handler="disable_toggled"/>
+          <object class="GtkSwitch" id="enable_switch">
+            <property name="valign">center</property>
+            <property name="active">true</property>
+            <property name="tooltip-text" translatable="yes">Enable this custom CSS</property>
+            <signal name="notify::active" handler="enable_switch_changed"/>
           </object>
         </child>
         <child>
@@ -53,8 +46,8 @@
             <property name="child">
               <object class="GtkImage">
                 <property name="paintable">
-                  <object class="GtkIconPaintable">
-                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/actions/document-save-symbolic.svg</property>
+                  <object class="GtkSvg">
+                    <property name="resource">/org/gtk/libgtk/icons/document-save-symbolic.svg</property>
                   </object>
                 </property>
               </object>
@@ -68,8 +61,8 @@
             <property name="child">
               <object class="GtkImage">
                 <property name="paintable">
-                  <object class="GtkIconPaintable">
-                    <property name="file">resource:///org/gtk/libgtk/icons/scalable/status/dialog-information-symbolic.svg</property>
+                  <object class="GtkSvg">
+                    <property name="resource">/org/gtk/libgtk/icons/dialog-information-symbolic.svg</property>
                   </object>
                 </property>
               </object>
@@ -79,7 +72,7 @@
         </child>
         <child>
           <object class="GtkDropDown" id="color_scheme">
-            <signal name="notify::selected" handler="color_scheme_changed"/>
+            <signal name="notify::selected" handler="settings_changed"/>
             <property name="tooltip-text">Color scheme to use for this CSS</property>
             <property name="model">
               <object class="GtkStringList">
@@ -95,7 +88,7 @@
         </child>
         <child>
           <object class="GtkDropDown" id="contrast">
-            <signal name="notify::selected" handler="color_scheme_changed"/>
+            <signal name="notify::selected" handler="settings_changed"/>
             <property name="tooltip-text">Contrast level to use for this CSS</property>
             <property name="model">
               <object class="GtkStringList">
@@ -103,6 +96,21 @@
                   <item>System contrast</item>
                   <item>More contrast</item>
                   <item>Less contrast</item>
+                </items>
+              </object>
+            </property>
+            <property name="selected">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkDropDown" id="reduced_motion">
+            <signal name="notify::selected" handler="settings_changed"/>
+            <property name="tooltip-text">Reduced motion level to use for this CSS</property>
+            <property name="model">
+              <object class="GtkStringList">
+                <items>
+                  <item>System reduced motion</item>
+                  <item>Reduced motion</item>
                 </items>
               </object>
             </property>

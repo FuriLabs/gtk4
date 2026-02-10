@@ -33,6 +33,7 @@ struct _GdkColorState
   gatomicrefcount ref_count;
 
   GdkMemoryDepth depth;
+  GdkColorChannel hue_channel; /* use ALPHA for none */
   GdkColorState *rendering_color_state;
   GdkColorState *rendering_color_state_linear;
 };
@@ -54,9 +55,6 @@ struct _GdkColorStateClass
   GdkFloatColorConvert  (* get_convert_from)    (GdkColorState  *self,
                                                  GdkColorState  *source);
   const GdkCicp *       (* get_cicp)            (GdkColorState  *self);
-  void                  (* clamp)               (GdkColorState  *self,
-                                                 const float     src[4],
-                                                 float           dest[4]);
 };
 
 typedef struct _GdkDefaultColorState GdkDefaultColorState;
@@ -68,9 +66,6 @@ struct _GdkDefaultColorState
   const char *name;
   GdkColorState *no_srgb;
   GdkFloatColorConvert convert_to[GDK_COLOR_STATE_N_IDS];
-  void (* clamp) (GdkColorState  *self,
-                  const float     src[4],
-                  float           dest[4]);
 
   GdkCicp cicp;
 };
@@ -106,14 +101,12 @@ extern GdkBuiltinColorState gdk_builtin_color_states[GDK_BUILTIN_COLOR_STATE_N_I
 
 GdkColorState * gdk_color_state_yuv                     (void);
 const char *    gdk_color_state_get_name                (GdkColorState          *self);
+gboolean        gdk_color_state_get_hue_channel         (GdkColorState          *self,
+                                                         GdkColorChannel        *out_channel);
 GdkColorState * gdk_color_state_get_no_srgb_tf          (GdkColorState          *self);
 
 GdkColorState * gdk_color_state_new_for_cicp            (const GdkCicp          *cicp,
                                                          GError                **error);
-
-void            gdk_color_state_clamp                   (GdkColorState          *self,
-                                                         const float             src[4],
-                                                         float                   dest[4]);
 
 static inline GdkColorState *
 gdk_color_state_get_rendering_color_state (GdkColorState *self)
@@ -271,3 +264,13 @@ gdk_color_state_from_rgba (GdkColorState *self,
                                  out_color);
 }
 
+static inline gboolean
+gdk_color_state_is_hdr (GdkColorState *color_state)
+{
+  GdkColorState *rendering_cs;
+
+  rendering_cs = gdk_color_state_get_rendering_color_state (color_state);
+
+  return rendering_cs != GDK_COLOR_STATE_SRGB &&
+         rendering_cs != GDK_COLOR_STATE_SRGB_LINEAR;
+}

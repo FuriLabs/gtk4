@@ -1209,7 +1209,7 @@ typedef enum {
  *
  * Domain for VFL parsing errors.
  */
-typedef enum {
+typedef enum { /*< prefix=GTK_CONSTRAINT_VFL_PARSER_ERROR >*/
   GTK_CONSTRAINT_VFL_PARSER_ERROR_INVALID_SYMBOL,
   GTK_CONSTRAINT_VFL_PARSER_ERROR_INVALID_ATTRIBUTE,
   GTK_CONSTRAINT_VFL_PARSER_ERROR_INVALID_VIEW,
@@ -1265,11 +1265,19 @@ typedef enum {
  *
  * Since: 4.6
  */
+/**
+ * GTK_SYMBOLIC_COLOR_ACCENT:
+ *
+ * The system accent color.
+ *
+ * Since: 4.22
+ */
 typedef enum {
-  GTK_SYMBOLIC_COLOR_FOREGROUND = 0,
-  GTK_SYMBOLIC_COLOR_ERROR = 1,
-  GTK_SYMBOLIC_COLOR_WARNING = 2,
-  GTK_SYMBOLIC_COLOR_SUCCESS = 3
+  GTK_SYMBOLIC_COLOR_FOREGROUND,
+  GTK_SYMBOLIC_COLOR_ERROR,
+  GTK_SYMBOLIC_COLOR_WARNING,
+  GTK_SYMBOLIC_COLOR_SUCCESS,
+  GTK_SYMBOLIC_COLOR_ACCENT,
 } GtkSymbolicColor;
 
 /**
@@ -1592,15 +1600,23 @@ typedef enum {
  *    would be presented if they were made. Value type: [enum@AccessibleAutocomplete]
  * @GTK_ACCESSIBLE_PROPERTY_DESCRIPTION: Defines a string value that describes
  *    or annotates the current element. Value type: string
- * @GTK_ACCESSIBLE_PROPERTY_HAS_POPUP: Indicates the availability and type of
- *    interactive popup element, such as menu or dialog, that can be triggered
- *    by an element.
+ * @GTK_ACCESSIBLE_PROPERTY_HAS_POPUP: Indicates the availability of interactive
+ *    popup element, such as menu or popover, that can be triggered by an
+ *    element. Contrary to “aria-haspopup”, it doesn't indicate the type of the
+ *    element, as such it cannot be used to indicate the availability of more
+ *    complex elements such as dialog. Value type: boolean
  * @GTK_ACCESSIBLE_PROPERTY_KEY_SHORTCUTS: Indicates keyboard shortcuts that an
  *    author has implemented to activate or give focus to an element. Value type:
  *    string. The format of the value is a space-separated list of shortcuts, with
  *    each shortcut consisting of one or more modifiers (`Control`, `Alt` or `Shift`),
- *    followed by a non-modifier key, all separated by `+`.
- *    Examples: `F2`, `Alt-F`, `Control+Shift+N`
+ *    followed by a non-modifier key, all separated by `+`. The
+ *    [WAI-ARIA](https://www.w3.org/TR/wai-aria/#aria-keyshortcuts) reference
+ *    specifies how to build keyboard shortcuts strings, with specific values
+ *    for each key which are the same regardless of the language, so these
+ *    strings can't be built from localized key names. You can convert an
+ *    accelerator into the matching key shortcuts label with
+ *    [func@Gtk.accelerator_get_accessible_label].
+ *    Examples: `F2`, `Alt+F`, `Control+Shift+N`
  * @GTK_ACCESSIBLE_PROPERTY_LABEL: Defines a string value that labels the current
  *    element. Value type: string
  * @GTK_ACCESSIBLE_PROPERTY_LEVEL: Defines the hierarchical level of an element
@@ -2028,5 +2044,25 @@ typedef enum {
   GTK_INTERFACE_CONTRAST_LESS,
 } GtkInterfaceContrast;
 
+/**
+ * GtkReducedMotion:
+ * @GTK_REDUCED_MOTION_NO_PREFERENCE: The user has made no preference known to the system
+ * @GTK_REDUCED_MOTION_REDUCE: The user has notified the system that they
+ *   prefer an interface that removes or replaces the types of motion-based
+ *   animation that either trigger discomfort for those with vestibular
+ *   motion sensitivity, or distraction for those with attention deficits
+ *
+ * Values for the [property@Gtk.Settings:gtk-interface-reduced-motion]
+ * and [property@Gtk.CssProvider:prefers-reduced-motion] properties
+ * that indicates the preferred level of motion animations.
+ *
+ * This information can be used inside CSS via media queries.
+ *
+ * Since: 4.22
+ */
+typedef enum {
+  GTK_REDUCED_MOTION_NO_PREFERENCE,
+  GTK_REDUCED_MOTION_REDUCE,
+} GtkReducedMotion;
 
 G_END_DECLS

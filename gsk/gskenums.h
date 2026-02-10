@@ -101,6 +101,55 @@
  * Since: 4.20
  */
 
+/**
+ * GSK_COPY_NODE:
+ *
+ * A node that copies the rendering canvas to be pasted later.
+ *
+ * Since: 4.22
+ */
+
+/**
+ * GSK_PASTE_NODE:
+ *
+ * A node that pastes a previously copied canvas.
+ *
+ * Since: 4.22
+ */
+
+/**
+ * GSK_COMPOSITE_NODE:
+ *
+ * A node that combines a child with the background using Porter/Duff
+ * operations.
+ *
+ * Since: 4.22
+ */
+
+/**
+ * GSK_ISOLATION_NODE:
+ *
+ * A node that isolated content of its child from previous content.
+ *
+ * Since: 4.22
+ */
+
+/**
+ * GSK_DISPLACEMENT_NODE:
+ *
+ * A node that displaces content according to some mask.
+ *
+ * Since: 4.22
+ */
+
+/**
+ * GSK_ARITHMETIC_NODE:
+ *
+ * A node that combines two child nodes in an arithmetic way.
+ *
+ * Since: 4.22
+ */
+
 typedef enum {
   GSK_NOT_A_RENDER_NODE = 0,
   GSK_CONTAINER_NODE,
@@ -134,6 +183,12 @@ typedef enum {
   GSK_STROKE_NODE,
   GSK_SUBSURFACE_NODE,
   GSK_COMPONENT_TRANSFER_NODE,
+  GSK_COPY_NODE,
+  GSK_PASTE_NODE,
+  GSK_COMPOSITE_NODE,
+  GSK_ISOLATION_NODE,
+  GSK_DISPLACEMENT_NODE,
+  GSK_ARITHMETIC_NODE,
 } GskRenderNodeType;
 
 /**
@@ -206,6 +261,44 @@ typedef enum {
 } GskBlendMode;
 
 /**
+ * GskPorterDuff:
+ * GSK_PORTER_DUFF_SOURCE:
+ * GSK_PORTER_DUFF_DEST:
+ * GSK_PORTER_DUFF_SOURCE_OVER_DEST:
+ * GSK_PORTER_DUFF_DEST_OVER_SOURCE:
+ * GSK_PORTER_DUFF_SOURCE_IN_DEST:
+ * GSK_PORTER_DUFF_DEST_IN_SOURCE:
+ * GSK_PORTER_DUFF_SOURCE_OUT_DEST:
+ * GSK_PORTER_DUFF_DEST_OUT_SOURCE:
+ * GSK_PORTER_DUFF_SOURCE_ATOP_DEST:
+ * GSK_PORTER_DUFF_DEST_ATOP_SOURCE:
+ * GSK_PORTER_DUFF_XOR:
+ * GSK_PORTER_DUFF_CLEAR:
+ *
+ * The 12 compositing modes defined by the seminal paper
+ * by Thomas Porter and Tom Duff.
+ *
+ * They are used in SVG, PDF and in Cairo with `cairo_operator_t`.
+ *
+ * Since: 4.22
+ */
+typedef enum
+{
+  GSK_PORTER_DUFF_SOURCE,
+  GSK_PORTER_DUFF_DEST,
+  GSK_PORTER_DUFF_SOURCE_OVER_DEST,
+  GSK_PORTER_DUFF_DEST_OVER_SOURCE,
+  GSK_PORTER_DUFF_SOURCE_IN_DEST,
+  GSK_PORTER_DUFF_DEST_IN_SOURCE,
+  GSK_PORTER_DUFF_SOURCE_OUT_DEST,
+  GSK_PORTER_DUFF_DEST_OUT_SOURCE,
+  GSK_PORTER_DUFF_SOURCE_ATOP_DEST,
+  GSK_PORTER_DUFF_DEST_ATOP_SOURCE,
+  GSK_PORTER_DUFF_XOR,
+  GSK_PORTER_DUFF_CLEAR
+} GskPorterDuff;
+
+/**
  * GskCorner:
  * @GSK_CORNER_TOP_LEFT: The top left corner
  * @GSK_CORNER_TOP_RIGHT: The top right corner
@@ -252,6 +345,32 @@ typedef enum {
   GSK_FILL_RULE_WINDING,
   GSK_FILL_RULE_EVEN_ODD
 } GskFillRule;
+
+/**
+ * GskIsolation:
+ * @GSK_ISOLATION_NONE: No isolation is defined.
+ * @GSK_ISOLATION_BACKGROUND: If the background should be made available.
+ *   If the background is not available, future operations will be rendered
+ *   to a transparent background and added to the existing background later.
+ * @GSK_ISOLATION_COPY_PASTE: If copies should be available to paste nodes.
+ *   If copies are not available, paste nodes can only paste from copies that
+ *   are made inside the isolated contents.
+ * @GSK_ISOLATION_ALL: Isolate everything. This will include features that
+ *   are added in the future.
+ *
+ * These flags describe the types of isolations possible with a
+ * [class@Gsk.IsolationNode].
+ *
+ * More isolation options may be added in the future.
+ *
+ * Since: 4.22
+ */
+typedef enum {
+  GSK_ISOLATION_NONE       = 0,
+  GSK_ISOLATION_BACKGROUND = 1 << 0,
+  GSK_ISOLATION_COPY_PASTE = 1 << 1,
+  GSK_ISOLATION_ALL        = -1
+} GskIsolation;
 
 /**
  * GskLineCap:

@@ -115,19 +115,10 @@ endif
 # Tests that test private apis and therefore are linked against libgtk-4.a
 internal_tests = [
   {
-    'name': 'symbolic2',
-    'sources': [
-      'symbolic2.c',
-      '../reftests/reftest-compare.c',
-    ],
-  },
-  { 'name': 'bitmask' },
-  {
     'name': 'composetable',
-    'sources': [
-      'composetable.c',
-      '../testutils.c'
-    ],
+    'libs': [
+      testutils_lib
+    ]
   },
   { 'name': 'imcontext' },
   { 'name': 'constraint-solver' },
@@ -147,6 +138,15 @@ internal_tests = [
       '../reftests/reftest-compare.c',
     ],
   },
+  {
+    'name': 'symbolic2',
+    'sources': [
+      'symbolic2.c',
+      '../reftests/reftest-compare.c',
+    ],
+    'suites': [ 'flaky' ],
+  },
+  { 'name': 'bitmask' },
 ]
 
 is_debug = get_option('buildtype').startswith('debug')
@@ -178,6 +178,7 @@ foreach t : tests
   test_srcs = ['@0@.c'.format(test_name)] + t.get('sources', [])
   test_extra_cargs = t.get('c_args', [])
   test_extra_ldflags = t.get('link_args', [])
+  test_extra_libs = t.get('libs', [])
   test_extra_suites = t.get('suites', [])
   test_timeout = 60
 
@@ -185,6 +186,7 @@ foreach t : tests
     sources: test_srcs,
     c_args: test_cargs + test_extra_cargs,
     link_args: test_extra_ldflags,
+    link_with: test_extra_libs,
     dependencies: libgtk_dep,
   )
 
@@ -206,6 +208,7 @@ foreach t : internal_tests
   test_srcs = ['@0@.c'.format(test_name)] + t.get('sources', [])
   test_extra_cargs = t.get('c_args', [])
   test_extra_ldflags = t.get('link_args', [])
+  test_extra_libs = t.get('libs', [])
   test_extra_suites = t.get('suites', [])
   test_timeout = 60
 
@@ -213,6 +216,7 @@ foreach t : internal_tests
     sources: test_srcs,
     c_args: test_cargs + test_extra_cargs + ['-DGTK_COMPILATION'],
     link_args: test_extra_ldflags,
+    link_with: test_extra_libs,
     dependencies: libgtk_static_dep,
   )
 
@@ -267,7 +271,8 @@ focus_chain_tests = [
 ]
 
 focus_chain = executable('test-focus-chain',
-  sources: ['test-focus-chain.c', '../testutils.c'],
+  sources: ['test-focus-chain.c'],
+  link_with: testutils_lib,
   dependencies: libgtk_dep,
   c_args: common_cflags,
 )

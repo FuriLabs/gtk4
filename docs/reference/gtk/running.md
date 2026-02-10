@@ -162,6 +162,12 @@ mainly for easy debugging of theme issues.
 It is also possible to specify a theme variant to load, by appending
 the variant name with a colon, like this: `GTK_THEME=Adwaita:dark`.
 
+### `GTK_OVERRIDE_RESTORE_REASON`
+
+If set, makes GTK ignore the session manager's restore reason and forces the
+specified restore reason instead. This is useful for app developers to test their
+app's behavior in various situations
+
 ## Other environment variables
 
 The following environment variables are used by GdkPixbuf, GDK or
@@ -260,6 +266,9 @@ A number of options affect behavior instead of logging:
 
 `color-mgmt`
 : Enable color management
+
+`session-mgmt`
+: Enable session management
 
 The special value `all` can be used to turn on all debug options. The special
 value `help` can be used to obtain a list of all supported debug options.

@@ -3826,7 +3826,7 @@ adjust_for_align (GtkAlign  align,
           nat_baseline > -1 &&
           *allocated_baseline > -1)
         {
-          *allocated_pos = *allocated_baseline - nat_baseline;
+          *allocated_pos += *allocated_baseline - nat_baseline;
           *allocated_size = MIN (*allocated_size, natural_size);
           *allocated_baseline = nat_baseline;
           break;
@@ -4775,6 +4775,9 @@ gtk_widget_handle_crossing (GtkWidget             *widget,
 {
   GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
   GList *l;
+
+  if (!priv->event_controllers)
+    return;
 
   g_object_ref (widget);
 
@@ -7870,6 +7873,7 @@ gtk_widget_real_unmap (GtkWidget *widget)
       gtk_widget_unset_state_flags (widget,
                                     GTK_STATE_FLAG_PRELIGHT |
                                     GTK_STATE_FLAG_ACTIVE);
+      gtk_widget_reset_controllers (widget);
     }
 }
 
@@ -8779,6 +8783,13 @@ gtk_widget_accessible_get_bounds (GtkAccessible *self,
   return TRUE;
 }
 
+static char *
+gtk_widget_accessible_get_accessible_id (GtkAccessible *self)
+{
+  const char *id = gtk_buildable_get_buildable_id (GTK_BUILDABLE (self));
+  return g_strdup (id);
+}
+
 static void
 gtk_widget_accessible_interface_init (GtkAccessibleInterface *iface)
 {
@@ -8788,6 +8799,7 @@ gtk_widget_accessible_interface_init (GtkAccessibleInterface *iface)
   iface->get_first_accessible_child = gtk_widget_accessible_get_first_accessible_child;
   iface->get_next_accessible_sibling = gtk_widget_accessible_get_next_accessible_sibling;
   iface->get_bounds = gtk_widget_accessible_get_bounds;
+  iface->get_accessible_id = gtk_widget_accessible_get_accessible_id;
 }
 
 static void
@@ -11664,7 +11676,7 @@ gtk_widget_class_bind_template_child_full (GtkWidgetClass *widget_class,
 /**
  * gtk_widget_get_template_child:
  * @widget: a widget
- * @widget_type: The `GType` to get a template child for
+ * @widget_type: The type of the widget class that defines the child in the template
  * @name: ID of the child defined in the template XML
  *
  * Fetches an object build from the template XML for @widget_type in
@@ -11954,9 +11966,10 @@ gtk_widget_create_render_node (GtkWidget   *widget,
   GtkWidgetClass *klass = GTK_WIDGET_GET_CLASS (widget);
   GtkWidgetPrivate *priv = gtk_widget_get_instance_private (widget);
   GtkCssBoxes boxes;
-  GtkCssValue *filter_value;
+  GtkCssValue *filter_value, *backdrop_filter_value;
   double css_opacity, opacity;
   GtkCssStyle *style;
+  gboolean has_backdrop_filter;
 
   style = gtk_css_node_get_style (priv->cssnode);
 
@@ -11973,11 +11986,49 @@ gtk_widget_create_render_node (GtkWidget   *widget,
                            "RenderNode for %s %p",
                            G_OBJECT_TYPE_NAME (widget), widget);
 
+  backdrop_filter_value = style->other->backdrop_filter;
+  has_backdrop_filter = !gtk_css_filter_value_is_none (backdrop_filter_value);
+
+  if (has_backdrop_filter)
+    gtk_snapshot_push_copy (snapshot);
+
   filter_value = style->other->filter;
   gtk_css_filter_value_push_snapshot (filter_value, snapshot);
 
   if (opacity < 1.0)
     gtk_snapshot_push_opacity (snapshot, opacity);
+
+  if (has_backdrop_filter)
+    {
+      const GskRoundedRect *border_box = gtk_css_boxes_get_border_box (&boxes);
+      graphene_rect_t bounds;
+      double extra_size;
+
+      gtk_snapshot_push_rounded_clip (snapshot, border_box);
+      extra_size = gtk_css_filter_value_push_snapshot (backdrop_filter_value, snapshot);
+      bounds = gtk_css_boxes_get_border_box (&boxes)->bounds;
+      if (extra_size)
+        {
+          graphene_rect_t enlarged = bounds;
+          graphene_rect_inset (&enlarged, - extra_size, - extra_size);
+          gtk_snapshot_push_repeat2 (snapshot,
+                                     &enlarged,
+                                     &bounds, 
+                                     GSK_REPEAT_REFLECT);
+          gtk_snapshot_append_paste (snapshot,
+                                     &bounds,
+                                     0);
+          gtk_snapshot_pop (snapshot);
+        }
+      else
+        {
+          gtk_snapshot_append_paste (snapshot,
+                                     &bounds,
+                                     0);
+        }
+      gtk_css_filter_value_pop_snapshot (backdrop_filter_value, &bounds, snapshot);
+      gtk_snapshot_pop (snapshot); /* clip */
+    }
 
   gtk_css_style_snapshot_background (&boxes, snapshot);
   gtk_css_style_snapshot_border (&boxes, snapshot);
@@ -11998,9 +12049,15 @@ gtk_widget_create_render_node (GtkWidget   *widget,
   if (opacity < 1.0)
     gtk_snapshot_pop (snapshot);
 
-  gtk_css_filter_value_pop_snapshot (filter_value, snapshot);
+  gtk_css_filter_value_pop_snapshot (filter_value,
+                                     &gtk_css_boxes_get_border_box (&boxes)->bounds,
 
-  gtk_snapshot_pop (snapshot);
+                                     snapshot);
+
+  if (has_backdrop_filter)
+    gtk_snapshot_pop (snapshot);
+
+  gtk_snapshot_pop (snapshot); /* debug */
 
   return gtk_snapshot_pop_collect (snapshot);
 }

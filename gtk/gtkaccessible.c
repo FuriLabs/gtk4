@@ -58,7 +58,9 @@
 #include "gtkaccessibleprivate.h"
 
 #include "gtkatcontextprivate.h"
+#include "gtkeditable.h"
 #include "gtkenums.h"
+#include "gtktext.h"
 #include "gtktypebuiltins.h"
 #include "gtkwidget.h"
 
@@ -67,6 +69,12 @@
 #include <stdarg.h>
 
 G_DEFINE_INTERFACE (GtkAccessible, gtk_accessible, G_TYPE_OBJECT)
+
+static char *
+gtk_accessible_default_get_accessible_id (GtkAccessible *self)
+{
+  return NULL;
+}
 
 static void
 gtk_accessible_default_init (GtkAccessibleInterface *iface)
@@ -86,6 +94,8 @@ gtk_accessible_default_init (GtkAccessibleInterface *iface)
                        G_PARAM_STATIC_STRINGS);
 
   g_object_interface_install_property (iface, pspec);
+
+  iface->get_accessible_id = gtk_accessible_default_get_accessible_id;
 }
 
 /**
@@ -1268,6 +1278,30 @@ gtk_accessible_get_bounds (GtkAccessible *self,
   return GTK_ACCESSIBLE_GET_IFACE (self)->get_bounds (self, x, y, width, height);
 }
 
+/**
+ * gtk_accessible_get_accessible_id:
+ * @self: an accessible object
+ *
+ * Retrieves the accessible identifier for the accessible object.
+ *
+ * This functionality can be overridden by `GtkAccessible`
+ * implementations.
+ *
+ * It is left to the accessible implementation to define the scope
+ * and uniqueness of the identifier.
+ *
+ * Returns: (transfer full) (nullable): the accessible identifier
+ *
+ * Since: 4.22
+ */
+char *
+gtk_accessible_get_accessible_id (GtkAccessible *self)
+{
+  g_return_val_if_fail (GTK_IS_ACCESSIBLE (self), NULL);
+
+  return GTK_ACCESSIBLE_GET_IFACE (self)->get_accessible_id (self);
+}
+
 struct _GtkAccessibleList
 {
   GList *objects;
@@ -1438,4 +1472,39 @@ gtk_accessible_update_children (GtkAccessible           *self,
   gtk_at_context_child_changed (context, 1 << state, child);
   gtk_at_context_update (context);
   g_object_unref (context);
+}
+
+/*< private >
+ * gtk_accessible_is_password_text:
+ * @accessible: an accessible object
+ *
+ * Returns whether this accessible represents a password text field.
+ *
+ * Returns: true if the accessible is a password text field
+ */
+gboolean
+gtk_accessible_is_password_text (GtkAccessible *accessible)
+{
+  GtkInputPurpose purpose = GTK_INPUT_PURPOSE_FREE_FORM;
+  gboolean found_purpose = FALSE;
+
+  if (GTK_IS_TEXT (accessible))
+    {
+      purpose = gtk_text_get_input_purpose (GTK_TEXT (accessible));
+      found_purpose = TRUE;
+    }
+  else if (GTK_IS_EDITABLE (accessible))
+    {
+      GtkEditable *delegate = gtk_editable_get_delegate (GTK_EDITABLE (accessible));
+      if (delegate && GTK_IS_TEXT (delegate))
+        {
+          purpose = gtk_text_get_input_purpose (GTK_TEXT (delegate));
+          found_purpose = TRUE;
+        }
+    }
+
+  if (found_purpose && 
+      (purpose == GTK_INPUT_PURPOSE_PASSWORD || purpose == GTK_INPUT_PURPOSE_PIN))
+    return TRUE;
+  return FALSE;
 }

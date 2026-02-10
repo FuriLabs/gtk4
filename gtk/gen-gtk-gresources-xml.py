@@ -49,13 +49,9 @@ xml += '\n'
 for f in get_files('theme/Default/assets', '.svg'):
   xml += '    <file preprocess=\'xml-stripblanks\'>theme/Default/assets/{0}</file>\n'.format(f)
 
-for f in get_files('theme/Default/assets-hc', '.png'):
-  xml += '    <file>theme/Default/assets-hc/{0}</file>\n'.format(f)
 
 xml += '\n'
 
-for f in get_files('theme/Default/assets-hc', '.svg'):
-  xml += '    <file preprocess=\'xml-stripblanks\'>theme/Default/assets-hc/{0}</file>\n'.format(f)
 
 for f in get_files('ui', '.ui'):
   xml += '    <file>ui/{0}</file>\n'.format(f)
@@ -69,14 +65,13 @@ xml += '''
     <file compressed="true">icons/hicolor.index.theme</file>
 '''
 
-for s in ['16x16', '32x32', '64x64', 'scalable']:
-  for c in ['actions', 'categories', 'emblems', 'emotes', 'devices', 'mimetypes', 'places', 'status']:
-    icons_dir = 'icons/{0}/{1}'.format(s,c)
-    if os.path.exists(os.path.join(srcdir,icons_dir)):
-      for f in get_files(icons_dir, '.png'):
-        xml += '    <file>icons/{0}/{1}/{2}</file>\n'.format(s,c,f)
-      for f in get_files(icons_dir, '.svg'):
-        xml += '    <file preprocess=\'xml-stripblanks\'>icons/{0}/{1}/{2}</file>\n'.format(s,c,f)
+xml += '    <file>icons/16x16/status/image-missing.png</file>\n'
+
+for f in get_files('icons', '.svg'):
+  xml += '    <file preprocess=\'xml-stripblanks\'>icons/{0}</file>\n'.format(f)
+
+for f in get_files('icons', '.gpa'):
+  xml += '    <file preprocess=\'xml-stripblanks\'>icons/{0}</file>\n'.format(f)
 
 for f in get_files('inspector', '.ui'):
   xml += '    <file preprocess=\'xml-stripblanks\'>inspector/{0}</file>\n'.format(f)

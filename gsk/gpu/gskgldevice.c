@@ -205,6 +205,11 @@ gsk_gl_device_setup_samplers (GskGLDevice *self)
       .mag_filter = GL_LINEAR,
       .wrap = GL_REPEAT,
     },
+    [GSK_GPU_SAMPLER_REFLECT] = {
+      .min_filter = GL_LINEAR,
+      .mag_filter = GL_LINEAR,
+      .wrap = GL_MIRRORED_REPEAT,
+    },
     [GSK_GPU_SAMPLER_NEAREST] = {
       .min_filter = GL_NEAREST,
       .mag_filter = GL_NEAREST,
@@ -380,6 +385,16 @@ print_shader_info (const char *prefix,
     }
 }
 
+static gboolean
+gsk_gl_device_has_gl_feature (GskGLDevice   *self,
+                              GdkGLFeatures  feature)
+{
+  GdkDisplay *display = gsk_gpu_device_get_display (GSK_GPU_DEVICE (self));
+  GdkGLContext *context = gdk_display_get_gl_context (display);
+
+  return gdk_gl_context_has_feature (context, feature);
+}
+
 static GLuint
 gsk_gl_device_load_shader (GskGLDevice       *self,
                            const char        *program_name,
@@ -400,6 +415,8 @@ gsk_gl_device_load_shader (GskGLDevice       *self,
   g_string_append (preamble, "\n");
   if (self->api == GDK_GL_API_GLES)
     {
+      if (gsk_gl_device_has_gl_feature (self, GDK_GL_FEATURE_BLEND_FUNC_EXTENDED))
+        g_string_append (preamble, "#extension GL_EXT_blend_func_extended : require\n");
       if (gsk_gpu_shader_flags_has_external_textures (flags))
         {
           g_string_append (preamble, "#extension GL_OES_EGL_image_external_essl3 : require\n");

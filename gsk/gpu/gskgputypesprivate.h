@@ -17,7 +17,6 @@ typedef struct _GskGpuImage             GskGpuImage;
 typedef struct _GskGpuOp                GskGpuOp;
 typedef struct _GskGpuOpClass           GskGpuOpClass;
 typedef guint32                         GskGpuShaderFlags;
-typedef struct _GskGpuShaderImage       GskGpuShaderImage;
 typedef struct _GskGpuShaderOp          GskGpuShaderOp;
 typedef struct _GskGpuShaderOpClass     GskGpuShaderOpClass;
 typedef struct _GskVulkanSemaphores     GskVulkanSemaphores;
@@ -51,6 +50,7 @@ typedef enum {
   GSK_GPU_SAMPLER_DEFAULT,
   GSK_GPU_SAMPLER_TRANSPARENT,
   GSK_GPU_SAMPLER_REPEAT,
+  GSK_GPU_SAMPLER_REFLECT,
   GSK_GPU_SAMPLER_NEAREST,
   GSK_GPU_SAMPLER_MIPMAP_DEFAULT,
   /* add more */
@@ -69,7 +69,10 @@ typedef enum {
   GSK_GPU_BLEND_NONE,
   GSK_GPU_BLEND_OVER,
   GSK_GPU_BLEND_ADD,
-  GSK_GPU_BLEND_CLEAR
+  GSK_GPU_BLEND_CLEAR,
+  GSK_GPU_BLEND_MASK_ONE,
+  GSK_GPU_BLEND_MASK_ALPHA,
+  GSK_GPU_BLEND_MASK_INV_ALPHA,
 } GskGpuBlend;
 
 /* We only need this for the final VkImageLayout, but don't tell anyone */
@@ -154,5 +157,7 @@ typedef enum {
   GSK_GPU_OPTIMIZE_TO_IMAGE             = 1 <<  5,
   GSK_GPU_OPTIMIZE_OCCLUSION_CULLING    = 1 <<  6,
   GSK_GPU_OPTIMIZE_REPEAT               = 1 <<  7,
+  GSK_GPU_OPTIMIZE_DUAL_BLEND           = 1 <<  8,
+  GSK_GPU_OPTIMIZE_PROFILE              = 1 <<  9,
 } GskGpuOptimizations;
 

@@ -117,9 +117,9 @@ parse_nonnegative_number (const char **p,
  * final NUL byte in this case, and we walk off
  * the end of the string. Oops
  */
-static inline char *
+static inline const char *
 _strchr (const char *str,
-           int         c)
+         int         c)
 {
   if (c == 0)
     return NULL;
@@ -147,7 +147,7 @@ static gboolean
 parse_command (const char **p,
                char        *cmd)
 {
-  char *s;
+  const char *s;
   const char *allowed;
 
   if (*cmd == 'X')
@@ -355,6 +355,66 @@ parse_rounded_rect (const char     **p,
 
 #undef NEAR
 
+static gboolean
+add_op (GskPathOperation        op,
+        const graphene_point_t *pts,
+        size_t                  n_pts,
+        float                   weight,
+        gpointer                user_data)
+{
+  GskPathBuilder *builder = user_data;
+
+  gsk_path_builder_add_op (builder, op, pts, n_pts, weight);
+  return TRUE;
+}
+
+static gboolean
+add_arc (float    rx,
+         float    ry,
+         float    rotation,
+         gboolean large,
+         gboolean sweep,
+         float    x,
+         float    y,
+         gpointer user_data)
+{
+  GskPathBuilder *builder = user_data;
+
+  gsk_path_builder_svg_arc_to (builder, rx, ry, rotation, large, sweep, x, y);
+  return TRUE;
+}
+
+static gboolean
+add_rect (const graphene_rect_t *rect,
+          gpointer               user_data)
+{
+  GskPathBuilder *builder = user_data;
+
+  gsk_path_builder_add_rect (builder, rect);
+  return TRUE;
+}
+
+static gboolean
+add_circle (const graphene_point_t *center,
+            float                   radius,
+            gpointer               user_data)
+{
+  GskPathBuilder *builder = user_data;
+
+  gsk_path_builder_add_circle (builder, center, radius);
+  return TRUE;
+}
+
+static gboolean
+add_rounded_rect (const GskRoundedRect *rect,
+                  gpointer              user_data)
+{
+  GskPathBuilder *builder = user_data;
+
+  gsk_path_builder_add_rounded_rect (builder, rect);
+  return TRUE;
+}
+
 /**
  * gsk_path_parse:
  * @string: a string
@@ -391,7 +451,74 @@ parse_rounded_rect (const char     **p,
 GskPath *
 gsk_path_parse (const char *string)
 {
+  GskPathParser parser = {
+    add_op, add_arc, add_rect, add_circle, add_rounded_rect,
+  };
   GskPathBuilder *builder;
+
+  builder = gsk_path_builder_new ();
+
+  if (!gsk_path_parse_full (string, &parser, builder))
+    {
+      gsk_path_builder_unref (builder);
+      return NULL;
+    }
+
+  return gsk_path_builder_free_to_path (builder);
+}
+
+#define move_to(builder, x0, y0) \
+  if (!parser->add_op (GSK_PATH_MOVE, (const graphene_point_t []) { { x0, y0 }, }, 1, 1, builder)) \
+    return FALSE;
+#define close(builder) \
+  if (!parser->add_op (GSK_PATH_CLOSE, \
+                  (const graphene_point_t []) { \
+                    { x, y }, \
+                  }, \
+                  0, 1, builder)) \
+    return FALSE;
+#define line_to(builder, x1, y1) \
+  if (!parser->add_op (GSK_PATH_LINE, \
+                       (const graphene_point_t []) { \
+                         { x, y }, \
+                         { x1, y1 }, \
+                       }, \
+                       2, 1, builder)) \
+    return FALSE;
+#define quad_to(builder, x1, y1, x2, y2) \
+  if (!parser->add_op (GSK_PATH_QUAD, \
+                  (const graphene_point_t []) { \
+                    { x, y }, \
+                    { x1, y1 }, \
+                    { x2, y2 }, \
+                  }, \
+                  3, 1, builder)) \
+    return FALSE;
+#define cubic_to(builder, x1, y1, x2, y2, x3, y3) \
+  if (!parser->add_op (GSK_PATH_CUBIC, \
+                  (const graphene_point_t []) { \
+                    { x, y }, \
+                    { x1, y1 }, \
+                    { x2, y2 }, \
+                    { x3, y3 }, \
+                  }, \
+                  4, 1, builder)) \
+    return FALSE;
+#define conic_to(builder, x1, y1, x2, y2, w) \
+  if (!parser->add_op (GSK_PATH_CONIC, \
+                    (const graphene_point_t []) { \
+                      { x, y }, \
+                      { x1, y1 }, \
+                      { x2, y2 }, \
+                    }, \
+                    3, w, builder)) \
+    return FALSE;
+
+gboolean
+gsk_path_parse_full (const char    *string,
+                     GskPathParser *parser,
+                     gpointer       builder)
+{
   double x, y; /* current point */
   double prev_x1, prev_y1;
   double path_x, path_y; /* start point of the current subpath */
@@ -400,8 +527,6 @@ gsk_path_parse (const char *string)
   char prev_cmd;
   gboolean after_comma;
   gboolean repeat;
-
-  builder = gsk_path_builder_new ();
 
   cmd = 'X';
   path_x = path_y = 0;
@@ -412,24 +537,24 @@ gsk_path_parse (const char *string)
   p = string;
   while (*p)
     {
-      prev_cmd = cmd;
+      prev_cmd = g_ascii_toupper (cmd);
       repeat = !parse_command (&p, &cmd);
 
       if (after_comma && !repeat)
-        goto error;
+        return FALSE;
 
       switch (cmd)
         {
         case 'X':
-          goto error;
+          return FALSE;
 
         case 'Z':
         case 'z':
           if (repeat)
-            goto error;
+            return FALSE;
           else
             {
-              gsk_path_builder_close (builder);
+              close (builder);
               x = path_x;
               y = path_y;
             }
@@ -442,14 +567,16 @@ gsk_path_parse (const char *string)
             GskRoundedRect rr;
 
             /* Look for special contours */
-            if (parse_rectangle (&p, &x1, &y1, &w, &h))
+            if (parser->add_rect && parse_rectangle (&p, &x1, &y1, &w, &h))
               {
                 if (cmd == 'm')
                   {
                     x1 += x;
                     y1 += y;
                   }
-                gsk_path_builder_add_rect (builder, &GRAPHENE_RECT_INIT (x1, y1, w, h));
+                if (!parser->add_rect (&GRAPHENE_RECT_INIT (x1, y1, w, h), builder))
+                  return FALSE;
+
                 path_x = x1;
                 path_y = y1;
 
@@ -457,14 +584,16 @@ gsk_path_parse (const char *string)
                 x = x1;
                 y = y1;
               }
-            else if (parse_circle (&p, &x1, &y1, &r))
+            else if (parser->add_circle && parse_circle (&p, &x1, &y1, &r))
               {
                 if (cmd == 'm')
                   {
                     x1 += x;
                     y1 += y;
                   }
-                gsk_path_builder_add_circle (builder, &GRAPHENE_POINT_INIT (x1, y1), r);
+                if (!parser->add_circle (&GRAPHENE_POINT_INIT (x1, y1), r, builder))
+                  return FALSE;
+
                 path_x = x1 + r;
                 path_y = y1;
 
@@ -472,14 +601,15 @@ gsk_path_parse (const char *string)
                 x = x1 + r;
                 y = y1;
               }
-            else if (parse_rounded_rect (&p, &rr))
+            else if (parser->add_rounded_rect && parse_rounded_rect (&p, &rr))
               {
                 if (cmd == 'm')
                   {
                     rr.bounds.origin.x += x;
                     rr.bounds.origin.y += y;
                   }
-                gsk_path_builder_add_rounded_rect (builder, &rr);
+                if (!parser->add_rounded_rect (&rr, builder))
+                  return FALSE;
 
                 path_x = rr.bounds.origin.x + rr.corner[GSK_CORNER_TOP_LEFT].width;
                 path_y = rr.bounds.origin.y;
@@ -497,10 +627,12 @@ gsk_path_parse (const char *string)
                   }
 
                 if (repeat)
-                  gsk_path_builder_line_to (builder, x1, y1);
+                  {
+                    line_to (builder, x1, y1);
+                  }
                 else
                   {
-                    gsk_path_builder_move_to (builder, x1, y1);
+                    move_to (builder, x1, y1);
                     path_x = x1;
                     path_y = y1;
                   }
@@ -509,7 +641,7 @@ gsk_path_parse (const char *string)
                 y = y1;
               }
             else
-              goto error;
+              return FALSE;
           }
           break;
 
@@ -526,18 +658,18 @@ gsk_path_parse (const char *string)
                     y1 += y;
                   }
 
-                if (_strchr ("zZ", prev_cmd))
+                if (prev_cmd == 'Z')
                   {
-                    gsk_path_builder_move_to (builder, x, y);
+                    move_to (builder, x, y);
                     path_x = x;
                     path_y = y;
                   }
-                gsk_path_builder_line_to (builder, x1, y1);
+                line_to (builder, x1, y1);
                 x = x1;
                 y = y1;
               }
             else
-              goto error;
+              return FALSE;
           }
           break;
 
@@ -550,17 +682,18 @@ gsk_path_parse (const char *string)
               {
                 if (cmd == 'h')
                   x1 += x;
-                if (_strchr ("zZ", prev_cmd))
+                if (prev_cmd == 'Z')
                   {
-                    gsk_path_builder_move_to (builder, x, y);
+                    move_to (builder, x, y);
+
                     path_x = x;
                     path_y = y;
                   }
-                gsk_path_builder_line_to (builder, x1, y);
+                line_to (builder, x1, y);
                 x = x1;
               }
             else
-              goto error;
+              return FALSE;
           }
           break;
 
@@ -573,17 +706,18 @@ gsk_path_parse (const char *string)
               {
                 if (cmd == 'v')
                   y1 += y;
-                if (_strchr ("zZ", prev_cmd))
+                if (prev_cmd == 'Z')
                   {
-                    gsk_path_builder_move_to (builder, x, y);
+                    move_to (builder, x, y);
+
                     path_x = x;
                     path_y = y;
                   }
-                gsk_path_builder_line_to (builder, x, y1);
+                line_to (builder, x, y1);
                 y = y1;
               }
             else
-              goto error;
+              return FALSE;
           }
           break;
 
@@ -605,20 +739,20 @@ gsk_path_parse (const char *string)
                     x2 += x;
                     y2 += y;
                   }
-                if (_strchr ("zZ", prev_cmd))
+                if (prev_cmd == 'Z')
                   {
-                    gsk_path_builder_move_to (builder, x, y);
+                    move_to (builder, x, y);
                     path_x = x;
                     path_y = y;
                   }
-                gsk_path_builder_cubic_to (builder, x0, y0, x1, y1, x2, y2);
+                cubic_to (builder, x0, y0, x1, y1, x2, y2);
                 prev_x1 = x1;
                 prev_y1 = y1;
                 x = x2;
                 y = y2;
               }
             else
-              goto error;
+              return FALSE;
           }
           break;
 
@@ -637,7 +771,7 @@ gsk_path_parse (const char *string)
                     x2 += x;
                     y2 += y;
                   }
-                if (_strchr ("CcSs", prev_cmd))
+                if (prev_cmd == 'C' || prev_cmd == 'S')
                   {
                     x0 = 2 * x - prev_x1;
                     y0 = 2 * y - prev_y1;
@@ -647,20 +781,21 @@ gsk_path_parse (const char *string)
                     x0 = x;
                     y0 = y;
                   }
-                if (_strchr ("zZ", prev_cmd))
+                if (prev_cmd == 'Z')
                   {
-                    gsk_path_builder_move_to (builder, x, y);
+                    move_to (builder, x, y);
                     path_x = x;
                     path_y = y;
                   }
-                gsk_path_builder_cubic_to (builder, x0, y0, x1, y1, x2, y2);
+                cubic_to (builder, x0, y0, x1, y1, x2, y2);
+
                 prev_x1 = x1;
                 prev_y1 = y1;
                 x = x2;
                 y = y2;
               }
             else
-              goto error;
+              return FALSE;
           }
           break;
 
@@ -679,20 +814,20 @@ gsk_path_parse (const char *string)
                     x2 += x;
                     y2 += y;
                   }
-                if (_strchr ("zZ", prev_cmd))
+                if (prev_cmd == 'Z')
                   {
-                    gsk_path_builder_move_to (builder, x, y);
+                    move_to (builder, x, y);
                     path_x = x;
                     path_y = y;
                   }
-                gsk_path_builder_quad_to (builder, x1, y1, x2, y2);
+                quad_to (builder, x1, y1, x2, y2);
                 prev_x1 = x1;
                 prev_y1 = y1;
                 x = x2;
                 y = y2;
               }
             else
-              goto error;
+              return FALSE;
           }
           break;
 
@@ -708,7 +843,7 @@ gsk_path_parse (const char *string)
                     x2 += x;
                     y2 += y;
                   }
-                if (_strchr ("QqTt", prev_cmd))
+                if (prev_cmd == 'Q' || prev_cmd == 'T')
                   {
                     x1 = 2 * x - prev_x1;
                     y1 = 2 * y - prev_y1;
@@ -718,20 +853,20 @@ gsk_path_parse (const char *string)
                     x1 = x;
                     y1 = y;
                   }
-                if (_strchr ("zZ", prev_cmd))
+                if (prev_cmd == 'Z')
                   {
-                    gsk_path_builder_move_to (builder, x, y);
+                    move_to (builder, x, y);
                     path_x = x;
                     path_y = y;
                   }
-                gsk_path_builder_quad_to (builder, x1, y1, x2, y2);
+                quad_to (builder, x1, y1, x2, y2);
                 prev_x1 = x1;
                 prev_y1 = y1;
                 x = x2;
                 y = y2;
               }
             else
-              goto error;
+              return FALSE;
           }
           break;
 
@@ -751,18 +886,18 @@ gsk_path_parse (const char *string)
                     x2 += x;
                     y2 += y;
                   }
-                if (_strchr ("zZ", prev_cmd))
+                if (prev_cmd == 'Z')
                   {
-                    gsk_path_builder_move_to (builder, x, y);
+                    move_to (builder, x, y);
                     path_x = x;
                     path_y = y;
                   }
-                gsk_path_builder_conic_to (builder, x1, y1, x2, y2, weight);
+                conic_to (builder, x1, y1, x2, y2, weight);
                 x = x2;
                 y = y2;
               }
             else
-              goto error;
+              return FALSE;
           }
           break;
 
@@ -787,26 +922,24 @@ gsk_path_parse (const char *string)
                     y1 += y;
                   }
 
-                if (_strchr ("zZ", prev_cmd))
+                if (prev_cmd == 'Z')
                   {
-                    gsk_path_builder_move_to (builder, x, y);
+                    move_to (builder, x, y);
                     path_x = x;
                     path_y = y;
                   }
-                gsk_path_builder_svg_arc_to (builder,
-                                             rx, ry, x_axis_rotation,
-                                             large_arc, sweep,
-                                             x1, y1);
+                if (!parser->add_arc (rx, ry, x_axis_rotation, large_arc, sweep, x1, y1, builder))
+                  return FALSE;
                 x = x1;
                 y = y1;
               }
             else
-              goto error;
+              return FALSE;
           }
           break;
 
         default:
-          goto error;
+          return FALSE;
         }
 
       after_comma = (p > string) && p[-1] == ',';
@@ -815,15 +948,9 @@ gsk_path_parse (const char *string)
     }
 
   if (after_comma)
-    goto error;
+    return FALSE;
 
-  return gsk_path_builder_free_to_path (builder);
-
-error:
-  //g_warning ("Can't parse string '%s' as GskPath, error at %ld", string, p - string);
-  gsk_path_builder_unref (builder);
-
-  return NULL;
+  return TRUE;
 }
 
 /* vim:set foldmethod=marker: */

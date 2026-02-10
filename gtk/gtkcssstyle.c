@@ -72,6 +72,7 @@ gtk_css_style_finalize (GObject *object)
   gtk_css_values_unref ((GtkCssValues *)style->icon);
   gtk_css_values_unref ((GtkCssValues *)style->outline);
   gtk_css_values_unref ((GtkCssValues *)style->font);
+  gtk_css_values_unref ((GtkCssValues *)style->text_decoration);
   gtk_css_values_unref ((GtkCssValues *)style->font_variant);
   gtk_css_values_unref ((GtkCssValues *)style->animation);
   gtk_css_values_unref ((GtkCssValues *)style->transition);
@@ -183,11 +184,11 @@ gtk_css_style_get_computed_value (GtkCssStyle *style,
     case GTK_CSS_PROPERTY_LINE_HEIGHT:
       return style->font->line_height;
     case GTK_CSS_PROPERTY_TEXT_DECORATION_LINE:
-      return style->font_variant->text_decoration_line;
+      return style->text_decoration->text_decoration_line;
     case GTK_CSS_PROPERTY_TEXT_DECORATION_COLOR:
-      return style->font_variant->text_decoration_color;
+      return style->text_decoration->text_decoration_color;
     case GTK_CSS_PROPERTY_TEXT_DECORATION_STYLE:
-      return style->font_variant->text_decoration_style;
+      return style->text_decoration->text_decoration_style;
     case GTK_CSS_PROPERTY_TEXT_TRANSFORM:
       return style->font_variant->text_transform;
     case GTK_CSS_PROPERTY_FONT_KERNING:
@@ -298,6 +299,8 @@ gtk_css_style_get_computed_value (GtkCssStyle *style,
       return style->other->icon_transform;
     case GTK_CSS_PROPERTY_ICON_FILTER:
       return style->other->icon_filter;
+    case GTK_CSS_PROPERTY_ICON_WEIGHT:
+      return style->icon->icon_weight;
     case GTK_CSS_PROPERTY_BORDER_SPACING:
       return style->size->border_spacing;
     case GTK_CSS_PROPERTY_TRANSFORM:
@@ -334,6 +337,8 @@ gtk_css_style_get_computed_value (GtkCssStyle *style,
       return style->animation->animation_fill_mode;
     case GTK_CSS_PROPERTY_OPACITY:
       return style->other->opacity;
+    case GTK_CSS_PROPERTY_BACKDROP_FILTER:
+      return style->other->backdrop_filter;
     case GTK_CSS_PROPERTY_FILTER:
       return style->other->filter;
     case GTK_CSS_PROPERTY_CARET_COLOR:
@@ -715,8 +720,8 @@ gtk_css_style_get_pango_attributes (GtkCssStyle *style)
   double letter_spacing;
 
   /* text-decoration */
-  decoration_line = _gtk_css_text_decoration_line_value_get (style->font_variant->text_decoration_line);
-  decoration_style = _gtk_css_text_decoration_style_value_get (style->font_variant->text_decoration_style);
+  decoration_line = _gtk_css_text_decoration_line_value_get (style->text_decoration->text_decoration_line);
+  decoration_style = _gtk_css_text_decoration_style_value_get (style->text_decoration->text_decoration_style);
 
   color = gtk_css_color_value_get_rgba (style->used->color);
   decoration_color = gtk_css_color_value_get_rgba (style->used->text_decoration_color);
@@ -869,17 +874,18 @@ gtk_css_style_get_pango_font (GtkCssStyle *style)
 
 void
 gtk_css_style_lookup_symbolic_colors (GtkCssStyle *style,
-                                      GdkRGBA      color_out[4])
+                                      GdkRGBA      color_out[5])
 {
-  const char *names[4] = {
+  const char *names[5] = {
     [GTK_SYMBOLIC_COLOR_ERROR] = "error",
     [GTK_SYMBOLIC_COLOR_WARNING] = "warning",
-    [GTK_SYMBOLIC_COLOR_SUCCESS] = "success"
+    [GTK_SYMBOLIC_COLOR_SUCCESS] = "success",
+    [GTK_SYMBOLIC_COLOR_ACCENT] = "accent",
   };
 
   color_out[GTK_SYMBOLIC_COLOR_FOREGROUND] = *gtk_css_color_value_get_rgba (style->used->color);
 
-  for (gsize i = 1; i < 4; i++)
+  for (gsize i = 1; i < G_N_ELEMENTS (names); i++)
     {
       GtkCssValue *lookup;
 
@@ -901,6 +907,7 @@ static const int values_size[] = {
   sizeof (GtkCssIconValues),
   sizeof (GtkCssOutlineValues),
   sizeof (GtkCssFontValues),
+  sizeof (GtkCssTextDecorationValues),
   sizeof (GtkCssFontVariantValues),
   sizeof (GtkCssAnimationValues),
   sizeof (GtkCssTransitionValues),

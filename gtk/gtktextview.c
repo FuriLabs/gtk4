@@ -8084,8 +8084,8 @@ gtk_text_view_set_attributes_from_style (GtkTextView        *text_view,
 
   /* text-decoration */
 
-  decoration_line = _gtk_css_text_decoration_line_value_get (style->font_variant->text_decoration_line);
-  decoration_style = _gtk_css_text_decoration_style_value_get (style->font_variant->text_decoration_style);
+  decoration_line = _gtk_css_text_decoration_line_value_get (style->text_decoration->text_decoration_line);
+  decoration_style = _gtk_css_text_decoration_style_value_get (style->text_decoration->text_decoration_style);
   decoration_color = gtk_css_color_value_get_rgba (style->used->text_decoration_color);
 
   if (decoration_line & GTK_CSS_TEXT_DECORATION_LINE_UNDERLINE)
@@ -10561,7 +10561,7 @@ gtk_text_view_set_extra_menu (GtkTextView *text_view,
  * Gets the menu model that gets added to the context menu
  * or %NULL if none has been set.
  *
- * Returns: (transfer none): the menu model
+ * Returns: (transfer none) (nullable): the menu model
  */
 GMenuModel *
 gtk_text_view_get_extra_menu (GtkTextView *text_view)
@@ -11070,6 +11070,40 @@ gtk_text_view_accessible_text_get_offset (GtkAccessibleText      *self,
   return TRUE;
 }
 
+static gboolean
+gtk_text_view_accessible_text_set_caret_position (GtkAccessibleText *self,
+                                                  unsigned int       offset)
+{
+  GtkTextBuffer *buffer;
+  GtkTextIter iter;
+
+  buffer = get_buffer (GTK_TEXT_VIEW (self));
+  gtk_text_buffer_get_iter_at_offset (buffer, &iter, offset);
+
+  gtk_text_buffer_place_cursor (buffer, &iter);
+  return TRUE;
+}
+
+static gboolean
+gtk_text_view_accessible_text_set_selection (GtkAccessibleText      *self,
+                                             gsize                   i,
+                                             GtkAccessibleTextRange *range)
+{
+  GtkTextBuffer *buffer;
+  GtkTextIter start, end;
+
+  buffer = get_buffer (GTK_TEXT_VIEW (self));
+
+  if (i != 0)
+    return FALSE;
+
+  gtk_text_buffer_get_iter_at_offset (buffer, &start, range->start);
+  gtk_text_buffer_get_iter_at_offset (buffer, &end, range->start + range->length);
+
+  gtk_text_buffer_select_range (buffer, &start, &end);
+  return TRUE;
+}
+
 static void
 gtk_text_view_accessible_text_init (GtkAccessibleTextInterface *iface)
 {
@@ -11081,6 +11115,8 @@ gtk_text_view_accessible_text_init (GtkAccessibleTextInterface *iface)
   iface->get_default_attributes = gtk_text_view_accessible_text_get_default_attributes;
   iface->get_extents = gtk_text_view_accessible_text_get_extents;
   iface->get_offset = gtk_text_view_accessible_text_get_offset;
+  iface->set_caret_position = gtk_text_view_accessible_text_set_caret_position;
+  iface->set_selection = gtk_text_view_accessible_text_set_selection;
 }
 
 /* }}} */

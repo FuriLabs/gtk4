@@ -29,7 +29,8 @@ pacman --noconfirm -S --needed \
     ${MINGW_PACKAGE_PREFIX}-python-gobject \
     ${MINGW_PACKAGE_PREFIX}-shaderc \
     ${MINGW_PACKAGE_PREFIX}-vulkan \
-    ${MINGW_PACKAGE_PREFIX}-vulkan-headers
+    ${MINGW_PACKAGE_PREFIX}-vulkan-headers \
+    ${MINGW_PACKAGE_PREFIX}-sassc
 
 mkdir -p _ccache
 export CCACHE_BASEDIR="$(pwd)"
@@ -41,7 +42,7 @@ ccache --zero-stats
 ccache --show-stats
 export CCACHE_DISABLE=true
 meson setup \
-    ${COMMON_MESON_CFLAGS} \
+    ${COMMON_MESON_FLAGS} \
     -Dx11-backend=false \
     -Dwayland-backend=false \
     -Dwin32-backend=true \

@@ -11,6 +11,10 @@
     <file>application.ui</file>
     <file>menus.ui</file>
   </gresource>
+  <gresource prefix="/aspect_frame">
+    <file>ducky.png</file>
+    <file>aspect_frame.css</file>
+  </gresource>
   <gresource prefix="/builder">
     <file>demo.ui</file>
   </gresource>
@@ -80,47 +84,13 @@
     <file>cursors.css</file>
   </gresource>
   <gresource prefix="/cursors/images">
-    <file>alias_cursor.png</file>
-    <file>all_scroll_cursor.png</file>
-    <file>cell_cursor.png</file>
-    <file>col_resize_cursor.png</file>
-    <file>context_menu_cursor.png</file>
-    <file>copy_cursor.png</file>
-    <file>crosshair_cursor.png</file>
-    <file>default_cursor.png</file>
-    <file>e_resize_cursor.png</file>
-    <file>ew_resize_cursor.png</file>
     <file>gtk_logo_cursor.png</file>
-    <file>grabbing_cursor.png</file>
-    <file>grab_cursor.png</file>
-    <file>hand_cursor.png</file>
-    <file>help_cursor.png</file>
-    <file>move_cursor.png</file>
-    <file>ne_resize_cursor.png</file>
-    <file>nesw_resize_cursor.png</file>
-    <file>no_drop_cursor.png</file>
     <file>none_cursor.png</file>
-    <file>not_allowed_cursor.png</file>
-    <file>n_resize_cursor.png</file>
-    <file>ns_resize_cursor.png</file>
-    <file>nw_resize_cursor.png</file>
-    <file>nwse_resize_cursor.png</file>
-    <file>pointer_cursor.png</file>
-    <file>progress_cursor.png</file>
-    <file>row_resize_cursor.png</file>
-    <file>se_resize_cursor.png</file>
-    <file>s_resize_cursor.png</file>
-    <file>sw_resize_cursor.png</file>
-    <file>text_cursor.png</file>
-    <file>vertical_text_cursor.png</file>
-    <file>wait_cursor.png</file>
-    <file>w_resize_cursor.png</file>
-    <file>zoom_in_cursor.png</file>
-    <file>zoom_out_cursor.png</file>
     <file>gtk-logo.svg</file>
   </gresource>
   <gresource prefix="/dnd">
     <file>dnd.css</file>
+    <file>user-trash-opening.gpa</file>
   </gresource>
   <gresource prefix="/errorstates">
     <file>errorstates.ui</file>
@@ -130,6 +100,8 @@
     <file>gtkfishbowl.c</file>
     <file>gtkfishbowl.h</file>
     <file>tiger.node</file>
+    <file>tiger.svg</file>
+    <file>spinning-circle.svg</file>
   </gresource>
   <gresource prefix="/frames">
     <file>frames.ui</file>
@@ -213,10 +185,6 @@
     <file>hsla.c</file>
   </gresource>
   <gresource prefix="/paintable_svg">
-    <file>svgpaintable.h</file>
-    <file>svgpaintable.c</file>
-    <file>symbolicpaintable.h</file>
-    <file>symbolicpaintable.c</file>
     <file>org.gtk.gtk4.NodeEditor.Devel.svg</file>
   </gresource>
   <gresource prefix="/shortcuts">
@@ -240,9 +208,10 @@
   <gresource prefix="/images">
     <file>pixbufpaintable.h</file>
     <file>pixbufpaintable.c</file>
-    <file>alphatest.png</file>
     <file>floppybuddy.gif</file>
     <file>gtk-logo.webm</file>
+    <file>stateful.gpa</file>
+    <file>animated.gpa</file>
     <file alias="org.gtk.Demo4.svg">data/scalable/apps/org.gtk.Demo4.svg</file>
     <file alias="org.gtk.Demo4-symbolic.svg">data/symbolic/apps/org.gtk.Demo4-symbolic.svg</file>
   </gresource>
@@ -254,6 +223,7 @@
   </gresource>
   <gresource prefix="/sources">
     <file>application_demo.c</file>
+    <file>aspect_frame.c</file>
     <file>assistant.c</file>
     <file>builder.c</file>
     <file>clipboard.c</file>
@@ -402,8 +372,7 @@
   </gresource>
   <gresource prefix="/transparent">
     <file>portland-rose.jpg</file>
-    <file>bluroverlay.h</file>
-    <file>bluroverlay.c</file>
+    <file>transparent.css</file>
   </gresource>
   <gresource prefix="/markup">
     <file>markup.txt</file>

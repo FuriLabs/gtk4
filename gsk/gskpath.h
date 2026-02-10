@@ -46,7 +46,7 @@ G_BEGIN_DECLS
  * Since: 4.14
  */
 typedef enum
-{
+{ /*< prefix=GSK_PATH_FOREACH >*/
   GSK_PATH_FOREACH_ALLOW_ONLY_LINES = 0,
   GSK_PATH_FOREACH_ALLOW_QUAD       = (1 << 0),
   GSK_PATH_FOREACH_ALLOW_CUBIC      = (1 << 1),
@@ -113,6 +113,10 @@ GDK_AVAILABLE_IN_4_14
 gboolean                gsk_path_get_bounds                     (GskPath                *self,
                                                                  graphene_rect_t        *bounds) G_GNUC_WARN_UNUSED_RESULT;
 
+GDK_AVAILABLE_IN_4_22
+gboolean                gsk_path_get_tight_bounds               (GskPath                *self,
+                                                                 graphene_rect_t        *bounds) G_GNUC_WARN_UNUSED_RESULT;
+
 GDK_AVAILABLE_IN_4_14
 gboolean                gsk_path_get_stroke_bounds              (GskPath                *self,
                                                                  const GskStroke        *stroke,
@@ -130,6 +134,12 @@ GDK_AVAILABLE_IN_4_14
 gboolean                gsk_path_get_end_point                  (GskPath                *self,
                                                                  GskPathPoint           *result);
 
+GDK_AVAILABLE_IN_4_22
+gboolean                gsk_path_get_next                       (GskPath                *self,
+                                                                 GskPathPoint           *point);
+GDK_AVAILABLE_IN_4_22
+gboolean                gsk_path_get_previous                   (GskPath                *self,
+                                                                 GskPathPoint           *point);
 GDK_AVAILABLE_IN_4_14
 gboolean                gsk_path_get_closest_point              (GskPath                *self,
                                                                  const graphene_point_t *point,
@@ -143,6 +153,9 @@ gboolean                gsk_path_foreach                        (GskPath        
                                                                  GskPathForeachFunc      func,
                                                                  gpointer                user_data);
 
+GDK_AVAILABLE_IN_4_22
+gboolean                gsk_path_equal                          (const GskPath          *path1,
+                                                                 const GskPath          *path2);
 /**
  * GskPathIntersection:
  * @GSK_PATH_INTERSECTION_NONE: No intersection

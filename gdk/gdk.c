@@ -147,6 +147,7 @@ static const GdkDebugKey gdk_debug_keys[] = {
   { "high-depth",      GDK_DEBUG_HIGH_DEPTH, "Use high bit depth rendering if possible" },
   { "no-vsync",        GDK_DEBUG_NO_VSYNC, "Repaint instantly (uses 100% CPU with animations)" },
   { "color-mgmt",      GDK_DEBUG_COLOR_MANAGEMENT, "Enable color management" },
+  { "session-mgmt",    GDK_DEBUG_SESSION_MANAGEMENT, "Enable session management" },
 };
 
 static const GdkDebugKey gdk_feature_keys[] = {
@@ -409,15 +410,92 @@ gdk_running_in_sandbox (void)
   return g_file_test ("/.flatpak-info", G_FILE_TEST_EXISTS);
 }
 
+#define DBUS_BUS_NAME "org.freedesktop.DBus"
+#define DBUS_OBJECT_PATH "/org/freedesktop/DBus"
+#define DBUS_BUS_INTERFACE "org.freedesktop.DBus"
 #define PORTAL_BUS_NAME "org.freedesktop.portal.Desktop"
 #define PORTAL_OBJECT_PATH "/org/freedesktop/portal/desktop"
+#define PORTAL_HOST_REGISTRY_INTERFACE "org.freedesktop.host.portal.Registry"
 
 static gboolean portals_disabled;
+static GHashTable *disabled_portals = NULL;
+static char *portals_app_id;
 
 void
-gdk_disable_portals (void)
+gdk_disable_portals (const char **portal_interfaces)
+{
+  if (G_LIKELY (disabled_portals == NULL))
+    disabled_portals = g_hash_table_new (g_str_hash, g_str_equal);
+
+  for (unsigned int i = 0; portal_interfaces[i] != NULL; i++)
+    {
+      const char *interface_name = portal_interfaces[i];
+
+      g_hash_table_add (disabled_portals, g_strdup (interface_name));
+    }
+}
+
+void
+gdk_disable_all_portals (void)
 {
   portals_disabled = TRUE;
+}
+
+void
+gdk_set_portals_app_id (const char *app_id)
+{
+  portals_app_id = g_strdup (app_id);
+}
+
+static gboolean
+environment_has_portals (void)
+{
+  static gboolean cached = FALSE;
+  static gboolean has_portals = FALSE;
+  GDBusConnection *bus = NULL;
+  GVariant *result = NULL;
+  GVariantIter *activatable_names = NULL;
+  const char *name = NULL;
+  GError *error = NULL;
+
+  if (cached)
+    return has_portals;
+
+  bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+  if (!bus)
+    return FALSE;
+
+  result = g_dbus_connection_call_sync (bus,
+                                        DBUS_BUS_NAME,
+                                        DBUS_OBJECT_PATH,
+                                        DBUS_BUS_INTERFACE,
+                                        "ListActivatableNames",
+                                        NULL,
+                                        G_VARIANT_TYPE ("(as)"),
+                                        G_DBUS_CALL_FLAGS_NONE,
+                                        25000,
+                                        NULL,
+                                        &error);
+  g_object_unref (bus);
+  if (error != NULL)
+    {
+      g_warning ("Cannot list activatable names: %s", error->message);
+      g_clear_error (&error);
+      return FALSE;
+    }
+
+  g_variant_get (result, "(as)", &activatable_names);
+  while (g_variant_iter_next (activatable_names, "&s", &name))
+    if (g_str_equal (name, PORTAL_BUS_NAME))
+      {
+        has_portals = TRUE;
+        break;
+      }
+  g_variant_iter_free (activatable_names);
+  g_variant_unref (result);
+
+  cached = TRUE;
+  return has_portals;
 }
 
 static gboolean
@@ -428,6 +506,7 @@ check_portal_interface (const char *portal_interface,
   GDBusConnection *bus = NULL;
   guint version = 0;
   gpointer val;
+  GError *error = NULL;
 
   /* Portal versions start at 1, and we use 0 as marker
    * for unsupported interfaces.
@@ -455,9 +534,15 @@ check_portal_interface (const char *portal_interface,
                                             G_DBUS_CALL_FLAGS_NONE,
                                             25000,
                                             NULL,
-                                            NULL);
+                                            &error);
 
-      if (result)
+      if (error != NULL)
+        {
+          g_warning ("Cannot get portal %s version: %s", portal_interface, error->message);
+          g_clear_error (&error);
+          version = 0;
+        }
+      else
         {
           GVariant *v;
 
@@ -466,8 +551,6 @@ check_portal_interface (const char *portal_interface,
           g_variant_unref (v);
           g_variant_unref (result);
         }
-      else
-        version = 0;
 
       val = GUINT_TO_POINTER (version);
       g_hash_table_insert (versions, g_strdup (portal_interface), val);
@@ -480,6 +563,47 @@ check_portal_interface (const char *portal_interface,
   g_object_unref (bus);
 
   return version >= min_version;
+}
+
+static void
+ensure_portals_app_id_registered (void)
+{
+  char *app_id;
+  GDBusConnection *bus;
+  GVariantBuilder options_builder;
+
+  if (!portals_app_id)
+    return;
+
+  app_id = g_steal_pointer (&portals_app_id);
+
+  if (!check_portal_interface (PORTAL_HOST_REGISTRY_INTERFACE, 1))
+    {
+      g_free (app_id);
+      return;
+    }
+
+  bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+  if (!bus)
+    {
+      g_free (app_id);
+      return;
+    }
+
+  g_variant_builder_init (&options_builder, G_VARIANT_TYPE_VARDICT);
+
+  g_dbus_connection_call (bus,
+                          PORTAL_BUS_NAME,
+                          PORTAL_OBJECT_PATH,
+                          PORTAL_HOST_REGISTRY_INTERFACE,
+                          "Register",
+                          g_variant_new ("(sa{sv})", app_id, &options_builder),
+                          NULL,
+                          G_DBUS_CALL_FLAGS_NONE,
+                          -1, NULL, NULL, NULL);
+
+  g_free (app_id);
+  g_object_unref (bus);
 }
 
 /* Here we decide whether we should use a given portal or not.
@@ -496,6 +620,8 @@ gdk_display_should_use_portal (GdkDisplay *display,
                                const char *portal_interface,
                                guint       min_version)
 {
+  gboolean sandboxed;
+
   if (gdk_display_get_debug_flags (display) & GDK_DEBUG_NO_PORTALS)
     return FALSE;
 
@@ -505,8 +631,19 @@ gdk_display_should_use_portal (GdkDisplay *display,
   if (portals_disabled)
     return FALSE;
 
-  if (gdk_running_in_sandbox ())
+  if (disabled_portals != NULL &&
+      g_hash_table_contains (disabled_portals, portal_interface))
+    return FALSE;
+
+  sandboxed = gdk_running_in_sandbox ();
+  if (sandboxed)
     return TRUE;
+
+  if (!environment_has_portals ())
+    return FALSE;
+
+  if (!sandboxed)
+    ensure_portals_app_id_registered ();
 
   if (portal_interface == NULL)
     return TRUE;

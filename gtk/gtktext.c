@@ -3560,6 +3560,9 @@ gtk_text_state_flags_changed (GtkWidget     *widget,
     {
       /* Clear any selection */
       gtk_text_set_selection_bounds (self, priv->current_pos, priv->current_pos);
+
+      /* Stop blinking */
+      remove_blink_timeout (self);
     }
 
   state &= ~GTK_STATE_FLAG_DROP_ACTIVE;
@@ -6851,7 +6854,6 @@ remove_blink_timeout (GtkText *self)
       priv->blink_tick = 0;
     }
 }
-
 /*
  * Blink!
  */
@@ -7801,6 +7803,26 @@ gtk_text_accessible_text_get_offset (GtkAccessibleText      *self,
   return TRUE;
 }
 
+static gboolean
+gtk_text_accessible_text_set_caret_position (GtkAccessibleText *self,
+                                             unsigned int       offset)
+{
+  gtk_text_set_selection_bounds (GTK_TEXT (self), offset, offset);
+  return TRUE;
+}
+
+static gboolean
+gtk_text_accessible_text_set_selection (GtkAccessibleText      *self,
+                                        gsize                   i,
+                                        GtkAccessibleTextRange *range)
+{
+  if (i != 0)
+    return FALSE;
+
+  gtk_text_set_selection_bounds (GTK_TEXT (self), range->start, range->start + range->length);
+  return TRUE;
+}
+
 static void
 gtk_text_accessible_text_init (GtkAccessibleTextInterface *iface)
 {
@@ -7812,6 +7834,10 @@ gtk_text_accessible_text_init (GtkAccessibleTextInterface *iface)
   iface->get_default_attributes = gtk_text_accessible_text_get_default_attributes;
   iface->get_extents = gtk_text_accessible_text_get_extents;
   iface->get_offset = gtk_text_accessible_text_get_offset;
+  iface->set_caret_position = gtk_text_accessible_text_set_caret_position;
+  iface->set_selection = gtk_text_accessible_text_set_selection;
 }
+
+/* }}} */
 
 /* vim:set foldmethod=marker: */

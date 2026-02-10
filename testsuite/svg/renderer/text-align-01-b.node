@@ -1,0 +1,217 @@
+isolation {
+  child: container {
+    text {
+      font: "SVGFreeSansASCII 34px" url("data:font/ttf;base64,\
+AAEAAAALAIAAAwAwR1NVQrj8uOoAAAEgAAAAKE9TLzJWVF4jAAABgAAAAGBjbWFwBYIE+AAAAzgA\
+AAC8Z2x5ZnqHDFMAAAVkAAAIxGhlYWQthLmJAAABSAAAADZoaGVhBsQDdgAAAPwAAAAkaG10eDN9\
+AAAAAAP0AAABcGxvY2FRKU64AAACfAAAALptYXhwAWsAdAAAALwAAAAgbmFtZQfXH7IAAAHgAAAA\
+nHBvc3QADQAAAAAA3AAAACAAAQAAAFwAaAAFAAAAAAACAAAACgAKAAAA/wAAAAAAAAADAAAAAAAA\
+AAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAMg/zgAAAP3/+r/6gO3AAEAAAAAAAAAAAAAAAAA\
+AABcAAEAAAAKACYAJgACREZMVAASbGF0bgAOAAAAAAAEAAAAAP//AAAAAAABAAAAAQAAuxOKn18P\
+PPUACwPoAAAAAOViOz4AAAAA5WI7Pv/q/yYDtwMCAAAACAACAAAAAAAAAAQCDgGQAAUAAAExArwA\
+AACMATECvAAAAeAAMQECAAACAAUDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFBmRWQAwAAgAKADIP84\
+AFoDegDaAAAAAQAAAAAAAAAAAAAAAAACAAAABgBOAAMAAQQJAAEAIAAuAAMAAQQJAAIADgAgAAMA\
+AQQJAAMACgAWAAMAAQQJAAQACgAWAAMAAQQJAAUAFgAAAAMAAQQJAAYACgAWAFYAZQByAHMAaQBv\
+AG4AIAAxAC4AMABhAHMAYwBpAGkAUgBlAGcAdQBsAGEAcgBTAFYARwBGAHIAZQBlAFMAYQBuAHMA\
+QQBTAEMASQBJAAAAAAAAAAAAAAAAAGEAYQBhAHAAkACuAK4ArgCuALsAxwDHAMcA4ADgAOAA4ADg\
+AOAA4AFHAUcBWQFZAVkBWQFZAVkBWQFZAVkBWQFZAVkBWQFZAVkBWQFZAVkBWQFZAVkBWQFZAVkB\
+mgGaAawBrAGsAawBrAGsAawBrAGsAawBrAGsAawCBQIFAjoCdwKyArICsgLXAuoC6gLqAvcDOQNg\
+A5YDlgOWA7MD/QQfBB8EMQQxBEsESwRiAAAAAAACAAAAAwAAABQAAwABAAAAFAAEAKgAAAAmACAA\
+BAAGACAAJAApAC4AMQA4ADoAUgBUAGEAZQBpAG8AdAB2AHgAegCg//8AAAAgACQAJwAtADEAOAA6\
+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\
+");
+      glyphs: 53 21, 70 19, "s", 85 9, 1 9, 8 6, 85 9, 70 19, "x", 85 9, 14 11, 66 19, 79 19, "c", 73 19, 80 19, 83 11, 8 6, 1 9, 9 11, 73 19, 80 19, 83 11, 74 8, "z", 80 19, 79 19, 85 9, 66 19, 77 8, 10 11;
+      offset: 5 40;
+    }
+    transform {
+      transform: translate(230, 130);
+      child: container {
+        stroke {
+          child: color {
+            bounds: -4 -4 58 8;
+            color: rgb(0,0,0);
+          }
+          path: "\
+M 0 0\
+L 50 0";
+          line-width: 1;
+          line-cap: butt;
+          line-join: miter;
+        }
+        fill {
+          child: color {
+            bounds: -3 -3 6 6;
+            color: rgb(0,0,0);
+          }
+          path: "\
+M 3 0 o 0 3, -3 3, 0.707106769 o -3 0, -3 -3, 0.707106769 o 0 -3, 3 -3, 0.707106769 o 3 0, 3 3, 0.707106769 z";
+          fill-rule: winding;
+        }
+        text {
+          color: rgb(255,0,255);
+          font: "SVGFreeSansASCII 30px";
+          glyphs: 85 8, 70 17, "x", 85 8, 14 10, 66 17, 79 17, "c", 73 17, 80 17, 83 10, 27 8, 79 17, 80 17, 79 17, 70 17;
+        }
+      }
+    }
+    transform {
+      transform: translate(230, 180);
+      child: container {
+        stroke {
+          child: color {
+            bounds: -4 -4 58 8;
+            color: rgb(0,0,0);
+          }
+          path: "\
+M 0 0\
+L 50 0";
+          line-width: 1;
+          line-cap: butt;
+          line-join: miter;
+        }
+        fill {
+          child: color {
+            bounds: -3 -3 6 6;
+            color: rgb(0,0,0);
+          }
+          path: "\
+M 3 0 o 0 3, -3 3, 0.707106769 o -3 0, -3 -3, 0.707106769 o 0 -3, 3 -3, 0.707106769 o 3 0, 3 3, 0.707106769 z";
+          fill-rule: winding;
+        }
+        text {
+          color: rgb(255,0,255);
+          font: "SVGFreeSansASCII 30px";
+          glyphs: 85 8, 70 17, "x", 85 8, 14 10, 66 17, 79 17, "c", 73 17, 80 17, 83 10, 27 8, "s", 85 8, 66 17, 83 10, 85 8;
+        }
+      }
+    }
+    transform {
+      transform: translate(230, 230);
+      child: container {
+        stroke {
+          child: color {
+            bounds: -29 -4 58 8;
+            color: rgb(0,0,0);
+          }
+          path: "\
+M -25 0\
+L 25 0";
+          line-width: 1;
+          line-cap: butt;
+          line-join: miter;
+        }
+        fill {
+          child: color {
+            bounds: -3 -3 6 6;
+            color: rgb(0,0,0);
+          }
+          path: "\
+M 3 0 o 0 3, -3 3, 0.707106769 o -3 0, -3 -3, 0.707106769 o 0 -3, 3 -3, 0.707106769 o 3 0, 3 3, 0.707106769 z";
+          fill-rule: winding;
+        }
+        text {
+          color: rgb(0,128,0);
+          font: "SVGFreeSansASCII 30px";
+          glyphs: 85 8, 70 17, "x", 85 8, 14 10, 66 17, 79 17, "c", 73 17, 80 17, 83 10, 27 8, 78 25, 74 7, 69 17, 69 17, 77 7, 70 17;
+          offset: -124.5 0;
+        }
+      }
+    }
+    transform {
+      transform: translate(230, 280);
+      child: container {
+        stroke {
+          child: color {
+            bounds: -54 -4 58 8;
+            color: rgb(0,0,0);
+          }
+          path: "\
+M -50 0\
+L 0 0";
+          line-width: 1;
+          line-cap: butt;
+          line-join: miter;
+        }
+        fill {
+          child: color {
+            bounds: -3 -3 6 6;
+            color: rgb(0,0,0);
+          }
+          path: "\
+M 3 0 o 0 3, -3 3, 0.707106769 o -3 0, -3 -3, 0.707106769 o 0 -3, 3 -3, 0.707106769 o 3 0, 3 3, 0.707106769 z";
+          fill-rule: winding;
+        }
+        text {
+          color: rgb(0,0,255);
+          font: "SVGFreeSansASCII 30px";
+          glyphs: 85 8, 70 17, "x", 85 8, 14 10, 66 17, 79 17, "c", 73 17, 80 17, 83 10, 27 8, 70 17, 79 17, 69 17;
+          offset: -210 0;
+        }
+      }
+    }
+    text {
+      font: "SVGFreeSansASCII 32px";
+      glyphs: 5 18, 51 23, 70 18, "v", 74 7, "s", 74 7, 80 18, 79 18, 27 9, 1 9, 18 18, 15 9, 25 18, 1 9, 5 18;
+      offset: 10 340;
+    }
+    stroke {
+      child: color {
+        bounds: 0.5 0.5 479 359;
+        color: rgb(0,0,0);
+      }
+      path: "\
+M 1 1 h 478 v 358 h -478 z";
+      line-width: 1;
+      line-cap: butt;
+      line-join: miter;
+    }
+  }
+  isolations: background;
+}

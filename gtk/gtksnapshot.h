@@ -70,6 +70,9 @@ void            gtk_snapshot_push_debug                 (GtkSnapshot            
 GDK_AVAILABLE_IN_ALL
 void            gtk_snapshot_push_opacity               (GtkSnapshot            *snapshot,
                                                          double                  opacity);
+GDK_AVAILABLE_IN_4_22
+void            gtk_snapshot_push_isolation             (GtkSnapshot            *snapshot,
+                                                         GskIsolation            features);
 GDK_AVAILABLE_IN_ALL
 void            gtk_snapshot_push_blur                  (GtkSnapshot            *snapshot,
                                                          double                  radius);
@@ -113,6 +116,12 @@ void            gtk_snapshot_push_blend                 (GtkSnapshot            
 GDK_AVAILABLE_IN_4_10
 void            gtk_snapshot_push_mask                  (GtkSnapshot            *snapshot,
                                                          GskMaskMode             mask_mode);
+GDK_AVAILABLE_IN_4_22
+void            gtk_snapshot_push_copy                  (GtkSnapshot            *snapshot);
+GDK_AVAILABLE_IN_4_22
+void            gtk_snapshot_push_composite             (GtkSnapshot            *snapshot,
+                                                         GskPorterDuff           op);
+
 
 GDK_AVAILABLE_IN_ALL
 void            gtk_snapshot_push_cross_fade            (GtkSnapshot            *snapshot,
@@ -261,6 +270,10 @@ void            gtk_snapshot_append_stroke              (GtkSnapshot            
                                                          GskPath                *path,
                                                          const GskStroke        *stroke,
                                                          const GdkRGBA          *color);
+GDK_AVAILABLE_IN_4_22
+void            gtk_snapshot_append_paste               (GtkSnapshot            *snapshot,
+                                                         const graphene_rect_t  *bounds,
+                                                         gsize                   nth);
 
 G_END_DECLS
 

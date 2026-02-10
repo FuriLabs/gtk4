@@ -9,8 +9,14 @@ gtk4 (4.21.5+ds-1) UNRELEASED; urgency=medium
 
   [ Alessandro Astone ]
   * New upstream release
+  * d/p: Drop patches applied upstream
+  * d/p: Rebase patches
+  * d/p/workarounds: Skip vulkan tests that break lavapipe
+  * d/gtk-4-examples.install: List files from GTK icon editor app
+  * d/libgtk-4-1.symbols.in: Add new symbols from 4.21.x
+  * d/control: Breaks xdg-desktop-portal-gnome
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 10 Feb 2026 14:33:47 +0100
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 10 Feb 2026 20:13:59 +0100
 
 gtk4 (4.20.3+ds-3) unstable; urgency=medium
 

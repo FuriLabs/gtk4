@@ -1,4 +1,4 @@
-gtk4 (4.21.5+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.21.5+ds-1) experimental; urgency=medium
 
   [ Jeremy Bícha ]
   * Enable sysprof support on all Linux architectures
@@ -17,7 +17,7 @@ gtk4 (4.21.5+ds-1) UNRELEASED; urgency=medium
   * d/control: Breaks xdg-desktop-portal-gnome
   * d/control: Breaks gnome-control-center
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 10 Feb 2026 20:26:06 +0100
+ -- Sebastien Bacher <seb128@ubuntu.com>  Wed, 11 Feb 2026 09:37:39 +0100
 
 gtk4 (4.20.3+ds-3) unstable; urgency=medium
 

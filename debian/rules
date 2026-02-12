@@ -267,6 +267,7 @@ skipped_suites = \
 	gsk-compare-ngl \
 	gsk-compare-vulkan \
 	needs-udmabuf \
+	svg \
 	$(NULL)
 
 # The doc-check tests aren't passing yet

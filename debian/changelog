@@ -1,3 +1,9 @@
+gtk4 (4.21.5+ds-4) unstable; urgency=medium
+
+  * Release to unstable
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 16 Feb 2026 13:46:58 -0500
+
 gtk4 (4.21.5+ds-3) experimental; urgency=medium
 
   * d/p: Add missing test files required by autopkgtests

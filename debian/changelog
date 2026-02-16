@@ -1,3 +1,10 @@
+gtk4 (4.21.5+ds-5) unstable; urgency=medium
+
+  * Add epoch to Breaks: gnome-control-center
+  * gtk4-examples: Add Recommends: highlight for source code syntax highlighting
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 16 Feb 2026 17:55:19 -0500
+
 gtk4 (4.21.5+ds-4) unstable; urgency=medium
 
   * Release to unstable

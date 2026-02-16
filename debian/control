@@ -230,6 +230,7 @@ Depends: ${misc:Depends},
          ${shlibs:Depends},
          libgtk-4-1 (= ${binary:Version})
 Recommends: fonts-cantarell,
+            highlight,
             librsvg2-common (>= 2.48),
 Description: example files for GTK 4
  GTK is a multi-platform toolkit for creating graphical user

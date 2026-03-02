@@ -70,6 +70,7 @@ for BACKEND in $BACKENDS; do
         GIO_MODULE_DIR=/nonexistent \
         GIO_USE_VFS=local \
         GIO_USE_VOLUME_MONITOR=unix \
+        VK_LOADER_DRIVERS_DISABLE="*power*" \
         dbus-run-session -- \
             debian/tests/run-with-display "$BACKEND" \
                 debian/tests/run-with-locales \

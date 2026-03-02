@@ -11,6 +11,9 @@ namespace=gtk-4.0/
 export GIO_USE_VFS=local
 export GIO_USE_VOLUME_MONITOR=unix
 
+# The powervr vulkan driver emits warnings when it isn't used
+export VK_LOADER_DRIVERS_DISABLE="*power*"
+
 export XDG_RUNTIME_DIR="$AUTOPKGTEST_TMP"
 export HOME="$AUTOPKGTEST_TMP"
 

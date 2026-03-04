@@ -96,7 +96,6 @@ gsk_repeat_node_draw_tiled (cairo_t                *cr,
   cairo_destroy (child_cr);
 
   pattern = cairo_pattern_create_for_surface (child_surface);
-  cairo_surface_write_to_png (child_surface, "foo.png");
   gdk_cairo_pattern_set_repeat (pattern, repeat);
   cairo_matrix_init_translate (&matrix, -pos->x, -pos->y);
   cairo_pattern_set_matrix (pattern, &matrix);
@@ -573,6 +572,8 @@ gsk_repeat_node_new2 (const graphene_rect_t  *bounds,
                        !gsk_rect_is_empty (&self->child_bounds);
   node->contains_subsurface_node = gsk_render_node_contains_subsurface_node (child);
   node->contains_paste_node = gsk_render_node_contains_paste_node (child);
+  /* because we sometimes manually repeat the child */
+  node->needs_blending = TRUE;
 
   return node;
 }

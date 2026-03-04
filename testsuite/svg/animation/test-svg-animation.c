@@ -248,6 +248,8 @@ typedef struct
   GtkSvg *svg;
   unsigned int state;
   char *output;
+  int64_t load_time;
+  int64_t time;
 } StepData;
 
 static gboolean
@@ -255,8 +257,23 @@ set_state (gpointer data)
 {
   StepData *sd = data;
 
-  g_print ("Step %u: Setting state to %u\n", sd->step, sd->state);
+  if (sd->state == GTK_SVG_STATE_EMPTY)
+    g_print ("Step %u: Setting state to empty\n", sd->step);
+  else
+    g_print ("Step %u: Setting state to %u\n", sd->step, sd->state);
   gtk_svg_set_state (sd->svg, sd->state);
+  g_free (sd);
+
+  return G_SOURCE_REMOVE;
+}
+
+static gboolean
+advance (gpointer data)
+{
+  StepData *sd = data;
+
+  g_print ("Step %u: Advance current time to %" G_GINT64_FORMAT "\n", sd->step, sd->time);
+  gtk_svg_advance (sd->svg, sd->load_time + sd->time * G_TIME_SPAN_MILLISECOND);
   g_free (sd);
 
   return G_SOURCE_REMOVE;
@@ -289,7 +306,7 @@ play_svg_test (GFile *file)
   size_t length;
   GBytes *bytes;
   GtkSvg *svg = NULL;
-  int64_t load_time;
+  int64_t load_time = 0;
   GError *error = NULL;
   GtkWidget *window, *picture;
   int64_t time = 0;
@@ -310,7 +327,7 @@ play_svg_test (GFile *file)
         case INPUT:
           g_assert (i == 0);
           if (!g_file_get_contents (step->input, &contents, &length, &error))
-          g_error ("%s", error->message);
+            g_error ("%s", error->message);
 
           bytes = g_bytes_new_take (contents, length);
           svg = gtk_svg_new_from_bytes (bytes);
@@ -322,6 +339,12 @@ play_svg_test (GFile *file)
 
         case TIME:
           time = step->time;
+          data = g_new (StepData, 1);
+          data->step = i;
+          data->svg = svg;
+          data->load_time = load_time;
+          data->time = step->time;
+          g_timeout_add (time, advance, data);
           break;
 
         case STATE:
@@ -578,7 +601,9 @@ main (int argc, char **argv)
   GOptionContext *context;
   GError *error = NULL;
 
-  if (argc >= 3 && strcmp (argv[1], "--generate") == 0)
+  if (argc >= 3 &&
+      (strcmp (argv[1], "--generate") == 0 ||
+       strcmp (argv[1], "--regenerate") == 0))
     {
       GFile *file;
 

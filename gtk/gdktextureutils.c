@@ -85,7 +85,7 @@ gdk_texture_new_from_svg_bytes (GBytes  *bytes,
   svg = gtk_svg_new_from_bytes (bytes);
 
   width = gdk_paintable_get_intrinsic_width (GDK_PAINTABLE (svg));
-  height = gdk_paintable_get_intrinsic_width (GDK_PAINTABLE (svg));
+  height = gdk_paintable_get_intrinsic_height (GDK_PAINTABLE (svg));
 
   if (width == 0 || height == 0)
     {
@@ -685,6 +685,7 @@ typedef struct
   double width, height;
   GtkSnapshot *snapshot;
   gboolean only_fg;
+  gboolean has_strokes;
   gboolean has_clip;
   guint n_paths;
 } ParserData;
@@ -836,6 +837,7 @@ start_element_cb (GMarkupParseContext  *context,
   const char *stroke_dashoffset_attr = NULL;
   const char *opacity_attr = NULL;
   const char *class_attr = NULL;
+  const char *visibility_attr = NULL;
   GskPath *path = NULL;
   GskStroke *stroke = NULL;
   GskFillRule fill_rule;
@@ -847,6 +849,7 @@ start_element_cb (GMarkupParseContext  *context,
   char *end;
   gboolean do_fill = FALSE;
   gboolean do_stroke = FALSE;
+  gboolean visibility = TRUE;
 
   if (strcmp (element_name, "svg") == 0)
     {
@@ -897,10 +900,14 @@ start_element_cb (GMarkupParseContext  *context,
            strcmp (element_name, "defs") == 0 ||
            strcmp (element_name, "style") == 0 ||
            g_str_has_prefix (element_name, "sodipodi:") ||
-           g_str_has_prefix (element_name, "inkscape:"))
-
+           g_str_has_prefix (element_name, "inkscape:") ||
+           strcmp (element_name, "metadata") == 0 ||
+           g_str_has_prefix (element_name, "rdf:") ||
+           g_str_has_prefix (element_name, "cc:") ||
+           g_str_has_prefix (element_name, "dc:"))
     {
-      /* Do nothing */
+      if (GTK_DEBUG_CHECK (ICONTHEME))
+        gdk_debug_message ("Ignoring element in symbolic icon: <%s>", element_name);
       return;
     }
   else if (strcmp (element_name, "circle") == 0)
@@ -1084,6 +1091,7 @@ start_element_cb (GMarkupParseContext  *context,
                                  error,
                                  "class", &class_attr,
                                  "opacity", &opacity_attr,
+                                 "visibility", &visibility_attr,
                                  "fill-rule", &fill_rule_attr,
                                  "fill-opacity", &fill_opacity_attr,
                                  "stroke-width", &stroke_width_attr,
@@ -1100,6 +1108,12 @@ start_element_cb (GMarkupParseContext  *context,
                                  "color", NULL,
                                  "overflow", NULL,
                                  "d", NULL,
+                                 "x", NULL,
+                                 "y", NULL,
+                                 "width", NULL,
+                                 "height", NULL,
+                                 "rx", NULL,
+                                 "ry", NULL,
                                  "cx", NULL,
                                  "cy", NULL,
                                  "r", NULL,
@@ -1222,6 +1236,13 @@ start_element_cb (GMarkupParseContext  *context,
         }
     }
 
+  visibility = TRUE;
+  if (visibility_attr)
+    {
+      if (strcmp (visibility_attr, "hidden") == 0)
+        visibility = FALSE;
+    }
+
   if (fill_rule_attr && strcmp (fill_rule_attr, "evenodd") == 0)
     fill_rule = GSK_FILL_RULE_EVEN_ODD;
   else
@@ -1327,23 +1348,27 @@ start_element_cb (GMarkupParseContext  *context,
       gsk_stroke_set_dash_offset (stroke, offset);
     }
 
-  if (opacity != 1)
-    gtk_snapshot_push_opacity (data->snapshot, opacity);
-
-  if (do_fill)
+  if (visibility)
     {
-      data->n_paths++;
-      gtk_snapshot_append_fill (data->snapshot, path, fill_rule, &fill_color);
-    }
+      if (opacity != 1)
+        gtk_snapshot_push_opacity (data->snapshot, opacity);
 
-  if (do_stroke)
-    {
-      data->n_paths++;
-      gtk_snapshot_append_stroke (data->snapshot, path, stroke, &stroke_color);
-    }
+      if (do_fill)
+        {
+          data->n_paths++;
+          gtk_snapshot_append_fill (data->snapshot, path, fill_rule, &fill_color);
+        }
 
-  if (opacity != 1)
-    gtk_snapshot_pop (data->snapshot);
+      if (do_stroke)
+        {
+          data->n_paths++;
+          data->has_strokes = TRUE;
+          gtk_snapshot_append_stroke (data->snapshot, path, stroke, &stroke_color);
+        }
+
+      if (opacity != 1)
+        gtk_snapshot_pop (data->snapshot);
+    }
 
 cleanup:
   g_clear_pointer (&path, gsk_path_unref);
@@ -1372,6 +1397,7 @@ static GskRenderNode *
 gsk_render_node_new_from_bytes_symbolic (GBytes    *bytes,
                                          gboolean  *only_fg,
                                          gboolean  *single_path,
+                                         gboolean  *has_strokes,
                                          double    *width,
                                          double    *height,
                                          GError   **error)
@@ -1390,6 +1416,7 @@ gsk_render_node_new_from_bytes_symbolic (GBytes    *bytes,
 
   data.width = data.height = 0;
   data.only_fg = TRUE;
+  data.has_strokes = FALSE;
   data.snapshot = gtk_snapshot_new ();
   data.has_clip = FALSE;
   data.n_paths = 0;
@@ -1420,6 +1447,9 @@ gsk_render_node_new_from_bytes_symbolic (GBytes    *bytes,
   if (single_path)
     *single_path = data.n_paths == 1;
 
+  if (has_strokes)
+    *has_strokes = data.has_strokes;
+
   *width = data.width;
   *height = data.height;
 
@@ -1430,6 +1460,7 @@ GskRenderNode *
 gsk_render_node_new_from_resource_symbolic (const char *path,
                                             gboolean   *only_fg,
                                             gboolean   *single_path,
+                                            gboolean   *has_strokes,
                                             double     *width,
                                             double     *height)
 {
@@ -1444,7 +1475,7 @@ gsk_render_node_new_from_resource_symbolic (const char *path,
   if (!bytes)
     return NULL;
 
-  node = gsk_render_node_new_from_bytes_symbolic (bytes, only_fg, single_path, width, height, &error);
+  node = gsk_render_node_new_from_bytes_symbolic (bytes, only_fg, single_path, has_strokes, width, height, &error);
   g_bytes_unref (bytes);
   if (error)
     {
@@ -1460,6 +1491,7 @@ GskRenderNode *
 gsk_render_node_new_from_filename_symbolic (const char *filename,
                                             gboolean   *only_fg,
                                             gboolean   *single_path,
+                                            gboolean   *has_strokes,
                                             double     *width,
                                             double     *height)
 {
@@ -1476,7 +1508,7 @@ gsk_render_node_new_from_filename_symbolic (const char *filename,
     return NULL;
 
   bytes = g_bytes_new_take (text, len);
-  node = gsk_render_node_new_from_bytes_symbolic (bytes, only_fg, single_path, width, height, &error);
+  node = gsk_render_node_new_from_bytes_symbolic (bytes, only_fg, single_path, has_strokes, width, height, &error);
   g_bytes_unref (bytes);
   if (error)
     {
@@ -1528,6 +1560,100 @@ apply_weight (const GskStroke *orig,
   gsk_stroke_set_line_width (stroke, width);
 
   return stroke;
+}
+
+static gboolean
+restroke_node (GskRenderNode *node,
+               float          weight,
+               GtkSnapshot   *snapshot)
+{
+  switch ((int) gsk_render_node_get_node_type (node))
+    {
+    case GSK_CONTAINER_NODE:
+      for (guint i = 0; i < gsk_container_node_get_n_children (node); i++)
+        if (!restroke_node (gsk_container_node_get_child (node, i), weight, snapshot))
+          return FALSE;
+      return TRUE;
+
+    case GSK_TRANSFORM_NODE:
+      {
+        gboolean ret;
+
+        gtk_snapshot_save (snapshot);
+        gtk_snapshot_transform (snapshot, gsk_transform_node_get_transform (node));
+        ret = restroke_node (gsk_transform_node_get_child (node), weight, snapshot);
+        gtk_snapshot_restore (snapshot);
+
+        return ret;
+      }
+
+    case GSK_CLIP_NODE:
+      {
+        gboolean ret;
+
+        gtk_snapshot_push_clip (snapshot, gsk_clip_node_get_clip (node));
+        ret = restroke_node (gsk_clip_node_get_child (node), weight, snapshot);
+        gtk_snapshot_pop (snapshot);
+
+        return ret;
+      }
+
+    case GSK_OPACITY_NODE:
+      {
+        gboolean ret;
+
+        gtk_snapshot_push_opacity (snapshot, gsk_opacity_node_get_opacity (node));
+        ret = restroke_node (gsk_opacity_node_get_child (node), weight, snapshot);
+        gtk_snapshot_pop (snapshot);
+
+        return ret;
+      }
+
+    case GSK_FILL_NODE:
+      {
+        gboolean ret;
+
+        gtk_snapshot_push_fill (snapshot,
+                                gsk_fill_node_get_path (node),
+                                gsk_fill_node_get_fill_rule (node));
+        ret = restroke_node (gsk_fill_node_get_child (node), weight, snapshot);
+        gtk_snapshot_pop (snapshot);
+
+        return ret;
+      }
+      break;
+
+    case GSK_STROKE_NODE:
+      {
+        gboolean ret;
+        GskStroke *stroke;
+
+        stroke = apply_weight (gsk_stroke_node_get_stroke (node), weight);
+        gtk_snapshot_push_stroke (snapshot,
+                                  gsk_stroke_node_get_path (node),
+                                  stroke);
+        gsk_stroke_free (stroke);
+
+        ret = restroke_node (gsk_stroke_node_get_child (node), weight, snapshot);
+        gtk_snapshot_pop (snapshot);
+
+        return ret;
+      }
+
+    case GSK_COLOR_NODE:
+      {
+        graphene_rect_t bounds;
+        GdkRGBA color;
+
+        gsk_render_node_get_bounds (node, &bounds);
+        color = *gsk_color_node_get_color (node);
+        gtk_snapshot_append_color (snapshot, &color, &bounds);
+      }
+      return TRUE;
+
+    default:
+      return FALSE;
+    }
 }
 
 static gboolean
@@ -1665,6 +1791,30 @@ gsk_render_node_recolor (GskRenderNode  *node,
 
   if (!ret)
     g_clear_pointer (recolored, gsk_render_node_unref);
+
+  return ret;
+}
+
+gboolean
+gsk_render_node_restroke (GskRenderNode  *node,
+                          float           weight,
+                          GskRenderNode **restroked)
+{
+  GtkSnapshot *snapshot;
+  gboolean ret;
+
+  if (gsk_render_node_get_node_type (node) == GSK_TEXTURE_NODE)
+    {
+      *restroked = NULL;
+      return FALSE;
+    }
+
+  snapshot = gtk_snapshot_new ();
+  ret = restroke_node (node, weight, snapshot);
+  *restroked = gtk_snapshot_free_to_node (snapshot);
+
+  if (!ret)
+    g_clear_pointer (restroked, gsk_render_node_unref);
 
   return ret;
 }

@@ -177,8 +177,7 @@ gtk_file_filter_set_property (GObject      *object,
     case PROP_MIME_TYPES:
       strv = (const char * const *) g_value_get_boxed (value);
       if (strv)
-        for (int i = 0; strv[i]; i++)
-          gtk_file_filter_add_mime_type (filter, strv[i]);
+        gtk_file_filter_add_mime_types (filter, (const char **) strv);
       break;
 
     case PROP_SUFFIXES:
@@ -641,6 +640,36 @@ gtk_file_filter_add_mime_type (GtkFileFilter *filter,
 }
 
 /**
+ * gtk_file_filter_add_mime_types:
+ * @filter: a file filter
+ * @mime_types: (array zero-terminated=1): a %NULL-terminated array of mime types
+ *
+ * Adds a rule allowing a given array of mime types.
+ * It can for example be used with
+ * [Gly.Loader.get_mime_types](https://gnome.pages.gitlab.gnome.org/glycin/libglycin/type_func.Loader.get_mime_types.html).
+ *
+ * This is equivalent to calling [method@Gtk.FileFilter.add_mime_type]
+ * for all the supported mime types.
+ *
+ * Since: 4.22
+ */
+void
+gtk_file_filter_add_mime_types (GtkFileFilter  *filter,
+                                const char    **mime_types)
+{
+  FilterRule *rule;
+
+  g_return_if_fail (GTK_IS_FILE_FILTER (filter));
+
+  rule = g_new (FilterRule, 1);
+  rule->type = FILTER_RULE_MIME_TYPE;
+  rule->u.content_types = g_strdupv ((char **) mime_types);
+
+  file_filter_add_attribute (filter, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
+  file_filter_add_rule (filter, rule);
+}
+
+/**
  * gtk_file_filter_add_pattern:
  * @filter: a file filter
  * @pattern: a shell style glob pattern
@@ -872,6 +901,7 @@ void _gtk_file_filter_store_types_in_list (GtkFileFilter *filter, jobject list)
 }
 #endif
 
+#ifdef GDK_WINDOWING_WIN32
 char **
 _gtk_file_filter_get_as_patterns (GtkFileFilter *filter)
 {
@@ -887,8 +917,12 @@ _gtk_file_filter_get_as_patterns (GtkFileFilter *filter)
       switch (rule->type)
         {
         case FILTER_RULE_MIME_TYPE:
-          g_ptr_array_free (array, TRUE);
-          return NULL;
+          for (int i = 0; rule->u.content_types[i]; i++)
+            {
+              /* When the content type is a file extension, use it as pattern */
+              if (rule->u.content_types[i][0] == '.')
+                g_ptr_array_add (array, g_strdup_printf ("*%s", rule->u.content_types[i]));
+            }
           break;
 
         case FILTER_RULE_PATTERN:
@@ -924,9 +958,14 @@ _gtk_file_filter_get_as_patterns (GtkFileFilter *filter)
         }
     }
 
+  /* If patterns list is empty, add a catch-all as fallback */
+  if (array->len == 0)
+    g_ptr_array_add (array, g_strdup ("*"));
+
   g_ptr_array_add (array, NULL); /* Null terminate */
   return (char **)g_ptr_array_free (array, FALSE);
 }
+#endif
 
 static GtkFilterMatch
 gtk_file_filter_get_strictness (GtkFilter *filter)

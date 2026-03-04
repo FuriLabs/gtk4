@@ -34,11 +34,13 @@ main (int argc, char *argv[])
   gboolean allow_shrink = FALSE;
   gboolean show_rsvg = TRUE;
   gboolean show_gtk = TRUE;
+  gboolean show_sym = TRUE;
   gboolean show_png = TRUE;
   int size = 24;
   const GOptionEntry entries[] = {
     { "no-rsvg", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &show_rsvg, "Don't show rsvg rendering", NULL },
-    { "no-gtk", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &show_gtk, "Don't show gtk rendering", NULL },
+    { "no-gtk", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &show_gtk, "Don't show gtk svg rendering", NULL },
+    { "no-symbolic", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &show_sym, "Don't show gtk symbolic rendering", NULL },
     { "no-png", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &show_png, "Don't show reference image", NULL },
     { "allow-shrink", 0, 0, G_OPTION_ARG_NONE, &allow_shrink, "Allow to shrink rendering", NULL },
     { "size", 0, 0, G_OPTION_ARG_INT, &size, "Minimum size" },
@@ -94,6 +96,7 @@ main (int argc, char *argv[])
       while (1)
         {
           GFile *child;
+          const char *path;
 
           if (!g_file_enumerator_iterate (dir, NULL, &child, NULL, &error))
             g_error ("%s", error->message);
@@ -101,7 +104,12 @@ main (int argc, char *argv[])
           if (!child)
             break;
 
-          g_ptr_array_add (files, g_file_get_path (child));
+          path = g_file_peek_path (child);
+
+          if ((g_str_has_suffix (path, ".svg") ||
+               g_str_has_suffix (path, ".gpa")) &&
+              !g_str_has_suffix (path, ".ref.svg"))
+            g_ptr_array_add (files, g_strdup (path));
         }
       g_object_unref (dir);
     }
@@ -121,16 +129,23 @@ main (int argc, char *argv[])
 
   if (show_gtk)
     {
-      label = gtk_label_new ("gtk");
+      label = gtk_label_new ("GtkSvg");
       gtk_label_set_xalign (GTK_LABEL (label), 0.5);
       gtk_grid_attach (GTK_GRID (grid), label, 2, -1, 1, 1);
+    }
+
+  if (show_sym)
+    {
+      label = gtk_label_new ("GtkIconPaintable");
+      gtk_label_set_xalign (GTK_LABEL (label), 0.5);
+      gtk_grid_attach (GTK_GRID (grid), label, 3, -1, 1, 1);
     }
 
   if (show_png)
     {
       label = gtk_label_new ("png");
       gtk_label_set_xalign (GTK_LABEL (label), 0.5);
-      gtk_grid_attach (GTK_GRID (grid), label, 3, -1, 1, 1);
+      gtk_grid_attach (GTK_GRID (grid), label, 4, -1, 1, 1);
     }
 
   row = 0;
@@ -146,10 +161,6 @@ main (int argc, char *argv[])
       path = g_ptr_array_index (files, i);
 
       child = g_file_new_for_path (path);
-
-      if (!g_str_has_suffix (path, ".svg") ||
-          g_str_has_suffix (path, ".ref.svg"))
-        continue;
 
       basename = g_file_get_basename (child);
 
@@ -177,6 +188,7 @@ main (int argc, char *argv[])
           if (svg)
             {
               img = gtk_picture_new_for_paintable (svg);
+              gtk_svg_play (GTK_SVG (svg));
               gtk_picture_set_can_shrink (GTK_PICTURE (img), allow_shrink);
               gtk_widget_set_size_request (img, size, size);
               gtk_grid_attach (GTK_GRID (grid), img, 2, row, 1, 1);
@@ -187,6 +199,21 @@ main (int argc, char *argv[])
             {
               g_warning ("%s", error->message);
               g_clear_error (&error);
+            }
+        }
+
+      if (show_sym)
+        {
+          GdkPaintable *sym;
+
+          sym = GDK_PAINTABLE (gtk_icon_paintable_new_for_file (child, 16, 1));
+          if (sym)
+            {
+              img = gtk_picture_new_for_paintable (sym);
+              gtk_picture_set_can_shrink (GTK_PICTURE (img), allow_shrink);
+              gtk_widget_set_size_request (img, size, size);
+              gtk_grid_attach (GTK_GRID (grid), img, 3, row, 1, 1);
+              g_object_unref (sym);
             }
         }
 
@@ -206,7 +233,7 @@ main (int argc, char *argv[])
               gtk_picture_set_can_shrink (GTK_PICTURE (img), allow_shrink);
               gtk_widget_set_size_request (img, size, size);
               gtk_widget_set_halign (img, GTK_ALIGN_START);
-              gtk_grid_attach (GTK_GRID (grid), img, 3, row, 1, 1);
+              gtk_grid_attach (GTK_GRID (grid), img, 4, row, 1, 1);
               g_object_unref (paintable);
             }
 
@@ -228,3 +255,4 @@ main (int argc, char *argv[])
 
   return 0;
 }
+

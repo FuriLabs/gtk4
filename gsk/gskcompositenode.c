@@ -321,7 +321,8 @@ gsk_composite_node_render_opacity (GskRenderNode  *node,
             }
           else
             {
-              gsk_rect_intersection (&child_data.opaque, &self->mask->bounds, &child_data.opaque);
+              if (!gsk_rect_intersection (&child_data.opaque, &self->mask->bounds, &child_data.opaque))
+                data->opaque = GRAPHENE_RECT_INIT (0, 0, 0, 0);
             }
 
           if (gsk_rect_is_empty (&data->opaque))
@@ -427,6 +428,7 @@ gsk_composite_node_new (GskRenderNode *child,
                                    gsk_render_node_contains_subsurface_node (mask);
   node->contains_paste_node = gsk_render_node_contains_paste_node (child) ||
                               gsk_render_node_contains_paste_node (mask);
+  node->needs_blending = TRUE;
 
   return node;
 }

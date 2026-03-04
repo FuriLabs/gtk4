@@ -106,6 +106,13 @@ static GParamSpec *properties[NUM_PROPERTIES];
 
 /* {{{ Callbacks */
 
+static void
+shape_attr_unset (Shape     *shape,
+                  ShapeAttr  attr)
+{
+  shape->attrs = _gtk_bitmask_set (shape->attrs, attr, FALSE);
+}
+
 enum
 {
   LINE,
@@ -143,6 +150,47 @@ static void
 shape_changed (ShapeEditor *self)
 {
   int res = 0;
+
+  if (self->updating)
+    return;
+
+  switch ((unsigned int) self->shape->type)
+    {
+    case SHAPE_LINE:
+      shape_attr_unset (self->shape, SHAPE_ATTR_X1);
+      shape_attr_unset (self->shape, SHAPE_ATTR_Y1);
+      shape_attr_unset (self->shape, SHAPE_ATTR_X2);
+      shape_attr_unset (self->shape, SHAPE_ATTR_Y2);
+      break;
+    case SHAPE_CIRCLE:
+      shape_attr_unset (self->shape, SHAPE_ATTR_CX);
+      shape_attr_unset (self->shape, SHAPE_ATTR_CY);
+      shape_attr_unset (self->shape, SHAPE_ATTR_R);
+      break;
+    case SHAPE_ELLIPSE:
+      shape_attr_unset (self->shape, SHAPE_ATTR_CX);
+      shape_attr_unset (self->shape, SHAPE_ATTR_CY);
+      shape_attr_unset (self->shape, SHAPE_ATTR_RX);
+      shape_attr_unset (self->shape, SHAPE_ATTR_RY);
+      break;
+    case SHAPE_RECT:
+      shape_attr_unset (self->shape, SHAPE_ATTR_X);
+      shape_attr_unset (self->shape, SHAPE_ATTR_Y);
+      shape_attr_unset (self->shape, SHAPE_ATTR_WIDTH);
+      shape_attr_unset (self->shape, SHAPE_ATTR_HEIGHT);
+      shape_attr_unset (self->shape, SHAPE_ATTR_RX);
+      shape_attr_unset (self->shape, SHAPE_ATTR_RY);
+      break;
+    case SHAPE_POLYLINE:
+    case SHAPE_POLYGON:
+      shape_attr_unset (self->shape, SHAPE_ATTR_POINTS);
+      break;
+    case SHAPE_PATH:
+      shape_attr_unset (self->shape, SHAPE_ATTR_PATH);
+      break;
+    default:
+      break;
+    }
 
   switch (gtk_drop_down_get_selected (self->shape_dropdown))
     {
@@ -305,6 +353,9 @@ static void
 shape_editor_update_path (ShapeEditor *self,
                           GskPath     *path)
 {
+  if (self->updating)
+    return;
+
   self->shape->type = SHAPE_PATH;
   svg_shape_attr_set (self->shape, SHAPE_ATTR_PATH, svg_path_new (path));
   path_paintable_changed (self->paintable);
@@ -316,22 +367,28 @@ shape_editor_update_path (ShapeEditor *self,
 static void
 path_changed (ShapeEditor *self)
 {
-  GskPath *path = path_editor_get_path (self->path_editor);
-  shape_editor_update_path (self, path);
+  if (self->updating)
+    return;
+
+  shape_editor_update_path (self, path_editor_get_path (self->path_editor));
 }
 
 static void
 shape_editor_update_clip_path (ShapeEditor *self,
                                GskPath     *path)
 {
+  if (self->updating)
+    return;
+
   if (gsk_path_is_empty (path))
     {
       svg_shape_attr_set (self->shape, SHAPE_ATTR_CLIP_PATH, svg_clip_new_none ());
+      shape_attr_unset (self->shape, SHAPE_ATTR_CLIP_PATH);
     }
   else
     {
       char *s = gsk_path_to_string (path);
-      svg_shape_attr_set (self->shape, SHAPE_ATTR_CLIP_PATH, svg_clip_new_path (s));
+      svg_shape_attr_set (self->shape, SHAPE_ATTR_CLIP_PATH, svg_clip_new_path (s, 0xffff));
       g_free (s);
     }
   path_paintable_changed (self->paintable);
@@ -565,6 +622,12 @@ shape_editor_get_path_image (ShapeEditor *self)
       svg->width = path_paintable_get_width (self->paintable);
       svg->height = path_paintable_get_height (self->paintable);
 
+      svg_shape_attr_set (svg->content,
+                          SHAPE_ATTR_WIDTH,
+                          svg_number_new (svg->width));
+      svg_shape_attr_set (svg->content,
+                          SHAPE_ATTR_HEIGHT,
+                          svg_number_new (svg->height));
       svg_shape_attr_set (svg->content,
                           SHAPE_ATTR_VIEW_BOX,
                           svg_view_box_new (&GRAPHENE_RECT_INIT (0, 0, svg->width, svg->height)));
@@ -1061,6 +1124,7 @@ shape_editor_update (ShapeEditor *self)
     {
       GskPath *path;
       g_autofree char *text = NULL;
+      SvgValue *tf;
       unsigned int symbolic;
       GdkRGBA color;
       double line_width;
@@ -1303,21 +1367,22 @@ shape_editor_update (ShapeEditor *self)
                     NULL);
 
       text = svg_shape_attr_get_transform (self->shape, SHAPE_ATTR_TRANSFORM);
-      gtk_editable_set_text (GTK_EDITABLE (self->transform), text);
+      if (g_strcmp0 (text, "none") == 0)
+        gtk_editable_set_text (GTK_EDITABLE (self->transform), "");
+      else
+        gtk_editable_set_text (GTK_EDITABLE (self->transform), text);
 
-      SvgValue *tf;
-      if (text && *text)
-        tf = svg_transform_parse (text);
-       else
-        tf = svg_transform_new_none ();
-
+      tf = svg_transform_parse (text);
       populate_transform (self, tf);
       svg_value_unref (tf);
 
       g_clear_pointer (&text, g_free);
 
       text = svg_shape_attr_get_filter (self->shape, SHAPE_ATTR_FILTER);
-      gtk_editable_set_text (GTK_EDITABLE (self->filter), text);
+      if (g_strcmp0 (text, "none") == 0)
+        gtk_editable_set_text (GTK_EDITABLE (self->filter), "");
+      else
+        gtk_editable_set_text (GTK_EDITABLE (self->filter), text);
       g_clear_pointer (&text, g_free);
 
       self->updating = FALSE;

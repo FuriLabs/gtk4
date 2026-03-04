@@ -30,12 +30,14 @@ struct _PathPaintable
   GtkSvg *svg;
   graphene_rect_t viewport;
   GdkPaintable *render_paintable;
+  GdkFrameClock *clock;
 };
 
 enum
 {
   PROP_STATE = 1,
   PROP_WEIGHT,
+  PROP_PLAYING,
   PROP_RESOURCE,
   NUM_PROPERTIES,
 };
@@ -69,7 +71,12 @@ ensure_render_paintable (PathPaintable *self)
 
       self->render_paintable = GDK_PAINTABLE (gtk_svg_new_from_bytes (bytes));
       gtk_svg_set_weight (GTK_SVG (self->render_paintable), gtk_svg_get_weight (self->svg));
-      gtk_svg_play (GTK_SVG (self->render_paintable));
+
+      gtk_svg_set_frame_clock (GTK_SVG (self->render_paintable), self->clock);
+
+      g_object_bind_property (self->svg, "playing",
+                              self->render_paintable, "playing",
+                              G_BINDING_SYNC_CREATE);
 
       g_signal_connect_swapped (self->render_paintable, "notify::state",
                                 G_CALLBACK (notify_state), self);
@@ -197,7 +204,6 @@ static void
 path_paintable_dispose (GObject *object)
 {
   PathPaintable *self = PATH_PAINTABLE (object);
-
   if (self->render_paintable)
     {
       g_signal_handlers_disconnect_by_func (self->render_paintable, notify_state, self);
@@ -208,6 +214,7 @@ path_paintable_dispose (GObject *object)
 
   g_clear_object (&self->svg);
   g_clear_object (&self->render_paintable);
+  g_clear_object (&self->clock);
 
   G_OBJECT_CLASS (path_paintable_parent_class)->dispose (object);
 }
@@ -228,6 +235,10 @@ path_paintable_get_property (GObject      *object,
 
     case PROP_WEIGHT:
       g_value_set_double (value, path_paintable_get_weight (self));
+      break;
+
+    case PROP_PLAYING:
+      g_value_set_boolean (value, path_paintable_get_playing (self));
       break;
 
     default:
@@ -252,6 +263,10 @@ path_paintable_set_property (GObject      *object,
 
     case PROP_WEIGHT:
       path_paintable_set_weight (self, g_value_get_double (value));
+      break;
+
+    case PROP_PLAYING:
+      path_paintable_set_playing (self, g_value_get_boolean (value));
       break;
 
     case PROP_RESOURCE:
@@ -310,6 +325,11 @@ path_paintable_class_init (PathPaintableClass *class)
                          -1, 1000.f, -1,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
+  properties[PROP_PLAYING] =
+    g_param_spec_boolean ("playing", NULL, NULL,
+                          FALSE,
+                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
   properties[PROP_RESOURCE] =
     g_param_spec_string ("resource", NULL, NULL,
                          NULL,
@@ -366,6 +386,12 @@ path_paintable_set_size (PathPaintable *self,
   self->svg->width = width;
   self->svg->height = height;
 
+  svg_shape_attr_set (self->svg->content,
+                      SHAPE_ATTR_WIDTH,
+                      svg_number_new (width));
+  svg_shape_attr_set (self->svg->content,
+                      SHAPE_ATTR_HEIGHT,
+                      svg_number_new (height));
   svg_shape_attr_set (self->svg->content,
                       SHAPE_ATTR_VIEW_BOX,
                       svg_view_box_new (&GRAPHENE_RECT_INIT (0, 0, width, height)));
@@ -621,14 +647,56 @@ void
 path_paintable_set_keywords (PathPaintable *self,
                              const char    *keywords)
 {
-  if (g_set_str (&self->svg->gpa_keywords, keywords))
+  if (g_set_str (&self->svg->keywords, keywords))
     g_signal_emit (self, signals[CHANGED], 0);
 }
 
 const char *
 path_paintable_get_keywords (PathPaintable *self)
 {
-  return self->svg->gpa_keywords;
+  return self->svg->keywords;
+}
+
+void
+path_paintable_set_description (PathPaintable *self,
+                                const char    *description)
+{
+  if (g_set_str (&self->svg->description, description))
+    g_signal_emit (self, signals[CHANGED], 0);
+}
+
+const char *
+path_paintable_get_description (PathPaintable *self)
+{
+  return self->svg->description;
+}
+
+void
+path_paintable_set_author (PathPaintable *self,
+                           const char    *author)
+{
+  if (g_set_str (&self->svg->author, author))
+    g_signal_emit (self, signals[CHANGED], 0);
+}
+
+const char *
+path_paintable_get_author (PathPaintable *self)
+{
+  return self->svg->author;
+}
+
+void
+path_paintable_set_license (PathPaintable *self,
+                            const char    *license)
+{
+  if (g_set_str (&self->svg->license, license))
+    g_signal_emit (self, signals[CHANGED], 0);
+}
+
+const char *
+path_paintable_get_license (PathPaintable *self)
+{
+  return self->svg->license;
 }
 
 size_t
@@ -770,6 +838,7 @@ path_paintable_get_compatibility (PathPaintable *self)
         case SHAPE_IMAGE:
         case SHAPE_FILTER:
         case SHAPE_SYMBOL:
+        case SHAPE_SWITCH:
           compat = MAX (compat, GTK_4_22);
           continue;
         default:
@@ -853,6 +922,7 @@ path_paintable_get_path_by_id (PathPaintable *self,
         case SHAPE_IMAGE:
         case SHAPE_FILTER:
         case SHAPE_SYMBOL:
+        case SHAPE_SWITCH:
           break;
         default:
           g_assert_not_reached ();
@@ -1051,6 +1121,7 @@ shape_is_graphical (Shape *shape)
     case SHAPE_IMAGE:
     case SHAPE_FILTER:
     case SHAPE_SYMBOL:
+    case SHAPE_SWITCH:
       return FALSE;
     default:
       g_assert_not_reached ();
@@ -1079,6 +1150,7 @@ shape_is_group (Shape *shape)
     case SHAPE_TSPAN:
     case SHAPE_SVG:
     case SHAPE_SYMBOL:
+    case SHAPE_SWITCH:
       return TRUE;
     case SHAPE_USE:
     case SHAPE_LINEAR_GRADIENT:
@@ -1119,6 +1191,86 @@ path_paintable_get_shape_by_id (PathPaintable *self,
   return get_shape_by_id (self->svg->content, id);
 }
 
-/* }}} */
+static void
+clear_tempfile (gpointer data)
+{
+  GFile *file = data;
 
+  g_file_delete (file, NULL, NULL);
+  g_object_unref (file);
+}
+
+GtkIconPaintable *
+path_paintable_get_icon_paintable (PathPaintable *self)
+{
+  GtkIconPaintable *paintable;
+  GFile *file;
+  GIOStream *iostream;
+  GOutputStream *ostream;
+  GInputStream *istream;
+  GBytes *bytes;
+  GError *error = NULL;
+
+  file = g_file_new_tmp ("gtkXXXXXX-symbolic.svg", (GFileIOStream **) &iostream, &error);
+  if (error)
+    {
+      g_warning ("%s", error->message);
+      g_error_free (error);
+      return NULL;
+    }
+
+  ostream = g_io_stream_get_output_stream (iostream);
+  bytes = path_paintable_serialize_as_svg (self);
+  istream = g_memory_input_stream_new_from_bytes (bytes);
+
+  g_output_stream_splice (ostream, istream, 0, NULL, &error);
+  if (error)
+    {
+      g_object_unref (file);
+      g_object_unref (iostream);
+      g_bytes_unref (bytes);
+      g_warning ("%s", error->message);
+      g_error_free (error);
+      return NULL;
+    }
+
+  paintable = gtk_icon_paintable_new_for_file (file, 64, 1);
+
+  g_object_set_data_full (G_OBJECT (paintable), "file", file, clear_tempfile);
+
+  g_object_unref (iostream);
+  g_bytes_unref (bytes);
+
+  return paintable;
+}
+
+void
+path_paintable_set_playing (PathPaintable *self,
+                            gboolean       playing)
+{
+  if (self->svg->playing == playing)
+    return;
+
+  g_object_set (self->svg, "playing", playing, NULL);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PLAYING]);
+}
+
+gboolean
+path_paintable_get_playing (PathPaintable *self)
+{
+  return self->svg->playing;
+}
+
+void
+path_paintable_set_frame_clock (PathPaintable *self,
+                                GdkFrameClock *clock)
+{
+  g_set_object (&self->clock, clock);
+
+  if (self->render_paintable)
+    gtk_svg_set_frame_clock (GTK_SVG (self->render_paintable), clock);
+}
+
+/* }}} */
 /* vim:set foldmethod=marker: */

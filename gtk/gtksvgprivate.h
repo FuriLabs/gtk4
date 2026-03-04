@@ -92,14 +92,16 @@ struct _GtkSvg
   GtkSvgRunMode run_mode;
   GdkFrameClock *clock;
   unsigned long clock_update_id;
-  unsigned int periodic_update_id;
 
   int64_t next_update;
-  unsigned int pending_invalidate;
+  unsigned int pending_advance;
   gboolean advance_after_snapshot;
 
   unsigned int gpa_version;
-  char *gpa_keywords;
+  char *author;
+  char *license;
+  char *description;
+  char *keywords;
 
   Timeline *timeline;
 
@@ -115,6 +117,8 @@ struct _GtkSvg
     GdkRGBA colors[5];
     size_t n_colors;
     double weight;
+    int64_t time;
+    unsigned int state;
   } node_for;
 };
 
@@ -142,6 +146,7 @@ typedef enum
   SHAPE_IMAGE,
   SHAPE_FILTER,
   SHAPE_SYMBOL,
+  SHAPE_SWITCH,
 } ShapeType;
 
 typedef enum
@@ -190,6 +195,8 @@ typedef enum
   SHAPE_ATTR_HREF,
   SHAPE_ATTR_OVERFLOW,
   SHAPE_ATTR_VECTOR_EFFECT,
+  SHAPE_ATTR_CONTENT_UNITS,
+  SHAPE_ATTR_BOUND_UNITS,
   SHAPE_ATTR_PATH,
   SHAPE_ATTR_CX,
   SHAPE_ATTR_CY,
@@ -206,8 +213,6 @@ typedef enum
   SHAPE_ATTR_Y2,
   SHAPE_ATTR_POINTS,
   SHAPE_ATTR_SPREAD_METHOD,
-  SHAPE_ATTR_CONTENT_UNITS,
-  SHAPE_ATTR_BOUND_UNITS,
   SHAPE_ATTR_FX,
   SHAPE_ATTR_FY,
   SHAPE_ATTR_FR,
@@ -227,6 +232,8 @@ typedef enum
   SHAPE_ATTR_WRITING_MODE,
   SHAPE_ATTR_LETTER_SPACING,
   SHAPE_ATTR_TEXT_DECORATION,
+  SHAPE_ATTR_REQUIRED_EXTENSIONS,
+  SHAPE_ATTR_SYSTEM_LANGUAGE,
   SHAPE_ATTR_STROKE_MINWIDTH,
   SHAPE_ATTR_STROKE_MAXWIDTH,
   LAST_SHAPE_ATTR = SHAPE_ATTR_STROKE_MAXWIDTH,
@@ -339,6 +346,7 @@ struct _Shape
   Shape *parent;
   GtkBitmask *attrs;
   char *id;
+  int line;
 
   /* Dependency order for computing updates */
   Shape *first;
@@ -513,7 +521,8 @@ SvgValue *   svg_numbers_new        (double           *values,
 SvgValue *   svg_view_box_new       (const graphene_rect_t *box);
 SvgValue *   svg_path_new           (GskPath *path);
 SvgValue *   svg_clip_new_none      (void);
-SvgValue *   svg_clip_new_path      (const char *string);
+SvgValue *   svg_clip_new_path      (const char *string,
+                                     unsigned int fill_rule);
 SvgValue *   svg_transform_parse    (const char       *value);
 unsigned int svg_transform_get_n_transforms (const SvgValue *value);
 SvgValue *   svg_transform_get_transform    (const SvgValue *value,

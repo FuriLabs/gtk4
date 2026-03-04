@@ -49,7 +49,7 @@ tests = [
   { 'name': 'flattenlistmodel' },
   { 'name': 'floating' },
   { 'name': 'flowbox' },
-  #{ 'name': 'gestures' },
+  { 'name': 'gestures' },
   { 'name': 'grid' },
   { 'name': 'grid-layout' },
   { 'name': 'icontheme' },
@@ -137,14 +137,6 @@ internal_tests = [
       'symbolic.c',
       '../reftests/reftest-compare.c',
     ],
-  },
-  {
-    'name': 'symbolic2',
-    'sources': [
-      'symbolic2.c',
-      '../reftests/reftest-compare.c',
-    ],
-    'suites': [ 'flaky' ],
   },
   { 'name': 'bitmask' },
 ]

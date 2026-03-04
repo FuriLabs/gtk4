@@ -524,11 +524,25 @@ gsk_render_node_draw_fallback (GskRenderNode *node,
     }
 }
 
+/**
+ * gsk_render_node_get_children:
+ * @self: the render node
+ * @n_children: (out): the number of items in the returned array 
+ *
+ * Gets a list of all children nodes of the rendernode.
+ *
+ * Keep in mind that for various rendernodes, their children have different
+ * semantics, like the mask vs the source of a mask node. If you care about
+ * thse semantics, don't use this function, use the specific getters instead.
+ *
+ * Returns: (transfer none) (nullable) (array length=n_children): The children
+ * Since: 4.22
+ **/
 GskRenderNode **
-gsk_render_node_get_children (GskRenderNode *node,
+gsk_render_node_get_children (GskRenderNode *self,
                               gsize         *n_children)
 {
-  return GSK_RENDER_NODE_GET_CLASS (node)->get_children (node, n_children);
+  return GSK_RENDER_NODE_GET_CLASS (self)->get_children (self, n_children);
 }
 
 /*
@@ -952,4 +966,21 @@ gboolean
 gsk_render_node_contains_paste_node (const GskRenderNode *node)
 {
   return node->contains_paste_node;
+}
+
+/*<private>
+ * gsk_render_node_needs_blending:
+ * @node: the node
+ *
+ * Checks if the node can be drawn without any blending. This means
+ * that glDisable(GL_BLEND) can be called by renderers when drawing
+ * this node and the node's background can be left unitialized if
+ * the node also doesn
+ *
+ * Returns: true if the node needs to be blended
+ **/
+gboolean
+gsk_render_node_needs_blending (const GskRenderNode *node)
+{
+  return node->needs_blending;
 }

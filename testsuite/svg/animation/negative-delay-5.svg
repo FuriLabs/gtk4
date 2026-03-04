@@ -32,7 +32,7 @@
             gpa:status='done'
             gpa:computed-simple-duration='indefinite'/>
     <animate
-            id='gpa:transition:fade-out:stroke-dasharray:line1'
+            id='gpa:transition:fade-out:0:stroke-dasharray:line1'
             attributeName='stroke-dasharray'
             begin='gpa:states(0).end -250ms'
             dur='500ms'
@@ -45,7 +45,7 @@
             calcMode='spline'
             gpa:status='done'/>
     <animate
-            id='gpa:transition:fade-in:stroke-dasharray:line1'
+            id='gpa:transition:fade-in:0:stroke-dasharray:line1'
             attributeName='stroke-dasharray'
             begin='gpa:states(0).begin -250ms'
             dur='500ms'
@@ -72,7 +72,9 @@
             dur='-250ms'
             repeatDur='-250ms'
             to='0.5'
-            gpa:status='done'/>
+            gpa:status='done'
+            gpa:current-start-time='750ms'
+            gpa:current-end-time='500ms'/>
     <set
             id='gpa:path-length'
             attributeName='pathLength'
@@ -105,9 +107,9 @@
             to='hidden'
             gpa:status='running'
             gpa:computed-simple-duration='indefinite'
-            gpa:current-start-time='0ms'/>
+            gpa:current-start-time='1000ms'/>
     <animate
-            id='gpa:transition:fade-in:stroke-dasharray:line2'
+            id='gpa:transition:fade-in:0:stroke-dasharray:line2'
             attributeName='stroke-dasharray'
             begin='gpa:states(1).begin -250ms'
             dur='500ms'
@@ -120,7 +122,7 @@
             calcMode='spline'
             gpa:status='done'/>
     <animate
-            id='gpa:transition:fade-out:stroke-dasharray:line2'
+            id='gpa:transition:fade-out:0:stroke-dasharray:line2'
             attributeName='stroke-dasharray'
             begin='gpa:states(1).end -250ms'
             dur='500ms'
@@ -147,7 +149,9 @@
             dur='-250ms'
             repeatDur='-250ms'
             to='0.5'
-            gpa:status='done'/>
+            gpa:status='done'
+            gpa:current-start-time='1000ms'
+            gpa:current-end-time='750ms'/>
     <set
             id='gpa:path-length'
             attributeName='pathLength'

@@ -58,9 +58,9 @@ gboolean                 gsk_rounded_rect_equal                 (gconstpointer  
                                                                  gconstpointer             rect2) G_GNUC_PURE;
 char *                   gsk_rounded_rect_to_string             (const GskRoundedRect     *self) G_GNUC_MALLOC;
 
-void                     gsk_rounded_rect_get_largest_cover     (const GskRoundedRect     *self,
+gboolean                 gsk_rounded_rect_get_largest_cover     (const GskRoundedRect     *self,
                                                                  const graphene_rect_t    *rect,
-                                                                 graphene_rect_t          *result);
+                                                                 graphene_rect_t          *result) G_GNUC_WARN_UNUSED_RESULT;
 
 typedef enum {
   GSK_INTERSECTION_EMPTY,
@@ -79,6 +79,21 @@ gboolean gsk_rounded_rect_corner_box_contains_point (const GskRoundedRect   *sel
                                                      GskCorner               corner,
                                                      const graphene_point_t *point);
 
+static inline void
+gsk_rounded_rect_init_uniform (GskRoundedRect *rect,
+                               float x, float y,
+                               float w, float h,
+                               float r)
+{
+  rect->bounds.origin.x = x;
+  rect->bounds.origin.y = y;
+  rect->bounds.size.width = w;
+  rect->bounds.size.height = h;
+  rect->corner[0].width = rect->corner[0].height = r;
+  rect->corner[1].width = rect->corner[1].height = r;
+  rect->corner[2].width = rect->corner[2].height = r;
+  rect->corner[3].width = rect->corner[3].height = r;
+}
 
 G_END_DECLS
 

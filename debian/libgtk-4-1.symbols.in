@@ -1028,6 +1028,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_render_node_deserialize@Base 4.0.0
  gsk_render_node_draw@Base 4.0.0
  gsk_render_node_get_bounds@Base 4.0.0
+ gsk_render_node_get_children@Base 4.21.6
  gsk_render_node_get_node_type@Base 4.0.0
  gsk_render_node_get_opaque_rect@Base 4.15.4
  gsk_render_node_get_type@Base 4.0.0
@@ -1040,13 +1041,11 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gsk_render_replay_filter_font@Base 4.21.5
  gsk_render_replay_filter_node@Base 4.21.5
  gsk_render_replay_filter_texture@Base 4.21.5
- gsk_render_replay_foreach_node@Base 4.21.5
  gsk_render_replay_free@Base 4.21.5
  gsk_render_replay_get_type@Base 4.21.5
  gsk_render_replay_new@Base 4.21.5
  gsk_render_replay_set_font_filter@Base 4.21.5
  gsk_render_replay_set_node_filter@Base 4.21.5
- gsk_render_replay_set_node_foreach@Base 4.21.5
  gsk_render_replay_set_texture_filter@Base 4.21.5
  gsk_renderer_get_surface@Base 4.0.0
  gsk_renderer_get_type@Base 4.0.0
@@ -2436,6 +2435,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_file_dialog_set_modal@Base 4.9.2
  gtk_file_dialog_set_title@Base 4.9.2
  gtk_file_filter_add_mime_type@Base 4.0.0
+ gtk_file_filter_add_mime_types@Base 4.21.6
  gtk_file_filter_add_pattern@Base 4.0.0
  gtk_file_filter_add_pixbuf_formats@Base 4.0.0
  gtk_file_filter_add_suffix@Base 4.3.1
@@ -5160,6 +5160,8 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_tree_view_set_tooltip_row@Base 4.0.0
  gtk_tree_view_unset_rows_drag_dest@Base 4.0.0
  gtk_tree_view_unset_rows_drag_source@Base 4.0.0
+ gtk_try_expression_get_type@Base 4.21.6
+ gtk_try_expression_new@Base 4.21.6
  gtk_unit_get_type@Base 4.0.0
  gtk_uri_launcher_can_launch@Base 4.19.3
  gtk_uri_launcher_get_type@Base 4.9.3

@@ -1,3 +1,9 @@
+gtk4 (4.21.6+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Wed, 04 Mar 2026 15:32:38 +0100
+
 gtk4 (4.21.5+ds-5) unstable; urgency=medium
 
   * Add epoch to Breaks: gnome-control-center

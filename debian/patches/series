@@ -14,6 +14,3 @@ workarounds/testsuite-skip-color-mix.patch
 workarounds/scaling-test-Skip-floating-point-pixel-formats-with-Cairo.patch
 workarounds/nodeparser-Mark-failing-tests-on-s390x.patch
 workarounds/testsuite-Skip-vulkan-tests-that-break-lavapipe.patch
-vulkan-Fix-type-mismatch-on-32-bit.patch
-path-Fix-alignment-issue-on-32-bit.patch
-testsuite-Add-missing-test-files-to-meson.build.patch

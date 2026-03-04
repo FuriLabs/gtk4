@@ -1,10 +1,6 @@
 debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
 insttests/Revert-build-Drop-the-install-tests-option.patch
 insttests/Revert-testsuite-Remove-leftover-test.in-files.patch
-gstplay/subprojects-Add-gst-play-1.0-as-subproject.patch
-gstplay/gst-play-1.0-Do-not-install-it-if-it-s-a-subproject.patch
-gstplay/media-Use-gst-play-1.0-from-meson-subproject.patch
-gstplayer/Revert-build-Add-wrap-file-for-GStreamer.patch
 workarounds/reftests-Allow-minor-differences-to-be-tolerated.patch
 workarounds/Disable-inscription-markup.ui-reftest.patch
 workarounds/tests-Mark-gltexture-as-expected-to-fail-on-big-endian-ma.patch

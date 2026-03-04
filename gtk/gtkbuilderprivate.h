@@ -84,12 +84,14 @@ struct _ExpressionInfo {
     EXPRESSION_EXPRESSION,
     EXPRESSION_CONSTANT,
     EXPRESSION_CLOSURE,
-    EXPRESSION_PROPERTY
+    EXPRESSION_PROPERTY,
+    EXPRESSION_TRY
   } expression_type;
   union {
     GtkExpression *expression;
     struct {
       GType type;
+      gboolean initial;
       GString *text;
       gboolean translatable;
       char *context;
@@ -106,6 +108,9 @@ struct _ExpressionInfo {
       char *property_name;
       ExpressionInfo *expression;
     } property;
+    struct {
+      GSList *expressions;
+    } try;
   };
 };
 

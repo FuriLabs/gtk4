@@ -30,11 +30,11 @@
             begin='gpa:states(0).end 250ms'
             end='gpa:states(0).begin -250ms'
             to='hidden'
-            gpa:status='inactive'
+            gpa:status='running'
             gpa:computed-simple-duration='indefinite'
             gpa:current-start-time='500ms'/>
     <animate
-            id='gpa:transition:fade-out:stroke-dasharray:line1'
+            id='gpa:transition:fade-out:0:stroke-dasharray:line1'
             attributeName='stroke-dasharray'
             begin='gpa:states(0).end -250ms'
             dur='500ms'
@@ -49,7 +49,7 @@
             gpa:current-start-time='0ms'
             gpa:current-end-time='500ms'/>
     <animate
-            id='gpa:transition:fade-in:stroke-dasharray:line1'
+            id='gpa:transition:fade-in:0:stroke-dasharray:line1'
             attributeName='stroke-dasharray'
             begin='gpa:states(0).begin -250ms'
             dur='500ms'
@@ -68,7 +68,7 @@
             dur='-250ms'
             repeatDur='-250ms'
             to='0.5'
-            gpa:status='inactive'
+            gpa:status='done'
             gpa:current-start-time='500ms'
             gpa:current-end-time='250ms'/>
     <set
@@ -109,11 +109,9 @@
             end='gpa:states(1).begin -250ms'
             to='hidden'
             gpa:status='done'
-            gpa:computed-simple-duration='indefinite'
-            gpa:current-start-time='0ms'
-            gpa:current-end-time='0ms'/>
+            gpa:computed-simple-duration='indefinite'/>
     <animate
-            id='gpa:transition:fade-in:stroke-dasharray:line2'
+            id='gpa:transition:fade-in:0:stroke-dasharray:line2'
             attributeName='stroke-dasharray'
             begin='gpa:states(1).begin -250ms'
             dur='500ms'
@@ -128,7 +126,7 @@
             gpa:current-start-time='0ms'
             gpa:current-end-time='500ms'/>
     <animate
-            id='gpa:transition:fade-out:stroke-dasharray:line2'
+            id='gpa:transition:fade-out:0:stroke-dasharray:line2'
             attributeName='stroke-dasharray'
             begin='gpa:states(1).end -250ms'
             dur='500ms'

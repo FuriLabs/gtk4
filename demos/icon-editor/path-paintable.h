@@ -75,6 +75,15 @@ double          path_paintable_get_height          (PathPaintable   *self);
 void            path_paintable_set_keywords        (PathPaintable   *self,
                                                     const char      *keywords);
 const char *    path_paintable_get_keywords        (PathPaintable   *self);
+void            path_paintable_set_description     (PathPaintable   *self,
+                                                    const char      *description);
+const char *    path_paintable_get_description     (PathPaintable   *self);
+void            path_paintable_set_author          (PathPaintable   *self,
+                                                    const char      *author);
+const char *    path_paintable_get_author          (PathPaintable   *self);
+void            path_paintable_set_license         (PathPaintable   *self,
+                                                    const char      *license);
+const char *    path_paintable_get_license         (PathPaintable   *self);
 
 size_t          path_paintable_get_n_paths         (PathPaintable   *self);
 
@@ -150,3 +159,13 @@ void            path_paintable_paths_changed       (PathPaintable   *self);
 
 Shape *         shape_duplicate                    (Shape *shape);
 gboolean        shape_is_graphical                 (Shape *shape);
+
+GtkIconPaintable *
+                path_paintable_get_icon_paintable  (PathPaintable *self);
+
+void            path_paintable_set_playing         (PathPaintable *self,
+                                                    gboolean       playing);
+gboolean        path_paintable_get_playing         (PathPaintable *self);
+
+void            path_paintable_set_frame_clock     (PathPaintable *self,
+                                                    GdkFrameClock *clock);

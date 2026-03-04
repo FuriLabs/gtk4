@@ -146,7 +146,6 @@ extra_demo_sources = files([
   'singular_value_decomposition.c',
   'suggestionentry.c',
   'unicode-names.c',
-  '../../gtk/gtkrendernodepaintable.c',
   'component_filter.c',
   'minigraph.c',
 ])
@@ -187,6 +186,7 @@ executable('gtk4-demo',
   win_subsystem: 'windows',
   link_args: extra_demo_ldflags,
   install: true,
+  kwargs: demo_kwargs
 )
 
 executable('gtk4-demo-application',

@@ -1029,12 +1029,16 @@ add_measure (const GskCurve *curve,
              float           tolerance,
              float           t1,
              float           l1,
-             GArray         *array)
+             GArray         *array,
+             int             depth)
 {
   GskCurve c;
   float ll, l0;
   float t0;
   CurvePoint *p;
+
+  if (depth > 10)
+    goto done;
 
   /* Check if we can add (t1, length + l1) without further
    * splitting. We check two things:
@@ -1063,8 +1067,8 @@ done:
     }
   else
     {
-      add_measure (curve, idx, length, tolerance, t0, l0, array);
-      add_measure (curve, idx, length, tolerance, t1, l1, array);
+      add_measure (curve, idx, length, tolerance, t0, l0, array, depth + 1);
+      add_measure (curve, idx, length, tolerance, t1, l1, array, depth + 1);
     }
 }
 
@@ -1105,10 +1109,10 @@ add_samples (const GskStandardContour  *self,
   for (int j = 0; j < n; j++)
     {
       float l = gsk_curve_get_length_to (&curve, t[j]);
-      add_measure (&curve, curve_measure->idx, l0, measure->tolerance, t[j], l, measure->points);
+      add_measure (&curve, curve_measure->idx, l0, measure->tolerance, t[j], l, measure->points, 0);
     }
 
-  add_measure (&curve, curve_measure->idx, l0, measure->tolerance, 1, l1 - l0, measure->points);
+  add_measure (&curve, curve_measure->idx, l0, measure->tolerance, 1, l1 - l0, measure->points, 0);
 
   curve_measure->first = first;
   curve_measure->n_samples = measure->points->len - first;
@@ -1415,6 +1419,38 @@ gsk_standard_contour_new (GskPathFlags            flags,
   gsk_standard_contour_init (contour, flags, points, n_points, ops, n_ops, offset);
 
   return contour;
+}
+
+size_t
+gsk_contour_get_standard_ops (const GskContour *contour,
+                              size_t            n_ops,
+                              GskPathOperation *ops)
+{
+  const GskStandardContour *self = (const GskStandardContour *) contour;
+
+  if (contour->klass != &GSK_STANDARD_CONTOUR_CLASS)
+    return 0;
+
+  for (size_t i = 0; i < MIN (n_ops, self->n_ops); i++)
+    ops[i] = gsk_pathop_op (self->ops[i]);
+
+  return self->n_ops;
+}
+
+size_t
+gsk_contour_get_standard_points (const GskContour *contour,
+                                 size_t            n_points,
+                                 graphene_point_t *points)
+{
+  const GskStandardContour *self = (const GskStandardContour *) contour;
+
+  if (contour->klass != &GSK_STANDARD_CONTOUR_CLASS)
+    return 0;
+
+  for (size_t i = 0; i < MIN (n_points, self->n_points); i++)
+    points[i] = self->points[i].pt;
+
+  return self->n_points;
 }
 
 /* }}} */
@@ -1856,7 +1892,6 @@ gsk_circle_contour_new (const graphene_point_t *center,
 
   self->contour.klass = &GSK_CIRCLE_CONTOUR_CLASS;
 
-  self->contour.klass = &GSK_CIRCLE_CONTOUR_CLASS;
   self->center = *center;
   self->radius = radius;
   self->ccw = FALSE;
@@ -1864,17 +1899,22 @@ gsk_circle_contour_new (const graphene_point_t *center,
   return (GskContour *) self;
 }
 
-void
-gsk_circle_contour_get_params (const GskContour *contour,
-                               graphene_point_t *center,
-                               float            *radius,
-                               gboolean         *ccw)
+gboolean
+gsk_contour_get_circle (const GskContour *contour,
+                        graphene_point_t *center,
+                        float            *radius,
+                        gboolean         *ccw)
 {
   const GskCircleContour *self = (const GskCircleContour *) contour;
+
+  if (contour->klass != &GSK_CIRCLE_CONTOUR_CLASS)
+    return FALSE;
 
   *center = self->center;
   *radius = self->radius;
   *ccw = self->ccw;
+
+  return TRUE;
 }
 
 /* }}} */
@@ -2226,6 +2266,23 @@ gsk_rect_contour_new (const graphene_rect_t *rect)
   self->n_ops = n_ops[(self->width != 0) + (self->height != 0)];
 
   return (GskContour *) self;
+}
+
+gboolean
+gsk_contour_get_rect (const GskContour *contour,
+                      graphene_rect_t  *rect)
+{
+  const GskRectContour *self = (const GskRectContour *) contour;
+
+  if (contour->klass != &GSK_RECT_CONTOUR_CLASS)
+    return FALSE;
+
+  rect->origin.x = self->x;
+  rect->origin.y = self->y;
+  rect->size.width = self->width;
+  rect->size.height = self->height;
+
+  return TRUE;
 }
 
 /* }}} */
@@ -2627,6 +2684,20 @@ gsk_rounded_rect_contour_new (const GskRoundedRect *rect)
   self->n_ops = rounded_rect_compute_n_ops (&self->rect);
 
   return (GskContour *) self;
+}
+
+gboolean
+gsk_contour_get_rounded_rect (const GskContour *contour,
+                              GskRoundedRect   *rect)
+{
+  const GskRoundedRectContour *self = (const GskRoundedRectContour *) contour;
+
+  if (contour->klass != &GSK_ROUNDED_RECT_CONTOUR_CLASS)
+    return FALSE;
+
+  *rect = self->rect;
+
+  return TRUE;
 }
 
 /* }}} */

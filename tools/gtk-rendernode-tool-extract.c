@@ -28,6 +28,7 @@
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
 #include "gtk-rendernode-tool.h"
+#include "gtk-tool-utils.h"
 
 static gboolean verbose;
 static char *directory = NULL;
@@ -160,7 +161,7 @@ extract_font (GskRenderReplay *replay,
 static void
 file_extract (const char *filename)
 {
-  GskRenderNode *node;
+  GskRenderNode *node, *result;
   GskRenderReplay *replay;
   char *basename, *dot;
 
@@ -180,8 +181,9 @@ file_extract (const char *filename)
                                      g_strdup (basename),
                                      g_free);
 
-  gsk_render_replay_foreach_node (replay, node);
+  result = gsk_render_replay_filter_node (replay, node);
 
+  gsk_render_node_unref (result);
   gsk_render_replay_free (replay);
   gsk_render_node_unref (node);
 }

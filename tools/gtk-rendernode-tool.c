@@ -43,6 +43,7 @@ usage (void)
              "  convert      Convert into nodes\n"
              "  extract      Extract data urls\n"
              "  info         Provide information about the node\n"
+             "  match        Match pattern in the node\n"
              "  show         Show the node\n"
              "  render       Take a screenshot of the node\n"
              "\n"));
@@ -123,6 +124,10 @@ main (int argc, const char *argv[])
     do_extract (&argc, &argv);
   else if (strcmp (argv[0], "convert") == 0)
     do_convert (&argc, &argv);
+  else if (strcmp (argv[0], "filter") == 0)
+    do_filter (&argc, &argv);
+  else if (strcmp (argv[0], "match") == 0)
+    do_match (&argc, &argv);
   else
     usage ();
 

@@ -226,7 +226,7 @@
                         <property name="hexpand">1</property>
                         <property name="halign">center</property>
                         <property name="child">
-                          <object class="GtkImage">
+                          <object class="GtkImage" id="example1">
                             <property name="pixel-size">32</property>
                             <property name="paintable">
                               <object class="GtkSvg">
@@ -248,7 +248,7 @@
                         <property name="hexpand">1</property>
                         <property name="halign">center</property>
                         <property name="child">
-                          <object class="GtkImage">
+                          <object class="GtkImage" id="example2">
                             <property name="pixel-size">32</property>
                             <property name="paintable">
                               <object class="GtkSvg">
@@ -270,7 +270,7 @@
                         <property name="hexpand">1</property>
                         <property name="halign">center</property>
                         <property name="child">
-                          <object class="GtkImage">
+                          <object class="GtkImage" id="example3">
                             <property name="pixel-size">32</property>
                             <property name="paintable">
                               <object class="GtkSvg">
@@ -292,7 +292,7 @@
                         <property name="hexpand">1</property>
                         <property name="halign">center</property>
                         <property name="child">
-                          <object class="GtkImage">
+                          <object class="GtkImage" id="example4">
                             <property name="pixel-size">32</property>
                             <property name="paintable">
                               <object class="GtkSvg">
@@ -314,7 +314,7 @@
                         <property name="hexpand">1</property>
                         <property name="halign">center</property>
                         <property name="child">
-                          <object class="GtkImage">
+                          <object class="GtkImage" id="example5">
                             <property name="pixel-size">32</property>
                             <property name="paintable">
                               <object class="GtkSvg">
@@ -336,7 +336,7 @@
                         <property name="hexpand">1</property>
                         <property name="halign">center</property>
                         <property name="child">
-                          <object class="GtkImage">
+                          <object class="GtkImage" id="example6">
                             <property name="pixel-size">32</property>
                             <property name="paintable">
                               <object class="GtkSvg">
@@ -386,6 +386,7 @@
                             <property name="paintable" bind-source="IconEditorWindow" bind-property="paintable"/>
                             <property name="show-bounds" bind-source="IconEditorWindow" bind-property="show-bounds"/>
                             <property name="show-spines" bind-source="IconEditorWindow" bind-property="show-spines"/>
+                            <property name="show-grid" bind-source="IconEditorWindow" bind-property="show-grid"/>
                           </object>
                         </property>
                         <layout>
@@ -784,6 +785,33 @@
                                       <object class="GtkLabel">
                                         <property name="xalign">0</property>
                                         <property name="hexpand">1</property>
+                                        <property name="label" translatable="yes">_Animations</property>
+                                        <property name="use-underline">1</property>
+                                        <property name="mnemonic-widget">animations</property>
+                                        <child>
+                                          <object class="GtkGestureClick">
+                                            <signal name="pressed" handler="gtk_widget_activate" object="animations"/>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkSwitch" id="animations">
+                                        <property name="action-name">win.set-playing</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkSeparator"/>
+                                </child>
+                                <child>
+                                  <object class="GtkBox">
+                                    <property name="hexpand">0</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="xalign">0</property>
+                                        <property name="hexpand">1</property>
                                         <property name="label" translatable="yes">_X-Ray Shapes</property>
                                         <property name="use-underline">1</property>
                                         <property name="mnemonic-widget">spine</property>
@@ -797,6 +825,33 @@
                                     <child>
                                       <object class="GtkSwitch" id="spine">
                                         <property name="action-name">win.show-spines</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkSeparator"/>
+                                </child>
+                                <child>
+                                  <object class="GtkBox">
+                                    <property name="hexpand">0</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="xalign">0</property>
+                                        <property name="hexpand">1</property>
+                                        <property name="label" translatable="yes">Show _Grid</property>
+                                        <property name="use-underline">1</property>
+                                        <property name="mnemonic-widget">grid</property>
+                                        <child>
+                                          <object class="GtkGestureClick">
+                                            <signal name="pressed" handler="gtk_widget_activate" object="grid"/>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkSwitch" id="grid">
+                                        <property name="action-name">win.show-grid</property>
                                       </object>
                                     </child>
                                   </object>
@@ -899,5 +954,12 @@
         </child>
       </object>
     </property>
+    <child>
+      <object class="GtkDropTarget">
+        <property name="actions">copy</property>
+        <property name="formats">GFile</property>
+        <signal name="drop" handler="file_drop" swapped="no"/>
+      </object>
+    </child>
   </template>
 </interface>

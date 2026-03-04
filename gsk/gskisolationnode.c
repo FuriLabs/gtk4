@@ -18,7 +18,7 @@
 
 #include "config.h"
 
-#include "gskisolationnode.h"
+#include "gskisolationnodeprivate.h"
 
 #include "gskrectprivate.h"
 #include "gskrendernodeprivate.h"
@@ -244,6 +244,7 @@ gsk_isolation_node_new (GskRenderNode *child,
   if (!gsk_isolation_node_is_isolating (self, GSK_ISOLATION_COPY_PASTE))
     node->contains_paste_node = gsk_render_node_contains_paste_node (child);
   node->contains_subsurface_node = gsk_render_node_contains_subsurface_node (child);
+  node->needs_blending = gsk_render_node_needs_blending (child);
 
   return node;
 }
@@ -282,5 +283,29 @@ gsk_isolation_node_get_isolations (const GskRenderNode *node)
   const GskIsolationNode *self = (const GskIsolationNode *) node;
 
   return self->isolations;
+}
+
+GskIsolation
+gsk_isolation_features_simplify_for_node (GskIsolation   features,
+                                          GskRenderNode *node)
+{
+  GskIsolation result;
+
+  result = 0;
+
+  if (features & GSK_ISOLATION_BACKGROUND)
+    {
+      if (gsk_render_node_clears_background (node) ||
+          gsk_render_node_get_copy_mode (node) != GSK_COPY_NONE)
+        result |= GSK_ISOLATION_BACKGROUND;
+    }
+
+  if (features & GSK_ISOLATION_COPY_PASTE)
+    {
+      if (gsk_render_node_contains_paste_node (node))
+        result |= GSK_ISOLATION_COPY_PASTE;
+    }
+
+  return result;
 }
 

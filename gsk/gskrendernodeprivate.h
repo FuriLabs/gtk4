@@ -43,6 +43,7 @@ struct _GskRenderNode
   guint clears_background : 1; /* mostly relevant for tracking opacity */
   guint contains_subsurface_node : 1; /* contains a subsurface node */
   guint contains_paste_node : 1; /* contains a paste node that has no matching copy node */
+  guint needs_blending : 1; /* This node cannot be drawn with glDisable (GL_BLEND) */
 };
 
 typedef struct
@@ -133,9 +134,6 @@ void            gsk_render_node_draw_fallback           (GskRenderNode          
 void            gsk_render_node_render_opacity          (GskRenderNode               *self,
                                                          GskOpacityData              *data);
 
-GskRenderNode **gsk_render_node_get_children            (GskRenderNode               *node,
-                                                         gsize                       *n_children);
-
 GdkMemoryDepth  gsk_render_node_get_preferred_depth     (const GskRenderNode         *node) G_GNUC_PURE;
 gboolean        gsk_render_node_is_hdr                  (const GskRenderNode         *node) G_GNUC_PURE;
 gboolean        gsk_render_node_is_fully_opaque         (const GskRenderNode         *node) G_GNUC_PURE;
@@ -143,6 +141,7 @@ gboolean        gsk_render_node_clears_background       (const GskRenderNode    
 GskCopyMode     gsk_render_node_get_copy_mode           (const GskRenderNode         *node) G_GNUC_PURE;
 gboolean        gsk_render_node_contains_subsurface_node(const GskRenderNode         *node) G_GNUC_PURE;
 gboolean        gsk_render_node_contains_paste_node     (const GskRenderNode         *node) G_GNUC_PURE;
+gboolean        gsk_render_node_needs_blending          (const GskRenderNode         *node) G_GNUC_PURE;
 
 #define gsk_render_node_ref(node)   _gsk_render_node_ref(node)
 #define gsk_render_node_unref(node) _gsk_render_node_unref(node)

@@ -68,6 +68,7 @@ compare_render_tests = [
   'copy-transform-order',
   'component-transfer-levels',
   'component-transfer-linear',
+  'composite-clipped-source',
   'composite-everything',
   'conic-gradient-premultiplied-nocairo',
   'conic-gradient-with-64-colorstops',
@@ -117,6 +118,7 @@ compare_render_tests = [
   'fill-subpixel-offsets-vertical-nocairo',
   'fill-subpixel-shift-nocairo',
   'fill-with-3d-contents-nocairo',
+  'gradient-premultiply-end-values',
   'glyph-cache-overflow',
   'glyph-cache-overflow-slices',
   'glyph-hinting-none',
@@ -179,6 +181,7 @@ compare_render_tests = [
   'outset_shadow_simple',
   'paste-behind-clip',
   'paste-no-porter-duff',
+  'paste-occluded',
   'paste-with-depth',
   'premul-color',
   'radial-gradient-pad-color',
@@ -319,6 +322,7 @@ compare_xfails = {
     'cairo-coordinates': ['serialize'],
     'rounded-clip-with-huge-bounds': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'], # 6532
     'yuv-matrix-dmabuf-nv12': ['serialize'],
+    'yuv-matrix-dmabuf-yuyv': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'],
   },
   'vulkan': {
     'big-checkerboard': ['clip'], # 6444
@@ -328,6 +332,7 @@ compare_xfails = {
     'repeating-radial-gradient-edge-colors': ['colorflip'],
     'rounded-clip-with-huge-bounds': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'], # 6532
     'yuv-matrix-dmabuf-nv12': ['serialize'],
+    'yuv-matrix-dmabuf-yuyv': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'],
   },
   'cairo': {
     'cairo-coordinates': ['serialize'],
@@ -338,6 +343,7 @@ compare_xfails = {
     'stroke-fractional-translate': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'],
     'stroke-fractional-translate-gradient': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'],
     'yuv-matrix-dmabuf-nv12': ['serialize'],
+    'yuv-matrix-dmabuf-yuyv': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'],
   }
 }
 
@@ -406,7 +412,9 @@ foreach testname : compare_render_tests
             '-k',
             join_paths(meson.current_source_dir(), 'compare', testname + '.node'),
           ],
-          env: test_env,
+          env: test_env + [
+            'GDK_DISABLE=gl,vulkan'
+          ],
           suite: [ 'gsk', 'gsk-serialize', ] + extra_suites,
         )
   

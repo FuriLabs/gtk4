@@ -36,12 +36,15 @@ struct _IconEditorWindow
   GFile *file;
   PathPaintable *paintable;
   PathPaintable *orig_paintable;
+  GBinding *playing_binding;
   gboolean changed;
   gboolean show_controls;
   gboolean show_thumbnails;
   gboolean show_bounds;
   gboolean show_spines;
+  gboolean show_grid;
   gboolean invert_colors;
+  gboolean playing;
   float weight;
   unsigned int state;
   unsigned int initial_state;
@@ -58,7 +61,15 @@ struct _IconEditorWindow
       GtkImage *image24_12, *image24_13, *image24_14, *image24_15;
     };
   };
+  union {
+    GtkImage *examples[6];
+    struct {
+      GtkImage *example1, *example2, *example3;
+      GtkImage *example4, *example5, *example6;
+    };
+  };
   PaintableEditor *paintable_editor;
+  GtkCssProvider *paintable_style;
 };
 
 struct _IconEditorWindowClass
@@ -73,10 +84,12 @@ enum
   PROP_SHOW_CONTROLS,
   PROP_SHOW_BOUNDS,
   PROP_SHOW_SPINES,
+  PROP_SHOW_GRID,
   PROP_INVERT_COLORS,
   PROP_WEIGHT,
   PROP_STATE,
   PROP_INITIAL_STATE,
+  PROP_PLAYING,
   NUM_PROPERTIES,
 };
 
@@ -130,6 +143,17 @@ icon_editor_window_set_show_spines (IconEditorWindow *self,
 }
 
 static void
+icon_editor_window_set_show_grid (IconEditorWindow *self,
+                                  gboolean          show_grid)
+{
+  if (self->show_grid == show_grid)
+    return;
+
+  self->show_grid = show_grid;
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SHOW_GRID]);
+}
+
+static void
 icon_editor_window_set_invert_colors (IconEditorWindow *self,
                                       gboolean          invert_colors)
 {
@@ -160,6 +184,27 @@ icon_editor_window_set_invert_colors (IconEditorWindow *self,
 }
 
 static void
+update_icon_paintable_style (IconEditorWindow *self,
+                             float             weight)
+{
+  char *css;
+
+  css = g_strdup_printf ("image.icon-paintable-preview { -gtk-icon-weight: %f; }", weight);
+
+  if (!self->paintable_style)
+    {
+      self->paintable_style = gtk_css_provider_new ();
+      gtk_style_context_add_provider_for_display (gtk_widget_get_display (GTK_WIDGET (self)),
+                                                  GTK_STYLE_PROVIDER (self->paintable_style),
+                                                  GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    }
+
+  gtk_css_provider_load_from_string (self->paintable_style, css);
+
+  g_free (css);
+}
+
+static void
 icon_editor_window_set_weight (IconEditorWindow *self,
                                float             weight)
 {
@@ -169,6 +214,8 @@ icon_editor_window_set_weight (IconEditorWindow *self,
   self->weight = weight;
 
   path_paintable_set_weight (self->paintable, weight);
+
+  update_icon_paintable_style (self, weight);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_WEIGHT]);
 }
@@ -217,6 +264,18 @@ icon_editor_window_set_initial_state (IconEditorWindow *self,
   icon_editor_window_set_changed (self, TRUE);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_INITIAL_STATE]);
+}
+
+static void
+icon_editor_window_set_playing (IconEditorWindow *self,
+                                gboolean          playing)
+{
+  if (self->playing == playing)
+    return;
+
+  self->playing = playing;
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PLAYING]);
 }
 
 /* }}} */
@@ -394,17 +453,25 @@ icon_editor_window_set_paintable (IconEditorWindow *self,
     return;
 
   if (self->paintable)
-    g_signal_handlers_disconnect_by_func (self->paintable, paintable_changed, self);
+    {
+      g_signal_handlers_disconnect_by_func (self->paintable, paintable_changed, self);
+      g_clear_object (&self->playing_binding);
+    }
 
   g_set_object (&self->paintable, paintable);
 
   if (self->paintable)
     {
+      path_paintable_set_frame_clock (self->paintable, gtk_widget_get_frame_clock (GTK_WIDGET (self)));
       icon_editor_window_set_state (self, path_paintable_get_state (paintable));
       icon_editor_window_set_initial_state (self, path_paintable_get_state (paintable));
 
       g_signal_connect_swapped (self->paintable, "changed",
                                 G_CALLBACK (paintable_changed), self);
+
+      self->playing_binding = g_object_bind_property (self, "playing",
+                                                      self->paintable, "playing",
+                                                      G_BINDING_SYNC_CREATE);
 
       set_random_icons (self);
 
@@ -462,6 +529,25 @@ load_file_contents (IconEditorWindow *self,
     }
 
   return load_bytes (self, bytes);
+}
+
+static gboolean
+file_drop (GtkDropTarget *target,
+           const GValue  *value,
+           double         x,
+           double         y,
+           gpointer       user_data)
+{
+  if (G_VALUE_HOLDS (value, G_TYPE_FILE))
+    {
+      GtkWidget *self = gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target));
+      GFile *file = g_value_get_object (value);
+
+      icon_editor_window_load (ICON_EDITOR_WINDOW (self), file);
+      return TRUE;
+    }
+
+  return FALSE;
 }
 
 static void
@@ -941,6 +1027,7 @@ icon_editor_window_init (IconEditorWindow *self)
 
   self->weight = 400;
   self->state = 0;
+  self->playing = TRUE;
 
   gtk_widget_init_template (GTK_WIDGET (self));
 
@@ -955,6 +1042,12 @@ icon_editor_window_init (IconEditorWindow *self)
   g_action_map_add_action (G_ACTION_MAP (self), G_ACTION (action));
 
   g_set_object (&action, g_property_action_new ("show-spines", self, "show-spines"));
+  g_action_map_add_action (G_ACTION_MAP (self), G_ACTION (action));
+
+  g_set_object (&action, g_property_action_new ("show-grid", self, "show-grid"));
+  g_action_map_add_action (G_ACTION_MAP (self), G_ACTION (action));
+
+  g_set_object (&action, g_property_action_new ("set-playing", self, "playing"));
   g_action_map_add_action (G_ACTION_MAP (self), G_ACTION (action));
 
   g_simple_action_set_enabled (G_SIMPLE_ACTION (g_action_map_lookup_action (G_ACTION_MAP (self), "save")), FALSE);
@@ -992,6 +1085,10 @@ icon_editor_window_set_property (GObject      *object,
       icon_editor_window_set_show_spines (self, g_value_get_boolean (value));
       break;
 
+    case PROP_SHOW_GRID:
+      icon_editor_window_set_show_grid (self, g_value_get_boolean (value));
+      break;
+
     case PROP_INVERT_COLORS:
       icon_editor_window_set_invert_colors (self, g_value_get_boolean (value));
       break;
@@ -1006,6 +1103,10 @@ icon_editor_window_set_property (GObject      *object,
 
     case PROP_INITIAL_STATE:
       icon_editor_window_set_initial_state (self, g_value_get_uint (value));
+      break;
+
+    case PROP_PLAYING:
+      icon_editor_window_set_playing (self, g_value_get_boolean (value));
       break;
 
     default:
@@ -1044,6 +1145,10 @@ icon_editor_window_get_property (GObject      *object,
       g_value_set_boolean (value, self->show_spines);
       break;
 
+    case PROP_SHOW_GRID:
+      g_value_set_boolean (value, self->show_grid);
+      break;
+
     case PROP_INVERT_COLORS:
       g_value_set_boolean (value, self->invert_colors);
       break;
@@ -1058,6 +1163,10 @@ icon_editor_window_get_property (GObject      *object,
 
     case PROP_INITIAL_STATE:
       g_value_set_uint (value, self->initial_state);
+      break;
+
+    case PROP_PLAYING:
+      g_value_set_boolean (value, self->playing);
       break;
 
     default:
@@ -1085,6 +1194,7 @@ icon_editor_window_finalize (GObject *object)
   g_clear_object (&self->paintable);
   g_clear_object (&self->orig_paintable);
   g_clear_object (&self->file);
+  g_clear_object (&self->paintable_style);
 
   G_OBJECT_CLASS (icon_editor_window_parent_class)->finalize (object);
 }
@@ -1097,6 +1207,7 @@ icon_editor_window_realize (GtkWidget *widget)
   g_autofree char *path = NULL;
   g_autoptr (GFile) file = NULL;
   g_autoptr (GtkIconPaintable) logo = NULL;
+  GdkFrameClock *clock;
 
   GTK_WIDGET_CLASS (icon_editor_window_parent_class)->realize (widget);
 
@@ -1107,6 +1218,13 @@ icon_editor_window_realize (GtkWidget *widget)
   file = g_file_new_for_uri (path);
   logo = gtk_icon_paintable_new_for_file (file, 128, 1);
   gtk_image_set_from_paintable (self->empty_logo, GDK_PAINTABLE (logo));
+
+  clock = gtk_widget_get_frame_clock (GTK_WIDGET (self));
+  for (unsigned int i = 0; i < 6; i++)
+    gtk_svg_set_frame_clock (GTK_SVG (gtk_image_get_paintable (GTK_IMAGE (self->examples[i]))), clock);
+
+  if (self->paintable)
+    path_paintable_set_frame_clock (self->paintable, clock);
 }
 
 static void
@@ -1152,6 +1270,11 @@ icon_editor_window_class_init (IconEditorWindowClass *class)
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
+  properties[PROP_SHOW_GRID] =
+    g_param_spec_boolean ("show-grid", NULL, NULL,
+                          FALSE,
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
+
   properties[PROP_INVERT_COLORS] =
     g_param_spec_boolean ("invert-colors", NULL, NULL,
                           FALSE,
@@ -1171,6 +1294,11 @@ icon_editor_window_class_init (IconEditorWindowClass *class)
     g_param_spec_uint ("initial-state", NULL, NULL,
                        0, G_MAXUINT, 0,
                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
+
+  properties[PROP_PLAYING] =
+    g_param_spec_boolean ("playing", NULL, NULL,
+                          TRUE,
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, properties);
 
@@ -1203,9 +1331,16 @@ icon_editor_window_class_init (IconEditorWindowClass *class)
   gtk_widget_class_bind_template_child (widget_class, IconEditorWindow, image24_14);
   gtk_widget_class_bind_template_child (widget_class, IconEditorWindow, image24_15);
   gtk_widget_class_bind_template_child (widget_class, IconEditorWindow, paintable_editor);
+  gtk_widget_class_bind_template_child (widget_class, IconEditorWindow, example1);
+  gtk_widget_class_bind_template_child (widget_class, IconEditorWindow, example2);
+  gtk_widget_class_bind_template_child (widget_class, IconEditorWindow, example3);
+  gtk_widget_class_bind_template_child (widget_class, IconEditorWindow, example4);
+  gtk_widget_class_bind_template_child (widget_class, IconEditorWindow, example5);
+  gtk_widget_class_bind_template_child (widget_class, IconEditorWindow, example6);
 
   gtk_widget_class_bind_template_callback (widget_class, show_open_filechooser);
   gtk_widget_class_bind_template_callback (widget_class, toggle_controls);
+  gtk_widget_class_bind_template_callback (widget_class, file_drop);
 }
 
 /* }}} */

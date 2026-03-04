@@ -28,6 +28,7 @@
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
 #include "gtk-rendernode-tool.h"
+#include "gtk-tool-utils.h"
 
 #define N_NODE_TYPES (GSK_DISPLACEMENT_NODE + 1)
 
@@ -37,55 +38,36 @@ typedef struct {
   guint cur_depth;
 } NodeCount;
 
-static GskRenderNode *
-count_nodes (GskRenderReplay *replay,
-             GskRenderNode   *node,
-             gpointer         data)
+static void
+count_nodes (GskRenderNode *node,
+             NodeCount     *count)
 {
-  NodeCount *count = data;
-  GskRenderNode *result;
+  GskRenderNode **children;
+  gsize i, n_children;
 
   g_assert (gsk_render_node_get_node_type (node) < N_NODE_TYPES);
 
   count->counts[gsk_render_node_get_node_type (node)] += 1;
   count->cur_depth++;
   count->max_depth = MAX (count->cur_depth, count->max_depth);
-  result = gsk_render_replay_default (replay, node);
+  children = gsk_render_node_get_children (node, &n_children);
+  for (i = 0; i < n_children; i++)
+    count_nodes (children[i], count);
   count->cur_depth--;
-
-  return result;
-}
-
-static const char *
-get_node_name (GskRenderNodeType type)
-{
-  GEnumClass *class;
-  GEnumValue *value;
-  const char *name;
-
-  class = g_type_class_ref (GSK_TYPE_RENDER_NODE_TYPE);
-  value = g_enum_get_value (class, type);
-  name = value->value_nick;
-  g_type_class_unref (class);
-
-  return name;
 }
 
 static void
 file_info (const char *filename)
 {
   GskRenderNode *node;
-  GskRenderReplay *replay;
   NodeCount count = { { 0, } };
   unsigned int total = 0;
   unsigned int namelen = 0;
   graphene_rect_t bounds, opaque;
 
   node = load_node_file (filename);
-  replay = gsk_render_replay_new ();
-  gsk_render_replay_set_node_filter (replay, count_nodes, &count, NULL);
-  
-  gsk_render_replay_foreach_node (replay, node);
+
+  count_nodes (node, &count);
 
   for (unsigned int i = 0; i < G_N_ELEMENTS (count.counts); i++)
     {
@@ -94,11 +76,18 @@ file_info (const char *filename)
         namelen = MAX (namelen, strlen (get_node_name (i)));
     }
 
-  g_print ("%s %u\n", _("Number of nodes:"), total);
+  namelen = MAX (namelen, strlen (_("Number of nodes:")));
+
+  g_print ("%*s %u\n", namelen, _("Number of nodes:"), total);
+
+  int digits = 0;
+  while (pow (10, digits) < total)
+    digits++;
+
   for (unsigned int i = 0; i < G_N_ELEMENTS (count.counts); i++)
     {
       if (count.counts[i] > 0)
-        g_print ("  %*s: %u\n", namelen, get_node_name (i), count.counts[i]);
+        g_print ("%*s: %*u\n", namelen - 1, get_node_name (i), digits, count.counts[i]);
     }
 
   g_print ("%s %u\n", _("Depth:"), count.max_depth);
@@ -117,7 +106,6 @@ file_info (const char *filename)
   else
     g_print ("%s none\n", _("Opaque part:"));
 
-  gsk_render_replay_free (replay);
   gsk_render_node_unref (node);
 }
 

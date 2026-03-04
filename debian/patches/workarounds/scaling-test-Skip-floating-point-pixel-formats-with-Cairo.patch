@@ -15,10 +15,10 @@ Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/7685
  1 file changed, 20 insertions(+)
 
 diff --git a/testsuite/gsk/scaling.c b/testsuite/gsk/scaling.c
-index eec5ea8..53902ab 100644
+index aa46f3c..27fca18 100644
 --- a/testsuite/gsk/scaling.c
 +++ b/testsuite/gsk/scaling.c
-@@ -302,6 +302,16 @@ test_linear_filtering (gconstpointer data,
+@@ -304,6 +304,16 @@ test_linear_filtering (gconstpointer data,
  
    decode_renderer_format (data, &renderer, &format);
  
@@ -35,7 +35,7 @@ index eec5ea8..53902ab 100644
    width = MAX (width, gdk_memory_format_get_block_width (format));
    height = MAX (height, gdk_memory_format_get_block_height (format));
  
-@@ -334,6 +344,16 @@ test_mipmaps (gconstpointer data)
+@@ -337,6 +347,16 @@ test_mipmaps (gconstpointer data)
  
    decode_renderer_format (data, &renderer, &format);
  

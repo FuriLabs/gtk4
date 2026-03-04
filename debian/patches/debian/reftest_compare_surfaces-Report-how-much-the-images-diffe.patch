@@ -272,10 +272,10 @@ index b91a12f..a303ad2 100644
  
  G_END_DECLS
 diff --git a/tools/gtk-image-tool-compare.c b/tools/gtk-image-tool-compare.c
-index 9e3e82c..dc2d2b4 100644
+index 1690f24..e9ea834 100644
 --- a/tools/gtk-image-tool-compare.c
 +++ b/tools/gtk-image-tool-compare.c
-@@ -49,6 +49,9 @@ do_compare (int          *argc,
+@@ -50,6 +50,9 @@ do_compare (int          *argc,
    GdkTexture *texture[2];
    GdkTexture *diff;
    GError *error = NULL;
@@ -285,7 +285,7 @@ index 9e3e82c..dc2d2b4 100644
  
    g_set_prgname ("gtk4-image-tool compare");
    context = g_option_context_new (NULL);
-@@ -80,7 +83,8 @@ do_compare (int          *argc,
+@@ -81,7 +84,8 @@ do_compare (int          *argc,
    for (int i = 0; i < 2; i++)
      texture[i] = load_image_file (filenames[i]);
  
@@ -296,10 +296,10 @@ index 9e3e82c..dc2d2b4 100644
    if (opt_filename && diff)
      {
 diff --git a/tools/gtk-rendernode-tool-compare.c b/tools/gtk-rendernode-tool-compare.c
-index 36ab0c7..94dcc42 100644
+index c6cba7f..c8126c8 100644
 --- a/tools/gtk-rendernode-tool-compare.c
 +++ b/tools/gtk-rendernode-tool-compare.c
-@@ -74,6 +74,9 @@ do_compare (int          *argc,
+@@ -75,6 +75,9 @@ do_compare (int          *argc,
    GdkTexture *texture[2];
    GdkTexture *diff;
    GError *error = NULL;
@@ -309,7 +309,7 @@ index 36ab0c7..94dcc42 100644
  
    g_set_prgname ("gtk4-rendernode-tool compare");
    context = g_option_context_new (NULL);
-@@ -113,8 +116,8 @@ do_compare (int          *argc,
+@@ -114,8 +117,8 @@ do_compare (int          *argc,
          }
      }
  

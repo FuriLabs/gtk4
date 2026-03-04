@@ -42,10 +42,10 @@ index 00d9887..d6430fd 100644
    height = round_up (height, gdk_memory_format_get_block_height (format));
  
 diff --git a/testsuite/gsk/scaling.c b/testsuite/gsk/scaling.c
-index 53902ab..416e594 100644
+index 27fca18..dc69bfc 100644
 --- a/testsuite/gsk/scaling.c
 +++ b/testsuite/gsk/scaling.c
-@@ -312,6 +312,27 @@ test_linear_filtering (gconstpointer data,
+@@ -314,6 +314,27 @@ test_linear_filtering (gconstpointer data,
        return;
      }
  
@@ -73,7 +73,7 @@ index 53902ab..416e594 100644
    width = MAX (width, gdk_memory_format_get_block_width (format));
    height = MAX (height, gdk_memory_format_get_block_height (format));
  
-@@ -354,6 +375,21 @@ test_mipmaps (gconstpointer data)
+@@ -357,6 +378,21 @@ test_mipmaps (gconstpointer data)
        return;
      }
  

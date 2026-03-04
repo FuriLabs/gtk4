@@ -21,7 +21,7 @@ This reverts commit 3121f88265ac61733e257f5335473d6f139f158c.
  11 files changed, 298 insertions(+), 9 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index 713d87a..e802cb6 100644
+index adb861e..7c8a81f 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -1053,6 +1053,7 @@ summary('Documentation', get_option('documentation'), section: 'Build')
@@ -279,7 +279,7 @@ index c35e634..c96b38e 100644
 +  install_data(test_data, install_dir: testexecdir)
 +endif
 diff --git a/testsuite/css/parser/meson.build b/testsuite/css/parser/meson.build
-index 2007708..7659e81 100644
+index 8cc1a74..67198b9 100644
 --- a/testsuite/css/parser/meson.build
 +++ b/testsuite/css/parser/meson.build
 @@ -1,8 +1,13 @@
@@ -296,7 +296,7 @@ index 2007708..7659e81 100644
  )
  
  test_data = [
-@@ -674,3 +679,15 @@ foreach testname : test_data
+@@ -675,3 +680,15 @@ foreach testname : test_data
           suite: 'css')
    endif
  endforeach
@@ -453,7 +453,7 @@ index 64a2ecd..1a2a1fd 100644
 +  install_subdir('image-data', install_dir: testexecdir)
 +endif
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
-index 7d32c93..679a044 100644
+index 725a6b1..f8384b2 100644
 --- a/testsuite/gsk/meson.build
 +++ b/testsuite/gsk/meson.build
 @@ -1,7 +1,12 @@
@@ -478,7 +478,7 @@ index 7d32c93..679a044 100644
  )
  
  compare_render_tests = [
-@@ -700,9 +707,12 @@ foreach t : tests
+@@ -708,9 +715,12 @@ foreach t : tests
    test_srcs = ['@0@.c'.format(test_name)] + t.get(1, [])
    test_extra_suites = t.get(2, [])
  
@@ -493,7 +493,7 @@ index 7d32c93..679a044 100644
    )
  
    test(test_name, test_exe,
-@@ -738,10 +748,11 @@ foreach t : internal_tests
+@@ -746,10 +756,11 @@ foreach t : internal_tests
    test_srcs = ['@0@.c'.format(test_name)] + t.get(1, [])
    test_extra_suites = t.get(2, [])
  
@@ -509,7 +509,7 @@ index 7d32c93..679a044 100644
  
    test(test_name, test_exe,
 diff --git a/testsuite/gtk/meson.build b/testsuite/gtk/meson.build
-index 6ea45ce..45ba0d6 100644
+index abc3ddb..7810f3d 100644
 --- a/testsuite/gtk/meson.build
 +++ b/testsuite/gtk/meson.build
 @@ -1,3 +1,6 @@
@@ -519,7 +519,7 @@ index 6ea45ce..45ba0d6 100644
  gtk_tests_export_dynamic_ldflag = []
  
  if cc.get_id() != 'msvc'
-@@ -188,6 +191,8 @@ foreach t : tests
+@@ -180,6 +183,8 @@ foreach t : tests
      link_args: test_extra_ldflags,
      link_with: test_extra_libs,
      dependencies: libgtk_dep,
@@ -528,7 +528,7 @@ index 6ea45ce..45ba0d6 100644
    )
  
    if test_extra_suites.contains('slow')
-@@ -218,6 +223,8 @@ foreach t : internal_tests
+@@ -210,6 +215,8 @@ foreach t : internal_tests
      link_args: test_extra_ldflags,
      link_with: test_extra_libs,
      dependencies: libgtk_static_dep,
@@ -537,7 +537,7 @@ index 6ea45ce..45ba0d6 100644
    )
  
    if test_extra_suites.contains('slow')
-@@ -238,6 +245,8 @@ if add_languages('cpp', required: false, native: false)
+@@ -230,6 +237,8 @@ if add_languages('cpp', required: false, native: false)
    test_exe = executable('autotestkeywords',
      sources: ['autotestkeywords.cc'],
      dependencies: libgtk_dep,
@@ -546,7 +546,7 @@ index 6ea45ce..45ba0d6 100644
    )
    test('c++ keywords', test_exe,
      args: [ '--tap', '-k' ],
-@@ -245,6 +254,16 @@ if add_languages('cpp', required: false, native: false)
+@@ -237,6 +246,16 @@ if add_languages('cpp', required: false, native: false)
      env: test_env,
      suite: 'gtk',
    )
@@ -563,7 +563,7 @@ index 6ea45ce..45ba0d6 100644
  endif
  
  
-@@ -275,6 +294,8 @@ focus_chain = executable('test-focus-chain',
+@@ -267,6 +286,8 @@ focus_chain = executable('test-focus-chain',
    link_with: testutils_lib,
    dependencies: libgtk_dep,
    c_args: common_cflags,
@@ -572,7 +572,7 @@ index 6ea45ce..45ba0d6 100644
  )
  
  foreach test : focus_chain_tests
-@@ -305,3 +326,27 @@ if host_machine.system() in ['linux']
+@@ -297,3 +318,27 @@ if host_machine.system() in ['linux']
         workdir: meson.project_source_root(),
         suite: ['gtk', 'gtk'])
  endif

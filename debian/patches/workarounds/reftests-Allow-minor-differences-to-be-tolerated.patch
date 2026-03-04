@@ -24,10 +24,9 @@ Applied-upstream: no, upstream want reftests to be a strict pass/fail with ident
 ---
  testsuite/gsk/compare-render.c     | 41 +++++++++++++++++++++++++++++++++++++-
  testsuite/gtk/symbolic.c           |  2 +-
- testsuite/gtk/symbolic2.c          |  2 +-
  testsuite/reftests/gtk-reftest.c   | 32 ++++++++++++++++++++++++++++-
  testsuite/reftests/image-compare.c |  2 +-
- 5 files changed, 74 insertions(+), 5 deletions(-)
+ 4 files changed, 73 insertions(+), 4 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
 index 1a4d0f1..bf8ee4d 100644
@@ -89,10 +88,10 @@ index 1a4d0f1..bf8ee4d 100644
  
    if (diff || g_test_verbose ())
 diff --git a/testsuite/gtk/symbolic.c b/testsuite/gtk/symbolic.c
-index 742c7ec..1f8f4b0 100644
+index cad2f3b..4db8b96 100644
 --- a/testsuite/gtk/symbolic.c
 +++ b/testsuite/gtk/symbolic.c
-@@ -187,7 +187,7 @@ test_symbolic (gconstpointer data)
+@@ -190,7 +190,7 @@ test_symbolic (gconstpointer data)
        return;
      }
  
@@ -101,19 +100,6 @@ index 742c7ec..1f8f4b0 100644
    if (diff)
      {
        save_image (texture, filename, NULL, ".out.png");
-diff --git a/testsuite/gtk/symbolic2.c b/testsuite/gtk/symbolic2.c
-index 2a49d7f..4358e12 100644
---- a/testsuite/gtk/symbolic2.c
-+++ b/testsuite/gtk/symbolic2.c
-@@ -151,7 +151,7 @@ compare_nodes (GskRenderNode *node1,
-   texture1 = gsk_renderer_render_texture (get_renderer (), node1, &bounds);
-   texture2 = gsk_renderer_render_texture (get_renderer (), node2, &bounds);
- 
--  diff = reftest_compare_textures (texture1, texture2);
-+  diff = reftest_compare_textures (texture1, texture2, NULL, NULL, NULL);
-   if (diff)
-     {
-       g_print ("Test failed for %s (%s)\n", path, variant);
 diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
 index 4ad5c56..ad55eab 100644
 --- a/testsuite/reftests/gtk-reftest.c

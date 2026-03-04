@@ -1,0 +1,95 @@
+From: =?utf-8?b?IllhbyBXZWkgKOmtj+mKmOW7tyki?= <yao.wei@canonical.com>
+Date: Fri, 3 Oct 2025 17:57:23 +0800
+Subject: gdk/x11: update cursor size on the extent after scale change
+
+This will update the cursor size when the scale is changed.
+When gnome-shell under Xorg is started in 2x, scaling the UI to
+1x the cursor size is correctly scaled to 1x, but it does not
+work the other way round.
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9017
+Bug: https://gitlab.gnome.org/GNOME/gtk/issues/7805
+Bug-Ubuntu: https://launchpad.net/bugs/1924689
+---
+ gdk/x11/gdkcursor-x11.c | 24 +++++++++++++++++-------
+ gdk/x11/gdkscreen-x11.c |  3 +++
+ gdk/x11/gdkscreen-x11.h |  2 ++
+ 3 files changed, 22 insertions(+), 7 deletions(-)
+
+diff --git a/gdk/x11/gdkcursor-x11.c b/gdk/x11/gdkcursor-x11.c
+index 4fcd122..2c26b10 100644
+--- a/gdk/x11/gdkcursor-x11.c
++++ b/gdk/x11/gdkcursor-x11.c
+@@ -290,8 +290,8 @@ _gdk_x11_display_set_cursor_theme (GdkDisplay  *display,
+   GdkX11Screen *x11_screen;
+   Display *xdisplay;
+   char *old_theme;
+-  int real_size;
+-  int old_size;
++  int new_physical_size, new_logical_size;
++  int old_physical_size, old_scale;
+   gpointer cursor, xcursor;
+   GHashTableIter iter;
+ 
+@@ -300,19 +300,29 @@ _gdk_x11_display_set_cursor_theme (GdkDisplay  *display,
+   x11_screen = gdk_x11_display_get_screen (display);
+   xdisplay = GDK_DISPLAY_XDISPLAY (display);
+ 
+-  real_size = size * x11_screen->surface_scale;
++  old_physical_size = XcursorGetDefaultSize (xdisplay);
++  old_scale = x11_screen->cursor_scale;
++
++  new_logical_size = size;
++
++  /* Find out the logical size of previous cursor, if unset */
++  if (new_logical_size <= 0 && old_scale > 0)
++    new_logical_size = old_physical_size / old_scale;
++
++  new_physical_size = new_logical_size * x11_screen->surface_scale;
+ 
+   old_theme = XcursorGetTheme (xdisplay);
+-  old_size = XcursorGetDefaultSize (xdisplay);
+ 
+-  if (old_size == real_size &&
++  if (old_physical_size == new_physical_size &&
+       (old_theme == theme ||
+        (old_theme && theme && strcmp (old_theme, theme) == 0)))
+     return;
+ 
++  x11_screen->cursor_scale = x11_screen->surface_scale;
++
+   XcursorSetTheme (xdisplay, theme);
+-  if (real_size > 0)
+-    XcursorSetDefaultSize (xdisplay, real_size);
++  if (new_physical_size > 0 && old_physical_size != new_physical_size)
++    XcursorSetDefaultSize (xdisplay, new_physical_size);
+ 
+   if (GDK_X11_DISPLAY (display)->cursors == NULL)
+     return;
+diff --git a/gdk/x11/gdkscreen-x11.c b/gdk/x11/gdkscreen-x11.c
+index 3e76990..5a2db88 100644
+--- a/gdk/x11/gdkscreen-x11.c
++++ b/gdk/x11/gdkscreen-x11.c
+@@ -963,6 +963,9 @@ _gdk_x11_screen_set_surface_scale (GdkX11Screen *x11_screen,
+ 
+   /* We re-read the monitor sizes so we can apply the new scale */
+   process_monitors_change (x11_screen);
++
++  /* Reload cursor theme with new scale */
++  gdk_x11_display_set_cursor_theme (x11_screen->display, NULL, 0);
+ }
+ 
+ static void
+diff --git a/gdk/x11/gdkscreen-x11.h b/gdk/x11/gdkscreen-x11.h
+index bfd0149..280e631 100644
+--- a/gdk/x11/gdkscreen-x11.h
++++ b/gdk/x11/gdkscreen-x11.h
+@@ -40,6 +40,8 @@ struct _GdkX11Screen
+   int surface_scale;
+   gboolean fixed_surface_scale;
+ 
++  int cursor_scale;
++
+   /* Xft resources for the display, used for default values for
+    * the Xft/ XSETTINGS
+    */

@@ -1,0 +1,286 @@
+From: Yao Wei <medicalwei@gmail.com>
+Date: Fri, 19 Dec 2025 07:30:38 +0800
+Subject: gdk/x11: check surface scale on input region, opaque region/rect
+
+Since in x11 backend the input region, opaque region and opaque rect are
+related to scale, it is necessary to track whether the scale is
+different so these regions can be updated without changing the logical
+size.
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9017
+Bug: https://gitlab.gnome.org/GNOME/gtk/issues/7805
+Bug-Ubuntu: https://launchpad.net/bugs/1924689
+---
+ gdk/gdksurface.c         | 41 ++++++++++++++++++++++++++++++++----
+ gdk/gdksurfaceprivate.h  | 20 ++++++++++++++++++
+ gdk/x11/gdksurface-x11.c | 54 ++++++++++++++++++++++++++++++++++++++++++++++++
+ gdk/x11/gdksurface-x11.h |  3 +++
+ 4 files changed, 114 insertions(+), 4 deletions(-)
+
+diff --git a/gdk/gdksurface.c b/gdk/gdksurface.c
+index 7e8a106..95ee848 100644
+--- a/gdk/gdksurface.c
++++ b/gdk/gdksurface.c
+@@ -554,6 +554,9 @@ gdk_surface_class_init (GdkSurfaceClass *klass)
+   klass->get_buffer_size = gdk_surface_default_get_buffer_size;
+   klass->create_subsurface = gdk_surface_real_create_subsurface;
+   klass->set_opaque_region = gdk_surface_default_set_opaque_region;
++  klass->should_set_input_region = gdk_surface_real_should_set_input_region;
++  klass->should_set_opaque_region = gdk_surface_real_should_set_opaque_region;
++  klass->should_set_opaque_rect = gdk_surface_real_should_set_opaque_rect;
+ 
+   /**
+    * GdkSurface:cursor:
+@@ -2029,6 +2032,12 @@ gdk_surface_get_root_coords (GdkSurface *surface,
+   GDK_SURFACE_GET_CLASS (surface)->get_root_coords (surface, x, y, root_x, root_y);
+ }
+ 
++gboolean
++gdk_surface_real_should_set_input_region (GdkSurface *surface, cairo_region_t *region)
++{
++  return !cairo_region_equal (surface->input_region, region);
++}
++
+ /**
+  * gdk_surface_set_input_region:
+  * @surface: a `GdkSurface`
+@@ -2054,12 +2063,14 @@ void
+ gdk_surface_set_input_region (GdkSurface     *surface,
+                               cairo_region_t *region)
+ {
++  GdkSurfaceClass *class = GDK_SURFACE_GET_CLASS (surface);
++
+   g_return_if_fail (GDK_IS_SURFACE (surface));
+ 
+   if (GDK_SURFACE_DESTROYED (surface))
+     return;
+ 
+-  if (cairo_region_equal (surface->input_region, region))
++  if (!class->should_set_input_region (surface, region))
+     return;
+ 
+   if (surface->input_region)
+@@ -2070,7 +2081,7 @@ gdk_surface_set_input_region (GdkSurface     *surface,
+   else
+     surface->input_region = NULL;
+ 
+-  GDK_SURFACE_GET_CLASS (surface)->set_input_region (surface, surface->input_region);
++  class->set_input_region (surface, surface->input_region);
+ }
+ 
+ static void
+@@ -2605,6 +2616,14 @@ gdk_surface_update_opaque_region (GdkSurface *self)
+   g_clear_pointer (&region, cairo_region_destroy);
+ }
+ 
++gboolean
++gdk_surface_real_should_set_opaque_region (GdkSurface *surface,
++                                           cairo_region_t *orig_region,
++                                           cairo_region_t *region)
++{
++  return !cairo_region_equal (orig_region, region);
++}
++
+ /**
+  * gdk_surface_set_opaque_region:
+  * @surface: a top-level `GdkSurface`
+@@ -2639,7 +2658,10 @@ gdk_surface_set_opaque_region (GdkSurface      *surface,
+   g_return_if_fail (GDK_IS_SURFACE (surface));
+   g_return_if_fail (!GDK_SURFACE_DESTROYED (surface));
+ 
+-  if (cairo_region_equal (priv->opaque_region, region))
++  if (!GDK_SURFACE_GET_CLASS (surface)->
++       should_set_opaque_region (surface,
++                                 priv->opaque_region,
++                                 region))
+     return;
+ 
+   g_clear_pointer (&priv->opaque_region, cairo_region_destroy);
+@@ -2650,18 +2672,29 @@ gdk_surface_set_opaque_region (GdkSurface      *surface,
+   gdk_surface_update_opaque_region (surface);
+ }
+ 
++gboolean
++gdk_surface_real_should_set_opaque_rect (GdkSurface *surface,
++                                         cairo_rectangle_int_t *orig_rect,
++                                         cairo_rectangle_int_t *rect)
++{
++  return !gdk_rectangle_equal (orig_rect, rect);
++}
++
+ /* Sets the opaque rect from the rendernode via end_frame() */
+ void
+ gdk_surface_set_opaque_rect (GdkSurface            *self,
+                              const graphene_rect_t *rect)
+ {
++  GdkSurfaceClass *class = GDK_SURFACE_GET_CLASS (self);
+   GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
+   cairo_rectangle_int_t opaque;
+ 
+   if (rect == NULL || !gsk_rect_to_cairo_shrink (rect, &opaque))
+     opaque = (cairo_rectangle_int_t) { 0, 0, 0, 0 };
+ 
+-  if (gdk_rectangle_equal (&priv->opaque_rect, &opaque))
++  if (!class->should_set_opaque_rect (self,
++                                      &priv->opaque_rect,
++                                      &opaque))
+     return;
+ 
+   priv->opaque_rect = opaque;
+diff --git a/gdk/gdksurfaceprivate.h b/gdk/gdksurfaceprivate.h
+index 6375c59..26e92eb 100644
+--- a/gdk/gdksurfaceprivate.h
++++ b/gdk/gdksurfaceprivate.h
+@@ -125,6 +125,8 @@ struct _GdkSurfaceClass
+                                          double          *x,
+                                          double          *y,
+                                          GdkModifierType *mask);
++  gboolean     (* should_set_input_region) (GdkSurface      *surface,
++                                            cairo_region_t  *shape_region);
+   void         (* set_input_region)     (GdkSurface      *surface,
+                                          cairo_region_t  *shape_region);
+ 
+@@ -158,6 +160,12 @@ struct _GdkSurfaceClass
+                                            guint           *out_width,
+                                            guint           *out_height);
+ 
++  gboolean     (* should_set_opaque_region) (GdkSurface      *surface,
++                                             cairo_region_t  *orig_region,
++                                             cairo_region_t  *region);
++  gboolean     (* should_set_opaque_rect) (GdkSurface      *surface,
++                                             cairo_rectangle_int_t  *orig_rect,
++                                             cairo_rectangle_int_t  *rect);
+   void         (* set_opaque_region)      (GdkSurface      *surface,
+                                            cairo_region_t *region);
+   void         (* request_layout)         (GdkSurface     *surface);
+@@ -358,4 +366,16 @@ void                    gdk_surface_set_attached_context                (GdkSurf
+                                                                          GdkDrawContext         *context);
+ GdkDrawContext *        gdk_surface_get_attached_context                (GdkSurface             *self);
+ 
++gboolean   gdk_surface_real_should_set_input_region (GdkSurface     *surface,
++                                                     cairo_region_t *region);
++
++gboolean   gdk_surface_real_should_set_opaque_region (GdkSurface *surface,
++                                                      cairo_region_t *orig_region,
++                                                      cairo_region_t *region);
++
++gboolean   gdk_surface_real_should_set_opaque_rect (GdkSurface *surface,
++                                                    cairo_rectangle_int_t *orig_rect,
++                                                    cairo_rectangle_int_t *rect);
++
++
+ G_END_DECLS
+diff --git a/gdk/x11/gdksurface-x11.c b/gdk/x11/gdksurface-x11.c
+index 498b209..4271dd5 100644
+--- a/gdk/x11/gdksurface-x11.c
++++ b/gdk/x11/gdksurface-x11.c
+@@ -2982,6 +2982,21 @@ gdk_x11_surface_get_device_state (GdkSurface     *surface,
+   return *x >= 0 && *y >= 0 && *x < surface->width && *y < surface->height;
+ }
+ 
++static gboolean
++gdk_x11_surface_should_set_input_region (GdkSurface *surface,
++                                         cairo_region_t *region)
++{
++  GdkX11Surface *impl = GDK_X11_SURFACE (surface);
++
++  if (!cairo_region_equal (surface->input_region, region))
++    return TRUE;
++
++  if (impl->input_region_scale != impl->surface_scale)
++    return TRUE;
++
++  return FALSE;
++}
++
+ static void 
+ gdk_x11_surface_set_input_region (GdkSurface     *surface,
+                                   cairo_region_t *input_region)
+@@ -2995,6 +3010,8 @@ gdk_x11_surface_set_input_region (GdkSurface     *surface,
+   if (!gdk_display_supports_input_shapes (GDK_SURFACE_DISPLAY (surface)))
+     return;
+ 
++  impl->input_region_scale = impl->surface_scale;
++
+   if (input_region == NULL)
+     {
+       XShapeCombineMask (GDK_SURFACE_XDISPLAY (surface),
+@@ -4751,6 +4768,38 @@ gdk_x11_surface_set_frame_sync_enabled (GdkSurface *surface,
+   GDK_X11_SURFACE (surface)->frame_sync_enabled = FALSE;
+ }
+ 
++static gboolean
++gdk_x11_surface_should_set_opaque_region (GdkSurface *surface,
++                                          cairo_region_t *orig_region,
++                                          cairo_region_t *region)
++{
++  GdkX11Surface *impl = GDK_X11_SURFACE (surface);
++
++  if (!cairo_region_equal (orig_region, region))
++    return TRUE;
++
++  if (impl->opaque_region_scale != impl->surface_scale)
++    return TRUE;
++
++  return FALSE;
++}
++
++static gboolean
++gdk_x11_surface_should_set_opaque_rect (GdkSurface *surface,
++                                        cairo_rectangle_int_t *orig_rect,
++                                        cairo_rectangle_int_t *rect)
++{
++  GdkX11Surface *impl = GDK_X11_SURFACE (surface);
++
++  if (!gdk_rectangle_equal (orig_rect, rect))
++    return TRUE;
++
++  if (impl->opaque_region_scale != impl->surface_scale)
++    return TRUE;
++
++  return FALSE;
++}
++
+ static void
+ gdk_x11_surface_set_opaque_region (GdkSurface      *surface,
+                                   cairo_region_t *region)
+@@ -4763,6 +4812,8 @@ gdk_x11_surface_set_opaque_region (GdkSurface      *surface,
+   if (GDK_SURFACE_DESTROYED (surface))
+     return;
+ 
++  impl->opaque_region_scale = impl->surface_scale;
++
+   if (region != NULL)
+     {
+       int i, nrects;
+@@ -4863,6 +4914,7 @@ gdk_x11_surface_class_init (GdkX11SurfaceClass *klass)
+   impl_class->get_geometry = gdk_x11_surface_get_geometry;
+   impl_class->get_root_coords = gdk_x11_surface_get_root_coords;
+   impl_class->get_device_state = gdk_x11_surface_get_device_state;
++  impl_class->should_set_input_region = gdk_x11_surface_should_set_input_region;
+   impl_class->set_input_region = gdk_x11_surface_set_input_region;
+   impl_class->destroy = gdk_x11_surface_destroy;
+   impl_class->beep = gdk_x11_surface_beep;
+@@ -4870,6 +4922,8 @@ gdk_x11_surface_class_init (GdkX11SurfaceClass *klass)
+   impl_class->destroy_notify = gdk_x11_surface_destroy_notify;
+   impl_class->drag_begin = _gdk_x11_surface_drag_begin;
+   impl_class->get_scale = gdk_x11_surface_get_scale;
++  impl_class->should_set_opaque_region = gdk_x11_surface_should_set_opaque_region;
++  impl_class->should_set_opaque_rect = gdk_x11_surface_should_set_opaque_rect;
+   impl_class->set_opaque_region = gdk_x11_surface_set_opaque_region;
+   impl_class->request_layout = gdk_x11_surface_request_layout;
+   impl_class->compute_size = gdk_x11_surface_compute_size;
+diff --git a/gdk/x11/gdksurface-x11.h b/gdk/x11/gdksurface-x11.h
+index 7e5a138..bf3376c 100644
+--- a/gdk/x11/gdksurface-x11.h
++++ b/gdk/x11/gdksurface-x11.h
+@@ -65,6 +65,9 @@ struct _GdkX11Surface
+ 
+   int surface_scale;
+ 
++  int opaque_region_scale;
++  int input_region_scale;
++
+   int shadow_left;
+   int shadow_right;
+   int shadow_top;

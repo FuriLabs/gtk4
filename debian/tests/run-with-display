@@ -39,8 +39,11 @@ case "$display" in
             echo "No weston available"
             exit 1
         fi
+        if [ "$(weston --version | grep -Po '(?<=weston )\d+')" -ge "15" ]; then
+            seat_arg="--fake-seat"
+        fi
         socket="wayland-$(od -vAn -N1 -tu1 < /dev/urandom | tr -d '[:space:]')"
-        weston --backend=headless-backend.so --socket="$socket" --idle-time=0 2>&1 &
+        weston --backend=headless-backend.so ${seat_arg:+"$seat_arg"} --socket="$socket" --idle-time=0 2>&1 &
         weston_pid=$!
         trap 'kill $weston_pid; [ -n $our_xrd ] && rm -rfv $our_xrd' EXIT INT
         while [ ! -S "$XDG_RUNTIME_DIR/$socket" ]; do

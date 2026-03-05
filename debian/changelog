@@ -1,8 +1,20 @@
-gtk4 (4.21.6+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.21.6+ds-1) unstable; urgency=medium
 
   * New upstream release
+  * d/p: Drop patches applied upstream
+  * d/p: Rebase patches
+  * d/symbols: Update symbols from 4.21.6
+  * d/rules: Disable media plugin in udeb
+  * d/control: Drop stale references to media package
+  * d/control, d/patches: Link against system gstplay
+  * d/control, d/tests: Enable vulkan testing on s390x
+  * d/run-tests.sh, d/tests: Disable powervr Vulkan driver
+  * d/p/x11-scale: Fix graphical artifacts after changing display scale in Xorg
+    (LP: #1924689)
+  * d/p: Fix testsuite when the headless display has no seat
+  * d/tests: Run weston with --fake-seat if available
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Wed, 04 Mar 2026 15:32:38 +0100
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 05 Mar 2026 15:25:19 +0100
 
 gtk4 (4.21.5+ds-5) unstable; urgency=medium
 

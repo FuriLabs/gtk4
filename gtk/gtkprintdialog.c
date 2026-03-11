@@ -1160,8 +1160,6 @@ print_response (GDBusConnection *connection,
           break;
         }
     }
-
-  g_object_unref (task);
 }
 
 static void
@@ -1204,7 +1202,8 @@ print_called (GObject      *source,
                                             NULL,
                                             G_DBUS_SIGNAL_FLAGS_NO_MATCH_RULE,
                                             print_response,
-                                            task, NULL);
+                                            g_object_ref (task),
+                                            g_object_unref);
 
     }
 
@@ -1218,8 +1217,8 @@ print_called (GObject      *source,
       ptd->has_returned = TRUE;
       g_object_add_weak_pointer (G_OBJECT (ptd->stream), (gpointer *)&ptd->stream);
       g_task_return_pointer (task, ptd->stream, g_object_unref);
-      g_object_unref (task);
     }
+  g_object_unref (task);
 }
 
 static void
@@ -1255,7 +1254,8 @@ print_window_handle_exported (GtkWindow  *window,
                                         NULL,
                                         G_DBUS_SIGNAL_FLAGS_NO_MATCH_RULE,
                                         print_response,
-                                        task, NULL);
+                                        g_object_ref (task),
+                                        g_object_unref);
 
   fd_list = g_unix_fd_list_new ();
   idx = g_unix_fd_list_append (fd_list, ptd->fds[0], NULL);

@@ -408,10 +408,13 @@ find_file_printer (void)
           printers = gtk_print_backend_get_printer_list (backend);
           printer = printers->data;
           g_list_free (printers);
-          break;
+        }
+      else
+        {
+          gtk_print_backend_destroy (backend);
         }
     }
-  g_list_free (backends);
+  g_list_free_full (backends, g_object_unref);
 
   return printer;
 }

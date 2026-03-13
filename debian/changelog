@@ -1,8 +1,16 @@
 gtk4 (4.22.1+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release
+  * d/p: Drop patch applied upstream
+  * d/p: Rebase patches
+  * d/p/x11-touch: Fix touchscreen input on Xorg
+    (LP: #2051886, #2119066, #2119065, #2125309)
+  * d/p: Fix crash from the print dialog
+  * d/p: Fix resource leak of cpdb printing
+  * d/p/w: Drop unnecessary testsuite workaround
+  * d/libgtk-4-1.symbols: Update symbols from 4.22.0
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Fri, 13 Mar 2026 15:42:04 +0100
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Fri, 13 Mar 2026 19:47:20 +0100
 
 gtk4 (4.21.6+ds-1) unstable; urgency=medium
 

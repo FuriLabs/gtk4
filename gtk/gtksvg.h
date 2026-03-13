@@ -68,8 +68,6 @@ void             gtk_svg_set_weight        (GtkSvg        *self,
 GDK_AVAILABLE_IN_4_22
 double           gtk_svg_get_weight        (GtkSvg        *self);
 
-#define GTK_SVG_STATE_EMPTY ((unsigned int) -1)
-
 GDK_AVAILABLE_IN_4_22
 void             gtk_svg_set_state         (GtkSvg        *self,
                                             unsigned int   state);
@@ -77,7 +75,8 @@ GDK_AVAILABLE_IN_4_22
 unsigned int     gtk_svg_get_state         (GtkSvg        *self);
 
 GDK_AVAILABLE_IN_4_22
-unsigned int     gtk_svg_get_n_states      (GtkSvg        *self);
+const char **    gtk_svg_get_state_names   (GtkSvg        *self,
+                                            unsigned int  *length);
 
 GDK_AVAILABLE_IN_4_22
 void             gtk_svg_set_frame_clock   (GtkSvg        *self,
@@ -153,6 +152,9 @@ typedef enum
   GTK_SVG_ERROR_INVALID_REFERENCE,
   GTK_SVG_ERROR_FAILED_UPDATE,
   GTK_SVG_ERROR_FAILED_RENDERING,
+  GTK_SVG_ERROR_IGNORED_ELEMENT,
+  GTK_SVG_ERROR_LIMITS_EXCEEDED,
+  GTK_SVG_ERROR_NOT_IMPLEMENTED,
 } GtkSvgError;
 
 typedef struct

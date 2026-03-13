@@ -60,7 +60,13 @@ void            path_paintable_set_state           (PathPaintable   *self,
                                                     unsigned int     state);
 unsigned int    path_paintable_get_state           (PathPaintable   *self);
 
-unsigned int    path_paintable_get_n_states        (PathPaintable   *self);
+unsigned int    path_paintable_get_max_state       (PathPaintable   *self);
+
+const char **   path_paintable_get_state_names     (PathPaintable   *self,
+                                                    unsigned int    *length);
+
+gboolean        path_paintable_set_state_names     (PathPaintable   *self,
+                                                    const char     **names);
 
 void            path_paintable_set_weight          (PathPaintable   *self,
                                                     double           weight);

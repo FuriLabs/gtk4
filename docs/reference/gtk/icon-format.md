@@ -9,7 +9,7 @@ This document is an attempt to describe this format.
 
 ## States, transitions and animations
 
-An icon can define a number of states (up to 64). Icons always have an `unset` state, which is used to do draw-in and draw-out animations.
+An icon can define a number of states (up to 64).
 
 Each path can be present in a subset of states (or in all states). When the state changes, the appearance and disappearance of paths can be animated, with a dynamic stroke, a blobby morphing effect, or a fade. There are a number of parameters to influence the transition effects.
 
@@ -124,14 +124,14 @@ GTK defines a small number of attributes in the `gpa` namespace to support state
 The following attributes can be set on the `<svg>` element:
 
 - `gpa:version`: The format version. Must be 1 if specified, currently.
-- `gpa:state`: The initial state, as a number between -1 and 63
+- `gpa:state-names`: A space-separated list of strings. The n-th string serves as name for state n. The strings 'all' and 'none' may not be used as state names, and state names cannot start with digits
+- `gpa:state`: The initial state, as an integer between 0 and 63 or as state name
 
 The following attributes can be set on elements that specify a path:
 
 - `gpa:stroke`: Stroke paint. Either a symbolic color name ('foreground', 'success', 'warning', 'error', 'accent') or a fixed color in the format parsed by `gdk_rgba_parse`
 - `gpa:fill`: Fill paint (similar to `gpa:stroke`)
-- `gpa:states`: A space-separated list of unsigned integers between 0 and 63, or
-   'all' or 'none'
+- `gpa:states`: A space-separated list of integers between 0 and 63, or state names, or 'all' or 'none'
 - `gpa:animation-type`: The animation to use. One of 'none' or 'automatic'
 - `gpa:animation-direction`: One of 'normal', 'alternate', 'reverse', 'reverse-alternate', 'in-out', 'in-out-alternate', 'in-out-reverse', 'segment, 'segment-alternate'
 - `gpa:animation-duration`: The duration of one animation cycle. A floating point number, followed by 's' or 'ms'

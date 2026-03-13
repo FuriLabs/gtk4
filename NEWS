@@ -1,3 +1,84 @@
+Overview of Changes in 4.22.1, 13-03-2026
+=========================================
+
+* Bugs fixed:
+  - #8081 po/README.translators should be updated or removed (Matthias Clasen)
+  - #8082 How Paintable should be translated in these strings? (Matthias Clasen)
+  - #8084 SVG image rendered as grey shape (Matthias Clasen)
+  - #8087 Drop Shadows Make Transparent Textures Significantly Darker (Benjamin
+    Otte)
+  - #8092 Shaper: changing state name doesn't mark file as "changed" (Matthias
+    Clasen)
+  - !9587 Stable backports (luming zh, Victoria, Urtsi Santsi)
+  - !9595 Backport the svg fallback changes (Matthias Clasen)
+  - !9606 testsuite: Limit size of clip test to 4096x4096 (Benjamin Otte)
+  - !9607 widget: Filter is applied before opacity (Benjamin Otte)
+  - !9608 testsuite: Limit size of clip test to 4096x4096 (Benjamin Otte)
+  - !9610 More svg fallback (Matthias Clasen)
+  - !9618 icon editor: Consider state names for unsaved (Matthias Clasen)
+  - !9627 application8: Don't use space in meson generated filename (Zoltán
+    Böszörményi)
+  - !9642 vulkan: Fix invalid read by requerying variable (Benjamin Otte)
+
+* Translation updates:
+  - Chinese (China) (luming zh)
+  - Danish (Ask Hjorth Larsen)
+  - English (United Kingdom) (Bruce Cowan)
+  - French (Guillaume Bernard)
+  - Galician (Francisco Diéguez Souto)
+  - Greek, Modern (1453-) (Efstathios Iosifidis)
+  - Kazakh (Baurzhan Muftakhidinov)
+  - Occitan (post 1500) (Quentin PAGÈS)
+  - Polish (Victoria)
+  - Portuguese (Brazil) (Rafael Fontenelle)
+  - Romanian (Antonio Marin)
+  - Turkish (Emin Tufan Çetin)
+
+
+Overview of Changes in 4.22.0, 06-03-2026
+=========================================
+
+* Bugs fixed:
+  - #8037 Regression: DropTarget's ::leave signal is no longer emitted when a
+    drop is finished (Matthias Clasen)
+  - #8079 Issues in the dnd demo in gtk4-demo (Matthias Clasen)
+  - #8080 Gtk program writes a "foo.png" file to current folder (Marco Trevisan
+    (Treviño))
+  - !9428 demos: Avoid main() from returning due to GApplication.quit (Florian
+    "sp1rit"​)
+  - !9455 win32: Drop the global inhibition counter (g.willems)
+  - !9547 Make WAYLAND_SOCKET handling more reliabe (Jonas Ådahl)
+  - !9553 svg: Allow unsetting values (Matthias Clasen)
+  - !9554 Update Japanese translation
+  - !9555 Update Korean translation
+  - !9556 Update Georgian translation
+  - !9558 accessiblehypertext: Fix doc formatting (Jamie Gravendeel)
+  - !9559 Update Georgian translation
+  - !9560 toplevel-wayland: Free a11y properties on finalize (Maximiliano
+    Sandoval)
+  - !9561 Update Hungarian translation
+  - !9563 svg: drop some api (Matthias Clasen)
+  - !9564 svg: Make the gpa:states condition more flexible (Matthias Clasen)
+  - !9565 svg: Add state names (Matthias Clasen)
+  - !9567 Update Portuguese translation (Hugo Carvalho)
+  - !9568 drop target: Emit the leave signal again (Matthias Clasen)
+  - !9570 Drop accidental files (Matthias Clasen)
+  - !9571 testsuite: Skip gestures if running with no seat (Alessandro Astone)
+  - !9572 droptarget: Fix unconditional leave on cross out (Niklas Wimmer)
+  - !9574 Update Bulgarian translation (Alexander Shopov)
+  - !9575 gtkcheckbutton: Don't use raw label for a11y purposes (Lukáš Tyrychtr)
+  - !9576 icons: Update from devkit (Jakub Steiner)
+  - !9577 wayland: Reset pending offset in Vulkan path (Matthias Clasen)
+
+* Translation updates:
+  - Bulgarian (Alexander Shopov)
+  - Georgian (Ekaterine Papava)
+  - Hungarian (Balázs Úr)
+  - Japanese (Makoto Sakaguchi)
+  - Korean (Changwoo Ryu)
+  - Portuguese (Hugo Carvalho)
+
+
 Overview of Changes in 4.21.6, 27-02-2026
 =========================================
 

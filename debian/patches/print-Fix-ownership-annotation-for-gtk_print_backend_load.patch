@@ -1,0 +1,25 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Thu, 12 Mar 2026 16:52:43 +0100
+Subject: print: Fix ownership annotation for gtk_print_backend_load_modules
+
+The only reference to each backend object is inside the list, so this is
+transfer ull.
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9641
+---
+ gtk/print/gtkprintbackend.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gtk/print/gtkprintbackend.c b/gtk/print/gtkprintbackend.c
+index 126dceb..0ce26374 100644
+--- a/gtk/print/gtkprintbackend.c
++++ b/gtk/print/gtkprintbackend.c
+@@ -139,7 +139,7 @@ gtk_print_backends_init (void)
+ /**
+  * gtk_print_backend_load_modules:
+  *
+- * Returns: (element-type GtkPrintBackend) (transfer container):
++ * Returns: (element-type GtkPrintBackend) (transfer full):
+  */
+ GList *
+ gtk_print_backend_load_modules (void)

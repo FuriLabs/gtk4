@@ -1,0 +1,29 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Thu, 12 Mar 2026 13:50:01 +0100
+Subject: print portal: Plug leak of backend modules
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9641
+---
+ gtk/print/gtkprintoperation-portal.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/gtk/print/gtkprintoperation-portal.c b/gtk/print/gtkprintoperation-portal.c
+index 7c40891..c2d1e9a 100644
+--- a/gtk/print/gtkprintoperation-portal.c
++++ b/gtk/print/gtkprintoperation-portal.c
+@@ -408,10 +408,13 @@ find_file_printer (void)
+           printers = gtk_print_backend_get_printer_list (backend);
+           printer = printers->data;
+           g_list_free (printers);
+-          break;
++        }
++      else
++        {
++          gtk_print_backend_destroy (backend);
+         }
+     }
+-  g_list_free (backends);
++  g_list_free_full (backends, g_object_unref);
+ 
+   return printer;
+ }

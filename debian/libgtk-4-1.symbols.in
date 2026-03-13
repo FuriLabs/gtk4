@@ -4462,8 +4462,8 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_svg_error_quark@Base 4.21.5
  gtk_svg_features_get_type@Base 4.21.5
  gtk_svg_get_features@Base 4.21.5
- gtk_svg_get_n_states@Base 4.21.5
  gtk_svg_get_state@Base 4.21.5
+ gtk_svg_get_state_names@Base 4.22.0
  gtk_svg_get_type@Base 4.21.5
  gtk_svg_get_weight@Base 4.21.5
  gtk_svg_load_from_bytes@Base 4.21.5

@@ -59,21 +59,80 @@ get_paintable_for_shape (StateEditor *self,
 {
   GtkSvg *svg = gtk_svg_new ();
   g_autoptr (GBytes) bytes = NULL;
+  Shape *sh;
 
   svg->width = path_paintable_get_width (self->paintable);
   svg->height = path_paintable_get_height (self->paintable);
 
   svg_shape_attr_set (svg->content,
+                      SHAPE_ATTR_WIDTH,
+                      svg_number_new (svg->width));
+  svg_shape_attr_set (svg->content,
+                      SHAPE_ATTR_HEIGHT,
+                      svg_number_new (svg->height));
+  svg_shape_attr_set (svg->content,
                       SHAPE_ATTR_VIEW_BOX,
                       svg_view_box_new (&GRAPHENE_RECT_INIT (0, 0, svg->width, svg->height)));
 
-  g_ptr_array_add (svg->content->shapes, shape_duplicate (shape));
+  sh = shape_duplicate (shape);
+  svg_shape_attr_set (sh, SHAPE_ATTR_VISIBILITY, NULL);
+  svg_shape_attr_set (sh, SHAPE_ATTR_DISPLAY, NULL);
+  g_ptr_array_add (svg->content->shapes, sh);
 
   bytes = gtk_svg_serialize (svg);
   g_object_unref (svg);
   svg = gtk_svg_new_from_bytes (bytes);
   gtk_svg_play (svg);
   return GDK_PAINTABLE (svg);
+}
+
+static gboolean
+valid_state_name (const char *name)
+{
+  if (strcmp (name, "all") == 0 ||
+      strcmp (name, "none") == 0 ||
+      g_ascii_isdigit (name[0]))
+    return FALSE;
+
+  return TRUE;
+}
+
+static void
+update_state_names (StateEditor *self)
+{
+  const char *names[65] = { NULL, };
+  unsigned int i;
+
+  for (i = 0; i <= self->max_state; i++)
+    {
+      GtkEditable *e;
+      const char *text;
+
+      e = GTK_EDITABLE (gtk_grid_get_child_at (self->grid, i, -1));
+      text = gtk_editable_get_text (e);
+      if (text && valid_state_name (text))
+        {
+          names[i] = text;
+        }
+      else
+        {
+          char num[64];
+          g_snprintf (num, sizeof (num), "%u", i);
+          if (strcmp (num, text) == 0)
+            {
+              names[i] = NULL;
+              break;
+            }
+          else
+            {
+              gtk_editable_set_text (e, num);
+              return;
+            }
+        }
+    }
+
+  names[i + 1] = NULL;
+  path_paintable_set_state_names (self->paintable, names);
 }
 
 static void
@@ -108,9 +167,7 @@ update_states (StateEditor *self)
   self->updating = TRUE;
 
   for (unsigned int i = 0; i < path_paintable_get_n_paths (self->paintable); i++)
-    {
-      path_paintable_set_path_states (self->paintable, i, states[i]);
-    }
+    path_paintable_set_path_states (self->paintable, i, states[i]);
 
   self->updating = FALSE;
 
@@ -120,15 +177,22 @@ update_states (StateEditor *self)
 static void
 drop_state (StateEditor *self)
 {
+  if (self->max_state == 0)
+    return;
+
   self->max_state--;
   self->max_state = CLAMP (self->max_state, 0, 63);
 
+  update_state_names (self);
   update_states (self);
 }
 
 static void
 add_state (StateEditor *self)
 {
+  if (self->max_state == 63)
+    return;
+
   self->max_state++;
   self->max_state = CLAMP (self->max_state, 0, 63);
 
@@ -175,6 +239,7 @@ create_paths_for_shape (StateEditor *self,
           for (unsigned int j = 0; j <= self->max_state; j++)
             {
               child = gtk_check_button_new ();
+              gtk_widget_set_halign (child, GTK_ALIGN_CENTER);
               gtk_check_button_set_active (GTK_CHECK_BUTTON (child),
                                            (states & ((G_GUINT64_CONSTANT (1) << j))) != 0);
               g_signal_connect_swapped (child, "notify::active", G_CALLBACK (update_states), self);
@@ -185,16 +250,43 @@ create_paths_for_shape (StateEditor *self,
 }
 
 static void
+state_name_changed (GtkEditable *editable,
+                    GParamSpec  *pspec,
+                    gpointer     data)
+{
+  StateEditor *self = (StateEditor *) data;
+
+  if (self->updating)
+    return;
+
+  if (gtk_editable_label_get_editing (GTK_EDITABLE_LABEL (editable)))
+    return;
+
+  update_state_names (self);
+}
+
+static void
 create_paths (StateEditor *self)
 {
   GtkWidget *child;
+  const char **names;
+  unsigned int n_names;
+
+  names = path_paintable_get_state_names (self->paintable, &n_names);
 
   for (unsigned int i = 0; i <= self->max_state; i++)
     {
-      char *s = g_strdup_printf ("%u", i);
-      child = gtk_label_new (s);
+      if (i < n_names)
+        child = gtk_editable_label_new (names[i]);
+      else
+        {
+          char *s = g_strdup_printf ("%u", i);
+          child = gtk_editable_label_new (s);
+          g_free (s);
+        }
+      gtk_editable_set_width_chars (GTK_EDITABLE (child), 6);
       gtk_grid_attach (self->grid, child, i, -1, 1, 1);
-      g_free (s);
+      g_signal_connect (child, "notify::editing", G_CALLBACK (state_name_changed), self);
     }
 
   create_paths_for_shape (self, path_paintable_get_content (self->paintable));
@@ -213,7 +305,7 @@ repopulate (StateEditor *self)
 static void
 paths_changed (StateEditor *self)
 {
-  self->max_state = MAX (self->max_state, path_paintable_get_n_states (self->paintable) - 1);
+  self->max_state = MAX (self->max_state, path_paintable_get_max_state (self->paintable));
   self->max_state = CLAMP (self->max_state, 0, 63);
 
   repopulate (self);

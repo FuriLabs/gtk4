@@ -63,9 +63,8 @@
  *
  * `GtkSvg` fills or strokes paths with symbolic or fixed colors.
  * It can have multiple states, and paths can be included in a subset
- * of the states. The special 'empty' state is always available.
- * States can have animations, and the transition between different
- * states can also be animated.
+ * of the states. States can have animations, and the transition
+ * between different states can also be animated.
  *
  * To show a static SVG image, it is enough to load the
  * the SVG and use it like any other paintable.
@@ -75,7 +74,6 @@
  * [method@Gtk.Svg.play] after loading the SVG. The animation can
  * be paused using [method@Gtk.Svg.pause].
  *
- * To find out what states a `GtkSvg` has, use [method@Gtk.Svg.get_n_states].
  * To set the current state, use [method@Gtk.Svg.set_state].
  *
  *
@@ -169,16 +167,30 @@
  *
  * will start a fade-out of path1 300ms before state 0 ends.
  *
+ * A variant of the `gpa:states(...)` condition allows specifying
+ * both before and after states:
+ *
+ *     <animate href='path1'
+ *              attributeName='opacity'
+ *              begin='gpa:states(0, 1 2)'
+ *              dur='300ms'
+ *              fill='freeze'
+ *              from='1'
+ *              to='0'/>
+ *
+ * will start the animation when the state changes from 0 to 1 or
+ * from 0 to 2, but not when it changes from 0 to 3.
+ *
  * In addition to the `gpa:fill` and `gpa:stroke` attributes, symbolic
  * colors can also be specified as a custom paint server reference,
- * like this: `url(gpa:#warning)`. This works in `fill` and `stroke`
+ * like this: `url(#gpa:warning)`. This works in `fill` and `stroke`
  * attributes, but also when specifying colors in SVG animation
  * attributes like `to` or `values`.
  *
  * Note that the SVG syntax allows for a fallback RGB color to be
  * specified after the url, for compatibility with other SVG consumers:
  *
- *     fill='url(gpa:#warning) orange'
+ *     fill='url(#gpa:warning) orange'
  *
  * In contrast to SVG 1.1 and 2.0, we allow the `transform` attribute
  * to be animated with `<animate>`.
@@ -395,12 +407,13 @@ gtk_svg_emit_error (GtkSvg       *svg,
   g_signal_emit (svg, error_signal, 0, error);
 }
 
-G_GNUC_PRINTF (5, 6)
+G_GNUC_PRINTF (6, 7)
 static void
-gtk_svg_invalid_element (GtkSvg               *self,
+gtk_svg_skipped_element (GtkSvg               *self,
                          const char           *parent_element,
                          const GtkSvgLocation *start,
                          const GtkSvgLocation *end,
+                         GtkSvgError           code,
                          const char           *format,
                          ...)
 {
@@ -408,9 +421,7 @@ gtk_svg_invalid_element (GtkSvg               *self,
   va_list args;
 
   va_start (args, format);
-  error = g_error_new_valist (GTK_SVG_ERROR,
-                              GTK_SVG_ERROR_INVALID_ELEMENT,
-                              format, args);
+  error = g_error_new_valist (GTK_SVG_ERROR, code, format, args);
   va_end (args);
 
   gtk_svg_error_set_element (error, parent_element);
@@ -865,7 +876,7 @@ string_append_point (GString                *s,
  * If sep contains just a non-space byte,
  * the separator is mandatory. If it contains
  * a space as well, the separator is optional.
- * If a mandatory separators is missing, NULL
+ * If a mandatory separator is missing, NULL
  * is returned.
  */
 static char **
@@ -1252,15 +1263,78 @@ compute_viewport_transform (gboolean               none,
   *translate_y = ty;
 }
 
+static inline gboolean
+is_state_name_start (char c)
+{
+  return g_ascii_isalpha (c);
+}
+
+static inline gboolean
+is_state_name (char c)
+{
+  return c == '-' || g_ascii_isalnum (c);
+}
+
+static gboolean
+valid_state_name (const char *name)
+{
+  if (strcmp (name, "all") == 0 ||
+      strcmp (name, "none") == 0)
+    return FALSE;
+
+  if (!is_state_name_start (name[0]))
+    return FALSE;
+
+  for (unsigned int i = 0; name[i]; i++)
+    {
+      if (!is_state_name (name[i]))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+find_named_state (GtkSvg       *svg,
+                  const char   *name,
+                  unsigned int *state)
+{
+  for (unsigned int i = 0; i < svg->n_state_names; i++)
+    {
+      if (strcmp (name, svg->state_names[i]) == 0)
+        {
+          *state = i;
+          return TRUE;
+        }
+    }
+
+  return FALSE;
+}
+
+static gboolean
+strv_unique (GStrv strv)
+{
+  if (strv)
+    for (unsigned int i = 0; strv[i]; i++)
+      for (unsigned int j = i + 1; strv[j]; j++)
+        if (strcmp (strv[i], strv[j]) == 0)
+          return FALSE;
+
+  return TRUE;
+}
+
 /* }}} */
 /* {{{ Image loading */
 
 static GdkTexture *
 load_texture (const char  *string,
               gboolean     allow_external,
+              gboolean    *cache_this,
               GError     **error)
 {
   GdkTexture *texture = NULL;
+
+  *cache_this = TRUE;
 
   if (g_str_has_prefix (string, "data:"))
     {
@@ -1271,6 +1345,7 @@ load_texture (const char  *string,
       if (bytes == NULL)
         return NULL;
 
+      *cache_this = FALSE;
       texture = gdk_texture_new_from_bytes (bytes, error);
 
       g_bytes_unref (bytes);
@@ -1297,10 +1372,13 @@ get_texture (GtkSvg      *svg,
   texture = g_hash_table_lookup (svg->images, string);
   if (!texture)
     {
+      gboolean cache_this;
+
       texture = load_texture (string,
                               (svg->features & GTK_SVG_EXTERNAL_RESOURCES) != 0,
+                              &cache_this,
                               error);
-      if (texture)
+      if (texture && cache_this)
         g_hash_table_insert (svg->images, g_strdup (string), texture);
     }
 
@@ -1314,10 +1392,10 @@ static void
 append_base64_with_linebreaks (GString *s,
                                GBytes  *bytes)
 {
-  const guchar *data;
-  gsize len;
-  gsize max;
-  gsize before;
+  const unsigned char *data;
+  size_t len;
+  size_t max;
+  size_t before;
   char *out;
   int state = 0, outlen;
   int save = 0;
@@ -1718,7 +1796,7 @@ typedef struct
 static gboolean
 transform_op (GskPathOperation        op,
               const graphene_point_t *_pts,
-              gsize                   n_pts,
+              size_t                   n_pts,
               float                   weight,
               gpointer                user_data)
 {
@@ -1828,7 +1906,7 @@ add_op (GskPathOperation        op,
         gpointer                user_data)
 {
   SvgPathOps *ops = user_data;
-  gsize size;
+  size_t size;
   SvgPathOp *pop;
 
   if (op == GSK_PATH_CONIC)
@@ -1856,7 +1934,7 @@ add_arc (float    rx,
          gpointer user_data)
 {
   SvgPathOps *ops = user_data;
-  gsize size;
+  size_t size;
   SvgPathOp *pop;
 
   size = svg_path_ops_get_size (ops);
@@ -1936,7 +2014,7 @@ svg_path_data_print (SvgPathData *p,
           string_append_point (s, "M ", &op->seg.pts[0]);
           break;
         case GSK_PATH_CLOSE:
-          g_string_append_printf (s, "Z");
+          g_string_append (s, "Z");
           break;
         case GSK_PATH_LINE:
           string_append_point (s, "L ", &op->seg.pts[1]);
@@ -2665,7 +2743,8 @@ snapshot_push_fill (GtkSnapshot *snapshot,
 #define ALL_STATES G_MAXUINT64
 
 static gboolean
-parse_states (const char *text,
+parse_states (GtkSvg     *svg,
+              const char *text,
               uint64_t   *states)
 {
   GStrv str = NULL;
@@ -2684,7 +2763,7 @@ parse_states (const char *text,
 
   *states = 0;
 
-  str = g_strsplit (text, " ", 0);
+  str = strsplit_set (text, " ");
   for (unsigned int i = 0; str[i]; i++)
     {
       unsigned int u;
@@ -2693,9 +2772,12 @@ parse_states (const char *text,
       u = (unsigned int) g_ascii_strtoull (str[i], &end, 10);
       if ((end && *end != '\0') || (u > 63))
         {
-          *states = ALL_STATES;
-          g_strfreev (str);
-          return FALSE;
+          if (!find_named_state (svg, str[i], &u))
+            {
+              *states = NO_STATES;
+              g_strfreev (str);
+              return FALSE;
+            }
         }
 
       *states |= BIT (u);
@@ -2707,6 +2789,7 @@ parse_states (const char *text,
 
 static void
 print_states (GString  *s,
+              GtkSvg   *svg,
               uint64_t  states)
 {
   if (states == ALL_STATES)
@@ -2720,14 +2803,24 @@ print_states (GString  *s,
   else
     {
       gboolean first = TRUE;
+      unsigned int n_state_names = 0;
+      const char **state_names = NULL;
+      if (svg)
+        {
+          n_state_names = svg->n_state_names;
+          state_names = (const char **) svg->state_names;
+        }
       for (unsigned int u = 0; u < 64; u++)
         {
           if ((states & BIT (u)) != 0)
             {
               if (!first)
                 g_string_append_c (s, ' ');
-              g_string_append_printf (s, "%u", u);
               first = FALSE;
+              if (u < n_state_names)
+                g_string_append (s, state_names[u]);
+              else
+                g_string_append_printf (s, "%u", u);
             }
         }
     }
@@ -2737,9 +2830,6 @@ static gboolean
 state_match (uint64_t     states,
              unsigned int state)
 {
-  if (state == GTK_SVG_STATE_EMPTY)
-    return FALSE;
-
   if ((states & BIT (state)) != 0)
     return TRUE;
 
@@ -2795,7 +2885,7 @@ struct _SvgValue
 
 static SvgValue *
 svg_value_alloc (const SvgValueClass *class,
-                 gsize                size)
+                 size_t                size)
 {
   SvgValue *value;
 
@@ -3941,7 +4031,7 @@ svg_string_print (const SvgValue *value,
                   GString        *string)
 {
   const SvgString *s = (const SvgString *)value;
-  gchar *escaped = g_markup_escape_text (s->value, strlen (s->value));
+  char *escaped = g_markup_escape_text (s->value, strlen (s->value));
   g_string_append (string, escaped);
   g_free (escaped);
 }
@@ -4051,7 +4141,7 @@ svg_string_list_print (const SvgValue *value,
 
   for (unsigned int i = 0; i < s->len; i++)
     {
-      gchar *escaped = g_markup_escape_text (s->values[i], strlen (s->values[i]));
+      char *escaped = g_markup_escape_text (s->values[i], strlen (s->values[i]));
       if (i > 0)
         g_string_append_c (string, ' ');
       g_string_append (string, escaped);
@@ -5172,9 +5262,9 @@ svg_transform_new_rotate_and_shift (double angle,
   return (SvgValue *) tf;
 }
 
-static guint
+static unsigned int
 css_parser_parse_number (GtkCssParser *parser,
-                         guint         n,
+                         unsigned int  n,
                          gpointer      data)
 {
   Number *val = data;
@@ -5189,9 +5279,9 @@ css_parser_parse_number (GtkCssParser *parser,
   return 1;
 }
 
-static guint
+static unsigned int
 css_parser_parse_number_length (GtkCssParser *parser,
-                                guint         n,
+                                unsigned int  n,
                                 gpointer      data)
 {
   Number *val = data;
@@ -5229,9 +5319,9 @@ css_parser_parse_number_length (GtkCssParser *parser,
   return 0;
 }
 
-static guint
+static unsigned int
 css_parser_parse_number_angle (GtkCssParser *parser,
-                               guint         n,
+                               unsigned int  n,
                                gpointer      data)
 {
   Number *val = data;
@@ -5269,9 +5359,9 @@ css_parser_parse_number_angle (GtkCssParser *parser,
   return 0;
 }
 
-static guint
+static unsigned int
 css_parser_parse_number_percentage (GtkCssParser *parser,
-                                    guint         n,
+                                    unsigned int  n,
                                     gpointer      data)
 {
   Number *val = data;
@@ -5302,14 +5392,14 @@ css_parser_parse_number_percentage (GtkCssParser *parser,
 
 static gboolean
 parse_transform_function (GtkCssParser *self,
-                          guint         min_args,
-                          guint         max_args,
+                          unsigned int  min_args,
+                          unsigned int  max_args,
                           double       *values)
 {
   const GtkCssToken *token;
   gboolean result = FALSE;
   char func[64];
-  guint arg;
+  unsigned int arg;
   Number *num;
 
   num = g_newa (Number, max_args);
@@ -5323,7 +5413,7 @@ parse_transform_function (GtkCssParser *self,
   arg = 0;
   while (TRUE)
     {
-      guint parse_args;
+      unsigned int parse_args;
 
       if (arg >= max_args)
         {
@@ -6877,7 +6967,7 @@ typedef enum
   FILTER_DROPSHADOW,
 } FilterKind;
 
-typedef guint (* ArgParseFunc) (GtkCssParser *, guint, gpointer);
+typedef unsigned int (* ArgParseFunc) (GtkCssParser *, unsigned int, gpointer);
 
 enum
 {
@@ -7091,9 +7181,9 @@ svg_filter_resolve (const SvgValue *value,
   return (SvgValue *) result;
 }
 
-static guint
+static unsigned int
 parse_drop_shadow_arg (GtkCssParser *parser,
-                       guint         n,
+                       unsigned int  n,
                        gpointer      data)
 {
   SvgValue **vals = data;
@@ -7166,7 +7256,7 @@ filter_parser_parse (GtkCssParser *parser)
           gtk_css_parser_start_block (parser);
           for (i = 0; i < 4; i++)
             {
-              guint parse_args = parse_drop_shadow_arg (parser, i, values);
+              unsigned int parse_args = parse_drop_shadow_arg (parser, i, values);
               if (parse_args == 0)
                 break;
             }
@@ -8276,9 +8366,9 @@ typedef struct
   char *string;
 } ClipPathArgs;
 
-static guint
+static unsigned int
 parse_clip_path_arg (GtkCssParser *parser,
-                     guint         n,
+                     unsigned int  n,
                      gpointer      data)
 {
   ClipPathArgs *args = data;
@@ -9736,7 +9826,7 @@ static FilterTypeInfo filter_types[] = {
   },
 };
 
-static guint
+static unsigned int
 filter_type_hash (gconstpointer v)
 {
   const FilterTypeInfo *t = (const FilterTypeInfo *) v;
@@ -11297,7 +11387,7 @@ static ShapeAttrLookup shape_attr_lookups[] = {
   { "offset", BIT (SHAPE_FILTER), FILTER_FUNCS, SHAPE_ATTR_FE_FUNC_OFFSET },
 };
 
-static guint
+static unsigned int
 shape_attr_lookup_hash (gconstpointer v)
 {
   const ShapeAttrLookup *l = (const ShapeAttrLookup *) v;
@@ -11666,7 +11756,7 @@ shape_type_has_text (ShapeType type)
   return type == SHAPE_TEXT || type == SHAPE_TSPAN;
 }
 
-static guint
+static unsigned int
 shape_type_hash (gconstpointer v)
 {
   const ShapeTypeInfo *t = (const ShapeTypeInfo *) v;
@@ -12563,8 +12653,8 @@ typedef struct {
       TimeSpecSide side;
     } sync;
     struct {
-      uint64_t states;
-      TimeSpecSide side;
+      uint64_t from;
+      uint64_t to;
     } states;
   };
   int64_t time;
@@ -12609,8 +12699,8 @@ time_spec_copy (const TimeSpec *orig)
       t->sync.side = orig->sync.side;
       break;
     case TIME_SPEC_TYPE_STATES:
-      t->states.states = orig->states.states;
-      t->states.side = orig->states.side;
+      t->states.from = orig->states.from;
+      t->states.to = orig->states.to;
       break;
     default:
       g_assert_not_reached ();
@@ -12644,8 +12734,8 @@ time_spec_equal (const void *p1,
              t1->offset == t2->offset;
 
     case TIME_SPEC_TYPE_STATES:
-      return t1->states.states == t2->states.states &&
-             t1->states.side == t2->states.side &&
+      return t1->states.from == t2->states.from &&
+             t1->states.to == t2->states.to &&
              t1->offset == t2->offset;
 
     default:
@@ -12654,7 +12744,8 @@ time_spec_equal (const void *p1,
 }
 
 static gboolean
-time_spec_parse (TimeSpec   *spec,
+time_spec_parse (GtkSvg     *svg,
+                 TimeSpec   *spec,
                  const char *value)
 {
   const char *side_str;
@@ -12695,7 +12786,7 @@ time_spec_parse (TimeSpec   *spec,
         {
           uint64_t states;
           str[strlen (str) - 1] = '\0';
-          if (!parse_states (str + strlen ("gpa:states("), &states))
+          if (!parse_states (svg, str + strlen ("gpa:states("), &states))
             {
               g_free (str);
               return FALSE;
@@ -12703,8 +12794,16 @@ time_spec_parse (TimeSpec   *spec,
           g_free (str);
 
           spec->type = TIME_SPEC_TYPE_STATES;
-          spec->states.side = side;
-          spec->states.states = states;
+          if (side == TIME_SPEC_SIDE_BEGIN)
+            {
+              spec->states.from = ALL_STATES & ~states;
+              spec->states.to = states;
+            }
+          else
+            {
+              spec->states.from = states;
+              spec->states.to = ALL_STATES & ~states;
+            }
         }
       else
         {
@@ -12713,6 +12812,42 @@ time_spec_parse (TimeSpec   *spec,
           spec->sync.base = NULL;
           spec->sync.side = side;
         }
+    }
+  else if (g_str_has_prefix (value, "gpa:states("))
+    {
+      const char *v, *end;
+      char *str;
+      uint64_t from, to;
+
+      v = value + strlen ("gpa:states(");
+      end = strchr (v, ',');
+      if (!end)
+        return FALSE;
+
+      str = g_strndup (v, end - v);
+      if (!parse_states (svg, str, &from))
+        {
+          g_free (str);
+          return FALSE;
+        }
+      g_free (str);
+
+      v = end + 1;
+      end = strchr (v, ')');
+      if (!end)
+        return FALSE;
+
+      str = g_strndup (v, end - v);
+      if (!parse_states (svg, str, &to))
+        {
+          g_free (str);
+          return FALSE;
+        }
+      g_free (str);
+
+      spec->type = TIME_SPEC_TYPE_STATES;
+      spec->states.from = from;
+      spec->states.to = to;
     }
   else if (strlen (value) > 0)
     {
@@ -12727,6 +12862,7 @@ time_spec_parse (TimeSpec   *spec,
 
 static void
 time_spec_print (TimeSpec *spec,
+                 GtkSvg   *svg,
                  GString  *s)
 {
   gboolean only_nonzero = FALSE;
@@ -12747,9 +12883,10 @@ time_spec_print (TimeSpec *spec,
     case TIME_SPEC_TYPE_STATES:
       {
         g_string_append (s, "gpa:states(");
-        print_states (s, spec->states.states);
+        print_states (s, svg, spec->states.from);
+        g_string_append (s, ", ");
+        print_states (s, svg, spec->states.to);
         g_string_append (s, ")");
-        g_string_append_printf (s, "%s", sides[spec->states.side]);
         only_nonzero = TRUE;
       }
       break;
@@ -12766,6 +12903,7 @@ time_spec_print (TimeSpec *spec,
 
 static void
 time_specs_print (GPtrArray *specs,
+                  GtkSvg    *svg,
                   GString   *s)
 {
   for (unsigned int i = 0; i < specs->len; i++)
@@ -12773,7 +12911,7 @@ time_specs_print (GPtrArray *specs,
       TimeSpec *spec = g_ptr_array_index (specs, i);
       if (i > 0)
         g_string_append (s, "; ");
-      time_spec_print (spec, s);
+      time_spec_print (spec, svg, s);
     }
 }
 
@@ -12839,31 +12977,15 @@ time_spec_update_for_state (TimeSpec     *spec,
 {
   if (spec->type == TIME_SPEC_TYPE_STATES && previous_state != state)
     {
-      gboolean was_in, is_in;
       int64_t time;
 
       time = spec->time;
 
-      was_in = state_match (spec->states.states, previous_state);
-      is_in = state_match (spec->states.states, state);
-
-      if (was_in != is_in)
-        {
-          if (spec->states.side == TIME_SPEC_SIDE_BEGIN)
-            {
-              if (!was_in && is_in)
-                time = state_start_time + spec->offset;
-              else if (was_in && !is_in)
-                time = INDEFINITE;
-            }
-          else if (spec->states.side == TIME_SPEC_SIDE_END)
-            {
-              if (!was_in && is_in)
-                time = INDEFINITE;
-              else if (was_in && !is_in)
-                time = state_start_time + spec->offset;
-            }
-        }
+      if (state_match (spec->states.from & ~spec->states.to, previous_state) &&
+          state_match (spec->states.to & ~spec->states.from, state))
+        time = state_start_time + spec->offset;
+      else
+        time = INDEFINITE;
 
       time_spec_set_time (spec, time);
     }
@@ -12872,9 +12994,8 @@ time_spec_update_for_state (TimeSpec     *spec,
 static int64_t
 time_spec_get_state_change_delay (TimeSpec *spec)
 {
-  if (spec->type == TIME_SPEC_TYPE_STATES &&
-      spec->states.side == TIME_SPEC_SIDE_END)
-    return ABS (spec->offset);
+  if (spec->type == TIME_SPEC_TYPE_STATES && spec->offset < 0)
+    return - spec->offset;
 
   return 0;
 }
@@ -12955,13 +13076,13 @@ timeline_get_sync (Timeline     *timeline,
 }
 
 static TimeSpec *
-timeline_get_states (Timeline     *timeline,
-                     uint64_t      states,
-                     TimeSpecSide  side,
-                     int64_t       offset)
+timeline_get_states (Timeline *timeline,
+                     uint64_t  from,
+                     uint64_t  to,
+                     int64_t   offset)
 {
   TimeSpec spec = { .type = TIME_SPEC_TYPE_STATES,
-                    .states = { .states = states, .side = side },
+                    .states = { .from = from, .to = to },
                     .offset = offset };
   return timeline_get_time_spec (timeline, &spec);
 }
@@ -14866,9 +14987,7 @@ shape_apply_state (GtkSvg       *self,
     {
       Visibility visibility;
 
-      if (state == GTK_SVG_STATE_EMPTY)
-        visibility = VISIBILITY_HIDDEN;
-      else if (shape->gpa.states & BIT (state))
+      if (shape->gpa.states & BIT (state))
         visibility = VISIBILITY_VISIBLE;
       else
         visibility = VISIBILITY_HIDDEN;
@@ -15017,10 +15136,10 @@ create_visibility_setter (Shape        *shape,
   if (initial_visibility == VISIBILITY_VISIBLE)
     {
       a->id = g_strdup_printf ("gpa:out-of-state:%s", shape->id);
-      begin = animation_add_begin (a, timeline_get_states (timeline, states, TIME_SPEC_SIDE_END, MAX (0, - delay)));
+      begin = animation_add_begin (a, timeline_get_states (timeline, states, ALL_STATES & ~states, MAX (0, - delay)));
       time_spec_add_animation (begin, a);
 
-      end = animation_add_end (a, timeline_get_states (timeline, states, TIME_SPEC_SIDE_BEGIN, - (MAX (0, - delay))));
+      end = animation_add_end (a, timeline_get_states (timeline, ALL_STATES & ~states, states, - (MAX (0, - delay))));
       time_spec_add_animation (end, a);
 
       opposite_visibility = VISIBILITY_HIDDEN;
@@ -15028,10 +15147,10 @@ create_visibility_setter (Shape        *shape,
   else
     {
       a->id = g_strdup_printf ("gpa:in-state:%s", shape->id);
-      begin = animation_add_begin (a, timeline_get_states (timeline, states, TIME_SPEC_SIDE_BEGIN, MAX (0, - delay)));
+      begin = animation_add_begin (a, timeline_get_states (timeline, ALL_STATES & ~states, states, MAX (0, - delay)));
       time_spec_add_animation (begin, a);
 
-      end = animation_add_end (a, timeline_get_states (timeline, states, TIME_SPEC_SIDE_END, - (MAX (0, - delay))));
+      end = animation_add_end (a, timeline_get_states (timeline, states, ALL_STATES & ~states, - (MAX (0, - delay))));
       time_spec_add_animation (end, a);
 
       opposite_visibility = VISIBILITY_VISIBLE;
@@ -15066,7 +15185,8 @@ create_states (Shape        *shape,
                int64_t       delay,
                unsigned int  initial)
 {
-  create_visibility_setter (shape, timeline, states, delay, initial);
+  if (states != ALL_STATES)
+    create_visibility_setter (shape, timeline, states, delay, initial);
 }
 
 /* }}} */
@@ -15131,7 +15251,7 @@ create_transition (Shape         *shape,
 
   a->id = g_strdup_printf ("gpa:transition:fade-in:%u:%s:%s", idx, shape_attr_get_name (attr), shape->id);
 
-  begin = animation_add_begin (a, timeline_get_states (timeline, states, TIME_SPEC_SIDE_BEGIN, delay));
+  begin = animation_add_begin (a, timeline_get_states (timeline, ALL_STATES & ~states, states, delay));
 
   a->n_frames = 2;
   a->frames = g_new0 (Frame, a->n_frames);
@@ -15165,7 +15285,7 @@ create_transition (Shape         *shape,
 
   a->id = g_strdup_printf ("gpa:transition:fade-out:%u:%s:%s", idx, shape_attr_get_name (attr), shape->id);
 
-  begin = animation_add_begin (a, timeline_get_states (timeline, states, TIME_SPEC_SIDE_END, - (duration + delay)));
+  begin = animation_add_begin (a, timeline_get_states (timeline, states, ALL_STATES & ~states, - (duration + delay)));
 
   a->n_frames = 2;
   a->frames = g_new0 (Frame, a->n_frames);
@@ -15197,7 +15317,7 @@ create_transition (Shape         *shape,
       a->repeat_count = 1;
 
       a->id = g_strdup_printf ("gpa:transition:delay-in:%u:%s:%s", idx, shape_attr_get_name (attr), shape->id);
-      begin = animation_add_begin (a, timeline_get_states (timeline, states, TIME_SPEC_SIDE_BEGIN, 0));
+      begin = animation_add_begin (a, timeline_get_states (timeline, ALL_STATES & ~states, states, 0));
       time_spec_add_animation (begin, a);
 
       a->has_begin = 1;
@@ -15223,7 +15343,7 @@ create_transition (Shape         *shape,
       a->repeat_count = 1;
 
       a->id = g_strdup_printf ("gpa:transition:delay-out:%u:%s:%s", idx, shape_attr_get_name (attr), shape->id);
-      begin = animation_add_begin (a, timeline_get_states (timeline, states, TIME_SPEC_SIDE_END, 0));
+      begin = animation_add_begin (a, timeline_get_states (timeline, states, ALL_STATES & ~states, 0));
       time_spec_add_animation (begin, a);
 
       a->has_begin = 1;
@@ -15265,7 +15385,7 @@ create_transition_delay (Shape     *shape,
 
   a->id = g_strdup_printf ("gpa:transition:fade-in-delay:%s:%s", shape_attr_get_name (attr), shape->id);
 
-  begin = animation_add_begin (a, timeline_get_states (timeline, states, TIME_SPEC_SIDE_BEGIN, 0));
+  begin = animation_add_begin (a, timeline_get_states (timeline, ALL_STATES & ~states, states, 0));
 
   a->attr = attr;
   a->n_frames = 2;
@@ -15291,7 +15411,7 @@ create_transition_delay (Shape     *shape,
 
   a->id = g_strdup_printf ("gpa:transition:fade-out-delay:%s:%s", shape_attr_get_name (attr), shape->id);
 
-  begin = animation_add_begin (a, timeline_get_states (timeline, states, TIME_SPEC_SIDE_END, -delay));
+  begin = animation_add_begin (a, timeline_get_states (timeline, states, ALL_STATES & ~states, -delay));
 
   a->attr = attr;
   a->n_frames = 2;
@@ -15567,7 +15687,7 @@ create_animation (Shape        *shape,
 
   a->id = g_strdup_printf ("gpa:animation:%s-%s", shape->id, shape_attr_get_name (attr));
 
-  begin = animation_add_begin (a, timeline_get_states (timeline, states, TIME_SPEC_SIDE_BEGIN, 0));
+  begin = animation_add_begin (a, timeline_get_states (timeline, ALL_STATES & ~states, states, 0));
   time_spec_add_animation (begin, a);
 
   if (state_match (states, initial))
@@ -15576,7 +15696,7 @@ create_animation (Shape        *shape,
       time_spec_add_animation (begin, a);
     }
 
-  end = animation_add_end (a, timeline_get_states (timeline, states, TIME_SPEC_SIDE_END, 0));
+  end = animation_add_end (a, timeline_get_states (timeline, states, ALL_STATES & ~states, 0));
   time_spec_add_animation (end, a);
 
   a->attr = attr;
@@ -16045,6 +16165,7 @@ typedef struct
   struct {
     const GSList *to;
     GtkSvgLocation start;
+    GtkSvgError code;
     char *reason;
     gboolean skip_over_target;
   } skip;
@@ -16128,7 +16249,7 @@ parse_base_animation_attrs (Animation            *a,
           TimeSpec *begin;
           GError *error = NULL;
 
-          if (!time_spec_parse (&spec, strv[i]))
+          if (!time_spec_parse (data->svg, &spec, strv[i]))
             {
               gtk_svg_invalid_attribute (data->svg, context, "begin", NULL);
               g_clear_error (&error);
@@ -16139,11 +16260,6 @@ parse_base_animation_attrs (Animation            *a,
           begin = animation_add_begin (a, timeline_get_time_spec (data->svg->timeline, &spec));
           time_spec_add_animation (begin, a);
           time_spec_clear (&spec);
-          if (begin->type == TIME_SPEC_TYPE_STATES)
-            {
-              if (begin->states.states != NO_STATES)
-                data->svg->max_state = MAX (data->svg->max_state, g_bit_nth_msf (begin->states.states, -1));
-            }
         }
       g_strfreev (strv);
     }
@@ -16165,7 +16281,7 @@ parse_base_animation_attrs (Animation            *a,
           TimeSpec *end;
           GError *error = NULL;
 
-          if (!time_spec_parse (&spec, strv[i]))
+          if (!time_spec_parse (data->svg, &spec, strv[i]))
             {
               gtk_svg_invalid_attribute (data->svg, context, "end", NULL);
               g_clear_error (&error);
@@ -16175,11 +16291,6 @@ parse_base_animation_attrs (Animation            *a,
           end = animation_add_end (a, timeline_get_time_spec (data->svg->timeline, &spec));
           time_spec_add_animation (end, a);
           time_spec_clear (&spec);
-          if (end->type == TIME_SPEC_TYPE_STATES)
-            {
-              if (end->states.states != NO_STATES)
-                data->svg->max_state = MAX (data->svg->max_state, g_bit_nth_msf (end->states.states, -1));
-            }
         }
       g_strfreev (strv);
     }
@@ -17396,6 +17507,7 @@ parse_svg_gpa_attrs (GtkSvg               *svg,
                      ParserData           *data,
                      GMarkupParseContext  *context)
 {
+  const char *state_names_attr = NULL;
   const char *state_attr = NULL;
   const char *version_attr = NULL;
   const char *keywords_attr = NULL;
@@ -17403,23 +17515,39 @@ parse_svg_gpa_attrs (GtkSvg               *svg,
   markup_filter_attributes (element_name,
                             attr_names, attr_values,
                             handled,
+                            "gpa:state-names", &state_names_attr,
                             "gpa:state", &state_attr,
                             "gpa:version", &version_attr,
                             "gpa:keywords", &keywords_attr,
                             NULL);
 
+  if (state_names_attr)
+    {
+      GStrv strv = strsplit_set (state_names_attr, " ");
+
+      if (strv == NULL)
+        {
+          gtk_svg_invalid_attribute (svg, context, "gpa:state-names", "failed to parse state names");
+        }
+      else
+        {
+          if (!gtk_svg_set_state_names (svg, (const char **) strv))
+            gtk_svg_invalid_attribute (svg, context, "gpa:state-names", "failed to parse state names");
+          g_strfreev (strv);
+        }
+    }
+
   if (state_attr)
     {
       double v;
+      unsigned int state;
 
-      if (strcmp (state_attr, "empty") == 0)
-        gtk_svg_set_state (svg, GTK_SVG_STATE_EMPTY);
-      else if (!parse_number (state_attr, -1, 63, &v))
-        gtk_svg_invalid_attribute (svg, context, "gpa:state", NULL);
-      else if (v < 0)
-        gtk_svg_set_state (svg, GTK_SVG_STATE_EMPTY);
+      if (parse_number (state_attr, 0, 63, &v))
+        gtk_svg_set_state (svg, (unsigned int) v);
+      else if (find_named_state (svg, state_attr, &state))
+        gtk_svg_set_state (svg, state);
       else
-        gtk_svg_set_state (svg, (unsigned int) CLAMP (v, 0, 63));
+        gtk_svg_invalid_attribute (svg, context, "gpa:state", NULL);
     }
 
   if (version_attr)
@@ -17565,7 +17693,7 @@ parse_shape_gpa_attrs (Shape                *shape,
   states = ALL_STATES;
   if (states_attr)
     {
-      if (!parse_states (states_attr, &states))
+      if (!parse_states (data->svg, states_attr, &states))
         {
           gtk_svg_invalid_attribute (data->svg, context, "gpa:states", NULL);
           states = ALL_STATES;
@@ -17618,7 +17746,7 @@ parse_shape_gpa_attrs (Shape                *shape,
         gtk_svg_invalid_attribute (data->svg, context, "gpa:transition-easing", NULL);
     }
 
-  has_animation = 0;
+  has_animation = 1;
   if (animation_type_attr)
     {
       if (!parse_enum (animation_type_attr,
@@ -17762,10 +17890,11 @@ parse_shape_gpa_attrs (Shape                *shape,
 
 /* }}} */
 
-G_GNUC_PRINTF (3, 4)
+G_GNUC_PRINTF (4, 5)
 static void
 skip_element (ParserData          *data,
               GMarkupParseContext *context,
+              GtkSvgError          code,
               const char          *format,
               ...)
 {
@@ -17774,6 +17903,7 @@ skip_element (ParserData          *data,
   gtk_svg_location_init (&data->skip.start, context);
   data->skip.to = g_markup_parse_context_get_element_stack (context);
   data->skip.skip_over_target = TRUE;
+  data->skip.code = code;
 
   va_start (args, format);
   g_vasprintf (&data->skip.reason, format, args);
@@ -17801,6 +17931,7 @@ start_element_cb (GMarkupParseContext  *context,
     {
       gtk_svg_location_init (&data->skip.start, context);
       data->skip.to = g_markup_parse_context_get_element_stack (context)->next;
+      data->skip.code = GTK_SVG_ERROR_LIMITS_EXCEEDED;
       data->skip.reason = g_strdup ("Loading limit exceeded");
       data->skip.skip_over_target = FALSE;
       return;
@@ -17811,7 +17942,7 @@ start_element_cb (GMarkupParseContext  *context,
       if (data->current_shape &&
           !shape_type_has_shapes (data->current_shape->type))
         {
-          skip_element (data, context, "Parent element can't contain shapes");
+          skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "Parent element can't contain shapes");
           return;
         }
 
@@ -17820,7 +17951,7 @@ start_element_cb (GMarkupParseContext  *context,
           has_ancestor (context, "clipPath") &&
           shape_type != SHAPE_CLIP_PATH)
         {
-          skip_element (data, context, "<clipPath> can only contain shapes, not %s", element_name);
+          skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "<clipPath> can only contain shapes, not %s", element_name);
           return;
         }
 
@@ -17882,7 +18013,7 @@ start_element_cb (GMarkupParseContext  *context,
           (!check_ancestors (context, "linearGradient", NULL) &&
            !check_ancestors (context, "radialGradient", NULL)))
         {
-          skip_element (data, context, "<stop> only allowed in <linearGradient> or <radialGradient>");
+          skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "<stop> only allowed in <linearGradient> or <radialGradient>");
           return;
         }
 
@@ -17952,7 +18083,7 @@ start_element_cb (GMarkupParseContext  *context,
         {
           if (!check_ancestors (context, "feMerge", "filter", NULL))
             {
-              skip_element (data, context, "<%s> only allowed in <feMerge>", element_name);
+              skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "<%s> only allowed in <feMerge>", element_name);
               return;
             }
 
@@ -17964,7 +18095,7 @@ start_element_cb (GMarkupParseContext  *context,
         {
           if (!check_ancestors (context, "feComponentTransfer", "filter", NULL))
             {
-              skip_element (data, context, "<%s> only allowed in <feComponentTransfer>", element_name);
+              skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "<%s> only allowed in <feComponentTransfer>", element_name);
               return;
             }
         }
@@ -17972,7 +18103,7 @@ start_element_cb (GMarkupParseContext  *context,
         {
           if (!check_ancestors (context, "filter", NULL))
             {
-              skip_element (data, context, "<%s> only allowed in <filter>", element_name);
+              skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "<%s> only allowed in <filter>", element_name);
               return;
             }
         }
@@ -18060,7 +18191,7 @@ start_element_cb (GMarkupParseContext  *context,
       strcmp (element_name, "rdf:li") == 0)
     {
       if (!has_ancestor (context, "metadata"))
-        skip_element (data, context, "Ignoring RDF elements outside <metadata>: <%s>", element_name);
+        skip_element (data, context, GTK_SVG_ERROR_IGNORED_ELEMENT, "Ignoring RDF elements outside <metadata>: <%s>", element_name);
 
       if (strcmp (element_name, "rdf:li") == 0)
         {
@@ -18071,7 +18202,7 @@ start_element_cb (GMarkupParseContext  *context,
               g_string_set_size (data->text, 0);
             }
           else
-            skip_element (data, context, "Ignoring RDF element in wrong context: <%s>", element_name);
+            skip_element (data, context, GTK_SVG_ERROR_IGNORED_ELEMENT, "Ignoring RDF element in wrong context: <%s>", element_name);
         }
       else if (strcmp (element_name, "dc:description") == 0)
         {
@@ -18081,7 +18212,7 @@ start_element_cb (GMarkupParseContext  *context,
               g_string_set_size (data->text, 0);
             }
           else
-            skip_element (data, context, "Ignoring RDF element in wrong context: <%s>", element_name);
+            skip_element (data, context, GTK_SVG_ERROR_IGNORED_ELEMENT, "Ignoring RDF element in wrong context: <%s>", element_name);
         }
       else if (strcmp (element_name, "dc:title") == 0)
         {
@@ -18091,7 +18222,7 @@ start_element_cb (GMarkupParseContext  *context,
               g_string_set_size (data->text, 0);
             }
           else
-            skip_element (data, context, "Ignoring RDF element in wrong context: <%s>", element_name);
+            skip_element (data, context, GTK_SVG_ERROR_IGNORED_ELEMENT, "Ignoring RDF element in wrong context: <%s>", element_name);
         }
       else if (strcmp (element_name, "cc:license") == 0)
         {
@@ -18131,18 +18262,28 @@ start_element_cb (GMarkupParseContext  *context,
             }
         }
       else
-        skip_element (data, context, "Ignoring font element in the wrong context: <%s>", element_name);
+        skip_element (data, context, GTK_SVG_ERROR_IGNORED_ELEMENT, "Ignoring font element in the wrong context: <%s>", element_name);
 
       return;
     }
 
   if (strcmp (element_name, "style") == 0 ||
-      strcmp (element_name, "title") == 0 ||
-      strcmp (element_name, "desc") == 0 ||
-      g_str_has_prefix (element_name, "sodipodi:") ||
-      g_str_has_prefix (element_name, "inkscape:"))
+      strcmp (element_name, "textPath") == 0 ||
+      strcmp (element_name, "feConvolveMatrix") == 0 ||
+      strcmp (element_name, "feDiffuseLighting") == 0 ||
+      strcmp (element_name, "feMorphology") == 0 ||
+      strcmp (element_name, "feSpecularLighting") == 0 ||
+      strcmp (element_name, "feTurbulence") == 0)
     {
-      skip_element (data, context, "Ignoring metadata and style elements: <%s>", element_name);
+      skip_element (data, context, GTK_SVG_ERROR_NOT_IMPLEMENTED, "<%s> is not supported", element_name);
+      return;
+    }
+  else if (strcmp (element_name, "title") == 0 ||
+           strcmp (element_name, "desc") == 0 ||
+           g_str_has_prefix (element_name, "sodipodi:") ||
+           g_str_has_prefix (element_name, "inkscape:"))
+    {
+      skip_element (data, context, GTK_SVG_ERROR_IGNORED_ELEMENT, "Ignoring metadata and non-standard elements: <%s>", element_name);
       return;
     }
 
@@ -18154,13 +18295,13 @@ start_element_cb (GMarkupParseContext  *context,
 
       if ((data->svg->features & GTK_SVG_ANIMATIONS) == 0)
         {
-          skip_element (data, context, "Animations are disabled");
+          skip_element (data, context, GTK_SVG_ERROR_IGNORED_ELEMENT, "Animations are disabled");
           return;
         }
 
       if (data->current_animation)
         {
-          skip_element (data, context, "Nested animation elements are not allowed: <set>");
+          skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "Nested animation elements are not allowed: <set>");
           return;
         }
 
@@ -18180,7 +18321,7 @@ start_element_cb (GMarkupParseContext  *context,
                                        context))
         {
           animation_drop_and_free (a);
-          skip_element (data, context, "Skipping <%s> - bad attributes", element_name);
+          skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "Skipping <%s> - bad attributes", element_name);
           return;
         }
 
@@ -18190,7 +18331,7 @@ start_element_cb (GMarkupParseContext  *context,
         {
           gtk_svg_missing_attribute (data->svg, context, "to", NULL);
           animation_drop_and_free (a);
-          skip_element (data, context, "Dropping <set> without 'to'");
+          skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "Dropping <set> without 'to'");
           return;
         }
 
@@ -18204,7 +18345,7 @@ start_element_cb (GMarkupParseContext  *context,
         {
           gtk_svg_invalid_attribute (data->svg, context, "to", "Failed to parse: %s", to_attr);
           animation_drop_and_free (a);
-          skip_element (data, context, "Dropping <set> without 'to'");
+          skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "Dropping <set> without 'to'");
           return;
         }
 
@@ -18237,13 +18378,13 @@ start_element_cb (GMarkupParseContext  *context,
 
       if ((data->svg->features & GTK_SVG_ANIMATIONS) == 0)
         {
-          skip_element (data, context, "Animations are disabled");
+          skip_element (data, context, GTK_SVG_ERROR_IGNORED_ELEMENT, "Animations are disabled");
           return;
         }
 
       if (data->current_animation)
         {
-          skip_element (data, context, "Nested animation elements are not allowed: <%s>", element_name);
+          skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "Nested animation elements are not allowed: <%s>", element_name);
           return;
         }
 
@@ -18264,7 +18405,7 @@ start_element_cb (GMarkupParseContext  *context,
                                        context))
         {
           animation_drop_and_free (a);
-          skip_element (data, context, "Skipping <%s> - bad attributes", element_name);
+          skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "Skipping <%s> - bad attributes", element_name);
           return;
         }
 
@@ -18276,7 +18417,7 @@ start_element_cb (GMarkupParseContext  *context,
                                         context))
         {
           animation_drop_and_free (a);
-          skip_element (data, context, "Skipping <%s> - bad attributes", element_name);
+          skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "Skipping <%s> - bad attributes", element_name);
           return;
         }
 
@@ -18290,7 +18431,7 @@ start_element_cb (GMarkupParseContext  *context,
                                              context))
             {
               animation_drop_and_free (a);
-              skip_element (data, context, "Skipping <%s>: bad attributes", element_name);
+              skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "Skipping <%s>: bad attributes", element_name);
               return;
             }
         }
@@ -18321,7 +18462,7 @@ start_element_cb (GMarkupParseContext  *context,
           data->current_animation->type != ANIMATION_TYPE_MOTION ||
           data->current_animation->motion.path_ref != NULL)
         {
-          skip_element (data, context, "<mpath> only allowed in <animateMotion>");
+          skip_element (data, context, GTK_SVG_ERROR_INVALID_ELEMENT, "<mpath> only allowed in <animateMotion>");
           return;
         }
 
@@ -18359,12 +18500,12 @@ start_element_cb (GMarkupParseContext  *context,
     }
 
   /* If we get here, its all over */
-  skip_element (data, context, "Unknown element: <%s>", element_name);
+  skip_element (data, context, GTK_SVG_ERROR_IGNORED_ELEMENT, "Unknown element: <%s>", element_name);
 }
 
 static void
 end_element_cb (GMarkupParseContext *context,
-                const gchar         *element_name,
+                const char          *element_name,
                 gpointer             user_data,
                 GError             **gmarkup_error)
 {
@@ -18387,10 +18528,11 @@ end_element_cb (GMarkupParseContext *context,
 
           gtk_svg_location_init (&end, context);
 
-          gtk_svg_invalid_element (data->svg,
+          gtk_svg_skipped_element (data->svg,
                                    parent,
                                    &data->skip.start,
                                    &end,
+                                   data->skip.code,
                                    "%s", data->skip.reason);
           g_clear_pointer (&data->skip.reason, g_free);
           data->skip.to = NULL;
@@ -19367,35 +19509,6 @@ serialize_shape_attrs (GString              *s,
 }
 
 static void
-states_to_string (GString  *s,
-                  uint64_t  states)
-{
-  if (states == ALL_STATES)
-    {
-      g_string_append (s, "all");
-    }
-  else if (states == NO_STATES)
-    {
-      g_string_append (s, "none");
-    }
-  else
-    {
-      gboolean first = TRUE;
-
-      for (unsigned int u = 0; u < 64; u++)
-        {
-          if ((states & (G_GUINT64_CONSTANT (1) << u)) != 0)
-            {
-              if (!first)
-                g_string_append_c (s, ' ');
-              g_string_append_printf (s, "%u", u);
-              first = FALSE;
-            }
-        }
-    }
-}
-
-static void
 serialize_gpa_attrs (GString              *s,
                      GtkSvg               *svg,
                      int                   indent,
@@ -19434,16 +19547,16 @@ serialize_gpa_attrs (GString              *s,
       g_string_append_c (s, '\'');
     }
 
+  if (shape->gpa.states != ALL_STATES)
+    {
+      indent_for_attr (s, indent);
+      g_string_append (s, "gpa:states='");
+      print_states (s, svg, shape->gpa.states);
+      g_string_append_c (s, '\'');
+    }
+
   if ((flags & GTK_SVG_SERIALIZE_EXPAND_GPA_ATTRS) == 0)
     {
-      if (shape->gpa.states != ALL_STATES)
-        {
-          indent_for_attr (s, indent);
-          g_string_append (s, "gpa:states='");
-          states_to_string (s, shape->gpa.states);
-          g_string_append_c (s, '\'');
-        }
-
       if (shape->gpa.transition != GPA_TRANSITION_NONE)
         {
           const char *names[] = { "none", "animate", "morph", "fade" };
@@ -19579,7 +19692,7 @@ serialize_base_animation_attrs (GString   *s,
     {
       indent_for_attr (s, indent);
       g_string_append (s, "begin='");
-      time_specs_print (a->begin, s);
+      time_specs_print (a->begin, svg, s);
       g_string_append (s, "'");
     }
 
@@ -19587,7 +19700,7 @@ serialize_base_animation_attrs (GString   *s,
     {
       indent_for_attr (s, indent);
       g_string_append (s, "end='");
-      time_specs_print (a->end, s);
+      time_specs_print (a->end, svg, s);
       g_string_append (s, "'");
     }
 
@@ -20152,7 +20265,7 @@ serialize_shape (GString              *s,
 
   if (shape_type_has_text (shape->type))
     {
-      for (guint i = 0; i < shape->text->len; i++)
+      for (unsigned int i = 0; i < shape->text->len; i++)
         {
           TextNode *node = &g_array_index (shape->text, TextNode, i);
           switch (node->type)
@@ -23359,7 +23472,7 @@ generate_layouts (Shape           *self,
     }                                               \
 } while(0);
 
-  for (guint i = 0; i < self->text->len; i++)
+  for (unsigned int i = 0; i < self->text->len; i++)
     {
       TextNode *node = &g_array_index (self->text, TextNode, i);
       switch (node->type)
@@ -23402,7 +23515,7 @@ generate_layouts (Shape           *self,
 static void
 clear_layouts (Shape *self)
 {
-  for (guint i = 0; i < self->text->len; i++)
+  for (unsigned int i = 0; i < self->text->len; i++)
     {
       TextNode *node = &g_array_index (self->text, TextNode, i);
       switch (node->type)
@@ -23427,7 +23540,7 @@ fill_text (Shape                 *self,
 {
   g_assert (shape_type_has_text (self->type));
 
-  for (guint i = 0; i < self->text->len; i++)
+  for (unsigned int i = 0; i < self->text->len; i++)
     {
       TextNode *node = &g_array_index (self->text, TextNode, i);
 
@@ -23517,7 +23630,7 @@ stroke_text (Shape                 *self,
 {
   g_assert (shape_type_has_text (self->type));
 
-  for (guint i = 0; i < self->text->len; i++)
+  for (unsigned int i = 0; i < self->text->len; i++)
     {
       TextNode *node = &g_array_index (self->text, TextNode, i);
 
@@ -24364,7 +24477,7 @@ gtk_svg_init (GtkSvg *self)
 {
   self->weight = -1;
   self->overflow = GTK_OVERFLOW_HIDDEN;
-  self->state = GTK_SVG_STATE_EMPTY;
+  self->state = 0;
   self->load_time = INDEFINITE;
   self->state_change_delay = 0;
   self->next_update = INDEFINITE;
@@ -24400,6 +24513,8 @@ gtk_svg_dispose (GObject *object)
   g_free (self->license);
   g_free (self->description);
   g_free (self->keywords);
+
+  g_strfreev (self->state_names);
 
   G_OBJECT_CLASS (gtk_svg_parent_class)->dispose (object);
 }
@@ -24553,15 +24668,13 @@ gtk_svg_class_init (GtkSvgClass *class)
    *
    * The current state of the renderer.
    *
-   * This can be a number between 0 and 63, or the special value
-   * `(unsigned int) -1` to indicate the 'empty' state in which
-   * nothing is drawn.
+   * This can be a number between 0 and 63.
    *
    * Since: 4.22
    */
   properties[PROP_STATE] =
     g_param_spec_uint ("state", NULL, NULL,
-                       0, G_MAXUINT, GTK_SVG_STATE_EMPTY,
+                       0, G_MAXUINT, 0,
                        G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, properties);
@@ -24653,7 +24766,7 @@ timeline_dump (Timeline *timeline)
     {
       TimeSpec *spec = g_ptr_array_index (timeline->times, i);
       g_string_append (s, "  ");
-      time_spec_print (spec, s);
+      time_spec_print (spec, NULL, s);
       g_string_append (s, "\n");
     }
   g_print ("%s", s->str);
@@ -25076,7 +25189,7 @@ gtk_svg_get_next_update (GtkSvg *self)
 static const GdkRGBA *
 pad_colors (GdkRGBA        col[5],
             const GdkRGBA *colors,
-            guint          n_colors)
+            unsigned int   n_colors)
 {
   GdkRGBA default_colors[5] = {
     [GTK_SYMBOLIC_COLOR_FOREGROUND] = { 0.745, 0.745, 0.745, 1.0 },
@@ -25187,11 +25300,21 @@ gtk_svg_serialize_full (GtkSvg               *self,
       g_string_append (s, "xmlns:gpa='https://www.gtk.org/grappa'");
       indent_for_attr (s, 0);
       g_string_append_printf (s, "gpa:version='%u'", MAX (self->gpa_version, 1));
+      if (self->n_state_names > 0)
+        {
+          indent_for_attr (s, 0);
+          g_string_append (s, "gpa:state-names='");
+          for (unsigned int i = 0; i < self->n_state_names; i++)
+            {
+              if (i > 0)
+                g_string_append_c (s, ' ');
+              g_string_append (s, self->state_names[i]);
+            }
+          g_string_append (s, "'");
+        }
+
       indent_for_attr (s, 0);
-      if (self->state == GTK_SVG_STATE_EMPTY)
-        g_string_append (s, "gpa:state='empty'");
-      else
-        g_string_append_printf (s, "gpa:state='%u'", self->state);
+      g_string_append_printf (s, "gpa:state='%u'", self->state);
     }
 
   if (flags & GTK_SVG_SERIALIZE_INCLUDE_STATE)
@@ -25276,7 +25399,7 @@ gtk_svg_serialize_full (GtkSvg               *self,
         {
           const char *file;
           char *data;
-          gsize len;
+          size_t len;
           GBytes *bytes;
 
           file = g_ptr_array_index (self->font_files, i);
@@ -25657,12 +25780,12 @@ svg_shape_attr_set (Shape     *shape,
                     ShapeAttr  attr,
                     SvgValue  *value)
 {
-  g_return_if_fail (value != NULL);
-
-  if (_gtk_bitmask_get (shape->attrs, attr))
-    svg_value_unref (shape->base[attr]);
-  shape->base[attr] = value;
-  shape->attrs = _gtk_bitmask_set (shape->attrs, attr, TRUE);
+  svg_value_unref (shape->base[attr]);
+  if (value)
+    shape->base[attr] = value;
+  else
+    shape->base[attr] = shape_attr_ref_initial_value (attr, shape->type, shape->parent != NULL);
+  shape->attrs = _gtk_bitmask_set (shape->attrs, attr, value != NULL);
 }
 
 Shape *
@@ -25689,7 +25812,7 @@ void
 svg_shape_delete (Shape *shape)
 {
   if (shape->text)
-    for (guint i = 0; i < shape->text->len; i++)
+    for (unsigned int i = 0; i < shape->text->len; i++)
       {
         TextNode *node = &g_array_index (shape->text, TextNode, i);
         if (node->type == TEXT_NODE_SHAPE && node->shape.shape == shape)
@@ -25804,6 +25927,9 @@ gtk_svg_clear_content (GtkSvg *self)
   self->used = 0;
 
   self->gpa_version = 0;
+
+  g_clear_pointer (&self->state_names, g_strfreev);
+  self->n_state_names = 0;
 }
 
 /*< private >
@@ -25932,6 +26058,35 @@ gtk_svg_apply_filter (GtkSvg                *svg,
   g_assert (node == NULL);
 
   return result;
+}
+
+/*< private>
+ * gtk_svg_set_state_names:
+ * @svg: a `GtkSvg`
+ * @names: (array zero-terminated=1): a `NULL`-terminated arrayt
+ *   of strings
+ *
+ * Sets names for states.
+ *
+ * Returns: true if the state names were set successfully
+ */
+gboolean
+gtk_svg_set_state_names (GtkSvg      *svg,
+                         const char **names)
+{
+  for (unsigned int i = 0; names[i]; i++)
+    {
+      if (!valid_state_name (names[i]))
+        return FALSE;
+    }
+
+  if (!strv_unique ((GStrv) names))
+    return FALSE;
+
+  g_strfreev (svg->state_names);
+  svg->state_names = g_strdupv ((char **) names);
+  svg->n_state_names = g_strv_length ((char **) names);
+  return TRUE;
 }
 
 /* }}} */
@@ -26167,13 +26322,9 @@ gtk_svg_get_weight (GtkSvg *self)
 /**
  * gtk_svg_set_state:
  * @self: an SVG paintable
- * @state: the state to set, as a value between 0 and 63,
- *   or `GTK_SVG_STATE_EMPTY`
+ * @state: the state to set, as a value between 0 and 63
  *
  * Sets the state of the paintable.
- *
- * Use [method@Gtk.Svg.get_n_states] to find out
- * what states @self has.
  *
  * If the paintable is currently playing, the state change
  * will apply transitions that are defined in the SVG. If
@@ -26189,7 +26340,7 @@ gtk_svg_set_state (GtkSvg       *self,
   unsigned int previous_state;
 
   g_return_if_fail (GTK_IS_SVG (self));
-  g_return_if_fail (state == GTK_SVG_STATE_EMPTY || state <= 63);
+  g_return_if_fail (state <= 63);
 
   if (self->state == state)
     return;
@@ -26257,26 +26408,29 @@ gtk_svg_get_state (GtkSvg *self)
 }
 
 /**
- * gtk_svg_get_n_states:
+ * gtk_svg_get_state_names:
  * @self: an SVG paintable
+ * @length: (out): return location for the number
+ *   of strings that are returned
  *
- * Gets the number of states defined in the SVG.
+ * Returns a `NULL`-terminated array of
+ * state names, if available.
  *
- * Note that there is always an empty state, which does
- * not count towards this number. If this function returns
- * the value N, the meaningful states of the SVG are
- * 0, 1, ..., N - 1 and `GTK_SVG_STATE_EMPTY`.
+ * Note that the returned array and the strings
+ * contained in it will only be valid until the
+ * `GtkSvg` is cleared or reloaded, so if you
+ * want to keep it around, you should make a copy.
  *
- * Returns: the number of states
+ * Returns: (nullable) (transfer none): the state names
  *
  * Since: 4.22
  */
-unsigned int
-gtk_svg_get_n_states (GtkSvg *self)
+const char **
+gtk_svg_get_state_names (GtkSvg       *self,
+                         unsigned int *length)
 {
-  g_return_val_if_fail (GTK_IS_SVG (self), 0);
-
-  return self->max_state + 1;
+  *length = self->n_state_names;
+  return (const char **) self->state_names;
 }
 
 /**
@@ -26427,6 +26581,14 @@ gtk_svg_pause (GtkSvg *self)
  * @GTK_SVG_ERROR_FAILED_UPDATE: An animation could not be updated
  * @GTK_SVG_ERROR_FAILED_RENDERING: Rendering is not according to
  *   expecations
+ * @GTK_SVG_ERROR_IGNORED_ELEMENT: An XML element is ignored,
+ *   but it should not affect rendering (this error code is used
+ *   for metadata and exension elements)
+ * @GTK_SVG_ERROR_NOT_IMPLEMENTED: The SVG uses features that
+ *   are not supported by `GtkSvg`. It may be advisable to use
+ *   a different SVG renderer.
+ * @GTK_SVG_ERROR_LIMITS_EXCEEDED: An implementation limit has
+ *   been hit, such as the number of loaded shapes.
  *
  * Error codes in the `GTK_SVG_ERROR` domain for errors
  * that happen during parsing or rendering of SVG.

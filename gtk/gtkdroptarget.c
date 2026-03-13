@@ -117,8 +117,8 @@ struct _GtkDropTarget
 
   GdkContentFormats *formats;
   GdkDragAction actions;
-  guint preload : 1;
-
+  guint preload  : 1;
+  guint entered  : 1;
   guint dropping : 1;
   graphene_point_t coords;
   GdkDrop *drop;
@@ -516,7 +516,10 @@ gtk_drop_target_handle_crossing (GtkEventController    *controller,
 
       /* start_drop ends w/ thaw_notify, where handler may reject, so recheck */
       if (self->drop != NULL)
-        g_signal_emit (self, signals[ENTER], 0, x, y, &preferred);
+        {
+          self->entered = TRUE;
+          g_signal_emit (self, signals[ENTER], 0, x, y, &preferred);
+        }
       else
         preferred = 0;
 
@@ -539,12 +542,24 @@ gtk_drop_target_handle_crossing (GtkEventController    *controller,
     }
   else
     {
+      /*
+       * @self is attached to the common ancestor of new_target and old_target.
+       * I.e. not actually crossing out of the drop target's area, so there is
+       * nothing to do.
+       */
       if (crossing->new_descendent != NULL ||
-          crossing->new_target == widget ||
-          self->drop == NULL)
+          crossing->new_target == widget)
         return;
 
-      g_signal_emit (self, signals[LEAVE], 0);
+      if (self->entered)
+        {
+          self->entered = FALSE;
+          g_signal_emit (self, signals[LEAVE], 0);
+        }
+
+      if (self->drop == NULL)
+        return;
+
       if (!self->dropping)
         gtk_drop_target_end_drop (self);
 
@@ -557,8 +572,12 @@ gtk_drop_target_reset (GtkEventController *controller)
 {
   GtkDropTarget *self = GTK_DROP_TARGET (controller);
 
-  if (self->drop)
-    g_signal_emit (self, signals[LEAVE], 0);
+  if (self->entered)
+    {
+      self->entered = FALSE;
+      g_signal_emit (self, signals[LEAVE], 0);
+    }
+
   gtk_drop_target_end_drop (self);
 }
 
@@ -1157,4 +1176,3 @@ gtk_drop_target_reject (GtkDropTarget *self)
 
   gtk_drop_target_end_drop (self);
 }
-

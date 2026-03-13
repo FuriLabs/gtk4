@@ -980,10 +980,60 @@ path_paintable_get_weight (PathPaintable *self)
   return gtk_svg_get_weight (self->svg);
 }
 
-unsigned int
-path_paintable_get_n_states (PathPaintable *self)
+static unsigned int
+shape_get_max_state (Shape *shape)
 {
-  return gtk_svg_get_n_states (GTK_SVG (ensure_render_paintable (self)));
+  if (shape->type == SHAPE_GROUP || shape->type == SHAPE_SVG)
+    {
+      unsigned int state = 0;
+
+      for (unsigned int i = 0; i < shape->shapes->len; i++)
+        {
+          Shape *sh = g_ptr_array_index (shape->shapes, i);
+          state = MAX (state, shape_get_max_state (sh));
+        }
+
+      return state;
+    }
+  else if (shape->gpa.states == 0)
+    {
+      return 0;
+    }
+  else
+    {
+      return g_bit_nth_msf (shape->gpa.states, -1);
+    }
+}
+
+unsigned int
+path_paintable_get_max_state (PathPaintable *self)
+{
+  unsigned int state;
+  unsigned int n_names;
+
+  state = shape_get_max_state (self->svg->content);
+
+  gtk_svg_get_state_names (self->svg, &n_names);
+  if (n_names > 0)
+    return MAX (state, n_names - 1);
+
+  return state;
+}
+
+const char **
+path_paintable_get_state_names (PathPaintable *self,
+                                unsigned int  *length)
+{
+  return gtk_svg_get_state_names (self->svg, length);
+}
+
+gboolean
+path_paintable_set_state_names (PathPaintable  *self,
+                                const char    **names)
+{
+  g_signal_emit (self, signals[CHANGED], 0);
+
+  return gtk_svg_set_state_names (self->svg, names);
 }
 
 gboolean
@@ -1039,7 +1089,10 @@ path_paintable_serialize (PathPaintable *self,
 GBytes *
 path_paintable_serialize_as_svg (PathPaintable *self)
 {
-  return gtk_svg_serialize (self->svg);
+  return gtk_svg_serialize_full (self->svg,
+                                 NULL, 0,
+                                 GTK_SVG_SERIALIZE_EXPAND_GPA_ATTRS |
+                                 GTK_SVG_SERIALIZE_NO_COMPAT);
 }
 
 const graphene_rect_t *
@@ -1220,7 +1273,7 @@ path_paintable_get_icon_paintable (PathPaintable *self)
     }
 
   ostream = g_io_stream_get_output_stream (iostream);
-  bytes = path_paintable_serialize_as_svg (self);
+  bytes = gtk_svg_serialize (self->svg);
   istream = g_memory_input_stream_new_from_bytes (bytes);
 
   g_output_stream_splice (ostream, istream, 0, NULL, &error);

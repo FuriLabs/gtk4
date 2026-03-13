@@ -16,3 +16,4 @@ x11-scale/gdk-x11-update-cursor-size-on-the-extent-after-scale-chan.patch
 x11-touch/xi2-Start-drag-grab-with-pointer-only-event-mask.patch
 x11-touch/xi2-Do-not-discard-emulated-pointer-events-during-drag-an.patch
 x11-touch/xi2-Expose-a-logical-touch-device.patch
+printdialog-Keep-GTask-alive-for-portal-repsonse.patch

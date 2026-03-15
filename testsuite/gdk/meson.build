@@ -96,7 +96,9 @@ if os_linux
   internal_tests += { 'name': 'dmabufformats' }
   internal_tests += { 'name': 'dmabuftexture', 'suites': 'failing' }
 
-  internal_test_executables += { 'name': 'waylandsocket' }
+  if wayland_enabled
+    internal_test_executables += { 'name': 'waylandsocket' }
+  endif
 endif
 
 foreach t : internal_tests

@@ -1,4 +1,2 @@
 # Exported by d/rules
 dh-exec-subst-unknown-variable env:DOC_PKG *
-# Not needed in compat level 13
-override_dh_auto_test-does-not-check-DEB_BUILD_OPTIONS [debian/rules:*]

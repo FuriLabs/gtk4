@@ -1,0 +1,28 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Sun, 15 Mar 2026 13:48:06 +0000
+Subject: testsuite: Don't build waylandsocket test if Wayland is disabled
+
+Debian builds a copy of GTK for the Debian installer, which is a
+constrained X11-only environment (currently using GTK 2 but hopefully
+upgrading to GTK 3 or 4 in future).
+
+Signed-off-by: Simon McVittie <smcv@debian.org>
+---
+ testsuite/gdk/meson.build | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
+index 9fe2dc1..9194d8b 100644
+--- a/testsuite/gdk/meson.build
++++ b/testsuite/gdk/meson.build
+@@ -96,7 +96,9 @@ if os_linux
+   internal_tests += { 'name': 'dmabufformats' }
+   internal_tests += { 'name': 'dmabuftexture', 'suites': 'failing' }
+ 
+-  internal_test_executables += { 'name': 'waylandsocket' }
++  if wayland_enabled
++    internal_test_executables += { 'name': 'waylandsocket' }
++  endif
+ endif
+ 
+ foreach t : internal_tests

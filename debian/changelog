@@ -1,5 +1,6 @@
 gtk4 (4.22.1+ds-1) UNRELEASED; urgency=medium
 
+  [ Alessandro Astone ]
   * New upstream release
   * d/p: Drop patch applied upstream
   * d/p: Rebase patches
@@ -10,7 +11,13 @@ gtk4 (4.22.1+ds-1) UNRELEASED; urgency=medium
   * d/p/w: Drop unnecessary testsuite workaround
   * d/libgtk-4-1.symbols: Update symbols from 4.22.0
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Fri, 13 Mar 2026 19:47:20 +0100
+  [ Jeremy Bícha ]
+  * debian/libgtk-4-1.bug-control: Add libgtk-nocsd0 to package status list
+
+  [ Simon McVittie ]
+  * d/copyright: Most icons are now CC0-1.0
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 15 Mar 2026 13:19:55 +0000
 
 gtk4 (4.21.6+ds-1) unstable; urgency=medium
 

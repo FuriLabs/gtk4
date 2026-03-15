@@ -1,4 +1,6 @@
-gtk4 (4.22.1+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.22.1+ds-1) unstable; urgency=medium
+
+  * Team upload
 
   [ Alessandro Astone ]
   * New upstream release
@@ -16,8 +18,10 @@ gtk4 (4.22.1+ds-1) UNRELEASED; urgency=medium
 
   [ Simon McVittie ]
   * d/copyright: Most icons are now CC0-1.0
+  * Add patch to fix udeb build
+  * d/source/lintian-overrides: Remove an unused override
 
- -- Simon McVittie <smcv@debian.org>  Sun, 15 Mar 2026 13:19:55 +0000
+ -- Simon McVittie <smcv@debian.org>  Sun, 15 Mar 2026 17:14:28 +0000
 
 gtk4 (4.21.6+ds-1) unstable; urgency=medium
 

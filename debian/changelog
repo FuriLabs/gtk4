@@ -1,3 +1,10 @@
+gtk4 (4.14.5+ds-0ubuntu0.10) noble; urgency=medium
+
+  * d/p/x11-touch: Fix crash when re-attaching XInput touch device
+    (LP: #2144632)
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 17 Mar 2026 15:21:46 +0100
+
 gtk4 (4.14.5+ds-0ubuntu0.9) noble; urgency=medium
 
   [ Marco Trevisan (Treviño) ]

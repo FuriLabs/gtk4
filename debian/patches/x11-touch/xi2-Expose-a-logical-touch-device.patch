@@ -19,11 +19,11 @@ Bug-Ubuntu: https://launchpad.net/bugs/2051886
 ---
  gdk/gdkseatdefault.c           |  23 +++--
  gdk/gdkseatdefaultprivate.h    |   5 +
- gdk/x11/gdkdevicemanager-xi2.c | 123 +++++++++++++++++++++--
+ gdk/x11/gdkdevicemanager-xi2.c | 124 +++++++++++++++++++++--
  gdk/x11/gdkseat-xi2-private.h  |  29 ++++++
  gdk/x11/gdkseat-xi2.c          | 217 +++++++++++++++++++++++++++++++++++++++++
  gdk/x11/meson.build            |   1 +
- 6 files changed, 383 insertions(+), 15 deletions(-)
+ 6 files changed, 384 insertions(+), 15 deletions(-)
  create mode 100644 gdk/x11/gdkseat-xi2-private.h
  create mode 100644 gdk/x11/gdkseat-xi2.c
 
@@ -95,7 +95,7 @@ index 9886d37..b3e68ac 100644
  G_END_DECLS
  
 diff --git a/gdk/x11/gdkdevicemanager-xi2.c b/gdk/x11/gdkdevicemanager-xi2.c
-index 086995b..ee100d9 100644
+index 086995b..d913d38 100644
 --- a/gdk/x11/gdkdevicemanager-xi2.c
 +++ b/gdk/x11/gdkdevicemanager-xi2.c
 @@ -30,7 +30,7 @@
@@ -251,15 +251,21 @@ index 086995b..ee100d9 100644
    g_hash_table_destroy (physical_devices);
  
    /* Connect to hierarchy change events */
-@@ -937,6 +1010,7 @@ handle_hierarchy_changed (GdkX11DeviceManagerXI2 *device_manager,
+@@ -932,11 +1005,13 @@ handle_hierarchy_changed (GdkX11DeviceManagerXI2 *device_manager,
+ 
+               if (logical != NULL)
+                 {
++                  int logical_id = _gdk_x11_device_xi2_get_id (GDK_X11_DEVICE_XI2 (logical));
+                   _gdk_device_set_associated_device (physical, logical);
+                   _gdk_device_add_physical_device (logical, physical);
  
                    seat = gdk_device_get_seat (logical);
                    gdk_seat_default_add_physical_device (GDK_SEAT_DEFAULT (seat), physical);
-+                  ensure_logical_touch_device (GINT_TO_POINTER (ev->info[i].deviceid), logical, device_manager);
++                  ensure_logical_touch_device (GINT_TO_POINTER (ev->info[i].deviceid), GINT_TO_POINTER (logical_id), device_manager);
                  }
              }
          }
-@@ -1221,11 +1295,12 @@ get_event_surface (GdkEventTranslator *translator,
+@@ -1221,11 +1296,12 @@ get_event_surface (GdkEventTranslator *translator,
                    XIEvent            *ev,
                    GdkSurface         **surface_p)
  {
@@ -273,7 +279,7 @@ index 086995b..ee100d9 100644
  
    switch (ev->evtype)
      {
-@@ -1249,11 +1324,21 @@ get_event_surface (GdkEventTranslator *translator,
+@@ -1249,11 +1325,21 @@ get_event_surface (GdkEventTranslator *translator,
            {
              GdkDeviceGrabInfo *info;
              GdkDevice *device;
@@ -296,7 +302,7 @@ index 086995b..ee100d9 100644
              serial = _gdk_display_get_next_serial (display);
              info = _gdk_display_has_device_grab (display, device, serial);
  
-@@ -1784,6 +1869,16 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
+@@ -1784,6 +1870,16 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
              break;
            }
  
@@ -313,7 +319,7 @@ index 086995b..ee100d9 100644
          axes = translate_axes (device,
                                 (double) xev->event_x / scale,
                                 (double) xev->event_y / scale,
-@@ -1827,6 +1922,12 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
+@@ -1827,6 +1923,12 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
          source_device = g_hash_table_lookup (device_manager->id_table,
                                               GUINT_TO_POINTER (xev->sourceid));
  
@@ -326,7 +332,7 @@ index 086995b..ee100d9 100644
          state = _gdk_x11_device_xi2_translate_state (&xev->mods, &xev->buttons, &xev->group);
          if (ev->evtype == XI_TouchBegin)
            state |= GDK_BUTTON1_MASK;
-@@ -1877,6 +1978,12 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
+@@ -1877,6 +1979,12 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
          source_device = g_hash_table_lookup (device_manager->id_table,
                                               GUINT_TO_POINTER (xev->sourceid));
  

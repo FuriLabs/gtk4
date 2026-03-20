@@ -1,3 +1,9 @@
+gtk4 (4.22.1+ds-2) unstable; urgency=medium
+
+  * d/p: Fix listing printers with cpdb
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Fri, 20 Mar 2026 17:57:32 +0100
+
 gtk4 (4.22.1+ds-1) unstable; urgency=medium
 
   * Team upload

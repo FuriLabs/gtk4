@@ -1,0 +1,46 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Fri, 20 Mar 2026 15:53:43 +0100
+Subject: print: Fix listing printers with synchronous backends
+
+By getting the current list of printers first, and only later calling
+request_printer_list(), we are assuming that request_printer_list() itself
+will never synchronously add new printers. The cpdb backend is mostly, if not
+entirely, synchronous so this assumption breaks.
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9696
+---
+ gtk/print/gtkprintbackend.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/gtk/print/gtkprintbackend.c b/gtk/print/gtkprintbackend.c
+index 0ce26374..abf9ff9 100644
+--- a/gtk/print/gtkprintbackend.c
++++ b/gtk/print/gtkprintbackend.c
+@@ -476,13 +476,6 @@ gtk_print_backend_get_printer_list (GtkPrintBackend *backend)
+   
+   g_return_val_if_fail (GTK_IS_PRINT_BACKEND (backend), NULL);
+ 
+-  for (i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (backend->priv->printers)); i++)
+-    {
+-      GtkPrinter *printer = g_list_model_get_item (G_LIST_MODEL (backend->priv->printers), i);
+-      result = g_list_prepend (result, printer);
+-      g_object_unref (printer);
+-    }
+-
+   if (!backend->priv->printer_list_requested)
+     {
+       if (GTK_PRINT_BACKEND_GET_CLASS (backend)->request_printer_list)
+@@ -490,6 +483,13 @@ gtk_print_backend_get_printer_list (GtkPrintBackend *backend)
+       backend->priv->printer_list_requested = TRUE;
+     }
+ 
++  for (i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (backend->priv->printers)); i++)
++    {
++      GtkPrinter *printer = g_list_model_get_item (G_LIST_MODEL (backend->priv->printers), i);
++      result = g_list_prepend (result, printer);
++      g_object_unref (printer);
++    }
++
+   return result;
+ }
+ 

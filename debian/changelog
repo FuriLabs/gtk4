@@ -1,3 +1,10 @@
+gtk4 (4.22.1+ds-3) unstable; urgency=medium
+
+  * d/rules, d/control: Drop CPDB backend
+    (LP: #2145712, #2113980, #2133194, #2143625, #2126551, #2130566)
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 24 Mar 2026 17:20:22 +0100
+
 gtk4 (4.22.1+ds-2) unstable; urgency=medium
 
   * d/p: Fix listing printers with cpdb

@@ -1,0 +1,119 @@
+From: Sergio Costas Rodriguez <sergio.costas@canonical.com>
+Date: Tue, 24 Mar 2026 13:21:58 +0100
+Subject: accessibility: Fix regression
+
+When using GtkApplication with windows attached, the top element
+gets a "filler" role instead of a "frame", and there are some
+name-calculation issues due to a wrong naming. This results in
+accessibility being broken, unable to detect when the focus has
+changed from a container to another and, thus, screen readers
+won't say the container label/role/description when switching
+from a widget in a container to a different widget in another
+container.
+
+All this is caused because in commit https://gitlab.gnome.org/GNOME/gtk/-/commit/ef2da952330aa6f1cbc5121caf8ba90cf637c837 ,
+the method gtk_at_context_realize() is called inside
+gtkapplication-wayland.c before the gtk_widget_realize_at_context()
+method in gtkwidget.c is called. This results in an incomplete
+widget initialization.
+
+This patch creates a new read-only property to notify when an
+ATContext has been realized. With this, we can now ensure that
+the code is called only when the ATContext is realized.
+
+This backport to debian includes dropping the unused REALIZED signal,
+which was later forwarded to upstream as well: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9746
+
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/8111
+Origin: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9722
+---
+ gtk/gtkapplication-wayland.c |  9 ++++++++-
+ gtk/gtkatcontext.c           | 20 ++++++++++++++++++++
+ 2 files changed, 28 insertions(+), 1 deletion(-)
+
+diff --git a/gtk/gtkapplication-wayland.c b/gtk/gtkapplication-wayland.c
+index 0ae4a30..6fb2f2c 100644
+--- a/gtk/gtkapplication-wayland.c
++++ b/gtk/gtkapplication-wayland.c
+@@ -31,6 +31,7 @@
+ #include <gdk/wayland/gdkdisplay-wayland.h>
+ 
+ #include "a11y/gtkatspicontextprivate.h"
++#include "gtkatcontextprivate.h"
+ 
+ typedef struct
+ {
+@@ -124,6 +125,7 @@ gtk_application_impl_wayland_handle_window_realize (GtkApplicationImpl *impl,
+   char *window_path;
+   GVariant *state;
+   char *id = NULL;
++  GtkATContext *at_context = NULL;
+ 
+   GTK_DEBUG (SESSION, "Handle window realize");
+ 
+@@ -164,7 +166,12 @@ gtk_application_impl_wayland_handle_window_realize (GtkApplicationImpl *impl,
+   gdk_wayland_toplevel_restore_from_session (GDK_TOPLEVEL (gdk_surface));
+   g_free (id);
+ 
+-  set_a11y_properties (window);
++  at_context = gtk_accessible_get_at_context (GTK_ACCESSIBLE (window));
++  if (gtk_at_context_is_realized (at_context))
++    set_a11y_properties (window);
++  else
++    g_signal_connect_object (at_context, "notify::realized", (GCallback) set_a11y_properties, window, G_CONNECT_SWAPPED);
++  g_clear_object (&at_context);
+ 
+   impl_class->handle_window_realize (impl, window);
+ }
+diff --git a/gtk/gtkatcontext.c b/gtk/gtkatcontext.c
+index 5acbe78..2bea6e9 100644
+--- a/gtk/gtkatcontext.c
++++ b/gtk/gtkatcontext.c
+@@ -62,6 +62,7 @@ enum
+   PROP_ACCESSIBLE_ROLE = 1,
+   PROP_ACCESSIBLE,
+   PROP_DISPLAY,
++  PROP_REALIZED,
+ 
+   N_PROPS
+ };
+@@ -165,6 +166,10 @@ gtk_at_context_get_property (GObject    *gobject,
+       g_value_set_object (value, self->display);
+       break;
+ 
++    case PROP_REALIZED:
++      g_value_set_boolean (value, self->realized);
++      break;
++
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (gobject, prop_id, pspec);
+     }
+@@ -287,6 +292,19 @@ gtk_at_context_class_init (GtkATContextClass *klass)
+                          G_PARAM_STATIC_STRINGS |
+                          G_PARAM_EXPLICIT_NOTIFY);
+ 
++  /**
++   * GtkATContext:realized:
++   *
++   * Whether the `GtkATContext` has been realized or not.
++   *
++   * Since: 4.24
++   */
++  obj_props[PROP_REALIZED] =
++    g_param_spec_boolean ("realized", NULL, NULL,
++                          FALSE,
++                          G_PARAM_READABLE |
++                          G_PARAM_EXPLICIT_NOTIFY);
++
+   /**
+    * GtkATContext::state-change:
+    * @self: the `GtkATContext`
+@@ -839,6 +857,8 @@ gtk_at_context_realize (GtkATContext *self)
+   GTK_AT_CONTEXT_GET_CLASS (self)->realize (self);
+ 
+   self->realized = TRUE;
++
++  g_object_notify_by_pspec (G_OBJECT (self), obj_props[PROP_REALIZED]);
+ }
+ 
+ void

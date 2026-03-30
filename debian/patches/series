@@ -18,3 +18,4 @@ x11-touch/xi2-Expose-a-logical-touch-device.patch
 printdialog-Keep-GTask-alive-for-portal-repsonse.patch
 testsuite-Don-t-build-waylandsocket-test-if-Wayland-is-di.patch
 print-Fix-listing-printers-with-synchronous-backends.patch
+accessibility-Fix-regression.patch

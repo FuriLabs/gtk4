@@ -1,3 +1,9 @@
+gtk4 (4.22.2+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Wed, 01 Apr 2026 09:39:23 +0200
+
 gtk4 (4.22.1+ds-3) unstable; urgency=medium
 
   * d/rules, d/control: Drop CPDB backend

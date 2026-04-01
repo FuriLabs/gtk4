@@ -17,14 +17,14 @@ Bug-Ubuntu: https://launchpad.net/bugs/2119066
 Bug-Ubuntu: https://launchpad.net/bugs/2119065
 Bug-Ubuntu: https://launchpad.net/bugs/2051886
 ---
- gdk/gdkseatdefault.c           |  23 +++--
- gdk/gdkseatdefaultprivate.h    |   5 +
- gdk/x11/gdkdevicemanager-xi2.c | 124 +++++++++++++++++++++--
- gdk/x11/gdkseat-xi2-private.h  |  29 ++++++
- gdk/x11/gdkseat-xi2.c          | 217 +++++++++++++++++++++++++++++++++++++++++
- gdk/x11/meson.build            |   1 +
- 6 files changed, 384 insertions(+), 15 deletions(-)
- create mode 100644 gdk/x11/gdkseat-xi2-private.h
+ gdk/gdkseatdefault.c                               |  23 ++-
+ gdk/gdkseatdefaultprivate.h                        |   5 +
+ gdk/x11/gdkdevicemanager-xi2.c                     | 124 +++++++++++-
+ .../gdkseat-xi2-private.h}                         |  19 +-
+ gdk/x11/gdkseat-xi2.c                              | 217 +++++++++++++++++++++
+ gdk/x11/meson.build                                |   1 +
+ 6 files changed, 365 insertions(+), 24 deletions(-)
+ copy gdk/{gdkpipeiostreamprivate.h => x11/gdkseat-xi2-private.h} (54%)
  create mode 100644 gdk/x11/gdkseat-xi2.c
 
 diff --git a/gdk/gdkseatdefault.c b/gdk/gdkseatdefault.c
@@ -345,39 +345,44 @@ index e601418..d1fb967 100644
          state = _gdk_x11_device_xi2_translate_state (&xev->mods, &xev->buttons, &xev->group);
          state |= GDK_BUTTON1_MASK;
  
-diff --git a/gdk/x11/gdkseat-xi2-private.h b/gdk/x11/gdkseat-xi2-private.h
-new file mode 100644
-index 0000000..4a5c23f
---- /dev/null
+diff --git a/gdk/gdkpipeiostreamprivate.h b/gdk/x11/gdkseat-xi2-private.h
+similarity index 54%
+copy from gdk/gdkpipeiostreamprivate.h
+copy to gdk/x11/gdkseat-xi2-private.h
+index 495de6d..4a5c23f 100644
+--- a/gdk/gdkpipeiostreamprivate.h
 +++ b/gdk/x11/gdkseat-xi2-private.h
-@@ -0,0 +1,29 @@
-+/* GDK - The GIMP Drawing Kit
+@@ -1,6 +1,5 @@
+ /* GDK - The GIMP Drawing Kit
+- *
+- * Copyright (C) 2017 Benjamin Otte <otte@gnome.org>
 + * Copyright (C) 2025 Canonical Ltd.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Lesser General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * Lesser General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Lesser General Public
-+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+  *
+  * This library is free software; you can redistribute it and/or
+  * modify it under the terms of the GNU Lesser General Public
+@@ -14,15 +13,17 @@
+  *
+  * You should have received a copy of the GNU Lesser General Public
+  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
 + *
 + * Author: Alessandro Astone <alessandro.astone@canonical.com>
-+ */
-+
+  */
+ 
+-#pragma once
+-
+-#include <gdk/gdktypes.h>
+-
+-G_BEGIN_DECLS
 +#include "gdkseatdefaultprivate.h"
-+
+ 
+-GIOStream *             gdk_pipe_io_stream_new                          (void);
 +#define GDK_TYPE_X11_SEAT_XI2 (gdk_x11_seat_xi2_get_type ())
 +G_DECLARE_FINAL_TYPE (GdkX11SeatXI2, gdk_x11_seat_xi2, GDK, X11_SEAT_XI2, GdkSeatDefault)
-+
+ 
+-G_END_DECLS
 +GdkSeat *gdk_x11_seat_xi2_new_for_logical_pair (GdkDevice *pointer,
 +                                                GdkDevice *keyboard);
-+
+ 
 +GdkDevice *gdk_x11_seat_xi2_get_logical_touch (GdkX11SeatXI2 *seat);
 +void       gdk_x11_seat_xi2_set_logical_touch (GdkX11SeatXI2 *seat, GdkDevice *device);
 diff --git a/gdk/x11/gdkseat-xi2.c b/gdk/x11/gdkseat-xi2.c

@@ -20,7 +20,7 @@
 #include "gdktextureutilsprivate.h"
 #include "gtkscalerprivate.h"
 #include "gtksnapshot.h"
-#include "gtk/gtksvg.h"
+#include "gtk/gtksvgprivate.h"
 #include "gtk/gtksymbolicpaintable.h"
 
 #include "gdk/gdktextureprivate.h"
@@ -268,22 +268,6 @@ keep_alpha (GdkTexture *src)
   return res;
 }
 
-static gboolean
-svg_has_symbolic_classes (GBytes *bytes)
-{
-#ifdef HAVE_MEMMEM
-  const char *data;
-  gsize len;
-
-  data = g_bytes_get_data (bytes, &len);
-
-  /* Not super precise, but good enough */
-  return memmem (data, len, "class=\"", strlen ("class=\"")) != NULL;
-#else
-  return TRUE;
-#endif
-}
-
 static GdkTexture *
 gdk_texture_new_from_bytes_symbolic (GBytes    *bytes,
                                      int        width,
@@ -300,7 +284,11 @@ gdk_texture_new_from_bytes_symbolic (GBytes    *bytes,
   GBytes *data_bytes;
   GdkTexture *texture;
 
-  svg = gtk_svg_new_from_bytes (bytes);
+  svg = gtk_svg_new ();
+
+  gtk_svg_set_features (svg, GTK_SVG_DEFAULT_FEATURES | GTK_SVG_TRADITIONAL_SYMBOLIC);
+
+  gtk_svg_load_from_bytes (svg, bytes);
 
   if (width == 0 && height == 0)
     {
@@ -315,7 +303,11 @@ gdk_texture_new_from_bytes_symbolic (GBytes    *bytes,
         }
     }
 
-  if (!svg_has_symbolic_classes (bytes))
+  only_fg = (svg->used & (GTK_SVG_USES_SYMBOLIC_ERROR |
+                          GTK_SVG_USES_SYMBOLIC_WARNING |
+                          GTK_SVG_USES_SYMBOLIC_SUCCESS)) == 0;
+
+  if (only_fg)
     {
       texture = svg_to_texture (svg, width, height, NULL, 0);
 
@@ -330,7 +322,6 @@ gdk_texture_new_from_bytes_symbolic (GBytes    *bytes,
       return texture;
     }
 
-  only_fg = TRUE;
   texture = NULL;
 
   data = NULL;
@@ -906,6 +897,7 @@ start_element_cb (GMarkupParseContext  *context,
   const char *opacity_attr = NULL;
   const char *class_attr = NULL;
   const char *visibility_attr = NULL;
+  const char *viewbox_attr = NULL;
   GskPath *path = NULL;
   GskStroke *stroke = NULL;
   GskFillRule fill_rule;
@@ -930,6 +922,7 @@ start_element_cb (GMarkupParseContext  *context,
                                 NULL,
                                 "width", &width_attr,
                                 "height", &height_attr,
+                                "viewBox", &viewbox_attr,
                                 NULL);
 
       if (width_attr == NULL)
@@ -956,6 +949,36 @@ start_element_cb (GMarkupParseContext  *context,
         {
           set_attribute_error (error, "height", height_attr);
           return;
+        }
+
+      if (viewbox_attr)
+        {
+          GStrv strv;
+
+          strv = g_strsplit (viewbox_attr, " ", 0);
+          if (g_strv_length (strv) == 4)
+            {
+              double d[4];
+              char *endp[4];
+
+              for (unsigned int i = 0; i < 4; i++)
+                d[i] = g_ascii_strtod (strv[i], &endp[i]);
+
+              if (d[0] != 0 || d[1] != 0 ||
+                  d[2] != data->width ||
+                  d[3] != data->height ||
+                 (endp[0] && *(endp[0])) ||
+                 (endp[1] && *(endp[1])) ||
+                 (endp[2] && *(endp[2])) ||
+                 (endp[3] && *(endp[3])))
+                {
+                  g_strfreev (strv);
+                  set_attribute_error (error, "viewBox", viewbox_attr);
+                  return;
+                }
+
+              g_strfreev (strv);
+            }
         }
 
       gtk_snapshot_push_clip (data->snapshot, &GRAPHENE_RECT_INIT (0, 0, data->width, data->height));

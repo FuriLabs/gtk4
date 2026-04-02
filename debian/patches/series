@@ -20,3 +20,4 @@ testsuite-Don-t-build-waylandsocket-test-if-Wayland-is-di.patch
 print-Fix-listing-printers-with-synchronous-backends.patch
 accessibility-Fix-regression.patch
 gtkapplication-wayland-Add-a-missing-NULL-check-when-forg.patch
+gskvulkanimage-fix-building-on-32-bit.patch

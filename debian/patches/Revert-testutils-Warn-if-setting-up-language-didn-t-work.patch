@@ -1,0 +1,32 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Thu, 2 Apr 2026 18:56:48 +0200
+Subject: Revert "testutils: Warn if setting up language didn't work"
+
+This needs fixing in multiple reverse-dependencies, which we cannot currently
+afford (in Ubuntu, at least)
+
+This reverts commit 016f64227e5727fc05543c5466997c0ab7892cf2.
+
+Bug-Debian: https://bugs.debian.org/1132536
+Forwarded: not-needed
+---
+ gtk/gtktestutils.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/gtk/gtktestutils.c b/gtk/gtktestutils.c
+index b338171..ce0e441 100644
+--- a/gtk/gtktestutils.c
++++ b/gtk/gtktestutils.c
+@@ -82,10 +82,8 @@ gtk_test_init (int    *argcp,
+ 
+   gtk_disable_setlocale();
+   lang = setlocale (LC_ALL, "en_US.UTF-8");
+-  if (lang == NULL)
+-    g_warning ("Failed to set locale to en_US.UTF-8");
+-  else if (g_test_verbose ())
+-    g_test_message ("language: %s", lang);
++  if (g_test_verbose ())
++    g_test_message ("language: %s", lang ? lang : "C");
+ 
+   gtk_init ();
+ }

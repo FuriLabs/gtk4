@@ -1,11 +1,36 @@
+gtk4 (4.22.2+ds-2) UNRELEASED; urgency=medium
+
+  [ Alessandro Astone ]
+  * d/p/gtkapplication-wayland-Add-a-missing-NULL-check-when-forg.patch:
+    Fix possible crash when terminating app with no windows
+  * d/p/gskvulkanimage-fix-building-on-32-bit.patch:
+    Fix FTBFS on 32-bit architectures
+  * d/p/Revert-testutils-Warn-if-setting-up-language-didn-t-work.patch:
+    Temporarily revert change that causes test failures in rdeps,
+    if they use gtk_test_init() without either build-depending on
+    locales-all or generating an en_US.UTF-8 locale programmatically
+    (Closes: #1132536)
+  * d/p/application-wayland-Add-NULL-check-on-gtk_accessible_get_.patch:
+    Fix crash with GTK_A11Y=none as detected by autopkgtests
+
+  [ Simon McVittie ]
+  * Mention fix for #1129991 in previous changelog entry
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 04 Apr 2026 18:26:15 +0100
+
 gtk4 (4.22.2+ds-1) unstable; urgency=medium
 
+  [ Alessandro Astone ]
   * New upstream bugfix release
   * d/p/print-*: Drop patches applied upstream
   * d/p: Refresh patches.
     Then latest git-buildpackag has changed the git options for generating a diff,
     so some patches result in changes even though the applied sources are unchanged
   * d/p: Backport fix for large regression in accessibility
+
+  [ Simon McVittie ]
+  * d/control: Version the B-D on libgstreamer-plugins-bad1.0-dev
+    (Closes: #1129991)
 
  -- Alessandro Astone <alessandro.astone@canonical.com>  Wed, 01 Apr 2026 10:34:05 +0200
 

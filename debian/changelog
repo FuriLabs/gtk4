@@ -1,4 +1,4 @@
-gtk4 (4.22.2+ds-2) UNRELEASED; urgency=medium
+gtk4 (4.22.2+ds-2) unstable; urgency=medium
 
   [ Alessandro Astone ]
   * d/p/gtkapplication-wayland-Add-a-missing-NULL-check-when-forg.patch:
@@ -16,7 +16,7 @@ gtk4 (4.22.2+ds-2) UNRELEASED; urgency=medium
   [ Simon McVittie ]
   * Mention fix for #1129991 in previous changelog entry
 
- -- Simon McVittie <smcv@debian.org>  Sat, 04 Apr 2026 18:26:15 +0100
+ -- Simon McVittie <smcv@debian.org>  Sat, 04 Apr 2026 20:51:56 +0100
 
 gtk4 (4.22.2+ds-1) unstable; urgency=medium
 

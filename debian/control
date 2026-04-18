@@ -1,5 +1,5 @@
 Source: gtk4
-Standards-Version: 4.7.3
+Standards-Version: 4.7.4
 Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
 Uploaders: Simon McVittie <smcv@debian.org>,
            Jeremy Bícha <jbicha@ubuntu.com>,

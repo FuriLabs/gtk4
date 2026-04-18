@@ -1,19 +1,21 @@
 Source: gtk4
-Section: libs
+Standards-Version: 4.7.3
 Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Simon McVittie <smcv@debian.org>, Jeremy Bícha <jbicha@ubuntu.com>
-Build-Depends: adwaita-icon-theme <!nocheck>,
-               at-spi2-core <!nocheck>,
-               dbus-daemon <!nocheck>,
-               debhelper-compat (= 13),
+Uploaders: Simon McVittie <smcv@debian.org>,
+           Jeremy Bícha <jbicha@ubuntu.com>,
+Section: libs
+Build-Depends: debhelper-compat (= 13),
                dh-exec,
                dh-sequence-gir,
                dh-sequence-gnome,
+               adwaita-icon-theme <!nocheck>,
+               at-spi2-core <!nocheck>,
+               dbus-daemon <!nocheck>,
                fonts-cantarell <!nocheck>,
                fonts-noto-core <!nocheck>,
                gir1.2-cairo-1.0-dev,
-               gir1.2-gio-2.0-dev,
                gir1.2-gdkpixbuf-2.0-dev,
+               gir1.2-gio-2.0-dev,
                gir1.2-graphene-1.0-dev,
                gir1.2-pango-1.0-dev,
                gir1.2-pangocairo-1.0-dev,
@@ -23,8 +25,8 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                gsettings-desktop-schemas <!nocheck>,
                iso-codes <!nocheck>,
                libcairo2-dev (>= 1.18.2),
+               libcloudproviders-dev,
                libcolord-dev <!pkg.gtk4.nocolord>,
-               libcloudproviders-dev (>= 0.3.1),
                libcups2-dev,
                libegl1-mesa-dev [linux-any],
                libepoxy-dev,
@@ -33,8 +35,8 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libgdk-pixbuf-2.0-dev,
                libglib2.0-dev (>= 2.80.0),
                libgraphene-1.0-dev,
-               libgstreamer1.0-dev,
                libgstreamer-plugins-bad1.0-dev (>= 1.28),
+               libgstreamer1.0-dev,
                libharfbuzz-dev (>= 8.4.0),
                libjpeg-dev,
                libjson-glib-dev:native,
@@ -43,7 +45,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                libpolkit-gobject-1-dev [linux-any],
                librsvg2-common (>= 2.48) <!nocheck>,
                librsvg2-dev (>= 2.48),
-               libsysprof-capture-4-dev (>= 3.40.1) [linux-any],
+               libsysprof-capture-4-dev [linux-any],
                libtiff-dev,
                libvulkan-dev [linux-any],
                libwayland-dev (>= 1.24.0) [linux-any],
@@ -65,7 +67,7 @@ Build-Depends: adwaita-icon-theme <!nocheck>,
                pkgconf,
                pkgconf:native,
                python3-docutils <!nodoc>,
-               python3-gi (>= 3.40) <!nocheck>,
+               python3-gi <!nocheck>,
                sassc,
                wayland-protocols (>= 1.44) [linux-any],
                weston [linux-any] <!nocheck>,
@@ -75,7 +77,6 @@ Build-Depends-Indep: gi-docgen <!nodoc>,
                      libcairo2-doc <!nodoc>,
                      libglib2.0-doc <!nodoc>,
                      libpango1.0-doc <!nodoc>,
-Standards-Version: 4.7.3
 Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4
 Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git
 Homepage: https://www.gtk.org/
@@ -85,22 +86,22 @@ Architecture: any
 Multi-Arch: same
 Depends: adwaita-icon-theme,
          hicolor-icon-theme,
+         libgles2,
+         libgtk-4-common (>= ${source:Version}),
          shared-mime-info,
          ${misc:Depends},
          ${shlibs:Depends},
-         libgles2,
-         libgtk-4-common (>= ${source:Version})
-Provides: ${gtk:Provides},
-          libgtk-4-media-gstreamer (= ${binary:Version}),
-Recommends: ${local:Recommends},
-            libgtk-4-bin,
-            ibus-gtk4,
+Recommends: ibus-gtk4,
             iso-codes,
+            libgtk-4-bin,
             librsvg2-common (>= 2.48),
-Suggests: gvfs
-Breaks: libgtk-4-media-gstreamer (<< 4.19.2),
+            ${local:Recommends},
+Suggests: gvfs,
+Breaks: gnome-control-center (<< 1:50~),
+        libgtk-4-media-gstreamer (<< 4.19.2),
         xdg-desktop-portal-gnome (<< 50~),
-        gnome-control-center (<< 1:50~),
+Provides: libgtk-4-media-gstreamer (= ${binary:Version}),
+          ${gtk:Provides},
 Replaces: libgtk-4-media-gstreamer (<< 4.19.2),
 Description: GTK graphical user interface library
  GTK is a multi-platform toolkit for creating graphical user
@@ -111,13 +112,13 @@ Description: GTK graphical user interface library
  This package contains the shared libraries.
 
 Package: libgtk-4-1-udeb
+Architecture: any
 Build-Profiles: <!noudeb>
 Package-Type: udeb
 Section: debian-installer
-Architecture: any
 Depends: ${misc:Depends},
-         ${shlibs:Depends}
-Provides: ${gtk:Provides}
+         ${shlibs:Depends},
+Provides: ${gtk:Provides},
 Description: GTK graphical user interface library - minimal runtime
  This is a udeb, or a microdeb, for the debian-installer.
  .
@@ -130,11 +131,11 @@ Description: GTK graphical user interface library - minimal runtime
  by the Debian installer.
 
 Package: libgtk-4-common
-Section: misc
 Architecture: all
 Multi-Arch: foreign
-Depends: ${misc:Depends}
-Recommends: libgtk-4-1
+Section: misc
+Depends: ${misc:Depends},
+Recommends: libgtk-4-1,
 Description: common files for the GTK graphical user interface library
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable
@@ -144,14 +145,14 @@ Description: common files for the GTK graphical user interface library
  This package contains the common files which the libraries need.
 
 Package: libgtk-4-bin
-Section: misc
 Architecture: any
 Multi-Arch: foreign
+Section: misc
 Depends: gtk-update-icon-cache (>= ${binary:Version}),
+         libgtk-4-1 (>= ${source:Version}),
+         libgtk-4-common (>= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends},
-         libgtk-4-common (>= ${source:Version}),
-         libgtk-4-1 (>= ${source:Version})
 Description: programs for the GTK graphical user interface library
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable
@@ -162,17 +163,20 @@ Description: programs for the GTK graphical user interface library
  and other packages.
 
 Package: libgtk-4-dev
-Section: libdevel
 Architecture: any
 Multi-Arch: same
+Section: libdevel
 Depends: libcairo2-dev (>= 1.18.2),
          libegl1-mesa-dev [linux-any],
-         libepoxy-dev (>= 1.0),
+         libepoxy-dev,
          libfontconfig-dev,
-         libgdk-pixbuf-2.0-dev (>= 2.30.0),
+         libgdk-pixbuf-2.0-dev,
          libglib2.0-dev (>= 2.80.0),
-         libgraphene-1.0-dev (>= 1.9.1),
+         libgraphene-1.0-dev,
+         libgtk-4-1 (= ${binary:Version}),
+         libgtk-4-common,
          libpango1.0-dev (>= 1.56.0),
+         libvulkan-dev [linux-any],
          libwayland-dev (>= 1.23.0) [linux-any],
          libx11-dev,
          libxcomposite-dev,
@@ -184,16 +188,13 @@ Depends: libcairo2-dev (>= 1.18.2),
          libxinerama-dev,
          libxkbcommon-dev,
          libxrandr-dev,
-         libvulkan-dev [linux-any],
          pkgconf,
          wayland-protocols (>= 1.44) [linux-any],
          ${gir:Depends},
          ${misc:Depends},
-         libgtk-4-common,
-         libgtk-4-1 (= ${binary:Version})
-Suggests: libgtk-4-doc,
-          gtk-4-examples
-Provides: ${gir:Provides}
+Suggests: gtk-4-examples,
+          libgtk-4-doc,
+Provides: ${gir:Provides},
 Description: development files for the GTK library
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable
@@ -204,13 +205,13 @@ Description: development files for the GTK library
  needed for building GTK applications.
 
 Package: libgtk-4-doc
-Build-Profiles: <!nodoc>
-Section: doc
 Architecture: all
+Build-Profiles: <!nodoc>
 Multi-Arch: foreign
-Depends: ${misc:Depends}
+Section: doc
+Depends: ${misc:Depends},
 Recommends: libglib2.0-doc,
-            libpango1.0-doc
+            libpango1.0-doc,
 Description: documentation for the GTK graphical user interface library
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable
@@ -221,12 +222,12 @@ Description: documentation for the GTK graphical user interface library
  in /usr/share/doc/libgtk-4-doc/ .
 
 Package: gtk-4-examples
+Architecture: any
 Build-Profiles: <!noinsttest>
 Section: x11
-Architecture: any
-Depends: ${misc:Depends},
+Depends: libgtk-4-1 (= ${binary:Version}),
+         ${misc:Depends},
          ${shlibs:Depends},
-         libgtk-4-1 (= ${binary:Version})
 Recommends: fonts-cantarell,
             highlight,
             librsvg2-common (>= 2.48),
@@ -240,14 +241,14 @@ Description: example files for GTK 4
  for GTK4.
 
 Package: gtk-4-tests
+Architecture: any
 Build-Profiles: <!noinsttest>
 Section: x11
-Architecture: any
 Depends: iso-codes,
+         libgtk-4-1 (= ${binary:Version}),
          librsvg2-common (>= 2.48),
          ${misc:Depends},
          ${shlibs:Depends},
-         libgtk-4-1 (= ${binary:Version}),
 Recommends: gnome-desktop-testing,
             locales | locales-all,
 Description: "as-installed" tests for GTK 4
@@ -260,12 +261,12 @@ Description: "as-installed" tests for GTK 4
  autopkgtest.
 
 Package: gir1.2-gtk-4.0
-Section: introspection
 Architecture: any
 Multi-Arch: same
-Depends: ${gir:Depends},
+Section: introspection
+Depends: libgtk-4-common,
+         ${gir:Depends},
          ${misc:Depends},
-         libgtk-4-common
 Provides: ${gir:Provides},
 Description: GTK graphical user interface library -- gir bindings
  GTK is a multi-platform toolkit for creating graphical user
@@ -277,13 +278,13 @@ Description: GTK graphical user interface library -- gir bindings
  generate dynamic bindings.
 
 Package: gtk-update-icon-cache
-Section: misc
 Architecture: any
 Multi-Arch: foreign
+Section: misc
 Depends: ${misc:Depends},
-         ${shlibs:Depends}
-Breaks: libgtk-4-bin (<< 4.15)
-Replaces: libgtk-4-bin (<< 4.15)
+         ${shlibs:Depends},
+Breaks: libgtk-4-bin (<< 4.15),
+Replaces: libgtk-4-bin (<< 4.15),
 Description: icon theme caching utility
  gtk-update-icon-cache creates mmap()able cache files for icon themes.
  .

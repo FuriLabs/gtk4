@@ -1,10 +1,10 @@
-usr/share/doc/${env:DOC_PKG}/gdk4 usr/share/doc/${env:DEV_PKG}/gdk4
 usr/share/doc/${env:DOC_PKG}/gdk4 usr/share/devhelp/books/gdk4
-usr/share/doc/${env:DOC_PKG}/gdk4-wayland usr/share/doc/${env:DEV_PKG}/gdk4-wayland
+usr/share/doc/${env:DOC_PKG}/gdk4 usr/share/doc/${env:DEV_PKG}/gdk4
 usr/share/doc/${env:DOC_PKG}/gdk4-wayland usr/share/devhelp/books/gdk4-wayland
-usr/share/doc/${env:DOC_PKG}/gdk4-x11 usr/share/doc/${env:DEV_PKG}/gdk4-x11
+usr/share/doc/${env:DOC_PKG}/gdk4-wayland usr/share/doc/${env:DEV_PKG}/gdk4-wayland
 usr/share/doc/${env:DOC_PKG}/gdk4-x11 usr/share/devhelp/books/gdk4-x11
-usr/share/doc/${env:DOC_PKG}/gsk4 usr/share/doc/${env:DEV_PKG}/gsk4
+usr/share/doc/${env:DOC_PKG}/gdk4-x11 usr/share/doc/${env:DEV_PKG}/gdk4-x11
 usr/share/doc/${env:DOC_PKG}/gsk4 usr/share/devhelp/books/gsk4
-usr/share/doc/${env:DOC_PKG}/gtk4 usr/share/doc/${env:DEV_PKG}/gtk4
+usr/share/doc/${env:DOC_PKG}/gsk4 usr/share/doc/${env:DEV_PKG}/gsk4
 usr/share/doc/${env:DOC_PKG}/gtk4 usr/share/devhelp/books/gtk4
+usr/share/doc/${env:DOC_PKG}/gtk4 usr/share/doc/${env:DEV_PKG}/gtk4

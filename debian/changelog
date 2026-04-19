@@ -1,3 +1,13 @@
+gtk4 (4.22.3+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+  * Run wrap-and-sort -at
+  * Update Standards Version to 4.7.4
+  * Remove testutils patch: it's effectively applied in 4.22.3 but no longer
+    needed for Debian or Ubuntu 26.10
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 18 Apr 2026 21:37:19 -0400
+
 gtk4 (4.22.2+ds-2) unstable; urgency=medium
 
   [ Alessandro Astone ]

@@ -1,3 +1,9 @@
+gtk4 (4.22.3+ds-2) UNRELEASED; urgency=medium
+
+  * d/watch: Convert to v5 format
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 12 May 2026 08:46:35 +0100
+
 gtk4 (4.22.3+ds-1) unstable; urgency=medium
 
   * New upstream release

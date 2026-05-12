@@ -17,7 +17,5 @@ x11-touch/xi2-Do-not-discard-emulated-pointer-events-during-drag-an.patch
 x11-touch/xi2-Expose-a-logical-touch-device.patch
 testsuite-Don-t-build-waylandsocket-test-if-Wayland-is-di.patch
 print-Fix-listing-printers-with-synchronous-backends.patch
-accessibility-Fix-regression.patch
 gtkapplication-wayland-Add-a-missing-NULL-check-when-forg.patch
 gskvulkanimage-fix-building-on-32-bit.patch
-application-wayland-Add-NULL-check-on-gtk_accessible_get_.patch

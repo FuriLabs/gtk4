@@ -20,10 +20,10 @@ Bug: https://gitlab.gnome.org/GNOME/gtk/-/issues/8098
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/gtk/gtkapplication-wayland.c b/gtk/gtkapplication-wayland.c
-index 6fb2f2c..e0cbd8e 100644
+index 2158cf6..407d80b 100644
 --- a/gtk/gtkapplication-wayland.c
 +++ b/gtk/gtkapplication-wayland.c
-@@ -229,7 +229,8 @@ gtk_application_impl_wayland_window_forget (GtkApplicationImpl *impl,
+@@ -232,7 +232,8 @@ gtk_application_impl_wayland_window_forget (GtkApplicationImpl *impl,
    GTK_APPLICATION_IMPL_CLASS (gtk_application_impl_wayland_parent_class)->window_forget (impl, window);
  
    surface = gtk_native_get_surface (GTK_NATIVE (window));

@@ -1,9 +1,14 @@
 gtk4 (4.22.4+ds-1) UNRELEASED; urgency=medium
 
-  * d/watch: Convert to v5 format
   * New upstream release
+  * d/patches: Refresh patch series, dropping patches that were applied
+    upstream
+  * d/p/demos-Make-build-reproducible.patch:
+    Add a patch from 4.23.0 to make the demos build more reproducibly
+  * d/gbp.conf: Use upstream/4.22.x git branch
+  * d/watch: Convert to v5 format
 
- -- Simon McVittie <smcv@debian.org>  Tue, 12 May 2026 08:47:13 +0100
+ -- Simon McVittie <smcv@debian.org>  Tue, 12 May 2026 09:01:27 +0100
 
 gtk4 (4.22.3+ds-1) unstable; urgency=medium
 

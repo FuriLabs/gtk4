@@ -79,8 +79,8 @@ Build-Depends-Indep: gi-docgen <!nodoc>,
 Standards-Version: 4.7.3
 XS-Debian-Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4
 XS-Debian-Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git
-Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4/-/tree/ubuntu/latest
-Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git -b ubuntu/latest
+Vcs-Browser: https://salsa.debian.org/gnome-team/gtk4/-/tree/ubuntu/resolute
+Vcs-Git: https://salsa.debian.org/gnome-team/gtk4.git -b ubuntu/resolute
 Homepage: https://www.gtk.org/
 
 Package: libgtk-4-1

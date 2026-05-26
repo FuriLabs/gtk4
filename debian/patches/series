@@ -20,3 +20,4 @@ print-Fix-listing-printers-with-synchronous-backends.patch
 gtkapplication-wayland-Add-a-missing-NULL-check-when-forg.patch
 gskvulkanimage-fix-building-on-32-bit.patch
 demos-Make-build-reproducible.patch
+dragsource-Fix-memory-corruption-due-to-uncancelled-sourc.patch

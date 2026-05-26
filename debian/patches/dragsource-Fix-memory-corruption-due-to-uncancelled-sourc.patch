@@ -1,0 +1,30 @@
+From: Khalid Abu Shawarib <khalid.shawarib@gmail.com>
+Date: Wed, 6 May 2026 02:44:13 +0300
+Subject: dragsource: Fix memory corruption due to uncancelled source
+
+Drag begin was called multiple times before the timeout expired,
+overwriting the existing id and not be able to cancel it. This led to a
+hard to debug race condition that caused memory corruption and crashes.
+
+I've confirmed that crashes only occur if a GtkDragSource controller
+was present, and that this change stops crashes from happening.
+
+Origin: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9913
+Bug: https://gitlab.gnome.org/GNOME/gtk/-/work_items/8191
+Bug-Ubuntu: https://launchpad.net/bugs/2150297
+---
+ gtk/gtkdragsource.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/gtk/gtkdragsource.c b/gtk/gtkdragsource.c
+index 72a680e..ce649fe 100644
+--- a/gtk/gtkdragsource.c
++++ b/gtk/gtkdragsource.c
+@@ -286,6 +286,7 @@ gtk_drag_source_begin (GtkGesture       *gesture,
+   GdkEventSequence *current;
+ 
+   current = gtk_gesture_single_get_current_sequence (GTK_GESTURE_SINGLE (gesture));
++  g_clear_handle_id (&source->timeout_id, g_source_remove);
+   source->timeout_id = g_timeout_add (MIN_TIME_TO_DND, drag_timeout, source);
+ 
+   gtk_gesture_get_point (gesture, current, &source->start_x, &source->start_y);

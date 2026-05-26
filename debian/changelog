@@ -1,3 +1,9 @@
+gtk4 (4.22.4+ds-1ubuntu1) stonking; urgency=medium
+
+  * d/p: Fix memory corruption leading to crashes in Nautilus (LP: #2150297)
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 26 May 2026 12:45:42 +0200
+
 gtk4 (4.22.4+ds-1) unstable; urgency=medium
 
   * New upstream release

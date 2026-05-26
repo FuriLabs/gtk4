@@ -1,8 +1,22 @@
-gtk4 (4.22.4+ds-0ubuntu0.1) UNRELEASED; urgency=medium
+gtk4 (4.22.4+ds-0ubuntu0.1) resolute; urgency=medium
 
+  [ Alessandro Astone ]
   * New upstream bugfix release (LP: #2154281)
+  * d/gbp.conf, d/control: Branch for ubuntu/resolute
+  * d/p: Drop patches applied upstream
+    - Revert-testutils-Warn-if-setting-up-language-didn-t-work.patch
+    - accessibility-Fix-regression.patch
+    - application-wayland-Add-NULL-check-on-gtk_accessible_get_.patch
+    - printdialog-Keep-GTask-alive-for-portal-repsonse.patch
+  * d/p: Refresh patches
+    - gtkapplication-wayland-Add-a-missing-NULL-check-when-forg.patch
+    - insttests/Revert-build-Drop-the-install-tests-option.patch
+  * d/p: Fix memory corruption leading to crashes in Nautilus (LP: #2150297)
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 26 May 2026 14:32:10 +0200
+  [ Simon McVittie ]
+  * d/gbp.conf: Use 4.22.x branch
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 26 May 2026 15:07:46 +0200
 
 gtk4 (4.22.2+ds-1ubuntu1) resolute; urgency=medium
 

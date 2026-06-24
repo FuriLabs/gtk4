@@ -1492,7 +1492,7 @@ check_valid_drop_target (GtkPlacesSidebar *sidebar,
 
   g_object_get (row,
                 "place-type", &place_type,
-                "section_type", &section_type,
+                "section-type", &section_type,
                 "uri", &uri,
                 NULL);
 
@@ -3060,7 +3060,8 @@ on_key_pressed (GtkEventControllerKey *controller,
       if (keyval == GDK_KEY_Return ||
           keyval == GDK_KEY_KP_Enter ||
           keyval == GDK_KEY_ISO_Enter ||
-          keyval == GDK_KEY_space)
+          keyval == GDK_KEY_space ||
+          keyval == GDK_KEY_KP_Space)
         {
           GtkPlacesOpenFlags open_flags = GTK_PLACES_OPEN_NORMAL;
 
@@ -3402,7 +3403,7 @@ on_row_pressed (GtkGestureClick *gesture,
 
   g_object_get (row,
                 "sidebar", &sidebar,
-                "section_type", &section_type,
+                "section-type", &section_type,
                 "place-type", &row_type,
                 NULL);
 
@@ -3430,7 +3431,7 @@ on_row_released (GtkGestureClick *gesture,
 
   g_object_get (row,
                 "sidebar", &sidebar,
-                "section_type", &section_type,
+                "section-type", &section_type,
                 "place-type", &row_type,
                 NULL);
 
@@ -3702,23 +3703,23 @@ create_volume_monitor (GtkPlacesSidebar *sidebar)
 
   sidebar->volume_monitor = g_volume_monitor_get ();
 
-  g_signal_connect_object (sidebar->volume_monitor, "volume_added",
+  g_signal_connect_object (sidebar->volume_monitor, "volume-added",
                            G_CALLBACK (update_places), sidebar, G_CONNECT_SWAPPED);
-  g_signal_connect_object (sidebar->volume_monitor, "volume_removed",
+  g_signal_connect_object (sidebar->volume_monitor, "volume-removed",
                            G_CALLBACK (update_places), sidebar, G_CONNECT_SWAPPED);
-  g_signal_connect_object (sidebar->volume_monitor, "volume_changed",
+  g_signal_connect_object (sidebar->volume_monitor, "volume-changed",
                            G_CALLBACK (update_places), sidebar, G_CONNECT_SWAPPED);
-  g_signal_connect_object (sidebar->volume_monitor, "mount_added",
+  g_signal_connect_object (sidebar->volume_monitor, "mount-added",
                            G_CALLBACK (update_places), sidebar, G_CONNECT_SWAPPED);
-  g_signal_connect_object (sidebar->volume_monitor, "mount_removed",
+  g_signal_connect_object (sidebar->volume_monitor, "mount-removed",
                            G_CALLBACK (update_places), sidebar, G_CONNECT_SWAPPED);
-  g_signal_connect_object (sidebar->volume_monitor, "mount_changed",
+  g_signal_connect_object (sidebar->volume_monitor, "mount-changed",
                            G_CALLBACK (update_places), sidebar, G_CONNECT_SWAPPED);
-  g_signal_connect_object (sidebar->volume_monitor, "drive_disconnected",
+  g_signal_connect_object (sidebar->volume_monitor, "drive-disconnected",
                            G_CALLBACK (update_places), sidebar, G_CONNECT_SWAPPED);
-  g_signal_connect_object (sidebar->volume_monitor, "drive_connected",
+  g_signal_connect_object (sidebar->volume_monitor, "drive-connected",
                            G_CALLBACK (update_places), sidebar, G_CONNECT_SWAPPED);
-  g_signal_connect_object (sidebar->volume_monitor, "drive_changed",
+  g_signal_connect_object (sidebar->volume_monitor, "drive-changed",
                            G_CALLBACK (update_places), sidebar, G_CONNECT_SWAPPED);
 }
 
@@ -3974,8 +3975,7 @@ gtk_places_sidebar_dispose (GObject *object)
   if (sidebar->cancellable)
     {
       g_cancellable_cancel (sidebar->cancellable);
-      g_object_unref (sidebar->cancellable);
-      sidebar->cancellable = NULL;
+      g_clear_object (&sidebar->cancellable);
     }
 
   if (sidebar->bookmarks_manager != NULL)
@@ -3997,16 +3997,13 @@ gtk_places_sidebar_dispose (GObject *object)
 
   if (sidebar->trash_monitor)
     {
-      g_signal_handler_disconnect (sidebar->trash_monitor, sidebar->trash_monitor_changed_id);
-      sidebar->trash_monitor_changed_id = 0;
+      g_clear_signal_handler (&sidebar->trash_monitor_changed_id, sidebar->trash_monitor);
       g_clear_object (&sidebar->trash_monitor);
     }
 
   if (sidebar->trash_row)
     {
-      g_object_remove_weak_pointer (G_OBJECT (sidebar->trash_row),
-                                    (gpointer *) &sidebar->trash_row);
-      sidebar->trash_row = NULL;
+      g_clear_weak_pointer (&sidebar->trash_row);
     }
 
   if (sidebar->volume_monitor != NULL)
@@ -4023,8 +4020,7 @@ gtk_places_sidebar_dispose (GObject *object)
     }
 
   g_clear_object (&sidebar->hostnamed_proxy);
-  g_free (sidebar->hostname);
-  sidebar->hostname = NULL;
+  g_clear_pointer (&sidebar->hostname, g_free);
 
   if (sidebar->gtk_settings)
     {
@@ -4051,8 +4047,7 @@ gtk_places_sidebar_dispose (GObject *object)
         {
           g_signal_handlers_disconnect_by_data (l->data, sidebar);
         }
-      g_object_unref (sidebar->cloud_manager);
-      sidebar->cloud_manager = NULL;
+      g_clear_object (&sidebar->cloud_manager);
     }
 #endif
 
@@ -4363,36 +4358,36 @@ gtk_places_sidebar_class_init (GtkPlacesSidebarClass *class)
   properties[PROP_LOCATION] =
           g_param_spec_object ("location", NULL, NULL,
                                G_TYPE_FILE,
-                               GTK_PARAM_READWRITE);
+                               G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
   properties[PROP_OPEN_FLAGS] =
           g_param_spec_flags ("open-flags", NULL, NULL,
                               GTK_TYPE_PLACES_OPEN_FLAGS,
                               GTK_PLACES_OPEN_NORMAL,
-                              GTK_PARAM_READWRITE);
+                              G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
   properties[PROP_SHOW_RECENT] =
           g_param_spec_boolean ("show-recent", NULL, NULL,
                                 TRUE,
-                                GTK_PARAM_READWRITE);
+                                G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
   properties[PROP_SHOW_DESKTOP] =
           g_param_spec_boolean ("show-desktop", NULL, NULL,
                                 TRUE,
-                                GTK_PARAM_READWRITE);
+                                G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
   properties[PROP_SHOW_ENTER_LOCATION] =
           g_param_spec_boolean ("show-enter-location", NULL, NULL,
                                 FALSE,
-                                GTK_PARAM_READWRITE);
+                                G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
   properties[PROP_SHOW_TRASH] =
           g_param_spec_boolean ("show-trash", NULL, NULL,
                                 TRUE,
-                                GTK_PARAM_READWRITE);
+                                G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
   properties[PROP_SHOW_OTHER_LOCATIONS] =
           g_param_spec_boolean ("show-other-locations", NULL, NULL,
                                 TRUE,
-                                GTK_PARAM_READWRITE);
+                                G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
   properties[PROP_SHOW_STARRED_LOCATION] =
           g_param_spec_boolean ("show-starred-location", NULL, NULL,
                                 FALSE,
-                                GTK_PARAM_READWRITE);
+                                G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, NUM_PROPERTIES, properties);
 

@@ -48,9 +48,11 @@
  */
 
 #include "config.h"
+
+#include "gtkcellareaboxprivate.h"
+
 #include "gtkorientable.h"
 #include "deprecated/gtkcelllayout.h"
-#include "gtkcellareabox.h"
 #include "gtkcellareaboxcontextprivate.h"
 #include "gtktypebuiltins.h"
 #include "gtkprivate.h"
@@ -236,9 +238,13 @@ struct _GtkCellAreaBoxPrivate
 
 enum {
   PROP_0,
+  PROP_SPACING,
+  /* GtkOrientable */
   PROP_ORIENTATION,
-  PROP_SPACING
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 enum {
   CELL_PROP_0,
@@ -306,20 +312,21 @@ gtk_cell_area_box_class_init (GtkCellAreaBoxClass *class)
   area_class->focus = gtk_cell_area_box_focus;
 
   /* Properties */
-  g_object_class_override_property (object_class, PROP_ORIENTATION, "orientation");
+  props[PROP_ORIENTATION] = g_param_spec_override ("orientation",
+      g_object_interface_find_property (g_type_default_interface_ref (GTK_TYPE_ORIENTABLE), "orientation"));
 
   /**
    * GtkCellAreaBox:spacing:
    *
    * The amount of space to reserve between cells.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_SPACING,
-                                   g_param_spec_int ("spacing", NULL, NULL,
-                                                     0,
-                                                     G_MAXINT,
-                                                     0,
-                                                     GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
+  props[PROP_SPACING] = g_param_spec_int ("spacing", NULL, NULL,
+                                          0,
+                                          G_MAXINT,
+                                          0,
+                                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
+
+  g_object_class_install_properties (object_class, N_PROPS, props);
 
   /* Cell Properties */
   /**
@@ -333,7 +340,7 @@ gtk_cell_area_box_class_init (GtkCellAreaBoxClass *class)
                                              g_param_spec_boolean
                                              ("expand", NULL, NULL,
                                               FALSE,
-                                              GTK_PARAM_READWRITE));
+                                              G_PARAM_READWRITE | G_PARAM_STATIC_NAME));
 
   /**
    * GtkCellAreaBox:align:
@@ -345,7 +352,7 @@ gtk_cell_area_box_class_init (GtkCellAreaBoxClass *class)
                                              g_param_spec_boolean
                                              ("align", NULL, NULL,
                                               FALSE,
-                                              GTK_PARAM_READWRITE));
+                                              G_PARAM_READWRITE | G_PARAM_STATIC_NAME));
 
   /**
    * GtkCellAreaBox:fixed-size:
@@ -358,7 +365,7 @@ gtk_cell_area_box_class_init (GtkCellAreaBoxClass *class)
                                              g_param_spec_boolean
                                              ("fixed-size", NULL, NULL,
                                               TRUE,
-                                              GTK_PARAM_READWRITE));
+                                              G_PARAM_READWRITE | G_PARAM_STATIC_NAME));
 
   /**
    * GtkCellAreaBox:pack-type:
@@ -371,7 +378,7 @@ gtk_cell_area_box_class_init (GtkCellAreaBoxClass *class)
                                              g_param_spec_enum
                                              ("pack-type", NULL, NULL,
                                               GTK_TYPE_PACK_TYPE, GTK_PACK_START,
-                                              GTK_PARAM_READWRITE));
+                                              G_PARAM_READWRITE | G_PARAM_STATIC_NAME));
 }
 
 
@@ -1016,8 +1023,7 @@ gtk_cell_area_box_finalize (GObject *object)
   for (l = priv->contexts; l; l = l->next)
     g_object_weak_unref (G_OBJECT (l->data), (GWeakNotify)context_weak_notify, box);
 
-  g_slist_free (priv->contexts);
-  priv->contexts = NULL;
+  g_clear_slist (&priv->contexts, NULL);
 
   /* Free the cell grouping info */
   cell_groups_clear (box);
@@ -2244,7 +2250,7 @@ gtk_cell_area_box_set_spacing (GtkCellAreaBox  *box,
     {
       priv->spacing = spacing;
 
-      g_object_notify (G_OBJECT (box), "spacing");
+      g_object_notify_by_pspec (G_OBJECT (box), props[PROP_SPACING]);
 
       /* Notify that size needs to be requested again */
       reset_contexts (box);

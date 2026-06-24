@@ -364,6 +364,8 @@ gsk_gl_shader_constructed (GObject *object)
   GMatchInfo *match_info;
   int max_texture_seen = 0;
 
+  G_OBJECT_CLASS (gsk_gl_shader_parent_class)->constructed (object);
+
   g_regex_match_full (uniform_regexp,
                       string, string_len, 0, 0,
                       &match_info, NULL);
@@ -454,7 +456,7 @@ gsk_gl_shader_class_init (GskGLShaderClass *klass)
                         G_TYPE_BYTES,
                         G_PARAM_READWRITE |
                         G_PARAM_CONSTRUCT_ONLY |
-                        G_PARAM_STATIC_STRINGS);
+                        G_PARAM_STATIC_NAME);
 
   /**
    * GskGLShader:resource:
@@ -469,7 +471,7 @@ gsk_gl_shader_class_init (GskGLShaderClass *klass)
                          NULL,
                          G_PARAM_READWRITE |
                          G_PARAM_CONSTRUCT_ONLY |
-                         G_PARAM_STATIC_STRINGS);
+                         G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (object_class, GLSHADER_N_PROPS, gsk_gl_shader_properties);
 }
@@ -1342,6 +1344,8 @@ gsk_shader_args_builder_ref (GskShaderArgsBuilder *builder)
  * Sets the value of the uniform @idx.
  *
  * The uniform must be of float type.
+ *
+ * Deprecated: 4.16
  */
 void
 gsk_shader_args_builder_set_float (GskShaderArgsBuilder *builder,

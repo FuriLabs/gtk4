@@ -35,11 +35,9 @@ void               _gdk_broadway_server_query_mouse              (GdkBroadwaySer
 GdkGrabStatus      _gdk_broadway_server_grab_pointer             (GdkBroadwayServer  *server,
 								  int                 id,
 								  gboolean            owner_events,
-								  guint32             event_mask,
 								  guint32             time_);
 guint32            _gdk_broadway_server_ungrab_pointer           (GdkBroadwayServer  *server,
 								  guint32             time_);
-gint32             _gdk_broadway_server_get_mouse_surface       (GdkBroadwayServer  *server);
 guint32            _gdk_broadway_server_new_surface               (GdkBroadwayServer  *server,
 								  int                 x,
 								  int                 y,
@@ -58,11 +56,6 @@ void               _gdk_broadway_server_surface_set_transient_for (GdkBroadwaySe
 								  int                 parent);
 void               _gdk_broadway_server_set_show_keyboard        (GdkBroadwayServer  *server,
 								  gboolean            show_keyboard);
-gboolean           _gdk_broadway_server_surface_translate         (GdkBroadwayServer  *server,
-								  int                 id,
-								  cairo_region_t     *area,
-								  int                 dx,
-								  int                 dy);
 guint32             gdk_broadway_server_upload_texture           (GdkBroadwayServer  *server,
                                                                   GdkTexture         *texture);
 void                gdk_broadway_server_release_texture          (GdkBroadwayServer  *server,
@@ -80,4 +73,3 @@ gboolean           _gdk_broadway_server_surface_move_resize       (GdkBroadwaySe
 void               _gdk_broadway_server_surface_set_modal_hint   (GdkBroadwayServer *server,
                                                                   int                id,
                                                                   gboolean           modal_hint);
-

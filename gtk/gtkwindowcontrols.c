@@ -186,7 +186,7 @@ get_default_icon (GtkWidget *widget)
                                      WINDOW_ICON_SIZE,
                                      scale,
                                      gtk_widget_get_direction (widget),
-                                     0);
+                                     GTK_ICON_LOOKUP_NONE);
 
   return GDK_PAINTABLE (info);
 }
@@ -337,8 +337,7 @@ update_window_buttons (GtkWindowControls *self)
           if (!update_window_icon (window, button))
             {
               g_object_ref_sink (button);
-              g_object_unref (button);
-              button = NULL;
+              g_clear_object (&button);
             }
         }
       else if (strcmp (tokens[i], "minimize") == 0 &&
@@ -580,7 +579,7 @@ gtk_window_controls_class_init (GtkWindowControlsClass *klass)
       g_param_spec_enum ("side", NULL, NULL,
                          GTK_TYPE_PACK_TYPE,
                          GTK_PACK_START,
-                         GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkWindowControls:decoration-layout:
@@ -593,7 +592,7 @@ gtk_window_controls_class_init (GtkWindowControlsClass *klass)
   props[PROP_DECORATION_LAYOUT] =
       g_param_spec_string ("decoration-layout", NULL, NULL,
                            NULL,
-                           GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
 
   /**
@@ -613,7 +612,7 @@ gtk_window_controls_class_init (GtkWindowControlsClass *klass)
   props[PROP_USE_NATIVE_CONTROLS] =
       g_param_spec_boolean ("use-native-controls", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkWindowControls:empty:
@@ -623,7 +622,7 @@ gtk_window_controls_class_init (GtkWindowControlsClass *klass)
   props[PROP_EMPTY] =
     g_param_spec_boolean ("empty", NULL, NULL,
                           TRUE,
-                          GTK_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, LAST_PROP, props);
 

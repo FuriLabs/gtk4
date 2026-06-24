@@ -21,7 +21,7 @@
 #include "config.h"
 #include <string.h>
 
-#include "gtk/gtkimcontextquartz.h"
+#include "gtk/gtkimcontextquartzprivate.h"
 #include "gtk/gtkimmoduleprivate.h"
 #include "gtk/gtkprivate.h"
 
@@ -126,11 +126,10 @@ output_result (GtkIMContext *context,
   if (fixed_str)
     {
       GTK_DEBUG (MODULES, "tic-insert-text: %s", fixed_str);
-      g_free (qc->preedit_str);
-      qc->preedit_str = NULL;
+      g_clear_pointer (&qc->preedit_str, g_free);
       g_object_set_data (G_OBJECT (surface), TIC_INSERT_TEXT, NULL);
       g_signal_emit_by_name (context, "commit", fixed_str);
-      g_signal_emit_by_name (context, "preedit_changed");
+      g_signal_emit_by_name (context, "preedit-changed");
 
       unsigned int filtered =
 	   GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (surface),
@@ -153,7 +152,7 @@ output_result (GtkIMContext *context,
       g_free (qc->preedit_str);
       qc->preedit_str = g_strdup (marked_str);
       g_object_set_data (G_OBJECT (surface), TIC_MARKED_TEXT, NULL);
-      g_signal_emit_by_name (context, "preedit_changed");
+      g_signal_emit_by_name (context, "preedit-changed");
       retval = TRUE;
     }
   if (!fixed_str && !marked_str)
@@ -247,9 +246,8 @@ discard_preedit (GtkIMContext *context)
     {
       g_signal_emit_by_name (context, "commit", qc->preedit_str);
 
-      g_free (qc->preedit_str);
-      qc->preedit_str = NULL;
-      g_signal_emit_by_name (context, "preedit_changed");
+      g_clear_pointer (&qc->preedit_str, g_free);
+      g_signal_emit_by_name (context, "preedit-changed");
     }
 }
 
@@ -356,10 +354,8 @@ imquartz_finalize (GObject *obj)
   GTK_DEBUG (MODULES, "imquartz_finalize");
 
   GtkIMContextQuartz *qc = GTK_IM_CONTEXT_QUARTZ (obj);
-  g_free (qc->preedit_str);
-  qc->preedit_str = NULL;
-  g_free (qc->cursor_rect);
-  qc->cursor_rect = NULL;
+  g_clear_pointer (&qc->preedit_str, g_free);
+  g_clear_pointer (&qc->cursor_rect, g_free);
 
   g_signal_handlers_disconnect_by_func (qc->helper, (gpointer)commit_cb, qc);
   g_object_unref (qc->helper);
@@ -395,7 +391,7 @@ gtk_im_context_quartz_init (GtkIMContextQuartz *qc)
   qc->preedit_str = g_strdup ("");
   qc->cursor_index = 0;
   qc->selected_len = 0;
-  qc->cursor_rect = g_malloc (sizeof (GdkRectangle));
+  qc->cursor_rect = g_new (GdkRectangle, 1);
   qc->focused = FALSE;
 
   qc->helper = g_object_new (GTK_TYPE_IM_CONTEXT_SIMPLE, NULL);

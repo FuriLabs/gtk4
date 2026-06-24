@@ -799,7 +799,7 @@ gtk_shortcuts_window_class_init (GtkShortcutsWindowClass *klass)
   properties[PROP_SECTION_NAME] =
     g_param_spec_string ("section-name", NULL, NULL,
                          "internal-search",
-                         (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                         (G_PARAM_READWRITE | G_PARAM_STATIC_NAME));
 
   /**
    * GtkShortcutsWindow:view-name:
@@ -817,7 +817,7 @@ gtk_shortcuts_window_class_init (GtkShortcutsWindowClass *klass)
   properties[PROP_VIEW_NAME] =
     g_param_spec_string ("view-name", NULL, NULL,
                          NULL,
-                         (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                         (G_PARAM_READWRITE | G_PARAM_STATIC_NAME));
 
   g_object_class_install_properties (object_class, LAST_PROP, properties);
 
@@ -860,7 +860,7 @@ gtk_shortcuts_window_class_init (GtkShortcutsWindowClass *klass)
                                  0);
 
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_Escape, 0,
+                                       GDK_KEY_Escape, GDK_NO_MODIFIER_MASK,
                                        "close",
                                        NULL);
 

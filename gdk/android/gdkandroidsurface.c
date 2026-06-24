@@ -22,7 +22,10 @@
 #include <math.h>
 
 #include "gdkframeclockidleprivate.h"
+#include "gdkframeclockprivate.h"
 #include "gdkglcontextprivate.h"
+
+#include "gdkandroidchoreographersource-private.h"
 
 #include <android/native_window_jni.h>
 
@@ -160,6 +163,10 @@ _gdk_android_surface_on_layout_surface (JNIEnv *env, jobject this,
 
   gdk_surface_request_layout ((GdkSurface *) self);
 
+  /* Complete a deferred map: gdk_android_surface_eventloop_idle sets
+   * delayed_map = TRUE when notifyVisibility(true) arrives before the surface
+   * geometry is fully known (cfg.x == 0 || cfg.y == 0).  At this point width,
+   * height, and scale are initialised, so it is safe to map the surface. */
   if (self->delayed_map)
     {
       gdk_android_surface_handle_map (self);
@@ -258,14 +265,6 @@ typedef struct
 } GdkAndroidSurfaceOnVisibilityData;
 
 static void
-gdk_android_surface_do_map_cb (GdkSeat    *seat,
-                               GdkSurface *surface,
-                               gpointer    user_data)
-{
-  gdk_surface_set_is_mapped (surface, TRUE);
-}
-
-static void
 gdk_android_surface_handle_map (GdkAndroidSurface *self)
 {
   GdkSurface *surface = (GdkSurface *) self;
@@ -284,19 +283,13 @@ gdk_android_surface_handle_map (GdkAndroidSurface *self)
       return;
     }
 
+  gdk_surface_set_is_mapped (surface, TRUE);
+
   if (surface->autohide)
     {
       g_debug ("Grabbing surface %p [%s]", self, G_OBJECT_TYPE_NAME (self));
-      gdk_seat_grab ((GdkSeat *) display->seat,
-                     surface,
-                     GDK_SEAT_CAPABILITY_ALL,
-                     TRUE,
-                     NULL, NULL,
-                     gdk_android_surface_do_map_cb, NULL);
-    }
-  else
-    {
-      gdk_surface_set_is_mapped (surface, TRUE);
+      gdk_seat_grab ((GdkSeat *) display->seat, surface);
+      self->popup_grab = TRUE;
     }
 }
 
@@ -323,6 +316,10 @@ gdk_android_surface_eventloop_idle (GdkAndroidSurfaceOnVisibilityData *data)
       // gdk_android_surface_queue_configuration_update(self);
       if (self->cfg.x == 0 || self->cfg.y == 0)
         {
+          /* Position not yet known — defer map to
+           * _gdk_android_surface_on_layout_surface.  This runs before
+           * notifyLayoutSurface because surfaceCreated calls
+           * notifyVisibility synchronously (see ToplevelActivity.java). */
           self->delayed_map = TRUE;
         }
       else
@@ -330,6 +327,13 @@ gdk_android_surface_eventloop_idle (GdkAndroidSurfaceOnVisibilityData *data)
           self->delayed_map = FALSE;
           gdk_android_surface_handle_map (self);
         }
+
+      GdkAndroidDisplay *display = GDK_ANDROID_DISPLAY (gdk_surface_get_display (surface));
+      display->visible_surfaces = g_list_prepend (display->visible_surfaces, self);
+      self->visible_node = display->visible_surfaces;
+      if (display->visible_surfaces->next == NULL && display->choreographer_source)
+        gdk_android_choreographer_source_unpause (
+            (GdkAndroidChoreographerSource *) display->choreographer_source);
     }
   else
     {
@@ -354,6 +358,17 @@ gdk_android_surface_eventloop_idle (GdkAndroidSurfaceOnVisibilityData *data)
 
       // cont. ugly hack
       self->visible = old_visibility;
+
+      GdkAndroidDisplay *display = GDK_ANDROID_DISPLAY (gdk_surface_get_display (surface));
+      if (self->visible_node)
+        {
+          display->visible_surfaces = g_list_delete_link (display->visible_surfaces,
+                                                          self->visible_node);
+          self->visible_node = NULL;
+          if (display->visible_surfaces == NULL && display->choreographer_source)
+            gdk_android_choreographer_source_pause (
+                (GdkAndroidChoreographerSource *) display->choreographer_source);
+        }
     }
 
   g_object_unref (self);
@@ -465,8 +480,15 @@ gdk_android_surface_frame_clock_after_paint (GdkFrameClock *clock,
     goto exit;
   gfloat refresh = (*env)->CallFloatMethod (env, view,
                                             gdk_android_get_java_cache ()->a_display.get_refresh_rate);
-  timings->refresh_interval = 1000000.f / refresh; // \frac{1}{refresh} * 10^6
-  timings->presentation_time = 0;
+  timings->refresh_interval = 1000000.f / refresh;
+
+  GdkAndroidDisplay *display = GDK_ANDROID_DISPLAY (gdk_surface_get_display (surface));
+  if (display->choreographer_source)
+    timings->presentation_time =
+      gdk_android_choreographer_source_get_presentation_time (
+        (GdkAndroidChoreographerSource *) display->choreographer_source);
+  else
+    timings->presentation_time = 0;
 
   timings->complete = TRUE;
 exit:
@@ -509,6 +531,15 @@ gdk_android_surface_hide (GdkSurface *surface)
   if (!self->surface || surface->destroyed)
     return;
 
+  if (surface->autohide && self->popup_grab)
+    {
+      GdkSeat *seat;
+
+      seat = gdk_display_get_default_seat (surface->display);
+      gdk_seat_ungrab (seat, surface);
+      self->popup_grab = FALSE;
+    }
+
   JNIEnv *env = gdk_android_get_env ();
 
   if (surface->is_mapped)
@@ -522,8 +553,9 @@ gdk_android_surface_get_geometry (GdkSurface *surface,
                                   int *x, int *y,
                                   int *width, int *height)
 {
-  *x = surface->x;
-  *y = surface->y;
+  GdkSurface *parent = surface->parent;
+  *x = surface->x - (parent ? parent->x : 0);
+  *y = surface->y - (parent ? parent->y : 0);
   *width = surface->width;
   *height = surface->height;
 }
@@ -533,8 +565,8 @@ gdk_android_surface_get_root_coords (GdkSurface *surface,
                                      int x, int y,
                                      int *root_x, int *root_y)
 {
-  *root_x = x - surface->x;
-  *root_y = y - surface->y;
+  *root_x = x + surface->x;
+  *root_y = y + surface->y;
 }
 
 static gboolean

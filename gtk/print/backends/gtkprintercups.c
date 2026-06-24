@@ -24,12 +24,15 @@
 #include <colord.h>
 #endif
 
-#include "gtkprintercups.h"
+#include "gtkprintercupsprivate.h"
 
 enum {
   PROP_0,
-  PROP_PROFILE_TITLE
+  PROP_PROFILE_TITLE,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 static void gtk_printer_cups_finalize   (GObject             *object);
 
@@ -55,11 +58,11 @@ gtk_printer_cups_class_init (GtkPrinterCupsClass *class)
 
   gtk_printer_cups_parent_class = g_type_class_peek_parent (class);
 
-  g_object_class_install_property (G_OBJECT_CLASS (class),
-                                   PROP_PROFILE_TITLE,
-                                   g_param_spec_string ("profile-title", NULL, NULL,
-                                                        "",
-                                                        G_PARAM_READABLE));
+  props[PROP_PROFILE_TITLE] = g_param_spec_string ("profile-title", NULL, NULL,
+                                                   "",
+                                                   G_PARAM_READABLE | G_PARAM_STATIC_NAME);
+
+  g_object_class_install_properties (object_class, N_PROPS, props);
 }
 
 static void
@@ -275,7 +278,7 @@ out:
     {
       g_free (printer->colord_title);
       printer->colord_title = g_strdup (title);
-      g_object_notify (G_OBJECT (printer), "profile-title");
+      g_object_notify_by_pspec (G_OBJECT (printer), props[PROP_PROFILE_TITLE]);
     }
   return;
 }
@@ -480,18 +483,10 @@ colord_update_device (GtkPrinterCups *printer)
 #endif
 
   /* old cached profile no longer valid */
-  if (printer->colord_profile)
-    {
-      g_object_unref (printer->colord_profile);
-      printer->colord_profile = NULL;
-    }
+  g_clear_object (&printer->colord_profile);
 
   /* old cached device no longer valid */
-  if (printer->colord_device)
-    {
-      g_object_unref (printer->colord_device);
-      printer->colord_device = NULL;
-    }
+  g_clear_object (&printer->colord_device);
 
   /* generate a known ID */
   colord_device_id = g_strdup_printf ("cups-%s", gtk_printer_get_name (GTK_PRINTER (printer)));

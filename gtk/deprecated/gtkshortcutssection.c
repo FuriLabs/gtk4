@@ -204,8 +204,7 @@ gtk_shortcuts_section_dispose (GObject *object)
   g_clear_pointer ((GtkWidget **)&self->stack, gtk_widget_unparent);
   g_clear_pointer (&self->footer, gtk_widget_unparent);
 
-  g_list_free (self->groups);
-  self->groups = NULL;
+  g_clear_list (&self->groups, NULL);
 
   G_OBJECT_CLASS (gtk_shortcuts_section_parent_class)->dispose (object);
 }
@@ -316,7 +315,7 @@ gtk_shortcuts_section_class_init (GtkShortcutsSectionClass *klass)
   properties[PROP_SECTION_NAME] =
     g_param_spec_string ("section-name", NULL, NULL,
                          NULL,
-                         (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                         (G_PARAM_READWRITE | G_PARAM_STATIC_NAME));
 
   /**
    * GtkShortcutsSection:view-name:
@@ -334,7 +333,7 @@ gtk_shortcuts_section_class_init (GtkShortcutsSectionClass *klass)
   properties[PROP_VIEW_NAME] =
     g_param_spec_string ("view-name", NULL, NULL,
                          NULL,
-                         (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY));
+                         (G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY));
 
   /**
    * GtkShortcutsSection:title:
@@ -350,7 +349,7 @@ gtk_shortcuts_section_class_init (GtkShortcutsSectionClass *klass)
   properties[PROP_TITLE] =
     g_param_spec_string ("title", NULL, NULL,
                          NULL,
-                         (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                         (G_PARAM_READWRITE | G_PARAM_STATIC_NAME));
 
   /**
    * GtkShortcutsSection:max-height:
@@ -366,7 +365,7 @@ gtk_shortcuts_section_class_init (GtkShortcutsSectionClass *klass)
   properties[PROP_MAX_HEIGHT] =
     g_param_spec_uint ("max-height", NULL, NULL,
                        0, G_MAXUINT, 15,
-                       (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY));
+                       (G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY));
 
   g_object_class_install_properties (object_class, LAST_PROP, properties);
 
@@ -399,11 +398,11 @@ gtk_shortcuts_section_class_init (GtkShortcutsSectionClass *klass)
                               _gtk_marshal_BOOLEAN__INTv);
 
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_Page_Up, 0,
+                                       GDK_KEY_Page_Up, GDK_NO_MODIFIER_MASK,
                                        "change-current-page",
                                        "(i)", -1);
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_Page_Down, 0,
+                                       GDK_KEY_Page_Down, GDK_NO_MODIFIER_MASK,
                                        "change-current-page",
                                        "(i)", 1);
   gtk_widget_class_add_binding_signal (widget_class,

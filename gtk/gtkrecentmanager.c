@@ -92,7 +92,7 @@
 #include <glib/gstdio.h>
 #include <gio/gio.h>
 
-#include "gtkrecentmanager.h"
+#include "gtkrecentmanagerprivate.h"
 #include <glib/gi18n-lib.h>
 #include "gtksettings.h"
 #include "gtktypebuiltins.h"
@@ -173,9 +173,11 @@ enum
   PROP_0,
 
   PROP_FILENAME,
-  PROP_LIMIT,
-  PROP_SIZE
+  PROP_SIZE,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 static void     gtk_recent_manager_dispose             (GObject           *object);
 static void     gtk_recent_manager_finalize            (GObject           *object);
@@ -272,22 +274,20 @@ gtk_recent_manager_class_init (GtkRecentManagerClass *klass)
    * The full path to the file to be used to store and read the
    * recently used resources list
    */
-  g_object_class_install_property (gobject_class,
-                                   PROP_FILENAME,
-                                   g_param_spec_string ("filename", NULL, NULL,
-                                                        NULL,
-                                                        (G_PARAM_CONSTRUCT_ONLY | GTK_PARAM_READWRITE)));
+  props[PROP_FILENAME] = g_param_spec_string ("filename", NULL, NULL,
+                                              NULL,
+                                              (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_NAME));
 
   /**
    * GtkRecentManager:size:
    *
    * The size of the recently used resources list.
    */
-  g_object_class_install_property (gobject_class,
-                                   PROP_SIZE,
-                                   g_param_spec_int ("size", NULL, NULL,
-                                                     -1, G_MAXINT, 0,
-                                                     GTK_PARAM_READABLE));
+  props[PROP_SIZE] = g_param_spec_int ("size", NULL, NULL,
+                                       -1, G_MAXINT, 0,
+                                       G_PARAM_READABLE | G_PARAM_STATIC_NAME);
+
+  g_object_class_install_properties (gobject_class, N_PROPS, props);
 
   /**
    * GtkRecentManager::changed:
@@ -395,14 +395,12 @@ gtk_recent_manager_dispose (GObject *gobject)
       g_signal_handlers_disconnect_by_func (priv->monitor,
                                             G_CALLBACK (gtk_recent_manager_monitor_changed),
                                             manager);
-      g_object_unref (priv->monitor);
-      priv->monitor = NULL;
+      g_clear_object (&priv->monitor);
     }
 
   if (priv->changed_timeout != 0)
     {
-      g_source_remove (priv->changed_timeout);
-      priv->changed_timeout = 0;
+      g_clear_handle_id (&priv->changed_timeout, g_source_remove);
       priv->changed_age = 0;
     }
 
@@ -597,8 +595,7 @@ gtk_recent_manager_set_filename (GtkRecentManager *manager,
           g_signal_handlers_disconnect_by_func (priv->monitor,
                                                 G_CALLBACK (gtk_recent_manager_monitor_changed),
                                                 manager);
-          g_object_unref (priv->monitor);
-          priv->monitor = NULL;
+          g_clear_object (&priv->monitor);
         }
 
       if (!filename || *filename == '\0')
@@ -698,7 +695,7 @@ build_recent_items_list (GtkRecentManager *manager)
             {
               priv->size = size;
 
-              g_object_notify (G_OBJECT (manager), "size");
+              g_object_notify_by_pspec (G_OBJECT (manager), props[PROP_SIZE]);
             }
         }
     }
@@ -1376,7 +1373,7 @@ emit_manager_changed (gpointer data)
 
   g_signal_emit (manager, signal_changed, 0);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void

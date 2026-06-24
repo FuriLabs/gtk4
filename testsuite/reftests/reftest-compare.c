@@ -94,6 +94,12 @@ memory_format_is_high_depth (GdkMemoryFormat format)
     case GDK_MEMORY_G16_B16_R16_420:
     case GDK_MEMORY_G16_B16_R16_422:
     case GDK_MEMORY_G16_B16_R16_444:
+    case GDK_MEMORY_ARGB2101010_PREMULTIPLIED:
+    case GDK_MEMORY_ARGB2101010:
+    case GDK_MEMORY_XRGB2101010:
+    case GDK_MEMORY_ABGR2101010_PREMULTIPLIED:
+    case GDK_MEMORY_ABGR2101010:
+    case GDK_MEMORY_XBGR2101010:
       return TRUE;
 
     case GDK_MEMORY_N_FORMATS:
@@ -320,9 +326,9 @@ reftest_compare_textures (GdkTexture *texture1,
       stride = w *  4 * sizeof (float);
     }
 
-  data1 = g_malloc_n (stride, h);
+  data1 = g_malloc0_n (stride, h);
   gdk_texture_downloader_download_into (downloader, data1, stride);
-  data2 = g_malloc_n (stride, h);
+  data2 = g_malloc0_n (stride, h);
   gdk_texture_downloader_set_texture (downloader, texture2);
   gdk_texture_downloader_download_into (downloader, data2, stride);
 
@@ -341,6 +347,7 @@ reftest_compare_textures (GdkTexture *texture1,
                              w, h);
     }
 
+  gdk_texture_downloader_free (downloader);
   g_free (data1);
   g_free (data2);
 

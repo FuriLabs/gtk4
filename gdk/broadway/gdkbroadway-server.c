@@ -328,11 +328,7 @@ process_input_messages (GdkBroadwayServer *server)
 {
   BroadwayReply *reply;
 
-  if (server->process_input_idle != 0)
-    {
-      g_source_remove (server->process_input_idle);
-      server->process_input_idle = 0;
-    }
+  g_clear_handle_id (&server->process_input_idle, g_source_remove);
 
   while (server->incoming)
     {
@@ -718,7 +714,6 @@ GdkGrabStatus
 _gdk_broadway_server_grab_pointer (GdkBroadwayServer *server,
                                    int id,
                                    gboolean owner_events,
-                                   guint32 event_mask,
                                    guint32 time_)
 {
   BroadwayRequestGrabPointer msg;
@@ -727,7 +722,6 @@ _gdk_broadway_server_grab_pointer (GdkBroadwayServer *server,
 
   msg.id = id;
   msg.owner_events = owner_events;
-  msg.event_mask = event_mask;
   msg.time_ = time_;
 
   serial = gdk_broadway_server_send_message (server, msg,

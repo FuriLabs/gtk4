@@ -302,7 +302,7 @@ stop_editing_soon (gpointer data)
 
   self->stop_editing_soon_id = 0;
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -511,7 +511,7 @@ gtk_editable_label_class_init (GtkEditableLabelClass *class)
   properties[PROP_EDITING] =
     g_param_spec_boolean ("editing", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, properties);
 
@@ -558,7 +558,7 @@ gtk_editable_label_class_init (GtkEditableLabelClass *class)
   g_object_unref (shortcut);
 
   gtk_widget_class_add_binding_action (widget_class,
-                                       GDK_KEY_Escape, 0,
+                                       GDK_KEY_Escape, GDK_NO_MODIFIER_MASK,
                                        "editing.stop",
                                        "b", FALSE);
 
@@ -570,7 +570,7 @@ gtk_editable_label_class_init (GtkEditableLabelClass *class)
                                        "menu.popup",
                                        NULL);
   gtk_widget_class_add_binding_action (widget_class,
-                                       GDK_KEY_Menu, 0,
+                                       GDK_KEY_Menu, GDK_NO_MODIFIER_MASK,
                                        "menu.popup",
                                        NULL);
 

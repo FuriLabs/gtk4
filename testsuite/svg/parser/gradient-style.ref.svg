@@ -14,19 +14,18 @@
             fx='500'
             fy='500'>
       <stop
-              offset='0%'
-              stop-color='rgb(170,136,255)'
-              stop-opacity='1'>
+              class='zero'
+              style='stop-color:#aa88ff'
+              offset='0%'>
       </stop>
       <stop
-              offset='50%'
-              stop-color='rgb(255,221,204)'
-              stop-opacity='1'>
+              id='one'
+              style='stop-color:#ffddcc'
+              offset='50%'>
       </stop>
       <stop
-              offset='100%'
-              stop-color='rgb(187,255,238)'
-              stop-opacity='1'>
+              style='stop-color:#bbffee'
+              offset='100%'>
       </stop>
     </radialGradient>
     <radialGradient
@@ -38,19 +37,16 @@
             fx='600'
             fy='1600'>
       <stop
-              offset='0%'
-              stop-color='rgb(170,136,255)'
-              stop-opacity='1'>
+              style='stop-color:#aa88ff'
+              offset='0%'>
       </stop>
       <stop
-              offset='50%'
-              stop-color='rgb(255,221,204)'
-              stop-opacity='1'>
+              style='stop-color:#ffddcc'
+              offset='50%'>
       </stop>
       <stop
-              offset='100%'
-              stop-color='rgb(187,255,238)'
-              stop-opacity='1'>
+              style='stop-color:#bbffee'
+              offset='100%'>
       </stop>
     </radialGradient>
     <radialGradient
@@ -62,19 +58,16 @@
             fx='800'
             fy='2500'>
       <stop
-              offset='0%'
-              stop-color='rgb(170,136,255)'
-              stop-opacity='1'>
+              style='stop-color:#aa88ff'
+              offset='0%'>
       </stop>
       <stop
-              offset='50%'
-              stop-color='rgb(255,221,204)'
-              stop-opacity='1'>
+              style='stop-color:#ffddcc'
+              offset='50%'>
       </stop>
       <stop
-              offset='100%'
-              stop-color='rgb(187,255,238)'
-              stop-opacity='1'>
+              style='stop-color:#bbffee'
+              offset='100%'>
       </stop>
     </radialGradient>
     <radialGradient
@@ -87,19 +80,16 @@
             fy='3600'
             fr='50'>
       <stop
-              offset='0%'
-              stop-color='rgb(170,136,255)'
-              stop-opacity='1'>
+              style='stop-color:#aa88ff'
+              offset='0%'>
       </stop>
       <stop
-              offset='50%'
-              stop-color='rgb(255,221,204)'
-              stop-opacity='1'>
+              style='stop-color:#ffddcc'
+              offset='50%'>
       </stop>
       <stop
-              offset='100%'
-              stop-color='rgb(187,255,238)'
-              stop-opacity='1'>
+              style='stop-color:#bbffee'
+              offset='100%'>
       </stop>
     </radialGradient>
     <radialGradient
@@ -112,19 +102,16 @@
             fy='4500'
             fr='50'>
       <stop
-              offset='0%'
-              stop-color='rgb(170,136,255)'
-              stop-opacity='1'>
+              style='stop-color:#aa88ff'
+              offset='0%'>
       </stop>
       <stop
-              offset='50%'
-              stop-color='rgb(255,221,204)'
-              stop-opacity='1'>
+              style='stop-color:#ffddcc'
+              offset='50%'>
       </stop>
       <stop
-              offset='100%'
-              stop-color='rgb(187,255,238)'
-              stop-opacity='1'>
+              style='stop-color:#bbffee'
+              offset='100%'>
       </stop>
     </radialGradient>
   </defs>
@@ -132,7 +119,7 @@
           id='layer1'>
     <rect
             id='rec1'
-            fill='url(#plain_svg11_gradient)'
+            style='fill:url(#plain_svg11_gradient)'
             x='50'
             y='100'
             width='900'
@@ -140,7 +127,7 @@
     </rect>
     <rect
             id='rec2'
-            fill='url(#full_svg11_gradient)'
+            style='fill:url(#full_svg11_gradient)'
             x='50'
             y='1100'
             width='900'
@@ -148,7 +135,7 @@
     </rect>
     <rect
             id='rec3'
-            fill='url(#full_svg11_outside_gradient)'
+            style='fill:url(#full_svg11_outside_gradient)'
             x='50'
             y='2100'
             width='900'
@@ -156,7 +143,7 @@
     </rect>
     <rect
             id='rec4'
-            fill='url(#svg2_inside_gradient)'
+            style='fill:url(#svg2_inside_gradient)'
             x='50'
             y='3100'
             width='900'
@@ -164,7 +151,7 @@
     </rect>
     <rect
             id='rec5'
-            fill='url(#svg2_outside_gradient)'
+            style='fill:url(#svg2_outside_gradient)'
             x='50'
             y='4100'
             width='900'
@@ -172,120 +159,66 @@
     </rect>
     <circle
             id='circle1'
-            fill='none'
-            stroke='rgb(0,0,0)'
-            stroke-opacity='1'
-            stroke-width='1'
-            stroke-miterlimit='4'
-            stroke-dasharray='none'
+            style='fill:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke:#000000;stroke-opacity:1'
             cx='500'
             cy='500'
-            r='200'
-            class='transparent-fill'>
+            r='200'>
     </circle>
     <circle
             id='circle2'
-            fill='none'
-            stroke='rgb(0,0,0)'
-            stroke-opacity='1'
-            stroke-width='1'
-            stroke-miterlimit='4'
-            stroke-dasharray='none'
+            style='fill:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke:#000000;stroke-opacity:1'
             cx='500'
             cy='1500'
-            r='200'
-            class='transparent-fill'>
+            r='200'>
     </circle>
     <circle
             id='circle2_2'
-            fill='none'
-            stroke='rgb(0,0,0)'
-            stroke-opacity='1'
-            stroke-width='1'
-            stroke-miterlimit='4'
-            stroke-dasharray='none'
+            style='fill:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke:#000000;stroke-opacity:1'
             cx='600'
             cy='1600'
-            r='1'
-            class='transparent-fill'>
+            r='1'>
     </circle>
     <circle
             id='circle3'
-            fill='none'
-            stroke='rgb(0,0,0)'
-            stroke-opacity='1'
-            stroke-width='1'
-            stroke-miterlimit='4'
-            stroke-dasharray='none'
+            style='fill:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke:#000000;stroke-opacity:1'
             cx='500'
             cy='2500'
-            r='200'
-            class='transparent-fill'>
+            r='200'>
     </circle>
     <circle
             id='circle3_2'
-            fill='none'
-            stroke='rgb(0,0,0)'
-            stroke-opacity='1'
-            stroke-width='1'
-            stroke-miterlimit='4'
-            stroke-dasharray='none'
+            style='fill:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke:#000000;stroke-opacity:1'
             cx='800'
             cy='2500'
-            r='1'
-            class='transparent-fill'>
+            r='1'>
     </circle>
     <circle
             id='circle4'
-            fill='none'
-            stroke='rgb(0,0,0)'
-            stroke-opacity='1'
-            stroke-width='1'
-            stroke-miterlimit='4'
-            stroke-dasharray='none'
+            style='fill:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke:#000000;stroke-opacity:1'
             cx='500'
             cy='3500'
-            r='200'
-            class='transparent-fill'>
+            r='200'>
     </circle>
     <circle
             id='circle4_2'
-            fill='none'
-            stroke='rgb(0,0,0)'
-            stroke-opacity='1'
-            stroke-width='1'
-            stroke-miterlimit='4'
-            stroke-dasharray='none'
+            style='fill:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke:#000000;stroke-opacity:1'
             cx='600'
             cy='3600'
-            r='50'
-            class='transparent-fill'>
+            r='50'>
     </circle>
     <circle
             id='circle5'
-            fill='none'
-            stroke='rgb(0,0,0)'
-            stroke-opacity='1'
-            stroke-width='1'
-            stroke-miterlimit='4'
-            stroke-dasharray='none'
+            style='fill:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke:#000000;stroke-opacity:1'
             cx='500'
             cy='4500'
-            r='200'
-            class='transparent-fill'>
+            r='200'>
     </circle>
     <circle
             id='circle5_2'
-            fill='none'
-            stroke='rgb(0,0,0)'
-            stroke-opacity='1'
-            stroke-width='1'
-            stroke-miterlimit='4'
-            stroke-dasharray='none'
+            style='fill:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke:#000000;stroke-opacity:1'
             cx='800'
             cy='4500'
-            r='50'
-            class='transparent-fill'>
+            r='50'>
     </circle>
   </g>
 </svg>

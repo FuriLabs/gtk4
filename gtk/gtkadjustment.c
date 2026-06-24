@@ -58,7 +58,7 @@ struct _GtkAdjustmentPrivate {
   double target;
 
   guint duration;
-  guint tick_id;
+  gulong tick_id;
   gint64 start_time;
   gint64 end_time;
   GdkFrameClock *clock;
@@ -110,7 +110,7 @@ gtk_adjustment_finalize (GObject *object)
   GtkAdjustmentPrivate *priv = gtk_adjustment_get_instance_private (adjustment);
 
   if (priv->tick_id)
-    g_signal_handler_disconnect (priv->clock, priv->tick_id);
+    g_clear_signal_handler (&priv->tick_id, priv->clock);
   if (priv->clock)
     g_object_unref (priv->clock);
 
@@ -139,7 +139,7 @@ gtk_adjustment_class_init (GtkAdjustmentClass *class)
       g_param_spec_double ("value", NULL, NULL,
                            -G_MAXDOUBLE, G_MAXDOUBLE,
                            0.0,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkAdjustment:lower:
@@ -150,7 +150,7 @@ gtk_adjustment_class_init (GtkAdjustmentClass *class)
       g_param_spec_double ("lower", NULL, NULL,
                            -G_MAXDOUBLE, G_MAXDOUBLE,
                            0.0,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkAdjustment:upper:
@@ -164,7 +164,7 @@ gtk_adjustment_class_init (GtkAdjustmentClass *class)
       g_param_spec_double ("upper", NULL, NULL,
                            -G_MAXDOUBLE, G_MAXDOUBLE,
                            0.0,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkAdjustment:step-increment:
@@ -175,7 +175,7 @@ gtk_adjustment_class_init (GtkAdjustmentClass *class)
       g_param_spec_double ("step-increment", NULL, NULL,
                            -G_MAXDOUBLE, G_MAXDOUBLE,
                            0.0,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkAdjustment:page-increment:
@@ -186,7 +186,7 @@ gtk_adjustment_class_init (GtkAdjustmentClass *class)
       g_param_spec_double ("page-increment", NULL, NULL,
                            -G_MAXDOUBLE, G_MAXDOUBLE,
                            0.0,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkAdjustment:page-size:
@@ -201,7 +201,7 @@ gtk_adjustment_class_init (GtkAdjustmentClass *class)
       g_param_spec_double ("page-size", NULL, NULL,
                            -G_MAXDOUBLE, G_MAXDOUBLE,
                            0.0,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, NUM_PROPERTIES, adjustment_props);
 
@@ -472,8 +472,7 @@ gtk_adjustment_end_updating (GtkAdjustment *adjustment)
 
   if (priv->tick_id != 0)
     {
-      g_signal_handler_disconnect (priv->clock, priv->tick_id);
-      priv->tick_id = 0;
+      g_clear_signal_handler (&priv->tick_id, priv->clock);
       gdk_frame_clock_end_updating (priv->clock);
     }
 }
@@ -969,8 +968,7 @@ gtk_adjustment_enable_animation (GtkAdjustment *adjustment,
         {
           adjustment_set_value (adjustment, priv->target);
 
-          g_signal_handler_disconnect (priv->clock, priv->tick_id);
-          priv->tick_id = 0;
+          g_clear_signal_handler (&priv->tick_id, priv->clock);
           gdk_frame_clock_end_updating (priv->clock);
         }
 

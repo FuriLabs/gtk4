@@ -278,8 +278,11 @@ enum {
 static guint child_signals[CHILD_LAST_SIGNAL] = { 0 };
 
 enum {
-  PROP_CHILD = 1
+  PROP_CHILD = 1,
+  N_PROPS
 };
+
+static GParamSpec *obj_props[N_PROPS] = { NULL, };
 
 typedef struct _GtkFlowBoxChildPrivate GtkFlowBoxChildPrivate;
 struct _GtkFlowBoxChildPrivate
@@ -536,11 +539,11 @@ gtk_flow_box_child_class_init (GtkFlowBoxChildClass *class)
    *
    * The child widget.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_CHILD,
-                                   g_param_spec_object ("child", NULL, NULL,
-                                                        GTK_TYPE_WIDGET,
-                                                        GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
+  obj_props[PROP_CHILD] = g_param_spec_object ("child", NULL, NULL,
+                                               GTK_TYPE_WIDGET,
+                                               G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
+
+  g_object_class_install_properties (object_class, N_PROPS, obj_props);
 
   /**
    * GtkFlowBoxChild::activate:
@@ -618,7 +621,7 @@ gtk_flow_box_child_set_child (GtkFlowBoxChild *self,
   priv->child = child;
   if (child)
     gtk_widget_set_parent (child, GTK_WIDGET (self));
-  g_object_notify (G_OBJECT (self), "child");
+  g_object_notify_by_pspec (G_OBJECT (self), obj_props[PROP_CHILD]);
 }
 
 /**
@@ -753,10 +756,9 @@ enum {
   PROP_SELECTION_MODE,
   PROP_ACTIVATE_ON_SINGLE_CLICK,
   PROP_ACCEPT_UNPAIRED_RELEASE,
-
-  /* orientable */
+  /* GtkOrientable */
   PROP_ORIENTATION,
-  LAST_PROP = PROP_ORIENTATION
+  LAST_PROP
 };
 
 static GParamSpec *props[LAST_PROP] = { NULL, };
@@ -3695,7 +3697,8 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   class->unselect_all = gtk_flow_box_unselect_all;
   class->selected_children_changed = gtk_flow_box_selected_children_changed;
 
-  g_object_class_override_property (object_class, PROP_ORIENTATION, "orientation");
+  props[PROP_ORIENTATION] = g_param_spec_override ("orientation",
+      g_object_interface_find_property (g_type_default_interface_ref (GTK_TYPE_ORIENTABLE), "orientation"));
 
   /**
    * GtkFlowBox:selection-mode:
@@ -3706,7 +3709,7 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
     g_param_spec_enum ("selection-mode", NULL, NULL,
                        GTK_TYPE_SELECTION_MODE,
                        GTK_SELECTION_SINGLE,
-                       GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkFlowBox:activate-on-single-click:
@@ -3717,7 +3720,7 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   props[PROP_ACTIVATE_ON_SINGLE_CLICK] =
     g_param_spec_boolean ("activate-on-single-click", NULL, NULL,
                           TRUE,
-                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkFlowBox:accept-unpaired-release:
@@ -3727,7 +3730,7 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   props[PROP_ACCEPT_UNPAIRED_RELEASE] =
     g_param_spec_boolean ("accept-unpaired-release", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkFlowBox:homogeneous:
@@ -3738,7 +3741,7 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   props[PROP_HOMOGENEOUS] =
     g_param_spec_boolean ("homogeneous", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkFlowBox:min-children-per-line:
@@ -3753,7 +3756,7 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   props[PROP_MIN_CHILDREN_PER_LINE] =
     g_param_spec_uint ("min-children-per-line", NULL, NULL,
                        0, G_MAXUINT, 0,
-                       GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkFlowBox:max-children-per-line:
@@ -3764,7 +3767,7 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   props[PROP_MAX_CHILDREN_PER_LINE] =
     g_param_spec_uint ("max-children-per-line", NULL, NULL,
                        1, G_MAXUINT, DEFAULT_MAX_CHILDREN_PER_LINE,
-                       GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkFlowBox:row-spacing:
@@ -3774,7 +3777,7 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   props[PROP_ROW_SPACING] =
     g_param_spec_uint ("row-spacing", NULL, NULL,
                        0, G_MAXUINT, 0,
-                       GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkFlowBox:column-spacing:
@@ -3784,7 +3787,7 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   props[PROP_COLUMN_SPACING] =
     g_param_spec_uint ("column-spacing", NULL, NULL,
                        0, G_MAXUINT, 0,
-                       GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, LAST_PROP, props);
 

@@ -120,7 +120,7 @@ struct _GtkWidgetPrivate
   int height_request;
 
   /* Animations and other things to update on clock ticks */
-  guint clock_tick_id;
+  gulong clock_tick_id;
   guint8 n_active;
   GList *tick_callbacks;
 
@@ -233,29 +233,19 @@ void         gtk_widget_monitor_changed     (GtkWidget *widget);
 
 GdkSurface * gtk_widget_get_surface         (GtkWidget *widget);
 
-void         gtk_widget_render              (GtkWidget            *widget,
-                                             GdkSurface           *surface,
-                                             const cairo_region_t *region);
-
 void         _gtk_widget_add_sizegroup         (GtkWidget    *widget,
 						gpointer      group);
 void         _gtk_widget_remove_sizegroup      (GtkWidget    *widget,
 						gpointer      group);
 GSList      *_gtk_widget_get_sizegroups        (GtkWidget    *widget);
 
-void              _gtk_widget_set_has_default              (GtkWidget *widget,
+void              gtk_widget_set_has_default               (GtkWidget *widget,
                                                             gboolean   has_default);
 void              _gtk_widget_set_has_grab                 (GtkWidget *widget,
                                                             gboolean   has_grab);
 
 gboolean          gtk_widget_has_grab                      (GtkWidget *widget);
 
-void              _gtk_widget_propagate_display_changed    (GtkWidget  *widget,
-                                                            GdkDisplay *previous_display);
-
-void              _gtk_widget_set_device_surface           (GtkWidget *widget,
-                                                            GdkDevice *device,
-                                                            GdkSurface *pointer_window);
 void              _gtk_widget_synthesize_crossing          (GtkWidget       *from,
                                                             GtkWidget       *to,
                                                             GdkDevice       *device,

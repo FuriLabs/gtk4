@@ -31,7 +31,6 @@
 #include "gdkdisplay-win32.h"
 #include "gdkprivate-win32.h"
 #include "gdkeventsprivate.h"
-#include "gdkseatdefaultprivate.h"
 #include "gdkinput-dmanipulation.h"
 #include "winpointer.h"
 
@@ -64,13 +63,11 @@ typedef struct
 DManipEventHandler;
 
 static void dmanip_event_handler_running_state_clear (DManipEventHandler *handler);
-static void dmanip_event_handler_free (DManipEventHandler *handler);
 
 static void reset_viewport (IDirectManipulationViewport *viewport);
 
 static gpointer util_get_next_sequence (void);
 static GdkModifierType util_get_modifier_state (void);
-static gboolean util_handler_free (gpointer);
 
 /* }}} */
 /* {{{ ViewportEventHandler */
@@ -81,6 +78,12 @@ DManipEventHandler_AddRef (IDirectManipulationViewportEventHandler *self_)
   DManipEventHandler *self = (DManipEventHandler*) self_;
 
   return (ULONG) InterlockedIncrement (&self->reference_count);
+}
+
+static void
+dmanip_event_handler_free (DManipEventHandler *handler)
+{
+  g_free (handler);
 }
 
 static STDMETHODIMP_ (ULONG)
@@ -94,10 +97,7 @@ DManipEventHandler_Release (IDirectManipulationViewportEventHandler *self_)
 
   if (new_reference_count <= 0)
     {
-      /* For safety, schedule the cleanup to be executed
-       * on the main thread */
-      g_idle_add (util_handler_free, self);
-
+      dmanip_event_handler_free (self);
       return 0;
     }
 
@@ -327,13 +327,6 @@ dmanip_event_handler_new (GdkSurface *surface,
 
   return handler;
 }
-
-static void
-dmanip_event_handler_free (DManipEventHandler *handler)
-{
-  g_free (handler);
-}
-
 
 /* }}} */
 /* {{{ Viewport utils */
@@ -613,14 +606,5 @@ util_get_modifier_state (void)
 
   return mask;
 }
-
-static gboolean
-util_handler_free (gpointer handler)
-{
-  dmanip_event_handler_free ((DManipEventHandler*)handler);
-
-  return G_SOURCE_REMOVE;
-}
-
 
 /* }}} */

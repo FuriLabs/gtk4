@@ -26,7 +26,7 @@
 #include <glib/gi18n-lib.h>
 #include "gtkmodulesprivate.h"
 #include "gtknomediafileprivate.h"
-#ifdef HAVE_MEDIA_GSTREAMER
+#ifdef HAVE_GSTREAMER
 #include "media/gtkgstmediafileprivate.h"
 #endif
 
@@ -161,7 +161,7 @@ gtk_media_file_class_init (GtkMediaFileClass *class)
   properties[PROP_FILE] =
     g_param_spec_object ("file", NULL, NULL,
                          G_TYPE_FILE,
-                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   /**
    * GtkMediaFile:input-stream:
@@ -173,7 +173,7 @@ gtk_media_file_class_init (GtkMediaFileClass *class)
   properties[PROP_INPUT_STREAM] =
     g_param_spec_object ("input-stream", NULL, NULL,
                          G_TYPE_INPUT_STREAM,
-                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, N_PROPS, properties);
 }
@@ -190,11 +190,17 @@ gtk_media_file_get_extension (void)
   GIOExtension *e;
   GIOExtensionPoint *ep;
 
+  g_type_ensure (GTK_TYPE_NO_MEDIA_FILE);
+
+#ifdef HAVE_MEDIA_GSTREAMER
+  g_type_ensure (GTK_TYPE_GST_MEDIA_FILE);
+#endif
+
   GTK_DEBUG (MODULES, "Looking up MediaFile extension");
 
   g_type_ensure (GTK_TYPE_NO_MEDIA_FILE);
 
-#ifdef HAVE_MEDIA_GSTREAMER
+#ifdef HAVE_GSTREAMER
   g_type_ensure (GTK_TYPE_GST_MEDIA_FILE);
 #endif
 

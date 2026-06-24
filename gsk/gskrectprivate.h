@@ -1,9 +1,18 @@
 #pragma once
 
 #include "gdk/gdkdihedralprivate.h"
+#include "gsk/gskenums.h"
+#include "gsk/gskrectsnapprivate.h"
+
+#include "gdk/gdkcairoprivate.h"
 
 #include <graphene.h>
 #include <math.h>
+
+/* the epsilon we allow pixels to be off due to rounding errors.
+ * Chosen rather randomly.
+ */
+#define GSK_SNAP_EPSILON 0.001
 
 #define GSK_RECT_INIT_CAIRO(cairo_rect) GRAPHENE_RECT_INIT((cairo_rect)->x, (cairo_rect)->y, (cairo_rect)->width, (cairo_rect)->height)
 
@@ -36,6 +45,20 @@ gsk_rect_init_offset (graphene_rect_t        *r,
 }
 
 static inline gboolean G_GNUC_PURE
+gsk_rect_is_empty (const graphene_rect_t *rect)
+{
+  return rect->size.width == 0 || rect->size.height == 0;
+}
+
+static inline gboolean G_GNUC_PURE
+gsk_rect_contains_point (const graphene_rect_t  *r,
+                         const graphene_point_t *p)
+{
+  return p->x >= r->origin.x && p->x <= r->origin.x + r->size.width &&
+         p->y >= r->origin.y && p->y <= r->origin.y + r->size.height;
+}
+
+static inline gboolean G_GNUC_PURE
 gsk_rect_contains_rect (const graphene_rect_t *r1,
                         const graphene_rect_t *r2)
 {
@@ -63,6 +86,21 @@ gsk_rect_intersects (const graphene_rect_t *r1,
     return TRUE;
 }
 
+/*<priv>
+ * gsk_rect_intersection:
+ * @r1: first rect to intersect
+ * @r2: second rect to intersect
+ * @res: (out caller-allocates): Result of the intersection
+ *
+ * Intersects the 2 rectangles and returns the intersection.
+ *
+ * If the intersection is empty, the result is initialized to a line
+ * or point that will end up in the covered pixel(s) when either of
+ * the input rectangles is set to grow when snapping.
+ *
+ * Returns: true if an intersection exists, false if the intersection
+ *   is empty and the result is a point or line.
+ **/
 static inline gboolean G_GNUC_WARN_UNUSED_RESULT
 gsk_rect_intersection (const graphene_rect_t *r1,
                        const graphene_rect_t *r2,
@@ -76,16 +114,9 @@ gsk_rect_intersection (const graphene_rect_t *r1,
   x2 = MIN (r1->origin.x + r1->size.width, r2->origin.x + r2->size.width);
   y2 = MIN (r1->origin.y + r1->size.height, r2->origin.y + r2->size.height);
 
-  if (x1 >= x2 || y1 >= y2)
-    {
-      gsk_rect_init (res, 0.f, 0.f, 0.f, 0.f);
-      return FALSE;
-    }
-  else
-    {
-      gsk_rect_init (res, x1, y1, x2 - x1, y2 - y1);
-      return TRUE;
-    }
+  gsk_rect_init (res, x1, y1, MAX (x2 - x1, 0.f), MAX (y2 - y1, 0.f));
+
+  return !gsk_rect_is_empty (res);
 }
 
 /**
@@ -160,6 +191,83 @@ gsk_rect_coverage (const graphene_rect_t *r1,
   *res = r;
 }
 
+static inline float
+gsk_rect_snap_direction (float            value,
+                         GskSnapDirection snap)
+{
+  switch (snap)
+    {
+    case GSK_SNAP_FLOOR:
+      return floorf (value + GSK_SNAP_EPSILON);
+    case GSK_SNAP_CEIL:
+      return ceilf (value - GSK_SNAP_EPSILON);
+    case GSK_SNAP_ROUND:
+      return roundf (value + GSK_SNAP_EPSILON);
+    case GSK_SNAP_NONE:
+    default:
+      return value;
+    }
+}
+
+static inline gboolean G_GNUC_WARN_UNUSED_RESULT
+gsk_rect_snap (const graphene_rect_t  *src,
+               GskRectSnap             snap,
+               graphene_rect_t        *dest)
+{
+  float x, y;
+
+  if (snap == 0)
+    {
+      if (src != dest)
+        *dest = *src;
+      return TRUE;
+    }
+
+  x = gsk_rect_snap_direction (src->origin.x, gsk_rect_snap_get_direction (snap, GSK_SIDE_LEFT));
+  y = gsk_rect_snap_direction (src->origin.y, gsk_rect_snap_get_direction (snap, GSK_SIDE_TOP));
+
+  *dest = GRAPHENE_RECT_INIT (
+      x,
+      y,
+      gsk_rect_snap_direction (src->origin.x + src->size.width,  gsk_rect_snap_get_direction (snap, GSK_SIDE_RIGHT)) - x,
+      gsk_rect_snap_direction (src->origin.y + src->size.height, gsk_rect_snap_get_direction (snap, GSK_SIDE_BOTTOM)) - y);
+
+  return !gsk_rect_is_empty (dest);
+}
+
+static inline gboolean G_GNUC_WARN_UNUSED_RESULT
+gsk_rect_snap_to_grid (const graphene_rect_t  *src,
+                       GskRectSnap             snap,
+                       const graphene_size_t  *grid_scale,
+                       const graphene_point_t *grid_offset,
+                       graphene_rect_t        *dest)
+{
+  gboolean result;
+
+  if (snap == 0)
+    {
+      if (src != dest)
+        *dest = *src;
+      return TRUE;
+    }
+
+  *dest = GRAPHENE_RECT_INIT (
+      (src->origin.x + grid_offset->x) * grid_scale->width,
+      (src->origin.y + grid_offset->y) * grid_scale->height,
+      src->size.width * grid_scale->width,
+      src->size.height * grid_scale->height);
+
+  result = gsk_rect_snap (dest, snap, dest);
+
+  *dest = GRAPHENE_RECT_INIT (
+      dest->origin.x / grid_scale->width - grid_offset->x,
+      dest->origin.y / grid_scale->height - grid_offset->y,
+      dest->size.width / grid_scale->width,
+      dest->size.height / grid_scale->height);
+
+  return result;
+}
+
 /**
  * gsk_rect_subtract:
  * @m: a valid rectangle for the minuend
@@ -232,7 +340,7 @@ gsk_rect_subtract (const graphene_rect_t *m,
 }
 
 /**
- * gsk_rect_snap_to_grid:
+ * gsk_rect_snap_to_grid_grow:
  * @src: rectangle to snap
  * @grid_scale: the scale of the grid
  * @grid_offset: the offset of the grid
@@ -250,37 +358,28 @@ gsk_rect_subtract (const graphene_rect_t *m,
  * Note that floating point rounding issues might result
  * in the snapping not being perfectly exact.
  * 
- * Returns false if the resulting rect has zero width/height
+ * Returns: false if the resulting rect has zero width/height
  **/
 static inline gboolean G_GNUC_WARN_UNUSED_RESULT
-gsk_rect_snap_to_grid (const graphene_rect_t  *src,
-                       const graphene_vec2_t  *grid_scale,
-                       const graphene_point_t *grid_offset,
-                       graphene_rect_t        *dest)
+gsk_rect_snap_to_grid_grow (const graphene_rect_t  *src,
+                            const graphene_size_t  *grid_scale,
+                            const graphene_point_t *grid_offset,
+                            graphene_rect_t        *dest)
 {
-  float x, y, xscale, yscale;
+  float x, y;
 
-  xscale = graphene_vec2_get_x (grid_scale);
-  yscale = graphene_vec2_get_y (grid_scale);
-
-  x = floorf ((src->origin.x + grid_offset->x) * xscale);
-  y = floorf ((src->origin.y + grid_offset->y) * yscale);
+  x = floorf ((src->origin.x + grid_offset->x) * grid_scale->width);
+  y = floorf ((src->origin.y + grid_offset->y) * grid_scale->height);
   *dest = GRAPHENE_RECT_INIT (
-      x / xscale - grid_offset->x,
-      y / yscale - grid_offset->y,
-      (ceilf ((src->origin.x + grid_offset->x + src->size.width) * xscale) - x) / xscale,
-      (ceilf ((src->origin.y + grid_offset->y + src->size.height) * yscale) - y) / yscale);
+      x / grid_scale->width - grid_offset->x,
+      y / grid_scale->height - grid_offset->y,
+      (ceilf ((src->origin.x + grid_offset->x + src->size.width) * grid_scale->width) - x) / grid_scale->width,
+      (ceilf ((src->origin.y + grid_offset->y + src->size.height) * grid_scale->height) - y) / grid_scale->height);
 
   if (dest->size.width <= 0.0 || dest->size.height <= 0.0)
     return FALSE;
 
   return TRUE;
-}
-
-static inline gboolean G_GNUC_PURE
-gsk_rect_is_empty (const graphene_rect_t *rect)
-{
-  return rect->size.width == 0 || rect->size.height == 0;
 }
 
 static inline void
@@ -301,6 +400,36 @@ gsk_rect_to_cairo_grow (const graphene_rect_t *graphene,
   cairo->y = floorf (graphene->origin.y);
   cairo->width = ceilf (graphene->origin.x + graphene->size.width) - cairo->x;
   cairo->height = ceilf (graphene->origin.y + graphene->size.height) - cairo->y;
+}
+
+static inline gboolean
+isintegralf (float f)
+{
+  return truncf(f) == f;
+}
+
+static inline gboolean G_GNUC_PURE
+gsk_rect_is_integral (const graphene_rect_t *rect)
+{
+  return isintegralf (rect->origin.x) &&
+         isintegralf (rect->origin.y) &&
+         isintegralf (rect->size.width) &&
+         isintegralf (rect->size.height);
+}
+
+static inline gboolean G_GNUC_WARN_UNUSED_RESULT
+gsk_rect_to_cairo_exact (const graphene_rect_t *graphene,
+                         cairo_rectangle_int_t *cairo)
+{
+  if (!gsk_rect_is_integral (graphene))
+    return FALSE;
+
+  cairo->x = graphene->origin.x;
+  cairo->y = graphene->origin.y;
+  cairo->width = graphene->size.width;
+  cairo->height = graphene->size.height;
+
+  return TRUE;
 }
 
 static inline gboolean G_GNUC_WARN_UNUSED_RESULT
@@ -334,16 +463,6 @@ gsk_gpu_rect_to_float (const graphene_rect_t  *rect,
   values[1] = rect->origin.y + offset->y;
   values[2] = rect->size.width;
   values[3] = rect->size.height;
-}
-
-static inline void
-gsk_rect_round_larger (graphene_rect_t *rect)
-{
-  float x = floor (rect->origin.x);
-  float y = floor (rect->origin.y);
-  *rect = GRAPHENE_RECT_INIT (x, y,
-                              ceil (rect->origin.x + rect->size.width) - x,
-                              ceil (rect->origin.y + rect->size.height) - y);
 }
 
 static inline void
@@ -410,4 +529,51 @@ _graphene_rect_init_from_clip_extents (graphene_rect_t *rect,
 
   cairo_clip_extents (cr, &x1c, &y1c, &x2c, &y2c);
   gsk_rect_init (rect, x1c, y1c, x2c - x1c, y2c - y1c);
+}
+
+static inline gboolean G_GNUC_WARN_UNUSED_RESULT
+gsk_cairo_rect_snap (cairo_t               *cr,
+                     const graphene_rect_t *src,
+                     GskRectSnap            snap,
+                     graphene_rect_t       *dest)
+{
+  cairo_matrix_t mat, cr_mat, target_mat;
+
+  if (snap == GSK_RECT_SNAP_NONE)
+    {
+      if (dest != src)
+        *dest = *src;
+      return TRUE;
+    }
+
+  cairo_get_matrix (cr, &cr_mat);
+  gdk_cairo_surface_get_device_matrix (cairo_get_group_target (cr), &target_mat);
+
+  cairo_matrix_multiply (&mat, &target_mat, &cr_mat);
+
+  if (mat.xy == 0 && mat.yx == 0 && mat.xx != 0 && mat.yy != 0)
+    {
+      return gsk_rect_snap_to_grid (src,
+                                    snap,
+                                    &GRAPHENE_SIZE_INIT (ABS (mat.xx), ABS (mat.yy)),
+                                    &GRAPHENE_POINT_INIT (mat.x0 / mat.xx,
+                                                          mat.y0 / mat.yy),
+                                    dest);
+    }
+  else if (mat.xx == 0 && mat.yy == 0 && mat.xy != 0 && mat.yx != 0)
+    {
+      return gsk_rect_snap_to_grid (src,
+                                    snap,
+                                    /* FIXME: Is this the right way around? */
+                                    &GRAPHENE_SIZE_INIT (ABS (mat.yx), ABS (mat.xy)),
+                                    &GRAPHENE_POINT_INIT (mat.y0 / mat.yx,
+                                                          mat.x0 / mat.xy),
+                                    dest);
+    }
+  else
+    {
+      if (dest != src)
+        *dest = *src;
+      return TRUE;
+    }
 }

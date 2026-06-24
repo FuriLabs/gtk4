@@ -174,11 +174,6 @@ enum {
   LAST_SIGNAL
 };
 
-enum {
-  ARG_0,
-  LAST_ARG
-};
-
 #define PIXEL_BOUND(d) (((d) + PANGO_SCALE - 1) / PANGO_SCALE)
 
 static guint signals[LAST_SIGNAL] = { 0 };
@@ -330,8 +325,7 @@ gtk_text_layout_set_buffer (GtkTextLayout *layout,
                                             G_CALLBACK (gtk_text_layout_before_buffer_delete_range),
                                             layout);
 
-      g_object_unref (layout->buffer);
-      layout->buffer = NULL;
+      g_clear_object (&layout->buffer);
     }
 
   if (buffer)

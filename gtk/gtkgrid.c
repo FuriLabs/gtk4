@@ -138,10 +138,9 @@ enum
   PROP_ROW_HOMOGENEOUS,
   PROP_COLUMN_HOMOGENEOUS,
   PROP_BASELINE_ROW,
-  N_PROPERTIES,
-
   /* GtkOrientable */
-  PROP_ORIENTATION
+  PROP_ORIENTATION,
+  N_PROPERTIES,
 };
 
 static void gtk_grid_buildable_iface_init (GtkBuildableIface *iface);
@@ -208,7 +207,7 @@ gtk_grid_set_orientation (GtkGrid        *grid,
 
       gtk_widget_update_orientation (GTK_WIDGET (grid), priv->orientation);
 
-      g_object_notify (G_OBJECT (grid), "orientation");
+      g_object_notify_by_pspec (G_OBJECT (grid), obj_properties[PROP_ORIENTATION]);
     }
 }
 
@@ -417,6 +416,7 @@ gtk_grid_class_init (GtkGridClass *class)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (class);
+  gpointer iface;
 
   object_class->dispose = gtk_grid_dispose;
   object_class->get_property = gtk_grid_get_property;
@@ -424,8 +424,6 @@ gtk_grid_class_init (GtkGridClass *class)
 
   widget_class->compute_expand = gtk_grid_compute_expand;
   widget_class->get_request_mode = gtk_grid_get_request_mode;
-
-  g_object_class_override_property (object_class, PROP_ORIENTATION, "orientation");
 
   /**
    * GtkGrid:row-spacing:
@@ -435,7 +433,7 @@ gtk_grid_class_init (GtkGridClass *class)
   obj_properties[PROP_ROW_SPACING] =
     g_param_spec_int ("row-spacing", NULL, NULL,
                       0, G_MAXINT16, 0,
-                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                      G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkGrid:column-spacing:
@@ -445,7 +443,7 @@ gtk_grid_class_init (GtkGridClass *class)
   obj_properties[PROP_COLUMN_SPACING] =
     g_param_spec_int ("column-spacing", NULL, NULL,
                       0, G_MAXINT16, 0,
-                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                      G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkGrid:row-homogeneous:
@@ -455,7 +453,7 @@ gtk_grid_class_init (GtkGridClass *class)
   obj_properties[PROP_ROW_HOMOGENEOUS] =
     g_param_spec_boolean ("row-homogeneous", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkGrid:column-homogeneous:
@@ -465,7 +463,7 @@ gtk_grid_class_init (GtkGridClass *class)
   obj_properties[PROP_COLUMN_HOMOGENEOUS] =
     g_param_spec_boolean ("column-homogeneous", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkGrid:baseline-row:
@@ -475,7 +473,13 @@ gtk_grid_class_init (GtkGridClass *class)
   obj_properties[PROP_BASELINE_ROW] =
     g_param_spec_int ("baseline-row", NULL, NULL,
                       0, G_MAXINT, 0,
-                      GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                      G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
+
+  /* GtkOrientable */
+  iface = g_type_default_interface_peek (GTK_TYPE_ORIENTABLE);
+  obj_properties[PROP_ORIENTATION] =
+    g_param_spec_override ("orientation",
+                           g_object_interface_find_property (iface, "orientation"));
 
   g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 
@@ -1204,7 +1208,7 @@ gtk_grid_set_baseline_row (GtkGrid *grid,
   if (old_row != row)
     {
       gtk_grid_layout_set_baseline_row (GTK_GRID_LAYOUT (priv->layout_manager), row);
-      g_object_notify (G_OBJECT (grid), "baseline-row");
+      g_object_notify_by_pspec (G_OBJECT (grid), obj_properties[PROP_BASELINE_ROW]);
     }
 }
 

@@ -199,11 +199,7 @@ gtk_widget_paintable_unset_widget (GtkWidgetPaintable *self)
   self->widget = NULL;
 
   g_clear_object (&self->pending_image);
-  if (self->pending_update_cb)
-    {
-      g_source_remove (self->pending_update_cb);
-      self->pending_update_cb = 0;
-    }
+  g_clear_handle_id (&self->pending_update_cb, g_source_remove);
 }
 
 static void
@@ -244,7 +240,7 @@ gtk_widget_paintable_class_init (GtkWidgetPaintableClass *klass)
   properties[PROP_WIDGET] =
     g_param_spec_object ("widget", NULL, NULL,
                          GTK_TYPE_WIDGET,
-                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, N_PROPS, properties);
 }

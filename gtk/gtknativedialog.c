@@ -69,7 +69,7 @@ enum {
   PROP_MODAL,
   PROP_TRANSIENT_FOR,
 
-  LAST_ARG,
+  N_PROPS,
 };
 
 enum {
@@ -78,7 +78,7 @@ enum {
   LAST_SIGNAL
 };
 
-static GParamSpec *native_props[LAST_ARG] = { NULL, };
+static GParamSpec *native_props[N_PROPS] = { NULL, };
 static guint native_signals[LAST_SIGNAL];
 
 G_DEFINE_ABSTRACT_TYPE_WITH_CODE (GtkNativeDialog, gtk_native_dialog, G_TYPE_OBJECT,
@@ -204,7 +204,7 @@ gtk_native_dialog_class_init (GtkNativeDialogClass *class)
   native_props[PROP_TITLE] =
     g_param_spec_string ("title", NULL, NULL,
                          NULL,
-                         GTK_PARAM_READWRITE);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkNativeDialog:modal:
@@ -214,7 +214,7 @@ gtk_native_dialog_class_init (GtkNativeDialogClass *class)
   native_props[PROP_MODAL] =
     g_param_spec_boolean ("modal", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNativeDialog:visible:
@@ -224,7 +224,7 @@ gtk_native_dialog_class_init (GtkNativeDialogClass *class)
   native_props[PROP_VISIBLE] =
     g_param_spec_boolean ("visible", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNativeDialog:transient-for:
@@ -234,9 +234,9 @@ gtk_native_dialog_class_init (GtkNativeDialogClass *class)
   native_props[PROP_TRANSIENT_FOR] =
     g_param_spec_object ("transient-for", NULL, NULL,
                          GTK_TYPE_WINDOW,
-                         GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
-  g_object_class_install_properties (gobject_class, LAST_ARG, native_props);
+  g_object_class_install_properties (gobject_class, N_PROPS, native_props);
 
   /**
    * GtkNativeDialog::response:

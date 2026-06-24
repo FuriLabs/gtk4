@@ -46,7 +46,7 @@
 #include "gtk/gtkprivate.h"
 #include "gtk/gtkmodulesprivate.h"
 
-#include "gtkprintbackendfile.h"
+#include "gtkprintbackendfileprivate.h"
 
 typedef struct _GtkPrintBackendFileClass GtkPrintBackendFileClass;
 
@@ -603,7 +603,7 @@ file_printer_output_file_format_changed (GtkPrinterOption    *format_option,
             if (strcmp (dot + 1, formats[i]) == 0)
               break;
 
-          if (i < N_FORMATS && strcmp (formats[i], format_option->value))
+          if (i < N_FORMATS && strcmp (formats[i], format_option->value) != 0)
             {
               /*  the file extension is known but doesn't match the
                *  selected one, strip it away

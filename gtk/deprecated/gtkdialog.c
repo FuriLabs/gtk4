@@ -232,8 +232,11 @@ static void     gtk_dialog_buildable_add_child        (GtkBuildable       *build
 
 enum {
   PROP_0,
-  PROP_USE_HEADER_BAR
+  PROP_USE_HEADER_BAR,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 enum {
   RESPONSE,
@@ -574,13 +577,13 @@ gtk_dialog_class_init (GtkDialogClass *class)
    *
    * Deprecated: 4.10: Use [class@Gtk.Window] instead
    */
-  g_object_class_install_property (gobject_class,
-                                   PROP_USE_HEADER_BAR,
-                                   g_param_spec_int ("use-header-bar", NULL, NULL,
-                                                     -1, 1, -1,
-                                                     GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY));
+  props[PROP_USE_HEADER_BAR] = g_param_spec_int ("use-header-bar", NULL, NULL,
+                                                 -1, 1, -1,
+                                                 G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT_ONLY);
 
-  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_Escape, 0, "close", NULL);
+  g_object_class_install_properties (gobject_class, N_PROPS, props);
+
+  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_Escape, GDK_NO_MODIFIER_MASK, "close", NULL);
 
   /* Bind class to template
    */
@@ -655,7 +658,7 @@ gtk_dialog_map (GtkWidget *widget)
 
       do
         {
-          g_signal_emit_by_name (window, "move_focus", GTK_DIR_TAB_FORWARD);
+          g_signal_emit_by_name (window, "move-focus", GTK_DIR_TAB_FORWARD);
 
           focus = gtk_window_get_focus (window);
           if (GTK_IS_LABEL (focus) &&

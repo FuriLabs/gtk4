@@ -141,8 +141,9 @@ enum {
   PROP_TEXT,
   PROP_SHOW_TEXT,
   PROP_ELLIPSIZE,
+  /* GtkOrientable */
   PROP_ORIENTATION,
-  NUM_PROPERTIES = PROP_ORIENTATION
+  NUM_PROPERTIES
 };
 
 static GParamSpec *progress_props[NUM_PROPERTIES] = { NULL, };
@@ -184,7 +185,8 @@ gtk_progress_bar_class_init (GtkProgressBarClass *class)
 
   widget_class->direction_changed = gtk_progress_bar_direction_changed;
 
-  g_object_class_override_property (gobject_class, PROP_ORIENTATION, "orientation");
+  progress_props[PROP_ORIENTATION] = g_param_spec_override ("orientation",
+      g_object_interface_find_property (g_type_default_interface_ref (GTK_TYPE_ORIENTABLE), "orientation"));
 
   /**
    * GtkProgressBar:inverted:
@@ -194,7 +196,7 @@ gtk_progress_bar_class_init (GtkProgressBarClass *class)
   progress_props[PROP_INVERTED] =
       g_param_spec_boolean ("inverted", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkProgressBar:fraction:
@@ -205,7 +207,7 @@ gtk_progress_bar_class_init (GtkProgressBarClass *class)
       g_param_spec_double ("fraction", NULL, NULL,
                            0.0, 1.0,
                            0.0,
-                           GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkProgressBar:pulse-step:
@@ -216,7 +218,7 @@ gtk_progress_bar_class_init (GtkProgressBarClass *class)
       g_param_spec_double ("pulse-step", NULL, NULL,
                            0.0, 1.0,
                            0.1,
-                           GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkProgressBar:text:
@@ -226,7 +228,7 @@ gtk_progress_bar_class_init (GtkProgressBarClass *class)
   progress_props[PROP_TEXT] =
       g_param_spec_string ("text", NULL, NULL,
                            NULL,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkProgressBar:show-text:
@@ -245,7 +247,7 @@ gtk_progress_bar_class_init (GtkProgressBarClass *class)
   progress_props[PROP_SHOW_TEXT] =
       g_param_spec_boolean ("show-text", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkProgressBar:ellipsize:
@@ -264,7 +266,7 @@ gtk_progress_bar_class_init (GtkProgressBarClass *class)
       g_param_spec_enum ("ellipsize", NULL, NULL,
                          PANGO_TYPE_ELLIPSIZE_MODE,
                          PANGO_ELLIPSIZE_NONE,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (gobject_class, NUM_PROPERTIES, progress_props);
 
@@ -1013,7 +1015,7 @@ gtk_progress_bar_set_orientation (GtkProgressBar *pbar,
   layout = GTK_BOX_LAYOUT (gtk_widget_get_layout_manager (GTK_WIDGET (pbar)));
   gtk_orientable_set_orientation (GTK_ORIENTABLE (layout), GTK_ORIENTATION_VERTICAL);
 
-  g_object_notify (G_OBJECT (pbar), "orientation");
+  g_object_notify_by_pspec (G_OBJECT (pbar), progress_props[PROP_ORIENTATION]);
 }
 
 /**

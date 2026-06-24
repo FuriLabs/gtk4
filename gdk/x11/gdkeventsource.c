@@ -17,7 +17,7 @@
 
 #include "config.h"
 
-#include "gdkeventsource.h"
+#include "gdkeventsourceprivate.h"
 
 #include "gdk/gdkeventsprivate.h"
 
@@ -440,8 +440,7 @@ gdk_event_source_finalize (GSource *source)
 {
   GdkEventSource *event_source = (GdkEventSource *)source;
 
-  g_list_free (event_source->translators);
-  event_source->translators = NULL;
+  g_clear_list (&event_source->translators, NULL);
 }
 
 GSource *

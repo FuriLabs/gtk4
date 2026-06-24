@@ -650,8 +650,10 @@ _gdk_macos_display_open (const char *display_name)
 
   /* Make the current process a foreground application, i.e. an app
    * with a user interface, in case we're not running from a .app bundle
+   * unless running as unit-test
    */
-  TransformProcessType (&psn, kProcessTransformToForegroundApplication);
+  if (!g_test_initialized ())
+    TransformProcessType (&psn, kProcessTransformToForegroundApplication);
 
   [NSApplication sharedApplication];
 
@@ -796,36 +798,15 @@ void
 _gdk_macos_display_break_all_grabs (GdkMacosDisplay *self,
                                     guint32          time)
 {
-  GdkDevice *devices[2];
+  GdkSurface *surface;
   GdkSeat *seat;
 
   g_return_if_fail (GDK_IS_MACOS_DISPLAY (self));
 
   seat = gdk_display_get_default_seat (GDK_DISPLAY (self));
-  devices[0] = gdk_seat_get_keyboard (seat);
-  devices[1] = gdk_seat_get_pointer (seat);
 
-  for (guint i = 0; i < G_N_ELEMENTS (devices); i++)
-    {
-      GdkDevice *device = devices[i];
-      GdkDeviceGrabInfo *grab;
-
-      grab = _gdk_display_get_last_device_grab (GDK_DISPLAY (self), device);
-
-      if (grab != NULL)
-        {
-          GdkEvent *event;
-          GList *node;
-
-          event = gdk_grab_broken_event_new (grab->surface,
-                                             device,
-                                             grab->surface,
-                                             TRUE);
-          node = _gdk_event_queue_append (GDK_DISPLAY (self), event);
-          _gdk_windowing_got_event (GDK_DISPLAY (self), node, event,
-                                    _gdk_display_get_next_serial (GDK_DISPLAY (self)));
-        }
-    }
+  while ((surface = gdk_seat_get_topmost_grab_surface (seat)) != NULL)
+    gdk_seat_break_grab (seat, surface);
 }
 
 void
@@ -903,25 +884,6 @@ _gdk_macos_display_get_surface_at_display_coords (GdkMacosDisplay *self,
   _gdk_macos_display_from_display_coords (self, x, y, &x_gdk, &y_gdk);
 
   return _gdk_macos_display_get_surface_at_coords (self, x_gdk, y_gdk, surface_x, surface_y);
-}
-
-NSWindow *
-_gdk_macos_display_find_native_under_pointer (GdkMacosDisplay *self,
-                                              int             *x,
-                                              int             *y)
-{
-  GdkMacosSurface *surface;
-  NSPoint point;
-
-  g_assert (GDK_IS_MACOS_DISPLAY (self));
-
-  point = [NSEvent mouseLocation];
-
-  surface = _gdk_macos_display_get_surface_at_display_coords (self, point.x, point.y, x, y);
-  if (surface != NULL)
-    return _gdk_macos_surface_get_native (surface);
-
-  return NULL;
 }
 
 void

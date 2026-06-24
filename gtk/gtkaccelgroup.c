@@ -455,8 +455,7 @@ gtk_accelerator_parse_with_keycode (const char      *accelerator,
 
                   if (j == 0)
                     {
-                      g_free (*accelerator_codes);
-                      *accelerator_codes = NULL;
+                      g_clear_pointer (accelerator_codes, g_free);
                       /* Not in keymap */
                       error = TRUE;
                       goto out;
@@ -580,63 +579,42 @@ char *
 gtk_accelerator_name (guint           accelerator_key,
                       GdkModifierType accelerator_mods)
 {
-#define TXTLEN(s) sizeof (s) - 1
   static const struct {
     guint mask;
     const char *text;
-    gsize text_len;
   } mask_text[] = {
-    { GDK_SHIFT_MASK,   "<Shift>",   TXTLEN ("<Shift>") },
-    { GDK_CONTROL_MASK, "<Control>", TXTLEN ("<Control>") },
-    { GDK_ALT_MASK,     "<Alt>",     TXTLEN ("<Alt>") },
-    { GDK_META_MASK,    "<Meta>",    TXTLEN ("<Meta>") },
-    { GDK_SUPER_MASK,   "<Super>",   TXTLEN ("<Super>") },
-    { GDK_HYPER_MASK,   "<Hyper>",   TXTLEN ("<Hyper>") }
+    { GDK_SHIFT_MASK,   "<Shift>"   },
+    { GDK_CONTROL_MASK, "<Control>" },
+    { GDK_ALT_MASK,     "<Alt>"     },
+    { GDK_META_MASK,    "<Meta>"    },
+    { GDK_SUPER_MASK,   "<Super>"   },
+    { GDK_HYPER_MASK,   "<Hyper>"   }
   };
-#undef TXTLEN
-  GdkModifierType saved_mods;
-  guint l;
-  guint name_len;
   const char *keyval_name;
-  char *accelerator;
-  int i;
+  GString *result;
+  gsize i;
 
   accelerator_mods &= GDK_MODIFIER_MASK;
 
   keyval_name = gdk_keyval_name (gdk_keyval_to_lower (accelerator_key));
-  if (!keyval_name)
+  if (keyval_name == NULL)
     keyval_name = "";
 
-  name_len = strlen (keyval_name);
-
-  saved_mods = accelerator_mods;
-  for (i = 0; i < G_N_ELEMENTS (mask_text); i++)
-    {
-      if (accelerator_mods & mask_text[i].mask)
-        name_len += mask_text[i].text_len;
-    }
-
-  if (name_len == 0)
+  if (accelerator_mods == 0)
     return g_strdup (keyval_name);
 
-  name_len += 1; /* NUL byte */
-  accelerator = g_new (char, name_len);
+  result = g_string_new (NULL);
 
-  accelerator_mods = saved_mods;
-  l = 0;
   for (i = 0; i < G_N_ELEMENTS (mask_text); i++)
     {
       if (accelerator_mods & mask_text[i].mask)
-        {
-          strcpy (accelerator + l, mask_text[i].text);
-          l += mask_text[i].text_len;
-        }
+        g_string_append (result, mask_text[i].text);
     }
 
-  strcpy (accelerator + l, keyval_name);
-  accelerator[name_len - 1] = '\0';
+  if (keyval_name)
+    g_string_append (result, keyval_name);
 
-  return accelerator;
+  return g_string_free_and_steal (result);
 }
 
 /**

@@ -450,8 +450,7 @@ follow_links (const char *path)
 
   if (strcmp (path, path2) == 0)
     {
-      g_free (path2);
-      path2 = NULL;
+      g_clear_pointer (&path2, g_free);
     }
 
   return path2;
@@ -793,7 +792,7 @@ write_string (FILE *cache, const char *n)
   l = ALIGN_VALUE (strlen (n) + 1, 4);
 
   s = g_malloc0 (l);
-  strcpy (s, n);
+  g_strlcpy (s, n, l);
 
   i = fwrite (s, l, 1, cache);
 

@@ -205,6 +205,8 @@ gdk_win32_hcursor_constructed (GObject *object)
 {
   GdkWin32HCursor *win32_hcursor;
 
+  G_OBJECT_CLASS (gdk_win32_hcursor_parent_class)->constructed (object);
+
   win32_hcursor = GDK_WIN32_HCURSOR (object);
 
   g_assert_nonnull (win32_hcursor->display);
@@ -230,16 +232,16 @@ gdk_win32_hcursor_class_init (GdkWin32HCursorClass *klass)
   hcursor_props[PROP_DISPLAY] =
       g_param_spec_object ("display", NULL, NULL,
                            GDK_TYPE_DISPLAY,
-                           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   hcursor_props[PROP_HANDLE] =
       g_param_spec_pointer ("handle", NULL, NULL,
-                            G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                            G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   hcursor_props[PROP_DESTROYABLE] =
       g_param_spec_boolean ("destroyable", NULL, NULL,
                             TRUE,
-                            G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                            G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, hcursor_props);
 }
@@ -310,8 +312,7 @@ delayed_cursor_destruction (gpointer user_data)
         g_warning (G_STRLOC ": DestroyCursor (%p) failed: %lu", handle, GetLastError ());
     }
 
-  g_list_free (win32_display->cursors_for_destruction);
-  win32_display->cursors_for_destruction = NULL;
+  g_clear_list (&win32_display->cursors_for_destruction, NULL);
 
   return G_SOURCE_REMOVE;
 }
@@ -750,8 +751,7 @@ _gdk_win32_display_finalize_cursors (GdkWin32Display *display)
 
   g_free (display->cursor_theme_name);
 
-  g_list_free (display->cursors_for_destruction);
-  display->cursors_for_destruction = NULL;
+  g_clear_list (&display->cursors_for_destruction, NULL);
 
   if (display->cursor_theme)
     win32_cursor_theme_destroy (display->cursor_theme);

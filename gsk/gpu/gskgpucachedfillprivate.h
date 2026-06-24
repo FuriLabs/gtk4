@@ -3,6 +3,7 @@
 #include "gskgpucachedprivate.h"
 
 #include "gsk/gskpath.h"
+#include "gsk/gsktransform.h"
 
 #include <graphene.h>
 
@@ -13,8 +14,9 @@ void                    gsk_gpu_cached_fill_finish_cache                (GskGpuC
 
 GskGpuImage *           gsk_gpu_cached_fill_lookup                      (GskGpuCache            *self,
                                                                          GskGpuFrame            *frame,
-                                                                         const graphene_vec2_t  *scale,
+                                                                         const graphene_size_t  *scale,
                                                                          const graphene_rect_t  *bounds,
+                                                                         GskTransform           *modelview,
                                                                          GskPath                *path,
                                                                          GskFillRule             fill_rule,
                                                                          graphene_rect_t        *rect);

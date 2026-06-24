@@ -52,7 +52,18 @@ void                    gtk_snapshot_push_subsurface            (GtkSnapshot    
 void                    gtk_snapshot_push_repeat2               (GtkSnapshot            *snapshot,
                                                                  const graphene_rect_t  *bounds,
                                                                  const graphene_rect_t  *child_bounds,
+                                                                 GskRectSnap             child_snap,
                                                                  GskRepeat               repeat);
+void                    gtk_snapshot_push_displacement          (GtkSnapshot            *snapshot,
+                                                                 const graphene_rect_t  *bounds,
+                                                                 const GdkColorChannel   channels[2],
+                                                                 const graphene_size_t  *max,
+                                                                 const graphene_size_t  *scale,
+                                                                 const graphene_point_t *offset);
+void                    gtk_snapshot_push_arithmetic            (GtkSnapshot            *snapshot,
+                                                                 const graphene_rect_t  *bounds,
+                                                                 GdkColorState          *color_state,
+                                                                 const float             factors[4]);
 
 void                    gtk_snapshot_add_color                  (GtkSnapshot            *snapshot,
                                                                  const GdkColor         *color,
@@ -60,6 +71,7 @@ void                    gtk_snapshot_add_color                  (GtkSnapshot    
 void                    gtk_snapshot_add_border                 (GtkSnapshot            *snapshot,
                                                                  const GskRoundedRect   *outline,
                                                                  const float             border_width[4],
+                                                                 GskRectSnap             border_snap,
                                                                  const GdkColor          border_color[4]);
 
 void                    gtk_snapshot_add_inset_shadow           (GtkSnapshot            *snapshot,

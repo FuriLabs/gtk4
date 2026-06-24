@@ -70,11 +70,7 @@ gtk_gesture_click_finalize (GObject *object)
   gesture = GTK_GESTURE_CLICK (object);
   priv = gtk_gesture_click_get_instance_private (gesture);
 
-  if (priv->double_click_timeout_id)
-    {
-      g_source_remove (priv->double_click_timeout_id);
-      priv->double_click_timeout_id = 0;
-    }
+  g_clear_handle_id (&priv->double_click_timeout_id, g_source_remove);
 
   G_OBJECT_CLASS (gtk_gesture_click_parent_class)->finalize (object);
 }
@@ -124,7 +120,7 @@ _double_click_timeout_cb (gpointer user_data)
   priv->double_click_timeout_id = 0;
   _gtk_gesture_click_stop (gesture);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void

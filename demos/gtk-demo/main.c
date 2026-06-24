@@ -109,28 +109,24 @@ static void gtk_demo_class_init (GtkDemoClass *klass)
 
   properties[PROP_FILENAME] =
     g_param_spec_string ("filename",
-                         "filename",
-                         "filename",
+                         NULL, NULL,
                          NULL,
-                         G_PARAM_READABLE);
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME);
   properties[PROP_NAME] =
     g_param_spec_string ("name",
-                         "name",
-                         "name",
+                         NULL, NULL,
                          NULL,
-                         G_PARAM_READABLE);
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME);
   properties[PROP_TITLE] =
     g_param_spec_string ("title",
-                         "title",
-                         "title",
+                         NULL, NULL,
                          NULL,
-                         G_PARAM_READABLE);
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME);
   properties[PROP_KEYWORDS] =
     g_param_spec_string ("keywords",
-                         "keywords",
-                         "keywords",
+                         NULL, NULL,
                          NULL,
-                         G_PARAM_READABLE);
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, N_PROPS, properties);
 }
@@ -514,7 +510,7 @@ load_file (const char *demoname,
   GBytes *bytes;
   int i;
 
-  if (!g_strcmp0 (current_file, filename))
+  if (g_strcmp0 (current_file, filename) == 0)
     return;
 
   remove_data_tabs ();
@@ -813,12 +809,12 @@ static void
 demo_search_changed_cb (GtkSearchEntry *entry,
                         GtkFilter      *filter)
 {
-  const char *text;
+  char *text;
 
   g_assert (GTK_IS_SEARCH_ENTRY (entry));
   g_assert (GTK_IS_FILTER (filter));
 
-  text = gtk_editable_get_text (GTK_EDITABLE (entry));
+  text = gtk_editable_get_complete_text (GTK_EDITABLE (entry));
 
   g_clear_pointer (&search_needle, g_strfreev);
 
@@ -826,6 +822,7 @@ demo_search_changed_cb (GtkSearchEntry *entry,
     search_needle = g_str_tokenize_and_fold (text, NULL, NULL);
 
   gtk_filter_changed (filter, GTK_FILTER_CHANGE_DIFFERENT);
+  g_free (text);
 }
 
 static gboolean
@@ -949,6 +946,77 @@ search_results_update (GObject    *filter_model,
     }
 }
 
+static gboolean
+save_state_cb (GtkApplicationWindow *window,
+               GVariantDict         *state)
+{
+  guint selected;
+  int current;
+
+  g_variant_dict_insert_value (state, "search-bar-visible", g_variant_new_boolean (gtk_search_bar_get_search_mode (GTK_SEARCH_BAR (search_bar))));
+
+  g_variant_dict_insert_value (state, "search-string", g_variant_new_string (gtk_editable_get_text (GTK_EDITABLE (search_entry))));
+
+  selected = gtk_single_selection_get_selected (selection);
+  g_variant_dict_insert_value (state, "selected-item", g_variant_new_uint32 (selected));
+
+  current = gtk_notebook_get_current_page (GTK_NOTEBOOK (notebook));
+  g_variant_dict_insert_value (state, "current-page", g_variant_new_int32 (current));
+
+  return TRUE;
+}
+
+static void
+select_item (gpointer data)
+{
+  gtk_single_selection_set_selected (selection, GPOINTER_TO_UINT (data));
+}
+
+static void
+select_page (gpointer data)
+{
+  gtk_notebook_set_current_page (GTK_NOTEBOOK (notebook), GPOINTER_TO_INT (data));
+}
+
+static void
+restore_state (GtkApplicationWindow *window,
+               GtkRestoreReason      reason,
+               GVariant             *state)
+{
+  gboolean visible;
+  guint selected;
+  const char *string;
+  int current;
+
+  if (!state)
+    return;
+
+  if (reason != GTK_RESTORE_REASON_RESTORE)
+    return;
+
+  g_variant_lookup (state, "search-bar-visible", "b", &visible);
+  gtk_search_bar_set_search_mode (GTK_SEARCH_BAR (search_bar), visible);
+
+  g_variant_lookup (state, "search-string", "&s", &string);
+  if (string)
+    {
+      gtk_editable_set_text (GTK_EDITABLE (search_entry), string);
+      gtk_editable_set_position (GTK_EDITABLE (search_entry), -1);
+    }
+
+  /* Wait for the search string filtering to take effect before
+   * applying the selected-item
+   */
+  g_variant_lookup (state, "selected-item", "u", &selected);
+  g_timeout_add_once (160, select_item, GUINT_TO_POINTER (selected));
+
+  /* Wait for the selected-item to update the notebook before
+   * applying the current-page
+   */
+  g_variant_lookup (state, "current-page", "i", &current);
+  g_timeout_add_once (320, select_page, GINT_TO_POINTER (current));
+}
+
 static GtkWindow *
 create_window (GtkApplication *app)
 {
@@ -963,6 +1031,8 @@ create_window (GtkApplication *app)
   builder = gtk_builder_new_from_resource ("/ui/main.ui");
 
   window = (GtkWidget *) gtk_builder_get_object (builder, "window");
+
+  g_signal_connect (window, "save-state", G_CALLBACK (save_state_cb), NULL);
 
   gtk_application_add_window (app, GTK_WINDOW (window));
 
@@ -1013,6 +1083,17 @@ create_window (GtkApplication *app)
 }
 
 static void
+restore_window (GtkApplication   *app,
+                GtkRestoreReason  reason,
+                GVariant         *state)
+{
+  GtkWindow *window;
+
+  window = create_window (app);
+  restore_state (GTK_APPLICATION_WINDOW (window), reason, state);
+}
+
+static void
 activate (GApplication *gapp)
 {
   GtkApplication *app = GTK_APPLICATION (gapp);
@@ -1028,11 +1109,10 @@ activate (GApplication *gapp)
   gtk_window_present (window);
 }
 
-static gboolean
+static void
 auto_quit (gpointer data)
 {
   g_application_quit (G_APPLICATION (data));
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -1074,8 +1154,11 @@ command_line (GApplication            *app,
   g_variant_dict_lookup (options, "autoquit", "b", &autoquit);
   g_variant_dict_lookup (options, "list", "b", &list);
 
+  if (name || autoquit || list)
+    g_object_set (app, "support-save", FALSE, NULL);
+    
   if (autoquit)
-    g_timeout_add_seconds (1, auto_quit, app);
+    g_timeout_add_seconds_once (1, auto_quit, app);
 
   if (!name && !list)
     {
@@ -1156,6 +1239,7 @@ main (int argc, char **argv)
   gtk_init ();
 
   app = gtk_application_new ("org.gtk.Demo4", G_APPLICATION_NON_UNIQUE|G_APPLICATION_HANDLES_COMMAND_LINE);
+  g_object_set (app, "support-save", TRUE, NULL);
 
   g_snprintf (version, sizeof (version), "%s%s%s\n",
               PACKAGE_VERSION,
@@ -1177,6 +1261,7 @@ main (int argc, char **argv)
 
   g_signal_connect (app, "command-line", G_CALLBACK (command_line), NULL);
   g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
+  g_signal_connect (app, "restore-window", G_CALLBACK (restore_window), NULL);
 
   g_application_run (G_APPLICATION (app), argc, argv);
 

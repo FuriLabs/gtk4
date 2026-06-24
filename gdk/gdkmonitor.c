@@ -195,7 +195,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
   props[PROP_DESCRIPTION] =
     g_param_spec_string ("description", NULL, NULL,
                          NULL,
-                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkMonitor:display:
@@ -205,7 +205,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
   props[PROP_DISPLAY] =
     g_param_spec_object ("display", NULL, NULL,
                          GDK_TYPE_DISPLAY,
-                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_NAME);
 
   /**
    * GdkMonitor:manufacturer:
@@ -215,7 +215,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
   props[PROP_MANUFACTURER] =
     g_param_spec_string ("manufacturer", NULL, NULL,
                          NULL,
-                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkMonitor:model:
@@ -225,7 +225,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
   props[PROP_MODEL] =
     g_param_spec_string ("model", NULL, NULL,
                          NULL,
-                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkMonitor:connector:
@@ -235,7 +235,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
   props[PROP_CONNECTOR] =
     g_param_spec_string ("connector", NULL, NULL,
                          NULL,
-                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkMonitor:scale-factor:
@@ -249,7 +249,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
     g_param_spec_int ("scale-factor", NULL, NULL,
                       1, G_MAXINT,
                       1,
-                      G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                      G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkMonitor:scale:
@@ -261,7 +261,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
   props[PROP_SCALE] =
       g_param_spec_double ("scale", NULL, NULL,
                         1., G_MAXDOUBLE, 1.,
-                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                        G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkMonitor:geometry:
@@ -271,7 +271,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
   props[PROP_GEOMETRY] =
     g_param_spec_boxed ("geometry", NULL, NULL,
                         GDK_TYPE_RECTANGLE,
-                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                        G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkMonitor:width-mm:
@@ -282,7 +282,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
     g_param_spec_int ("width-mm", NULL, NULL,
                       0, G_MAXINT,
                       0,
-                      G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                      G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkMonitor:height-mm:
@@ -293,7 +293,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
     g_param_spec_int ("height-mm", NULL, NULL,
                       0, G_MAXINT,
                       0,
-                      G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                      G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkMonitor:refresh-rate:
@@ -304,7 +304,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
     g_param_spec_int ("refresh-rate", NULL, NULL,
                       0, G_MAXINT,
                       0,
-                      G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                      G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkMonitor:subpixel-layout:
@@ -315,7 +315,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
     g_param_spec_enum ("subpixel-layout", NULL, NULL,
                        GDK_TYPE_SUBPIXEL_LAYOUT,
                        GDK_SUBPIXEL_LAYOUT_UNKNOWN,
-                       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                       G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkMonitor:valid: (getter is_valid)
@@ -325,7 +325,7 @@ gdk_monitor_class_init (GdkMonitorClass *class)
   props[PROP_VALID] =
     g_param_spec_boolean ("valid", NULL, NULL,
                           TRUE,
-                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                          G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (object_class, LAST_PROP, props);
 
@@ -569,7 +569,7 @@ gdk_monitor_set_manufacturer (GdkMonitor *monitor,
   g_free (monitor->manufacturer);
   monitor->manufacturer = g_strdup (manufacturer);
 
-  g_object_notify (G_OBJECT (monitor), "manufacturer");
+  g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_MANUFACTURER]);
 }
 
 void
@@ -579,7 +579,7 @@ gdk_monitor_set_model (GdkMonitor *monitor,
   g_free (monitor->model);
   monitor->model = g_strdup (model);
 
-  g_object_notify (G_OBJECT (monitor), "model");
+  g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_MODEL]);
 }
 
 void
@@ -589,7 +589,7 @@ gdk_monitor_set_connector (GdkMonitor *monitor,
   g_free (monitor->connector);
   monitor->connector = g_strdup (connector);
 
-  g_object_notify (G_OBJECT (monitor), "connector");
+  g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_CONNECTOR]);
 }
 
 void
@@ -600,7 +600,7 @@ gdk_monitor_set_geometry (GdkMonitor *monitor,
     return;
 
   monitor->geometry = *geometry;
-  g_object_notify (G_OBJECT (monitor), "geometry");
+  g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_GEOMETRY]);
 }
 
 void
@@ -613,13 +613,13 @@ gdk_monitor_set_physical_size (GdkMonitor *monitor,
   if (monitor->width_mm != width_mm)
     {
       monitor->width_mm = width_mm;
-      g_object_notify (G_OBJECT (monitor), "width-mm");
+      g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_WIDTH_MM]);
     }
 
   if (monitor->height_mm != height_mm)
     {
       monitor->height_mm = height_mm;
-      g_object_notify (G_OBJECT (monitor), "height-mm");
+      g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_HEIGHT_MM]);
     }
 
   g_object_thaw_notify (G_OBJECT (monitor));
@@ -640,8 +640,8 @@ gdk_monitor_set_scale_factor (GdkMonitor *monitor,
   monitor->scale_factor = scale_factor;
   monitor->scale = scale_factor;
 
-  g_object_notify (G_OBJECT (monitor), "scale-factor");
-  g_object_notify (G_OBJECT (monitor), "scale");
+  g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_SCALE_FACTOR]);
+  g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_SCALE]);
 }
 
 void
@@ -658,8 +658,8 @@ gdk_monitor_set_scale (GdkMonitor *monitor,
   monitor->scale = scale;
   monitor->scale_factor = (int) ceil (scale);
 
-  g_object_notify (G_OBJECT (monitor), "scale");
-  g_object_notify (G_OBJECT (monitor), "scale-factor");
+  g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_SCALE]);
+  g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_SCALE_FACTOR]);
 }
 
 void
@@ -671,7 +671,7 @@ gdk_monitor_set_refresh_rate (GdkMonitor *monitor,
 
   monitor->refresh_rate = refresh_rate;
 
-  g_object_notify (G_OBJECT (monitor), "refresh-rate");
+  g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_REFRESH_RATE]);
 }
 
 void
@@ -683,14 +683,14 @@ gdk_monitor_set_subpixel_layout (GdkMonitor        *monitor,
 
   monitor->subpixel_layout = subpixel_layout;
 
-  g_object_notify (G_OBJECT (monitor), "subpixel-layout");
+  g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_SUBPIXEL_LAYOUT]);
 }
 
 void
 gdk_monitor_invalidate (GdkMonitor *monitor)
 {
   monitor->valid = FALSE;
-  g_object_notify (G_OBJECT (monitor), "valid");
+  g_object_notify_by_pspec (G_OBJECT (monitor), props[PROP_VALID]);
   g_signal_emit (monitor, signals[INVALIDATE], 0);
 }
 

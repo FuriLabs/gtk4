@@ -257,15 +257,13 @@ gtk_video_unmap (GtkWidget *widget)
 
   if (self->controls_hide_source)
     {
-      g_source_remove (self->controls_hide_source);
-      self->controls_hide_source = 0;
+      g_clear_handle_id (&self->controls_hide_source, g_source_remove);
       gtk_revealer_set_reveal_child (GTK_REVEALER (self->controls_revealer), FALSE);
     }
 
   if (self->cursor_hide_source)
     {
-      g_source_remove (self->cursor_hide_source);
-      self->cursor_hide_source = 0;
+      g_clear_handle_id (&self->cursor_hide_source, g_source_remove);
       gtk_widget_set_cursor (widget, NULL);
     }
 
@@ -420,7 +418,7 @@ gtk_video_class_init (GtkVideoClass *klass)
   properties[PROP_AUTOPLAY] =
     g_param_spec_boolean ("autoplay", NULL, NULL,
                           FALSE,
-                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   /**
    * GtkVideo:file:
@@ -430,7 +428,7 @@ gtk_video_class_init (GtkVideoClass *klass)
   properties[PROP_FILE] =
     g_param_spec_object ("file", NULL, NULL,
                          G_TYPE_FILE,
-                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   /**
    * GtkVideo:loop:
@@ -440,7 +438,7 @@ gtk_video_class_init (GtkVideoClass *klass)
   properties[PROP_LOOP] =
     g_param_spec_boolean ("loop", NULL, NULL,
                           FALSE,
-                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   /**
    * GtkVideo:media-stream:
@@ -450,7 +448,7 @@ gtk_video_class_init (GtkVideoClass *klass)
   properties[PROP_MEDIA_STREAM] =
     g_param_spec_object ("media-stream", NULL, NULL,
                          GTK_TYPE_MEDIA_STREAM,
-                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   /**
    * GtkVideo:graphics-offload:
@@ -463,7 +461,7 @@ gtk_video_class_init (GtkVideoClass *klass)
     g_param_spec_enum ("graphics-offload", NULL, NULL,
                        GTK_TYPE_GRAPHICS_OFFLOAD_ENABLED,
                        GTK_GRAPHICS_OFFLOAD_DISABLED,
-                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, N_PROPS, properties);
 
@@ -735,8 +733,7 @@ gtk_video_set_media_stream (GtkVideo       *self,
           surface = gtk_native_get_surface (gtk_widget_get_native (GTK_WIDGET (self)));
           gtk_media_stream_unrealize (self->media_stream, surface);
         }
-      g_object_unref (self->media_stream);
-      self->media_stream = NULL;
+      g_clear_object (&self->media_stream);
     }
 
   if (stream)

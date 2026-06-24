@@ -1,5 +1,5 @@
 compare_render = executable('compare-render',
-  ['compare-render.c', '../reftests/reftest-compare.c', 'replay-node.c', '../gdk/udmabuf.c'],
+  ['compare-render.c', '../reftests/reftest-compare.c', 'replay-node.c'],
   dependencies: libgtk_static_dep,
   c_args: common_cflags + ['-DGTK_COMPILATION'],
 )
@@ -19,6 +19,7 @@ serialize = executable('serialize',
 )
 
 compare_render_tests = [
+  'arithmetic-bounds',
   'big-box-glyph',
   'big-checkerboard',
   'big-checkerboard-scaled-down',
@@ -33,16 +34,20 @@ compare_render_tests = [
   'blur-child-bounds-oversize',
   'blur-contents-outside-of-clip',
   'blur-huge-contents-outside-of-clip',
+  'blur-scaled',
   'border-bottom-right',
+  'border-circle-with-non-pixel-aligned-center',
   'border-colorstates',
   'border-one-rounded',
   'border-opacity',
   'border-zero-width-color',
   'borders-rotated',
   'borders-scaled',
+  'bug-early-exit-doesnt-clear-clip-mask',
   'cairo-coordinates',
   'cairo-translations',
   'clip-all-clipped-issue-7044',
+  'clip-all-snaps',
   'clip-contained',
   'clip-coordinates-2d',
   'clip-coordinates-nocairo',
@@ -50,11 +55,19 @@ compare_render_tests = [
   'clip-in-rounded-clip2',
   'clip-in-rounded-clip3',
   'clip-in-smaller-rounded-clip',
+  'clip-intersection-background',
   'clip-intersection-fail-opacity',
-  'clipped-repeat',
-  'clipped_rounded_clip',
+  'clip-mask-clip',
+  'clip-mask-opacity-tracking',
+  'clip-mask-restore-failure',
+  'clip-mask-rotations',
+  'clip-mask-with-clip-mask',
+  'clip-mask-with-contained-clip',
+  'clip-mask-wrap-mode',
   'clip-nested1',
   'clip-translate-offscreen',
+  'clipped-repeat',
+  'clipped_rounded_clip',
   'color-blur0',
   'color-dodge-nan',
   'color-matrix-identity',
@@ -119,6 +132,7 @@ compare_render_tests = [
   'fill-subpixel-shift-nocairo',
   'fill-with-3d-contents-nocairo',
   'gradient-premultiply-end-values',
+  'gradient-with-lots-of-colorstops-double-clips',
   'glyph-cache-overflow',
   'glyph-cache-overflow-slices',
   'glyph-hinting-none',
@@ -137,6 +151,7 @@ compare_render_tests = [
   'invalid-transform',
   'isolation',
   'issue-3615',
+  'issue-8184',
   'linear-gradient-averages-nocairo',
   'linear-gradient-interpolation-nocairo',
   'linear-gradient-3d-nocairo',
@@ -155,6 +170,8 @@ compare_render_tests = [
   'mask-modes-in-opacity',
   'mask-modes-with-alpha',
   'mask-texture-color-alpha',
+  'mask-with-opacity-nondisjoint-source',
+  'memoryformats',
   'mipmap-generation-later',
   'mipmap-with-1x1',
   'nested-rounded-clips',
@@ -198,15 +215,21 @@ compare_render_tests = [
   'repeat-no-repeat',
   'repeat-node-tiling-horizontal',
   'repeat-node-tiling-vertical',
+  'repeat-none-child-bounds',
   'repeat-noninteger-nocairo',
+  'repeat-pad-noninteger-child-bounds',
+  'repeat-reflect-pixel-alignment',
   'repeat-repeat',
   'repeat-repeats',
   'repeat-repeats-nested',
   'repeat-scaling',
+  'repeat-snap',
   'repeat-texture',
   'repeat-tiny-nocairo',
+  'repeat-unaligned-bounds',
   'repeating-gradient-scaled',
   'reuse-of-texture-nested-in-offscreens',
+  'rounded-clip-intersection-background',
   'rounded-clip-with-huge-bounds',
   'scale-textures-negative-ngl',
   'scale-up-down',
@@ -241,6 +264,7 @@ compare_render_tests = [
   'text-glyph-lsb',
   'text-mixed-color-nocairo',
   'text-mixed-color-colrv1',
+  'texture-all-snaps',
   'texture-coords',
   'texture-offscreen-mipmap',
   'texture-scale-filters-nocairo',
@@ -255,6 +279,7 @@ compare_render_tests = [
   'transform-huge-child-3d-nocairo',
   'transform-in-transform',
   'transform-in-transform-in-transform',
+  'transform-scale-too-small-nocairo',
   'yuv-matrix-d3d12',
   'yuv-matrix-dmabuf-nv12',
   'yuv-matrix-dmabuf-rgba',
@@ -330,6 +355,7 @@ compare_xfails = {
     'big-checkerboard': ['clipped'], # 6444
     'blur-child-bounds-oversize': ['clip'], # 6450
     'cairo-coordinates': ['serialize'],
+    'clip-mask-rotations': ['replay'], # changes transform order causing rotated offscreen
     'rounded-clip-with-huge-bounds': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'], # 6532
     'yuv-matrix-dmabuf-nv12': ['serialize'],
     'yuv-matrix-dmabuf-yuyv': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'],
@@ -338,6 +364,7 @@ compare_xfails = {
     'big-checkerboard': ['clip'], # 6444
     'blur-child-bounds-oversize': ['clip'], # 6450
     'cairo-coordinates': ['serialize'],
+    'clip-mask-rotations': ['replay'], # changes transform order causing rotated offscreen
     'repeat-repeats-nested': ['clip'], # 6522
     'repeating-radial-gradient-edge-colors': ['colorflip'],
     'rounded-clip-with-huge-bounds': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'], # 6532
@@ -346,6 +373,7 @@ compare_xfails = {
   },
   'cairo': {
     'cairo-coordinates': ['serialize'],
+    'clip-mask-rotations': ['replay'], # changes transform order causing rotated offscreen
     'inter-hinting': ['flip', 'rotate'],
     'inter-optical-scaling': ['flip', 'rotate'],
     'fill-fractional-translate': ['plain','flip','rotate','repeat','mask','replay','clip','colorflip', 'serialize'],
@@ -740,6 +768,7 @@ foreach t : tests
 endforeach
 
 internal_tests = [
+  [ 'atlasallocator', ['atlasallocator.c', '../../gsk/gpu/gskatlasallocator.c' ] ],
   [ 'boundingbox'],
   [ 'curve', [ ], [ 'flaky' ]],
   [ 'curve-special-cases' ],

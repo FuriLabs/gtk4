@@ -167,7 +167,7 @@ check_bulk (GtkRecentManager *manager,
     g_main_loop_quit (closure->main_loop);
 }
 
-static gboolean
+static void
 add_bulk (gpointer data_)
 {
   AddManyClosure *closure = data_;
@@ -193,8 +193,6 @@ add_bulk (gpointer data_)
     }
 
   g_free (data);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -211,7 +209,7 @@ recent_manager_add_many (void)
 
   g_signal_connect (manager, "changed", G_CALLBACK (check_bulk), closure);
 
-  g_idle_add (add_bulk, closure);
+  g_idle_add_once (add_bulk, closure);
 
   g_main_loop_run (closure->main_loop);
 
@@ -253,9 +251,8 @@ recent_manager_move_item (void)
                                       &error);
   g_assert_false (res);
   g_assert_error (error, GTK_RECENT_MANAGER_ERROR, GTK_RECENT_MANAGER_ERROR_NOT_FOUND);
-  g_error_free (error);
+  g_clear_error (&error);
 
-  error = NULL;
   res = gtk_recent_manager_move_item (manager, uri, uri2, &error);
   g_assert_true (res);
   g_assert_null (error);
@@ -282,9 +279,8 @@ recent_manager_lookup_item (void)
                                          &error);
   g_assert_null (info);
   g_assert_error (error, GTK_RECENT_MANAGER_ERROR, GTK_RECENT_MANAGER_ERROR_NOT_FOUND);
-  g_error_free (error);
+  g_clear_error (&error);
 
-  error = NULL;
   info = gtk_recent_manager_lookup_item (manager, uri2, &error);
   g_assert_nonnull (info);
   g_assert_null (error);

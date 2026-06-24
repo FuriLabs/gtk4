@@ -72,10 +72,10 @@ enum {
   PROP_0,
   PROP_CHILD,
 
-  LAST_ARG
+  N_PROPS
 };
 
-static GParamSpec *properties[LAST_ARG] = { NULL, };
+static GParamSpec *properties[N_PROPS] = { NULL, };
 
 static void gtk_drag_icon_root_init   (GtkRootInterface *iface);
 static void gtk_drag_icon_native_init (GtkNativeInterface *iface);
@@ -176,15 +176,6 @@ gtk_drag_icon_native_init (GtkNativeInterface *iface)
   iface->layout = gtk_drag_icon_native_layout;
 }
 
-static gboolean
-surface_render (GdkSurface     *surface,
-                cairo_region_t *region,
-                GtkWidget      *widget)
-{
-  gtk_widget_render (widget, surface, region);
-  return TRUE;
-}
-
 static void
 surface_compute_size (GdkDragSurface     *surface,
                       GdkDragSurfaceSize *size,
@@ -204,7 +195,6 @@ gtk_drag_icon_realize (GtkWidget *widget)
 
   gdk_surface_set_widget (icon->surface, widget);
 
-  g_signal_connect (icon->surface, "render", G_CALLBACK (surface_render), widget);
   g_signal_connect (icon->surface, "compute-size", G_CALLBACK (surface_compute_size), widget);
 
   GTK_WIDGET_CLASS (gtk_drag_icon_parent_class)->realize (widget);
@@ -228,7 +218,6 @@ gtk_drag_icon_unrealize (GtkWidget *widget)
 
   if (icon->surface)
     {
-      g_signal_handlers_disconnect_by_func (icon->surface, surface_render, widget);
       g_signal_handlers_disconnect_by_func (icon->surface, surface_compute_size, widget);
       gdk_surface_set_widget (icon->surface, NULL);
     }
@@ -387,9 +376,9 @@ gtk_drag_icon_class_init (GtkDragIconClass *klass)
   properties[PROP_CHILD] =
     g_param_spec_object ("child", NULL, NULL,
                          GTK_TYPE_WIDGET,
-                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
-  g_object_class_install_properties (object_class, LAST_ARG, properties);
+  g_object_class_install_properties (object_class, N_PROPS, properties);
 
   gtk_widget_class_set_css_name (widget_class, "dnd");
 }
@@ -568,7 +557,10 @@ gtk_drag_icon_create_widget_for_value (const GValue *value)
       GFileInfo *info;
       GtkWidget *image;
 
-      info = g_file_query_info (G_FILE (g_value_get_object (value)), "standard::icon", 0, NULL, NULL);
+      info = g_file_query_info (G_FILE (g_value_get_object (value)), "standard::icon",
+                                G_FILE_QUERY_INFO_NONE,
+                                NULL,
+                                NULL);
       if (!info)
         return NULL;
 

@@ -115,7 +115,7 @@ gdk_device_tool_class_init (GdkDeviceToolClass *klass)
                                                       0, G_MAXUINT64, 0,
                                                       G_PARAM_READWRITE |
                                                       G_PARAM_CONSTRUCT_ONLY |
-                                                      G_PARAM_STATIC_STRINGS);
+                                                      G_PARAM_STATIC_NAME);
 
   /**
    * GdkDeviceTool:tool-type:
@@ -127,7 +127,7 @@ gdk_device_tool_class_init (GdkDeviceToolClass *klass)
                                                        GDK_DEVICE_TOOL_TYPE_UNKNOWN,
                                                        G_PARAM_READWRITE |
                                                        G_PARAM_CONSTRUCT_ONLY |
-                                                       G_PARAM_STATIC_STRINGS);
+                                                       G_PARAM_STATIC_NAME);
 
   /**
    * GdkDeviceTool:axes:
@@ -136,8 +136,7 @@ gdk_device_tool_class_init (GdkDeviceToolClass *klass)
    */
   tool_props[TOOL_PROP_AXES] = g_param_spec_flags ("axes", NULL, NULL,
                                                    GDK_TYPE_AXIS_FLAGS, 0,
-                                                   G_PARAM_READWRITE |
-                                                   G_PARAM_CONSTRUCT_ONLY);
+                                                   G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_NAME);
 
   /**
    * GdkDeviceTool:hardware-id:
@@ -148,7 +147,7 @@ gdk_device_tool_class_init (GdkDeviceToolClass *klass)
                                                            0, G_MAXUINT64, 0,
                                                            G_PARAM_READWRITE |
                                                            G_PARAM_CONSTRUCT_ONLY |
-                                                           G_PARAM_STATIC_STRINGS);
+                                                           G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (object_class, N_TOOL_PROPS, tool_props);
 }

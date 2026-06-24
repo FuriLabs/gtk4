@@ -51,6 +51,8 @@
  * it is necessary to ensure the correct shape of the a11y tree
  * by calling [method@Gtk.Accessible.set_accessible_parent] and
  * updating the sibling by [method@Gtk.Accessible.update_next_accessible_sibling].
+ *
+ * Since: 4.10
  */
 
 #include "config.h"
@@ -91,7 +93,7 @@ gtk_accessible_default_init (GtkAccessibleInterface *iface)
                        GTK_TYPE_ACCESSIBLE_ROLE,
                        GTK_ACCESSIBLE_ROLE_NONE,
                        G_PARAM_READWRITE |
-                       G_PARAM_STATIC_STRINGS);
+                       G_PARAM_STATIC_NAME);
 
   g_object_interface_install_property (iface, pspec);
 
@@ -1503,7 +1505,7 @@ gtk_accessible_is_password_text (GtkAccessible *accessible)
         }
     }
 
-  if (found_purpose && 
+  if (found_purpose &&
       (purpose == GTK_INPUT_PURPOSE_PASSWORD || purpose == GTK_INPUT_PURPOSE_PIN))
     return TRUE;
   return FALSE;

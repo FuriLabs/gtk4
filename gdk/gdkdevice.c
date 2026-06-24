@@ -113,7 +113,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
   device_props[PROP_DISPLAY] =
       g_param_spec_object ("display", NULL, NULL,
                            GDK_TYPE_DISPLAY,
-                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:name:
@@ -124,7 +124,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
       g_param_spec_string ("name", NULL, NULL,
                            NULL,
                            G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
-                           G_PARAM_STATIC_STRINGS);
+                           G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:source:
@@ -136,7 +136,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
                          GDK_TYPE_INPUT_SOURCE,
                          GDK_SOURCE_MOUSE,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
-                         G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GdkDevice:has-cursor:
@@ -147,7 +147,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
       g_param_spec_boolean ("has-cursor", NULL, NULL,
                             FALSE,
                             G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
-                            G_PARAM_STATIC_STRINGS);
+                            G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:n-axes:
@@ -158,7 +158,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
       g_param_spec_uint ("n-axes", NULL, NULL,
                          0, G_MAXUINT,
                          0,
-                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:vendor-id:
@@ -171,7 +171,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
       g_param_spec_string ("vendor-id", NULL, NULL,
                            NULL,
                            G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
-                           G_PARAM_STATIC_STRINGS);
+                           G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:product-id:
@@ -184,7 +184,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
       g_param_spec_string ("product-id", NULL, NULL,
                            NULL,
                            G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
-                           G_PARAM_STATIC_STRINGS);
+                           G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:seat:
@@ -195,7 +195,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
       g_param_spec_object ("seat", NULL, NULL,
                            GDK_TYPE_SEAT,
                            G_PARAM_READWRITE |
-                           G_PARAM_STATIC_STRINGS);
+                           G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:num-touches:
@@ -210,7 +210,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
                          0, G_MAXUINT,
                          0,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
-                         G_PARAM_STATIC_STRINGS);
+                         G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:tool: (getter get_device_tool)
@@ -220,7 +220,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
   device_props[PROP_TOOL] =
     g_param_spec_object ("tool", NULL, NULL,
                          GDK_TYPE_DEVICE_TOOL,
-                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:direction:
@@ -232,7 +232,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
   device_props[PROP_DIRECTION] =
       g_param_spec_enum ("direction", NULL, NULL,
                          PANGO_TYPE_DIRECTION, PANGO_DIRECTION_NEUTRAL,
-                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:has-bidi-layouts:
@@ -244,7 +244,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
   device_props[PROP_HAS_BIDI_LAYOUTS] =
       g_param_spec_boolean ("has-bidi-layouts", NULL, NULL,
                             FALSE,
-                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                            G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:caps-lock-state:
@@ -256,7 +256,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
   device_props[PROP_CAPS_LOCK_STATE] =
       g_param_spec_boolean ("caps-lock-state", NULL, NULL,
                             FALSE,
-                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                            G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:num-lock-state:
@@ -268,7 +268,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
   device_props[PROP_NUM_LOCK_STATE] =
       g_param_spec_boolean ("num-lock-state", NULL, NULL,
                             FALSE,
-                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                            G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:scroll-lock-state:
@@ -280,7 +280,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
   device_props[PROP_SCROLL_LOCK_STATE] =
       g_param_spec_boolean ("scroll-lock-state", NULL, NULL,
                             FALSE,
-                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                            G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:modifier-state:
@@ -293,7 +293,7 @@ gdk_device_class_init (GdkDeviceClass *klass)
       g_param_spec_flags ("modifier-state", NULL, NULL,
                           GDK_TYPE_MODIFIER_TYPE,
                           GDK_NO_MODIFIER_MASK,
-                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                          G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:active-layout-index:
@@ -304,12 +304,14 @@ gdk_device_class_init (GdkDeviceClass *klass)
    *
    * This is only relevant for keyboard devices.
    *
+   * Value changes from compositor events, connect to notify if needed.
+   *
    * Since: 4.18
    */
   device_props[PROP_ACTIVE_LAYOUT_INDEX] =
       g_param_spec_int ("active-layout-index", NULL, NULL,
                         -1, G_MAXINT, 0,
-                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                        G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GdkDevice:layout-names:
@@ -318,12 +320,14 @@ gdk_device_class_init (GdkDeviceClass *klass)
    *
    * This is only relevant for keyboard devices.
    *
+   * Value changes from compositor events, connect to notify if needed.
+   *
    * Since: 4.18
    */
   device_props[PROP_LAYOUT_NAMES] =
       g_param_spec_boxed ("layout-names", NULL, NULL,
                           G_TYPE_STRV,
-                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                          G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (object_class, LAST_PROP, device_props);
 
@@ -765,77 +769,6 @@ gdk_device_get_axis (GdkDevice  *device,
   return FALSE;
 }
 
-static GdkEventMask
-get_native_grab_event_mask (GdkEventMask grab_mask)
-{
-  /* Similar to the above but for pointer events only */
-  return
-    GDK_POINTER_MOTION_MASK |
-    GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
-    GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK |
-    GDK_SCROLL_MASK |
-    (grab_mask &
-     ~(GDK_BUTTON_MOTION_MASK |
-       GDK_BUTTON1_MOTION_MASK |
-       GDK_BUTTON2_MOTION_MASK |
-       GDK_BUTTON3_MOTION_MASK));
-}
-
-GdkGrabStatus
-gdk_device_grab (GdkDevice        *device,
-                 GdkSurface       *surface,
-                 gboolean          owner_events,
-                 GdkEventMask      event_mask,
-                 GdkCursor        *cursor,
-                 guint32           time_)
-{
-  GdkGrabStatus res;
-
-  g_return_val_if_fail (GDK_IS_DEVICE (device), GDK_GRAB_FAILED);
-  g_return_val_if_fail (GDK_IS_SURFACE (surface), GDK_GRAB_FAILED);
-  g_return_val_if_fail (gdk_surface_get_display (surface) == gdk_device_get_display (device), GDK_GRAB_FAILED);
-
-  if (GDK_SURFACE_DESTROYED (surface))
-    return GDK_GRAB_NOT_VIEWABLE;
-
-  res = GDK_DEVICE_GET_CLASS (device)->grab (device,
-                                             surface,
-                                             owner_events,
-                                             get_native_grab_event_mask (event_mask),
-                                             NULL,
-                                             cursor,
-                                             time_);
-
-  if (res == GDK_GRAB_SUCCESS)
-    {
-      GdkDisplay *display;
-      gulong serial;
-
-      display = gdk_surface_get_display (surface);
-      serial = _gdk_display_get_next_serial (display);
-
-      _gdk_display_add_device_grab (display,
-                                    device,
-                                    surface,
-                                    owner_events,
-                                    event_mask,
-                                    serial,
-                                    time_,
-                                    FALSE);
-    }
-
-  return res;
-}
-
-void
-gdk_device_ungrab (GdkDevice  *device,
-                   guint32     time_)
-{
-  g_return_if_fail (GDK_IS_DEVICE (device));
-
-  GDK_DEVICE_GET_CLASS (device)->ungrab (device, time_);
-}
-
 /* Private API */
 void
 _gdk_device_reset_axes (GdkDevice *device)
@@ -1192,7 +1125,7 @@ gdk_device_set_seat (GdkDevice *device,
     return;
 
   device->seat = seat;
-  g_object_notify (G_OBJECT (device), "seat");
+  g_object_notify_by_pspec (G_OBJECT (device), device_props[PROP_SEAT]);
 }
 
 /**
@@ -1219,7 +1152,7 @@ gdk_device_update_tool (GdkDevice     *device,
 
   if (g_set_object (&device->last_tool, tool))
     {
-      g_object_notify (G_OBJECT (device), "tool");
+      g_object_notify_by_pspec (G_OBJECT (device), device_props[PROP_TOOL]);
       g_signal_emit (device, signals[TOOL_CHANGED], 0, tool);
     }
 }

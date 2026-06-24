@@ -286,6 +286,7 @@ gtk_drag_source_begin (GtkGesture       *gesture,
   GdkEventSequence *current;
 
   current = gtk_gesture_single_get_current_sequence (GTK_GESTURE_SINGLE (gesture));
+  g_clear_handle_id (&source->timeout_id, g_source_remove);
   source->timeout_id = g_timeout_add (MIN_TIME_TO_DND, drag_timeout, source);
 
   gtk_gesture_get_point (gesture, current, &source->start_x, &source->start_y);
@@ -340,7 +341,7 @@ gtk_drag_source_class_init (GtkDragSourceClass *class)
   properties[PROP_CONTENT] =
        g_param_spec_object ("content", NULL, NULL,
                            GDK_TYPE_CONTENT_PROVIDER,
-                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkDragSource:actions:
@@ -353,7 +354,7 @@ gtk_drag_source_class_init (GtkDragSourceClass *class)
   properties[PROP_ACTIONS] =
        g_param_spec_flags ("actions", NULL, NULL,
                            GDK_TYPE_DRAG_ACTION, GDK_ACTION_COPY,
-                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, properties);
 

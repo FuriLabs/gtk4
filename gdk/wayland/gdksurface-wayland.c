@@ -237,13 +237,11 @@ gdk_wayland_surface_update_size (GdkSurface               *surface,
 
   gdk_surface_invalidate_rect (surface, NULL);
 
-  if (width_changed)
-    g_object_notify (G_OBJECT (surface), "width");
-  if (height_changed)
-    g_object_notify (G_OBJECT (surface), "height");
   if (scale_changed)
+    /* gobject-linter-ignore-next-line: use_g_object_notify_by_pspec */
     g_object_notify (G_OBJECT (surface), "scale");
   if (scale_factor_changed)
+    /* gobject-linter-ignore-next-line: use_g_object_notify_by_pspec */
     g_object_notify (G_OBJECT (surface), "scale-factor");
 
   _gdk_surface_update_size (surface);
@@ -1077,21 +1075,23 @@ static void
 unmap_popups_for_surface (GdkSurface *surface)
 {
   GdkWaylandDisplay *display_wayland;
-  GList *l;
+  GList *l, *popups;
 
   display_wayland = GDK_WAYLAND_DISPLAY (gdk_surface_get_display (surface));
-  for (l = display_wayland->current_popups; l; l = l->next)
+  popups = g_list_copy (display_wayland->current_popups);
+  for (l = popups; l; l = l->next)
     {
        GdkSurface *popup = l->data;
 
        if (popup->parent == surface)
          {
-           g_warning ("Tried to unmap the parent of a popup");
+           if (popup->autohide)
+             g_warning ("Tried to unmap the parent of a popup");
            gdk_surface_hide (popup);
-
-           return;
          }
     }
+
+  g_list_free (popups);
 }
 
 void
@@ -1149,12 +1149,8 @@ gdk_wayland_surface_hide (GdkSurface *surface)
 
   seat = gdk_display_get_default_seat (surface->display);
   if (seat)
-    {
-      if (surface->autohide)
-        gdk_seat_ungrab (seat);
+    gdk_wayland_seat_clear_touchpoints (GDK_WAYLAND_SEAT (seat), surface);
 
-      gdk_wayland_seat_clear_touchpoints (GDK_WAYLAND_SEAT (seat), surface);
-    }
   gdk_wayland_surface_hide_surface (surface);
   _gdk_surface_clear_update_area (surface);
 }

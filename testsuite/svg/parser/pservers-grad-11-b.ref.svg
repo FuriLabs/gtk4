@@ -5,6 +5,7 @@
         width='100%'
         height='100%'
         viewBox='0 0 480 360'>
+  <title>$RCSfile: pservers-grad-11-b.svg,v $</title>
   <g
           id='test-body-content'
           font-size='18'
@@ -19,13 +20,11 @@
             fy='100'>
       <stop
               offset='0'
-              stop-color='rgb(0,0,153)'
-              stop-opacity='1'>
+              stop-color='rgb(0,0,153)'>
       </stop>
       <stop
               offset='1'
-              stop-color='rgb(34,238,34)'
-              stop-opacity='1'>
+              stop-color='rgb(34,238,34)'>
       </stop>
     </radialGradient>
     <rect
@@ -50,13 +49,11 @@
             fy='100'>
       <stop
               offset='0'
-              stop-color='rgb(238,34,34)'
-              stop-opacity='1'>
+              stop-color='rgb(238,34,34)'>
       </stop>
       <stop
               offset='1'
-              stop-color='rgb(255,255,102)'
-              stop-opacity='1'>
+              stop-color='rgb(255,255,102)'>
       </stop>
     </radialGradient>
     <rect
@@ -66,8 +63,7 @@
             x='250'
             y='30'
             width='170'
-            height='100'
-            class='transparent-fill'>
+            height='100'>
     </rect>
     <text
             font-size='12'
@@ -84,13 +80,11 @@
             fy='180'>
       <stop
               offset='0'
-              stop-color='rgb(0,102,0)'
-              stop-opacity='1'>
+              stop-color='rgb(0,102,0)'>
       </stop>
       <stop
               offset='1'
-              stop-color='rgb(255,255,0)'
-              stop-opacity='1'>
+              stop-color='rgb(255,255,0)'>
       </stop>
     </radialGradient>
     <text
@@ -114,13 +108,11 @@
             fy='245'>
       <stop
               offset='0'
-              stop-color='rgb(0,0,0)'
-              stop-opacity='1'>
+              stop-color='rgb(0,0,0)'>
       </stop>
       <stop
               offset='1'
-              stop-color='rgb(221,102,221)'
-              stop-opacity='1'>
+              stop-color='rgb(221,102,221)'>
       </stop>
     </radialGradient>
     <text
@@ -130,8 +122,7 @@
             stroke='url(#Grad4)'
             stroke-width='2'
             x='10'
-            y='270'
-            class='transparent-fill'>Gradient on text stroke</text>
+            y='270'>Gradient on text stroke</text>
     <text
             font-size='12'
             font-family='Arial'
@@ -155,7 +146,6 @@
           x='1'
           y='1'
           width='478'
-          height='358'
-          class='transparent-fill'>
+          height='358'>
   </rect>
 </svg>

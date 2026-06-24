@@ -6,10 +6,7 @@
           transform='translate(300.689, 64.6681)'>
     <rect
             id='rect2013'
-            fill='rgb(255,255,0)'
-            stroke='none'
-            stroke-width='0.0707788'
-            paint-order='markers fill stroke'
+            style='fill:#ffff00;stroke:none;stroke-width:0.0707788;paint-order:markers fill stroke;stop-color:#000000'
             x='-247.125'
             y='-54.6681'
             width='5.02925'

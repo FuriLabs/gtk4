@@ -183,8 +183,11 @@ struct _GtkPopoverMenuClass
 enum {
   PROP_VISIBLE_SUBMENU = 1,
   PROP_MENU_MODEL,
-  PROP_FLAGS
+  PROP_FLAGS,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 static void gtk_popover_menu_buildable_iface_init (GtkBuildableIface *iface);
 
@@ -277,7 +280,7 @@ visible_submenu_changed (GObject        *object,
                          GParamSpec     *pspec,
                          GtkPopoverMenu *popover)
 {
-  g_object_notify (G_OBJECT (popover), "visible-submenu");
+  g_object_notify_by_pspec (G_OBJECT (popover), props[PROP_VISIBLE_SUBMENU]);
 }
 
 static void
@@ -378,8 +381,7 @@ gtk_popover_menu_dispose (GObject *object)
 
   if (popover->active_item)
     {
-      g_object_remove_weak_pointer (G_OBJECT (popover->active_item), (gpointer *)&popover->active_item);
-      popover->active_item = NULL;
+      g_clear_weak_pointer (&popover->active_item);
     }
 
   g_clear_object (&popover->model);
@@ -552,16 +554,20 @@ add_arrow_bindings (GtkWidgetClass   *widget_class,
 {
   guint keypad_keysym = keysym - GDK_KEY_Left + GDK_KEY_KP_Left;
 
-  gtk_widget_class_add_binding_signal (widget_class, keysym, 0,
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       keysym, GDK_NO_MODIFIER_MASK,
                                        "move-focus",
                                        "(i)", direction);
-  gtk_widget_class_add_binding_signal (widget_class, keysym, GDK_CONTROL_MASK,
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       keysym, GDK_CONTROL_MASK,
                                        "move-focus",
                                        "(i)", direction);
-  gtk_widget_class_add_binding_signal (widget_class, keypad_keysym, 0,
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       keypad_keysym, GDK_NO_MODIFIER_MASK,
                                        "move-focus",
                                        "(i)", direction);
-  gtk_widget_class_add_binding_signal (widget_class, keypad_keysym, GDK_CONTROL_MASK,
+  gtk_widget_class_add_binding_signal (widget_class,
+                                       keypad_keysym, GDK_CONTROL_MASK,
                                        "move-focus",
                                        "(i)", direction);
 }
@@ -615,22 +621,18 @@ gtk_popover_menu_class_init (GtkPopoverMenuClass *klass)
    *
    * The name of the visible submenu.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_VISIBLE_SUBMENU,
-                                   g_param_spec_string ("visible-submenu", NULL, NULL,
-                                                        NULL,
-                                                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  props[PROP_VISIBLE_SUBMENU] = g_param_spec_string ("visible-submenu", NULL, NULL,
+                                                     NULL,
+                                                     G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkPopoverMenu:menu-model:
    *
    * The model from which the menu is made.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_MENU_MODEL,
-                                   g_param_spec_object ("menu-model", NULL, NULL,
-                                                        G_TYPE_MENU_MODEL,
-                                                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  props[PROP_MENU_MODEL] = g_param_spec_object ("menu-model", NULL, NULL,
+                                                G_TYPE_MENU_MODEL,
+                                                G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkPopoverMenu:flags:
@@ -642,13 +644,13 @@ gtk_popover_menu_class_init (GtkPopoverMenuClass *klass)
    *
    * Since: 4.14
    */
-  g_object_class_install_property (object_class,
-                                   PROP_FLAGS,
-                                   g_param_spec_flags ("flags", NULL, NULL,
-                                                       GTK_TYPE_POPOVER_MENU_FLAGS,
-                                                       GTK_POPOVER_MENU_SLIDING,
-                                                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS
-                                                         | G_PARAM_EXPLICIT_NOTIFY));
+  props[PROP_FLAGS] = g_param_spec_flags ("flags", NULL, NULL,
+                                          GTK_TYPE_POPOVER_MENU_FLAGS,
+                                          GTK_POPOVER_MENU_SLIDING,
+                                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME
+                                          | G_PARAM_EXPLICIT_NOTIFY);
+
+  g_object_class_install_properties (object_class, N_PROPS, props);
 
   add_arrow_bindings (widget_class, GDK_KEY_Up, GTK_DIR_UP);
   add_arrow_bindings (widget_class, GDK_KEY_Down, GTK_DIR_DOWN);
@@ -660,15 +662,15 @@ gtk_popover_menu_class_init (GtkPopoverMenuClass *klass)
   add_tab_bindings (widget_class, GDK_SHIFT_MASK, GTK_DIR_TAB_BACKWARD);
   add_tab_bindings (widget_class, GDK_CONTROL_MASK | GDK_SHIFT_MASK, GTK_DIR_TAB_BACKWARD);
 
-  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_Return, 0,
+  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_Return, GDK_NO_MODIFIER_MASK,
                                        "activate-default", NULL);
-  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_ISO_Enter, 0,
+  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_ISO_Enter, GDK_NO_MODIFIER_MASK,
                                        "activate-default", NULL);
-  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_KP_Enter, 0,
+  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_KP_Enter, GDK_NO_MODIFIER_MASK,
                                        "activate-default", NULL);
-  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_space, 0,
+  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_space, GDK_NO_MODIFIER_MASK,
                                        "activate-default", NULL);
-  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_KP_Space, 0,
+  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_KP_Space, GDK_NO_MODIFIER_MASK,
                                        "activate-default", NULL);
 
   gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_MENU);
@@ -846,7 +848,7 @@ gtk_popover_menu_set_menu_model (GtkPopoverMenu *popover,
   if (g_set_object (&popover->model, model))
     {
       gtk_popover_menu_rebuild_contents (popover);
-      g_object_notify (G_OBJECT (popover), "menu-model");
+      g_object_notify_by_pspec (G_OBJECT (popover), props[PROP_MENU_MODEL]);
     }
 }
 
@@ -877,7 +879,7 @@ gtk_popover_menu_set_flags (GtkPopoverMenu      *popover,
   if (gtk_popover_get_child (GTK_POPOVER (popover)) != NULL)
     gtk_popover_menu_rebuild_contents (popover);
 
-  g_object_notify (G_OBJECT (popover), "flags");
+  g_object_notify_by_pspec (G_OBJECT (popover), props[PROP_FLAGS]);
 }
 
 /**

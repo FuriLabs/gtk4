@@ -20,8 +20,6 @@
 
 #pragma once
 
-G_BEGIN_DECLS
-
 #define _gdk_atom_array_index(a, i) (g_array_index (a, const char *, i))
 #define _gdk_win32_clipdrop_atom(c, i) (_gdk_atom_array_index (c->known_atoms, i))
 #define _gdk_cf_array_index(a, i) (g_array_index (a, UINT, i))
@@ -234,9 +232,6 @@ int      _gdk_win32_add_contentformat_to_pairs                     (GdkWin32Clip
                                                                     const char                  *target,
                                                                     GArray                      *array);
 
-void     _gdk_win32_clipboard_default_output_done                  (GObject                     *clipboard,
-                                                                    GAsyncResult                *result,
-                                                                    gpointer                     user_data);
 gboolean gdk_win32_clipdrop_transmute_contentformat                (GdkWin32Clipdrop            *clipdrop,
                                                                     const char                  *from_contentformat,
                                                                     UINT                         to_w32format,
@@ -266,6 +261,6 @@ void     _gdk_win32_advertise_clipboard_contentformats             (GdkClipboard
                                                                     GdkContentFormats           *contentformats);
 
 void     gdk_win32_clipdrop_add_win32_format_to_pairs              (GdkWin32Clipdrop            *clipdrop,
-                                                                    UINT                         format,
+                                                                    UINT                         w32format,
                                                                     GArray                      *array,
                                                                     GdkContentFormatsBuilder    *builder);

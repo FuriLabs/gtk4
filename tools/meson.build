@@ -42,6 +42,8 @@ gtk_tools = [
                          'fake-scope.c'], [libgtk_dep] ],
   ['gtk4-rendernode-tool', ['gtk-rendernode-tool.c',
                         'gtk-rendernode-filter-copypaste.c',
+                        'gtk-rendernode-filter-cut.c',
+                        'gtk-rendernode-filter-simplify.c',
                         'gtk-rendernode-filter-strip.c',
                         'gtk-rendernode-filter-texture.c',
                         'gtk-rendernode-tool-benchmark.c',
@@ -65,7 +67,6 @@ gtk_tools = [
                        'gtk-tool-utils.c',
                         '../testsuite/reftests/reftest-compare.c'], [libgtk_dep] ],
   ['gtk4-update-icon-cache', ['updateiconcache.c', '../gtk/gtkiconcachevalidator.c' ] + extra_update_icon_cache_objs, [ libgtk_dep ] ],
-  ['gtk4-encode-symbolic-svg', ['encodesymbolic.c'], [ libgtk_static_dep ] ],
 ]
 
 if os_unix

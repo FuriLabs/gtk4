@@ -68,6 +68,8 @@ enum {
   NUM_PROPERTIES
 };
 
+static GParamSpec *props[NUM_PROPERTIES] = { NULL, };
+
 enum {
   MENU_ACTIVATE,
   NUM_SIGNALS
@@ -124,8 +126,7 @@ gtk_tree_popover_dispose (GObject *object)
 
   if (popover->context)
     {
-      g_signal_handler_disconnect (popover->context, popover->size_changed_id);
-      popover->size_changed_id = 0;
+      g_clear_signal_handler (&popover->size_changed_id, popover->context);
 
       g_clear_object (&popover->context);
     }
@@ -203,17 +204,15 @@ gtk_tree_popover_class_init (GtkTreePopoverClass *class)
   object_class->set_property = gtk_tree_popover_set_property;
   object_class->get_property = gtk_tree_popover_get_property;
 
-  g_object_class_install_property (object_class,
-                                   PROP_MODEL,
-                                   g_param_spec_object ("model", NULL, NULL,
-                                                        GTK_TYPE_TREE_MODEL,
-                                                        GTK_PARAM_READWRITE));
+  props[PROP_MODEL] = g_param_spec_object ("model", NULL, NULL,
+                                           GTK_TYPE_TREE_MODEL,
+                                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
-  g_object_class_install_property (object_class,
-                                   PROP_CELL_AREA,
-                                   g_param_spec_object ("cell-area", NULL, NULL,
-                                                        GTK_TYPE_CELL_AREA,
-                                                        GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+  props[PROP_CELL_AREA] = g_param_spec_object ("cell-area", NULL, NULL,
+                                               GTK_TYPE_CELL_AREA,
+                                               G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT_ONLY);
+
+  g_object_class_install_properties (object_class, NUM_PROPERTIES, props);
 
   signals[MENU_ACTIVATE] =
     g_signal_new (I_("menu-activate"),
@@ -450,10 +449,10 @@ context_size_changed_cb (GtkCellAreaContext *context,
                          GParamSpec         *pspec,
                          GtkWidget          *popover)
 {
-  if (!strcmp (pspec->name, "minimum-width") ||
-      !strcmp (pspec->name, "natural-width") ||
-      !strcmp (pspec->name, "minimum-height") ||
-      !strcmp (pspec->name, "natural-height"))
+  if (strcmp (pspec->name, "minimum-width") == 0 ||
+      strcmp (pspec->name, "natural-width") == 0 ||
+      strcmp (pspec->name, "minimum-height") == 0 ||
+      strcmp (pspec->name, "natural-height") == 0)
     gtk_widget_queue_resize (popover);
 }
 
@@ -564,8 +563,7 @@ gtk_tree_popover_set_area (GtkTreePopover *popover,
 {
   if (popover->area)
     {
-      g_signal_handler_disconnect (popover->area, popover->apply_attributes_id);
-      popover->apply_attributes_id = 0;
+      g_clear_signal_handler (&popover->apply_attributes_id, popover->area);
       g_clear_object (&popover->area);
     }
 

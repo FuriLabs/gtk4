@@ -1,5 +1,7 @@
 gtk_tests = [
   # testname, optional extra sources
+  ['movingtext'],
+  ['bigfont'],
   ['svg-view'],
   ['imagednd'],
   ['testcursor'],
@@ -133,7 +135,6 @@ if os_unix
   gtk_tests += [
     ['testfontchooserdialog'],
     ['parallel', [], [ libgtk_static_dep, libm ] ],
-    ['testsymbolic', [], [ libgtk_static_dep ] ],
   ]
 endif
 

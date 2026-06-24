@@ -106,9 +106,9 @@ typedef struct {
 enum {
   PROP_0,
   PROP_ADJUSTMENT,
-
+  /* GtkOrientable */
   PROP_ORIENTATION,
-  LAST_PROP = PROP_ORIENTATION
+  LAST_PROP
 };
 
 static void gtk_scrollbar_accessible_range_init (GtkAccessibleRangeInterface *iface);
@@ -247,11 +247,12 @@ gtk_scrollbar_class_init (GtkScrollbarClass *class)
   props[PROP_ADJUSTMENT] =
       g_param_spec_object ("adjustment", NULL, NULL,
                            GTK_TYPE_ADJUSTMENT,
-                           GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT|G_PARAM_EXPLICIT_NOTIFY);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
+
+  props[PROP_ORIENTATION] = g_param_spec_override ("orientation",
+      g_object_interface_find_property (g_type_default_interface_ref (GTK_TYPE_ORIENTABLE), "orientation"));
 
   g_object_class_install_properties (object_class, LAST_PROP, props);
-
-  g_object_class_override_property (object_class, PROP_ORIENTATION, "orientation");
 
   gtk_widget_class_set_css_name (widget_class, I_("scrollbar"));
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BOX_LAYOUT);

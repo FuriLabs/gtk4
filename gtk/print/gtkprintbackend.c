@@ -27,12 +27,12 @@
 #include "gtkprivate.h"
 
 #ifdef HAVE_PRINTBACKEND_CPDB
-#include "print/backends/gtkprintbackendcpdb.h"
+#include "print/backends/gtkprintbackendcpdbprivate.h"
 #endif
 #ifdef HAVE_PRINTBACKEND_CUPS
-#include "print/backends/gtkprintbackendcups.h"
+#include "print/backends/gtkprintbackendcupsprivate.h"
 #endif
-#include "print/backends/gtkprintbackendfile.h"
+#include "print/backends/gtkprintbackendfileprivate.h"
 
 #include "gtkprintbackendprivate.h"
 
@@ -74,8 +74,11 @@ static guint signals[LAST_SIGNAL] = { 0 };
 enum 
 { 
   PROP_ZERO,
-  PROP_STATUS
+  PROP_STATUS,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 static GObjectClass *backend_parent_class;
 
@@ -279,13 +282,13 @@ gtk_print_backend_class_init (GtkPrintBackendClass *class)
   class->printer_get_capabilities = fallback_printer_get_capabilities;
   class->request_password = request_password;
   
-  g_object_class_install_property (object_class, 
-                                   PROP_STATUS,
-                                   g_param_spec_int ("status", NULL, NULL,
-                                                     GTK_PRINT_BACKEND_STATUS_UNKNOWN,
-                                                     GTK_PRINT_BACKEND_STATUS_UNAVAILABLE,
-                                                     GTK_PRINT_BACKEND_STATUS_UNKNOWN,
-                                                     GTK_PARAM_READWRITE)); 
+  props[PROP_STATUS] = g_param_spec_int ("status", NULL, NULL,
+                                         GTK_PRINT_BACKEND_STATUS_UNKNOWN,
+                                         GTK_PRINT_BACKEND_STATUS_UNAVAILABLE,
+                                         GTK_PRINT_BACKEND_STATUS_UNKNOWN,
+                                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
+
+  g_object_class_install_properties (object_class, N_PROPS, props); 
   
   signals[PRINTER_LIST_CHANGED] =
     g_signal_new ("printer-list-changed",
@@ -476,18 +479,18 @@ gtk_print_backend_get_printer_list (GtkPrintBackend *backend)
   
   g_return_val_if_fail (GTK_IS_PRINT_BACKEND (backend), NULL);
 
-  for (i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (backend->priv->printers)); i++)
-    {
-      GtkPrinter *printer = g_list_model_get_item (G_LIST_MODEL (backend->priv->printers), i);
-      result = g_list_prepend (result, printer);
-      g_object_unref (printer);
-    }
-
   if (!backend->priv->printer_list_requested)
     {
       if (GTK_PRINT_BACKEND_GET_CLASS (backend)->request_printer_list)
 	GTK_PRINT_BACKEND_GET_CLASS (backend)->request_printer_list (backend);
       backend->priv->printer_list_requested = TRUE;
+    }
+
+  for (i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (backend->priv->printers)); i++)
+    {
+      GtkPrinter *printer = g_list_model_get_item (G_LIST_MODEL (backend->priv->printers), i);
+      result = g_list_prepend (result, printer);
+      g_object_unref (printer);
     }
 
   return result;
@@ -610,8 +613,7 @@ password_dialog_response (GtkWidget       *dialog,
       if (priv->auth_info[i] != NULL)
         {
           memset (priv->auth_info[i], 0, strlen (priv->auth_info[i]));
-          g_free (priv->auth_info[i]);
-          priv->auth_info[i] = NULL;
+          g_clear_pointer (&priv->auth_info[i], g_free);
         }
     }
 

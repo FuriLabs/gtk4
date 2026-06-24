@@ -480,68 +480,68 @@ path_view_class_init (PathViewClass *class)
   properties[PROP_PATH1]
       = g_param_spec_boxed ("path1", NULL, NULL,
                             GSK_TYPE_PATH,
-                            G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_PATH2]
       = g_param_spec_boxed ("path2", NULL, NULL,
                             GSK_TYPE_PATH,
-                            G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_DO_FILL]
       = g_param_spec_boolean ("do-fill", NULL, NULL,
                               TRUE,
-                              G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                              G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_STROKE]
       = g_param_spec_boxed ("stroke", NULL, NULL,
                             GSK_TYPE_STROKE,
-                            G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_FILL_RULE]
       = g_param_spec_enum ("fill-rule", NULL, NULL,
                            GSK_TYPE_FILL_RULE,
                            GSK_FILL_RULE_WINDING,
-                           G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                           G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_FG_COLOR]
       = g_param_spec_boxed ("fg-color", NULL, NULL,
                             GDK_TYPE_RGBA,
-                            G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_BG_COLOR]
       = g_param_spec_boxed ("bg-color", NULL, NULL,
                             GDK_TYPE_RGBA,
-                            G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_SHOW_POINTS]
       = g_param_spec_boolean ("show-points", NULL, NULL,
                               FALSE,
-                              G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                              G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_SHOW_CONTROLS]
       = g_param_spec_boolean ("show-controls", NULL, NULL,
                               FALSE,
-                              G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                              G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_SHOW_INTERSECTIONS]
       = g_param_spec_boolean ("show-intersections", NULL, NULL,
                               FALSE,
-                              G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                              G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_POINT_COLOR]
       = g_param_spec_boxed ("point-color", NULL, NULL,
                             GDK_TYPE_RGBA,
-                            G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_INTERSECTION_COLOR]
       = g_param_spec_boxed ("intersection-color", NULL, NULL,
                             GDK_TYPE_RGBA,
-                            G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_ZOOM]
       = g_param_spec_double ("zoom", NULL, NULL,
                              1, 20, 1,
-                             G_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                             G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (object_class, N_PROPERTIES, properties);
 
@@ -555,12 +555,12 @@ path_view_class_init (PathViewClass *class)
   gtk_widget_class_install_action (widget_class, "fill-rule", NULL,
                                    path_view_toggle_fill_rule);
 
-  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_plus, 0, "zoom", "d", 1.2);
-  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_minus, 0, "zoom", "d", 1/1.2);
-  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_p, 0, "points", NULL);
-  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_c, 0, "controls", NULL);
-  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_i, 0, "intersections", NULL);
-  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_f, 0, "fill-rule", NULL);
+  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_plus, GDK_NO_MODIFIER_MASK, "zoom", "d", 1.2);
+  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_minus, GDK_NO_MODIFIER_MASK, "zoom", "d", 1/1.2);
+  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_p, GDK_NO_MODIFIER_MASK, "points", NULL);
+  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_c, GDK_NO_MODIFIER_MASK, "controls", NULL);
+  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_i, GDK_NO_MODIFIER_MASK, "intersections", NULL);
+  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_f, GDK_NO_MODIFIER_MASK, "fill-rule", NULL);
 }
 
 GtkWidget *

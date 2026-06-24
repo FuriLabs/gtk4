@@ -301,7 +301,7 @@ clear_response_data (GtkWidget *widget)
   ResponseData *data;
 
   data = get_response_data (widget, FALSE);
-  g_signal_handler_disconnect (widget, data->handler_id);
+  g_clear_signal_handler (&data->handler_id, widget);
   g_object_set_data (G_OBJECT (widget), "gtk-info-bar-response-data", NULL);
 }
 
@@ -368,7 +368,7 @@ gtk_info_bar_class_init (GtkInfoBarClass *klass)
     g_param_spec_enum ("message-type", NULL, NULL,
                        GTK_TYPE_MESSAGE_TYPE,
                        GTK_MESSAGE_INFO,
-                       GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT|G_PARAM_EXPLICIT_NOTIFY);
+                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkInfoBar:show-close-button:
@@ -378,7 +378,7 @@ gtk_info_bar_class_init (GtkInfoBarClass *klass)
   props[PROP_SHOW_CLOSE_BUTTON] =
     g_param_spec_boolean ("show-close-button", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkInfoBar:revealed:
@@ -388,7 +388,7 @@ gtk_info_bar_class_init (GtkInfoBarClass *klass)
   props[PROP_REVEALED] =
     g_param_spec_boolean ("revealed", NULL, NULL,
                           TRUE,
-                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, LAST_PROP, props);
 
@@ -430,7 +430,7 @@ gtk_info_bar_class_init (GtkInfoBarClass *klass)
                                   G_TYPE_NONE, 0);
 
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_Escape, 0,
+                                       GDK_KEY_Escape, GDK_NO_MODIFIER_MASK,
                                        "close",
                                        NULL);
 
@@ -1049,7 +1049,7 @@ gtk_info_bar_buildable_custom_finished (GtkBuildable *buildable,
   ResponseData *ad;
   guint signal_id;
 
-  if (strcmp (tagname, "action-widgets"))
+  if (strcmp (tagname, "action-widgets") != 0)
     {
       parent_buildable_iface->custom_finished (buildable, builder, child,
                                                tagname, user_data);

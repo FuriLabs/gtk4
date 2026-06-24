@@ -28,6 +28,7 @@
 #include "gdk/gdkdisplayprivate.h"
 #include "gdk/gdkprofilerprivate.h"
 #include "gdk/gdkdebugprivate.h"
+#include "gdk/gdkseatprivate.h"
 #include "gsk/gskprivate.h"
 #include "gsk/gskrendernodeprivate.h"
 #include "gtknative.h"
@@ -56,7 +57,7 @@
 #include "gtkmediafileprivate.h"
 #include "gtkmodulesprivate.h"
 #include "gtkprivate.h"
-#include "gtkrecentmanager.h"
+#include "gtkrecentmanagerprivate.h"
 #include "gtktooltipprivate.h"
 #include "gtkwidgetprivate.h"
 #include "gtkwindowprivate.h"
@@ -206,6 +207,7 @@ static const GdkDebugKey gtk_debug_keys[] = {
   { "css", GTK_DEBUG_CSS, "Information about deprecated CSS features" },
   { "builder", GTK_DEBUG_BUILDER, "Information about deprecated GtkBuilder features" },
   { "session-mgmt", GTK_DEBUG_SESSION, "Information about session saving" },
+  { "general-info", GTK_DEBUG_GENERAL_INFO, "General information (in markdown)" },
 };
 
 /* This checks to see if the process is running suid or sgid
@@ -392,9 +394,7 @@ enum_locale_proc (LPSTR locale)
             {
               char str[300];
 
-              strcpy (str, language);
-              strcat (str, "_");
-              strcat (str, country);
+              g_snprintf (str, sizeof (str), "%s_%s", language, country);
 
               if (setlocale (LC_ALL, str) != NULL)
                 setlocale_called = TRUE;
@@ -696,6 +696,9 @@ gtk_init_check (void)
 
   if (ret && (gtk_get_debug_flags () & GTK_DEBUG_INTERACTIVE))
     gtk_window_set_interactive_debugging (TRUE);
+
+  if (ret && (gtk_get_debug_flags () & GTK_DEBUG_GENERAL_INFO))
+    gtk_inspector_print_general_info (gdk_display_get_default ());
 
   return ret;
 }
@@ -1077,21 +1080,20 @@ rewrite_event_for_surface (GdkEvent  *event,
   return NULL;
 }
 
-/* If there is a pointer or keyboard grab in effect with owner_events = TRUE,
- * then what X11 does is deliver the event normally if it was going to this
- * client, otherwise, delivers it in terms of the grab surface. This function
- * rewrites events to the effect that events going to the same window group
- * are delivered normally, otherwise, the event is delivered in terms of the
- * grab window.
+/* If there is a seat grab in effect what GDK does is deliver the event normally
+ * if it was going to this client, otherwise, delivers it in terms of the grab
+ * surface.
+ *
+ * This function rewrites events to the effect that events going to the same
+ * window group are delivered normally, otherwise, the event is delivered in
+ * terms of the grab surface.
  */
 static GdkEvent *
 rewrite_event_for_grabs (GdkEvent *event)
 {
   GdkSurface *grab_surface;
   GtkWidget *event_widget, *grab_widget;
-  gboolean owner_events;
-  GdkDisplay *display;
-  GdkDevice *device;
+  GdkSeat *seat;
 
   switch ((guint) gdk_event_get_event_type (event))
     {
@@ -1110,10 +1112,10 @@ rewrite_event_for_grabs (GdkEvent *event)
     case GDK_TOUCHPAD_SWIPE:
     case GDK_TOUCHPAD_PINCH:
     case GDK_TOUCHPAD_HOLD:
-      display = gdk_event_get_display (event);
-      device = gdk_event_get_device (event);
+      seat = gdk_event_get_seat (event);
+      grab_surface = gdk_seat_get_topmost_grab_surface (seat);
 
-      if (!gdk_device_grab_info (display, device, &grab_surface, &owner_events))
+      if (!grab_surface)
         return NULL;
       break;
     default:
@@ -1126,18 +1128,10 @@ rewrite_event_for_grabs (GdkEvent *event)
   if (!grab_widget)
     return NULL;
 
-  /* If owner_events was set, events in client surfaces get forwarded
+  /* Events in client surfaces get forwarded
    * as normal, but we consider other window groups foreign surfaces.
    */
-  if (owner_events &&
-      gtk_main_get_window_group (grab_widget) == gtk_main_get_window_group (event_widget))
-    return NULL;
-
-  /* If owner_events was not set, events only get sent to the grabbing
-   * surface.
-   */
-  if (!owner_events &&
-      grab_surface == gtk_native_get_surface (gtk_widget_get_native (event_widget)))
+  if (gtk_main_get_window_group (grab_widget) == gtk_main_get_window_group (event_widget))
     return NULL;
 
   return rewrite_event_for_surface (event, grab_surface);
@@ -2079,4 +2073,18 @@ gtk_propagate_event (GtkWidget *widget,
   topmost = gtk_window_group_get_current_grab (window_group);
 
   return gtk_propagate_event_internal (widget, event, topmost);
+}
+
+gboolean
+gtk_event_treat_as_touch (GdkEvent *event)
+{
+  switch ((unsigned int) gdk_device_get_source (gdk_event_get_device (event)))
+    {
+    case GDK_SOURCE_TOUCHSCREEN:
+      return TRUE;
+    case GDK_SOURCE_KEYBOARD:
+      return FALSE;
+    default:
+      return GTK_DISPLAY_DEBUG_CHECK (gdk_event_get_display (event), TOUCHSCREEN);
+    }
 }

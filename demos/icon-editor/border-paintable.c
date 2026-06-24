@@ -21,6 +21,7 @@
 
 #include "border-paintable.h"
 #include "path-paintable.h"
+#include "gtk/svg/gtksvgelementprivate.h"
 
 struct _BorderPaintable
 {
@@ -64,6 +65,84 @@ get_origin_location (GskPath          *path,
 /* {{{ GtkSymbolicPaintable implementation */
 
 static void
+snapshot_spines (GtkSnapshot           *snapshot,
+                 graphene_rect_t       *bounds,
+                 PathPaintable         *paintable,
+                 SvgElement                 *shape,
+                 unsigned int           state,
+                 const graphene_rect_t *viewport,
+                 float                  scale,
+                 const GdkRGBA         *c,
+                 GskStroke             *stroke)
+{
+  switch ((unsigned int) svg_element_get_type (shape))
+    {
+    case SVG_ELEMENT_SVG:
+    case SVG_ELEMENT_GROUP:
+      for (unsigned int i = 0; i < svg_element_get_n_children (shape); i++)
+        {
+          SvgElement *sh = svg_element_get_child (shape, i);
+          snapshot_spines (snapshot, bounds, paintable, sh, state, viewport, scale, c, stroke);
+        }
+      break;
+    case SVG_ELEMENT_LINE:
+    case SVG_ELEMENT_POLYLINE:
+    case SVG_ELEMENT_POLYGON:
+    case SVG_ELEMENT_CIRCLE:
+    case SVG_ELEMENT_ELLIPSE:
+    case SVG_ELEMENT_PATH:
+      {
+        uint64_t states = svg_element_get_states (shape);
+
+        if (states & (G_GUINT64_CONSTANT (1) << state))
+          {
+            GskPath *path = svg_element_get_path (shape, viewport, FALSE);
+            double origin = svg_element_get_gpa_origin (shape);
+            SvgElement * attach_to = NULL;
+            double attach_pos;
+
+            graphene_point_t pos;
+            g_autoptr (GskPath) dot = NULL;
+
+            gtk_snapshot_push_stroke (snapshot, path, stroke);
+            gtk_snapshot_append_color (snapshot, c, bounds);
+            gtk_snapshot_pop (snapshot);
+
+            get_origin_location (path, origin, &pos);
+
+            dot = circle_path_new (pos.x, pos.y, 4.f/scale);
+            gtk_snapshot_push_fill (snapshot, dot, GSK_FILL_RULE_WINDING);
+            gtk_snapshot_append_color (snapshot, c, bounds);
+            gtk_snapshot_pop (snapshot);
+
+            path_paintable_get_attach_path_for_shape (paintable, shape, &attach_to, &attach_pos);
+
+            if (attach_to != NULL)
+              {
+                GskPathBuilder *builder;
+                GskPath *arrow;
+
+                builder = gsk_path_builder_new ();
+                gsk_path_builder_move_to (builder, pos.x, pos.y);
+                gsk_path_builder_rel_line_to (builder, 20.f/scale, 0);
+                gsk_path_builder_rel_move_to (builder, -4.f/scale, -3.f/scale);
+                gsk_path_builder_rel_line_to (builder, 4.f/scale, 3.f/scale);
+                gsk_path_builder_rel_line_to (builder, -4.f/scale, 3.f/scale);
+                arrow = gsk_path_builder_free_to_path (builder);
+                gtk_snapshot_push_stroke (snapshot, arrow, stroke);
+                gtk_snapshot_append_color (snapshot, c, bounds);
+                gtk_snapshot_pop (snapshot);
+                gsk_path_unref (arrow);
+              }
+          }
+      }
+      break;
+    default:
+      break;
+    }
+}
+
+static void
 border_paintable_snapshot_with_weight (GtkSymbolicPaintable  *paintable,
                                        GtkSnapshot           *snapshot,
                                        double                 width,
@@ -73,14 +152,15 @@ border_paintable_snapshot_with_weight (GtkSymbolicPaintable  *paintable,
                                        double                 weight)
 {
   BorderPaintable *self = BORDER_PAINTABLE (paintable);
+  GtkSvg *svg = path_paintable_get_svg (self->paintable);
   double w, h;
   float scale;
 
   if (!self->paintable)
     return;
 
-  w = path_paintable_get_width (self->paintable);
-  h = path_paintable_get_height (self->paintable);
+  w = svg->width;
+  h = svg->height;
 
   if (w == 0 || h == 0)
     return;
@@ -146,64 +226,19 @@ border_paintable_snapshot_with_weight (GtkSymbolicPaintable  *paintable,
       GdkRGBA c = (GdkRGBA) { 1, 0, 0, 1 };
       g_autoptr (GskStroke) stroke = NULL;
       unsigned int state;
+      graphene_rect_t viewport;
+      SvgElement *shape;
 
       stroke = gsk_stroke_new (1.f/scale);
 
       gtk_snapshot_save (snapshot);
       gtk_snapshot_scale (snapshot, scale, scale);
 
-      state = path_paintable_get_state (self->paintable);
+      state = gtk_svg_get_state (svg);
+      graphene_rect_init (&viewport, 0, 0, svg->width, svg->height);
+      shape = svg->content;
 
-      if (state != STATE_UNSET)
-        {
-          for (unsigned int i = 0; i < path_paintable_get_n_paths (self->paintable); i++)
-            {
-              uint64_t states = path_paintable_get_path_states (self->paintable, i);
-
-              if (states & (G_GUINT64_CONSTANT (1) << state))
-                {
-                  GskPath *path = path_paintable_get_path (self->paintable, i);
-                  double origin = path_paintable_get_path_origin (self->paintable, i);
-                  size_t attach_to;
-                  double attach_pos;
-
-                  graphene_point_t pos;
-                  g_autoptr (GskPath) dot = NULL;
-
-                  gtk_snapshot_push_stroke (snapshot, path, stroke);
-                  gtk_snapshot_append_color (snapshot, &c, &bounds);
-                  gtk_snapshot_pop (snapshot);
-
-                  get_origin_location (path, origin, &pos);
-
-                  dot = circle_path_new (pos.x, pos.y, 4.f/scale);
-                  gtk_snapshot_push_fill (snapshot, dot, GSK_FILL_RULE_WINDING);
-                  gtk_snapshot_append_color (snapshot, &c, &bounds);
-                  gtk_snapshot_pop (snapshot);
-
-                  path_paintable_get_attach_path (self->paintable, i, &attach_to, &attach_pos);
-
-                  if (attach_to != (size_t) -1)
-                    {
-                      GskPathBuilder *builder;
-                      GskPath *arrow;
-
-                      builder = gsk_path_builder_new ();
-                      gsk_path_builder_move_to (builder, pos.x, pos.y);
-                      gsk_path_builder_rel_line_to (builder, 20.f/scale, 0);
-                      gsk_path_builder_rel_move_to (builder, -4.f/scale, -3.f/scale);
-                      gsk_path_builder_rel_line_to (builder, 4.f/scale, 3.f/scale);
-                      gsk_path_builder_rel_line_to (builder, -4.f/scale, 3.f/scale);
-                      arrow = gsk_path_builder_free_to_path (builder);
-                      gtk_snapshot_push_stroke (snapshot, arrow, stroke);
-                      gtk_snapshot_append_color (snapshot, &c, &bounds);
-                      gtk_snapshot_pop (snapshot);
-
-                      gsk_path_unref (arrow);
-                    }
-                }
-            }
-        }
+      snapshot_spines (snapshot, &bounds, self->paintable, shape, state, &viewport, scale, &c, stroke);
 
       gtk_snapshot_restore (snapshot);
     }
@@ -398,22 +433,22 @@ border_paintable_class_init (BorderPaintableClass *class)
   properties[PROP_PAINTABLE] =
     g_param_spec_object ("paintable", NULL, NULL,
                          PATH_PAINTABLE_TYPE,
-                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_SHOW_BOUNDS] =
     g_param_spec_boolean ("show-bounds", NULL, NULL,
                           FALSE,
-                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_SHOW_SPINES] =
     g_param_spec_boolean ("show-spines", NULL, NULL,
                           FALSE,
-                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_SHOW_GRID] =
     g_param_spec_boolean ("show-grid", NULL, NULL,
                           FALSE,
-                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, properties);
 }

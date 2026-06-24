@@ -1,458 +1,448 @@
-Overview of Changes in 4.22.4, 29-04-2026
+Overview of Changes in 4.23.1, 29-05-2026
 =========================================
 
+* Snapping: GTK can now snap contents to device pixel boundaries,
+  for better control of rendering with fractional scales
+
+* SVG:
+ - Support the dominant-baseline attribute for text
+ - Support media queries in CSS
+ - Fix priority order of styles and animations
+
+* Touch:
+ - Long press on entries opens the touch menu
+
+* Android:
+ - Frame timing is now aligned with vsync
+
 * Bugs fixed:
-  - !9833 Misc backports (Benjamin Otte, Alessandro Astone, Sergio Costas
+  - #3542 Window dragging doesn't work with touch on X11 (Alessandro Astone)
+  - #4529 Popover cannot be closed after opening a child popover (Carlos
+    Garnacho)
+  - #5610 Unable to move windows by dragging the title bar on GTK4 Xorg with
+    touchscreens (Alessandro Astone)
+  - #5890 X11 drag-and-drop failure not communicated to source, unlike Wayland
+    (Will Warner)
+  - #7508 In X11, touchscreen double tap requires very precise input (Alessandro
+    Astone)
+  - #7515 X11 touchscreen events are handled as mouse events (Alessandro Astone)
+  - #7657 Nautilus and other GTK4 applications crash when writing in a text box
+    using the on-screen keyboard (Carlos Garnacho)
+  - #8034 MacOS: Clipboard: Pasting url from safari cannot be decoded with
+    text/uri-list
+  - #8138 android: use Choreographer for vsync-aligned frame timing
+  - #8140 Accessibility: GTK4 TextView reports wrappet lines incorrectly to Orca
+  - #8142 svg: Shadow dom issues (Matthias Clasen)
+  - #8146 Snapshot with too small an angle shift freezes (Matthias Clasen)
+  - #8153 android: Text handles within popups are wrongly positioned (Florian
+    "sp1rit"​)
+  - #8156 svg: Fix priority order of animations and styles (Matthias Clasen)
+  - #8159 Properties never installed
+  - #8168 Application looses focus after selecton of GtkComboBoxText (Carlos
+    Garnacho)
+  - #8170 wayland: Don't send v2 text_input content hints when v1 is bound
+    (Matthias Clasen)
+  - #8175 Android builder needs meson 1.11 (Florian "sp1rit"​)
+  - #8177 Shaper: crash on load (Matthias Clasen)
+  - #8178 Symbolic icons rendering in wrong style (Matthias Clasen)
+  - #8179 Shaper: UI for fill/stroke doesn't seem to have any effect
+  - #8184 Zoomed image in Loupe makes hardware renderer glitch (Benjamin Otte)
+  - #8186 GTK4 TextView doesn't emit object:text-selection-changed events when
+    it should (and does when it shouldn't)
+  - #8189 GskGpuCache causing FD exhausting for HDR video playback on lavapipe
+    (Benjamin Otte)
+  - #8191 DragSource race condition leads to corrupted memory (Khalid Abu
+    Shawarib)
+  - #8193 Conditional jump on uninitialized value in SVG parser (Matthias
+    Clasen)
+  - #8196 Shaper: launches light when in dark mode. (Matthias Clasen)
+  - #8203 GtkConstraintVflParser parser doesn't allow underscores in VFL view
+    identifiers (Emmanuele Bassi)
+  - #8210 non-Linux build fix
+  - #8216 Add a way to dump the inspector info for bug reports into a text file
+    (Matthias Clasen)
+  - !6480 gtklabel: Queue a draw after changing the focused link (Philip
+    Withnall)
+  - !8827 fontdialog: update font-dialog-set-language API to set an initial
+    language filter (Sudip Shil)
+  - !8906 Add GdkAppLaunchContextWin32 (Luca Bacci)
+  - !8951 X11 backend touchscreen fixes (Alessandro Astone)
+  - !9523 macos: Add support for pasting url's as text/uri-list (Arjan Molenaar)
+  - !9579 Report mnemonic shortcuts through a11y (Lukáš Tyrychtr)
+  - !9614 gtk: unrealize window if backing surface got destroyed (Florian
+    "sp1rit"​)
+  - !9715 fix incorrect baseline calculation for vertical boxes (Max Bachmann)
+  - !9760 widget: Handle coordinate translation failure (Sergey Bugaev)
+  - !9784 popover: Don't set GDK_ANCHOR_RESIZE_{X,Y} when we can't be resized
+    (Sergey Bugaev)
+  - !9790 Use named enum values instead of 0 (Maximiliano Sandoval)
+  - !9798 Use G_PARAM_STATIC_NAME on properties
+  - !9799 win32: Fix public symbol not being exported (Sergey Bugaev)
+  - !9802 Stop exporting various private symbols (Sergey Bugaev)
+  - !9807 svg: Fix use of alternative views (Matthias Clasen)
+  - !9808 svg: Move the renderer to a separate file (Matthias Clasen)
+  - !9809 gtkfilelauncher/android: Pass correct pointer as URL (Florian
+    "sp1rit"​)
+  - !9810 glsl: Add snapping APIs to GLSL (Benjamin Otte)
+  - !9812 Fix copy-pasted doc blocks in GtkSvgWidget (Emmanuele Bassi)
+  - !9813 gtkpango: Don't land on a single char of a wrapped line twice (Lukáš
+    Tyrychtr)
+  - !9814 svg: Avoid a compiler warning (Matthias Clasen)
+  - !9815 wayland: Fix underlining of preedit (Matthias Clasen)
+  - !9818 gtk-demo: Fix the images demo (Matthias Clasen)
+  - !9819 android: use Choreographer for vsync-aligned frame timing (Kristjan
+    ESPERANTO)
+  - !9822 Small misc fixes (Theo de Raadt, Florian "sp1rit"​)
+  - !9823 Update German translation (Christian Kirbach)
+  - !9825 print dialog: Fix GTask lifecycle management (Matthias Clasen)
+  - !9829 svg: Make shadow trees work properly (Matthias Clasen)
+  - !9830 gtk: Rework text handles (Florian "sp1rit"​)
+  - !9831 theme: Fix context menus in grid views (Alice Mikhaylenko)
+  - !9832 testsuite: Change the font in a compare test (Benjamin Otte)
+  - !9835 add language filtering to font picker (Sudip Shil)
+  - !9838 android: Expose accent-color property in Gdk.AndroidDisplay (Florian
+    "sp1rit"​)
+  - !9839 Misc fixes (Matthias Clasen)
+  - !9842 icons: Sync with icon devkit (Jakub Steiner)
+  - !9843 Only activate osk on touch (Matthias Clasen)
+  - !9844 API: Add snapping (Matthias Clasen, Benjamin Otte)
+  - !9845 android/popup: fix position of cascaded popups (Florian "sp1rit"​)
+  - !9846 application: Fix a memory leak (Matthias Clasen)
+  - !9849 gdk/event: Document timestamp being in milliseconds (Florian
+    "sp1rit"​)
+  - !9850 android: attempt to restore toplevel identifier from save-state
+    (Florian "sp1rit"​)
+  - !9857 selectionmodel: Amend the docs (Matthias Clasen)
+  - !9858 gpu: Don't double-clip gradients (Benjamin Otte)
+  - !9859 colormatrixnode: Make the bounds explicit (Benjamin Otte)
+  - !9860 win32: Convert GetSystemMetrics results to logical units (Sergey
+    Bugaev)
+  - !9861 svgwidget: Fix activate signal parameter count (Liu Jinchang)
+  - !9863 popoverbin: Point to the center of the widget when popping up (Hari
+    Rana)
+  - !9864 printdialog: Fix a crash (Matthias Clasen)
+  - !9865 popoverbin: Improve keyboard placement (Matthias Clasen)
+  - !9868 svg: support dominant-baseline (Florian "sp1rit"​)
+  - !9870 icons: Fix up media-record-symbolic (Matthias Clasen)
+  - !9871 gsk: Avoid cache explosion in 3D
+  - !9872 icons: Remove compat classes (Matthias Clasen)
+  - !9873 Add a some details about MRs (Matthias Clasen)
+  - !9874 gpu: Don't override fields already marked as modified (Benjamin Otte)
+  - !9875 android: drop explicit fontconfig master dependency (Florian
+    "sp1rit"​)
+  - !9878 Revert !9875 & ci: bump meson to 1.11.1 (Florian "sp1rit"​)
+  - !9879 Update Persian translation
+  - !9881 widgets: Add missing GDK_KEY_KP_Space for activation (Sergio Costas
     Rodriguez)
-  - !9866 popoverbin: Point to the center of the widget when popping up
-    (Matthias Clasen, Hari Rana)
+  - !9882 svg: Clean up some private apis (Matthias Clasen)
+  - !9883 Redo the transform demo (Matthias Clasen)
+  - !9884 Various snapshot & rendernodeparser fixes (Benjamin Otte)
+  - !9885 tools: Add a "cut" rendernode filter (Benjamin Otte)
+  - !9887 Update Romanian translation
+  - !9888 tools: Add simplify filter (Benjamin Otte)
+  - !9889 Add more content to the rotating sphere benchmarks (Matthias Clasen)
+  - !9894 Update Slovenian translation
+  - !9895 Rework GDK grabs (Carlos Garnacho)
+  - !9896 Fix memory leak when focused widget is hidden before being unparented.
+    (Ben Mather)
+  - !9897 text: Open touch menu on long press
+  - !9899 editable: Fix typo in example (Guido Günther)
+  - !9900 android: Scale bounds of AndroidMonitor (Florian "sp1rit"​)
+  - !9903 gpu: Trigger cache GC from dmabuf downloading code (Benjamin Otte)
+  - !9907 various fixes (Benjamin Otte)
+  - !9908 textview: Sync touch behavior (Matthias Clasen)
+  - !9909 docs: Fix CSS examples (Evangelos Paterakis)
+  - !9910 svg: Cosmetics (Matthias Clasen)
+  - !9911 inspector: Handle Unicode more carefully (Matthias Clasen)
+  - !9914 gtk-demo: No session saving in special modes (Matthias Clasen)
+  - !9915 svg: Fix a compiler warning (Matthias Clasen)
+  - !9920 Clarify how to acquire environment information in `Bug.md`. (Mr.
+    Beedell, Roke Julian Lockhart (RJLB))
+  - !9921 android/ime: get surface when needed instead in set_client_widget
+    (Florian "sp1rit"​)
+  - !9923 icon editor: Avoid a crash (Matthias Clasen)
+  - !9924 Add a gobject-linter job (Jordan Petridis, Benjamin Otte)
+  - !9925 gi: Various since annotations fixes (Bilal Elmoussaoui)
+  - !9926 svg: Handle media queries (Matthias Clasen)
+  - !9927 Complete pspec fixes from previous MRs (Benjamin Otte)
+  - !9930 miscellaneous fixes and cleanups (Matthias Clasen)
+  - !9931 Remove GTK_PARAM_READABLE/WRITABLE/READWRITE (Benjamin Otte)
+  - !9932 Move private functions into private header (Benjamin Otte)
+  - !9933 docs: Make docs for GtkAlign match reality (Matthias Clasen)
+  - !9936 gtktextview: Send selection changed signal when we should (Lukáš
+    Tyrychtr)
+  - !9937 constraint: Fix VFL parsing of view names (Emmanuele Bassi)
+  - !9938 widget: Move ::has-default notify into set_has_default() (Benjamin
+    Otte)
+  - !9939 examples: fix bloatpad missing icons (g.willems)
+  - !9940 dropdown: Add missing a11y control relation (g.willems)
+  - !9943 More paramspec improvements (Benjamin Otte)
+  - !9944 icon editor: Remove some leftover code (Matthias Clasen)
+  - !9946 gdk: Fix checking NULL portal usage (Peter Eisenmann)
+  - !9947 Lots of simple fixes (Benjamin Otte)
+  - !9948 Fix issues with G_BEGIN/END_DECLS (Benjamin Otte)
+  - !9949 Use g_clear_*() (Benjamin Otte)
+  - !9952 Header renaming and autoptr addition (Benjamin Otte)
+  - !9953 win32: Remove gdkwin32cursor.h from the public API (Benjamin Otte)
+  - !9954 icon editor: More catching up (Matthias Clasen)
+  - !9957 testsuite: fix non-Linux wayland build. (Thomas Klausner)
+  - !9959 icon editor improvements (Matthias Clasen)
+  - !9960 Add a way to dump general info (Matthias Clasen)
+  - !9961 Update Romanian translation
+  - !9962 treednd: use a proper flexible array member (Alyssa Ross)
+  - !9963 vulkan: fix descriptor sets for masks (Benjamin Otte)
+  - !9964 macos: don't show test processes in the dock (Johan Dahlin)
+  - !9966 macos: fix URL encoding regression in pasteboard file URIs (Roberto
+    Moura)
+  - !9967 icon editor: stylesheet editing (Matthias Clasen)
+  - !9969 Update Georgian translation
+  - !9971 Various fixes (Benjamin Otte)
+  - !9974 svg: Don't write out gpa attributes if not doing gpa (Matthias Clasen)
+  - !9975 ci: Save the ASAN testsuite artifacts (Benjamin Otte)
+  - !9976 svg: Work on test coverage (Matthias Clasen)
+  - !9977 inspector: Avoid a needless roundtrip (Matthias Clasen)
+  - !9978 icon editor: Handle <style> media attributes (Matthias Clasen)
+  - !9979 Fix sporadic svg crashes (Matthias Clasen)
+  - !9981 gsk: Tweak some doc images (Matthias Clasen)
+  - !9983 Update Slovenian translation
+  - !9986 Unify GTK native rendering code in gtknative.c (Benjamin Otte)
+  - !9987 svgwidget: Add a private paintable getter (Matthias Clasen)
 
 * Translation updates:
-  - Slovak (Jose Riha)
+  - Georgian (Ekaterine Papava)
+  - German (Christian Kirbach)
+  - Persian (Danial Behzadi)
+  - Romanian (Antonio Marin)
+  - Slovenian (Martin)
 
-Overview of Changes in 4.22.3, 18-04-2026
+
+Overview of Changes in 4.23.0, 14-04-2026
 =========================================
 
+* SVG:
+ - GtkSvgWidget is a widget to display SVG, with some support
+    for interactive aspects of SVG
+ - We now handle <a>, <view>, <title> and <desc>
+ - Problems with recoloring of symbolic icons have been fixed
+ - GtkSvg is now used for all SVG icons
+ - GtkSpinner is using GtkSvg
+
+* Wayland:
+ - Version 3.2 of the text protocol is supported
+ - xdg-session-management-v1 is used
+
+* Session saving:
+ - The session saving support is back
+
+* GSK:
+ - A number of 10bit image formats are supported
+ - The cache allocator has been rewritten
+ - We are now using clip masks to reduce the number of offscreens
+
+* The Android backend has been ported to SDK 36
+
+* The gtk4-encode-symbolic tool for producing symbolic
+  png icons has been dropped. If you were using it,
+  just ship the symbolic svg icons instead
+
 * Bugs fixed:
+  - #6071 FileDialog filter becomes (None) when navigating via top bar
+  - #7567 Black borders around windows in Windows (Dan Yeaw)
   - #7833 Input panel misplaced when typing with an input method in a GTKPopover
     widget (cdbg)
-  - #8146 Snapshot with too small an angle shift freezes (Matthias Clasen)
-  - !9748 Update Polish translation
-  - !9753 gtk-demo: Make --autoquit work again (Benjamin Otte)
-  - !9755 gtk-demo: Make --autoquit work again (Benjamin Otte)
-  - !9763 Backport !9761 (cssprovider: Fix gtk-application-prefer-dark-theme
-    setting) (Florian "sp1rit"​)
-  - !9770 Update Russian translation
-  - !9781 gdksettings-wayland: Apply reduced-motion setting (Alice)
-  - !9797 Update German translation
-  - !9811 Revert "testutils: Warn if setting up language didn't work" (Lukáš
-    Tyrychtr, Matthias Clasen, cdbg)
-  - !9820 Update Norwegian Bokmål translation
-  - !9824 transform: Better float comparisons (Matthias Clasen)
-  - !9826 print dialog: Fix GTask lifecycle management (Matthias Clasen)
-
-* Translation updates:
-  - German (Christian Kirbach)
-  - Norwegian Bokmål (Kjartan Maraas)
-  - Polish (Victoria Niedzielska)
-  - Russian (Artur S0)
-
-
-Overview of Changes in 4.22.2, 31-03-2026
-=========================================
-
-* Bugs fixed:
-  - #8117 Docs for the new SVG parser? (Matthias Clasen)
-  - #8119 Wrong colors used for fallback symbolic icons containing classes
-    (Matthias Clasen)
-  - #8125 svg: Animating hrefs does not work (Matthias Clasen)
-  - !9590 vulkan: fix GDK_VULKAN_FEATURE_SWAPCHAIN_MAINTENANCE check (Benjamin
-    Otte)
-  - !9656 vulkan: fix GDK_VULKAN_FEATURE_SWAPCHAIN_MAINTENANCE check (Benjamin
-    Otte)
-  - !9659 Various Vulkan fixes (Benjamin Otte)
-  - !9660 Various Vulkan fixes (Benjamin Otte)
-  - !9665 tests: fix libtestutils build under Windows. (Christoph Reiter)
-  - !9667 Update Serbian translation
-  - !9673 testsuite: Add dmabuf compare tests to needs-udmabuf suite (Benjamin
-    Otte)
-  - !9678 testsuite: Add dmabuf compare tests to needs-udmabuf suite (Benjamin
-    Otte)
-  - !9679 dmabuf: Support dmabufs with fewer fds than planes (Benjamin Otte)
-  - !9681 dmabuf: Support dmabufs with fewer fds than planes (Benjamin Otte)
-  - !9682 Update Galician translation
-  - !9701 Update Turkish translation
-  - !9704 Update Catalan translation
-  - !9711 Load less icons as symbolics (Matthias Clasen)
-  - !9719 Fix traditional symbolic fallback (Matthias Clasen)
-  - !9736 svg: Fix invalidation (Matthias Clasen, Sergio Costas Rodriguez)
-  - !9739 Assorted backports (Alessandro Astone, Jonas Ådahl, Matthias Clasen,
-    Sergey Bugaev)
-
-* Translation updates:
-  - Catalan (Victor Dargallo)
-  - Galician (Francisco Diéguez Souto)
-  - Serbian (Марко Костић)
-  - Turkish (Sabri Ünal)
-
-
-Overview of Changes in 4.22.1, 13-03-2026
-=========================================
-
-* Bugs fixed:
   - #8081 po/README.translators should be updated or removed (Matthias Clasen)
-  - #8082 How Paintable should be translated in these strings? (Matthias Clasen)
-  - #8084 SVG image rendered as grey shape (Matthias Clasen)
   - #8087 Drop Shadows Make Transparent Textures Significantly Darker (Benjamin
     Otte)
+  - #8090 Gtk.IconPaintable SVG fallback wrong color (Matthias Clasen)
   - #8092 Shaper: changing state name doesn't mark file as "changed" (Matthias
     Clasen)
-  - !9587 Stable backports (luming zh, Victoria, Urtsi Santsi)
-  - !9595 Backport the svg fallback changes (Matthias Clasen)
+  - #8094 Devel style class is broken by SVG changes (Matthias Clasen)
+  - #8096 Shaper: don't add countless states
+  - #8098 Crashes with SIGSEGV in `gdk_wayland_toplevel_remove_from_session()`
+    (Philip Withnall)
+  - #8099 Documentation: Gtk Switch page is missing switch-state.png image
+    (Matthias Clasen)
+  - #8100 GtkSvg: Switching states quickly in Shaper doesn't work (Matthias
+    Clasen)
+  - #8101 Shaper: issue with weight (Matthias Clasen)
+  - #8103 gtk3 refresh_rate calculation overflows on 32-bit targets (Alberto
+    Garcia)
+  - #8105 Shaper: Inkscape to Shaper breaks format (Matthias Clasen)
+  - #8106 Some symbolic icons seems to not be recolored correctly (Matthias
+    Clasen)
+  - #8107 Unbalanced Snapshot.{save,restore} calls in libadwaita (Florian
+    "sp1rit"​)
+  - #8108 Shaper: cannot set stroke color to Foreground (Matthias Clasen)
+  - #8111 a11y: PreferencesGroup isn't being described as container of
+    ActionRows
+  - #8125 svg: Animating hrefs does not work (Matthias Clasen)
+  - #8139 A layout manager invoking a Cairo bug (Benjamin Otte)
+  - !6922 Implement version 2 of text_input_v3 protocol (Carlos Garnacho)
+  - !9016 spinner: Use an animated icon (Matthias Clasen)
+  - !9184 filechooser: Fix filters being removed when navigating via the bar
+    path (Jules Maselbas)
+  - !9380 Iterate on save/restore support (Adrian Vovk)
+  - !9411 text: Add option to include preedit as part of text (Florian
+    "sp1rit"​)
+  - !9437 The big renderer refactor (Benjamin Otte)
+  - !9459 Use GtkSvg for all icons (Matthias Clasen)
+  - !9505 Add clip masks (Benjamin Otte)
+  - !9533 Add a new atlas allocator and rework caching APIs (Benjamin Otte)
+  - !9545 memoryformat: Add packed 10bit formats (Benjamin Otte)
+  - !9552 A bunch of fixes and speedups for 4.24 (Benjamin Otte)
+  - !9557 CI: use native git in msys2 + remove base-devel (Christoph Reiter)
+  - !9582 Update Polish translation
+  - !9583 Update Polish translation
+  - !9584 Update Chinese (China) translation
+  - !9586 Fix typo (Urtsi Santsi)
+  - !9588 Drop the gtk4-encode-symbolic tool (Matthias Clasen)
+  - !9589 Drop po/README.translators (Matthias Clasen)
+  - !9590 vulkan: fix GDK_VULKAN_FEATURE_SWAPCHAIN_MAINTENANCE check (Christoph
+    Reiter)
+  - !9591 icon paintable: Don't load unsupported SVG (Matthias Clasen)
+  - !9597 Update macOS runner (René de Hesselle)
+  - !9602 svg: parse `<style>` (Matthias Clasen)
+  - !9605 icons: Fix process-working (Jakub Steiner)
   - !9606 testsuite: Limit size of clip test to 4096x4096 (Benjamin Otte)
-  - !9607 widget: Filter is applied before opacity (Benjamin Otte)
-  - !9608 testsuite: Limit size of clip test to 4096x4096 (Benjamin Otte)
-  - !9610 More svg fallback (Matthias Clasen)
-  - !9618 icon editor: Consider state names for unsaved (Matthias Clasen)
+  - !9609 Avoid a critical (Matthias Clasen)
+  - !9611 Update French translation
+  - !9616 Small svg cleanups (Matthias Clasen)
+  - !9617 svg: Some refactoring (Matthias Clasen)
+  - !9619 svg: Add a workaround for traditional symbolics (Matthias Clasen)
+  - !9621 Update Hungarian translation
+  - !9622 svg: Make get_state_names() more robust (Alice Mikhaylenko)
+  - !9623 Revert save/restore API removal (Adrian Vovk)
+  - !9624 reftests: Fix an icon (Matthias Clasen)
+  - !9625 svg: Small optimization (Matthias Clasen)
+  - !9626 icon editor: Various grouping-related fixes (Matthias Clasen)
   - !9627 application8: Don't use space in meson generated filename (Zoltán
     Böszörményi)
-  - !9642 vulkan: Fix invalid read by requerying variable (Benjamin Otte)
+  - !9629 Update French translation
+  - !9630 Update Hungarian translation
+  - !9632 svg: Add a testcase for units (Matthias Clasen)
+  - !9634 Update Turkish translation
+  - !9635 icon editor: Some comfort (Matthias Clasen)
+  - !9636 Update Romanian translation
+  - !9638 renderpass: Fix wrong clip mask opacity tracking (Benjamin Otte)
+  - !9640 vulkan: Fix invalid read by requerying variable (Benjamin Otte)
+  - !9641 print portal: Plug leak of backend modules (Alessandro Astone)
+  - !9644 Add a test for the color-matrix optimization (Matthias Clasen)
+  - !9645 icon editor: Add a compat class checkbox (Matthias Clasen)
+  - !9650 Some icon editor improvements (Matthias Clasen)
+  - !9651 roaring: remove/merge bswap_64() guard for FreeBSD (Charlie Li)
+  - !9652 gesturestylus: Output empty backlog when there is none (Sergey Bugaev)
+  - !9654 Make clip paths work in shaper (Matthias Clasen)
+  - !9655 hlg: Convert from scene-referred to display light (Kenny Levinsen)
+  - !9657 Update Slovenian translation
+  - !9659 Various Vulkan fixes (Benjamin Otte)
+  - !9661 icon editor: Small cleanup (Matthias Clasen)
+  - !9662 fontchooser: Cosmetics (Matthias Clasen)
+  - !9663 vulkan: Generate new SPIRV for shaders with clip mask (Benjamin Otte)
+  - !9664 inspector: Display more information about GStreamer (Benjamin Otte)
+  - !9666 svg: Update the docs (Matthias Clasen)
+  - !9668 gdk: Remove GDK_MEMORY_U8_SRGB (Benjamin Otte)
+  - !9672 svg: Support the `<a>` element (Matthias Clasen)
+  - !9673 testsuite: Add dmabuf compare tests to needs-udmabuf suite (Benjamin
+    Otte)
+  - !9674 gtkgstsink.c: Fix build on Visual Studio (Chun-wei Fan)
+  - !9675 demos: Make build reproducible. (Maxim Cournoyer)
+  - !9679 dmabuf: Support dmabufs with fewer fds than planes (Benjamin Otte)
+  - !9680 Rewrite the svg renderer test (Matthias Clasen)
+  - !9683 Update Galician translation
+  - !9684 Replace outdated freedesktop.org Window Manager spec links (balooii
+    balooii)
+  - !9686 Update Romanian translation
+  - !9687 icon editor: Restore metadata (Matthias Clasen)
+  - !9688 Update Kabyle translation
+  - !9689 icon editor: Restore metadata (Matthias Clasen)
+  - !9690 svg: Fix quick state changes (Matthias Clasen)
+  - !9692 gtk/emojichooser: Select first result on Enter (Zoey Ahmed)
+  - !9693 gtk/emojichooser: Fix typos in docs (Zoey Ahmed)
+  - !9694 Write down AI contribution guidelines (Matthias Clasen)
+  - !9695 renderer: Render clip mask in device grid (Benjamin Otte)
+  - !9696 print: Fix listing printers with synchronous backends (Alessandro
+    Astone)
+  - !9697 svg: Handle color a bit better (Matthias Clasen)
+  - !9698 Properly apply reduced-motion portal setting (stupidduos)
+  - !9702 Update Turkish translation
+  - !9703 icon editor: Add an xml view (Matthias Clasen)
+  - !9705 Clean  up error handling in GtkSvg (Matthias Clasen)
+  - !9714 Add font rendering tests (Matthias Clasen)
+  - !9717 Tweak the movingtext demo (Matthias Clasen)
+  - !9720 inspector: Add an svg page (Matthias Clasen)
+  - !9722 accessibility: Fix regression (Sergio Costas Rodriguez)
+  - !9723 ci: Fix msys2-clang64 errors (Sergio Costas Rodriguez)
+  - !9724 media: Don't leak URI (Guido Günther)
+  - !9725 widget: Explain minimum and natural size in the docs (Logan Rathbone)
+  - !9727 svg: The big split, part one (Matthias Clasen)
+  - !9728 bookmarklist: Document `standard::file` attribute (Arun Mani J)
+  - !9730 New syntax for state change conditions (Matthias Clasen)
+  - !9731 Janitorial (Matthias Clasen)
+  - !9733 svg: More splitting (Matthias Clasen)
+  - !9735 svg: Fix invalidation (Matthias Clasen)
+  - !9737 wayland/toplevel: Set fallback wm capabilities on old xdg_wm_base
+    (Jonas Ådahl)
+  - !9738 Fix the build (Matthias Clasen)
+  - !9740 Misc warnings fixes (g.willems)
+  - !9742 wayland: Accept cursor-shape v1 (Matthias Clasen)
+  - !9745 gskvulkanimage: fix building on 32-bit (oreo639)
+  - !9746 atcontext: remove unneeded signal definition (Sergio Costas Rodriguez)
+  - !9747 gtkcheckbutton: Recalculate a11y label on use-underline change (Lukáš
+    Tyrychtr)
+  - !9749 Update Polish translation
+  - !9750 icon editor: Avoid a crash (Matthias Clasen)
+  - !9751 Update Czech translation
+  - !9752 svg: Improve error reporting (Matthias Clasen)
+  - !9753 gtk-demo: Make --autoquit work again (Benjamin Otte)
+  - !9756 application-wayland: Add NULL check on gtk_accessible_get_at_context
+    (Alessandro Astone)
+  - !9757 Update Georgian translation
+  - !9758 Add GtkEnumList (Matthias Clasen)
+  - !9759 android: Target SDK 36 (Florian "sp1rit"​)
+  - !9761 cssprovider: Fix gtk-application-prefer-dark-theme setting (Florian
+    "sp1rit"​)
+  - !9762 inspector: update keyboard device layouts on property notify (Juan
+    Pablo Ugarte)
+  - !9764 Add gtk_svg_set_stylesheet (Matthias Clasen)
+  - !9765 build: Require wayland-protocols 1.48 (Matthias Clasen)
+  - !9766 Wayland: Port to xdg-session-management-v1 (Matthias Clasen)
+  - !9767 css: Make this code easier to manage (Matthias Clasen)
+  - !9769 icon editor: Drop some wrappers (Matthias Clasen)
+  - !9771 Update Romanian translation
+  - !9772 accessiblehypertext: Remove non-ISO C semicolon (Stuart Hayhurst)
+  - !9773 svg: Support 3D transforms (Matthias Clasen)
+  - !9774 Add a GtkSvgWidget (Matthias Clasen)
+  - !9776 Update Slovenian translation
+  - !9777 svgutils: Plug bytes leak at parser_new_for_string (Maximiliano
+    Sandoval)
+  - !9779 android: expose gtk-interface-color-scheme XSetting (Florian
+    "sp1rit"​)
+  - !9782 gpu: Add GSK_GPU_DISABLE=damage (Benjamin Otte)
+  - !9783 Assorted small fixes and cleanup (Matthias Clasen)
+  - !9785 svg: Move serialization code to a separate file (Matthias Clasen)
+  - !9786 surface: Adjust how we decide whether to flip popups (Sergey Bugaev)
+  - !9787 Small refactoring (Matthias Clasen)
+  - !9788 svg: Misc fixes (Matthias Clasen)
+  - !9789 Fix missing dispose and finalize chain-ups (Maximiliano Sandoval)
+  - !9792 Some memory leak fixes (Matthias Clasen)
+  - !9793 testsuite/diff: fix memory leak in diffreg (Florian "sp1rit"​)
+  - !9795 Misc svg fixes (Matthias Clasen)
+  - !9796 Add a demo for GtkSvgWidget (Matthias Clasen)
+  - !9800 gtkatspitext: Correct for inclusivity differences (Lukáš Tyrychtr)
+  - !9801 gpu: Handle scale being too small (Benjamin Otte)
+  - !9804 svg: Detect circular \<use\> again (Matthias Clasen)
 
 * Translation updates:
   - Chinese (China) (luming zh)
-  - Danish (Ask Hjorth Larsen)
-  - English (United Kingdom) (Bruce Cowan)
+  - Czech (Patrik Sivek)
   - French (Guillaume Bernard)
   - Galician (Francisco Diéguez Souto)
-  - Greek, Modern (1453-) (Efstathios Iosifidis)
-  - Kazakh (Baurzhan Muftakhidinov)
-  - Occitan (post 1500) (Quentin PAGÈS)
-  - Polish (Victoria)
-  - Portuguese (Brazil) (Rafael Fontenelle)
-  - Romanian (Antonio Marin)
-  - Turkish (Emin Tufan Çetin)
-
-
-Overview of Changes in 4.22.0, 06-03-2026
-=========================================
-
-* Bugs fixed:
-  - #8037 Regression: DropTarget's ::leave signal is no longer emitted when a
-    drop is finished (Matthias Clasen)
-  - #8079 Issues in the dnd demo in gtk4-demo (Matthias Clasen)
-  - #8080 Gtk program writes a "foo.png" file to current folder (Marco Trevisan
-    (Treviño))
-  - !9428 demos: Avoid main() from returning due to GApplication.quit (Florian
-    "sp1rit"​)
-  - !9455 win32: Drop the global inhibition counter (g.willems)
-  - !9547 Make WAYLAND_SOCKET handling more reliabe (Jonas Ådahl)
-  - !9553 svg: Allow unsetting values (Matthias Clasen)
-  - !9554 Update Japanese translation
-  - !9555 Update Korean translation
-  - !9556 Update Georgian translation
-  - !9558 accessiblehypertext: Fix doc formatting (Jamie Gravendeel)
-  - !9559 Update Georgian translation
-  - !9560 toplevel-wayland: Free a11y properties on finalize (Maximiliano
-    Sandoval)
-  - !9561 Update Hungarian translation
-  - !9563 svg: drop some api (Matthias Clasen)
-  - !9564 svg: Make the gpa:states condition more flexible (Matthias Clasen)
-  - !9565 svg: Add state names (Matthias Clasen)
-  - !9567 Update Portuguese translation (Hugo Carvalho)
-  - !9568 drop target: Emit the leave signal again (Matthias Clasen)
-  - !9570 Drop accidental files (Matthias Clasen)
-  - !9571 testsuite: Skip gestures if running with no seat (Alessandro Astone)
-  - !9572 droptarget: Fix unconditional leave on cross out (Niklas Wimmer)
-  - !9574 Update Bulgarian translation (Alexander Shopov)
-  - !9575 gtkcheckbutton: Don't use raw label for a11y purposes (Lukáš Tyrychtr)
-  - !9576 icons: Update from devkit (Jakub Steiner)
-  - !9577 wayland: Reset pending offset in Vulkan path (Matthias Clasen)
-
-* Translation updates:
-  - Bulgarian (Alexander Shopov)
   - Georgian (Ekaterine Papava)
   - Hungarian (Balázs Úr)
-  - Japanese (Makoto Sakaguchi)
-  - Korean (Changwoo Ryu)
-  - Portuguese (Hugo Carvalho)
-
-
-Overview of Changes in 4.21.6, 27-02-2026
-=========================================
-
-* GtkTryExpression is a new type of expression that allows for fallback
-
-* GtkSvg:
- - Setting states will have immediate effect when paused
- - Various optimizations and crash fixes
-
-* Media:
- - The gstreamer backend will use gapless looping with gstreamer 1.28
-
-* Printing:
- - Avoid applying the n-copies setting twice
-
-* Debugging:
- - The inspector can show GSK profiling information with GSK_DEBUG=profile
- - gtk4-rendernode-tool has gained a new filter command for node manipulation
-
-* Bugs fixed:
-  - #5794 Click gesture doesn't reset properly (Carlos Garnacho)
-  - #6054 GtkSwitch ignores one click after dragging the handle (Carlos
-    Garnacho)
-  - #7432 unexpected enter event before popover close event (Alessandro Astone)
-  - #7605 Printing two copies prints four copies (Lucas Baudin)
-  - #7844 Debugging weird gesture behaviour (Carlos Garnacho)
-  - #7901 Add `key-capture-widget` property to `GtkSearchEntry` (Zoey Ahmed)
-  - #7930 "Broken accounting of active state for widget" (Carlos Garnacho)
-  - #7959 `GtkFilterListModel:watch-items` causes `GtkFilterListModel:n-items`
-    to not notify (Georges Basile Stavracas Neto)
-  - #7994 `Gtk.Expression.bind` fallback expression
-  - #8017 Icon Shaper crash when opening a file (Matthias Clasen)
-  - #8023 Icon editor crash when using a `rect` shape (Matthias Clasen)
-  - #8025 Shaper crashes when opening an icon with a line (Matthias Clasen)
-  - #8035 svg: rotate transformation does not behave as expected (Matthias
-    Clasen)
-  - #8038 GNOME Tour window is incorrectly sized/placed in GNOME 50 (Sebastian
-    Keller)
-  - #8040 Mismatches between GtkSvg and GtkIconPaintable for symbolic icons
-    (Matthias Clasen)
-  - #8041 Legacy icons from gtk4-demo aren't recolored in GtkSvg (Matthias
-    Clasen)
-  - #8042 4.21: Application Class demo doesn't work (Matthias Clasen)
-  - #8043 Instantaneously setting state for GtkSvg (Matthias Clasen)
-  - #8045 GtkFileFilter batch formats function (for glycin)
-  - #8051 Shaper: crash when opening the states popover (Matthias Clasen)
-  - #8053 gradient rendering bug (Benjamin Otte)
-  - #8055 Switching GtkSvg states doesn't work correctly
-  - #8064 Shaper: stroke width defaults changed (Matthias Clasen)
-  - !7541 gdk/wayland/dmabuf: Some cleanups (Marco Trevisan (Treviño))
-  - !8532 macos: fix deprecation messages (Arjan Molenaar)
-  - !8748 surface: Ignore events for unmapped surface (Alessandro Astone)
-  - !9289 gtkgstmediafile: Use gapless looping (Adrien Plazas)
-  - !9366 Plug GTask leaks (Sergey Bugaev)
-  - !9385 popoverbin: Take into account gesture coordinates and
-    triggers_context_menu (Maximiliano Sandoval)
-  - !9412 gtkwidget: Improve cancellation/denial of gestures on active input
-    (Carlos Garnacho)
-  - !9413 node editor: Stop using support-save (Matthias Clasen)
-  - !9414 android: Init cleanup & Add deprecation checker utility (Florian
-    "sp1rit"​)
-  - !9415 Add some more profiling information (Benjamin Otte)
-  - !9416 gtkapplication: Only keep window state if enabled (Adrian Vovk)
-  - !9417 ci: Use EXTRA_MESON_FLAGS in the gnomeos job (Jordan Petridis)
-  - !9420 snapshot: Avoid scaling textures (Matthias Clasen)
-  - !9421 application: Fix private comments (Maximiliano Sandoval)
-  - !9422 Update Lithuanian translation
-  - !9424 Add even more profiling and heatmap stuff (Benjamin Otte)
-  - !9425 Add gtk4-rendernode-tool filter (Benjamin Otte)
-  - !9427 icons: Apply stroking consistently (Matthias Clasen)
-  - !9429 svg: Fix a crash (Matthias Clasen)
-  - !9430 icon editor: Make it work again (Matthias Clasen)
-  - !9431 icon editor: Fix up shape editing (Matthias Clasen)
-  - !9432 Misc icon editor work (Matthias Clasen)
-  - !9433 icons: Open end arrows (Jakub Steiner)
-  - !9434 Various improvements, in particular glDisable(GL_BLEND) (Benjamin
-    Otte)
-  - !9435 docs: Some updates (Matthias Clasen)
-  - !9436 Tweak the icon paintable parser again (Matthias Clasen)
-  - !9438 node-editor: Improve zoom levels (Benjamin Otte)
-  - !9439 node editor: UI perfectionism (Matthias Clasen)
-  - !9440 Add GtkTryExpression (Jamie Gravendeel)
-  - !9442 icon paintable: Fix up visibility handling (Matthias Clasen)
-  - !9443 Revert "directory list: Fix directory changes" (Matthias Clasen)
-  - !9445 Add G_GNUC_WARN_UNUSED_RESULT to gsk_rect_intersection() (Benjamin
-    Otte)
-  - !9446 Improve GPU renderer handling of composite nodes (Benjamin Otte)
-  - !9447 demo/shadertoy: Provide GLES shaders (Florian "sp1rit"​)
-  - !9448 gsk: Remove duplicated line (Jules Maselbas)
-  - !9449 icons: Update to the latest (Jakub Steiner)
-  - !9451 Make gsk_render_node_get_children() public (Benjamin Otte)
-  - !9453 Fix up icons to work with the symbolic parser (Matthias Clasen)
-  - !9454 CI: Make Vulkan work (Benjamin Otte, Alessandro Astone)
-  - !9456 icon editor: Support open files by drag'n'drop (g.willems)
-  - !9457 icon editor: Add toggle to show the pixel grid (g.willems)
-  - !9460 vulkan: Fix type mismatch on 32-bit (Alessandro Astone)
-  - !9461 builder: Add initial attribute to constant element (Jamie Gravendeel)
-  - !9462 path: Fix alignment issue on 32-bit (Alessandro Astone)
-  - !9463 Updated Lithuanian translaton
-  - !9465 tools: Add rendernodetool filter texture (Benjamin Otte)
-  - !9466 Update Romanian translation
-  - !9467 Update Russian translation
-  - !9468 Update Bulgarian translation
-  - !9469 iconhelper: Respect pixel-size and -gtk-icon-size for icons (Alice
-    Mikhaylenko)
-  - !9470 inspector: Make data copyable (Matthias Clasen)
-  - !9471 vulkan: Use g_get_monotonic_time_ns() in debug code
-  - !9472 Update Kazakh translation
-  - !9473 Update Czech translation
-  - !9474 filefilter: Fix win32 native filechooser not used when any file filter
-    uses a mimetype rule (g.willems)
-  - !9477 rendernode: Remove leftover debug output from repeat nodes (Sebastian
-    Keller)
-  - !9478 pathbuilder: preallocate the arrays to fit a 4k page (Benjamin Otte)
-  - !9479 svg: Handle fill rules for clip-path (Matthias Clasen)
-  - !9480 svg: Optimize allocations a bit (Matthias Clasen)
-  - !9481 isolationnode: Add utility to check if features are needed (Benjamin
-    Otte, Matthias Clasen)
-  - !9482 gsk: Fix setting of the hdr flag (Matthias Clasen)
-  - !9485 testsuite: Make a test more robust (Matthias Clasen)
-  - !9486 snapshot: Mention optimization in the docs (Matthias Clasen)
-  - !9487 builder: Fix initial GObject constant expressions (Jamie Gravendeel)
-  - !9488 snapshot: Unpack container nodes (Benjamin Otte)
-  - !9490 testsuite: Add missing test files to meson.build (Alessandro Astone)
-  - !9491 svg: optimizations (Matthias Clasen)
-  - !9492 svg: Fix a corner case (Matthias Clasen)
-  - !9493 svg: Fix a corner case (Matthias Clasen)
-  - !9494 svg: Implement some conditional processing (Matthias Clasen)
-  - !9495 Pass D-Bus a11y details through gtk-shell protocol (Carlos Garnacho)
-  - !9497 rendernode tool: Allow matching nodes (Matthias Clasen)
-  - !9498 svg: Support a description (Matthias Clasen)
-  - !9499 icon editor: Some robustness for the state dialog (Matthias Clasen)
-  - !9500 gdk/wayland: Clean up EGL surface when detaching a GdkWaylandGLContext
-    (davidaf3)
-  - !9501 filefilter: Add plural mime_types function (Matthias Clasen, Peter
-    Eisenmann)
-  - !9502 svg: Support state updates when paused (Matthias Clasen)
-  - !9503 Update Ukrainian translation
-  - !9504 svg: More fixes for non-animated state changed (Matthias Clasen)
-  - !9506 Update German translation (Christian Kirbach)
-  - !9507 Update Greek translation
-  - !9509 Update Chinese (China) translation (luming zh)
-  - !9510 icon editor: Make a metadata expander (Matthias Clasen)
-  - !9511 svg: Fix animating filter attributes (Matthias Clasen)
-  - !9513 Update Finnish translation
-  - !9514 svg: Make empty language lists static (Matthias Clasen)
-  - !9515 Update Basque translation
-  - !9516 svg: Fix a corner case of pausing (Matthias Clasen)
-  - !9518 Update Slovenian translation
-  - !9519 More fixes for instantaneous state changes (Matthias Clasen)
-  - !9521 cssimagerecolor: Fix typos (Matthias Clasen)
-  - !9522 gsk/gi: Add missing since annotation (Bilal Elmoussaoui)
-  - !9524 wayland: Add some color mgmt v2 defines (Matthias Clasen)
-  - !9525 Update Spanish translation
-  - !9526 Update Lithuanian translation
-  - !9527 tooltip: Fix typo in comment (Robert Ancell)
-  - !9528 svg: Redo the morph transition (Matthias Clasen)
-  - !9529 Update Catalan translation
-  - !9531 Fix brokenness in widget active state maintenance (Carlos Garnacho)
-  - !9532 Stop using emblem-system-symbolic (Matthias Clasen)
-  - !9534 printing: do not do manual copies/number up when the printing portal
-    is used (Lucas Baudin)
-  - !9535 Small android improvements for 4.22 (Florian "sp1rit"​)
-  - !9536 gtkwindow: Also update resize cursor on
-    GtkEventControllerMotion::enter (Carlos Garnacho)
-  - !9537 Update Brazilian Portuguese translation
-  - !9539 Update Turkish translation
-  - !9540 Update Czech translation (AsciiWolf)
-  - !9541 docs: Clarify CSS custom properties support across GTK releases
-    (Leonid Zaburunov)
-  - !9543 svg crash fixes (Matthias Clasen)
-  - !9544 Update French translation
-  - !9546 Another round of crash fixes (Matthias Clasen)
-
-* Translation updates:
-  - Basque (Asier Saratsua Garmendia)
-  - Bulgarian (Alexander Alexandrov Shopov)
-  - Catalan (Victor Dargallo)
-  - Chinese (China) (luming zh)
-  - Czech (AsciiWolf, Daniel Rusek)
-  - Finnish (Jiri Grönroos)
-  - French (Guillaume Bernard)
-  - German (Christian Kirbach)
-  - Greek, Modern (1453-) (Efstathios Iosifidis)
-  - Kazakh (Baurzhan Muftakhidinov)
-  - Lithuanian (Aurimas Černius, Aurimas Aurimas Černius)
-  - Portuguese (Brazil) (Rafael Fontenelle)
+  - Kabyle (BoF ButterflyOfFire)
+  - Polish (Victoria, Victoria Niedzielska)
   - Romanian (Antonio Marin)
-  - Russian (Artur S0)
   - Slovenian (Martin)
-  - Spanish (Daniel Mustieles)
-  - Turkish (Emin Tufan Çetin)
-  - Ukrainian (Yuri Chornoivan)
-
-
-Overview of Changes in 4.21.5, 30-01-2026
-=========================================
-
-* Early adopters have run into some problems with the state saving
-  APIs that were introduced earlier this cycle, so they have been
-  temporarily removed. We plan to reintroduce state saving early
-  in the next cycle.
-
-* gsk:
- - All of the shader glue code is now autogenerated
- - Gradients can be interpolated in CSS (i.e. premultiplied)
-   or SVG style (non-premultiplied)
- - Profiling support has been added (shown as 'heat maps' in the
-   inspector)
-
-* svg:
- - Filters operate in linear RGB (unless overwritten)
- - Many correctness fixes
- - The librsvg dependency has been dropped, since GTK can now
-   render svg images natively
-
-* css:
- - SVG filters can be used via data urls
-
-* Bugs fixed:
-  - #6870 Feature Request: Add an "accessible ID" property to GtkAccessible
-    (Michael Weghorn)
-  - #7078 Memory leak with cairo renderer + wayland GDK backend (Matthias
-    Clasen)
-Overview of Changes in 4.22.2, 31-03-2026
-=========================================
-
-* Bugs fixed:
-  - #8117 Docs for the new SVG parser? (Matthias Clasen)
-  - #8119 Wrong colors used for fallback symbolic icons containing classes
-    (Matthias Clasen)
-  - #8125 svg: Animating hrefs does not work (Matthias Clasen)
-  - !9590 vulkan: fix GDK_VULKAN_FEATURE_SWAPCHAIN_MAINTENANCE check (Benjamin
-    Otte)
-  - !9656 vulkan: fix GDK_VULKAN_FEATURE_SWAPCHAIN_MAINTENANCE check (Benjamin
-    Otte)
-  - !9659 Various Vulkan fixes (Benjamin Otte)
-  - !9660 Various Vulkan fixes (Benjamin Otte)
-  - !9665 tests: fix libtestutils build under Windows. (Christoph Reiter)
-  - !9667 Update Serbian translation
-  - !9673 testsuite: Add dmabuf compare tests to needs-udmabuf suite (Benjamin
-    Otte)
-  - !9678 testsuite: Add dmabuf compare tests to needs-udmabuf suite (Benjamin
-    Otte)
-  - !9679 dmabuf: Support dmabufs with fewer fds than planes (Benjamin Otte)
-  - !9681 dmabuf: Support dmabufs with fewer fds than planes (Benjamin Otte)
-  - !9682 Update Galician translation
-  - !9701 Update Turkish translation
-  - !9704 Update Catalan translation
-  - !9711 Load less icons as symbolics (Matthias Clasen)
-  - !9719 Fix traditional symbolic fallback (Matthias Clasen)
-  - !9736 svg: Fix invalidation (Matthias Clasen, Sergio Costas Rodriguez)
-  - !9739 Assorted backports (Alessandro Astone, Jonas Ådahl, Matthias Clasen,
-    Sergey Bugaev)
-
-* Translation updates:
-  - Catalan (Victor Dargallo)
-  - Galician (Francisco Diéguez Souto)
-  - Serbian (Марко Костић)
-  - Turkish (Sabri Ünal)
-
-
-Overview of Changes in 4.22.1, 13-03-2026
-=========================================
-
-* Bugs fixed:
-  - #8081 po/README.translators should be updated or removed (Matthias Clasen)
-  - #8082 How Paintable should be translated in these strings? (Matthias Clasen)
-  - #8084 SVG image rendered as grey shape (Matthias Clasen)
-  - #8087 Drop Shadows Make Transparent Textures Significantly Darker (Benjamin
-    Otte)
-  - #8092 Shaper: changing state name doesn't mark file as "changed" (Matthias
-    Clasen)
-  - !9587 Stable backports (luming zh, Victoria, Urtsi Santsi)
-  - !9595 Backport the svg fallback changes (Matthias Clasen)
-  - !9606 testsuite: Limit size of clip test to 4096x4096 (Benjamin Otte)
-  - !9607 widget: Filter is applied before opacity (Benjamin Otte)
-  - !9608 testsuite: Limit size of clip test to 4096x4096 (Benjamin Otte)
-  - !9610 More svg fallback (Matthias Clasen)
-  - !9618 icon editor: Consider state names for unsaved (Matthias Clasen)
-  - !9627 application8: Don't use space in meson generated filename (Zoltán
-    Böszörményi)
-  - !9642 vulkan: Fix invalid read by requerying variable (Benjamin Otte)
-
-* Translation updates:
-  - Chinese (China) (luming zh)
-  - Danish (Ask Hjorth Larsen)
-  - English (United Kingdom) (Bruce Cowan)
-  - French (Guillaume Bernard)
-  - Galician (Francisco Diéguez Souto)
-  - Greek, Modern (1453-) (Efstathios Iosifidis)
-  - Kazakh (Baurzhan Muftakhidinov)
-  - Occitan (post 1500) (Quentin PAGÈS)
-  - Polish (Victoria)
-  - Portuguese (Brazil) (Rafael Fontenelle)
-  - Romanian (Antonio Marin)
   - Turkish (Emin Tufan Çetin)
 
 

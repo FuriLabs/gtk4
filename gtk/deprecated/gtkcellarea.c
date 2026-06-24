@@ -342,13 +342,14 @@
 
 #include "config.h"
 
+#include "gtkcellareaprivate.h"
+
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "deprecated/gtkcelllayout.h"
-#include "gtkcellarea.h"
-#include "deprecated/gtkcellareacontext.h"
+#include "gtkcelllayoutprivate.h"
+#include "gtkcellareacontext.h"
 #include "gtkmarshalers.h"
 #include "gtkprivate.h"
 #include "deprecated/gtkrender.h"
@@ -588,8 +589,11 @@ enum {
   PROP_0,
   PROP_FOCUS_CELL,
   PROP_EDITED_CELL,
-  PROP_EDIT_WIDGET
+  PROP_EDIT_WIDGET,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 enum {
   SIGNAL_APPLY_ATTRIBUTES,
@@ -775,11 +779,9 @@ gtk_cell_area_class_init (GtkCellAreaClass *class)
    *
    * The cell in the area that currently has focus
    */
-  g_object_class_install_property (object_class,
-                                   PROP_FOCUS_CELL,
-                                   g_param_spec_object ("focus-cell", NULL, NULL,
-                                                        GTK_TYPE_CELL_RENDERER,
-                                                        GTK_PARAM_READWRITE));
+  props[PROP_FOCUS_CELL] = g_param_spec_object ("focus-cell", NULL, NULL,
+                                                GTK_TYPE_CELL_RENDERER,
+                                                G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkCellArea:edited-cell:
@@ -789,11 +791,9 @@ gtk_cell_area_class_init (GtkCellAreaClass *class)
    * This property is read-only and only changes as
    * a result of a call gtk_cell_area_activate_cell().
    */
-  g_object_class_install_property (object_class,
-                                   PROP_EDITED_CELL,
-                                   g_param_spec_object ("edited-cell", NULL, NULL,
-                                                        GTK_TYPE_CELL_RENDERER,
-                                                        GTK_PARAM_READABLE));
+  props[PROP_EDITED_CELL] = g_param_spec_object ("edited-cell", NULL, NULL,
+                                                 GTK_TYPE_CELL_RENDERER,
+                                                 G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkCellArea:edit-widget:
@@ -803,11 +803,11 @@ gtk_cell_area_class_init (GtkCellAreaClass *class)
    * This property is read-only and only changes as
    * a result of a call gtk_cell_area_activate_cell().
    */
-  g_object_class_install_property (object_class,
-                                   PROP_EDIT_WIDGET,
-                                   g_param_spec_object ("edit-widget", NULL, NULL,
-                                                        GTK_TYPE_CELL_EDITABLE,
-                                                        GTK_PARAM_READABLE));
+  props[PROP_EDIT_WIDGET] = g_param_spec_object ("edit-widget", NULL, NULL,
+                                                 GTK_TYPE_CELL_EDITABLE,
+                                                 G_PARAM_READABLE | G_PARAM_STATIC_NAME);
+
+  g_object_class_install_properties (object_class, N_PROPS, props);
 
   /* Pool for Cell Properties */
   if (!cell_property_pool)
@@ -1716,6 +1716,8 @@ gtk_cell_area_foreach (GtkCellArea        *area,
  *
  * Calls @callback for every `GtkCellRenderer` in @area with the
  * allocated rectangle inside @cell_area.
+ *
+ * Deprecated: 4.10
  */
 void
 gtk_cell_area_foreach_alloc (GtkCellArea          *area,
@@ -1999,6 +2001,8 @@ gtk_cell_area_copy_context (GtkCellArea        *area,
  * or a width-for-height layout.
  *
  * Returns: The `GtkSizeRequestMode` preferred by @area.
+ *
+ * Deprecated: 4.10
  */
 GtkSizeRequestMode
 gtk_cell_area_get_request_mode (GtkCellArea *area)
@@ -2357,6 +2361,8 @@ gtk_cell_area_apply_attributes (GtkCellArea  *area,
  * Returns: The current `GtkTreePath` string for the current
  * attributes applied to @area. This string belongs to the area and
  * should not be freed.
+ *
+ * Deprecated: 4.10
  */
 const char *
 gtk_cell_area_get_current_path_string (GtkCellArea *area)
@@ -2947,7 +2953,7 @@ gtk_cell_area_set_focus_cell (GtkCellArea     *area,
       if (priv->focus_cell)
         g_object_ref (priv->focus_cell);
 
-      g_object_notify (G_OBJECT (area), "focus-cell");
+      g_object_notify_by_pspec (G_OBJECT (area), props[PROP_FOCUS_CELL]);
     }
 
   /* Signal that the current focus renderer for this path changed
@@ -3240,7 +3246,7 @@ gtk_cell_area_set_edited_cell (GtkCellArea     *area,
       if (priv->edited_cell)
         g_object_ref (priv->edited_cell);
 
-      g_object_notify (G_OBJECT (area), "edited-cell");
+      g_object_notify_by_pspec (G_OBJECT (area), props[PROP_EDITED_CELL]);
     }
 }
 
@@ -3273,7 +3279,7 @@ gtk_cell_area_set_edit_widget (GtkCellArea     *area,
           g_object_ref (priv->edit_widget);
         }
 
-      g_object_notify (G_OBJECT (area), "edit-widget");
+      g_object_notify_by_pspec (G_OBJECT (area), props[PROP_EDIT_WIDGET]);
     }
 }
 

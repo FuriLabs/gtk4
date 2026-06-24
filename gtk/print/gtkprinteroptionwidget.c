@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <ctype.h>
 
 #include <glib/gi18n-lib.h>
 
@@ -67,8 +66,11 @@ enum {
 
 enum {
   PROP_0,
-  PROP_SOURCE
+  PROP_SOURCE,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
@@ -109,11 +111,11 @@ gtk_printer_option_widget_class_init (GtkPrinterOptionWidgetClass *class)
 		  NULL,
 		  G_TYPE_NONE, 0);
 
-  g_object_class_install_property (object_class,
-                                   PROP_SOURCE,
-                                   g_param_spec_object ("source", NULL, NULL,
-							GTK_TYPE_PRINTER_OPTION,
-							G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
+  props[PROP_SOURCE] = g_param_spec_object ("source", NULL, NULL,
+                                            GTK_TYPE_PRINTER_OPTION,
+                                            G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_NAME);
+
+  g_object_class_install_properties (object_class, N_PROPS, props);
 
 }
 
@@ -135,8 +137,7 @@ gtk_printer_option_widget_finalize (GObject *object)
     {
       g_signal_handler_disconnect (priv->source,
 				   priv->source_changed_handler);
-      g_object_unref (priv->source);
-      priv->source = NULL;
+      g_clear_object (&priv->source);
     }
 
   G_OBJECT_CLASS (gtk_printer_option_widget_parent_class)->finalize (object);
@@ -247,7 +248,7 @@ gtk_printer_option_widget_set_source (GtkPrinterOptionWidget *widget,
   construct_widgets (widget);
   update_widgets (widget);
 
-  g_object_notify (G_OBJECT (widget), "source");
+  g_object_notify_by_pspec (G_OBJECT (widget), props[PROP_SOURCE]);
 }
 
 static void
@@ -517,7 +518,7 @@ dialog_response_callback (GObject *source,
 
       info = g_file_query_info (new_location,
                                 "standard::display-name",
-                                0,
+                                G_FILE_QUERY_INFO_NONE,
                                 NULL,
                                 NULL);
       if (info != NULL)
@@ -609,7 +610,7 @@ filter_numeric (const char *val,
 
   for (i = 0, j = 0; i < len; i++)
     {
-      if (isdigit (val[i]))
+      if (g_ascii_isdigit (val[i]))
         {
           filtered_val[j] = val[i];
 	  j++;

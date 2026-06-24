@@ -27,7 +27,7 @@
 #undef GTK_DISABLE_DEPRECATED
 #endif
 
-#include "gtkimcontextime.h"
+#include "gtkimcontextimeprivate.h"
 #include "gtkimmoduleprivate.h"
 #include "gtkroot.h"
 
@@ -157,7 +157,7 @@ gtk_im_context_ime_init (GtkIMContextIME *context_ime)
   context_ime->cursor_location.height = 0;
   context_ime->commit_string          = NULL;
 
-  context_ime->priv = g_malloc0 (sizeof (GtkIMContextIMEPrivate));
+  context_ime->priv = g_new0 (GtkIMContextIMEPrivate, 1);
   context_ime->priv->focus_behavior = GTK_WIN32_IME_FOCUS_BEHAVIOR_COMMIT;
 }
 
@@ -180,8 +180,7 @@ gtk_im_context_ime_finalize (GObject *obj)
 {
   GtkIMContextIME *context_ime = GTK_IM_CONTEXT_IME (obj);
 
-  g_free (context_ime->priv);
-  context_ime->priv = NULL;
+  g_clear_pointer (&context_ime->priv, g_free);
 
   G_OBJECT_CLASS (gtk_im_context_ime_parent_class)->finalize (obj);
 }

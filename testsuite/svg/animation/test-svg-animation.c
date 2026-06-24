@@ -21,7 +21,12 @@
 #include <string.h>
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
-#include "gtk/gtksvgprivate.h"
+#include "gtk/svg/gtksvgprivate.h"
+#include "gtk/svg/gtksvgelementprivate.h"
+#include "gtk/svg/gtksvghrefprivate.h"
+#include "gtk/svg/gtksvgserializeprivate.h"
+#include "gtkeventcontrollerprivate.h"
+#include "gdk/gdkeventsprivate.h"
 #include "testsuite/testutils.h"
 
 static char *
@@ -126,12 +131,23 @@ get_sibling (const char *file,
 
 typedef enum
 {
-  INPUT,
-  TIME,
-  STATE,
-  COLORS,
-  OUTPUT,
+  STEP_INPUT,
+  STEP_TIME,
+  STEP_STATE,
+  STEP_COLORS,
+  STEP_OUTPUT,
+  STEP_FOCUS,
+  STEP_KEY,
+  STEP_BUTTON,
+  STEP_POINTER,
 } StepType;
+
+enum
+{
+  ENTER,
+  LEAVE,
+  MOVE,
+};
 
 typedef struct
 {
@@ -142,6 +158,13 @@ typedef struct
   char *output;
   GdkRGBA colors[5];
   size_t n_colors;
+  GtkDirectionType direction;
+  unsigned int keyval;
+  unsigned int button;
+  double x;
+  double y;
+  char *activate;
+  unsigned int pointer;
 } Step;
 
 static void
@@ -149,11 +172,14 @@ clear_step (gpointer data)
 {
   Step *step = data;
 
-  if (step->type == INPUT)
+  if (step->type == STEP_INPUT)
     g_free (step->input);
 
-  if (step->type == OUTPUT)
+  if (step->type == STEP_OUTPUT)
     g_free (step->output);
+
+  if (step->type == STEP_BUTTON)
+    g_free (step->activate);
 }
 
 static GArray *
@@ -182,7 +208,7 @@ parse_test_file (const char *filename)
     g_error ("Can't parse %s.%u (expected 'input: ')\n", filename, i);
 
   memset (&step, 0, sizeof (Step));
-  step.type = INPUT;
+  step.type = STEP_INPUT;
   step.input = get_sibling (filename, strv[i] + strlen ("input: "));
   g_array_append_val (steps, step);
 
@@ -194,27 +220,24 @@ parse_test_file (const char *filename)
         {
           char *end;
 
-          step.type = STATE;
+          step.type = STEP_STATE;
           step.state = g_ascii_strtoull (strv[i] + strlen ("state: "), &end, 10);
           if ((end && *end != '\0') || step.state > 63)
             g_error ("Can't parse %s.%u (expected a state)\n", filename, i);
-
-          g_array_append_val (steps, step);
         }
       else if (g_str_has_prefix (strv[i], "time: "))
         {
           char *end;
-          step.type = TIME;
+          step.type = STEP_TIME;
           step.time = g_ascii_strtoull (strv[i] + strlen ("time: "), &end, 10);
           if (end && *end != '\0')
             g_error ("Can't parse %s.%u (expected a time)\n", filename, i);
-          g_array_append_val (steps, step);
         }
       else if (g_str_has_prefix (strv[i], "colors: "))
         {
           GStrv cols = g_strsplit (strv[i] + strlen ("colors: "), ";", 0);
 
-          step.type = COLORS;
+          step.type = STEP_COLORS;
           step.n_colors = MIN (g_strv_length (cols), 5);
           for (unsigned int j = 0; j < step.n_colors; j++)
             {
@@ -222,15 +245,81 @@ parse_test_file (const char *filename)
                 g_error ("Can't parse %s.%u (expected colors)\n", filename, i);
             }
           g_strfreev (cols);
-
-          g_array_append_val (steps, step);
         }
       else if (g_str_has_prefix (strv[i], "output: "))
         {
-          step.type = OUTPUT;
+          step.type = STEP_OUTPUT;
           step.output = get_sibling (filename, strv[i] + strlen ("output: "));
-          g_array_append_val (steps, step);
         }
+      else if (g_str_has_prefix (strv[i], "focus: "))
+        {
+          step.type = STEP_FOCUS;
+          if (strcmp (strv[i] + strlen ("focus: "), "forward") == 0)
+            step.direction = GTK_DIR_TAB_FORWARD;
+          else if (strcmp (strv[i] + strlen ("focus: "), "backward") == 0)
+            step.direction = GTK_DIR_TAB_BACKWARD;
+          else
+            g_error ("Can't parse focus direction\n");
+        }
+      else if (g_str_has_prefix (strv[i], "key: "))
+        {
+          char *p;
+          char *key;
+
+          step.type = STEP_KEY;
+
+          key = g_strdup (strv[i] + strlen ("key: "));
+          p = strstr (key, " expect:");
+          if (p)
+            *p = '\0';
+
+          step.keyval = gdk_keyval_from_name (key);
+          g_free (key);
+
+          p = strstr (strv[i], " expect: activate ");
+          if (p)
+            step.activate = g_strdup (p + strlen (" expect: activate "));
+          else
+            step.activate = NULL;
+        }
+      else if (g_str_has_prefix (strv[i], "button: "))
+        {
+          const char *p;
+
+          step.type = STEP_BUTTON;
+          if (sscanf (strv[i], "button: %d %lf %lf", &step.button, &step.x, &step.y) < 3)
+            g_error ("Can't parse button info");
+
+          p = strstr (strv[i], "expect: activate ");
+          if (p)
+            step.activate = g_strdup (p + strlen ("expect: activate "));
+          else
+            step.activate = NULL;
+        }
+      else if (g_str_has_prefix (strv[i], "pointer: "))
+        {
+          step.type = STEP_POINTER;
+          if (sscanf (strv[i], "pointer: enter %lf %lf", &step.x, &step.y) == 2)
+            {
+              step.pointer = ENTER;
+            }
+          else if (strcmp (strv[i], "pointer: leave") == 0)
+            {
+              step.pointer = LEAVE;
+            }
+          else if (sscanf (strv[i], "pointer: move %lf %lf", &step.x, &step.y) == 2)
+            {
+              step.pointer = MOVE;
+            }
+          else
+            {
+              g_error ("Can't parser pointer enter");
+            }
+        }
+      else
+        continue;
+
+      g_array_append_val (steps, step);
     }
 
   g_strfreev (strv);
@@ -247,9 +336,16 @@ typedef struct
   char *output;
   int64_t load_time;
   int64_t time;
+  GtkDirectionType direction;
+  unsigned int keyval;
+  unsigned int button;
+  double x, y;
+  char *id;
+  char *url;
+  unsigned int pointer;
 } StepData;
 
-static gboolean
+static void
 set_state (gpointer data)
 {
   StepData *sd = data;
@@ -257,11 +353,9 @@ set_state (gpointer data)
   g_print ("Step %u: Setting state to %u\n", sd->step, sd->state);
   gtk_svg_set_state (sd->svg, sd->state);
   g_free (sd);
-
-  return G_SOURCE_REMOVE;
 }
 
-static gboolean
+static void
 advance (gpointer data)
 {
   StepData *sd = data;
@@ -269,26 +363,121 @@ advance (gpointer data)
   g_print ("Step %u: Advance current time to %" G_GINT64_FORMAT "\n", sd->step, sd->time);
   gtk_svg_advance (sd->svg, sd->load_time + sd->time * G_TIME_SPAN_MILLISECOND);
   g_free (sd);
-
-  return G_SOURCE_REMOVE;
 }
 
-static gboolean
+static void
 snapshot_here (gpointer data)
 {
   StepData *sd = data;
 
   g_print ("Step %u: Snapshot %s\n", sd->step, sd->output);
   g_free (sd);
-
-  return G_SOURCE_REMOVE;
 }
 
-static gboolean
+static void
+focus (gpointer data)
+{
+  StepData *sd = data;
+
+  g_print ("Step %u: Move focus %s\n", sd->step, sd->direction == GTK_DIR_TAB_FORWARD ? "forward" : "backward");
+
+  gtk_svg_move_focus (sd->svg, sd->direction);
+
+  if (sd->svg->focus)
+    {
+      if (svg_element_get_id (sd->svg->focus))
+        g_print ("focus on %s\n", svg_element_get_id (sd->svg->focus));
+      else
+        g_print ("focus on unnamed %s\n", svg_element_type_get_name (svg_element_get_type (sd->svg->focus)));
+    }
+  else
+    g_print ("no focus\n");
+}
+
+static void
+key (gpointer data)
+{
+  StepData *sd = data;
+  GdkEvent *event;
+  GdkTranslatedKey translated;
+  unsigned int keycode = 0;
+
+  g_print ("Step %u: Key press+release\n", sd->step);
+
+  translated.keyval = sd->keyval;
+  translated.consumed = 0;
+  translated.layout = 0;
+  translated.level = 0;
+  event = gdk_key_event_new (GDK_KEY_PRESS, NULL, NULL, 0, 0, keycode, FALSE, &translated, &translated, NULL);
+  gtk_svg_handle_event (sd->svg, event, 0, 0);
+  gdk_event_unref (event);
+
+  event = gdk_key_event_new (GDK_KEY_RELEASE, NULL, NULL, 0, keycode, 0, FALSE, &translated, &translated, NULL);
+  gtk_svg_handle_event (sd->svg, event, 0, 0);
+  gdk_event_unref (event);
+}
+
+static void
+button (gpointer data)
+{
+  StepData *sd = data;
+  GdkEvent *event;
+
+  g_print ("Step %u: Button press+release\n", sd->step);
+
+  event = gdk_button_event_new (GDK_BUTTON_PRESS, NULL, NULL, NULL, 0, 0, sd->button, sd->x, sd->y, NULL);
+  gtk_svg_handle_event (sd->svg, event, sd->x, sd->y);
+  gdk_event_unref (event);
+
+  event = gdk_button_event_new (GDK_BUTTON_RELEASE, NULL, NULL, NULL, 0, 0, sd->button, sd->x, sd->y, NULL);
+  gtk_svg_handle_event (sd->svg, event, sd->x, sd->y);
+  gdk_event_unref (event);
+}
+
+static void
+pointer (gpointer data)
+{
+  StepData *sd = data;
+  const char *kind[] = { "enter", "leave", "move" };
+  GtkCrossingData crossing;
+  GdkEvent *event;
+
+  g_print ("Step %u: Pointer %s\n", sd->step, kind[sd->pointer]);
+
+  switch (sd->pointer)
+    {
+    case ENTER:
+      crossing.type = GTK_CROSSING_POINTER;
+      crossing.direction = GTK_CROSSING_IN;
+      gtk_svg_handle_crossing (sd->svg, &crossing, sd->x, sd->y);
+      break;
+    case LEAVE:
+      crossing.type = GTK_CROSSING_POINTER;
+      crossing.direction = GTK_CROSSING_OUT;
+      gtk_svg_handle_crossing (sd->svg, &crossing, 0, 0);
+      break;
+    case MOVE:
+      event = gdk_motion_event_new (NULL, NULL, NULL, 0, 0, sd->x, sd->y, NULL);
+      gtk_svg_handle_event (sd->svg, event, sd->x, sd->y);
+
+      gdk_event_unref (event);
+      break;
+    default:
+      g_assert_not_reached ();
+    }
+}
+
+static void
+activate_cb (SvgElement *element, gpointer data)
+{
+  SvgValue *href = svg_element_get_current_value (element, SVG_PROPERTY_HREF);
+  g_print ("activate %s\n", svg_href_get_ref (href));
+}
+
+static void
 end_it_all (gpointer data)
 {
-  gtk_window_close (GTK_WINDOW (data));
-  return G_SOURCE_REMOVE;
+  //gtk_window_close (GTK_WINDOW (data));
 }
 
 static void
@@ -316,9 +505,10 @@ play_svg_test (GFile *file)
   for (unsigned int i = 0; i < steps->len; i++)
     {
       Step *step = &g_array_index (steps, Step, i);
+
       switch (step->type)
         {
-        case INPUT:
+        case STEP_INPUT:
           g_assert (i == 0);
           if (!g_file_get_contents (step->input, &contents, &length, &error))
             g_error ("%s", error->message);
@@ -331,33 +521,69 @@ play_svg_test (GFile *file)
           gtk_svg_set_load_time (svg, load_time);
           break;
 
-        case TIME:
+        case STEP_TIME:
           time = step->time;
           data = g_new (StepData, 1);
           data->step = i;
           data->svg = svg;
           data->load_time = load_time;
           data->time = step->time;
-          g_timeout_add (time, advance, data);
+          g_timeout_add_once (time, advance, data);
           break;
 
-        case STATE:
+        case STEP_STATE:
           data = g_new (StepData, 1);
           data->step = i;
           data->svg = svg;
           data->state = step->state;
-          g_timeout_add (time, set_state, data);
+          g_timeout_add_once (time, set_state, data);
           break;
 
-        case COLORS:
+        case STEP_COLORS:
           g_print ("FIXME: apply colors\n");
           break;
 
-        case OUTPUT:
+        case STEP_OUTPUT:
           data = g_new (StepData, 1);
           data->step = i;
           data->output = g_path_get_basename (step->output);
-          g_timeout_add (time, snapshot_here, data);
+          g_timeout_add_once (time, snapshot_here, data);
+          break;
+
+        case STEP_FOCUS:
+          data = g_new (StepData, 1);
+          data->step = i;
+          data->svg = svg;
+          data->direction = step->direction;
+          g_timeout_add_once (time, focus, data);
+          break;
+
+        case STEP_KEY:
+          data = g_new (StepData, 1);
+          data->step = i;
+          data->svg = svg;
+          data->keyval = step->keyval;
+          g_timeout_add_once (time, key, data);
+          break;
+
+        case STEP_BUTTON:
+          data = g_new (StepData, 1);
+          data->step = i;
+          data->svg = svg;
+          data->button = step->button;
+          data->x = step->x;
+          data->y = step->y;
+          g_timeout_add_once (time, button, data);
+          break;
+
+        case STEP_POINTER:
+          data = g_new (StepData, 1);
+          data->step = i;
+          data->svg = svg;
+          data->pointer = step->pointer;
+          data->x = step->x;
+          data->y = step->y;
+          g_timeout_add_once (time, pointer, data);
           break;
 
         default:
@@ -370,9 +596,13 @@ play_svg_test (GFile *file)
 
   window = gtk_window_new ();
   picture = gtk_picture_new_for_paintable (GDK_PAINTABLE (svg));
+  gtk_widget_set_halign (picture, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign (picture, GTK_ALIGN_CENTER);
   gtk_window_set_child (GTK_WINDOW (window), picture);
 
-  g_timeout_add (time + 1000, end_it_all, window);
+  gtk_svg_set_activate_callback (svg, activate_cb, NULL);
+
+  g_timeout_add_once (time + 1000, end_it_all, window);
 
   g_print ("Starting replay\n");
   gtk_svg_play (svg);
@@ -381,10 +611,18 @@ play_svg_test (GFile *file)
   while (g_list_model_get_n_items (gtk_window_get_toplevels ()) > 0)
     g_main_context_iteration (NULL, TRUE);
 
-  gtk_svg_play (svg);
-
   g_array_unref (steps);
   g_object_unref (svg);
+}
+
+static void
+activate_cb2 (SvgElement *element,
+              gpointer    data)
+{
+  const char **url = data;
+  SvgValue *href = svg_element_get_current_value (element, SVG_PROPERTY_HREF);
+
+  *url = svg_href_get_ref (href);
 }
 
 static void
@@ -422,11 +660,11 @@ render_svg_file (GFile *file, gboolean generate)
       time = (unsigned int) g_ascii_strtoull (&p[1], &end, 10);
       *p = '\0';
 
-      step.type = TIME;
+      step.type = STEP_TIME;
       step.time = time;
       g_array_append_val (steps, step);
 
-      step.type = OUTPUT;
+      step.type = STEP_OUTPUT;
       step.output = g_file_get_path (file);
       g_array_append_val (steps, step);
     }
@@ -436,7 +674,7 @@ render_svg_file (GFile *file, gboolean generate)
       Step *step = &g_array_index (steps, Step, i);
       switch (step->type)
         {
-        case INPUT:
+        case STEP_INPUT:
           g_assert (i == 0);
           if (!g_file_get_contents (step->input, &contents, &length, &error))
           g_error ("%s", error->message);
@@ -448,17 +686,21 @@ render_svg_file (GFile *file, gboolean generate)
           load_time = g_get_monotonic_time ();
           gtk_svg_set_load_time (svg, load_time);
           break;
-        case TIME:
+
+        case STEP_TIME:
           gtk_svg_advance (svg, load_time + step->time * G_TIME_SPAN_MILLISECOND);
           break;
-        case STATE:
+
+        case STEP_STATE:
           gtk_svg_set_state (svg, step->state);
           break;
-        case COLORS:
+
+        case STEP_COLORS:
           colors = step->colors;
           n_colors = step->n_colors;
           break;
-        case OUTPUT:
+
+        case STEP_OUTPUT:
           {
             GBytes *output;
 
@@ -497,6 +739,90 @@ render_svg_file (GFile *file, gboolean generate)
                 g_free (diff);
               }
             g_clear_pointer (&output, g_bytes_unref);
+          }
+          break;
+
+        case STEP_FOCUS:
+          gtk_svg_move_focus (svg, step->direction);
+          break;
+
+        case STEP_KEY:
+          {
+            GdkTranslatedKey translated;
+            GdkEvent *event;
+            char *activate = NULL;
+            unsigned int keycode = 0;
+
+            gtk_svg_set_activate_callback (svg, activate_cb2, &activate);
+
+            translated.keyval = step->keyval;
+            translated.consumed = 0;
+            translated.layout = 0;
+            translated.level = 0;
+
+            event = gdk_key_event_new (GDK_KEY_PRESS, NULL, NULL, 0, 0, keycode, FALSE, &translated, &translated, NULL);
+            gtk_svg_handle_event (svg, event, 0, 0);
+            gdk_event_unref (event);
+
+            event = gdk_key_event_new (GDK_KEY_RELEASE, NULL, NULL, 0, 0, keycode, FALSE, &translated, &translated, NULL);
+            gtk_svg_handle_event (svg, event, 0, 0);
+            gdk_event_unref (event);
+
+            if (step->activate)
+              g_assert_cmpstr (step->activate, ==, activate);
+
+            gtk_svg_set_activate_callback (svg, NULL, NULL);
+          }
+          break;
+
+        case STEP_BUTTON:
+          {
+            GdkEvent *event;
+            char *activate = NULL;
+
+            gtk_svg_set_activate_callback (svg, activate_cb2, &activate);
+
+            event = gdk_button_event_new (GDK_BUTTON_PRESS, NULL, NULL, NULL, 0, 0, step->button, step->x, step->y, NULL);
+            gtk_svg_handle_event (svg, event, step->x, step->y);
+            gdk_event_unref (event);
+
+            event = gdk_button_event_new (GDK_BUTTON_RELEASE, NULL, NULL, NULL, 0, 0, step->button, step->x, step->y, NULL);
+            gtk_svg_handle_event (svg, event, step->x, step->y);
+            gdk_event_unref (event);
+
+            if (step->activate)
+              g_assert_cmpstr (step->activate, ==, activate);
+
+            gtk_svg_set_activate_callback (svg, NULL, NULL);
+          }
+          break;
+
+        case STEP_POINTER:
+          {
+            GdkEvent *event;
+            GtkCrossingData crossing;
+
+            switch (step->pointer)
+              {
+              case ENTER:
+                crossing.type = GTK_CROSSING_POINTER;
+                crossing.direction = GTK_CROSSING_IN;
+                gtk_svg_handle_crossing (svg, &crossing, step->x, step->y);
+                break;
+              case LEAVE:
+                crossing.type = GTK_CROSSING_POINTER;
+                crossing.direction = GTK_CROSSING_OUT;
+                gtk_svg_handle_crossing (svg, &crossing, 0, 0);
+                break;
+              case MOVE:
+                event = gdk_motion_event_new (NULL, NULL, NULL, 0, 0, step->x, step->y, NULL);
+                gtk_svg_handle_event (svg, event, step->x, step->y);
+
+                gdk_event_unref (event);
+                break;
+              default:
+                g_assert_not_reached ();
+              }
           }
           break;
 

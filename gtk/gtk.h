@@ -27,6 +27,7 @@
 #define __GTK_H_INSIDE__
 
 #include <gtk/css/gtkcss.h>
+#include <gtk/svg/gtksvg.h>
 #include <gdk/gdk.h>
 #include <gsk/gsk.h>
 
@@ -117,6 +118,7 @@
 #include <gtk/gtkentry.h>
 #include <gtk/gtkentrybuffer.h>
 #include <gtk/deprecated/gtkentrycompletion.h>
+#include <gtk/gtkenumlist.h>
 #include <gtk/gtkenums.h>
 #include <gtk/gtkeventcontroller.h>
 #include <gtk/gtkeventcontrollerfocus.h>
@@ -269,7 +271,7 @@
 #include <gtk/gtkstringsorter.h>
 #include <gtk/deprecated/gtkstylecontext.h>
 #include <gtk/gtkstyleprovider.h>
-#include <gtk/gtksvg.h>
+#include <gtk/gtksvgwidget.h>
 #include <gtk/gtkswitch.h>
 #include <gtk/gtksymbolicpaintable.h>
 #include <gtk/gtktext.h>

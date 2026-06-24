@@ -20,7 +20,7 @@
  * Modified by the GTK+ Team and others 1997-2000.  See the AUTHORS
  * file for a list of people on the GTK+ Team.  See the ChangeLog
  * files for a list of changes.  These files are distributed with
- * GTK+ at ftp://ftp.gtk.org/pub/gtk/. 
+ * GTK+ at ftp://ftp.gtk.org/pub/gtk/.
  */
 
 #include "config.h"
@@ -33,7 +33,7 @@
 #include "gdkdevice-broadway.h"
 #include "gdkdisplay.h"
 #include "gdkdragsurfaceprivate.h"
-#include "gdkeventsource.h"
+#include "gdkeventsourceprivate.h"
 #include "gdkframeclockidleprivate.h"
 #include "gdkpopupprivate.h"
 #include "gdkprivate-broadway.h"
@@ -308,13 +308,12 @@ gdk_broadway_surface_finalize (GObject *object)
   G_OBJECT_CLASS (gdk_broadway_surface_parent_class)->finalize (object);
 }
 
-static gboolean
+static void
 thaw_updates_cb (GdkSurface *surface)
 {
   if (!GDK_SURFACE_DESTROYED (surface))
     gdk_surface_thaw_updates (surface);
   g_object_unref (surface);
-  return G_SOURCE_REMOVE;
 }
 
 void
@@ -331,7 +330,7 @@ _gdk_broadway_roundtrip_notify (GdkSurface  *surface,
 
   /* If there is no remote web client, rate limit update to once a second */
   if (local_reply)
-    g_timeout_add_seconds (1, (GSourceFunc)thaw_updates_cb, g_object_ref (surface));
+    g_timeout_add_seconds_once (1, (GSourceOnceFunc) thaw_updates_cb, g_object_ref (surface));
   else
     gdk_surface_thaw_updates (surface);
 
@@ -445,6 +444,15 @@ gdk_broadway_surface_hide (GdkSurface *surface)
   impl->visible = FALSE;
 
   /* FIXME: update state ? */
+
+  if (surface->autohide && impl->popup_grab)
+    {
+      GdkSeat *seat;
+
+      seat = gdk_display_get_default_seat (surface->display);
+      gdk_seat_ungrab (seat, surface);
+      impl->popup_grab = FALSE;
+    }
 
   broadway_display = GDK_BROADWAY_DISPLAY (gdk_surface_get_display (surface));
 
@@ -622,6 +630,7 @@ gdk_broadway_surface_layout_popup (GdkSurface     *surface,
                                    monitor,
                                    &bounds,
                                    layout,
+                                   GDK_SURFACE_LAYOUT_POPUP_HELPER_DEFAULT,
                                    &final_rect);
 
   x = final_rect.x;
@@ -650,37 +659,25 @@ show_popup (GdkSurface *surface)
   gdk_surface_invalidate_rect (surface, NULL);
 }
 
-static void
-show_grabbing_popup (GdkSeat    *seat,
-                     GdkSurface *surface,
-                     gpointer    user_data)
-{
-  show_popup (surface);
-}
-
 static gboolean
 gdk_broadway_surface_present_popup (GdkSurface     *surface,
                                     int             width,
                                     int             height,
                                     GdkPopupLayout *layout)
 {
+  GdkBroadwaySurface *impl = GDK_BROADWAY_SURFACE (surface);
+
   gdk_broadway_surface_layout_popup (surface, width, height, layout);
 
   if (GDK_SURFACE_IS_MAPPED (surface))
     return TRUE;
 
+  show_popup (surface);
+
   if (surface->autohide)
     {
-      gdk_seat_grab (gdk_display_get_default_seat (surface->display),
-                     surface,
-                     GDK_SEAT_CAPABILITY_ALL,
-                     TRUE,
-                     NULL, NULL,
-                     show_grabbing_popup, NULL);
-    }
-  else
-    {
-      show_popup (surface);
+      gdk_seat_grab (gdk_display_get_default_seat (surface->display), surface);
+      impl->popup_grab = TRUE;
     }
 
   return GDK_SURFACE_IS_MAPPED (surface);
@@ -1036,8 +1033,7 @@ finish_drag (MoveResizeData *mv_resize)
 {
   gdk_surface_destroy (mv_resize->moveresize_emulation_surface);
   mv_resize->moveresize_emulation_surface = NULL;
-  g_object_unref (mv_resize->moveresize_surface);
-  mv_resize->moveresize_surface = NULL;
+  g_clear_object (&mv_resize->moveresize_surface);
   g_clear_pointer (&mv_resize->moveresize_pending_event, g_free);
 }
 
@@ -1172,9 +1168,9 @@ static void
 create_moveresize_surface (MoveResizeData *mv_resize,
                            guint32         timestamp)
 {
+  GdkBroadwayDisplay *broadway_display;
   GdkGrabStatus status;
-  GdkSeat *seat;
-  GdkDevice *pointer;
+  GdkSurface *surface;
 
   g_assert (mv_resize->moveresize_emulation_surface == NULL);
 
@@ -1184,18 +1180,11 @@ create_moveresize_surface (MoveResizeData *mv_resize,
   gdk_broadway_surface_move_resize_internal (mv_resize->moveresize_emulation_surface, TRUE, -100, -100, 1, 1);
   gdk_broadway_surface_show (mv_resize->moveresize_emulation_surface, FALSE);
 
-  seat = gdk_display_get_default_seat (mv_resize->display);
-  pointer = gdk_seat_get_pointer (seat);
-
-  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
-  status = gdk_device_grab (pointer,
-                            mv_resize->moveresize_emulation_surface,
-                            FALSE,
-                            GDK_BUTTON_RELEASE_MASK |
-                            GDK_POINTER_MOTION_MASK,
-                            NULL,
-                            timestamp);
-  G_GNUC_END_IGNORE_DEPRECATIONS;
+  broadway_display = GDK_BROADWAY_DISPLAY (mv_resize->display);
+  surface = mv_resize->moveresize_emulation_surface;
+  status = _gdk_broadway_server_grab_pointer (broadway_display->server,
+                                              GDK_BROADWAY_SURFACE (surface)->id,
+                                              FALSE, timestamp);
 
   if (status != GDK_GRAB_SUCCESS)
     {
@@ -1612,11 +1601,11 @@ gdk_broadway_toplevel_get_property (GObject    *object,
       break;
 
     case LAST_PROP + GDK_TOPLEVEL_PROP_TITLE:
-      g_value_set_string (value, "");
+      g_value_set_static_string (value, "");
       break;
 
     case LAST_PROP + GDK_TOPLEVEL_PROP_STARTUP_ID:
-      g_value_set_string (value, "");
+      g_value_set_static_string (value, "");
       break;
 
     case LAST_PROP + GDK_TOPLEVEL_PROP_TRANSIENT_FOR:

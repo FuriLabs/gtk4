@@ -15,10 +15,10 @@
           id='foreground'
           font-size='13.333'
           font-weight='400'
-          fill='rgb(0,0,0)'
           cx='0'
           cy='5'
-          r='5'>
+          r='5'
+          gpa:fill='foreground'>
   </circle>
   <circle
           id='warning'
@@ -27,7 +27,8 @@
           fill='rgb(255,255,0)'
           cx='10'
           cy='5'
-          r='5'>
+          r='5'
+          gpa:fill='warning'>
   </circle>
   <circle
           id='blue'

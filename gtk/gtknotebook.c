@@ -377,7 +377,10 @@ enum {
   CHILD_PROP_CHILD,
   CHILD_PROP_TAB,
   CHILD_PROP_MENU,
+  CHILD_N_PROPS
 };
+
+static GParamSpec *props[CHILD_N_PROPS] = { NULL, };
 
 #define GTK_NOTEBOOK_PAGE_FROM_LIST(_glist_)         ((GtkNotebookPage *)(_glist_)->data)
 
@@ -607,110 +610,92 @@ gtk_notebook_page_class_init (GtkNotebookPageClass *class)
    *
    * The child for this page.
    */
-  g_object_class_install_property (object_class,
-                                   CHILD_PROP_CHILD,
-                                   g_param_spec_object ("child", NULL, NULL,
-                                                        GTK_TYPE_WIDGET,
-                                                        GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY));
+  props[CHILD_PROP_CHILD] = g_param_spec_object ("child", NULL, NULL,
+                                                 GTK_TYPE_WIDGET,
+                                                 G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT_ONLY);
 
   /**
    * GtkNotebookPage:tab:
    *
    * The tab widget for this page.
    */
-  g_object_class_install_property (object_class,
-                                   CHILD_PROP_TAB,
-                                   g_param_spec_object ("tab", NULL, NULL,
-                                                        GTK_TYPE_WIDGET,
-                                                        GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY));
+  props[CHILD_PROP_TAB] = g_param_spec_object ("tab", NULL, NULL,
+                                               GTK_TYPE_WIDGET,
+                                               G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT_ONLY);
 
   /**
    * GtkNotebookPage:menu:
    *
    * The label widget displayed in the child's menu entry.
    */
-  g_object_class_install_property (object_class,
-                                   CHILD_PROP_MENU,
-                                   g_param_spec_object ("menu", NULL, NULL,
-                                                        GTK_TYPE_WIDGET,
-                                                        GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY));
+  props[CHILD_PROP_MENU] = g_param_spec_object ("menu", NULL, NULL,
+                                                GTK_TYPE_WIDGET,
+                                                G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT_ONLY);
 
   /**
    * GtkNotebookPage:tab-label:
    *
    * The text of the tab widget.
    */
-  g_object_class_install_property (object_class,
-                                   CHILD_PROP_TAB_LABEL,
-                                   g_param_spec_string ("tab-label", NULL, NULL,
-                                                        NULL,
-                                                         GTK_PARAM_READWRITE));
+  props[CHILD_PROP_TAB_LABEL] = g_param_spec_string ("tab-label", NULL, NULL,
+                                                     NULL,
+                                                     G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkNotebookPage:menu-label:
    *
    * The text of the menu widget.
    */
-  g_object_class_install_property (object_class,
-                                   CHILD_PROP_MENU_LABEL,
-                                   g_param_spec_string ("menu-label", NULL, NULL,
-                                                        NULL,
-                                                         GTK_PARAM_READWRITE));
+  props[CHILD_PROP_MENU_LABEL] = g_param_spec_string ("menu-label", NULL, NULL,
+                                                      NULL,
+                                                      G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkNotebookPage:position:
    *
    * The index of the child in the parent.
    */
-  g_object_class_install_property (object_class,
-                                   CHILD_PROP_POSITION,
-                                   g_param_spec_int ("position", NULL, NULL,
-                                                     -1, G_MAXINT, 0,
-                                                     GTK_PARAM_READWRITE));
+  props[CHILD_PROP_POSITION] = g_param_spec_int ("position", NULL, NULL,
+                                                 -1, G_MAXINT, 0,
+                                                 G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkNotebookPage:tab-expand:
    *
    * Whether to expand the child's tab.
    */
-  g_object_class_install_property (object_class,
-                                   CHILD_PROP_TAB_EXPAND,
-                                   g_param_spec_boolean ("tab-expand", NULL, NULL,
-                                                         FALSE,
-                                                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
+  props[CHILD_PROP_TAB_EXPAND] = g_param_spec_boolean ("tab-expand", NULL, NULL,
+                                                       FALSE,
+                                                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNotebookPage:tab-fill:
    *
    * Whether the child's tab should fill the allocated area.
    */
-  g_object_class_install_property (object_class,
-                                   CHILD_PROP_TAB_FILL,
-                                   g_param_spec_boolean ("tab-fill", NULL, NULL,
-                                                         TRUE,
-                                                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
+  props[CHILD_PROP_TAB_FILL] = g_param_spec_boolean ("tab-fill", NULL, NULL,
+                                                     TRUE,
+                                                     G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNotebookPage:reorderable:
    *
    * Whether the tab is reorderable by user action.
    */
-  g_object_class_install_property (object_class,
-                                   CHILD_PROP_REORDERABLE,
-                                   g_param_spec_boolean ("reorderable", NULL, NULL,
-                                                         FALSE,
-                                                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
+  props[CHILD_PROP_REORDERABLE] = g_param_spec_boolean ("reorderable", NULL, NULL,
+                                                        FALSE,
+                                                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNotebookPage:detachable:
    *
    * Whether the tab is detachable.
    */
-  g_object_class_install_property (object_class,
-                                   CHILD_PROP_DETACHABLE,
-                                   g_param_spec_boolean ("detachable", NULL, NULL,
-                                                         FALSE,
-                                                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
+  props[CHILD_PROP_DETACHABLE] = g_param_spec_boolean ("detachable", NULL, NULL,
+                                                       FALSE,
+                                                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
+
+  g_object_class_install_properties (object_class, CHILD_N_PROPS, props);
 
 }
 
@@ -905,7 +890,7 @@ static void     gtk_notebook_snapshot_tabs   (GtkGizmo         *gizmo,
 static void gtk_notebook_real_remove         (GtkNotebook      *notebook,
                                               GList            *list);
 static void gtk_notebook_update_labels       (GtkNotebook      *notebook);
-static int gtk_notebook_timer                (GtkNotebook      *notebook);
+static gboolean gtk_notebook_timer           (GtkNotebook      *notebook);
 static void gtk_notebook_set_scroll_timer    (GtkNotebook *notebook);
 static int gtk_notebook_page_compare         (gconstpointer     a,
                                               gconstpointer     b);
@@ -1132,7 +1117,7 @@ gtk_notebook_class_init (GtkNotebookClass *class)
       g_param_spec_int ("page", NULL, NULL,
                         -1, G_MAXINT,
                         -1,
-                        GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNotebook:tab-pos:
@@ -1143,7 +1128,7 @@ gtk_notebook_class_init (GtkNotebookClass *class)
       g_param_spec_enum ("tab-pos", NULL, NULL,
                          GTK_TYPE_POSITION_TYPE,
                          GTK_POS_TOP,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNotebook:show-tabs:
@@ -1153,7 +1138,7 @@ gtk_notebook_class_init (GtkNotebookClass *class)
   properties[PROP_SHOW_TABS] =
       g_param_spec_boolean ("show-tabs", NULL, NULL,
                             TRUE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNotebook:show-border:
@@ -1163,7 +1148,7 @@ gtk_notebook_class_init (GtkNotebookClass *class)
   properties[PROP_SHOW_BORDER] =
       g_param_spec_boolean ("show-border", NULL, NULL,
                             TRUE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNotebook:scrollable:
@@ -1173,7 +1158,7 @@ gtk_notebook_class_init (GtkNotebookClass *class)
   properties[PROP_SCROLLABLE] =
       g_param_spec_boolean ("scrollable", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNotebook:enable-popup:
@@ -1183,7 +1168,7 @@ gtk_notebook_class_init (GtkNotebookClass *class)
   properties[PROP_ENABLE_POPUP] =
       g_param_spec_boolean ("enable-popup", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNotebook:group-name:
@@ -1193,7 +1178,7 @@ gtk_notebook_class_init (GtkNotebookClass *class)
   properties[PROP_GROUP_NAME] =
       g_param_spec_string ("group-name", NULL, NULL,
                            NULL,
-                           GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkNotebook:pages:
@@ -1203,7 +1188,7 @@ gtk_notebook_class_init (GtkNotebookClass *class)
   properties[PROP_PAGES] =
       g_param_spec_object ("pages", NULL, NULL,
                            G_TYPE_LIST_MODEL,
-                           GTK_PARAM_READABLE);
+                           G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, LAST_PROP, properties);
 
@@ -1459,28 +1444,28 @@ gtk_notebook_class_init (GtkNotebookClass *class)
   gtk_widget_class_install_action (widget_class, "menu.popup", NULL, gtk_notebook_popup_menu);
 
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_space, 0,
+                                       GDK_KEY_space, GDK_NO_MODIFIER_MASK,
                                        "select-page",
                                        "(b)", FALSE);
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_KP_Space, 0,
+                                       GDK_KEY_KP_Space, GDK_NO_MODIFIER_MASK,
                                        "select-page",
                                        "(b)", FALSE);
 
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_Home, 0,
+                                       GDK_KEY_Home, GDK_NO_MODIFIER_MASK,
                                        "focus-tab",
                                        "(i)", GTK_NOTEBOOK_TAB_FIRST);
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_KP_Home, 0,
+                                       GDK_KEY_KP_Home, GDK_NO_MODIFIER_MASK,
                                        "focus-tab",
                                        "(i)", GTK_NOTEBOOK_TAB_FIRST);
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_End, 0,
+                                       GDK_KEY_End, GDK_NO_MODIFIER_MASK,
                                        "focus-tab",
                                        "(i)", GTK_NOTEBOOK_TAB_LAST);
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_KP_End, 0,
+                                       GDK_KEY_KP_End, GDK_NO_MODIFIER_MASK,
                                        "focus-tab",
                                        "(i)", GTK_NOTEBOOK_TAB_LAST);
 
@@ -1489,7 +1474,7 @@ gtk_notebook_class_init (GtkNotebookClass *class)
                                        "menu.popup",
                                        NULL);
   gtk_widget_class_add_binding_action (widget_class,
-                                       GDK_KEY_Menu, 0,
+                                       GDK_KEY_Menu, GDK_NO_MODIFIER_MASK,
                                        "menu.popup",
                                        NULL);
 
@@ -1925,7 +1910,7 @@ gtk_notebook_reorder_tab (GtkNotebook      *notebook,
   for (element = notebook->children, i = 0; element; element = element->next, i++)
     {
       if (MIN (old_page_num, page_num) <= i && i <= MAX (old_page_num, page_num))
-        g_object_notify (G_OBJECT (element->data), "position");
+        g_object_notify_by_pspec (G_OBJECT (element->data), props[CHILD_PROP_POSITION]);
     }
   g_signal_emit (notebook,
                  notebook_signals[PAGE_REORDERED],
@@ -2737,8 +2722,7 @@ stop_scrolling (GtkNotebook *notebook)
 
   if (notebook->timer)
     {
-      g_source_remove (notebook->timer);
-      notebook->timer = 0;
+      g_clear_handle_id (&notebook->timer, g_source_remove);
       notebook->need_timer = FALSE;
     }
   notebook->click_child = ARROW_NONE;
@@ -2864,7 +2848,7 @@ gtk_notebook_stop_reorder (GtkNotebook *notebook)
               for (element = notebook->children, i = 0; element; element = element->next, i++)
                 {
                   if (MIN (old_page_num, page_num) <= i && i <= MAX (old_page_num, page_num))
-                    g_object_notify (G_OBJECT (element->data), "position");
+                    g_object_notify_by_pspec (G_OBJECT (element->data), props[CHILD_PROP_POSITION]);
                 }
               g_signal_emit (notebook,
                              notebook_signals[PAGE_REORDERED], 0,
@@ -2878,11 +2862,7 @@ gtk_notebook_stop_reorder (GtkNotebook *notebook)
 
       notebook->operation = DRAG_OPERATION_NONE;
 
-      if (notebook->dnd_timer)
-        {
-          g_source_remove (notebook->dnd_timer);
-          notebook->dnd_timer = 0;
-        }
+      g_clear_handle_id (&notebook->dnd_timer, g_source_remove);
 
       gtk_widget_queue_allocate (GTK_WIDGET (notebook));
     }
@@ -2990,7 +2970,7 @@ scroll_notebook_timer (gpointer data)
       gtk_widget_queue_allocate (notebook->tabs_widget);
     }
 
-  return TRUE;
+  return G_SOURCE_CONTINUE;
 }
 
 static gboolean
@@ -3073,11 +3053,7 @@ gtk_notebook_motion (GtkEventController *controller,
       gtk_drag_icon_set_from_paintable (drag, paintable, -2, -2);
       g_object_unref (paintable);
 
-      if (notebook->dnd_timer)
-        {
-          g_source_remove (notebook->dnd_timer);
-          notebook->dnd_timer = 0;
-        }
+      g_clear_handle_id (&notebook->dnd_timer, g_source_remove);
 
       notebook->operation = DRAG_OPERATION_DETACH;
       tab_drag_end (notebook, notebook->cur_page);
@@ -3114,11 +3090,7 @@ gtk_notebook_motion (GtkEventController *controller,
         }
       else
         {
-          if (notebook->dnd_timer)
-            {
-              g_source_remove (notebook->dnd_timer);
-              notebook->dnd_timer = 0;
-            }
+          g_clear_handle_id (&notebook->dnd_timer, g_source_remove);
         }
 
       if (notebook->operation != DRAG_OPERATION_REORDER)
@@ -3402,7 +3374,7 @@ gtk_notebook_switch_page_timeout (gpointer data)
                                                   switch_page));
     }
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static gboolean
@@ -3592,7 +3564,7 @@ gtk_notebook_remove (GtkNotebook *notebook,
 
   while (list)
     {
-      g_object_notify (G_OBJECT (list->data), "position");
+      g_object_notify_by_pspec (G_OBJECT (list->data), props[CHILD_PROP_POSITION]);
       list = list->next;
     }
 
@@ -4185,15 +4157,15 @@ gtk_notebook_insert_notebook_page (GtkNotebook *notebook,
       gtk_notebook_switch_focus_tab (notebook, notebook->focus_tab);
     }
 
-  g_object_notify (G_OBJECT (page), "tab-expand");
-  g_object_notify (G_OBJECT (page), "tab-fill");
-  g_object_notify (G_OBJECT (page), "tab-label");
-  g_object_notify (G_OBJECT (page), "menu-label");
+  g_object_notify_by_pspec (G_OBJECT (page), props[CHILD_PROP_TAB_EXPAND]);
+  g_object_notify_by_pspec (G_OBJECT (page), props[CHILD_PROP_TAB_FILL]);
+  g_object_notify_by_pspec (G_OBJECT (page), props[CHILD_PROP_TAB_LABEL]);
+  g_object_notify_by_pspec (G_OBJECT (page), props[CHILD_PROP_MENU_LABEL]);
 
   list = g_list_nth (notebook->children, position);
   while (list)
     {
-      g_object_notify (G_OBJECT (list->data), "position");
+      g_object_notify_by_pspec (G_OBJECT (list->data), props[CHILD_PROP_POSITION]);
       list = list->next;
     }
 
@@ -4289,8 +4261,7 @@ gtk_notebook_remove_tab_label (GtkNotebook     *notebook,
   if (page->tab_label)
     {
       if (page->mnemonic_activate_signal)
-        g_signal_handler_disconnect (page->tab_label,
-                                     page->mnemonic_activate_signal);
+        g_clear_signal_handler (&page->mnemonic_activate_signal, page->tab_label);
       page->mnemonic_activate_signal = 0;
 
       if (gtk_widget_get_native (page->tab_label) != gtk_widget_get_native (GTK_WIDGET (notebook)) ||
@@ -4390,8 +4361,7 @@ gtk_notebook_real_remove (GtkNotebook *notebook,
 
   if (page->last_focus_child)
     {
-      g_object_remove_weak_pointer (G_OBJECT (page->last_focus_child), (gpointer *)&page->last_focus_child);
-      page->last_focus_child = NULL;
+      g_clear_weak_pointer (&page->last_focus_child);
     }
 
   gtk_widget_unparent (page->tab_widget);
@@ -6657,7 +6627,7 @@ gtk_notebook_set_tab_label (GtkNotebook *notebook,
   if (notebook->menu)
     gtk_notebook_menu_item_recreate (notebook, list);
 
-  g_object_notify (G_OBJECT (page), "tab-label");
+  g_object_notify_by_pspec (G_OBJECT (page), props[CHILD_PROP_TAB_LABEL]);
 }
 
 /**
@@ -6783,7 +6753,7 @@ gtk_notebook_set_menu_label (GtkNotebook *notebook,
 
   if (notebook->menu)
     gtk_notebook_menu_item_create (notebook, page);
-  g_object_notify (G_OBJECT (page), "menu-label");
+  g_object_notify_by_pspec (G_OBJECT (page), props[CHILD_PROP_MENU_LABEL]);
 }
 
 /**
@@ -6928,7 +6898,7 @@ gtk_notebook_reorder_child (GtkNotebook *notebook,
   for (list = notebook->children, i = 0; list; list = list->next, i++)
     {
       if (MIN (old_pos, position) <= i && i <= MAX (old_pos, position))
-        g_object_notify (G_OBJECT (list->data), "position");
+        g_object_notify_by_pspec (G_OBJECT (list->data), props[CHILD_PROP_POSITION]);
     }
 
   g_signal_emit (notebook,
@@ -7043,7 +7013,7 @@ gtk_notebook_set_tab_reorderable (GtkNotebook *notebook,
       else
         gtk_widget_remove_css_class (page->tab_widget, "reorderable-page");
 
-      g_object_notify (G_OBJECT (page), "reorderable");
+      g_object_notify_by_pspec (G_OBJECT (page), props[CHILD_PROP_REORDERABLE]);
     }
 }
 
@@ -7143,7 +7113,7 @@ gtk_notebook_set_tab_detachable (GtkNotebook *notebook,
   if (page->detachable != detachable)
     {
       page->detachable = detachable;
-      g_object_notify (G_OBJECT (page), "detachable");
+      g_object_notify_by_pspec (G_OBJECT (page), props[CHILD_PROP_DETACHABLE]);
     }
 }
 

@@ -1208,7 +1208,7 @@ gtk_list_base_add_move_binding (GtkWidgetClass *widget_class,
 {
   gtk_widget_class_add_binding (widget_class,
                                 keyval,
-                                0,
+                                GDK_NO_MODIFIER_MASK,
                                 gtk_list_base_move_cursor,
                                 "(ubbbi)", orientation, TRUE, FALSE, FALSE, amount);
   gtk_widget_class_add_binding (widget_class,
@@ -1235,7 +1235,7 @@ gtk_list_base_add_custom_move_binding (GtkWidgetClass  *widget_class,
 {
   gtk_widget_class_add_binding (widget_class,
                                 keyval,
-                                0,
+                                GDK_NO_MODIFIER_MASK,
                                 callback,
                                 "(bbb)", TRUE, FALSE, FALSE);
   gtk_widget_class_add_binding (widget_class,
@@ -1295,7 +1295,7 @@ gtk_list_base_class_init (GtkListBaseClass *klass)
     g_param_spec_enum ("orientation", NULL, NULL,
                        GTK_TYPE_ORIENTATION,
                        GTK_ORIENTATION_VERTICAL,
-                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, N_PROPS, properties);
 
@@ -1838,8 +1838,7 @@ gtk_list_base_stop_rubberband (GtkListBase *self)
 
   gtk_list_item_tracker_free (priv->item_manager, priv->rubberband->start_tracker);
   g_clear_pointer (&priv->rubberband->widget, gtk_widget_unparent);
-  g_free (priv->rubberband);
-  priv->rubberband = NULL;
+  g_clear_pointer (&priv->rubberband, g_free);
 
   remove_autoscroll (self);
 }

@@ -323,16 +323,13 @@ gtk_sidebar_row_set_property (GObject      *object,
           {
             g_clear_object (&self->start_icon);
             g_clear_object (&self->end_icon);
-            g_free (self->label);
-            self->label = NULL;
-            g_free (self->tooltip);
-            self->tooltip = NULL;
+            g_clear_pointer (&self->label, g_free);
+            g_clear_pointer (&self->tooltip, g_free);
             gtk_widget_set_tooltip_text (GTK_WIDGET (self), NULL);
             self->ejectable = FALSE;
             self->section_type = GTK_PLACES_SECTION_BOOKMARKS;
             self->place_type = GTK_PLACES_BOOKMARK_PLACEHOLDER;
-            g_free (self->uri);
-            self->uri = NULL;
+            g_clear_pointer (&self->uri, g_free);
             g_clear_object (&self->drive);
             g_clear_object (&self->volume);
             g_clear_object (&self->mount);
@@ -429,12 +426,9 @@ gtk_sidebar_row_finalize (GObject *object)
 
   g_clear_object (&self->start_icon);
   g_clear_object (&self->end_icon);
-  g_free (self->label);
-  self->label = NULL;
-  g_free (self->tooltip);
-  self->tooltip = NULL;
-  g_free (self->uri);
-  self->uri = NULL;
+  g_clear_pointer (&self->label, g_free);
+  g_clear_pointer (&self->tooltip, g_free);
+  g_clear_pointer (&self->uri, g_free);
   g_clear_object (&self->drive);
   g_clear_object (&self->volume);
   g_clear_object (&self->mount);
@@ -470,50 +464,50 @@ gtk_sidebar_row_class_init (GtkSidebarRowClass *klass)
                          GTK_TYPE_PLACES_SIDEBAR,
                          (G_PARAM_READWRITE |
                           G_PARAM_CONSTRUCT_ONLY |
-                          G_PARAM_STATIC_STRINGS));
+                          G_PARAM_STATIC_NAME));
 
   properties [PROP_START_ICON] =
     g_param_spec_object ("start-icon", NULL, NULL,
                          G_TYPE_ICON,
                          (G_PARAM_READWRITE |
-                          G_PARAM_STATIC_STRINGS));
+                          G_PARAM_STATIC_NAME));
 
   properties [PROP_END_ICON] =
     g_param_spec_object ("end-icon", NULL, NULL,
                          G_TYPE_ICON,
                          (G_PARAM_READWRITE |
-                          G_PARAM_STATIC_STRINGS));
+                          G_PARAM_STATIC_NAME));
 
   properties [PROP_LABEL] =
     g_param_spec_string ("label", NULL, NULL,
                          NULL,
                          (G_PARAM_READWRITE |
-                          G_PARAM_STATIC_STRINGS));
+                          G_PARAM_STATIC_NAME));
 
   properties [PROP_TOOLTIP] =
     g_param_spec_string ("tooltip", NULL, NULL,
                          NULL,
                          (G_PARAM_READWRITE |
-                          G_PARAM_STATIC_STRINGS));
+                          G_PARAM_STATIC_NAME));
 
   properties [PROP_EJECTABLE] =
     g_param_spec_boolean ("ejectable", NULL, NULL,
                           FALSE,
                           (G_PARAM_READWRITE |
-                           G_PARAM_STATIC_STRINGS));
+                           G_PARAM_STATIC_NAME));
 
   properties [PROP_ORDER_INDEX] =
     g_param_spec_int ("order-index", NULL, NULL,
                       0, G_MAXINT, 0,
                       (G_PARAM_READWRITE |
-                       G_PARAM_STATIC_STRINGS));
+                       G_PARAM_STATIC_NAME));
 
   properties [PROP_SECTION_TYPE] =
     g_param_spec_enum ("section-type", NULL, NULL,
                        GTK_TYPE_PLACES_SECTION_TYPE,
                        GTK_PLACES_SECTION_INVALID,
                        (G_PARAM_READWRITE |
-                        G_PARAM_STATIC_STRINGS |
+                        G_PARAM_STATIC_NAME |
                         G_PARAM_CONSTRUCT_ONLY));
 
   properties [PROP_PLACE_TYPE] =
@@ -521,7 +515,7 @@ gtk_sidebar_row_class_init (GtkSidebarRowClass *klass)
                        GTK_TYPE_PLACES_PLACE_TYPE,
                        GTK_PLACES_INVALID,
                        (G_PARAM_READWRITE |
-                        G_PARAM_STATIC_STRINGS |
+                        G_PARAM_STATIC_NAME |
                         G_PARAM_CONSTRUCT_ONLY));
 
   properties [PROP_URI] =
@@ -529,41 +523,41 @@ gtk_sidebar_row_class_init (GtkSidebarRowClass *klass)
                          NULL,
                          (G_PARAM_READWRITE |
                           G_PARAM_CONSTRUCT_ONLY |
-                          G_PARAM_STATIC_STRINGS));
+                          G_PARAM_STATIC_NAME));
 
   properties [PROP_DRIVE] =
     g_param_spec_object ("drive", NULL, NULL,
                          G_TYPE_DRIVE,
                          (G_PARAM_READWRITE |
                           G_PARAM_CONSTRUCT_ONLY |
-                          G_PARAM_STATIC_STRINGS));
+                          G_PARAM_STATIC_NAME));
 
   properties [PROP_VOLUME] =
     g_param_spec_object ("volume", NULL, NULL,
                          G_TYPE_VOLUME,
                          (G_PARAM_READWRITE |
                           G_PARAM_CONSTRUCT_ONLY |
-                          G_PARAM_STATIC_STRINGS));
+                          G_PARAM_STATIC_NAME));
 
   properties [PROP_MOUNT] =
     g_param_spec_object ("mount", NULL, NULL,
                          G_TYPE_MOUNT,
                          (G_PARAM_READWRITE |
                           G_PARAM_CONSTRUCT_ONLY |
-                          G_PARAM_STATIC_STRINGS));
+                          G_PARAM_STATIC_NAME));
 
   properties [PROP_CLOUD_PROVIDER_ACCOUNT] =
     g_param_spec_object ("cloud-provider-account", NULL, NULL,
                          G_TYPE_OBJECT,
                          (G_PARAM_READWRITE |
-                          G_PARAM_STATIC_STRINGS));
+                          G_PARAM_STATIC_NAME));
 
   properties [PROP_PLACEHOLDER] =
     g_param_spec_boolean ("placeholder", NULL, NULL,
                           FALSE,
                           (G_PARAM_READWRITE |
                            G_PARAM_CONSTRUCT_ONLY |
-                           G_PARAM_STATIC_STRINGS));
+                           G_PARAM_STATIC_NAME));
 
   g_object_class_install_properties (object_class, LAST_PROP, properties);
 

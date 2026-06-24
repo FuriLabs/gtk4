@@ -178,7 +178,7 @@ gsk_renderer_class_init (GskRendererClass *klass)
   gsk_renderer_properties[PROP_REALIZED] =
     g_param_spec_boolean ("realized", NULL, NULL,
                           FALSE,
-                          G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                          G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   /**
    * GskRenderer:surface:
@@ -188,7 +188,7 @@ gsk_renderer_class_init (GskRendererClass *klass)
   gsk_renderer_properties[PROP_SURFACE] =
     g_param_spec_object ("surface", NULL, NULL,
                          GDK_TYPE_SURFACE,
-                         G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, N_PROPS, gsk_renderer_properties);
 }
@@ -261,9 +261,9 @@ gsk_renderer_do_realize (GskRenderer  *renderer,
 
   priv->is_realized = TRUE;
 
-  g_object_notify (G_OBJECT (renderer), "realized");
+  g_object_notify_by_pspec (G_OBJECT (renderer), gsk_renderer_properties[PROP_REALIZED]);
   if (surface)
-    g_object_notify (G_OBJECT (renderer), "surface");
+    g_object_notify_by_pspec (G_OBJECT (renderer), gsk_renderer_properties[PROP_SURFACE]);
 
   return TRUE;
 }
@@ -368,9 +368,9 @@ gsk_renderer_unrealize (GskRenderer *renderer)
 
   priv->is_realized = FALSE;
 
-  g_object_notify (G_OBJECT (renderer), "realized");
+  g_object_notify_by_pspec (G_OBJECT (renderer), gsk_renderer_properties[PROP_REALIZED]);
   if (has_surface)
-    g_object_notify (G_OBJECT (renderer), "surface");
+    g_object_notify_by_pspec (G_OBJECT (renderer), gsk_renderer_properties[PROP_SURFACE]);
 }
 
 /**

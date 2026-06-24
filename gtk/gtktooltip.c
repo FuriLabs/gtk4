@@ -168,17 +168,9 @@ gtk_tooltip_dispose (GObject *object)
 {
   GtkTooltip *tooltip = GTK_TOOLTIP (object);
 
-  if (tooltip->timeout_id)
-    {
-      g_source_remove (tooltip->timeout_id);
-      tooltip->timeout_id = 0;
-    }
+  g_clear_handle_id (&tooltip->timeout_id, g_source_remove);
 
-  if (tooltip->browse_mode_timeout_id)
-    {
-      g_source_remove (tooltip->browse_mode_timeout_id);
-      tooltip->browse_mode_timeout_id = 0;
-    }
+  g_clear_handle_id (&tooltip->browse_mode_timeout_id, g_source_remove);
 
   gtk_tooltip_set_custom (tooltip, NULL);
   gtk_tooltip_set_surface (tooltip, NULL);
@@ -465,17 +457,13 @@ tooltip_browse_mode_expired (gpointer data)
   tooltip->browse_mode_enabled = FALSE;
   tooltip->browse_mode_timeout_id = 0;
 
-  if (tooltip->timeout_id)
-    {
-      g_source_remove (tooltip->timeout_id);
-      tooltip->timeout_id = 0;
-    }
+  g_clear_handle_id (&tooltip->timeout_id, g_source_remove);
 
   /* destroy tooltip */
   display = gtk_widget_get_display (tooltip->window);
   g_object_set_qdata (G_OBJECT (display), quark_current_tooltip, NULL);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -483,11 +471,7 @@ gtk_tooltip_display_closed (GdkDisplay *display,
 			    gboolean    was_error,
 			    GtkTooltip *tooltip)
 {
-  if (tooltip->timeout_id)
-    {
-      g_source_remove (tooltip->timeout_id);
-      tooltip->timeout_id = 0;
-    }
+  g_clear_handle_id (&tooltip->timeout_id, g_source_remove);
 
   g_object_set_qdata (G_OBJECT (display), quark_current_tooltip, NULL);
 }
@@ -766,11 +750,7 @@ gtk_tooltip_show_tooltip (GdkDisplay *display)
    * mode is enabled.
    */
   tooltip->browse_mode_enabled = TRUE;
-  if (tooltip->browse_mode_timeout_id)
-    {
-      g_source_remove (tooltip->browse_mode_timeout_id);
-      tooltip->browse_mode_timeout_id = 0;
-    }
+  g_clear_handle_id (&tooltip->browse_mode_timeout_id, g_source_remove);
 }
 
 static void
@@ -781,11 +761,7 @@ gtk_tooltip_hide_tooltip (GtkTooltip *tooltip)
   if (!tooltip)
     return;
 
-  if (tooltip->timeout_id)
-    {
-      g_source_remove (tooltip->timeout_id);
-      tooltip->timeout_id = 0;
-    }
+  g_clear_handle_id (&tooltip->timeout_id, g_source_remove);
 
   if (!GTK_TOOLTIP_VISIBLE (tooltip))
     return;
@@ -822,13 +798,13 @@ tooltip_popup_timeout (gpointer data)
    * bindings were reference counting of objects behaves differently.
    */
   if (!tooltip)
-    return FALSE;
+    return G_SOURCE_REMOVE;
 
   gtk_tooltip_show_tooltip (display);
 
   tooltip->timeout_id = 0;
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void

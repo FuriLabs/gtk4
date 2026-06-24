@@ -116,8 +116,11 @@ enum {
   PROP_PRINTER,
   PROP_PAGE_SETUP,
   PROP_SETTINGS,
-  PROP_TRACK_PRINT_STATUS
+  PROP_TRACK_PRINT_STATUS,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
@@ -139,48 +142,36 @@ gtk_print_job_class_init (GtkPrintJobClass *class)
    *
    * The title of the print job.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_TITLE,
-                                   g_param_spec_string ("title", NULL, NULL,
-						        NULL,
-							G_PARAM_READWRITE |
-						        G_PARAM_CONSTRUCT_ONLY));
+  props[PROP_TITLE] = g_param_spec_string ("title", NULL, NULL,
+                                           NULL,
+                                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_NAME);
 
   /**
    * GtkPrintJob:printer:
    *
    * The printer to send the job to.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_PRINTER,
-                                   g_param_spec_object ("printer", NULL, NULL,
-						        GTK_TYPE_PRINTER,
-							G_PARAM_READWRITE |
-						        G_PARAM_CONSTRUCT_ONLY));
+  props[PROP_PRINTER] = g_param_spec_object ("printer", NULL, NULL,
+                                             GTK_TYPE_PRINTER,
+                                             G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_NAME);
 
   /**
    * GtkPrintJob:settings:
    *
    * Printer settings.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_SETTINGS,
-                                   g_param_spec_object ("settings", NULL, NULL,
-						        GTK_TYPE_PRINT_SETTINGS,
-							G_PARAM_READWRITE |
-						        G_PARAM_CONSTRUCT_ONLY));
+  props[PROP_SETTINGS] = g_param_spec_object ("settings", NULL, NULL,
+                                              GTK_TYPE_PRINT_SETTINGS,
+                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_NAME);
 
   /**
    * GtkPrintJob:page-setup:
    *
    * Page setup.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_PAGE_SETUP,
-                                   g_param_spec_object ("page-setup", NULL, NULL,
-						        GTK_TYPE_PAGE_SETUP,
-							G_PARAM_READWRITE |
-						        G_PARAM_CONSTRUCT_ONLY));
+  props[PROP_PAGE_SETUP] = g_param_spec_object ("page-setup", NULL, NULL,
+                                                GTK_TYPE_PAGE_SETUP,
+                                                G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_NAME);
 
   /**
    * GtkPrintJob:track-print-status:
@@ -188,11 +179,11 @@ gtk_print_job_class_init (GtkPrintJobClass *class)
    * %TRUE if the print job will continue to emit status-changed
    * signals after the print data has been setn to the printer.
    */
-  g_object_class_install_property (object_class,
-				   PROP_TRACK_PRINT_STATUS,
-				   g_param_spec_boolean ("track-print-status", NULL, NULL,
-							 FALSE,
-							 G_PARAM_READWRITE));
+  props[PROP_TRACK_PRINT_STATUS] = g_param_spec_boolean ("track-print-status", NULL, NULL,
+                                                         FALSE,
+                                                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
+
+  g_object_class_install_properties (object_class, N_PROPS, props);
 
   /**
    * GtkPrintJob::status-changed:
@@ -287,11 +278,9 @@ gtk_print_job_finalize (GObject *object)
   if (job->page_setup)
     g_object_unref (job->page_setup);
 
-  g_free (job->page_ranges);
-  job->page_ranges = NULL;
+  g_clear_pointer (&job->page_ranges, g_free);
 
-  g_free (job->title);
-  job->title = NULL;
+  g_clear_pointer (&job->title, g_free);
 
   G_OBJECT_CLASS (gtk_print_job_parent_class)->finalize (object);
 }
@@ -578,7 +567,7 @@ gtk_print_job_set_track_print_status (GtkPrintJob *job,
     {
       job->track_print_status = track_status;
 
-      g_object_notify (G_OBJECT (job), "track-print-status");
+      g_object_notify_by_pspec (G_OBJECT (job), props[PROP_TRACK_PRINT_STATUS]);
     }
 }
 

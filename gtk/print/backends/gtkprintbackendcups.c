@@ -1,5 +1,5 @@
 /* GTK - The GIMP Toolkit
- * gtkprintbackendcups.h: Default implementation of GtkPrintBackend
+ * gtkprintbackendcupsprivate.h: Default implementation of GtkPrintBackend
  * for the Common Unix Print System (CUPS)
  * Copyright (C) 2006, 2007 Red Hat, Inc.
  *
@@ -18,7 +18,6 @@
  */
 
 #include "config.h"
-#include <ctype.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -51,12 +50,12 @@
 #include <gtk/gtkprivate.h>
 #include <gtk/gtkmodulesprivate.h>
 
-#include "gtkprintbackendcups.h"
-#include "gtkprintercups.h"
+#include "gtkprintbackendcupsprivate.h"
+#include "gtkprintercupsprivate.h"
 
-#include "gtkcupsutils.h"
-#include "gtkcupssecretsutils.h"
-#include "gtkprintbackendutils.h"
+#include "gtkcupsutilsprivate.h"
+#include "gtkcupssecretsutilsprivate.h"
+#include "gtkprintbackendutilsprivate.h"
 
 #include <gtk/print/gtkprintutilsprivate.h>
 #include "gtkprivate.h"
@@ -924,8 +923,7 @@ gtk_print_backend_cups_finalize (GObject *object)
 
   backend_cups = GTK_PRINT_BACKEND_CUPS (object);
 
-  g_free (backend_cups->default_printer);
-  backend_cups->default_printer = NULL;
+  g_clear_pointer (&backend_cups->default_printer, g_free);
 
   gtk_cups_connection_test_free (backend_cups->cups_connection_test);
   backend_cups->cups_connection_test = NULL;
@@ -1012,11 +1010,7 @@ gtk_print_backend_cups_dispose (GObject *object)
       backend_cups->avahi_service_browser_subscription_id = 0;
     }
 
-  if (backend_cups->unsubscribe_general_subscription_id > 0)
-    {
-      g_source_remove (backend_cups->unsubscribe_general_subscription_id);
-      backend_cups->unsubscribe_general_subscription_id = 0;
-    }
+  g_clear_handle_id (&backend_cups->unsubscribe_general_subscription_id, g_source_remove);
 
   backend_parent_class->dispose (object);
 }
@@ -1077,7 +1071,7 @@ gtk_print_backend_cups_set_password (GtkPrintBackend  *backend,
 
       httpGetHostname (dispatch->request->http, dispatch_hostname, sizeof (dispatch_hostname));
       if (is_address_local (dispatch_hostname))
-        strcpy (dispatch_hostname, "localhost");
+        g_strlcpy (dispatch_hostname, "localhost", sizeof (dispatch_hostname));
 
       if (dispatch->request->need_auth_info)
         {
@@ -1113,7 +1107,7 @@ gtk_print_backend_cups_set_password (GtkPrintBackend  *backend,
     }
 }
 
-static gboolean
+static void
 request_password (gpointer data)
 {
   GtkPrintCupsDispatchWatch *dispatch = data;
@@ -1130,11 +1124,11 @@ request_password (gpointer data)
   int                        i;
 
   if (dispatch->backend->authentication_lock)
-    return G_SOURCE_REMOVE;
+    return;
 
   httpGetHostname (dispatch->request->http, hostname, sizeof (hostname));
   if (is_address_local (hostname))
-    strcpy (hostname, "localhost");
+    g_strlcpy (hostname, "localhost", sizeof (hostname));
 
   if (dispatch->backend->username != NULL)
     username = dispatch->backend->username;
@@ -1243,8 +1237,6 @@ request_password (gpointer data)
   g_free (auth_info_display);
   g_free (auth_info_visible);
   g_free (key);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -1261,8 +1253,7 @@ cups_dispatch_add_poll (GSource *source)
   if (poll_state != dispatch->poll_state && dispatch->data_poll != NULL)
     {
       g_source_remove_poll (source, dispatch->data_poll);
-      g_free (dispatch->data_poll);
-      dispatch->data_poll = NULL;
+      g_clear_pointer (&dispatch->data_poll, g_free);
     }
 
   if (dispatch->request->http != NULL)
@@ -1320,8 +1311,7 @@ check_auth_info (gpointer user_data)
 
           for (i = 0; i < length; i++)
             overwrite_and_free (dispatch->request->auth_info[i]);
-          g_free (dispatch->request->auth_info);
-          dispatch->request->auth_info = NULL;
+          g_clear_pointer (&dispatch->request->auth_info, g_free);
         }
 
       return G_SOURCE_REMOVE;
@@ -1401,6 +1391,7 @@ lookup_auth_info (gpointer user_data)
         }
     }
 
+  /* gobject-linter-ignore-next-line: g_source_id_not_stored */
   g_idle_add (check_auth_info, user_data);
 
   if (dispatch->backend->secrets_service_available && need_secret_auth_info)
@@ -1535,14 +1526,13 @@ cups_dispatch_watch_check (GSource *source)
   if (result && dispatch->data_poll != NULL)
     {
       g_source_remove_poll (source, dispatch->data_poll);
-      g_free (dispatch->data_poll);
-      dispatch->data_poll = NULL;
+      g_clear_pointer (&dispatch->data_poll, g_free);
     }
 
   if (dispatch->request->need_password && dispatch->request->password_state != GTK_CUPS_PASSWORD_REQUESTED)
     {
       dispatch->request->need_password = FALSE;
-      g_idle_add (request_password, dispatch);
+      g_idle_add_once (request_password, dispatch);
       result = FALSE;
     }
 
@@ -1621,7 +1611,7 @@ cups_dispatch_watch_finalize (GSource *source)
 
       httpGetHostname (dispatch->request->http, hostname, sizeof (hostname));
       if (is_address_local (hostname))
-        strcpy (hostname, "localhost");
+        g_strlcpy (hostname, "localhost", sizeof (hostname));
 
       if (dispatch->backend->username != NULL)
         username = dispatch->backend->username;
@@ -1654,15 +1644,13 @@ cups_dispatch_watch_finalize (GSource *source)
       dispatch->backend->requests = g_list_remove (dispatch->backend->requests, dispatch);
 
 
-      g_object_unref (dispatch->backend);
-      dispatch->backend = NULL;
+      g_clear_object (&dispatch->backend);
     }
 
   if (dispatch->data_poll)
     {
       g_source_remove_poll (source, dispatch->data_poll);
-      g_free (dispatch->data_poll);
-      dispatch->data_poll = NULL;
+      g_clear_pointer (&dispatch->data_poll, g_free);
     }
 }
 
@@ -2505,14 +2493,14 @@ cups_create_printer (GtkPrintBackendCups *cups_backend,
   cups_server = g_strdup (cupsGetServer());
 
   if (strcasecmp (uri, hostname) == 0)
-    strcpy (hostname, "localhost");
+    g_strlcpy (hostname, "localhost", sizeof (hostname));
 
   /* if the cups server is local and listening at a unix domain socket
    * then use the socket connection
    */
   if ((strstr (hostname, "localhost") != NULL) &&
       (cups_server[0] == '/'))
-    strcpy (hostname, cups_server);
+    g_strlcpy (hostname, cups_server, sizeof (hostname));
 
   g_free (cups_server);
 
@@ -3940,7 +3928,7 @@ cups_request_printer_list (GtkPrintBackendCups *cups_backend)
   GtkCupsRequest *request;
 
   if (cups_backend->reading_ppds > 0 || cups_backend->list_printers_pending)
-    return TRUE;
+    return G_SOURCE_CONTINUE;
 
   state = gtk_cups_connection_test_get_state (cups_backend->cups_connection_test);
   update_backend_status (cups_backend, state);
@@ -3957,7 +3945,7 @@ cups_request_printer_list (GtkPrintBackendCups *cups_backend)
     cups_backend->list_printers_attempts++;
 
   if (state == GTK_CUPS_CONNECTION_IN_PROGRESS || state == GTK_CUPS_CONNECTION_NOT_AVAILABLE)
-    return TRUE;
+    return G_SOURCE_CONTINUE;
   else
     if (cups_backend->list_printers_attempts > 0)
       cups_backend->list_printers_attempts = 60;
@@ -3982,7 +3970,7 @@ cups_request_printer_list (GtkPrintBackendCups *cups_backend)
 		        request,
 		        NULL);
 
-  return TRUE;
+  return G_SOURCE_CONTINUE;
 }
 
 static void
@@ -4088,7 +4076,7 @@ cups_request_ppd_cb (GtkPrintBackendCups *print_backend,
             gtk_cups_connection_test_new (cups_printer->original_hostname,
                                           cups_printer->original_port);
 
-          if (cups_request_ppd (printer))
+          if (cups_request_ppd (printer) == G_SOURCE_CONTINUE)
             {
               cups_printer->get_remote_ppd_poll = g_timeout_add (50, (GSourceFunc) cups_request_ppd, printer);
               g_source_set_name_by_id (cups_printer->get_remote_ppd_poll, "[gtk] cups_request_ppd");
@@ -4149,7 +4137,7 @@ cups_request_ppd (GtkPrinter *printer)
           else if (cups_printer->get_remote_ppd_attempts != -1)
             cups_printer->get_remote_ppd_attempts++;
 
-          return TRUE;
+          return G_SOURCE_CONTINUE;
         }
 
       gtk_cups_connection_test_free (cups_printer->remote_cups_connection_test);
@@ -4160,7 +4148,7 @@ cups_request_ppd (GtkPrinter *printer)
       if (state == GTK_CUPS_CONNECTION_NOT_AVAILABLE)
         {
           g_signal_emit_by_name (printer, "details-acquired", FALSE);
-          return FALSE;
+          return G_SOURCE_REMOVE;
         }
     }
 
@@ -4207,7 +4195,7 @@ cups_request_ppd (GtkPrinter *printer)
       g_free (resource);
 
       g_signal_emit_by_name (printer, "details-acquired", FALSE);
-      return FALSE;
+      return G_SOURCE_REMOVE;
     }
 
   data->http = http;
@@ -4247,7 +4235,7 @@ cups_request_ppd (GtkPrinter *printer)
   g_free (resource);
   g_free (ppd_filename);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 #endif
 
@@ -4270,18 +4258,18 @@ cups_parse_user_default_printer (const char  *filename,
 
   while (fgets (line, sizeof (line), fp) != NULL)
     {
-      if (strncasecmp (line, "default", 7) != 0 || !isspace (line[7]))
+      if (strncasecmp (line, "default", 7) != 0 || !g_ascii_isspace (line[7]))
         continue;
 
       lineptr = line + 8;
-      while (isspace (*lineptr))
+      while (g_ascii_isspace (*lineptr))
         lineptr++;
 
       if (!*lineptr)
         continue;
 
       defname = lineptr;
-      while (!isspace (*lineptr) && *lineptr && *lineptr != '/')
+      while (!g_ascii_isspace (*lineptr) && *lineptr && *lineptr != '/')
         lineptr++;
 
       *lineptr = '\0';
@@ -4332,22 +4320,22 @@ cups_parse_user_options (const char     *filename,
 
   while (fgets (line, sizeof (line), fp) != NULL)
     {
-      if (strncasecmp (line, "dest", 4) == 0 && isspace (line[4]))
+      if (strncasecmp (line, "dest", 4) == 0 && g_ascii_isspace (line[4]))
         lineptr = line + 4;
-      else if (strncasecmp (line, "default", 7) == 0 && isspace (line[7]))
+      else if (strncasecmp (line, "default", 7) == 0 && g_ascii_isspace (line[7]))
         lineptr = line + 7;
       else
         continue;
 
       /* Skip leading whitespace */
-      while (isspace (*lineptr))
+      while (g_ascii_isspace (*lineptr))
         lineptr++;
 
       if (!*lineptr)
         continue;
 
       name = lineptr;
-      while (!isspace (*lineptr) && *lineptr)
+      while (!g_ascii_isspace (*lineptr) && *lineptr)
         {
           lineptr++;
         }
@@ -4517,7 +4505,7 @@ cups_request_default_printer (GtkPrintBackendCups *print_backend)
   update_backend_status (print_backend, state);
 
   if (state == GTK_CUPS_CONNECTION_IN_PROGRESS || state == GTK_CUPS_CONNECTION_NOT_AVAILABLE)
-    return TRUE;
+    return G_SOURCE_CONTINUE;
 
   request = gtk_cups_request_new_with_username (NULL,
                                                 GTK_CUPS_POST,
@@ -4533,7 +4521,7 @@ cups_request_default_printer (GtkPrintBackendCups *print_backend)
 		        g_object_ref (print_backend),
 		        g_object_unref);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void

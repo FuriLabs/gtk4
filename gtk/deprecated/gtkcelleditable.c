@@ -49,7 +49,7 @@ gtk_cell_editable_default_init (GtkCellEditableInterface *iface)
   g_object_interface_install_property (iface,
                                        g_param_spec_boolean ("editing-canceled", NULL, NULL,
                                        FALSE,
-                                       GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
+                                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY));
 
   /**
    * GtkCellEditable::editing-done:
@@ -117,6 +117,8 @@ gtk_cell_editable_default_init (GtkCellEditableInterface *iface)
  *
  * Note that the @cell_editable is created on-demand for the current edit; its
  * lifetime is temporary and does not persist across other edits and/or cells.
+ *
+ * Deprecated: 4.10
  **/
 void
 gtk_cell_editable_start_editing (GtkCellEditable *cell_editable,

@@ -1,0 +1,30 @@
+clip {
+  clip: 0 0 100 100;
+  child: transform {
+    transform: translate(0, 25) scale(0.25);
+    child: container {
+      stroke {
+        child: color {
+          bounds: -0.5 -0.5 401 201;
+          color: rgb(0,0,0);
+        }
+        path: "\
+M 0 0 h 400 v 200 h -400 z";
+        line-width: 1;
+        line-cap: butt;
+        line-join: miter;
+      }
+      stroke {
+        child: color {
+          bounds: 39.5 19.5 321 161;
+          color: rgb(255,0,0);
+        }
+        path: "\
+M 40 20 h 320 v 160 h -320 z";
+        line-width: 1;
+        line-cap: butt;
+        line-join: miter;
+      }
+    }
+  }
+}

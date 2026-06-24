@@ -65,11 +65,9 @@ enum {
   PROP_SPACING,
   PROP_BASELINE_CHILD,
   PROP_BASELINE_POSITION,
-
-  /* From GtkOrientable */
+  /* GtkOrientable */
   PROP_ORIENTATION,
-
-  N_PROPS = PROP_ORIENTATION
+  N_PROPS,
 };
 
 static GParamSpec *box_layout_props[N_PROPS];
@@ -92,7 +90,7 @@ gtk_box_layout_set_orientation (GtkBoxLayout   *self,
 
   gtk_layout_manager_layout_changed (layout_manager);
 
-  g_object_notify (G_OBJECT (self), "orientation");
+  g_object_notify_by_pspec (G_OBJECT (self), box_layout_props[PROP_ORIENTATION]);
 }
 
 static void
@@ -218,6 +216,7 @@ gtk_box_layout_compute_size (GtkBoxLayout *self,
                              int          *natural_baseline)
 {
   GtkWidget *child;
+  int n_visible_children_above_baseline = 0;
   int n_visible_children = 0;
   int required_min = 0, required_nat = 0;
   int largest_min = 0, largest_nat = 0;
@@ -256,6 +255,7 @@ gtk_box_layout_compute_size (GtkBoxLayout *self,
             {
               above_min += child_min;
               above_nat += child_nat;
+              n_visible_children_above_baseline += 1;
             }
           else if (pos == self->baseline_child)
             {
@@ -283,15 +283,15 @@ gtk_box_layout_compute_size (GtkBoxLayout *self,
           required_min = largest_min * n_visible_children;
           required_nat = largest_nat * n_visible_children;
 
-          above_min = largest_min * MAX (self->baseline_child, 0);
-          above_nat = largest_nat * MAX (self->baseline_child, 0);
+          above_min = largest_min * n_visible_children_above_baseline;
+          above_nat = largest_nat * n_visible_children_above_baseline;
         }
 
       required_min += (n_visible_children - 1) * spacing;
       required_nat += (n_visible_children - 1) * spacing;
 
-      above_min += MAX (self->baseline_child, 0) * spacing;
-      above_nat += MAX (self->baseline_child, 0) * spacing;
+      above_min += n_visible_children_above_baseline * spacing;
+      above_nat += n_visible_children_above_baseline * spacing;
     }
 
   *minimum = required_min;
@@ -1179,6 +1179,7 @@ gtk_box_layout_class_init (GtkBoxLayoutClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   GtkLayoutManagerClass *layout_manager_class = GTK_LAYOUT_MANAGER_CLASS (klass);
+  gpointer iface;
 
   gobject_class->set_property = gtk_box_layout_set_property;
   gobject_class->get_property = gtk_box_layout_get_property;
@@ -1195,8 +1196,7 @@ gtk_box_layout_class_init (GtkBoxLayoutClass *klass)
   box_layout_props[PROP_HOMOGENEOUS] =
     g_param_spec_boolean ("homogeneous", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE |
-                          G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkBoxLayout:spacing:
@@ -1206,8 +1206,7 @@ gtk_box_layout_class_init (GtkBoxLayoutClass *klass)
   box_layout_props[PROP_SPACING] =
     g_param_spec_int ("spacing", NULL, NULL,
                       0, G_MAXINT, 0,
-                      GTK_PARAM_READWRITE |
-                      G_PARAM_EXPLICIT_NOTIFY);
+                      G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkBoxLayout:baseline-child:
@@ -1224,8 +1223,7 @@ gtk_box_layout_class_init (GtkBoxLayoutClass *klass)
   box_layout_props[PROP_BASELINE_CHILD] =
     g_param_spec_int ("baseline-child", NULL, NULL,
                       -1, G_MAXINT, -1,
-                      GTK_PARAM_READWRITE |
-                      G_PARAM_EXPLICIT_NOTIFY);
+                      G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkBoxLayout:baseline-position:
@@ -1240,11 +1238,15 @@ gtk_box_layout_class_init (GtkBoxLayoutClass *klass)
     g_param_spec_enum ("baseline-position", NULL, NULL,
                        GTK_TYPE_BASELINE_POSITION,
                        GTK_BASELINE_POSITION_CENTER,
-                       GTK_PARAM_READWRITE |
-                       G_PARAM_EXPLICIT_NOTIFY);
+                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
+
+  /* GtkOrientable */
+  iface = g_type_default_interface_peek (GTK_TYPE_ORIENTABLE);
+  box_layout_props[PROP_ORIENTATION] =
+      g_param_spec_override ("orientation",
+                             g_object_interface_find_property (iface, "orientation"));
 
   g_object_class_install_properties (gobject_class, N_PROPS, box_layout_props);
-  g_object_class_override_property (gobject_class, PROP_ORIENTATION, "orientation");
 }
 
 static void

@@ -148,8 +148,7 @@ op_unix_free (GtkPrintOperationUnix *op_unix)
   if (op_unix->job)
     {
       if (op_unix->job_status_changed_tag > 0)
-        g_signal_handler_disconnect (op_unix->job,
-                                     op_unix->job_status_changed_tag);
+        g_clear_signal_handler (&op_unix->job_status_changed_tag, op_unix->job);
       g_object_unref (op_unix->job);
     }
 
@@ -1117,7 +1116,7 @@ struct _PrinterFinder
   GtkPrinter *first_printer;
 };
 
-static gboolean
+static void
 find_printer_idle (gpointer data)
 {
   PrinterFinder *finder = data;
@@ -1135,15 +1134,13 @@ find_printer_idle (gpointer data)
   finder->func (printer, finder->data);
 
   printer_finder_free (finder);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
 schedule_finder_callback (PrinterFinder *finder)
 {
   g_assert (!finder->scheduled_callback);
-  g_idle_add (find_printer_idle, finder);
+  g_idle_add_once (find_printer_idle, finder);
   finder->scheduled_callback = TRUE;
 }
 

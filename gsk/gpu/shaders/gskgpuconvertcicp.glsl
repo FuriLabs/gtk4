@@ -3,7 +3,7 @@ textures = 1;
 var_name = "gsk_gpu_convert_cicp";
 struct_name = "GskGpuConvertCicp";
 
-graphene_rect_t rect;
+graphene_rect_t bounds;
 graphene_rect_t tex_rect;
 float opacity;
 guint32 color_primaries;
@@ -11,7 +11,6 @@ guint32 transfer_function;
 guint32 matrix_coefficients;
 guint32 range;
 
-variation: gboolean opacity;
 variation: gboolean premultiply;
 variation: gboolean reverse;
 #endif /* GSK_PREAMBLE */
@@ -19,7 +18,7 @@ variation: gboolean reverse;
 #include "gskgpuconvertcicpinstance.glsl"
 
 PASS(0) vec2 _pos;
-PASS_FLAT(1) Rect _rect;
+PASS_FLAT(1) Rect _bounds;
 PASS(2) vec2 _tex_coord;
 PASS_FLAT(3) float _opacity;
 PASS_FLAT(4) uint _transfer_function;
@@ -207,12 +206,12 @@ rgb_to_yuv (uint mc, out vec3 yuv_add)
 void
 run (out vec2 pos)
 {
-  Rect r = rect_from_gsk (in_rect);
+  Rect b = rect_from_gsk (in_bounds);
 
-  pos = rect_get_position (r);
+  pos = rect_get_position (b);
 
   _pos = pos;
-  _rect = r;
+  _bounds = b;
   _tex_coord = rect_get_coord (rect_from_gsk (in_tex_rect), pos);
   _opacity = in_opacity;
   _transfer_function = in_transfer_function;
@@ -248,78 +247,83 @@ run (out vec2 pos)
 #ifdef GSK_FRAGMENT_SHADER
 
 
-float
-bt709_eotf (float v)
+vec3
+bt709_eotf (vec3 v)
 {
   const float a = 1.099;
   const float d = 0.0812;
 
-  if (abs (v) < d)
-    return v / 4.5;
-  else
-    return sign (v) * pow ((abs (v) + (a - 1.0)) / a, 1.0 / 0.45);
+  vec3 lo = v / 4.5;
+  vec3 hi = sign (v) * pow ((abs (v) + (a - 1.0)) / a, vec3 (1.0 / 0.45));
+  return mix (hi, lo, lessThan (abs (v), vec3 (d)));
 }
 
-float
-bt709_oetf (float v)
+vec3
+bt709_oetf (vec3 v)
 {
   const float a = 1.099;
   const float b = 0.018;
 
-  if (abs (v) < b)
-    return v * 4.5;
-  else
-    return sign (v) * (a * pow (abs (v), 0.45) - (a - 1.0));
+  vec3 lo = v * 4.5;
+  vec3 hi = sign (v) * (a * pow (abs (v), vec3 (0.45)) - (a - 1.0));
+  return mix (hi, lo, lessThan (abs (v), vec3 (b)));
 }
 
-float
-gamma22_oetf (float v)
+vec3
+gamma22_oetf (vec3 v)
 {
-  return sign (v) * pow (abs (v), 1.0 / 2.2);
+  return sign (v) * pow (abs (v), vec3 (1.0 / 2.2));
 }
 
-float
-gamma22_eotf (float v)
+vec3
+gamma22_eotf (vec3 v)
 {
-  return sign (v) * pow (abs (v), 2.2);
+  return sign (v) * pow (abs (v), vec3 (2.2));
 }
 
-float
-gamma28_oetf (float v)
+vec3
+gamma28_oetf (vec3 v)
 {
-  return sign (v) * pow (abs (v), 1.0 / 2.8);
+  return sign (v) * pow (abs (v), vec3 (1.0 / 2.8));
 }
 
-float
-gamma28_eotf (float v)
+vec3
+gamma28_eotf (vec3 v)
 {
-  return sign (v) * pow (abs (v), 2.8);
+  return sign (v) * pow (abs (v), vec3 (2.8));
 }
 
-float
-hlg_eotf (float v)
-{
-  const float a = 0.17883277;
-  const float b = 0.28466892;
-  const float c = 0.55991073;
-
-  if (abs (v) <= 0.5)
-    return sign (v) * ((v * v) / 3.0);
-  else
-    return sign (v) * (exp (((abs (v) - c) / a) + b) / 12.0);
-}
-
-float
-hlg_oetf (float v)
+vec3
+hlg_eotf (vec3 v)
 {
   const float a = 0.17883277;
   const float b = 0.28466892;
   const float c = 0.55991073;
 
-  if (abs (v) <= 1.0 / 12.0)
-    return sign (v) * sqrt (3.0 * abs (v));
-  else
-    return sign (v) * (a * log (12.0 * abs (v) - b) + c);
+  vec3 lo = sign (v) * ((v * v) / 3.0);
+  vec3 hi = sign (v) * ((exp ((abs (v) - c) / a) + b) / 12.0);
+  v = mix (hi, lo, lessThanEqual (abs (v), vec3 (0.5)));
+
+  float Ys = dot (vec3 (0.2627, 0.6780, 0.0593), v);
+  v *= (1000.0 / 203.0) * pow (max (Ys, 0.0), 0.2);
+
+  return v;
+}
+
+vec3
+hlg_oetf (vec3 v)
+{
+  const float a = 0.17883277;
+  const float b = 0.28466892;
+  const float c = 0.55991073;
+
+  float Yd = dot (vec3 (0.2627, 0.6780, 0.0593), v);
+  if (Yd > 0.0)
+    v *= pow (203.0 / 1000.0, 1.0 / 1.2) * pow (Yd, 1.0 / 1.2 - 1.0);
+
+  vec3 lo = sign (v) * sqrt (3.0 * abs (v));
+  vec3 hi = sign (v) * (a * log (12.0 * abs (v) - b) + c);
+  return mix (hi, lo, lessThanEqual (abs (v), vec3 (1.0 / 12.0)));
 }
 
 vec3
@@ -332,37 +336,25 @@ apply_cicp_eotf (vec3 color,
     case 6u:
     case 14u:
     case 15u:
-      return vec3 (bt709_eotf (color.r),
-                   bt709_eotf (color.g),
-                   bt709_eotf (color.b));
+      return bt709_eotf (color);
 
     case 4u:
-      return vec3 (gamma22_eotf (color.r),
-                   gamma22_eotf (color.g),
-                   gamma22_eotf (color.b));
+      return gamma22_eotf (color);
 
     case 5u:
-      return vec3 (gamma28_eotf (color.r),
-                   gamma28_eotf (color.g),
-                   gamma28_eotf (color.b));
+      return gamma28_eotf (color);
 
     case 8u:
       return color;
 
     case 13u:
-      return vec3 (srgb_eotf (color.r),
-                   srgb_eotf (color.g),
-                   srgb_eotf (color.b));
+      return srgb_eotf (color);
 
     case 16u:
-      return vec3 (pq_eotf (color.r),
-                   pq_eotf (color.g),
-                   pq_eotf (color.b));
+      return pq_eotf (color);
 
     case 18u:
-      return vec3 (hlg_eotf (color.r),
-                   hlg_eotf (color.g),
-                   hlg_eotf (color.b));
+      return hlg_eotf (color);
 
     default:
       return vec3 (1.0, 0.2, 0.8);
@@ -379,37 +371,25 @@ apply_cicp_oetf (vec3 color,
     case 6u:
     case 14u:
     case 15u:
-      return vec3 (bt709_oetf (color.r),
-                   bt709_oetf (color.g),
-                   bt709_oetf (color.b));
+      return bt709_oetf (color);
 
     case 4u:
-      return vec3 (gamma22_oetf (color.r),
-                   gamma22_oetf (color.g),
-                   gamma22_oetf (color.b));
+      return gamma22_oetf (color);
 
     case 5u:
-      return vec3 (gamma28_oetf (color.r),
-                   gamma28_oetf (color.g),
-                   gamma28_oetf (color.b));
+      return gamma28_oetf (color);
 
     case 8u:
       return color;
 
     case 13u:
-      return vec3 (srgb_oetf (color.r),
-                   srgb_oetf (color.g),
-                   srgb_oetf (color.b));
+      return srgb_oetf (color);
 
     case 16u:
-      return vec3 (pq_oetf (color.r),
-                   pq_oetf (color.g),
-                   pq_oetf (color.b));
+      return pq_oetf (color);
 
     case 18u:
-      return vec3 (hlg_oetf (color.r),
-                   hlg_oetf (color.g),
-                   hlg_oetf (color.b));
+      return hlg_oetf (color);
 
     default:
       return vec3 (1.0, 0.2, 0.8);
@@ -475,9 +455,7 @@ run (out vec4 color,
   else
     pixel = convert_color_from_cicp (pixel);
 
-  float alpha = rect_coverage (_rect, _pos);
-  if (VARIATION_OPACITY)
-    alpha *= _opacity;
+  float alpha = rect_coverage (_bounds, _pos) * _opacity;
 
   color = output_color_alpha (pixel, alpha);
 

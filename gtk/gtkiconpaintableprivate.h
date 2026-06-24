@@ -2,6 +2,7 @@
 
 #include "gtkicontheme.h"
 #include "gtkiconpaintable.h"
+#include "gtk/svg/gtksvg.h"
 #include "gsk/gsktypes.h"
 
 typedef struct {
@@ -31,14 +32,6 @@ struct _GtkIconPaintable
   guint is_svg          : 1;
   guint is_resource     : 1;
   guint is_symbolic     : 1;
-  guint only_fg         : 1;
-  guint single_path     : 1;
-  guint has_strokes     : 1;
-
-  /* Debug flags for testing svg->node conversion */
-  guint allow_node     : 1;
-  guint allow_recolor  : 1;
-  guint allow_mask     : 1;
 
   /* Cached information if we go ahead and try to load the icon.
    *
@@ -48,7 +41,7 @@ struct _GtkIconPaintable
    */
   GMutex texture_lock;
 
-  GskRenderNode *node;
+  GdkPaintable *paintable;
   double width;
   double height;
 };
@@ -64,10 +57,6 @@ GtkIconPaintable *gtk_icon_paintable_new_for_loadable (GLoadableIcon *loadable,
                                                        int            desired_size,
                                                        int            desired_scale);
 
-void gtk_icon_paintable_set_debug (GtkIconPaintable *icon,
-                                   gboolean          allow_node,
-                                   gboolean          allow_recolor,
-                                   gboolean          allow_mask);
 void gtk_icon_paintable_set_icon_name (GtkIconPaintable *icon,
                                        const char       *name);
 

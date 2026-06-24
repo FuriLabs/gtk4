@@ -20,7 +20,7 @@
 #include "gdkdevice-wayland-private.h"
 #include "gdksurface-wayland-private.h"
 
-#include "gdkeventsource.h"
+#include "gdkeventsourceprivate.h"
 #include "gdkclipboard-wayland.h"
 #include "gdkclipboardprivate.h"
 #include "gdkcursorprivate.h"
@@ -424,8 +424,7 @@ data_device_leave (void                  *data,
   if (seat->drop == NULL)
     return;
 
-  g_object_unref (seat->pointer_info.focus);
-  seat->pointer_info.focus = NULL;
+  g_clear_object (&seat->pointer_info.focus);
 
   gdk_drop_emit_leave_event (seat->drop,
                              FALSE,
@@ -732,26 +731,9 @@ pointer_handle_leave (void              *data,
 {
   GdkWaylandSeat *seat = data;
   GdkEvent *event;
-  GdkDeviceGrabInfo *grab;
 
   if (!seat->pointer_info.focus)
     return;
-
-  grab = _gdk_display_get_last_device_grab (seat->display,
-                                            seat->logical_pointer);
-
-  if (seat->pointer_info.button_modifiers != 0 &&
-      grab && grab->implicit)
-    {
-      gulong display_serial;
-
-      display_serial = _gdk_display_get_next_serial (seat->display);
-      _gdk_display_end_device_grab (seat->display, seat->logical_pointer,
-                                    display_serial, NULL, TRUE);
-      _gdk_display_device_grab_update (seat->display,
-                                       seat->logical_pointer,
-                                       display_serial);
-    }
 
   event = gdk_crossing_event_new (GDK_LEAVE_NOTIFY,
                                   seat->pointer_info.focus,
@@ -770,8 +752,7 @@ pointer_handle_leave (void              *data,
                   "leave, seat %p surface %p",
                   seat, seat->pointer_info.focus);
 
-  g_object_unref (seat->pointer_info.focus);
-  seat->pointer_info.focus = NULL;
+  g_clear_object (&seat->pointer_info.focus);
   seat->pointer_info.cursor_shape = 0;
 
   seat->pointer_info.has_cursor_surface = FALSE;
@@ -1160,11 +1141,7 @@ get_key_repeat (GdkWaylandSeat *seat,
 static void
 stop_key_repeat (GdkWaylandSeat *seat)
 {
-  if (seat->repeat_timer)
-    {
-      g_source_remove (seat->repeat_timer);
-      seat->repeat_timer = 0;
-    }
+  g_clear_handle_id (&seat->repeat_timer, g_source_remove);
 
   g_clear_pointer (&seat->repeat_callback, wl_callback_destroy);
 }
@@ -1471,8 +1448,7 @@ keyboard_handle_leave (void               *data,
                                seat->logical_keyboard,
                                FALSE);
 
-  g_object_unref (seat->keyboard_focus);
-  seat->keyboard_focus = NULL;
+  g_clear_object (&seat->keyboard_focus);
   seat->repeat_key = 0;
   seat->key_modifiers = 0;
 
@@ -2865,8 +2841,7 @@ gdk_wayland_tablet_flush_frame_events (GdkWaylandTabletData *tablet,
                           GDK_CROSSING_NORMAL, time);
       else if (tablet_event->event_type == GDK_PROXIMITY_OUT)
         {
-          g_object_unref (tablet->pointer_info.focus);
-          tablet->pointer_info.focus = NULL;
+          g_clear_object (&tablet->pointer_info.focus);
           tablet->pointer_info.has_cursor_surface = FALSE;
 
           tablet->pointer_info.button_modifiers &=
@@ -4155,149 +4130,43 @@ gdk_wayland_seat_get_capabilities (GdkSeat *seat)
   return caps;
 }
 
-static void
-gdk_wayland_seat_set_grab_surface (GdkWaylandSeat *seat,
-                                  GdkSurface      *surface)
-{
-  if (seat->grab_surface)
-    {
-      _gdk_wayland_surface_set_grab_seat (seat->grab_surface, NULL);
-      g_object_remove_weak_pointer (G_OBJECT (seat->grab_surface),
-                                    (gpointer *) &seat->grab_surface);
-      seat->grab_surface = NULL;
-    }
-
-  if (surface)
-    {
-      seat->grab_surface = surface;
-      g_object_add_weak_pointer (G_OBJECT (surface),
-                                 (gpointer *) &seat->grab_surface);
-      _gdk_wayland_surface_set_grab_seat (surface, GDK_SEAT (seat));
-    }
-}
-
 static GdkGrabStatus
-gdk_wayland_seat_grab (GdkSeat                *seat,
-                       GdkSurface             *surface,
-                       GdkSeatCapabilities     capabilities,
-                       gboolean                owner_events,
-                       GdkCursor              *cursor,
-                       GdkEvent               *event,
-                       GdkSeatGrabPrepareFunc  prepare_func,
-                       gpointer                prepare_func_data)
+gdk_wayland_seat_grab (GdkSeat    *seat,
+                       GdkSurface *surface)
 {
   GdkWaylandSeat *wayland_seat = GDK_WAYLAND_SEAT (seat);
-  uint32_t evtime = event ? gdk_event_get_time (event) : GDK_CURRENT_TIME;
-  GdkDisplay *display = gdk_seat_get_display (seat);
-  gulong next_serial;
+  uint32_t evtime = GDK_CURRENT_TIME;
   GList *l;
 
-  if (surface == NULL || GDK_SURFACE_DESTROYED (surface))
+  if (surface == NULL || GDK_SURFACE_DESTROYED (surface) ||
+      !gdk_wayland_surface_has_surface (surface))
     return GDK_GRAB_NOT_VIEWABLE;
 
-  gdk_wayland_seat_set_grab_surface (wayland_seat, surface);
   wayland_seat->grab_time = evtime;
 
-  if (prepare_func)
-    (prepare_func) (seat, surface, prepare_func_data);
-
-  if (!gdk_wayland_surface_has_surface (surface))
+  if (wayland_seat->logical_pointer)
     {
-      gdk_wayland_seat_set_grab_surface (wayland_seat, NULL);
-      return GDK_GRAB_NOT_VIEWABLE;
-    }
-
-  if (wayland_seat->logical_pointer &&
-      capabilities & GDK_SEAT_CAPABILITY_POINTER)
-    {
-      next_serial = _gdk_display_get_next_serial (display);
-
-      _gdk_display_add_device_grab (display,
-                                    wayland_seat->logical_pointer,
-                                    surface,
-                                    owner_events,
-                                    GDK_ALL_EVENTS_MASK,
-                                    next_serial,
-                                    evtime,
-                                    FALSE);
-
-      _gdk_display_device_grab_update (display, wayland_seat->logical_pointer,
-                                       next_serial);
-
       gdk_wayland_device_maybe_emit_grab_crossing (wayland_seat->logical_pointer,
                                                    surface, evtime);
-
-      gdk_wayland_seat_set_global_cursor (seat, cursor);
-      g_set_object (&wayland_seat->cursor, cursor);
-      gdk_wayland_device_update_surface_cursor (wayland_seat->logical_pointer);
     }
 
-  if (wayland_seat->logical_touch &&
-      capabilities & GDK_SEAT_CAPABILITY_TOUCH)
+  if (wayland_seat->logical_touch)
     {
-      next_serial = _gdk_display_get_next_serial (display);
-
-      _gdk_display_add_device_grab (display,
-                                    wayland_seat->logical_touch,
-                                    surface,
-                                    owner_events,
-                                    GDK_ALL_EVENTS_MASK,
-                                    next_serial,
-                                    evtime,
-                                    FALSE);
-
-      _gdk_display_device_grab_update (display, wayland_seat->logical_touch,
-                                       next_serial);
-
       gdk_wayland_device_maybe_emit_grab_crossing (wayland_seat->logical_touch,
                                                    surface, evtime);
     }
 
-  if (wayland_seat->logical_keyboard &&
-      capabilities & GDK_SEAT_CAPABILITY_KEYBOARD)
+  if (wayland_seat->logical_keyboard)
     {
-      next_serial = _gdk_display_get_next_serial (display);
-
-      _gdk_display_add_device_grab (display,
-                                    wayland_seat->logical_keyboard,
-                                    surface,
-                                    owner_events,
-                                    GDK_ALL_EVENTS_MASK,
-                                    next_serial,
-                                    evtime,
-                                    FALSE);
-
-      _gdk_display_device_grab_update (display, wayland_seat->logical_keyboard,
-                                       next_serial);
-
       gdk_wayland_device_maybe_emit_grab_crossing (wayland_seat->logical_keyboard,
                                                    surface, evtime);
-
-      /* Inhibit shortcuts if the seat grab is for the keyboard only */
-      if (capabilities == GDK_SEAT_CAPABILITY_KEYBOARD)
-        gdk_wayland_surface_inhibit_shortcuts (surface, seat);
     }
 
-  if (wayland_seat->tablets &&
-      capabilities & GDK_SEAT_CAPABILITY_TABLET_STYLUS)
+  if (wayland_seat->tablets)
     {
       for (l = wayland_seat->tablets; l; l = l->next)
         {
           GdkWaylandTabletData *tablet = l->data;
-
-          next_serial = _gdk_display_get_next_serial (display);
-
-          _gdk_display_add_device_grab (display,
-                                        tablet->logical_device,
-                                        surface,
-                                        owner_events,
-                                        GDK_ALL_EVENTS_MASK,
-                                        _gdk_display_get_next_serial (display),
-                                        evtime,
-                                        FALSE);
-
-          _gdk_display_device_grab_update (display, tablet->logical_device,
-                                           next_serial);
 
           gdk_wayland_device_update_surface_cursor (tablet->logical_device);
 
@@ -4310,26 +4179,24 @@ gdk_wayland_seat_grab (GdkSeat                *seat,
         }
     }
 
+  if (GDK_IS_WAYLAND_POPUP (surface))
+    _gdk_wayland_surface_set_grab_seat (surface, seat);
+
   return GDK_GRAB_SUCCESS;
 }
 
 static void
-gdk_wayland_seat_ungrab (GdkSeat *seat)
+gdk_wayland_seat_ungrab (GdkSeat    *seat,
+                         GdkSurface *surface)
 {
   GdkWaylandSeat *wayland_seat = GDK_WAYLAND_SEAT (seat);
-  GdkDisplay *display = gdk_seat_get_display (seat);
-  GdkDeviceGrabInfo *grab;
-  GList *l;
 
   g_clear_object (&wayland_seat->grab_cursor);
-
-  gdk_wayland_seat_set_grab_surface (wayland_seat, NULL);
 
   if (wayland_seat->logical_pointer)
     {
       gdk_wayland_device_maybe_emit_ungrab_crossing (wayland_seat->logical_pointer,
                                                      GDK_CURRENT_TIME);
-
       gdk_wayland_device_update_surface_cursor (wayland_seat->logical_pointer);
     }
 
@@ -4343,23 +4210,7 @@ gdk_wayland_seat_ungrab (GdkSeat *seat)
         gdk_wayland_surface_restore_shortcuts (prev_focus, seat);
     }
 
-  if (wayland_seat->logical_touch)
-    {
-      grab = _gdk_display_get_last_device_grab (display, wayland_seat->logical_touch);
-
-      if (grab)
-        grab->serial_end = grab->serial_start;
-    }
-
-  for (l = wayland_seat->tablets; l; l = l->next)
-    {
-      GdkWaylandTabletData *tablet = l->data;
-
-      grab = _gdk_display_get_last_device_grab (display, tablet->logical_device);
-
-      if (grab)
-        grab->serial_end = grab->serial_start;
-    }
+  _gdk_wayland_surface_set_grab_seat (surface, NULL);
 }
 
 static GdkDevice *

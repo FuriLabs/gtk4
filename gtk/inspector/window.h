@@ -72,6 +72,7 @@ typedef struct
   GtkWidget *controllers;
   GtkWidget *magnifier;
   GtkWidget *a11y;
+  GtkWidget *svg;
   GtkWidget *sidebar_revealer;
   GtkWidget *css_editor;
   GtkWidget *visual;
@@ -166,6 +167,8 @@ void                    gtk_inspector_trace_event            (GdkEvent          
 void                    gtk_inspector_add_profile_node       (GdkDisplay           *display,
                                                               GskRenderNode        *node,
                                                               GskRenderNode        *profile_node);
+
+void                    gtk_inspector_print_general_info     (GdkDisplay           *display);
 
 
 G_END_DECLS

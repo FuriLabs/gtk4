@@ -23,7 +23,7 @@
 #include "gtkbutton.h"
 #include "gtkcellareabox.h"
 #include "gtkcellareacontext.h"
-#include "gtkcelllayout.h"
+#include "gtkcelllayoutprivate.h"
 #include "gtkdragsourceprivate.h"
 #include "gtkframe.h"
 #include "gtkimage.h"
@@ -277,95 +277,95 @@ gtk_tree_view_column_class_init (GtkTreeViewColumnClass *class)
   tree_column_props[PROP_VISIBLE] =
       g_param_spec_boolean ("visible", NULL, NULL,
                             TRUE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   tree_column_props[PROP_RESIZABLE] =
       g_param_spec_boolean ("resizable", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   tree_column_props[PROP_X_OFFSET] =
       g_param_spec_int ("x-offset", NULL, NULL,
                         -G_MAXINT, G_MAXINT,
                         0,
-                        GTK_PARAM_READABLE);
+                        G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   tree_column_props[PROP_WIDTH] =
       g_param_spec_int ("width", NULL, NULL,
                         0, G_MAXINT,
                         0,
-                        GTK_PARAM_READABLE);
+                        G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   tree_column_props[PROP_SPACING] =
       g_param_spec_int ("spacing", NULL, NULL,
                         0, G_MAXINT,
                         0,
-                        GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   tree_column_props[PROP_SIZING] =
       g_param_spec_enum ("sizing", NULL, NULL,
                          GTK_TYPE_TREE_VIEW_COLUMN_SIZING,
                          GTK_TREE_VIEW_COLUMN_GROW_ONLY,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   tree_column_props[PROP_FIXED_WIDTH] =
       g_param_spec_int ("fixed-width", NULL, NULL,
                          -1, G_MAXINT,
                          -1,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   tree_column_props[PROP_MIN_WIDTH] =
       g_param_spec_int ("min-width", NULL, NULL,
                         -1, G_MAXINT,
                         -1,
-                        GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   tree_column_props[PROP_MAX_WIDTH] =
       g_param_spec_int ("max-width", NULL, NULL,
                         -1, G_MAXINT,
                         -1,
-                        GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   tree_column_props[PROP_TITLE] =
       g_param_spec_string ("title", NULL, NULL,
                            "",
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   tree_column_props[PROP_EXPAND] =
       g_param_spec_boolean ("expand", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   tree_column_props[PROP_CLICKABLE] =
       g_param_spec_boolean ("clickable", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   tree_column_props[PROP_WIDGET] =
       g_param_spec_object ("widget", NULL, NULL,
                            GTK_TYPE_WIDGET,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   tree_column_props[PROP_ALIGNMENT] =
       g_param_spec_float ("alignment", NULL, NULL,
                           0.0, 1.0, 0.0,
-                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   tree_column_props[PROP_REORDERABLE] =
       g_param_spec_boolean ("reorderable", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   tree_column_props[PROP_SORT_INDICATOR] =
       g_param_spec_boolean ("sort-indicator", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   tree_column_props[PROP_SORT_ORDER] =
       g_param_spec_enum ("sort-order", NULL, NULL,
                          GTK_TYPE_SORT_TYPE,
                          GTK_SORT_ASCENDING,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkTreeViewColumn:sort-column-id:
@@ -377,7 +377,7 @@ gtk_tree_view_column_class_init (GtkTreeViewColumnClass *class)
       g_param_spec_int ("sort-column-id", NULL, NULL,
                         -1, G_MAXINT,
                         -1,
-                        GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkTreeViewColumn:cell-area:
@@ -390,7 +390,7 @@ gtk_tree_view_column_class_init (GtkTreeViewColumnClass *class)
   tree_column_props[PROP_CELL_AREA] =
       g_param_spec_object ("cell-area", NULL, NULL,
                            GTK_TYPE_CELL_AREA,
-                           GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT_ONLY);
 
   g_object_class_install_properties (object_class, LAST_PROP, tree_column_props);
 }
@@ -481,9 +481,8 @@ gtk_tree_view_column_dispose (GObject *object)
       g_signal_handler_disconnect (priv->cell_area_context,
 				   priv->context_changed_signal);
 
-      g_object_unref (priv->cell_area_context);
+      g_clear_object (&priv->cell_area_context);
 
-      priv->cell_area_context = NULL;
       priv->context_changed_signal = 0;
     }
 
@@ -494,17 +493,12 @@ gtk_tree_view_column_dispose (GObject *object)
       g_signal_handler_disconnect (priv->cell_area,
 				   priv->remove_editable_signal);
 
-      g_object_unref (priv->cell_area);
-      priv->cell_area = NULL;
+      g_clear_object (&priv->cell_area);
       priv->add_editable_signal = 0;
       priv->remove_editable_signal = 0;
     }
 
-  if (priv->child)
-    {
-      g_object_unref (priv->child);
-      priv->child = NULL;
-    }
+  g_clear_object (&priv->child);
 
   g_clear_object (&priv->button);
 
@@ -1202,10 +1196,10 @@ gtk_tree_view_column_context_changed  (GtkCellAreaContext      *context,
    * we also block the handler when explicitly resetting the context
    * so as to avoid some infinite stack recursion.
    */
-  if (!strcmp (pspec->name, "minimum-width") ||
-      !strcmp (pspec->name, "natural-width") ||
-      !strcmp (pspec->name, "minimum-height") ||
-      !strcmp (pspec->name, "natural-height"))
+  if (strcmp (pspec->name, "minimum-width") == 0 ||
+      strcmp (pspec->name, "natural-width") == 0 ||
+      strcmp (pspec->name, "minimum-height") == 0 ||
+      strcmp (pspec->name, "natural-height") == 0)
     _gtk_tree_view_column_cell_set_dirty (tree_column, TRUE);
 }
 
@@ -1269,12 +1263,7 @@ _gtk_tree_view_column_unset_model (GtkTreeViewColumn *column,
 {
   GtkTreeViewColumnPrivate *priv = column->priv;
 
-  if (priv->sort_column_changed_signal)
-    {
-      g_signal_handler_disconnect (old_model,
-				   priv->sort_column_changed_signal);
-      priv->sort_column_changed_signal = 0;
-    }
+  g_clear_signal_handler (&priv->sort_column_changed_signal, old_model);
   gtk_tree_view_column_set_sort_indicator (column, FALSE);
 }
 
@@ -1310,11 +1299,7 @@ _gtk_tree_view_column_unset_tree_view (GtkTreeViewColumn *column)
 
   gtk_widget_unparent (priv->button);
 
-  if (priv->property_changed_signal)
-    {
-      g_signal_handler_disconnect (priv->tree_view, priv->property_changed_signal);
-      priv->property_changed_signal = 0;
-    }
+  g_clear_signal_handler (&priv->property_changed_signal, priv->tree_view);
 
   if (priv->sort_column_changed_signal)
     {
@@ -2613,17 +2598,9 @@ gtk_tree_view_column_set_sort_column_id (GtkTreeViewColumn *tree_column,
     {
       GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (priv->tree_view));
 
-      if (priv->sort_clicked_signal)
-	{
-	  g_signal_handler_disconnect (tree_column, priv->sort_clicked_signal);
-	  priv->sort_clicked_signal = 0;
-	}
+      g_clear_signal_handler (&priv->sort_clicked_signal, tree_column);
 
-      if (priv->sort_column_changed_signal)
-	{
-	  g_signal_handler_disconnect (model, priv->sort_column_changed_signal);
-	  priv->sort_column_changed_signal = 0;
-	}
+      g_clear_signal_handler (&priv->sort_column_changed_signal, model);
 
       gtk_tree_view_column_set_sort_order (tree_column, GTK_SORT_ASCENDING);
       gtk_tree_view_column_set_sort_indicator (tree_column, FALSE);

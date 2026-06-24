@@ -16,7 +16,7 @@
  *
  * Authors: Florian Leander Singer <sp1rit@disroot.org>
  */
-/*	$OpenBSD: diffreg.c,v 1.95 2021/10/24 21:24:16 deraadt Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.96 2026/04/01 17:47:46 deraadt Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -329,6 +329,12 @@ diffreg(const char *filename, GInputStream *file1, GInputStream *file2, GOutputS
 	op.ixnew = g_realloc_n(op.ixnew, op.len[1] + 2, sizeof(*op.ixnew));
 	check(&op, f1, f2, flags);
 	output(&op, f1, f2, flags);
+
+	g_free (op.context_vec_start);
+	g_free (op.ixold);
+	g_free (op.ixnew);
+	g_free (op.J);
+
 closem:
 	if (op.anychange && rval == D_SAME)
 		rval = D_DIFFER;
@@ -890,7 +896,7 @@ static int
 readhash(GInputStream *f, int flags)
 {
 	int i, t, space;
-	int sum;
+	unsigned int sum;
 
 	sum = 1;
 	space = 0;

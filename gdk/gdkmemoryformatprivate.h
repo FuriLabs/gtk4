@@ -36,6 +36,10 @@
 #include <vulkan/vulkan.h>
 #endif
 
+#ifdef HAVE_GSTREAMER
+#include <gst/video/video.h>
+#endif
+
 G_BEGIN_DECLS
 
 typedef enum {
@@ -47,7 +51,6 @@ typedef enum {
 typedef enum {
   GDK_MEMORY_NONE,
   GDK_MEMORY_U8,
-  GDK_MEMORY_U8_SRGB,
   GDK_MEMORY_FLOAT16,
   GDK_MEMORY_FLOAT32,
 
@@ -81,8 +84,7 @@ GdkMemoryFormat         gdk_memory_format_get_mipmap_format (GdkMemoryFormat    
 gboolean                gdk_memory_format_get_rgba_format   (GdkMemoryFormat             format,
                                                              GdkMemoryFormat            *out_format,
                                                              GdkSwizzle                 *out_swizzle);
-GdkMemoryDepth          gdk_memory_format_get_depth         (GdkMemoryFormat             format,
-                                                             gboolean                    srgb) G_GNUC_CONST;
+GdkMemoryDepth          gdk_memory_format_get_depth         (GdkMemoryFormat             format) G_GNUC_CONST;
 gsize                   gdk_memory_format_get_n_planes      (GdkMemoryFormat             format) G_GNUC_CONST;
 gsize                   gdk_memory_format_get_block_width   (GdkMemoryFormat             format) G_GNUC_CONST;
 gsize                   gdk_memory_format_get_block_height  (GdkMemoryFormat             format) G_GNUC_CONST;
@@ -98,7 +100,6 @@ gsize                   gdk_memory_format_get_plane_block_height
 gsize                   gdk_memory_format_get_plane_block_bytes
                                                             (GdkMemoryFormat             format,
                                                              gsize                       plane) G_GNUC_CONST;
-gboolean                gdk_memory_depth_is_srgb            (GdkMemoryDepth              depth) G_GNUC_CONST;
 GdkMemoryDepth          gdk_memory_depth_merge              (GdkMemoryDepth              depth1,
                                                              GdkMemoryDepth              depth2) G_GNUC_CONST;
 GdkMemoryFormat         gdk_memory_depth_get_format         (GdkMemoryDepth              depth) G_GNUC_CONST;
@@ -125,6 +126,7 @@ VkFormat                gdk_memory_format_vk_format         (GdkMemoryFormat    
                                                              gboolean                   *needs_ycbcr_conversion);
 VkFormat                gdk_memory_format_vk_srgb_format    (GdkMemoryFormat             format);
 #endif
+
 gboolean                gdk_memory_format_find_by_dmabuf_fourcc     (guint32                     fourcc,
                                                                      gboolean                    premultiplied,
                                                                      GdkMemoryFormat            *out_format,
@@ -140,8 +142,19 @@ gboolean                gdk_memory_format_find_by_dxgi_format       (DXGI_FORMAT
 DXGI_FORMAT             gdk_memory_format_get_dxgi_format           (GdkMemoryFormat             format,
                                                                      guint                      *out_shader_4_component_mapping);
 DXGI_FORMAT             gdk_memory_format_get_dxgi_srgb_format      (GdkMemoryFormat             format);
-guint32                 gdk_memory_format_get_dmabuf_fourcc (GdkMemoryFormat             format);
-const char *            gdk_memory_format_get_name          (GdkMemoryFormat             format);
+
+gboolean                gdk_memory_format_find_by_cairo_format      (cairo_format_t              cairo_format,
+                                                                     GdkMemoryFormat            *out_memory_format);
+cairo_format_t          gdk_memory_format_get_cairo_format          (GdkMemoryFormat             format);
+
+#ifdef HAVE_GSTREAMER
+gboolean                gdk_memory_format_find_by_gst_video_format  (GstVideoFormat              gst_format,
+                                                                     gboolean                    premultiplied,
+                                                                     GdkMemoryFormat            *out_memory_format);
+GstVideoFormat          gdk_memory_format_get_gst_video_format      (GdkMemoryFormat             format);
+#endif
+
+const char *            gdk_memory_format_get_name                  (GdkMemoryFormat             format);
 
 void                    gdk_memory_convert                  (guchar                     *dest_data,
                                                              const GdkMemoryLayout      *dest_layout,

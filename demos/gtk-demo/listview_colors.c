@@ -260,21 +260,21 @@ gtk_color_class_init (GtkColorClass *klass)
   gobject_class->finalize = gtk_color_finalize;
 
   color_properties[PROP_NAME] =
-    g_param_spec_string ("name", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+    g_param_spec_string ("name", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_NAME);
   color_properties[PROP_COLOR] =
-    g_param_spec_boxed ("color", NULL, NULL, GDK_TYPE_RGBA, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+    g_param_spec_boxed ("color", NULL, NULL, GDK_TYPE_RGBA, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_NAME);
   color_properties[PROP_RED] =
-    g_param_spec_float ("red", NULL, NULL, 0, 1, 0, G_PARAM_READABLE);
+    g_param_spec_float ("red", NULL, NULL, 0, 1, 0, G_PARAM_READABLE | G_PARAM_STATIC_NAME);
   color_properties[PROP_GREEN] =
-    g_param_spec_float ("green", NULL, NULL, 0, 1, 0, G_PARAM_READABLE);
+    g_param_spec_float ("green", NULL, NULL, 0, 1, 0, G_PARAM_READABLE | G_PARAM_STATIC_NAME);
   color_properties[PROP_BLUE] =
-    g_param_spec_float ("blue", NULL, NULL, 0, 1, 0, G_PARAM_READABLE);
+    g_param_spec_float ("blue", NULL, NULL, 0, 1, 0, G_PARAM_READABLE | G_PARAM_STATIC_NAME);
   color_properties[PROP_HUE] =
-    g_param_spec_int ("hue", NULL, NULL, 0, 360, 0, G_PARAM_READABLE);
+    g_param_spec_int ("hue", NULL, NULL, 0, 360, 0, G_PARAM_READABLE | G_PARAM_STATIC_NAME);
   color_properties[PROP_SATURATION] =
-    g_param_spec_int ("saturation", NULL, NULL, 0, 100, 0, G_PARAM_READABLE);
+    g_param_spec_int ("saturation", NULL, NULL, 0, 100, 0, G_PARAM_READABLE | G_PARAM_STATIC_NAME);
   color_properties[PROP_VALUE] =
-    g_param_spec_int ("value", NULL, NULL, 0, 100, 0, G_PARAM_READABLE);
+    g_param_spec_int ("value", NULL, NULL, 0, 100, 0, G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, N_COLOR_PROPS, color_properties);
 }
@@ -297,6 +297,16 @@ gtk_color_new (const char *name,
                          NULL);
 
   return result;
+}
+
+GdkPaintable * color_paintable_new (const char *name,
+                                    float r, float g, float b);
+
+GdkPaintable *
+color_paintable_new (const char *name,
+                     float r, float g, float b)
+{
+  return (GdkPaintable *) gtk_color_new (name, r, g, b);
 }
 
 #define N_COLORS (256 * 256 * 256)
@@ -467,7 +477,7 @@ gtk_color_list_dispose (GObject *object)
     }
   g_free (self->colors);
 
-  G_OBJECT_CLASS (gtk_color_parent_class)->finalize (object);
+  G_OBJECT_CLASS (gtk_color_list_parent_class)->dispose (object);
 }
 
 static void
@@ -480,7 +490,7 @@ gtk_color_list_class_init (GtkColorListClass *klass)
   gobject_class->dispose = gtk_color_list_dispose;
 
   list_properties[LIST_PROP_SIZE] =
-    g_param_spec_uint ("size", NULL, NULL, 0, N_COLORS, 0, G_PARAM_READWRITE);
+    g_param_spec_uint ("size", NULL, NULL, 0, N_COLORS, 0, G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, N_LIST_PROPS, list_properties);
 }
@@ -701,6 +711,7 @@ refill (GtkWidget    *button,
         GtkColorList *colors)
 {
   gtk_color_list_set_size (colors, 0);
+  /* gobject-linter-ignore-next-line: g_source_id_not_stored */
   gtk_widget_add_tick_callback (button, add_colors, g_object_ref (colors), g_object_unref);
 }
  

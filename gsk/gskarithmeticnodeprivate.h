@@ -32,22 +32,17 @@ typedef struct _GskArithmeticNode                    GskArithmeticNode;
 
 GType                   gsk_arithmetic_node_get_type            (void) G_GNUC_CONST;
 GskRenderNode *         gsk_arithmetic_node_new                 (const graphene_rect_t  *bounds,
+                                                                 GskRectSnap             snap,
                                                                  GskRenderNode          *first,
                                                                  GskRenderNode          *second,
                                                                  GdkColorState          *color_state,
-                                                                 float                   k1,
-                                                                 float                   k2,
-                                                                 float                   k3,
-                                                                 float                   k4);
+                                                                 const float             factors[4]);
 
 GskRenderNode *         gsk_arithmetic_node_get_first_child     (const GskRenderNode    *node) G_GNUC_PURE;
 GskRenderNode *         gsk_arithmetic_node_get_second_child    (const GskRenderNode    *node) G_GNUC_PURE;
-void                    gsk_arithmetic_node_get_factors         (const GskRenderNode    *node,
-                                                                 float                  *k1,
-                                                                 float                  *k2,
-                                                                 float                  *k3,
-                                                                 float                  *k4);
+const float *           gsk_arithmetic_node_get_factors         (const GskRenderNode    *node) G_GNUC_PURE;
 GdkColorState *         gsk_arithmetic_node_get_color_state     (const GskRenderNode    *node) G_GNUC_PURE;
+GskRectSnap             gsk_arithmetic_node_get_snap            (const GskRenderNode    *node) G_GNUC_PURE;
 
 G_END_DECLS
 

@@ -230,7 +230,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_display_supports_shadow_width@Base 4.13.8
  gdk_display_sync@Base 4.0.0
  gdk_display_translate_key@Base 4.0.0
- gdk_dmabuf_downloader_get_type@Base 4.13.5
  gdk_dmabuf_error_get_type@Base 4.13.5
  gdk_dmabuf_error_quark@Base 4.13.5
  gdk_dmabuf_formats_contains@Base 4.13.5
@@ -586,7 +585,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_surface_new_toplevel@Base 4.0.0
  gdk_surface_queue_render@Base 4.0.0
  gdk_surface_request_layout@Base 4.0.0
- gdk_surface_request_motion@Base 4.0.0
  gdk_surface_set_cursor@Base 4.0.0
  gdk_surface_set_device_cursor@Base 4.0.0
  gdk_surface_set_input_region@Base 4.0.0
@@ -1845,8 +1843,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_color_dialog_set_title@Base 4.9.2
  gtk_color_dialog_set_with_alpha@Base 4.9.2
  gtk_color_picker_kwin_new@Base 4.0.0
- gtk_color_picker_portal_new@Base 4.0.0
- gtk_color_picker_shell_new@Base 4.0.0
  gtk_column_view_append_column@Base 4.0.0
  gtk_column_view_cell_get_child@Base 4.12.0
  gtk_column_view_cell_get_focusable@Base 4.12.0
@@ -2364,7 +2360,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_file_chooser_add_choice@Base 4.0.0
  gtk_file_chooser_add_filter@Base 4.0.0
  gtk_file_chooser_add_shortcut_folder@Base 4.0.0
- gtk_file_chooser_cell_get_type@Base 4.9.2
  gtk_file_chooser_dialog_get_type@Base 4.0.0
  gtk_file_chooser_dialog_new@Base 4.0.0
  gtk_file_chooser_error_get_type@Base 4.0.0
@@ -3522,7 +3517,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_password_entry_new@Base 4.0.0
  gtk_password_entry_set_extra_menu@Base 4.0.0
  gtk_password_entry_set_show_peek_icon@Base 4.0.0
- gtk_path_bar_get_type@Base 4.0.0
  gtk_pick_flags_get_type@Base 4.0.0
  gtk_picture_get_alternative_text@Base 4.0.0
  gtk_picture_get_can_shrink@Base 4.0.0

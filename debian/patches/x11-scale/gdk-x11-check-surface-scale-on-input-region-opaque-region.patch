@@ -18,10 +18,10 @@ Bug-Ubuntu: https://launchpad.net/bugs/1924689
  4 files changed, 114 insertions(+), 4 deletions(-)
 
 diff --git a/gdk/gdksurface.c b/gdk/gdksurface.c
-index 7e8a106..95ee848 100644
+index 80b1055..c234e8d 100644
 --- a/gdk/gdksurface.c
 +++ b/gdk/gdksurface.c
-@@ -554,6 +554,9 @@ gdk_surface_class_init (GdkSurfaceClass *klass)
+@@ -580,6 +580,9 @@ gdk_surface_class_init (GdkSurfaceClass *klass)
    klass->get_buffer_size = gdk_surface_default_get_buffer_size;
    klass->create_subsurface = gdk_surface_real_create_subsurface;
    klass->set_opaque_region = gdk_surface_default_set_opaque_region;
@@ -31,7 +31,7 @@ index 7e8a106..95ee848 100644
  
    /**
     * GdkSurface:cursor:
-@@ -2029,6 +2032,12 @@ gdk_surface_get_root_coords (GdkSurface *surface,
+@@ -2010,6 +2013,12 @@ gdk_surface_get_root_coords (GdkSurface *surface,
    GDK_SURFACE_GET_CLASS (surface)->get_root_coords (surface, x, y, root_x, root_y);
  }
  
@@ -44,7 +44,7 @@ index 7e8a106..95ee848 100644
  /**
   * gdk_surface_set_input_region:
   * @surface: a `GdkSurface`
-@@ -2054,12 +2063,14 @@ void
+@@ -2035,12 +2044,14 @@ void
  gdk_surface_set_input_region (GdkSurface     *surface,
                                cairo_region_t *region)
  {
@@ -60,7 +60,7 @@ index 7e8a106..95ee848 100644
      return;
  
    if (surface->input_region)
-@@ -2070,7 +2081,7 @@ gdk_surface_set_input_region (GdkSurface     *surface,
+@@ -2051,7 +2062,7 @@ gdk_surface_set_input_region (GdkSurface     *surface,
    else
      surface->input_region = NULL;
  
@@ -69,7 +69,7 @@ index 7e8a106..95ee848 100644
  }
  
  static void
-@@ -2605,6 +2616,14 @@ gdk_surface_update_opaque_region (GdkSurface *self)
+@@ -2529,6 +2540,14 @@ gdk_surface_update_opaque_region (GdkSurface *self)
    g_clear_pointer (&region, cairo_region_destroy);
  }
  
@@ -84,7 +84,7 @@ index 7e8a106..95ee848 100644
  /**
   * gdk_surface_set_opaque_region:
   * @surface: a top-level `GdkSurface`
-@@ -2639,7 +2658,10 @@ gdk_surface_set_opaque_region (GdkSurface      *surface,
+@@ -2563,7 +2582,10 @@ gdk_surface_set_opaque_region (GdkSurface      *surface,
    g_return_if_fail (GDK_IS_SURFACE (surface));
    g_return_if_fail (!GDK_SURFACE_DESTROYED (surface));
  
@@ -96,7 +96,7 @@ index 7e8a106..95ee848 100644
      return;
  
    g_clear_pointer (&priv->opaque_region, cairo_region_destroy);
-@@ -2650,18 +2672,29 @@ gdk_surface_set_opaque_region (GdkSurface      *surface,
+@@ -2574,18 +2596,29 @@ gdk_surface_set_opaque_region (GdkSurface      *surface,
    gdk_surface_update_opaque_region (surface);
  }
  
@@ -128,7 +128,7 @@ index 7e8a106..95ee848 100644
  
    priv->opaque_rect = opaque;
 diff --git a/gdk/gdksurfaceprivate.h b/gdk/gdksurfaceprivate.h
-index 6375c59..26e92eb 100644
+index 7ed3c09..16cf631 100644
 --- a/gdk/gdksurfaceprivate.h
 +++ b/gdk/gdksurfaceprivate.h
 @@ -125,6 +125,8 @@ struct _GdkSurfaceClass
@@ -153,7 +153,7 @@ index 6375c59..26e92eb 100644
    void         (* set_opaque_region)      (GdkSurface      *surface,
                                             cairo_region_t *region);
    void         (* request_layout)         (GdkSurface     *surface);
-@@ -358,4 +366,16 @@ void                    gdk_surface_set_attached_context                (GdkSurf
+@@ -359,4 +367,16 @@ void                    gdk_surface_set_attached_context                (GdkSurf
                                                                           GdkDrawContext         *context);
  GdkDrawContext *        gdk_surface_get_attached_context                (GdkSurface             *self);
  
@@ -171,10 +171,10 @@ index 6375c59..26e92eb 100644
 +
  G_END_DECLS
 diff --git a/gdk/x11/gdksurface-x11.c b/gdk/x11/gdksurface-x11.c
-index 498b209..4271dd5 100644
+index 9e5d7b5..937c682 100644
 --- a/gdk/x11/gdksurface-x11.c
 +++ b/gdk/x11/gdksurface-x11.c
-@@ -2982,6 +2982,21 @@ gdk_x11_surface_get_device_state (GdkSurface     *surface,
+@@ -2976,6 +2976,21 @@ gdk_x11_surface_get_device_state (GdkSurface     *surface,
    return *x >= 0 && *y >= 0 && *x < surface->width && *y < surface->height;
  }
  
@@ -193,10 +193,10 @@ index 498b209..4271dd5 100644
 +  return FALSE;
 +}
 +
- static void 
+ static void
  gdk_x11_surface_set_input_region (GdkSurface     *surface,
                                    cairo_region_t *input_region)
-@@ -2995,6 +3010,8 @@ gdk_x11_surface_set_input_region (GdkSurface     *surface,
+@@ -2989,6 +3004,8 @@ gdk_x11_surface_set_input_region (GdkSurface     *surface,
    if (!gdk_display_supports_input_shapes (GDK_SURFACE_DISPLAY (surface)))
      return;
  
@@ -205,7 +205,7 @@ index 498b209..4271dd5 100644
    if (input_region == NULL)
      {
        XShapeCombineMask (GDK_SURFACE_XDISPLAY (surface),
-@@ -4751,6 +4768,38 @@ gdk_x11_surface_set_frame_sync_enabled (GdkSurface *surface,
+@@ -4746,6 +4763,38 @@ gdk_x11_surface_set_frame_sync_enabled (GdkSurface *surface,
    GDK_X11_SURFACE (surface)->frame_sync_enabled = FALSE;
  }
  
@@ -244,7 +244,7 @@ index 498b209..4271dd5 100644
  static void
  gdk_x11_surface_set_opaque_region (GdkSurface      *surface,
                                    cairo_region_t *region)
-@@ -4763,6 +4812,8 @@ gdk_x11_surface_set_opaque_region (GdkSurface      *surface,
+@@ -4758,6 +4807,8 @@ gdk_x11_surface_set_opaque_region (GdkSurface      *surface,
    if (GDK_SURFACE_DESTROYED (surface))
      return;
  
@@ -253,7 +253,7 @@ index 498b209..4271dd5 100644
    if (region != NULL)
      {
        int i, nrects;
-@@ -4863,6 +4914,7 @@ gdk_x11_surface_class_init (GdkX11SurfaceClass *klass)
+@@ -4858,6 +4909,7 @@ gdk_x11_surface_class_init (GdkX11SurfaceClass *klass)
    impl_class->get_geometry = gdk_x11_surface_get_geometry;
    impl_class->get_root_coords = gdk_x11_surface_get_root_coords;
    impl_class->get_device_state = gdk_x11_surface_get_device_state;
@@ -261,7 +261,7 @@ index 498b209..4271dd5 100644
    impl_class->set_input_region = gdk_x11_surface_set_input_region;
    impl_class->destroy = gdk_x11_surface_destroy;
    impl_class->beep = gdk_x11_surface_beep;
-@@ -4870,6 +4922,8 @@ gdk_x11_surface_class_init (GdkX11SurfaceClass *klass)
+@@ -4865,6 +4917,8 @@ gdk_x11_surface_class_init (GdkX11SurfaceClass *klass)
    impl_class->destroy_notify = gdk_x11_surface_destroy_notify;
    impl_class->drag_begin = _gdk_x11_surface_drag_begin;
    impl_class->get_scale = gdk_x11_surface_get_scale;
@@ -271,10 +271,10 @@ index 498b209..4271dd5 100644
    impl_class->request_layout = gdk_x11_surface_request_layout;
    impl_class->compute_size = gdk_x11_surface_compute_size;
 diff --git a/gdk/x11/gdksurface-x11.h b/gdk/x11/gdksurface-x11.h
-index 7e5a138..bf3376c 100644
+index ca8bcaf..d7f59ae 100644
 --- a/gdk/x11/gdksurface-x11.h
 +++ b/gdk/x11/gdksurface-x11.h
-@@ -65,6 +65,9 @@ struct _GdkX11Surface
+@@ -66,6 +66,9 @@ struct _GdkX11Surface
  
    int surface_scale;
  

@@ -32,9 +32,9 @@
  * It presents a `GListModel` and fills it asynchronously with the
  * `GFileInfo`s returned from that function.
  *
- * The `GFileInfo`s in the list have some attributes in the recent
- * namespace added: `recent::private` (boolean) and `recent:applications`
- * (stringv).
+ * The `GFileInfo`s in the list have some attributes in the recent namespace
+ * added: `recent::private` (boolean) and `recent:applications` (stringv). They
+ * also have the `GFile` referred by the URI in `standard::file` attribute.
  */
 
 enum {
@@ -225,7 +225,7 @@ gtk_bookmark_list_class_init (GtkBookmarkListClass *class)
   properties[PROP_FILENAME] =
       g_param_spec_string ("filename", NULL, NULL,
                            NULL,
-                           GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_EXPLICIT_NOTIFY);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT_ONLY | G_PARAM_EXPLICIT_NOTIFY);
   /**
    * GtkBookmarkList:attributes:
    *
@@ -234,7 +234,7 @@ gtk_bookmark_list_class_init (GtkBookmarkListClass *class)
   properties[PROP_ATTRIBUTES] =
       g_param_spec_string ("attributes", NULL, NULL,
                            NULL,
-                           GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkBookmarkList:io-priority:
@@ -244,7 +244,7 @@ gtk_bookmark_list_class_init (GtkBookmarkListClass *class)
   properties[PROP_IO_PRIORITY] =
       g_param_spec_int ("io-priority", NULL, NULL,
                         -G_MAXINT, G_MAXINT, G_PRIORITY_DEFAULT,
-                        GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkBookmarkList:item-type:
@@ -256,7 +256,7 @@ gtk_bookmark_list_class_init (GtkBookmarkListClass *class)
   properties[PROP_ITEM_TYPE] =
     g_param_spec_gtype ("item-type", NULL, NULL,
                         G_TYPE_FILE_INFO,
-                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                        G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkBookmarkList:loading: (getter is_loading)
@@ -266,7 +266,7 @@ gtk_bookmark_list_class_init (GtkBookmarkListClass *class)
   properties[PROP_LOADING] =
       g_param_spec_boolean ("loading", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkBookmarkList:n-items:
@@ -278,7 +278,7 @@ gtk_bookmark_list_class_init (GtkBookmarkListClass *class)
   properties[PROP_N_ITEMS] =
     g_param_spec_uint ("n-items", NULL, NULL,
                        0, G_MAXUINT, 0,
-                       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                       G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, NUM_PROPERTIES, properties);
 }
@@ -401,7 +401,7 @@ gtk_bookmark_list_start_loading (GtkBookmarkList *self)
           file = g_file_new_for_uri (uri);
           g_file_query_info_async (file,
                                    self->attributes,
-                                   0,
+                                   G_FILE_QUERY_INFO_NONE,
                                    self->io_priority,
                                    self->cancellable,
                                    got_file_info,

@@ -14,8 +14,10 @@ typedef struct _GskGpuDevice            GskGpuDevice;
 typedef struct _GskGpuFrame             GskGpuFrame;
 typedef struct _GskGpuGlobalsInstance   GskGpuGlobalsInstance;
 typedef struct _GskGpuImage             GskGpuImage;
+typedef struct _GskGpuOcclusion         GskGpuOcclusion;
 typedef struct _GskGpuOp                GskGpuOp;
 typedef struct _GskGpuOpClass           GskGpuOpClass;
+typedef struct _GskGpuRenderPass        GskGpuRenderPass;
 typedef guint32                         GskGpuShaderFlags;
 typedef struct _GskGpuShaderOp          GskGpuShaderOp;
 typedef struct _GskGpuShaderOpClass     GskGpuShaderOpClass;
@@ -62,14 +64,17 @@ typedef enum {
   GSK_GPU_SHADER_CLIP_RECT,
   GSK_GPU_SHADER_CLIP_ROUNDED
 } GskGpuShaderClip;
-#define GSK_GPU_SHADER_CLIP_SHIFT 2
-#define GSK_GPU_SHADER_CLIP_MASK ((1 << GSK_GPU_SHADER_CLIP_SHIFT) - 1)
+/* includes 1 bit for the has_clip_mask flag */
+#define GSK_GPU_SHADER_CLIP_SHIFT 4
+#define GSK_GPU_SHADER_CLIP_MASK ((1 << (GSK_GPU_SHADER_CLIP_SHIFT - 1)) - 1)
 
 typedef enum {
   GSK_GPU_BLEND_NONE,
   GSK_GPU_BLEND_OVER,
   GSK_GPU_BLEND_ADD,
   GSK_GPU_BLEND_CLEAR,
+  GSK_GPU_BLEND_MASK,
+  /* dual blend modes start here */
   GSK_GPU_BLEND_MASK_ONE,
   GSK_GPU_BLEND_MASK_ALPHA,
   GSK_GPU_BLEND_MASK_INV_ALPHA,
@@ -158,6 +163,7 @@ typedef enum {
   GSK_GPU_OPTIMIZE_OCCLUSION_CULLING    = 1 <<  6,
   GSK_GPU_OPTIMIZE_REPEAT               = 1 <<  7,
   GSK_GPU_OPTIMIZE_DUAL_BLEND           = 1 <<  8,
-  GSK_GPU_OPTIMIZE_PROFILE              = 1 <<  9,
+  GSK_GPU_OPTIMIZE_DAMAGE               = 1 <<  9,
+  GSK_GPU_OPTIMIZE_PROFILE              = 1 << 10,
 } GskGpuOptimizations;
 

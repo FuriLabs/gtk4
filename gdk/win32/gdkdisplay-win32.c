@@ -33,6 +33,7 @@
 #include "gdkwin32display.h"
 #include "gdkwin32surface.h"
 #include "gdkmonitor-win32.h"
+#include "gdkapplaunchcontext-win32.h"
 #include "gdkwin32.h"
 #include "gdkvulkancontext-win32.h"
 
@@ -517,7 +518,11 @@ gdk_win32_display_init_dcomp (GdkWin32Display *self)
   const GUID my_IID_IDCompositionDevice = { 0xC37EA93A,0xE7AA,0x450D, { 0xB1,0x6F,0x97,0x46,0xCB,0x04,0x07,0xF3 } };
   IDXGIDevice *dxgi_device;
 
-  if (!gdk_has_feature (GDK_FEATURE_DCOMP))
+  /* DComp is opt-in (GDK_DEBUG=dcomp) because it causes issues with the GL and
+   * Vulkan renderers (e.g. black borders). The Cairo renderer works fine with
+   * DComp. Re-enable DComp by default when the D3D12 renderer lands and
+   * becomes the default on Windows. */
+  if (!GDK_DISPLAY_DEBUG_CHECK (GDK_DISPLAY (self), DCOMP))
     return;
   
   hr_warn (ID3D11Device_QueryInterface (self->d3d11_device, &IID_IDXGIDevice, (void **) &dxgi_device));
@@ -940,6 +945,21 @@ gdk_win32_display_finalize (GObject *object)
   G_OBJECT_CLASS (gdk_win32_display_parent_class)->finalize (object);
 }
 
+/* Polyfill for GetSystemMetricsForDPI */
+static int WINAPI
+get_system_metrics_for_dpi_fallback (int index, UINT dpi)
+{
+  HDC hdc;
+  int system_dpi;
+
+  /* Polyfill GetDpiForSystem () */
+  hdc = GetDC (NULL);
+  system_dpi = GetDeviceCaps (hdc, LOGPIXELSX);
+  ReleaseDC (NULL, hdc);
+
+  return MulDiv (GetSystemMetrics (index), dpi, system_dpi);
+}
+
 static void
 _gdk_win32_enable_hidpi (GdkWin32Display *display)
 {
@@ -964,7 +984,11 @@ _gdk_win32_enable_hidpi (GdkWin32Display *display)
         (funcGTDAC) GetProcAddress (user32, "GetThreadDpiAwarenessContext");
       display->user32_dpi_funcs.areDACEqual =
         (funcADACE) GetProcAddress (user32, "AreDpiAwarenessContextsEqual");
+      display->user32_dpi_funcs.getSysMetrics =
+        (funcGSMFD) GetProcAddress (user32, "GetSystemMetricsForDpi");
     }
+  if (!display->user32_dpi_funcs.getSysMetrics)
+    display->user32_dpi_funcs.getSysMetrics = get_system_metrics_for_dpi_fallback;
 
   if (g_getenv ("GDK_WIN32_DISABLE_HIDPI") == NULL)
     {
@@ -1409,7 +1433,7 @@ gdk_win32_display_class_init (GdkWin32DisplayClass *klass)
   display_class->flush = gdk_win32_display_flush;
   display_class->queue_events = _gdk_win32_display_queue_events;
 
-  //? display_class->get_app_launch_context = _gdk_win32_display_get_app_launch_context;
+  display_class->get_app_launch_context = gdk_win32_display_get_app_launch_context;
 
   display_class->get_next_serial = gdk_win32_display_get_next_serial;
   display_class->notify_startup_complete = gdk_win32_display_notify_startup_complete;

@@ -348,13 +348,13 @@ gtk_action_helper_class_init (GtkActionHelperClass *class)
   class->finalize = gtk_action_helper_finalize;
 
   gtk_action_helper_pspecs[PROP_ENABLED] = g_param_spec_boolean ("enabled", NULL, NULL, FALSE,
-                                                                 G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                                                                 G_PARAM_READABLE | G_PARAM_STATIC_NAME);
   gtk_action_helper_pspecs[PROP_ACTIVE] = g_param_spec_boolean ("active", NULL, NULL, FALSE,
-                                                                G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                                                                G_PARAM_READABLE | G_PARAM_STATIC_NAME);
   gtk_action_helper_pspecs[PROP_ROLE] = g_param_spec_enum ("role", NULL, NULL,
                                                            GTK_TYPE_BUTTON_ROLE,
                                                            GTK_BUTTON_ROLE_NORMAL,
-                                                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                                                           G_PARAM_READABLE | G_PARAM_STATIC_NAME);
   g_object_class_install_properties (class, N_PROPS, gtk_action_helper_pspecs);
 }
 
@@ -476,6 +476,7 @@ gtk_action_helper_set_action_name (GtkActionHelper *helper,
   if (helper->active != was_active)
     gtk_action_helper_report_change (helper, PROP_ACTIVE);
 
+  /* gobject-linter-ignore-next-line: use_g_object_notify_by_pspec */
   g_object_notify (G_OBJECT (helper->widget), "action-name");
 }
 
@@ -502,11 +503,7 @@ gtk_action_helper_set_action_target_value (GtkActionHelper *helper,
       return;
     }
 
-  if (helper->target)
-    {
-      g_variant_unref (helper->target);
-      helper->target = NULL;
-    }
+  g_clear_pointer (&helper->target, g_variant_unref);
 
   if (target_value)
     helper->target = g_variant_ref_sink (target_value);
@@ -552,6 +549,7 @@ gtk_action_helper_set_action_target_value (GtkActionHelper *helper,
   if (helper->active != was_active)
     gtk_action_helper_report_change (helper, PROP_ACTIVE);
 
+  /* gobject-linter-ignore-next-line: use_g_object_notify_by_pspec */
   g_object_notify (G_OBJECT (helper->widget), "action-target");
 }
 

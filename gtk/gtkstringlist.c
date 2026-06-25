@@ -86,6 +86,8 @@ enum {
   PROP_NUM_PROPERTIES
 };
 
+static GParamSpec *props[PROP_NUM_PROPERTIES] = { NULL, };
+
 G_DEFINE_TYPE (GtkStringObject, gtk_string_object, G_TYPE_OBJECT);
 
 static void
@@ -127,7 +129,6 @@ static void
 gtk_string_object_class_init (GtkStringObjectClass *class)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (class);
-  GParamSpec *pspec;
 
   object_class->finalize = gtk_string_object_finalize;
   object_class->get_property = gtk_string_object_get_property;
@@ -137,12 +138,13 @@ gtk_string_object_class_init (GtkStringObjectClass *class)
    *
    * The string.
    */
-  pspec = g_param_spec_string ("string", NULL, NULL,
-                               NULL,
-                               G_PARAM_READABLE |
-                               G_PARAM_STATIC_STRINGS);
+  props[PROP_STRING] = g_param_spec_string ("string", NULL, NULL,
+                                            NULL,
+                                            G_PARAM_READABLE |
+                                            G_PARAM_STATIC_NAME);
 
-  g_object_class_install_property (object_class, PROP_STRING, pspec);
+
+  g_object_class_install_properties (object_class, PROP_NUM_PROPERTIES, props);
 
 }
 
@@ -499,7 +501,7 @@ gtk_string_list_class_init (GtkStringListClass *class)
   properties[PROP_ITEM_TYPE] =
     g_param_spec_gtype ("item-type", NULL, NULL,
                         G_TYPE_OBJECT,
-                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                        G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkStringList:n-items:
@@ -511,7 +513,7 @@ gtk_string_list_class_init (GtkStringListClass *class)
   properties[PROP_N_ITEMS] =
     g_param_spec_uint ("n-items", NULL, NULL,
                        0, G_MAXUINT, 0,
-                       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+                       G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkStringList:strings:
@@ -523,7 +525,7 @@ gtk_string_list_class_init (GtkStringListClass *class)
   properties[PROP_STRINGS] =
       g_param_spec_boxed ("strings", NULL, NULL,
                           G_TYPE_STRV,
-                          G_PARAM_WRITABLE|G_PARAM_STATIC_STRINGS|G_PARAM_CONSTRUCT_ONLY);
+                          G_PARAM_WRITABLE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT_ONLY);
 
   g_object_class_install_properties (gobject_class, N_PROPS, properties);
 }

@@ -7,8 +7,11 @@ enum
 {
   PROP_ABOVE = 1,
   PROP_BELOW,
-  PROP_ACROSS
+  PROP_ACROSS,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 struct _BaselineWidget
 {
@@ -135,6 +138,18 @@ baseline_widget_snapshot (GtkWidget   *widget,
 
   gtk_snapshot_save (snapshot);
 
+  outline = GSK_ROUNDED_RECT_INIT (0, 0,
+                                   gtk_widget_get_width (widget),
+                                   gtk_widget_get_height (widget));
+
+  for (int i = 0; i < 4; i++)
+    {
+      widths[i] = .5;
+      gdk_rgba_parse (&colors[i], "gray");
+    }
+
+  gtk_snapshot_append_border (snapshot, &outline, widths, colors);
+
   if (baseline > -1)
     {
       int y;
@@ -206,12 +221,11 @@ baseline_widget_class_init (BaselineWidgetClass *class)
   widget_class->snapshot = baseline_widget_snapshot;
   widget_class->measure = baseline_widget_measure;
 
-  g_object_class_install_property (object_class, PROP_ABOVE,
-    g_param_spec_int ("above", NULL, NULL, 0, G_MAXINT, 0, G_PARAM_READWRITE));
-  g_object_class_install_property (object_class, PROP_BELOW,
-    g_param_spec_int ("below", NULL, NULL, -1, G_MAXINT, 0, G_PARAM_READWRITE));
-  g_object_class_install_property (object_class, PROP_ACROSS,
-    g_param_spec_int ("across", NULL, NULL, 0, G_MAXINT, 0, G_PARAM_READWRITE));
+  props[PROP_ABOVE] = g_param_spec_int ("above", NULL, NULL, 0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
+  props[PROP_BELOW] = g_param_spec_int ("below", NULL, NULL, -1, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
+  props[PROP_ACROSS] = g_param_spec_int ("across", NULL, NULL, 0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
+
+  g_object_class_install_properties (object_class, N_PROPS, props);
 }
 
 static GtkWidget *

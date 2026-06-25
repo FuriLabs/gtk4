@@ -207,7 +207,7 @@ add_check_row (GtkInspectorGeneral *gen,
   gtk_list_box_insert (list, row, -1);
 }
 
-static void
+static GtkWidget *
 add_label_row (GtkInspectorGeneral *gen,
                GtkListBox          *list,
                const char          *name,
@@ -243,6 +243,8 @@ add_label_row (GtkInspectorGeneral *gen,
 
   gtk_widget_set_hexpand (box, FALSE);
   gtk_list_box_insert (GTK_LIST_BOX (list), row, -1);
+
+  return label;
 }
 
 static void
@@ -413,26 +415,42 @@ dump_pango (GdkDisplay *display,
 /* }}} */
 /* {{{ Media */
 
-static const char *
-get_media_backend_kind (void)
+static char *
+get_media_backend_description (void)
 {
   GIOExtension *e;
+  const char *name;
 
   e = gtk_media_file_get_extension ();
-  return g_io_extension_get_name (e);
+  name = g_io_extension_get_name (e);
+
+#ifdef HAVE_GSTREAMER
+  if (g_str_equal (name, "gstreamer"))
+    {
+      return gst_version_string ();
+    }
+  else
+#endif
+    {
+      return g_strdup (name);
+    }
 }
 
 static void
 init_media (GtkInspectorGeneral *gen)
 {
-  gtk_label_set_label (GTK_LABEL (gen->media_backend), get_media_backend_kind ());
+  char *backend = get_media_backend_description ();
+  gtk_label_set_label (GTK_LABEL (gen->media_backend), backend);
+  g_free (backend);
 }
 
 static void
 dump_media (GdkDisplay *display,
             GString    *string)
 {
-  g_string_append_printf (string, "| Media Backend | %s |\n", get_media_backend_kind ());
+  char *backend = get_media_backend_description ();
+  g_string_append_printf (string, "| Media Backend | %s |\n", backend);
+  g_free (backend);
 }
 
 /* }}} */
@@ -681,7 +699,7 @@ init_gl (GtkInspectorGeneral *gen)
 
       gtk_label_set_text (GTK_LABEL (gen->gl_backend_vendor), eglQueryString (egl_display, EGL_VENDOR));
 
-      gtk_label_set_text (GTK_LABEL (gen->egl_extensions_row_name), "EGL extensions");
+      gtk_label_set_text (GTK_LABEL (gen->egl_extensions_row_name), _("EGL extensions"));
       append_extensions (gen->egl_extensions_list, eglQueryString (egl_display, EGL_EXTENSIONS));
     }
   else
@@ -707,7 +725,7 @@ G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 G_GNUC_BEGIN_IGNORE_DEPRECATIONS
       screen = XScreenNumberOfScreen (gdk_x11_display_get_xscreen (gen->display));
 G_GNUC_END_IGNORE_DEPRECATIONS
-      gtk_label_set_text (GTK_LABEL (gen->egl_extensions_row_name), "GLX extensions");
+      gtk_label_set_text (GTK_LABEL (gen->egl_extensions_row_name), _("GLX extensions"));
       append_extensions (gen->egl_extensions_list, glXQueryExtensionsString (dpy, screen));
     }
   else
@@ -721,19 +739,19 @@ G_GNUC_END_IGNORE_DEPRECATIONS
     {
       PFNWGLGETEXTENSIONSSTRINGARBPROC my_wglGetExtensionsStringARB;
 
-      gtk_label_set_text (GTK_LABEL (gen->gl_backend_vendor), "Microsoft WGL");
+      gtk_label_set_text (GTK_LABEL (gen->gl_backend_vendor), _("Microsoft WGL"));
       gtk_widget_set_visible (gen->gl_backend_version, FALSE);
 
       my_wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC) wglGetProcAddress("wglGetExtensionsStringARB");
 
       if (my_wglGetExtensionsStringARB)
         {
-          gtk_label_set_text (GTK_LABEL (gen->egl_extensions_row_name), "WGL extensions");
+          gtk_label_set_text (GTK_LABEL (gen->egl_extensions_row_name), _("WGL extensions"));
           append_extensions (gen->egl_extensions_list, my_wglGetExtensionsStringARB (wglGetCurrentDC ()));
         }
       else
         {
-          gtk_label_set_text (GTK_LABEL (gen->egl_extensions_row_name), "WGL extensions: none");
+          gtk_label_set_text (GTK_LABEL (gen->egl_extensions_row_name), _("WGL extensions: none"));
         }
     }
   else
@@ -1315,7 +1333,7 @@ add_wayland_protocols (GdkDisplay          *display,
       append_wayland_protocol_row (gen, (struct wl_proxy *)d->system_bell);
       append_wayland_protocol_row (gen, (struct wl_proxy *)d->cursor_shape);
       append_wayland_protocol_row (gen, (struct wl_proxy *)d->toplevel_icon);
-      append_wayland_protocol_row (gen, (struct wl_proxy *)d->xx_session_manager);
+      append_wayland_protocol_row (gen, (struct wl_proxy *)d->session_manager);
       append_wayland_protocol_row (gen, gtk_im_context_wayland_get_text_protocol (display));
     }
 }
@@ -1360,7 +1378,7 @@ dump_wayland_protocols (GdkDisplay *display,
       append_wayland_protocol (string, (struct wl_proxy *)d->system_bell, &count);
       append_wayland_protocol (string, (struct wl_proxy *)d->cursor_shape, &count);
       append_wayland_protocol (string, (struct wl_proxy *)d->toplevel_icon, &count);
-      append_wayland_protocol (string, (struct wl_proxy *)d->xx_session_manager, &count);
+      append_wayland_protocol (string, (struct wl_proxy *)d->session_manager, &count);
       append_wayland_protocol (string , gtk_im_context_wayland_get_text_protocol (display), &count);
 
       g_string_append (string, " |\n");
@@ -1728,6 +1746,48 @@ dump_tool (GdkDeviceTool *tool,
   g_string_free (str, TRUE);
 }
 
+static char *
+layout_names_from_device (GdkDevice *device)
+{
+  GString *s = g_string_new ("");
+  char **layout_names = gdk_device_get_layout_names (device);
+
+  if (layout_names)
+    {
+      int n_layouts, active_layout;
+
+      active_layout = gdk_device_get_active_layout_index (device);
+      n_layouts = g_strv_length (layout_names);
+      for (int i = 0; i < n_layouts; i++)
+        {
+          if (s->len > 0)
+            g_string_append (s, ", ");
+          g_string_append (s, layout_names[i]);
+          if (i == active_layout)
+            g_string_append (s, "*");
+        }
+    }
+  else
+    {
+      g_string_append (s, "Unknown");
+    }
+
+  return g_string_free_and_steal (s);
+}
+
+static void
+on_keyboard_device_notify (GdkDevice  *keyboard,
+                           GParamSpec *pspec,
+                           GtkWidget  *label)
+{
+  if (g_strcmp0 (pspec->name, "layout-names") == 0 || g_strcmp0 (pspec->name, "active-layout-index") == 0)
+    {
+      gchar *layouts = layout_names_from_device (keyboard);
+      gtk_label_set_label (GTK_LABEL (label), layouts);
+      g_free (layouts);
+    }
+}
+
 static void
 add_device (GtkInspectorGeneral *gen,
             GdkDevice           *device)
@@ -1755,33 +1815,19 @@ add_device (GtkInspectorGeneral *gen,
 
   if (gdk_device_get_source (device) == GDK_SOURCE_KEYBOARD)
     {
-      GString *s;
-      char **layout_names;
+      GtkWidget *label;
 
-      s = g_string_new ("");
-      layout_names = gdk_device_get_layout_names (device);
-      if (layout_names)
-        {
-          int n_layouts, active_layout;
+      text = layout_names_from_device (device);
+      label = add_label_row (gen, GTK_LIST_BOX (gen->device_box), "Layouts", text, 20);
+      g_free (text);
 
-          active_layout = gdk_device_get_active_layout_index (device);
-          n_layouts = g_strv_length (layout_names);
-          for (int i = 0; i < n_layouts; i++)
-            {
-              if (s->len > 0)
-                g_string_append (s, ", ");
-              g_string_append (s, layout_names[i]);
-              if (i == active_layout)
-                g_string_append (s, "*");
-            }
-        }
-      else
-        {
-          g_string_append (s, "Unknown");
-        }
-
-      add_label_row (gen, GTK_LIST_BOX (gen->device_box), "Layouts", s->str, 20);
-      g_string_free (s, TRUE);
+      /* Connect to associated device if exists to get layout changes */
+      /* NOTE: there is no public or private API to get the associated device */
+      g_signal_connect_object (device->associated ? device->associated : device,
+                               "notify",
+                               G_CALLBACK (on_keyboard_device_notify),
+                               label,
+                               G_CONNECT_DEFAULT);
     }
 
   g_type_class_unref (class);
@@ -2262,6 +2308,23 @@ gtk_inspector_general_clip (GtkButton           *button,
 
   clipboard = gtk_widget_get_clipboard (GTK_WIDGET (gen));
   gdk_clipboard_set_text (clipboard, text);
+
+  g_free (text);
+}
+
+void
+gtk_inspector_print_general_info (GdkDisplay *display)
+{
+  char *text;
+  const char *file;
+
+  text = generate_dump (display);
+
+  file = g_getenv ("GTK_INSPECTOR_GENERAL_INFO_FILE");
+  if (file)
+    g_file_set_contents (file, text, strlen (text), NULL);
+  else
+    g_print ("%s\n", text);
 
   g_free (text);
 }

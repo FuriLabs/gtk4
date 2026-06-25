@@ -21,7 +21,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -218,8 +217,11 @@ enum {
   PROP_MANUAL_CAPABILITIES,
   PROP_SUPPORT_SELECTION,
   PROP_HAS_SELECTION,
-  PROP_EMBED_PAGE_SETUP
+  PROP_EMBED_PAGE_SETUP,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 typedef struct _GtkPrintUnixDialogClass    GtkPrintUnixDialogClass;
 
@@ -320,7 +322,7 @@ struct _GtkPrintUnixDialog
   gulong request_details_tag;
   GtkPrinterOptionSet *options;
   gulong options_changed_handler;
-  gulong mark_conflicts_id;
+  guint mark_conflicts_id;
 
   char *format_for_printer;
 
@@ -408,91 +410,77 @@ gtk_print_unix_dialog_class_init (GtkPrintUnixDialogClass *class)
    *
    * The `GtkPageSetup` object to use.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_PAGE_SETUP,
-                                   g_param_spec_object ("page-setup", NULL, NULL,
-                                                        GTK_TYPE_PAGE_SETUP,
-                                                        G_PARAM_READWRITE));
+  props[PROP_PAGE_SETUP] = g_param_spec_object ("page-setup", NULL, NULL,
+                                                GTK_TYPE_PAGE_SETUP,
+                                                G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkPrintUnixDialog:current-page:
    *
    * The current page in the document.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_CURRENT_PAGE,
-                                   g_param_spec_int ("current-page", NULL, NULL,
-                                                     -1,
-                                                     G_MAXINT,
-                                                     -1,
-                                                     G_PARAM_READWRITE));
+  props[PROP_CURRENT_PAGE] = g_param_spec_int ("current-page", NULL, NULL,
+                                               -1,
+                                               G_MAXINT,
+                                               -1,
+                                               G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkPrintUnixDialog:print-settings: (getter get_settings) (setter set_settings)
    *
    * The `GtkPrintSettings` object used for this dialog.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_PRINT_SETTINGS,
-                                   g_param_spec_object ("print-settings", NULL, NULL,
-                                                        GTK_TYPE_PRINT_SETTINGS,
-                                                        G_PARAM_READWRITE));
+  props[PROP_PRINT_SETTINGS] = g_param_spec_object ("print-settings", NULL, NULL,
+                                                    GTK_TYPE_PRINT_SETTINGS,
+                                                    G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkPrintUnixDialog:selected-printer:
    *
    * The `GtkPrinter` which is selected.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_SELECTED_PRINTER,
-                                   g_param_spec_object ("selected-printer", NULL, NULL,
-                                                        GTK_TYPE_PRINTER,
-                                                        G_PARAM_READABLE));
+  props[PROP_SELECTED_PRINTER] = g_param_spec_object ("selected-printer", NULL, NULL,
+                                                      GTK_TYPE_PRINTER,
+                                                      G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkPrintUnixDialog:manual-capabilities:
    *
    * Capabilities the application can handle.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_MANUAL_CAPABILITIES,
-                                   g_param_spec_flags ("manual-capabilities", NULL, NULL,
-                                                       GTK_TYPE_PRINT_CAPABILITIES,
-                                                       0,
-                                                       G_PARAM_READWRITE));
+  props[PROP_MANUAL_CAPABILITIES] = g_param_spec_flags ("manual-capabilities", NULL, NULL,
+                                                        GTK_TYPE_PRINT_CAPABILITIES,
+                                                        0,
+                                                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkPrintUnixDialog:support-selection:
    *
    * Whether the dialog supports selection.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_SUPPORT_SELECTION,
-                                   g_param_spec_boolean ("support-selection", NULL, NULL,
-                                                         FALSE,
-                                                         G_PARAM_READWRITE));
+  props[PROP_SUPPORT_SELECTION] = g_param_spec_boolean ("support-selection", NULL, NULL,
+                                                        FALSE,
+                                                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkPrintUnixDialog:has-selection:
    *
    * Whether the application has a selection.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_HAS_SELECTION,
-                                   g_param_spec_boolean ("has-selection", NULL, NULL,
-                                                         FALSE,
-                                                         G_PARAM_READWRITE));
+  props[PROP_HAS_SELECTION] = g_param_spec_boolean ("has-selection", NULL, NULL,
+                                                    FALSE,
+                                                    G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
    /**
     * GtkPrintUnixDialog:embed-page-setup:
     *
     * %TRUE if the page setup controls are embedded.
     */
-   g_object_class_install_property (object_class,
-                                   PROP_EMBED_PAGE_SETUP,
-                                   g_param_spec_boolean ("embed-page-setup", NULL, NULL,
-                                                         FALSE,
-                                                         G_PARAM_READWRITE));
+   props[PROP_EMBED_PAGE_SETUP] = g_param_spec_boolean ("embed-page-setup", NULL, NULL,
+                                                       FALSE,
+                                                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
+
+  g_object_class_install_properties (object_class, N_PROPS, props);
 
   /* Bind class to template
    */
@@ -949,9 +937,7 @@ disconnect_printer_details_request (GtkPrintUnixDialog *dialog,
 {
   if (dialog->request_details_tag)
     {
-      g_signal_handler_disconnect (dialog->request_details_printer,
-                                   dialog->request_details_tag);
-      dialog->request_details_tag = 0;
+      g_clear_signal_handler (&dialog->request_details_tag, dialog->request_details_printer);
       set_busy_cursor (dialog, FALSE);
       if (details_failed)
         gtk_printer_set_state_message (dialog->request_details_printer, _("Getting printer information failed"));
@@ -979,8 +965,7 @@ gtk_print_unix_dialog_finalize (GObject *object)
       g_free (dialog->number_up_layout_2_option->choices_display[1]);
       dialog->number_up_layout_2_option->choices_display[0] = NULL;
       dialog->number_up_layout_2_option->choices_display[1] = NULL;
-      g_object_unref (dialog->number_up_layout_2_option);
-      dialog->number_up_layout_2_option = NULL;
+      g_clear_object (&dialog->number_up_layout_2_option);
     }
 
   g_clear_object (&dialog->number_up_layout_n_option);
@@ -1059,8 +1044,7 @@ printer_added_cb (GListModel         *model,
           strcmp (gtk_printer_get_name (printer), dialog->waiting_for_printer) == 0)
         {
           gtk_single_selection_set_selected (GTK_SINGLE_SELECTION (model), i);
-          g_free (dialog->waiting_for_printer);
-          dialog->waiting_for_printer = NULL;
+          g_clear_pointer (&dialog->waiting_for_printer, g_free);
           g_object_unref (printer);
           return;
         }
@@ -1775,17 +1759,13 @@ mark_conflicts_callback (gpointer data)
 
   mark_conflicts (dialog);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void
 unschedule_idle_mark_conflicts (GtkPrintUnixDialog *dialog)
 {
-  if (dialog->mark_conflicts_id != 0)
-    {
-      g_source_remove (dialog->mark_conflicts_id);
-      dialog->mark_conflicts_id = 0;
-    }
+  g_clear_handle_id (&dialog->mark_conflicts_id, g_source_remove);
 }
 
 static void
@@ -1804,8 +1784,7 @@ options_changed_cb (GtkPrintUnixDialog *dialog)
 {
   schedule_idle_mark_conflicts (dialog);
 
-  g_free (dialog->waiting_for_printer);
-  dialog->waiting_for_printer = NULL;
+  g_clear_pointer (&dialog->waiting_for_printer, g_free);
 }
 
 static void
@@ -1851,8 +1830,7 @@ selected_printer_changed (GtkPrintUnixDialog *dialog)
   if (dialog->waiting_for_printer &&
       !dialog->internal_printer_change)
     {
-      g_free (dialog->waiting_for_printer);
-      dialog->waiting_for_printer = NULL;
+      g_clear_pointer (&dialog->waiting_for_printer, g_free);
     }
 
   disconnect_printer_details_request (dialog, FALSE);
@@ -1936,7 +1914,7 @@ selected_printer_changed (GtkPrintUnixDialog *dialog)
   update_paper_sizes (dialog);
   dialog->internal_page_setup_change = FALSE;
 
-  g_object_notify (G_OBJECT (dialog), "selected-printer");
+  g_object_notify_by_pspec (G_OBJECT (dialog), props[PROP_SELECTED_PRINTER]);
 }
 
 static void
@@ -2046,7 +2024,7 @@ dialog_get_page_ranges (GtkPrintUnixDialog *dialog,
   p = text;
   while (*p)
     {
-      while (isspace (*p)) p++;
+      while (g_ascii_isspace (*p)) p++;
 
       if (*p == '-')
         {
@@ -2063,7 +2041,7 @@ dialog_get_page_ranges (GtkPrintUnixDialog *dialog,
 
       end = start;
 
-      while (isspace (*p)) p++;
+      while (g_ascii_isspace (*p)) p++;
 
       if (*p == '-')
         {
@@ -3032,7 +3010,7 @@ gtk_print_unix_dialog_set_page_setup (GtkPrintUnixDialog *dialog,
 
       dialog->page_setup_set = TRUE;
 
-      g_object_notify (G_OBJECT (dialog), "page-setup");
+      g_object_notify_by_pspec (G_OBJECT (dialog), props[PROP_PAGE_SETUP]);
     }
 }
 
@@ -3091,7 +3069,7 @@ gtk_print_unix_dialog_set_current_page (GtkPrintUnixDialog *dialog,
       if (dialog->current_page_radio)
         gtk_widget_set_sensitive (dialog->current_page_radio, current_page != -1);
 
-      g_object_notify (G_OBJECT (dialog), "current-page");
+      g_object_notify_by_pspec (G_OBJECT (dialog), props[PROP_CURRENT_PAGE]);
     }
 }
 
@@ -3129,8 +3107,7 @@ set_active_printer (GtkPrintUnixDialog *dialog,
         {
           gtk_single_selection_set_selected (GTK_SINGLE_SELECTION (model), i);
 
-          g_free (dialog->waiting_for_printer);
-          dialog->waiting_for_printer = NULL;
+          g_clear_pointer (&dialog->waiting_for_printer, g_free);
 
           g_object_unref (printer);
           return TRUE;
@@ -3188,8 +3165,7 @@ gtk_print_unix_dialog_set_settings (GtkPrintUnixDialog *dialog,
 
   dialog->initial_settings = settings;
 
-  g_free (dialog->waiting_for_printer);
-  dialog->waiting_for_printer = NULL;
+  g_clear_pointer (&dialog->waiting_for_printer, g_free);
 
   if (settings)
     {
@@ -3201,7 +3177,7 @@ gtk_print_unix_dialog_set_settings (GtkPrintUnixDialog *dialog,
         dialog->waiting_for_printer = g_strdup (printer);
     }
 
-  g_object_notify (G_OBJECT (dialog), "print-settings");
+  g_object_notify_by_pspec (G_OBJECT (dialog), props[PROP_PRINT_SETTINGS]);
 }
 
 /**
@@ -3319,7 +3295,7 @@ gtk_print_unix_dialog_set_manual_capabilities (GtkPrintUnixDialog   *dialog,
           selected_printer_changed (dialog);
        }
 
-      g_object_notify (G_OBJECT (dialog), "manual-capabilities");
+      g_object_notify_by_pspec (G_OBJECT (dialog), props[PROP_MANUAL_CAPABILITIES]);
     }
 }
 
@@ -3363,7 +3339,7 @@ gtk_print_unix_dialog_set_support_selection (GtkPrintUnixDialog *dialog,
           gtk_widget_set_sensitive (dialog->selection_radio, support_selection && dialog->has_selection);
         }
 
-      g_object_notify (G_OBJECT (dialog), "support-selection");
+      g_object_notify_by_pspec (G_OBJECT (dialog), props[PROP_SUPPORT_SELECTION]);
     }
 }
 
@@ -3409,7 +3385,7 @@ gtk_print_unix_dialog_set_has_selection (GtkPrintUnixDialog *dialog,
             gtk_widget_set_sensitive (dialog->selection_radio, FALSE);
         }
 
-      g_object_notify (G_OBJECT (dialog), "has-selection");
+      g_object_notify_by_pspec (G_OBJECT (dialog), props[PROP_HAS_SELECTION]);
     }
 }
 

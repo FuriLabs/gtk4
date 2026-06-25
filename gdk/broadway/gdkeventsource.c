@@ -17,7 +17,7 @@
 
 #include "config.h"
 
-#include "gdkeventsource.h"
+#include "gdkeventsourceprivate.h"
 
 #include "gdkeventsprivate.h"
 #include "gdkframeclockprivate.h"
@@ -298,9 +298,6 @@ _gdk_broadway_events_got_input (GdkDisplay *display,
     break;
   case BROADWAY_EVENT_GRAB_NOTIFY:
   case BROADWAY_EVENT_UNGRAB_NOTIFY:
-    _gdk_display_device_grab_update (display,
-                                     display_broadway->core_pointer,
-                                     message->base.serial);
     break;
 
   case BROADWAY_EVENT_CONFIGURE_NOTIFY:

@@ -267,8 +267,7 @@ gtk_entry_buffer_finalize (GObject *obj)
   if (pv->normal_text)
     {
       trash_area (pv->normal_text, pv->normal_text_size);
-      g_free (pv->normal_text);
-      pv->normal_text = NULL;
+      g_clear_pointer (&pv->normal_text, g_free);
       pv->normal_text_bytes = pv->normal_text_size = 0;
       pv->normal_text_chars = 0;
     }
@@ -348,7 +347,7 @@ gtk_entry_buffer_class_init (GtkEntryBufferClass *klass)
   entry_buffer_props[PROP_TEXT] =
       g_param_spec_string ("text", NULL, NULL,
                            "",
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkEntryBuffer:length:
@@ -358,7 +357,7 @@ gtk_entry_buffer_class_init (GtkEntryBufferClass *klass)
    entry_buffer_props[PROP_LENGTH] =
        g_param_spec_uint ("length", NULL, NULL,
                           0, GTK_ENTRY_BUFFER_MAX_SIZE, 0,
-                          GTK_PARAM_READABLE);
+                          G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkEntryBuffer:max-length:
@@ -368,7 +367,7 @@ gtk_entry_buffer_class_init (GtkEntryBufferClass *klass)
   entry_buffer_props[PROP_MAX_LENGTH] =
       g_param_spec_int ("max-length", NULL, NULL,
                         0, GTK_ENTRY_BUFFER_MAX_SIZE, 0,
-                        GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (gobject_class, NUM_PROPERTIES, entry_buffer_props);
 

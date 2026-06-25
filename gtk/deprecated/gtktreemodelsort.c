@@ -252,8 +252,11 @@ struct _SortData
 enum {
   PROP_0,
   /* Construct args */
-  PROP_MODEL
+  PROP_MODEL,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 
 struct _GtkTreeModelSortPrivate
@@ -485,11 +488,11 @@ gtk_tree_model_sort_class_init (GtkTreeModelSortClass *class)
    *
    * The model of the tree model sort.
    */
-  g_object_class_install_property (object_class,
-                                   PROP_MODEL,
-                                   g_param_spec_object ("model", NULL, NULL,
-							GTK_TYPE_TREE_MODEL,
-							GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+  props[PROP_MODEL] = g_param_spec_object ("model", NULL, NULL,
+                                           GTK_TYPE_TREE_MODEL,
+                                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT_ONLY);
+
+  g_object_class_install_properties (object_class, N_PROPS, props);
 }
 
 static void
@@ -537,6 +540,8 @@ gtk_tree_model_sort_drag_source_init (GtkTreeDragSourceIface *iface)
  * Creates a new `GtkTreeModelSort`, with @child_model as the child model.
  *
  * Returns: (transfer full) (type Gtk.TreeModelSort): A new `GtkTreeModelSort`.
+ *
+ * Deprecated: 4.10
  */
 GtkTreeModel *
 gtk_tree_model_sort_new_with_model (GtkTreeModel *child_model)
@@ -2207,6 +2212,8 @@ gtk_tree_model_sort_set_model (GtkTreeModelSort *tree_model_sort,
  * Returns the model the `GtkTreeModelSort` is sorting.
  *
  * Returns: (transfer none): the "child model" being sorted
+ *
+ * Deprecated: 4.10
  **/
 GtkTreeModel *
 gtk_tree_model_sort_get_model (GtkTreeModelSort *tree_model)
@@ -2649,11 +2656,9 @@ gtk_tree_model_sort_free_level (GtkTreeModelSort *tree_model_sort,
   else
     priv->root = NULL;
 
-  g_sequence_free (sort_level->seq);
-  sort_level->seq = NULL;
+  g_clear_pointer (&sort_level->seq, g_sequence_free);
 
-  g_free (sort_level);
-  sort_level = NULL;
+  g_clear_pointer (&sort_level, g_free);
 }
 
 static void

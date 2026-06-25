@@ -69,14 +69,14 @@ G_BEGIN_DECLS
 /**
  * GTK_ALIGN_BASELINE_FILL:
  *
- * a different name for `GTK_ALIGN_BASELINE`.
+ * stretch to fill all space, but align the baseline.
  *
  * Since: 4.12
  */
 /**
  * GTK_ALIGN_BASELINE_CENTER:
  *
- * stretch to fill all space, but align the baseline.
+ * align the baseline.
  *
  * Since: 4.12
  */
@@ -678,6 +678,7 @@ typedef enum {
  * that only exists when parsing the source for introspection.
  */
 #ifdef __GI_SCANNER__
+GDK_AVAILABLE_IN_ALL
 GtkOrdering     gtk_ordering_from_cmpfunc       (int cmpfunc_result);
 #else
 /**
@@ -2043,6 +2044,27 @@ typedef enum {
   GTK_INTERFACE_CONTRAST_MORE,
   GTK_INTERFACE_CONTRAST_LESS,
 } GtkInterfaceContrast;
+
+/**
+ * GtkRestoreReason:
+ * @GTK_RESTORE_REASON_PRISTINE: Don't restore anything
+ * @GTK_RESTORE_REASON_LAUNCH: This is normal launch. Restore as little as is reasonable
+ * @GTK_RESTORE_REASON_RECOVER: The application has crashed before. Try to restore the previous state
+ * @GTK_RESTORE_REASON_RESTORE: This is a session restore. Restore the previous state as far as possible
+ *
+ * Enumerates possible reasons for an application to restore saved state.
+ *
+ * See [signal@Gtk.Application::restore-state].
+ *
+ * Since: 4.24
+ */
+typedef enum
+{
+  GTK_RESTORE_REASON_PRISTINE,
+  GTK_RESTORE_REASON_LAUNCH,
+  GTK_RESTORE_REASON_RECOVER,
+  GTK_RESTORE_REASON_RESTORE,
+} GtkRestoreReason;
 
 /**
  * GtkReducedMotion:

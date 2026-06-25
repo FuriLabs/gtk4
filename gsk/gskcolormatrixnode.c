@@ -40,6 +40,7 @@ struct _GskColorMatrixNode
   GdkColorState *color_state;
   graphene_matrix_t color_matrix;
   graphene_vec4_t color_offset;
+  GskRectSnap snap;
 };
 
 static void
@@ -157,9 +158,13 @@ gsk_color_matrix_node_draw (GskRenderNode *node,
 {
   GskColorMatrixNode *self = (GskColorMatrixNode *) node;
   cairo_pattern_t *pattern;
+  graphene_rect_t bounds;
+
+  if (!gsk_cairo_rect_snap (cr, &node->bounds, self->snap, &bounds))
+    return;
 
   /* clip so the push_group() creates a smaller surface */
-  gdk_cairo_rect (cr, &node->bounds);
+  gdk_cairo_rect (cr, &bounds);
   cairo_clip (cr);
 
   if (gdk_cairo_is_all_clipped (cr))
@@ -186,11 +191,23 @@ gsk_color_matrix_node_diff (GskRenderNode *node1,
   GskColorMatrixNode *self1 = (GskColorMatrixNode *) node1;
   GskColorMatrixNode *self2 = (GskColorMatrixNode *) node2;
 
-  if (gdk_color_state_equal (self1->color_state, self2->color_state) &&
+  if (gsk_rect_equal (&node1->bounds, &node2->bounds) &&
+      self1->snap == self2->snap &&
+      gdk_color_state_equal (self1->color_state, self2->color_state) &&
       graphene_vec4_equal (&self1->color_offset, &self2->color_offset) &&
       graphene_matrix_equal_fast (&self1->color_matrix, &self2->color_matrix))
     {
+      cairo_region_t *save;
+      cairo_rectangle_int_t clip_rect;
+
+      save = data->region;
+      data->region = cairo_region_create ();
       gsk_render_node_diff (self1->child, self2->child, data);
+      gsk_rect_to_cairo_grow (&node1->bounds, &clip_rect);
+      cairo_region_intersect_rectangle (data->region, &clip_rect);
+      cairo_region_union (save, data->region);
+      cairo_region_destroy (data->region);
+      data->region = save;
       return;
     }
 
@@ -223,7 +240,9 @@ gsk_color_matrix_node_replay (GskRenderNode   *node,
   if (child == self->child)
     result = gsk_render_node_ref (node);
   else
-    result = gsk_color_matrix_node_new2 (child,
+    result = gsk_color_matrix_node_new2 (&node->bounds,
+                                         self->snap,
+                                         child,
                                          self->color_state,
                                          &self->color_matrix,
                                          &self->color_offset);
@@ -273,12 +292,18 @@ gsk_color_matrix_node_new (GskRenderNode           *child,
                            const graphene_matrix_t *color_matrix,
                            const graphene_vec4_t   *color_offset)
 {
-  return gsk_color_matrix_node_new2 (child, GDK_COLOR_STATE_SRGB,
-                                     color_matrix, color_offset);
+  return gsk_color_matrix_node_new2 (&child->bounds,
+                                     GSK_RECT_SNAP_NONE,
+                                     child,
+                                     GDK_COLOR_STATE_SRGB,
+                                     color_matrix,
+                                     color_offset);
 }
 
 /*< private >
  * gsk_color_matrix_node_new2:
+ * @bounds: The rectangle to operate in
+ * @snap: how to snap the clip rectangle to the pixel grid
  * @child: The node to draw
  * @color_state: the color state to operate in
  * @color_matrix: The matrix to apply
@@ -297,7 +322,9 @@ gsk_color_matrix_node_new (GskRenderNode           *child,
  * Returns: (transfer full) (type GskColorMatrixNode): A new `GskRenderNode`
  */
 GskRenderNode *
-gsk_color_matrix_node_new2 (GskRenderNode           *child,
+gsk_color_matrix_node_new2 (const graphene_rect_t   *bounds,
+                            GskRectSnap              snap,
+                            GskRenderNode           *child,
                             GdkColorState           *color_state,
                             const graphene_matrix_t *color_matrix,
                             const graphene_vec4_t   *color_offset)
@@ -305,18 +332,19 @@ gsk_color_matrix_node_new2 (GskRenderNode           *child,
   GskColorMatrixNode *self;
   GskRenderNode *node;
 
+  g_return_val_if_fail (bounds != NULL, NULL);
   g_return_val_if_fail (GSK_IS_RENDER_NODE (child), NULL);
   g_return_val_if_fail (GDK_IS_DEFAULT_COLOR_STATE (color_state), NULL);
 
   self = gsk_render_node_alloc (GSK_TYPE_COLOR_MATRIX_NODE);
   node = (GskRenderNode *) self;
+  node->bounds = *bounds;
 
+  self->snap = snap;
   self->child = gsk_render_node_ref (child);
   self->color_state = gdk_color_state_ref (color_state);
   graphene_matrix_init_from_matrix (&self->color_matrix, color_matrix);
   graphene_vec4_init_from_vec4 (&self->color_offset, color_offset);
-
-  gsk_rect_init_from_rect (&node->bounds, &child->bounds);
 
   node->preferred_depth = gsk_render_node_get_preferred_depth (child);
   node->is_hdr = gsk_render_node_is_hdr (child);
@@ -388,4 +416,22 @@ gsk_color_matrix_node_get_color_state (const GskRenderNode *node)
   const GskColorMatrixNode *self = (const GskColorMatrixNode *) node;
 
   return self->color_state;
+}
+
+/**
+ * gsk_color_matrix_node_get_snap:
+ * @node: (type GskColorMatrixNode): a `GskColorMatrixNode`
+ *
+ * Retrieves the snap value for this node
+ *
+ * Returns: the snap value
+ *
+ * Since: 4.24
+ **/
+GskRectSnap
+gsk_color_matrix_node_get_snap (const GskRenderNode *node)
+{
+  const GskColorMatrixNode *self = (const GskColorMatrixNode *) node;
+
+  return self->snap;
 }

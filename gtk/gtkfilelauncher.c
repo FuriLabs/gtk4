@@ -172,7 +172,7 @@ gtk_file_launcher_class_init (GtkFileLauncherClass *class)
   properties[PROP_FILE] =
       g_param_spec_object ("file", NULL, NULL,
                            G_TYPE_FILE,
-                           G_PARAM_READWRITE|G_PARAM_STATIC_STRINGS|G_PARAM_EXPLICIT_NOTIFY);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkFileLauncher:always-ask:
@@ -185,7 +185,7 @@ gtk_file_launcher_class_init (GtkFileLauncherClass *class)
   properties[PROP_ALWAYS_ASK] =
       g_param_spec_boolean ("always-ask", NULL, NULL,
                             FALSE,
-                            G_PARAM_READWRITE|G_PARAM_STATIC_STRINGS|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkFileLauncher:writable:
@@ -197,7 +197,7 @@ gtk_file_launcher_class_init (GtkFileLauncherClass *class)
   properties[PROP_WRITABLE] =
       g_param_spec_boolean ("writable", NULL, NULL,
                             FALSE,
-                            G_PARAM_READWRITE|G_PARAM_STATIC_STRINGS|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, properties);
 }
@@ -495,7 +495,7 @@ gtk_show_file_android (GFile               *file,
       gchar *curi = g_file_get_uri (file);
       uri = (*env)->CallStaticObjectMethod (env, gdk_android_get_java_cache ()->a_uri.klass,
                                             gdk_android_get_java_cache ()->a_uri.parse,
-                                            gdk_android_utf8_to_java (uri));
+                                            gdk_android_utf8_to_java (curi));
       g_free (curi);
       if (gdk_android_check_exception (error))
         {

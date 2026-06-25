@@ -30,7 +30,6 @@
 #include <gdk/gdkdebugprivate.h>
 
 #include "gtkcsstypesprivate.h"
-#include "gtkenumsprivate.h"
 #include "gtktexthandleprivate.h"
 #include "gtkplacessidebarprivate.h"
 #include "gtkeventcontrollerprivate.h"
@@ -38,10 +37,6 @@
 #include "gtkdebug.h"
 
 G_BEGIN_DECLS
-
-#define GTK_PARAM_READABLE G_PARAM_READABLE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB
-#define GTK_PARAM_WRITABLE G_PARAM_WRITABLE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB
-#define GTK_PARAM_READWRITE G_PARAM_READWRITE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB
 
 #define OPPOSITE_ORIENTATION(_orientation) (1 - (_orientation))
 
@@ -99,6 +94,8 @@ gboolean   gtk_main_do_event            (GdkEvent        *event);
 GtkWidget *gtk_get_event_widget         (GdkEvent  *event);
 
 guint32    gtk_get_current_event_time   (void);
+
+gboolean   gtk_event_treat_as_touch (GdkEvent *event);
 
 void check_crossing_invariants (GtkWidget       *widget,
                                 GtkCrossingData *crossing);

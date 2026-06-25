@@ -25,6 +25,9 @@
 #include "path-paintable.h"
 #include "border-paintable.h"
 #include "state-editor.h"
+#include "gtk/svg/gtksvgelementprivate.h"
+#include "gtk/svg/gtksvgpaintprivate.h"
+#include "gtk/svg/gtksvgserializeprivate.h"
 
 #include <glib/gstdio.h>
 
@@ -38,16 +41,16 @@ struct _IconEditorWindow
   PathPaintable *orig_paintable;
   GBinding *playing_binding;
   gboolean changed;
-  gboolean show_controls;
+  gboolean show_sidebar;
   gboolean show_thumbnails;
   gboolean show_bounds;
   gboolean show_spines;
   gboolean show_grid;
   gboolean invert_colors;
   gboolean playing;
+  gboolean compat_classes;
   float weight;
   unsigned int state;
-  unsigned int initial_state;
   GtkStack *main_stack;
   GtkImage *empty_logo;
   union {
@@ -81,15 +84,15 @@ enum
 {
   PROP_PAINTABLE = 1,
   PROP_CHANGED,
-  PROP_SHOW_CONTROLS,
+  PROP_SHOW_SIDEBAR,
   PROP_SHOW_BOUNDS,
   PROP_SHOW_SPINES,
   PROP_SHOW_GRID,
   PROP_INVERT_COLORS,
   PROP_WEIGHT,
   PROP_STATE,
-  PROP_INITIAL_STATE,
   PROP_PLAYING,
+  PROP_COMPAT_CLASSES,
   NUM_PROPERTIES,
 };
 
@@ -100,13 +103,13 @@ G_DEFINE_TYPE(IconEditorWindow, icon_editor_window, GTK_TYPE_APPLICATION_WINDOW)
 /* {{{ Setters */
 
 static void
-icon_editor_window_set_show_controls (IconEditorWindow *self,
-                                      gboolean          show_controls)
+icon_editor_window_set_show_sidebar (IconEditorWindow *self,
+                                     gboolean          show_sidebar)
 {
-  if (self->show_controls == show_controls)
+  if (self->show_sidebar == show_sidebar)
     return;
 
-  if (show_controls)
+  if (show_sidebar)
     {
       GAction *action;
 
@@ -115,9 +118,9 @@ icon_editor_window_set_show_controls (IconEditorWindow *self,
       gtk_stack_set_visible_child_name (self->main_stack, "content");
     }
 
-  self->show_controls = show_controls;
+  self->show_sidebar = show_sidebar;
 
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SHOW_CONTROLS]);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SHOW_SIDEBAR]);
 }
 
 static void
@@ -253,20 +256,6 @@ icon_editor_window_set_changed (IconEditorWindow *self,
 }
 
 static void
-icon_editor_window_set_initial_state (IconEditorWindow *self,
-                                      unsigned int      initial_state)
-{
-  if (self->initial_state == initial_state)
-    return;
-
-  self->initial_state = initial_state;
-
-  icon_editor_window_set_changed (self, TRUE);
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_INITIAL_STATE]);
-}
-
-static void
 icon_editor_window_set_playing (IconEditorWindow *self,
                                 gboolean          playing)
 {
@@ -278,13 +267,27 @@ icon_editor_window_set_playing (IconEditorWindow *self,
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PLAYING]);
 }
 
+static void
+icon_editor_window_set_compat_classes (IconEditorWindow *self,
+                                       gboolean          compat_classes)
+{
+  if (self->compat_classes == compat_classes)
+    return;
+
+  self->compat_classes = compat_classes;
+
+  icon_editor_window_set_changed (self, TRUE);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_COMPAT_CLASSES]);
+}
+
 /* }}} */
 /* {{{ Callbacks, utilities */
 
 static void
-toggle_controls (IconEditorWindow *self)
+toggle_sidebar (IconEditorWindow *self)
 {
-  icon_editor_window_set_show_controls (self, !self->show_controls);
+  icon_editor_window_set_show_sidebar (self, !self->show_sidebar);
 }
 
 static void
@@ -292,7 +295,8 @@ paintable_changed (IconEditorWindow *self)
 {
   gboolean changed;
 
-  changed = !path_paintable_equal (self->paintable, self->orig_paintable);
+  changed = !gtk_svg_equal (path_paintable_get_svg (self->paintable),
+                            path_paintable_get_svg (self->orig_paintable));
 
   icon_editor_window_set_changed (self, changed);
 }
@@ -464,7 +468,7 @@ icon_editor_window_set_paintable (IconEditorWindow *self,
     {
       path_paintable_set_frame_clock (self->paintable, gtk_widget_get_frame_clock (GTK_WIDGET (self)));
       icon_editor_window_set_state (self, path_paintable_get_state (paintable));
-      icon_editor_window_set_initial_state (self, path_paintable_get_state (paintable));
+      path_paintable_set_weight (self->paintable, self->weight);
 
       g_signal_connect_swapped (self->paintable, "changed",
                                 G_CALLBACK (paintable_changed), self);
@@ -475,8 +479,8 @@ icon_editor_window_set_paintable (IconEditorWindow *self,
 
       set_random_icons (self);
 
-      if (path_paintable_get_n_paths (self->paintable) > 0)
-        icon_editor_window_set_show_controls (self, TRUE);
+      if (svg_element_get_n_children (path_paintable_get_svg (self->paintable)->content) > 0)
+        icon_editor_window_set_show_sidebar (self, TRUE);
     }
 
   g_clear_object (&self->orig_paintable);
@@ -620,6 +624,94 @@ show_open_filechooser (IconEditorWindow *self)
 /* {{{ Saving/Exporting */
 
 static void
+set_compat (SvgElement *shape,
+            gpointer    data)
+{
+  IconEditorWindow *self = data;
+
+  if (!svg_element_type_is_graphical (svg_element_get_type (shape)))
+    return;
+
+  svg_element_parse_classes (shape, NULL);
+
+  if (self->compat_classes)
+    {
+      SvgValue *value;
+      GStrvBuilder *builder;
+
+      builder = g_strv_builder_new ();
+
+      value = ref_value (shape, SVG_PROPERTY_FILL);
+      switch ((unsigned int) svg_paint_get_kind (value))
+        {
+        case PAINT_SYMBOLIC:
+          switch (svg_paint_get_symbolic (value))
+            {
+            case GTK_SYMBOLIC_COLOR_FOREGROUND:
+              g_strv_builder_add_many (builder, "foreground", "foreground-fill", NULL);
+              break;
+            case GTK_SYMBOLIC_COLOR_ERROR:
+              g_strv_builder_add_many (builder, "error", "error-fill", NULL);
+              break;
+            case GTK_SYMBOLIC_COLOR_WARNING:
+              g_strv_builder_add_many (builder, "warning", "warning-fill", NULL);
+              break;
+            case GTK_SYMBOLIC_COLOR_SUCCESS:
+              g_strv_builder_add_many (builder, "success", "success-fill", NULL);
+              break;
+            case GTK_SYMBOLIC_COLOR_ACCENT:
+            default:
+              break;
+            }
+          break;
+        case PAINT_NONE:
+          g_strv_builder_add (builder, "transparent-fill");
+          break;
+        default:
+          break;
+        }
+      svg_value_unref (value);
+
+      value = ref_value (shape, SVG_PROPERTY_STROKE);
+      switch ((unsigned int) svg_paint_get_kind (value))
+        {
+        case PAINT_SYMBOLIC:
+          switch (svg_paint_get_symbolic (value))
+            {
+            case GTK_SYMBOLIC_COLOR_FOREGROUND:
+              g_strv_builder_add (builder, "foreground-stroke");
+              break;
+            case GTK_SYMBOLIC_COLOR_ERROR:
+              g_strv_builder_add (builder, "error-stroke");
+              break;
+            case GTK_SYMBOLIC_COLOR_WARNING:
+              g_strv_builder_add (builder, "warning-stroke");
+              break;
+            case GTK_SYMBOLIC_COLOR_SUCCESS:
+              g_strv_builder_add (builder, "success-stroke");
+              break;
+            case GTK_SYMBOLIC_COLOR_ACCENT:
+            default:
+              break;
+            }
+          break;
+        default:
+          break;
+        }
+      svg_value_unref (value);
+
+      svg_element_take_classes (shape, g_strv_builder_end (builder));
+    }
+}
+
+static void
+apply_compat_classes (IconEditorWindow *window,
+                      GtkSvg           *svg)
+{
+  svg_element_foreach (svg->content, set_compat, window);
+}
+
+static void
 save_error (IconEditorWindow *self,
             const char       *message)
 {
@@ -630,10 +722,15 @@ static void
 save_to_file (IconEditorWindow *self,
               GFile            *file)
 {
+  GtkSvg *svg;
+
   g_autoptr (GBytes) bytes = NULL;
   g_autoptr (GError) error = NULL;
 
-  bytes = path_paintable_serialize (self->paintable, self->initial_state);
+  svg = path_paintable_get_svg (self->paintable);
+  apply_compat_classes (self, svg);
+  bytes = gtk_svg_serialize (svg);
+
   if (!g_file_replace_contents (file,
                                 g_bytes_get_data (bytes, NULL),
                                 g_bytes_get_size (bytes),
@@ -701,10 +798,16 @@ static void
 export_to_file (IconEditorWindow *self,
                 GFile            *file)
 {
+  GtkSvg *svg;
   g_autoptr (GBytes) bytes = NULL;
   g_autoptr (GError) error = NULL;
 
-  bytes = path_paintable_serialize_as_svg (self->paintable);
+  svg = path_paintable_get_svg (self->paintable);
+  apply_compat_classes (self, svg);
+  bytes = gtk_svg_serialize_full (svg,
+                                  NULL, 0,
+                                  GTK_SVG_SERIALIZE_EXPAND_GPA_ATTRS |
+                                  GTK_SVG_SERIALIZE_NO_COMPAT);
   if (!g_file_replace_contents (file,
                                 g_bytes_get_data (bytes, NULL),
                                 g_bytes_get_size (bytes),
@@ -865,7 +968,7 @@ back_to_empty (IconEditorWindow *self)
   GAction *action;
 
   icon_editor_window_set_paintable (self, paintable);
-  icon_editor_window_set_show_controls (self, FALSE);
+  icon_editor_window_set_show_sidebar (self, FALSE);
 
   gtk_stack_set_visible_child_name (self->main_stack, "empty");
   action = g_action_map_lookup_action (G_ACTION_MAP (self), "close");
@@ -939,13 +1042,13 @@ revert_changes (GSimpleAction *action,
 }
 
 static void
-add_path (GSimpleAction *action,
-          GVariant      *parameter,
-          gpointer       user_data)
+add_element (GSimpleAction *action,
+             GVariant      *parameter,
+             gpointer       user_data)
 {
   IconEditorWindow *self = user_data;
 
-  paintable_editor_add_path (self->paintable_editor);
+  paintable_editor_add_element (self->paintable_editor);
 }
 
 static void
@@ -965,13 +1068,13 @@ edit_states (GSimpleAction *action,
 }
 
 static void
-show_controls (GSimpleAction *action,
-               GVariant      *parameter,
-               gpointer       user_data)
+show_sidebar (GSimpleAction *action,
+              GVariant      *parameter,
+              gpointer       user_data)
 {
   IconEditorWindow *self = user_data;
 
-  icon_editor_window_set_show_controls (self, TRUE);
+  icon_editor_window_set_show_sidebar (self, TRUE);
 }
 
 static void
@@ -1002,6 +1105,17 @@ reshuffle (GSimpleAction *action,
   set_random_icons (self);
 }
 
+static void
+set_sidebar_contents (GSimpleAction *action,
+                      GVariant      *parameter,
+                      gpointer       user_data)
+{
+  IconEditorWindow *self = user_data;
+
+  paintable_editor_set_show_xml (self->paintable_editor, strcmp (g_variant_get_string (parameter, NULL), "xml") == 0);
+  g_simple_action_set_state (action, parameter);
+}
+
 static GActionEntry win_entries[] = {
   { "open", file_open, NULL, NULL, NULL },
   { "save", file_save, NULL, NULL, NULL },
@@ -1009,11 +1123,12 @@ static GActionEntry win_entries[] = {
   { "export", file_export, NULL, NULL, NULL },
   { "revert", revert_changes, NULL, NULL, NULL },
   { "close", file_close, NULL, NULL, NULL },
-  { "add-path", add_path, NULL, NULL, NULL },
+  { "add-element", add_element, NULL, NULL, NULL },
   { "edit-states", edit_states, NULL, NULL, NULL },
-  { "show-controls", show_controls, NULL, NULL, NULL },
+  { "show-sidebar", show_sidebar, NULL, NULL, NULL },
   { "open-example", open_example, "s", NULL, NULL },
   { "reshuffle", reshuffle, NULL, NULL, NULL },
+  { "set-sidebar-contents", NULL, "s", "'controls'", set_sidebar_contents },
 };
 
 /* }}} */
@@ -1028,6 +1143,7 @@ icon_editor_window_init (IconEditorWindow *self)
   self->weight = 400;
   self->state = 0;
   self->playing = TRUE;
+  self->compat_classes = TRUE;
 
   gtk_widget_init_template (GTK_WIDGET (self));
 
@@ -1073,8 +1189,8 @@ icon_editor_window_set_property (GObject      *object,
       icon_editor_window_set_paintable (self, g_value_get_object (value));
       break;
 
-    case PROP_SHOW_CONTROLS:
-      icon_editor_window_set_show_controls (self, g_value_get_boolean (value));
+    case PROP_SHOW_SIDEBAR:
+      icon_editor_window_set_show_sidebar (self, g_value_get_boolean (value));
       break;
 
     case PROP_SHOW_BOUNDS:
@@ -1101,12 +1217,12 @@ icon_editor_window_set_property (GObject      *object,
       icon_editor_window_set_state (self, g_value_get_uint (value));
       break;
 
-    case PROP_INITIAL_STATE:
-      icon_editor_window_set_initial_state (self, g_value_get_uint (value));
-      break;
-
     case PROP_PLAYING:
       icon_editor_window_set_playing (self, g_value_get_boolean (value));
+      break;
+
+    case PROP_COMPAT_CLASSES:
+      icon_editor_window_set_compat_classes (self, g_value_get_boolean (value));
       break;
 
     default:
@@ -1133,8 +1249,8 @@ icon_editor_window_get_property (GObject      *object,
       g_value_set_boolean (value, self->changed);
       break;
 
-    case PROP_SHOW_CONTROLS:
-      g_value_set_boolean (value, self->show_controls);
+    case PROP_SHOW_SIDEBAR:
+      g_value_set_boolean (value, self->show_sidebar);
       break;
 
     case PROP_SHOW_BOUNDS:
@@ -1161,12 +1277,12 @@ icon_editor_window_get_property (GObject      *object,
       g_value_set_uint (value, self->state);
       break;
 
-    case PROP_INITIAL_STATE:
-      g_value_set_uint (value, self->initial_state);
-      break;
-
     case PROP_PLAYING:
       g_value_set_boolean (value, self->playing);
+      break;
+
+    case PROP_COMPAT_CLASSES:
+      g_value_set_boolean (value, self->compat_classes);
       break;
 
     default:
@@ -1255,8 +1371,8 @@ icon_editor_window_class_init (IconEditorWindowClass *class)
                           FALSE,
                           G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
-  properties[PROP_SHOW_CONTROLS] =
-    g_param_spec_boolean ("show-controls", NULL, NULL,
+  properties[PROP_SHOW_SIDEBAR] =
+    g_param_spec_boolean ("show-sidebar", NULL, NULL,
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
@@ -1290,13 +1406,13 @@ icon_editor_window_class_init (IconEditorWindowClass *class)
                        0, G_MAXUINT, 0,
                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
-  properties[PROP_INITIAL_STATE] =
-    g_param_spec_uint ("initial-state", NULL, NULL,
-                       0, G_MAXUINT, 0,
-                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
-
   properties[PROP_PLAYING] =
     g_param_spec_boolean ("playing", NULL, NULL,
+                          TRUE,
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
+
+  properties[PROP_COMPAT_CLASSES] =
+    g_param_spec_boolean ("compat-classes", NULL, NULL,
                           TRUE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
@@ -1339,8 +1455,9 @@ icon_editor_window_class_init (IconEditorWindowClass *class)
   gtk_widget_class_bind_template_child (widget_class, IconEditorWindow, example6);
 
   gtk_widget_class_bind_template_callback (widget_class, show_open_filechooser);
-  gtk_widget_class_bind_template_callback (widget_class, toggle_controls);
+  gtk_widget_class_bind_template_callback (widget_class, toggle_sidebar);
   gtk_widget_class_bind_template_callback (widget_class, file_drop);
+  gtk_widget_class_bind_template_callback (widget_class, gtk_widget_activate);
 }
 
 /* }}} */
@@ -1374,4 +1491,3 @@ icon_editor_window_load (IconEditorWindow *self,
 /* }}} */
 
 /* vim:set foldmethod=marker: */
-

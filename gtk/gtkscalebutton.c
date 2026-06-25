@@ -102,15 +102,17 @@ enum
 enum
 {
   PROP_0,
-
-  PROP_ORIENTATION,
   PROP_VALUE,
-  PROP_SIZE,
   PROP_ADJUSTMENT,
   PROP_ICONS,
   PROP_ACTIVE,
-  PROP_HAS_FRAME
+  PROP_HAS_FRAME,
+  /* GtkOrientable */
+  PROP_ORIENTATION,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 typedef struct
 {
@@ -218,31 +220,28 @@ gtk_scale_button_class_init (GtkScaleButtonClass *klass)
   widget_class->grab_focus = gtk_widget_grab_focus_child;
 
 
-  g_object_class_override_property (gobject_class, PROP_ORIENTATION, "orientation");
+  props[PROP_ORIENTATION] = g_param_spec_override ("orientation",
+      g_object_interface_find_property (g_type_default_interface_ref (GTK_TYPE_ORIENTABLE), "orientation"));
 
   /**
    * GtkScaleButton:value:
    *
    * The value of the scale.
    */
-  g_object_class_install_property (gobject_class,
-				   PROP_VALUE,
-				   g_param_spec_double ("value", NULL, NULL,
-							-G_MAXDOUBLE,
-							G_MAXDOUBLE,
-							0,
-							GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
+  props[PROP_VALUE] = g_param_spec_double ("value", NULL, NULL,
+                                           -G_MAXDOUBLE,
+                                           G_MAXDOUBLE,
+                                           0,
+                                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkScaleButton:adjustment:
    *
    * The `GtkAdjustment` that is used as the model.
    */
-  g_object_class_install_property (gobject_class,
-                                   PROP_ADJUSTMENT,
-                                   g_param_spec_object ("adjustment", NULL, NULL,
-                                                        GTK_TYPE_ADJUSTMENT,
-                                                        GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
+  props[PROP_ADJUSTMENT] = g_param_spec_object ("adjustment", NULL, NULL,
+                                                GTK_TYPE_ADJUSTMENT,
+                                                G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkScaleButton:icons:
@@ -264,11 +263,9 @@ gtk_scale_button_class_init (GtkScaleButtonClass *klass)
    * `GtkScaleButton` reflects the current value of the scale
    * better for the users.
    */
-  g_object_class_install_property (gobject_class,
-                                   PROP_ICONS,
-                                   g_param_spec_boxed ("icons", NULL, NULL,
-                                                       G_TYPE_STRV,
-                                                       GTK_PARAM_READWRITE));
+  props[PROP_ICONS] = g_param_spec_boxed ("icons", NULL, NULL,
+                                          G_TYPE_STRV,
+                                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkScaleButton:active:
@@ -277,11 +274,9 @@ gtk_scale_button_class_init (GtkScaleButtonClass *klass)
    *
    * Since: 4.10
    */
-  g_object_class_install_property (gobject_class,
-                                   PROP_ACTIVE,
-                                   g_param_spec_boolean ("active", NULL, NULL,
-                                                         FALSE,
-                                                         GTK_PARAM_READABLE));
+  props[PROP_ACTIVE] = g_param_spec_boolean ("active", NULL, NULL,
+                                             FALSE,
+                                             G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkScaleButton:has-frame:
@@ -290,11 +285,11 @@ gtk_scale_button_class_init (GtkScaleButtonClass *klass)
    *
    * Since: 4.14
    */
-  g_object_class_install_property (gobject_class,
-                                   PROP_HAS_FRAME,
-                                   g_param_spec_boolean ("has-frame", NULL, NULL,
-                                                         FALSE,
-                                                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY));
+  props[PROP_HAS_FRAME] = g_param_spec_boolean ("has-frame", NULL, NULL,
+                                                FALSE,
+                                                G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
+
+  g_object_class_install_properties (gobject_class, N_PROPS, props);
 
   /**
    * GtkScaleButton::value-changed:
@@ -353,27 +348,27 @@ gtk_scale_button_class_init (GtkScaleButtonClass *klass)
 
   /* Key bindings */
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_space, 0,
+                                       GDK_KEY_space, GDK_NO_MODIFIER_MASK,
 				       "popup",
                                        NULL);
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_KP_Space, 0,
+                                       GDK_KEY_KP_Space, GDK_NO_MODIFIER_MASK,
 				       "popup",
                                        NULL);
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_Return, 0,
+                                       GDK_KEY_Return, GDK_NO_MODIFIER_MASK,
 				       "popup",
                                        NULL);
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_ISO_Enter, 0,
+                                       GDK_KEY_ISO_Enter, GDK_NO_MODIFIER_MASK,
 				       "popup",
                                        NULL);
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_KP_Enter, 0,
+                                       GDK_KEY_KP_Enter, GDK_NO_MODIFIER_MASK,
 				       "popup",
                                        NULL);
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_Escape, 0,
+                                       GDK_KEY_Escape, GDK_NO_MODIFIER_MASK,
 				       "popdown",
                                        NULL);
 
@@ -435,7 +430,7 @@ gtk_scale_button_toggled (GtkScaleButton *button)
   GtkScaleButtonPrivate *priv = gtk_scale_button_get_instance_private (button);
   gboolean active;
 
-  g_object_notify (G_OBJECT (button), "active");
+  g_object_notify_by_pspec (G_OBJECT (button), props[PROP_ACTIVE]);
 
   active = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->button));
 
@@ -675,7 +670,7 @@ gtk_scale_button_set_value (GtkScaleButton *button,
   g_return_if_fail (GTK_IS_SCALE_BUTTON (button));
 
   gtk_range_set_value (GTK_RANGE (priv->scale), value);
-  g_object_notify (G_OBJECT (button), "value");
+  g_object_notify_by_pspec (G_OBJECT (button), props[PROP_VALUE]);
 }
 
 /**
@@ -699,7 +694,7 @@ gtk_scale_button_set_icons (GtkScaleButton  *button,
   g_strfreev (tmp);
   gtk_scale_button_update_icon (button);
 
-  g_object_notify (G_OBJECT (button), "icons");
+  g_object_notify_by_pspec (G_OBJECT (button), props[PROP_ICONS]);
 }
 
 /**
@@ -754,7 +749,7 @@ gtk_scale_button_set_adjustment	(GtkScaleButton *button,
       if (priv->scale)
         gtk_range_set_adjustment (GTK_RANGE (priv->scale), adjustment);
 
-      g_object_notify (G_OBJECT (button), "adjustment");
+      g_object_notify_by_pspec (G_OBJECT (button), props[PROP_ADJUSTMENT]);
 
       gtk_accessible_update_property (GTK_ACCESSIBLE (button),
                                       GTK_ACCESSIBLE_PROPERTY_VALUE_MAX, gtk_adjustment_get_upper (adjustment) -
@@ -886,7 +881,7 @@ gtk_scale_button_set_has_frame (GtkScaleButton *button,
     return;
 
   gtk_button_set_has_frame (GTK_BUTTON (priv->button), has_frame);
-  g_object_notify (G_OBJECT (button), "has-frame");
+  g_object_notify_by_pspec (G_OBJECT (button), props[PROP_HAS_FRAME]);
 }
 
 static void
@@ -935,7 +930,7 @@ gtk_scale_button_set_orientation_private (GtkScaleButton *button,
 
       apply_orientation (button, priv->orientation);
 
-      g_object_notify (G_OBJECT (button), "orientation");
+      g_object_notify_by_pspec (G_OBJECT (button), props[PROP_ORIENTATION]);
     }
 }
 
@@ -1033,11 +1028,7 @@ cb_button_clicked (GtkWidget *widget,
   GtkScaleButton *button = GTK_SCALE_BUTTON (user_data);
   GtkScaleButtonPrivate *priv = gtk_scale_button_get_instance_private (button);
 
-  if (priv->autoscroll_timeout)
-    {
-      g_source_remove (priv->autoscroll_timeout);
-      priv->autoscroll_timeout = 0;
-    }
+  g_clear_handle_id (&priv->autoscroll_timeout, g_source_remove);
 
   if (priv->autoscrolling)
     {
@@ -1132,7 +1123,7 @@ cb_scale_value_changed (GtkRange *range,
   gtk_widget_set_sensitive (priv->minus_button, lower < value);
 
   g_signal_emit (button, signals[VALUE_CHANGED], 0, value);
-  g_object_notify (G_OBJECT (button), "value");
+  g_object_notify_by_pspec (G_OBJECT (button), props[PROP_VALUE]);
 
   gtk_accessible_update_property (GTK_ACCESSIBLE (button),
                                   GTK_ACCESSIBLE_PROPERTY_VALUE_NOW, value,

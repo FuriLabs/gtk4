@@ -313,22 +313,22 @@ gtk_list_factory_widget_class_init (GtkListFactoryWidgetClass *klass)
   properties[PROP_ACTIVATABLE] =
     g_param_spec_boolean ("activatable", NULL, NULL,
                           FALSE,
-                          G_PARAM_WRITABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                          G_PARAM_WRITABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_FACTORY] =
     g_param_spec_object ("factory", NULL, NULL,
                          GTK_TYPE_LIST_ITEM_FACTORY,
-                         G_PARAM_WRITABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_WRITABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_SELECTABLE] =
     g_param_spec_boolean ("selectable", NULL, NULL,
                           FALSE,
-                          G_PARAM_WRITABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                          G_PARAM_WRITABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   properties[PROP_SINGLE_CLICK_ACTIVATE] =
     g_param_spec_boolean ("single-click-activate", NULL, NULL,
                           FALSE,
-                          G_PARAM_WRITABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+                          G_PARAM_WRITABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, N_PROPS, properties);
 
@@ -372,16 +372,16 @@ gtk_list_factory_widget_class_init (GtkListFactoryWidgetClass *klass)
                                    NULL,
                                    gtk_list_factory_widget_scroll_to_action);
 
-  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_Return, 0,
+  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_Return, GDK_NO_MODIFIER_MASK,
                                        "activate-keybinding", 0);
-  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_ISO_Enter, 0,
+  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_ISO_Enter, GDK_NO_MODIFIER_MASK,
                                        "activate-keybinding", 0);
-  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_KP_Enter, 0,
+  gtk_widget_class_add_binding_signal (widget_class, GDK_KEY_KP_Enter, GDK_NO_MODIFIER_MASK,
                                        "activate-keybinding", 0);
 
   /* note that some of these may get overwritten by child widgets,
    * such as GtkTreeExpander */
-  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_space, 0,
+  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_space, GDK_NO_MODIFIER_MASK,
                                        "listitem.select", "(bb)", TRUE, FALSE);
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_space, GDK_CONTROL_MASK,
                                        "listitem.select", "(bb)", TRUE, FALSE);
@@ -389,7 +389,7 @@ gtk_list_factory_widget_class_init (GtkListFactoryWidgetClass *klass)
                                        "listitem.select", "(bb)", TRUE, FALSE);
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_space, GDK_CONTROL_MASK | GDK_SHIFT_MASK,
                                        "listitem.select", "(bb)", TRUE, FALSE);
-  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_KP_Space, 0,
+  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_KP_Space, GDK_NO_MODIFIER_MASK,
                                        "listitem.select", "(bb)", TRUE, FALSE);
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_KP_Space, GDK_CONTROL_MASK,
                                        "listitem.select", "(bb)", TRUE, FALSE);

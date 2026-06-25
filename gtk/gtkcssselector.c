@@ -34,7 +34,7 @@
  * @GTK_CSS_SELECTOR_CATEGORY_SIMPLE: A simple selector
  * @GTK_CSS_SELECTOR_CATEGORY_SIMPLE_RADICAL: A simple selector that matches
  *   what change tracking considers a "radical change"
- * @GTK_CSS_SELECTOR_SIBLING: A selector matching siblings
+ * @GTK_CSS_SELECTOR_CATEGORY_SIBLING: A selector matching siblings
  * @GTK_CSS_SELECTOR_CATEGORY_PARENT: A selector matching a parent or other
  *   ancestor
  *
@@ -967,6 +967,12 @@ gtk_css_selector_new (const GtkCssSelectorClass *class,
   selector->class = class;
 
   return selector;
+}
+
+GtkCssSelector *
+gtk_css_selector_copy (const GtkCssSelector *selector)
+{
+  return (GtkCssSelector *) g_memdup2 (selector, sizeof (GtkCssSelector) * gtk_css_selector_size (selector) + sizeof (gpointer));
 }
 
 static GtkCssSelector *

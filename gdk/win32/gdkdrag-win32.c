@@ -498,7 +498,7 @@ do_drag_drop_response (gpointer user_data)
                                 (hr == E_UNEXPECTED ? "E_UNEXPECTED" :
                                  g_strdup_printf ("%#.8lx", hr)))), ddd->received_drop_effect));
 
-      drag_win32->drop_failed = !(SUCCEEDED (hr) || hr == DRAGDROP_S_DROP);
+      drag_win32->drop_failed = hr != DRAGDROP_S_DROP;
 
       /* We used to delete the selection here,
        * now GTK does that automatically in response to 
@@ -508,8 +508,15 @@ do_drag_drop_response (gpointer user_data)
       GDK_NOTE (DND, g_print ("gdk_dnd_handle_drop_finished: 0x%p\n",
                               drag));
 
-      g_signal_emit_by_name (drag, "dnd-finished");
-      gdk_drag_drop_done (drag, !drag_win32->drop_failed);
+      if (drag_win32->drop_failed)
+        {
+          gdk_drag_cancel (drag, GDK_DRAG_CANCEL_ERROR);
+        }
+      else
+        {
+          g_signal_emit_by_name (drag, "dnd-finished");
+          gdk_drag_drop_done (drag, TRUE);
+        }
     }
   else
     {
@@ -604,6 +611,11 @@ get_data_response (gpointer user_data)
                                         getdata);
 
           return G_SOURCE_REMOVE;
+        }
+      else
+        {
+          GDK_NOTE (DND, g_print ("Error creeating output stream: %s", error->message));
+          g_clear_error (&error);
         }
     }
 
@@ -988,14 +1000,12 @@ idropsource_queryinterface (LPDROPSOURCE This,
     }
 }
 
-static gboolean
+static void
 unref_context_in_main_thread (gpointer opaque_context)
 {
   GdkDrag *drag = GDK_DRAG (opaque_context);
 
   g_clear_object (&drag);
-
-  return G_SOURCE_REMOVE;
 }
 
 static ULONG STDMETHODCALLTYPE
@@ -1009,7 +1019,7 @@ idropsource_release (LPDROPSOURCE This)
 
   if (ref_count == 0)
   {
-    g_idle_add (unref_context_in_main_thread, ctx->drag);
+    g_idle_add_once (unref_context_in_main_thread, ctx->drag);
     g_free (This);
   }
 
@@ -1809,13 +1819,22 @@ gdk_win32_drag_set_cursor (GdkDrag   *drag,
 
   if (drag_win32->grab_seat)
     {
-      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
-      gdk_device_grab (gdk_seat_get_pointer (drag_win32->grab_seat),
-                       drag_win32->grab_surface,
-                       FALSE,
-                       GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
-                       cursor, GDK_CURRENT_TIME);
-      G_GNUC_END_IGNORE_DEPRECATIONS;
+      GdkWin32HCursor *win32_hcursor = NULL;
+      GdkSeat *seat = drag_win32->grab_seat;
+      GdkWin32Display *display = GDK_WIN32_DISPLAY (gdk_seat_get_display (seat));
+      GdkSurface *surface = drag_win32->grab_surface;
+
+      if (cursor != NULL)
+        win32_hcursor = _gdk_win32_display_get_win32hcursor_with_scale (display,
+                                                                        cursor,
+                                                                        gdk_surface_get_scale (surface));
+
+      g_set_object (&display->grab_cursor, win32_hcursor);
+
+      if (display->grab_cursor != NULL)
+        SetCursor (gdk_win32_hcursor_get_handle (display->grab_cursor));
+      else
+        SetCursor (LoadCursor (NULL, IDC_ARROW));
     }
 }
 
@@ -1944,7 +1963,6 @@ static gboolean
 drag_context_grab (GdkDrag *drag)
 {
   GdkWin32Drag *drag_win32 = GDK_WIN32_DRAG (drag);
-  GdkSeatCapabilities capabilities;
   GdkSeat *seat;
   GdkCursor *cursor;
 
@@ -1955,19 +1973,13 @@ drag_context_grab (GdkDrag *drag)
   if (!drag_win32->grab_surface)
     return FALSE;
 
-  seat = gdk_device_get_seat (gdk_drag_get_device (drag));
+  SetCapture (GDK_SURFACE_HWND (drag_win32->grab_surface));
 
-  capabilities = GDK_SEAT_CAPABILITY_ALL;
+  seat = gdk_device_get_seat (gdk_drag_get_device (drag));
+  g_set_object (&drag_win32->grab_seat, seat);
 
   cursor = gdk_drag_get_cursor (drag, gdk_drag_get_selected_action (drag));
-  g_set_object (&drag_win32->cursor, cursor);
-
-  if (gdk_seat_grab (seat, drag_win32->grab_surface,
-                     capabilities, FALSE,
-                     drag_win32->cursor, NULL, NULL, NULL) != GDK_GRAB_SUCCESS)
-    return FALSE;
-
-  g_set_object (&drag_win32->grab_seat, seat);
+  gdk_win32_drag_set_cursor (drag, cursor);
 
   /* TODO: Should be grabbing keys here, to support keynav. SetWindowsHookEx()? */
 
@@ -1978,6 +1990,7 @@ static void
 drag_context_ungrab (GdkDrag *drag)
 {
   GdkWin32Drag *drag_win32 = GDK_WIN32_DRAG (drag);
+  GdkWin32Display *display;
 
   GDK_NOTE (DND, g_print ("drag_context_ungrab: 0x%p 0x%p\n",
                           drag,
@@ -1986,7 +1999,9 @@ drag_context_ungrab (GdkDrag *drag)
   if (!drag_win32->grab_seat)
     return;
 
-  gdk_seat_ungrab (drag_win32->grab_seat);
+  display = GDK_WIN32_DISPLAY (gdk_seat_get_display (drag_win32->grab_seat));
+  g_clear_object (&display->grab_cursor);
+  ReleaseCapture ();
 
   g_clear_object (&drag_win32->grab_seat);
 

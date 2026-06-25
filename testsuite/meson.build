@@ -31,6 +31,8 @@ common_env = [
   'GSETTINGS_SCHEMA_DIR=@0@'.format(gtk_schema_build_dir),
   'GDK_DEBUG=default-settings,no-portals',
   'GTK_DEBUG=css',
+  'LSAN_OPTIONS=suppressions=@0@/lsan.supp:print_suppressions=0:detect_leaks=0:allocator_may_return_null=1'.format(meson.project_source_root()),
+  'ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer',
 ]
 exclude_unstable = ['flaky', 'failing']
 
@@ -89,6 +91,18 @@ foreach setup : setups
     )
   endif
 endforeach
+
+if get_option('build-demos') and not os_android
+  test('general info', gtk4_demo,
+       args: [ '--autoquit' ],
+       protocol: 'exitcode',
+       env: common_env + [
+         'GTK_DEBUG=general-info',
+         'GTK_INSPECTOR_GENERAL_INFO_FILE=@0@'.format(join_paths(meson.current_build_dir(), 'general-info.md')),
+          ] + setup.get('env', []),
+       suite: [ 'info' ],
+  )
+endif
 
 subdir('gdk')
 subdir('gsk')

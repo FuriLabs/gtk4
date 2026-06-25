@@ -50,6 +50,7 @@ struct _GdkBroadwaySurface
 
   gboolean visible;
   gboolean maximized;
+  gboolean popup_grab;
   int transient_for;
 
   int pre_maximize_x;
@@ -89,8 +90,6 @@ struct _GdkBroadwaySurfaceClass
 {
   GdkSurfaceClass parent_class;
 };
-
-GType gdk_surface_broadway_get_type (void);
 
 G_END_DECLS
 

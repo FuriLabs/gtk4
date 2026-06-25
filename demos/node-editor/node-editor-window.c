@@ -1196,6 +1196,7 @@ testcase_save_clicked_cb (GtkWidget        *button,
   gtk_popover_popdown (GTK_POPOVER (self->testcase_popover));
 
 out:
+  g_clear_error (&error);
   g_free (text);
   g_free (png_file);
   g_free (node_file);
@@ -1345,8 +1346,7 @@ node_editor_window_unrealize (GtkWidget *widget)
   g_signal_handlers_disconnect_by_func (gtk_widget_get_clipboard (widget), update_paste_action, widget);
 
   frameclock = gtk_widget_get_frame_clock (widget);
-  g_signal_handler_disconnect (frameclock, self->after_paint_handler);
-  self->after_paint_handler = 0;
+  g_clear_signal_handler (&self->after_paint_handler, frameclock);
 
   for (i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->renderers)); i ++)
     {
@@ -1868,11 +1868,27 @@ zoom_out_cb (GtkButton        *button,
   set_zoom_level (self, self->zoom_level - 1);
 }
 
+static gboolean
+node_editor_window_save_state (GtkApplicationWindow *win,
+                               GVariantDict         *state)
+{
+  NodeEditorWindow *self = NODE_EDITOR_WINDOW (win);
+
+  g_variant_dict_insert (state, "zoom-level", "i", self->zoom_level);
+  g_variant_dict_insert (state, "auto-reload", "b", self->auto_reload);
+  g_variant_dict_insert (state, "dark-mode", "b", self->dark_mode);
+  g_variant_dict_insert (state, "paned-position", "i", self->paned_position);
+
+  return TRUE;
+}
+
 static void
 node_editor_window_class_init (NodeEditorWindowClass *class)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (class);
+  GtkApplicationWindowClass *appwin_class = GTK_APPLICATION_WINDOW_CLASS (class);
+
   GtkShortcutTrigger *trigger;
   GtkShortcutAction *action;
   GtkShortcut *shortcut;
@@ -1881,6 +1897,8 @@ node_editor_window_class_init (NodeEditorWindowClass *class)
   object_class->finalize = node_editor_window_finalize;
   object_class->set_property = node_editor_window_set_property;
   object_class->get_property = node_editor_window_get_property;
+
+  appwin_class->save_state = node_editor_window_save_state;
 
   gtk_widget_class_set_template_from_resource (widget_class,
                                                "/org/gtk/gtk4/node-editor/node-editor-window.ui");

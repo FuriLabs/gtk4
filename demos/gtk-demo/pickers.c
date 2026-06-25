@@ -40,7 +40,10 @@ set_file (GFile    *file,
   gtk_widget_set_sensitive (open_folder_button, TRUE);
   g_object_set_data_full (G_OBJECT (open_folder_button), "file", g_object_ref (file), g_object_unref);
 
-  info = g_file_query_info (file, "standard::content-type", 0, NULL, NULL);
+  info = g_file_query_info (file, "standard::content-type",
+                            G_FILE_QUERY_INFO_NONE,
+                            NULL,
+                            NULL);
   if (strcmp (g_file_info_get_content_type (info), "application/pdf") == 0)
     {
       gtk_widget_set_sensitive (print_button, TRUE);
@@ -71,14 +74,13 @@ file_opened (GObject *source,
   set_file (file, data);
 }
 
-static gboolean
+static void
 abort_mission (gpointer data)
 {
   GCancellable *cancellable = data;
 
   g_cancellable_cancel (cancellable);
-
-  return G_SOURCE_REMOVE;
+  g_object_unref (cancellable);
 }
 
 static void
@@ -93,9 +95,9 @@ open_file (GtkButton *picker,
 
   cancellable = g_cancellable_new ();
 
-  g_timeout_add_seconds_full (G_PRIORITY_DEFAULT,
-                              20,
-                              abort_mission, g_object_ref (cancellable), g_object_unref);
+  g_timeout_add_seconds_once (20,
+                              abort_mission,
+                              g_object_ref (cancellable));
 
   gtk_file_dialog_open (dialog, parent, cancellable, file_opened, label);
 
@@ -199,9 +201,9 @@ print_file (GtkButton *picker)
 
   cancellable = g_cancellable_new ();
 
-  id = g_timeout_add_seconds_full (G_PRIORITY_DEFAULT,
-                                   20,
-                                   abort_mission, g_object_ref (cancellable), g_object_unref);
+  id = g_timeout_add_seconds_once (20,
+                                   abort_mission,
+                                   g_object_ref (cancellable));
   g_object_set_data (G_OBJECT (cancellable), "timeout", GUINT_TO_POINTER (id));
 
   gtk_print_dialog_print_file (dialog, parent, NULL, file, cancellable, print_file_done, NULL);
@@ -254,6 +256,44 @@ on_drop (GtkDropTarget *target,
   return FALSE;
 }
 
+static void
+on_language_changed (GtkDropDown *drop_down,
+                     GParamSpec  *pspec,
+                     gpointer     data)
+{
+  GtkFontDialog *font_dialog = GTK_FONT_DIALOG (data);
+  GtkStringObject *selected_obj;
+  const char *selected_text;
+  PangoLanguage *lang = NULL;
+
+  selected_obj = GTK_STRING_OBJECT (gtk_drop_down_get_selected_item (drop_down));
+  if (!selected_obj)
+    return;
+
+  selected_text = gtk_string_object_get_string (selected_obj);
+
+  if (g_strcmp0 (selected_text, "No Language") == 0)
+    {
+      lang = NULL;
+    }
+  else if (g_strcmp0 (selected_text, "Current") == 0)
+    {
+      lang = gtk_get_default_language ();
+    }
+  else if (g_strcmp0 (selected_text, "English") == 0)
+    lang = pango_language_from_string ("en");
+  else if (g_strcmp0 (selected_text, "Arabic") == 0)
+    lang = pango_language_from_string ("ar");
+  else if (g_strcmp0 (selected_text, "Hindi") == 0)
+    lang = pango_language_from_string ("hi");
+  else if (g_strcmp0 (selected_text, "Thai") == 0)
+    lang = pango_language_from_string ("th");
+  else if (g_strcmp0 (selected_text, "Vietnamese") == 0)
+    lang = pango_language_from_string ("vi");
+
+  gtk_font_dialog_set_language (font_dialog, lang);
+}
+	
 GtkWidget *
 do_pickers (GtkWidget *do_widget)
 {
@@ -263,6 +303,11 @@ do_pickers (GtkWidget *do_widget)
 
   if (!window)
   {
+    GtkFontDialog *font_dialog;
+    GtkWidget *lang_dropdown;
+    GtkWidget *font_hbox;
+    const char *languages[] = { "No Language", "Current", "English", "Arabic", "Hindi", "Thai", "Vietnamese", NULL };
+    
     window = gtk_window_new ();
     gtk_window_set_display (GTK_WINDOW (window),
                             gtk_widget_get_display (do_widget));
@@ -294,9 +339,19 @@ do_pickers (GtkWidget *do_widget)
     gtk_widget_set_hexpand (label, TRUE);
     gtk_grid_attach (GTK_GRID (table), label, 0, 1, 1, 1);
 
-    picker = gtk_font_dialog_button_new (gtk_font_dialog_new ());
+    font_dialog = gtk_font_dialog_new ();
+    picker = gtk_font_dialog_button_new (font_dialog);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), picker);
-    gtk_grid_attach (GTK_GRID (table), picker, 1, 1, 1, 1);
+    
+    lang_dropdown = gtk_drop_down_new_from_strings (languages);
+    gtk_drop_down_set_selected (GTK_DROP_DOWN (lang_dropdown), 0);
+    g_signal_connect (lang_dropdown, "notify::selected", G_CALLBACK (on_language_changed), font_dialog);
+    
+    font_hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 6);
+    gtk_box_append (GTK_BOX (font_hbox), picker);
+    gtk_box_append (GTK_BOX (font_hbox), lang_dropdown);
+
+    gtk_grid_attach (GTK_GRID (table), font_hbox, 1, 1, 1, 1);
 
     label = gtk_label_new_with_mnemonic ("_File:");
     gtk_widget_set_halign (label, GTK_ALIGN_START);

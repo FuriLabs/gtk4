@@ -258,9 +258,12 @@ enum {
   PROP_WRAP,
   PROP_UPDATE_POLICY,
   PROP_VALUE,
-  NUM_SPINBUTTON_PROPS,
-  PROP_ORIENTATION = NUM_SPINBUTTON_PROPS,
-  PROP_EDITING_CANCELED
+  /* GtkCellEditable */
+  PROP_EDITING_CANCELED,
+
+  /* GtkOrientable */
+  PROP_ORIENTATION,
+  NUM_SPINBUTTON_PROPS
 };
 
 /* Signals */
@@ -396,7 +399,7 @@ gtk_spin_button_class_init (GtkSpinButtonClass *class)
   spinbutton_props[PROP_ACTIVATES_DEFAULT] =
     g_param_spec_boolean ("activates-default", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSpinButton:adjustment:
@@ -406,7 +409,7 @@ gtk_spin_button_class_init (GtkSpinButtonClass *class)
   spinbutton_props[PROP_ADJUSTMENT] =
     g_param_spec_object ("adjustment", NULL, NULL,
                          GTK_TYPE_ADJUSTMENT,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSpinButton:climb-rate:
@@ -416,7 +419,7 @@ gtk_spin_button_class_init (GtkSpinButtonClass *class)
   spinbutton_props[PROP_CLIMB_RATE] =
     g_param_spec_double ("climb-rate", NULL, NULL,
                          0.0, G_MAXDOUBLE, 0.0,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSpinButton:digits:
@@ -426,7 +429,7 @@ gtk_spin_button_class_init (GtkSpinButtonClass *class)
   spinbutton_props[PROP_DIGITS] =
     g_param_spec_uint ("digits", NULL, NULL,
                        0, MAX_DIGITS, 0,
-                       GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSpinButton:snap-to-ticks:
@@ -437,7 +440,7 @@ gtk_spin_button_class_init (GtkSpinButtonClass *class)
   spinbutton_props[PROP_SNAP_TO_TICKS] =
     g_param_spec_boolean ("snap-to-ticks", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSpinButton:numeric:
@@ -447,7 +450,7 @@ gtk_spin_button_class_init (GtkSpinButtonClass *class)
   spinbutton_props[PROP_NUMERIC] =
     g_param_spec_boolean ("numeric", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSpinButton:wrap:
@@ -457,7 +460,7 @@ gtk_spin_button_class_init (GtkSpinButtonClass *class)
   spinbutton_props[PROP_WRAP] =
     g_param_spec_boolean ("wrap", NULL, NULL,
                           FALSE,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSpinButton:update-policy:
@@ -469,7 +472,7 @@ gtk_spin_button_class_init (GtkSpinButtonClass *class)
     g_param_spec_enum ("update-policy", NULL, NULL,
                        GTK_TYPE_SPIN_BUTTON_UPDATE_POLICY,
                        GTK_UPDATE_ALWAYS,
-                       GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSpinButton:value:
@@ -479,12 +482,16 @@ gtk_spin_button_class_init (GtkSpinButtonClass *class)
   spinbutton_props[PROP_VALUE] =
     g_param_spec_double ("value", NULL, NULL,
                          -G_MAXDOUBLE, G_MAXDOUBLE, 0.0,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
+
+  spinbutton_props[PROP_ORIENTATION] = g_param_spec_override ("orientation",
+      g_object_interface_find_property (g_type_default_interface_ref (GTK_TYPE_ORIENTABLE), "orientation"));
+  spinbutton_props[PROP_EDITING_CANCELED] = g_param_spec_override ("editing-canceled",
+      g_object_interface_find_property (g_type_default_interface_ref (GTK_TYPE_CELL_EDITABLE), "editing-canceled"));
 
   g_object_class_install_properties (gobject_class, NUM_SPINBUTTON_PROPS, spinbutton_props);
-  g_object_class_override_property (gobject_class, PROP_ORIENTATION, "orientation");
-  g_object_class_override_property (gobject_class, PROP_EDITING_CANCELED, "editing-canceled");
-  gtk_editable_install_properties (gobject_class, PROP_EDITING_CANCELED + 1);
+
+  gtk_editable_install_properties (gobject_class, NUM_SPINBUTTON_PROPS);
 
   /**
    * GtkSpinButton::input:
@@ -769,7 +776,7 @@ gtk_spin_button_set_property (GObject      *object,
 {
   GtkSpinButton *spin_button = GTK_SPIN_BUTTON (object);
 
-  if (prop_id == PROP_EDITING_CANCELED + 1 + GTK_EDITABLE_PROP_WIDTH_CHARS)
+  if (prop_id == NUM_SPINBUTTON_PROPS + GTK_EDITABLE_PROP_WIDTH_CHARS)
     {
       spin_button->width_chars = g_value_get_int (value);
       gtk_spin_button_update_width_chars (spin_button);
@@ -824,7 +831,7 @@ gtk_spin_button_set_property (GObject      *object,
       if (spin_button->editing_canceled != g_value_get_boolean (value))
         {
           spin_button->editing_canceled = g_value_get_boolean (value);
-          g_object_notify (object, "editing-canceled");
+          g_object_notify_by_pspec (object, spinbutton_props[PROP_EDITING_CANCELED]);
         }
       break;
     default:
@@ -841,7 +848,7 @@ gtk_spin_button_get_property (GObject      *object,
 {
   GtkSpinButton *spin_button = GTK_SPIN_BUTTON (object);
 
-  if (prop_id == PROP_EDITING_CANCELED + 1 + GTK_EDITABLE_PROP_WIDTH_CHARS)
+  if (prop_id == NUM_SPINBUTTON_PROPS + GTK_EDITABLE_PROP_WIDTH_CHARS)
     {
       g_value_set_int (value, spin_button->width_chars);
       return;
@@ -935,8 +942,7 @@ gtk_spin_button_stop_spinning (GtkSpinButton *spin)
 
   if (spin->timer)
     {
-      g_source_remove (spin->timer);
-      spin->timer = 0;
+      g_clear_handle_id (&spin->timer, g_source_remove);
       spin->need_timer = FALSE;
 
       did_spin = TRUE;
@@ -1293,7 +1299,7 @@ gtk_spin_button_set_orientation (GtkSpinButton  *spin,
       gtk_box_layout_set_baseline_child (layout_manager, 1);
     }
 
-  g_object_notify (G_OBJECT (spin), "orientation");
+  g_object_notify_by_pspec (G_OBJECT (spin), spinbutton_props[PROP_ORIENTATION]);
 }
 
 static char *
@@ -1364,7 +1370,7 @@ gtk_spin_button_state_flags_changed (GtkWidget     *widget,
   GTK_WIDGET_CLASS (gtk_spin_button_parent_class)->state_flags_changed (widget, previous_state);
 }
 
-static int
+static gboolean
 gtk_spin_button_timer (GtkSpinButton *spin_button)
 {
   gboolean retval = FALSE;
@@ -1752,7 +1758,7 @@ gtk_spin_button_default_output (GtkSpinButton *spin_button)
   char *buf = gtk_spin_button_format_for_value (spin_button,
                                                  gtk_adjustment_get_value (spin_button->adjustment));
 
-  if (strcmp (buf, gtk_editable_get_text (GTK_EDITABLE (spin_button->entry))))
+  if (strcmp (buf, gtk_editable_get_text (GTK_EDITABLE (spin_button->entry))) != 0)
     gtk_editable_set_text (GTK_EDITABLE (spin_button->entry), buf);
 
   g_free (buf);

@@ -31,6 +31,7 @@
 #include "deprecated/gtkiconview.h"
 #include "deprecated/gtktreeview.h"
 #include "gtkcolordialogbutton.h"
+#include "gtkcolorswatchprivate.h"
 #include "gtkfontdialogbutton.h"
 #include "gtklabel.h"
 #include "gtkpopover.h"
@@ -61,8 +62,11 @@ enum
   PROP_0,
   PROP_OBJECT,
   PROP_NAME,
-  PROP_SIZE_GROUP
+  PROP_SIZE_GROUP,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 enum
 {
@@ -92,7 +96,7 @@ disconnect_func (gpointer data)
 {
   DisconnectData *dd = data;
 
-  g_signal_handler_disconnect (dd->instance, dd->id);
+  g_clear_signal_handler (&dd->id, dd->instance);
 }
 
 static void
@@ -215,6 +219,85 @@ static void
 notify_property (GObject *object, GParamSpec *pspec)
 {
   g_object_notify (object, pspec->name);
+}
+
+static void
+rgba_ro_changed (GObject *object, GParamSpec *pspec, gpointer data)
+{
+  GtkColorSwatch *swatch = GTK_COLOR_SWATCH (data);
+  GValue val = G_VALUE_INIT;
+  GdkRGBA *color;
+
+  g_value_init (&val, GDK_TYPE_RGBA);
+  get_property_value (object, pspec, &val);
+
+  color = g_value_get_boxed (&val);
+
+  if (color != NULL)
+    gtk_color_swatch_set_rgba (swatch, color);
+
+ g_value_unset (&val);
+}
+
+static void
+readonly_fallback_changed (GObject    *object,
+                           GParamSpec *spec,
+                           gpointer    data)
+{
+  GValue gvalue = {0};
+  char *value;
+  char *type;
+
+  g_value_init (&gvalue, spec->value_type);
+  g_object_get_property (object, spec->name, &gvalue);
+  strdup_value_contents (&gvalue, &value, &type);
+
+  gtk_label_set_label (GTK_LABEL (data), value);
+
+  g_value_unset (&gvalue);
+  g_free (value);
+  g_free (type);
+}
+
+static GtkWidget *
+property_viewer (GObject                *object,
+                 GParamSpec             *spec,
+                 GtkInspectorPropEditor *self)
+{
+  GtkWidget *prop_view;
+  GType type = G_PARAM_SPEC_TYPE (spec);
+
+  if (type == G_TYPE_PARAM_BOXED &&
+      G_PARAM_SPEC_VALUE_TYPE (spec) == GDK_TYPE_RGBA)
+    {
+      prop_view = g_object_new (GTK_TYPE_COLOR_SWATCH,
+                                "accessible-role", GTK_ACCESSIBLE_ROLE_IMG,
+                                "selectable", FALSE,
+                                "has-menu", FALSE,
+                                "can-drag", FALSE,
+                                NULL);
+
+      rgba_ro_changed (object, spec, prop_view);
+      g_object_connect_property (object, spec,
+                                 G_CALLBACK (rgba_ro_changed),
+                                 prop_view, G_OBJECT (prop_view));
+    }
+  else
+    {
+      prop_view = gtk_label_new ("");
+      gtk_label_set_ellipsize (GTK_LABEL (prop_view), PANGO_ELLIPSIZE_END);
+      gtk_label_set_max_width_chars (GTK_LABEL (prop_view), 20);
+      gtk_label_set_xalign (GTK_LABEL (prop_view), 0.0);
+      gtk_widget_set_hexpand (prop_view, TRUE);
+      gtk_widget_set_halign (prop_view, GTK_ALIGN_FILL);
+
+      readonly_fallback_changed (object, spec, prop_view);
+      g_object_connect_property (self->object, spec,
+                                 G_CALLBACK (readonly_fallback_changed),
+                                 prop_view, G_OBJECT (prop_view));
+    }
+
+  return prop_view;
 }
 
 static void
@@ -931,6 +1014,20 @@ describe_expression (GtkExpression *expression)
 }
 
 static void
+string_append_unichar_escaped (GString  *string,
+                               gunichar  ch)
+{
+  char text[16] = { 0, };
+  int len;
+  char *escaped;
+
+  len = g_unichar_to_utf8 (ch, text);
+  escaped = g_markup_escape_text (text, len);
+  g_string_append (string, escaped);
+  g_free (escaped);
+}
+
+static void
 toggle_unicode (GtkWidget *stack,
                 gboolean   show_unicode)
 {
@@ -949,17 +1046,20 @@ toggle_unicode (GtkWidget *stack,
 
       orig = gtk_editable_get_text (GTK_EDITABLE (entry));
       s = g_string_sized_new (10 * strlen (orig));
+
+      g_string_append_unichar (s, 0x202d); /* LRO, we are rendering left-to-right */
       for (p = orig; *p; p = g_utf8_next_char (p))
         {
           gunichar ch = g_utf8_get_char (p);
           if (s->len > 0)
             g_string_append_unichar (s, 0x2005);
-          g_string_append_unichar (s, ch);
+          string_append_unichar_escaped (s, ch);
           g_string_append_unichar (s, 0x2005);
           g_string_append (s, "<span alpha=\"70%\" font_size=\"smaller\">");
           g_string_append_printf (s, "%04X", ch);
           g_string_append (s, "</span>");
         }
+      g_string_append_unichar (s, 0x202c); /* PDF */
       pango_parse_markup (s->str, s->len, 0, &attrs, &text, NULL, NULL);
       gtk_editable_set_text (GTK_EDITABLE (unicode), text);
       gtk_entry_set_attributes (GTK_ENTRY (unicode), attrs);
@@ -1131,22 +1231,15 @@ property_editor (GObject                *object,
     }
   else if (type == G_TYPE_PARAM_ENUM)
     {
-      GEnumClass *eclass;
-      GtkStringList *names;
-      int j;
+      GtkEnumList *list;
+      GtkExpression *expression;
 
-      eclass = G_ENUM_CLASS (g_type_class_ref (spec->value_type));
-
-      names = gtk_string_list_new (NULL);
-      for (j = 0; j < eclass->n_values; j++)
-        gtk_string_list_append (names, eclass->values[j].value_nick);
-
-      prop_edit = gtk_drop_down_new (G_LIST_MODEL (names), NULL);
+      list = gtk_enum_list_new (spec->value_type);
+      expression = gtk_property_expression_new (GTK_TYPE_ENUM_LIST_ITEM, NULL, "nick");
+      prop_edit = gtk_drop_down_new (G_LIST_MODEL (list), expression);
 
       connect_controller (G_OBJECT (prop_edit), "notify::selected",
                           object, spec, G_CALLBACK (enum_modified));
-
-      g_type_class_unref (eclass);
 
       g_object_connect_property (object, spec,
                                  G_CALLBACK (enum_changed),
@@ -1713,26 +1806,6 @@ add_gtk_settings_info (GtkInspectorPropEditor *self)
 }
 
 static void
-readonly_changed (GObject    *object,
-                  GParamSpec *spec,
-                  gpointer    data)
-{
-  GValue gvalue = {0};
-  char *value;
-  char *type;
-
-  g_value_init (&gvalue, spec->value_type);
-  g_object_get_property (object, spec->name, &gvalue);
-  strdup_value_contents (&gvalue, &value, &type);
-
-  gtk_label_set_label (GTK_LABEL (data), value);
-
-  g_value_unset (&gvalue);
-  g_free (value);
-  g_free (type);
-}
-
-static void
 constructed (GObject *object)
 {
   GtkInspectorPropEditor *self = GTK_INSPECTOR_PROP_EDITOR (object);
@@ -1740,6 +1813,8 @@ constructed (GObject *object)
   GtkWidget *label;
   gboolean can_modify;
   GtkWidget *box;
+
+  G_OBJECT_CLASS (gtk_inspector_prop_editor_parent_class)->constructed (object);
 
   spec = find_property (self);
 
@@ -1749,9 +1824,9 @@ constructed (GObject *object)
   box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 10);
 
   if ((spec->flags & G_PARAM_CONSTRUCT_ONLY) != 0)
-    label = gtk_label_new ("(construct-only)");
+    label = gtk_label_new (_("(construct-only)"));
   else if ((spec->flags & G_PARAM_WRITABLE) == 0)
-    label = gtk_label_new ("(not writable)");
+    label = gtk_label_new (_("(not writable)"));
   else
     label = NULL;
 
@@ -1770,18 +1845,8 @@ constructed (GObject *object)
 
   if (!can_modify)
     {
-      label = gtk_label_new ("");
-      gtk_label_set_ellipsize (GTK_LABEL (label), PANGO_ELLIPSIZE_END);
-      gtk_label_set_max_width_chars (GTK_LABEL (label), 20);
-      gtk_label_set_xalign (GTK_LABEL (label), 0.0);
-      gtk_widget_set_hexpand (label, TRUE);
-      gtk_widget_set_halign (label, GTK_ALIGN_FILL);
-      gtk_box_append (GTK_BOX (box), label);
-
-      readonly_changed (self->object, spec, label);
-      g_object_connect_property (self->object, spec,
-                                 G_CALLBACK (readonly_changed),
-                                 label, G_OBJECT (label));
+      self->self = property_viewer (self->object, spec, self);
+      gtk_box_append (GTK_BOX (box), self->self);
 
       if (self->size_group)
         gtk_size_group_add_widget (self->size_group, box);
@@ -1889,17 +1954,16 @@ gtk_inspector_prop_editor_class_init (GtkInspectorPropEditorClass *klass)
                   NULL, NULL, NULL,
                   G_TYPE_NONE, 3, G_TYPE_OBJECT, G_TYPE_STRING, G_TYPE_STRING);
 
-  g_object_class_install_property (object_class, PROP_OBJECT,
-      g_param_spec_object ("object", NULL, NULL,
-                           G_TYPE_OBJECT, G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
+  props[PROP_OBJECT] = g_param_spec_object ("object", NULL, NULL,
+                                            G_TYPE_OBJECT, G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_NAME);
 
-  g_object_class_install_property (object_class, PROP_NAME,
-      g_param_spec_string ("name", NULL, NULL,
-                           NULL, G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
+  props[PROP_NAME] = g_param_spec_string ("name", NULL, NULL,
+                                          NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_NAME);
 
-  g_object_class_install_property (object_class, PROP_SIZE_GROUP,
-      g_param_spec_object ("size-group", NULL, NULL,
-                           GTK_TYPE_SIZE_GROUP, G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
+  props[PROP_SIZE_GROUP] = g_param_spec_object ("size-group", NULL, NULL,
+                                                GTK_TYPE_SIZE_GROUP, G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_NAME);
+
+  g_object_class_install_properties (object_class, N_PROPS, props);
 }
 
 GtkWidget *

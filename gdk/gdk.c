@@ -147,7 +147,7 @@ static const GdkDebugKey gdk_debug_keys[] = {
   { "high-depth",      GDK_DEBUG_HIGH_DEPTH, "Use high bit depth rendering if possible" },
   { "no-vsync",        GDK_DEBUG_NO_VSYNC, "Repaint instantly (uses 100% CPU with animations)" },
   { "color-mgmt",      GDK_DEBUG_COLOR_MANAGEMENT, "Enable color management" },
-  { "session-mgmt",    GDK_DEBUG_SESSION_MANAGEMENT, "Enable session management" },
+  { "dcomp",           GDK_DEBUG_DCOMP, "Enable Direct Composition (Windows)" },
 };
 
 static const GdkDebugKey gdk_feature_keys[] = {
@@ -161,10 +161,8 @@ static const GdkDebugKey gdk_feature_keys[] = {
   { "dmabuf",     GDK_FEATURE_DMABUF,           "Disable dmabuf support" },
   { "d3d11",      GDK_FEATURE_D3D11,            "Disable Direct3D 11" },
   { "d3d12",      GDK_FEATURE_D3D12,            "Disable Direct3D 12" },
-  { "dcomp",      GDK_FEATURE_DCOMP,            "Disable Direct Composition" },
   { "offload",    GDK_FEATURE_OFFLOAD,          "Disable graphics offload" },
   { "threads",    GDK_FEATURE_THREADS,          "Disable threads where possible" },
-  { "icon-nodes", GDK_FEATURE_ICON_NODES,       "Disable svg->node conversion for symbolic icons" },
 };
 
 static GdkFeatures gdk_features;
@@ -631,7 +629,7 @@ gdk_display_should_use_portal (GdkDisplay *display,
   if (portals_disabled)
     return FALSE;
 
-  if (disabled_portals != NULL &&
+  if (disabled_portals != NULL && portal_interface != NULL &&
       g_hash_table_contains (disabled_portals, portal_interface))
     return FALSE;
 

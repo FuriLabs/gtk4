@@ -49,10 +49,12 @@ G_DEFINE_TYPE (GtkFileChooserCell, gtk_file_chooser_cell, GTK_TYPE_WIDGET)
 
 enum
 {
-  PROP_POSITION = 1,
-  PROP_ITEM,
+  PROP_ITEM = 1,
   PROP_LIST_ITEM,
+  N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 #define ICON_SIZE 16
 
@@ -135,7 +137,7 @@ drag_prepare_cb (GtkDragSource *source,
 
   icon = _gtk_file_info_get_icon (self->item, ICON_SIZE, scale, icon_theme);
 
-  paintable = gtk_icon_theme_lookup_by_gicon (icon_theme,icon, ICON_SIZE, scale, GTK_TEXT_DIR_NONE, 0);
+  paintable = gtk_icon_theme_lookup_by_gicon (icon_theme,icon, ICON_SIZE, scale, GTK_TEXT_DIR_NONE, GTK_ICON_LOOKUP_NONE);
 
   gtk_drag_source_set_icon (source, GDK_PAINTABLE (paintable), x, y);
 
@@ -249,15 +251,15 @@ gtk_file_chooser_cell_class_init (GtkFileChooserCellClass *klass)
   object_class->set_property = gtk_file_chooser_cell_set_property;
   object_class->get_property = gtk_file_chooser_cell_get_property;
 
-  g_object_class_install_property (object_class, PROP_ITEM,
-                                   g_param_spec_object ("item", NULL, NULL,
-                                                        G_TYPE_FILE_INFO,
-                                                        GTK_PARAM_READWRITE));
+  props[PROP_ITEM] = g_param_spec_object ("item", NULL, NULL,
+                                          G_TYPE_FILE_INFO,
+                                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
-  g_object_class_install_property (object_class, PROP_LIST_ITEM,
-                                   g_param_spec_object ("list-item", NULL, NULL,
-                                                        GTK_TYPE_LIST_ITEM,
-                                                        GTK_PARAM_WRITABLE));
+  props[PROP_LIST_ITEM] = g_param_spec_object ("list-item", NULL, NULL,
+                                               GTK_TYPE_LIST_ITEM,
+                                               G_PARAM_WRITABLE | G_PARAM_STATIC_NAME);
+
+  g_object_class_install_properties (object_class, N_PROPS, props);
 
   gtk_widget_class_set_css_name (widget_class, I_("filelistcell"));
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);

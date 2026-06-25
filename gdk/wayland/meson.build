@@ -25,7 +25,6 @@ gdk_wayland_sources = files([
   'gdkvulkancontext-wayland.c',
   'gdkwaylandcolor.c',
   'gdkwaylandpresentationtime.c',
-  'wm-button-layout-translation.c',
 ])
 
 gdk_wayland_public_headers = files([
@@ -171,8 +170,8 @@ proto_sources = [
     'version': 1,
   },
   {
-    'name': 'xx-session-management',
-    'stability': 'private',
+    'name': 'xdg-session-management',
+    'stability': 'staging',
     'version': 1,
   },
 ]

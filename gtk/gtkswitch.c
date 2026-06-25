@@ -128,9 +128,10 @@ enum
   PROP_0,
   PROP_ACTIVE,
   PROP_STATE,
-  LAST_PROP,
+  /* GtkActionable */
   PROP_ACTION_NAME,
-  PROP_ACTION_TARGET
+  PROP_ACTION_TARGET,
+  LAST_PROP
 };
 
 enum
@@ -585,7 +586,7 @@ gtk_switch_class_init (GtkSwitchClass *klass)
   switch_props[PROP_ACTIVE] =
     g_param_spec_boolean ("active", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSwitch:state:
@@ -601,14 +602,12 @@ gtk_switch_class_init (GtkSwitchClass *klass)
   switch_props[PROP_STATE] =
     g_param_spec_boolean ("state", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   gobject_class->set_property = gtk_switch_set_property;
   gobject_class->get_property = gtk_switch_get_property;
   gobject_class->dispose = gtk_switch_dispose;
   gobject_class->finalize = gtk_switch_finalize;
-
-  g_object_class_install_properties (gobject_class, LAST_PROP, switch_props);
 
   widget_class->direction_changed = gtk_switch_direction_changed;
 
@@ -667,8 +666,12 @@ gtk_switch_class_init (GtkSwitchClass *klass)
                               G_TYPE_FROM_CLASS (gobject_class),
                               _gtk_marshal_BOOLEAN__BOOLEANv);
 
-  g_object_class_override_property (gobject_class, PROP_ACTION_NAME, "action-name");
-  g_object_class_override_property (gobject_class, PROP_ACTION_TARGET, "action-target");
+  switch_props[PROP_ACTION_NAME] = g_param_spec_override ("action-name",
+      g_object_interface_find_property (g_type_default_interface_ref (GTK_TYPE_ACTIONABLE), "action-name"));
+  switch_props[PROP_ACTION_TARGET] = g_param_spec_override ("action-target",
+      g_object_interface_find_property (g_type_default_interface_ref (GTK_TYPE_ACTIONABLE), "action-target"));
+
+  g_object_class_install_properties (gobject_class, LAST_PROP, switch_props);
 
   gtk_widget_class_set_css_name (widget_class, I_("switch"));
 

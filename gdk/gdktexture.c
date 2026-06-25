@@ -228,6 +228,7 @@ gdk_texture_loadable_icon_load_async (GLoadableIcon       *icon,
   GTask *task;
 
   task = g_task_new (icon, cancellable, callback, user_data);
+  g_task_set_source_tag (task, gdk_texture_loadable_icon_load_async);
   g_task_run_in_thread (task, gdk_texture_loadable_icon_load_in_thread);
   g_object_unref (task);
 }
@@ -405,7 +406,7 @@ gdk_texture_class_init (GdkTextureClass *klass)
                       1,
                       G_PARAM_READWRITE |
                       G_PARAM_CONSTRUCT_ONLY |
-                      G_PARAM_STATIC_STRINGS |
+                      G_PARAM_STATIC_NAME |
                       G_PARAM_EXPLICIT_NOTIFY);
 
   /**
@@ -420,7 +421,7 @@ gdk_texture_class_init (GdkTextureClass *klass)
                       1,
                       G_PARAM_READWRITE |
                       G_PARAM_CONSTRUCT_ONLY |
-                      G_PARAM_STATIC_STRINGS |
+                      G_PARAM_STATIC_NAME |
                       G_PARAM_EXPLICIT_NOTIFY);
 
   /**
@@ -435,7 +436,7 @@ gdk_texture_class_init (GdkTextureClass *klass)
                         GDK_TYPE_COLOR_STATE,
                         G_PARAM_READWRITE |
                         G_PARAM_CONSTRUCT_ONLY |
-                        G_PARAM_STATIC_STRINGS |
+                        G_PARAM_STATIC_NAME |
                         G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (gobject_class, N_PROPS, properties);
@@ -445,39 +446,6 @@ static void
 gdk_texture_init (GdkTexture *self)
 {
   self->color_state = gdk_color_state_get_srgb ();
-}
-
-static GdkMemoryFormat
-cairo_format_to_memory_format (cairo_format_t format)
-{
-  switch (format)
-  {
-    case CAIRO_FORMAT_ARGB32:
-      return GDK_MEMORY_DEFAULT;
-
-    case CAIRO_FORMAT_RGB24:
-#if G_BYTE_ORDER == G_LITTLE_ENDIAN
-      return GDK_MEMORY_B8G8R8X8;
-#elif G_BYTE_ORDER == G_BIG_ENDIAN
-      return GDK_MEMORY_X8R8G8B8;
-#else
-#error "Unknown byte order for Cairo format"
-#endif
-    case CAIRO_FORMAT_A8:
-      return GDK_MEMORY_A8;
-    case CAIRO_FORMAT_RGB96F:
-      return GDK_MEMORY_R32G32B32_FLOAT;
-    case CAIRO_FORMAT_RGBA128F:
-      return GDK_MEMORY_R32G32B32A32_FLOAT;
-
-    case CAIRO_FORMAT_RGB16_565:
-    case CAIRO_FORMAT_RGB30:
-    case CAIRO_FORMAT_INVALID:
-    case CAIRO_FORMAT_A1:
-    default:
-      g_assert_not_reached ();
-      return GDK_MEMORY_DEFAULT;
-  }
 }
 
 /*<private>
@@ -510,7 +478,7 @@ gdk_texture_new_for_surface (cairo_surface_t *surface)
 
   texture = gdk_memory_texture_new (cairo_image_surface_get_width (surface),
                                     cairo_image_surface_get_height (surface),
-                                    cairo_format_to_memory_format (cairo_image_surface_get_format (surface)),
+                                    gdk_cairo_format_to_memory_format (cairo_image_surface_get_format (surface)),
                                     bytes,
                                     cairo_image_surface_get_stride (surface));
 
@@ -992,9 +960,6 @@ gdk_texture_download_surface (GdkTexture    *texture,
   /* disabled for performance reasons. Enjoy living with some banding. */
   if (!gdk_color_state_equal (texture->color_state, color_state))
     depth = gdk_memory_depth_merge (depth, gdk_color_state_get_depth (color_state));
-#else
-  if (depth == GDK_MEMORY_U8_SRGB)
-    depth = GDK_MEMORY_U8;
 #endif
 
   surface_format = gdk_cairo_format_for_depth (depth);
@@ -1102,8 +1067,7 @@ gdk_texture_get_format (GdkTexture *self)
 GdkMemoryDepth
 gdk_texture_get_depth (GdkTexture *self)
 {
-  return gdk_memory_format_get_depth (self->format,
-                                      gdk_color_state_get_no_srgb_tf (self->color_state) != NULL);
+  return gdk_memory_format_get_depth (self->format);
 }
 
 gboolean

@@ -8,11 +8,13 @@ icon_editor_sources = [
   'fontify.c',
   'main.c',
   'mini-graph.c',
+  'number-editor.c',
   'paintable-editor.c',
   'path-editor.c',
   'path-paintable.c',
   'shape-editor.c',
   'state-editor.c',
+  'style-editor.c',
   'transform-editor.c',
 ]
 

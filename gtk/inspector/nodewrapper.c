@@ -149,17 +149,17 @@ gtk_inspector_node_wrapper_class_init (GtkInspectorNodeWrapperClass *klass)
 
   props[PROP_DRAW_NODE] =
     g_param_spec_pointer ("draw-node", NULL, NULL,
-                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_NAME);
   props[PROP_NODE] =
     g_param_spec_pointer ("node", NULL, NULL,
-                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_NAME);
   props[PROP_PROFILE_NODE] =
     g_param_spec_pointer ("profile-node", NULL, NULL,
-                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_NAME);
   props[PROP_ROLE] =
     g_param_spec_string ("role", NULL, NULL,
                          NULL,
-                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (object_class, N_PROPS, props);
 }
@@ -700,6 +700,7 @@ heatmap_from_mask (GskRenderNode        *mask,
                                                                       bounds.origin.y,
                                                                       bounds.size.width + 20,
                                                                       bounds.size.height),
+                                                 GSK_RECT_SNAP_NONE,
                                                  &GRAPHENE_POINT_INIT (bounds.origin.x,
                                                                        bounds.origin.y),
                                                  &GRAPHENE_POINT_INIT (bounds.origin.x + bounds.size.width,
@@ -708,6 +709,7 @@ heatmap_from_mask (GskRenderNode        *mask,
   gsk_gradient_free (gradient);
 
   displacement = gsk_displacement_node_new (&bounds,
+                                            GSK_RECT_SNAP_NONE,
                                             gradient_node,
                                             container,
                                             (GdkColorChannel[2]) { GDK_COLOR_CHANNEL_RED, GDK_COLOR_CHANNEL_GREEN },

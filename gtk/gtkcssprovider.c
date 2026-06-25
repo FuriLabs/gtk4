@@ -316,7 +316,7 @@ gtk_css_provider_class_init (GtkCssProviderClass *klass)
   pspecs[PROP_PREFERS_COLOR_SCHEME] = g_param_spec_enum ("prefers-color-scheme", NULL, NULL,
                                                          GTK_TYPE_INTERFACE_COLOR_SCHEME,
                                                          GTK_INTERFACE_COLOR_SCHEME_DEFAULT,
-                                                         GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                                                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkCssProvider:prefers-contrast:
@@ -345,7 +345,7 @@ gtk_css_provider_class_init (GtkCssProviderClass *klass)
   pspecs[PROP_PREFERS_CONTRAST] = g_param_spec_enum ("prefers-contrast", NULL, NULL,
                                                      GTK_TYPE_INTERFACE_CONTRAST,
                                                      GTK_INTERFACE_CONTRAST_NO_PREFERENCE,
-                                                     GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                                                     G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkCssProvider:prefers-reduced-motion:
@@ -373,7 +373,7 @@ gtk_css_provider_class_init (GtkCssProviderClass *klass)
   pspecs[PROP_PREFERS_REDUCED_MOTION] = g_param_spec_enum ("prefers-reduced-motion", NULL, NULL,
                                                            GTK_TYPE_REDUCED_MOTION,
                                                            GTK_REDUCED_MOTION_NO_PREFERENCE,
-                                                           GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                                                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, pspecs);
 }
@@ -1005,11 +1005,7 @@ gtk_css_provider_reset (GtkCssProvider *css_provider)
       priv->resource = NULL;
     }
 
-  if (priv->path)
-    {
-      g_free (priv->path);
-      priv->path = NULL;
-    }
+  g_clear_pointer (&priv->path, g_free);
 
   g_hash_table_remove_all (priv->symbolic_colors);
   g_hash_table_remove_all (priv->keyframes);
@@ -1905,8 +1901,7 @@ _gtk_css_find_theme_dir (const char *dir,
       if (g_file_test (path, G_FILE_TEST_EXISTS))
         break;
 
-      g_free (path);
-      path = NULL;
+      g_clear_pointer (&path, g_free);
     }
 
   g_free (base);
@@ -1929,7 +1924,7 @@ _gtk_css_find_theme (const char *name,
   if (variant && *variant)
     g_snprintf (file, sizeof (file), "gtk-%s.css", variant);
   else
-    strcpy (file, "gtk.css");
+    g_strlcpy (file, "gtk.css", sizeof (file));
 
   /* First look in the user's data directory */
   path = _gtk_css_find_theme_dir (g_get_user_data_dir (), "themes", name, file);

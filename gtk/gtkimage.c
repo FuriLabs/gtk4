@@ -179,7 +179,7 @@ gtk_image_class_init (GtkImageClass *class)
   image_props[PROP_PAINTABLE] =
       g_param_spec_object ("paintable", NULL, NULL,
                            GDK_TYPE_PAINTABLE,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkImage:file: (attributes org.gtk.Property.set=gtk_image_set_from_file)
@@ -189,7 +189,7 @@ gtk_image_class_init (GtkImageClass *class)
   image_props[PROP_FILE] =
       g_param_spec_string ("file", NULL, NULL,
                            NULL,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkImage:icon-size:
@@ -200,7 +200,7 @@ gtk_image_class_init (GtkImageClass *class)
       g_param_spec_enum ("icon-size", NULL, NULL,
                          GTK_TYPE_ICON_SIZE,
                          GTK_ICON_SIZE_INHERIT,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkImage:pixel-size:
@@ -215,7 +215,7 @@ gtk_image_class_init (GtkImageClass *class)
       g_param_spec_int ("pixel-size", NULL, NULL,
                         -1, G_MAXINT,
                         -1,
-                        GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkImage:icon-name: (getter get_icon_name) (setter set_from_icon_name)
@@ -227,7 +227,7 @@ gtk_image_class_init (GtkImageClass *class)
   image_props[PROP_ICON_NAME] =
       g_param_spec_string ("icon-name", NULL, NULL,
                            NULL,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkImage:gicon: (getter get_gicon) (setter set_from_gicon)
@@ -240,7 +240,7 @@ gtk_image_class_init (GtkImageClass *class)
   image_props[PROP_GICON] =
       g_param_spec_object ("gicon", NULL, NULL,
                            G_TYPE_ICON,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkImage:resource: (attributes org.gtk.Property.set=gtk_image_set_from_resource)
@@ -250,7 +250,7 @@ gtk_image_class_init (GtkImageClass *class)
   image_props[PROP_RESOURCE] =
       g_param_spec_string ("resource", NULL, NULL,
                            NULL,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkImage:storage-type:
@@ -261,7 +261,7 @@ gtk_image_class_init (GtkImageClass *class)
       g_param_spec_enum ("storage-type", NULL, NULL,
                          GTK_TYPE_IMAGE_TYPE,
                          GTK_IMAGE_EMPTY,
-                         GTK_PARAM_READABLE);
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkImage:use-fallback:
@@ -275,7 +275,7 @@ gtk_image_class_init (GtkImageClass *class)
   image_props[PROP_USE_FALLBACK] =
       g_param_spec_boolean ("use-fallback", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (gobject_class, NUM_PROPERTIES, image_props);
 
@@ -597,7 +597,6 @@ void
 gtk_image_set_from_file (GtkImage    *image,
                          const char *filename)
 {
-  int scale_factor;
   GdkPaintable *paintable;
 
   g_return_if_fail (GTK_IS_IMAGE (image));
@@ -613,8 +612,7 @@ gtk_image_set_from_file (GtkImage    *image,
       return;
     }
 
-  scale_factor = gtk_widget_get_scale_factor (GTK_WIDGET (image));
-  paintable = gdk_paintable_new_from_filename_scaled (filename, scale_factor);
+  paintable = gdk_paintable_new_from_filename (filename, NULL);
 
   if (paintable == NULL)
     {
@@ -675,7 +673,6 @@ void
 gtk_image_set_from_resource (GtkImage   *image,
                              const char *resource_path)
 {
-  int scale_factor;
   GdkPaintable *paintable;
 
   g_return_if_fail (GTK_IS_IMAGE (image));
@@ -697,8 +694,7 @@ gtk_image_set_from_resource (GtkImage   *image,
     }
   else
     {
-      scale_factor = gtk_widget_get_scale_factor (GTK_WIDGET (image));
-      paintable = gdk_paintable_new_from_resource_scaled (resource_path, scale_factor);
+      paintable = gdk_paintable_new_from_resource (resource_path);
     }
 
   if (paintable == NULL)
@@ -1134,8 +1130,7 @@ gtk_image_clear_internal (GtkImage *self,
 
   if (self->filename)
     {
-      g_free (self->filename);
-      self->filename = NULL;
+      g_clear_pointer (&self->filename, g_free);
 
       if (notify)
         g_object_notify_by_pspec (gobject, image_props[PROP_FILE]);
@@ -1143,8 +1138,7 @@ gtk_image_clear_internal (GtkImage *self,
 
   if (self->resource_path)
     {
-      g_free (self->resource_path);
-      self->resource_path = NULL;
+      g_clear_pointer (&self->resource_path, g_free);
 
       if (notify)
         g_object_notify_by_pspec (gobject, image_props[PROP_RESOURCE]);

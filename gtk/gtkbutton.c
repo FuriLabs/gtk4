@@ -120,11 +120,10 @@ enum {
   PROP_ICON_NAME,
   PROP_CHILD,
   PROP_CAN_SHRINK,
-
-  /* actionable properties */
+  /* GtkActionable */
   PROP_ACTION_NAME,
   PROP_ACTION_TARGET,
-  LAST_PROP = PROP_ACTION_NAME
+  LAST_PROP
 };
 
 enum {
@@ -228,7 +227,7 @@ gtk_button_class_init (GtkButtonClass *klass)
   props[PROP_LABEL] =
     g_param_spec_string ("label", NULL, NULL,
                          NULL,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkButton:use-underline:
@@ -239,7 +238,7 @@ gtk_button_class_init (GtkButtonClass *klass)
   props[PROP_USE_UNDERLINE] =
     g_param_spec_boolean ("use-underline", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkButton:has-frame:
@@ -249,7 +248,7 @@ gtk_button_class_init (GtkButtonClass *klass)
   props[PROP_HAS_FRAME] =
     g_param_spec_boolean ("has-frame", NULL, NULL,
                           TRUE,
-                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkButton:icon-name:
@@ -259,7 +258,7 @@ gtk_button_class_init (GtkButtonClass *klass)
   props[PROP_ICON_NAME] =
     g_param_spec_string ("icon-name", NULL, NULL,
                          NULL,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkButton:child:
@@ -269,7 +268,7 @@ gtk_button_class_init (GtkButtonClass *klass)
   props[PROP_CHILD] =
     g_param_spec_object ("child", NULL, NULL,
                          GTK_TYPE_WIDGET,
-                         GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkButton:can-shrink:
@@ -287,12 +286,14 @@ gtk_button_class_init (GtkButtonClass *klass)
   props[PROP_CAN_SHRINK] =
     g_param_spec_boolean ("can-shrink", NULL, NULL,
                           FALSE,
-                          GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
+
+  props[PROP_ACTION_NAME] = g_param_spec_override ("action-name",
+      g_object_interface_find_property (g_type_default_interface_ref (GTK_TYPE_ACTIONABLE), "action-name"));
+  props[PROP_ACTION_TARGET] = g_param_spec_override ("action-target",
+      g_object_interface_find_property (g_type_default_interface_ref (GTK_TYPE_ACTIONABLE), "action-target"));
 
   g_object_class_install_properties (gobject_class, LAST_PROP, props);
-
-  g_object_class_override_property (gobject_class, PROP_ACTION_NAME, "action-name");
-  g_object_class_override_property (gobject_class, PROP_ACTION_TARGET, "action-target");
 
   /**
    * GtkButton::clicked:
@@ -822,7 +823,7 @@ button_activate_timeout (gpointer data)
 {
   gtk_button_finish_activate (data, TRUE);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -849,8 +850,7 @@ gtk_button_finish_activate (GtkButton *button,
 
   gtk_widget_remove_css_class (GTK_WIDGET (button), "keyboard-activating");
 
-  g_source_remove (priv->activate_timeout);
-  priv->activate_timeout = 0;
+  g_clear_handle_id (&priv->activate_timeout, g_source_remove);
 
   priv->button_down = FALSE;
 

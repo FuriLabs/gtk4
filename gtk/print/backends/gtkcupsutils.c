@@ -1,5 +1,5 @@
 /* GTK - The GIMP Toolkit
- * gtkcupsutils.h: Statemachine implementation of POST and GET 
+ * gtkcupsutilsprivate.h: Statemachine implementation of POST and GET 
  * cups calls which can be used to create a non-blocking cups API
  * Copyright (C) 2006, 2007 Red Hat, Inc.
  *
@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <gtk/gtk.h>
-#include "gtkcupsutils.h"
+#include "gtkcupsutilsprivate.h"
 #include "gtkprivate.h"
 
 #include <errno.h>
@@ -1052,8 +1052,7 @@ _post_check (GtkCupsRequest *request)
               if (request->password != NULL)
                 {
                   memset (request->password, 0, strlen (request->password));
-                  g_free (request->password);
-                  request->password = NULL;
+                  g_clear_pointer (&request->password, g_free);
                 }
 
               request->password_state = GTK_CUPS_PASSWORD_APPLIED;
@@ -1348,8 +1347,7 @@ _get_check (GtkCupsRequest *request)
               if (request->password != NULL)
                 {
                   memset (request->password, 0, strlen (request->password));
-                  g_free (request->password);
-                  request->password = NULL;
+                  g_clear_pointer (&request->password, g_free);
                 }
 
               request->password_state = GTK_CUPS_PASSWORD_APPLIED;

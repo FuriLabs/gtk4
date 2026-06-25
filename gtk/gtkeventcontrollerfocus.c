@@ -127,13 +127,13 @@ update_focus (GtkEventController    *controller,
   if (focus->is_focus != is_focus)
     {
       focus->is_focus = is_focus;
-      g_object_notify (G_OBJECT (focus), "is-focus");
+      g_object_notify_by_pspec (G_OBJECT (focus), props[PROP_IS_FOCUS]);
     }
 
   if (focus->contains_focus != contains_focus)
     {
       focus->contains_focus = contains_focus;
-      g_object_notify (G_OBJECT (focus), "contains-focus");
+      g_object_notify_by_pspec (G_OBJECT (focus), props[PROP_CONTAINS_FOCUS]);
     }
   g_object_thaw_notify (G_OBJECT (focus));
 
@@ -200,7 +200,7 @@ gtk_event_controller_focus_class_init (GtkEventControllerFocusClass *klass)
   props[PROP_IS_FOCUS] =
       g_param_spec_boolean ("is-focus", NULL, NULL,
                             FALSE,
-                            G_PARAM_READABLE);
+                            G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkEventControllerFocus:contains-focus:
@@ -217,7 +217,7 @@ gtk_event_controller_focus_class_init (GtkEventControllerFocusClass *klass)
   props[PROP_CONTAINS_FOCUS] =
       g_param_spec_boolean ("contains-focus", NULL, NULL,
                             FALSE,
-                            G_PARAM_READABLE);
+                            G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, props);
 

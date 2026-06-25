@@ -1,5 +1,5 @@
 /* GTK - The GIMP Toolkit
- * gtkprintbackendcpdb.h: Default implementation of GtkPrintBackend
+ * gtkprintbackendcpdbprivate.h: Default implementation of GtkPrintBackend
  * for the Common Print Dialog Backends (CPDB)
  * Copyright (C) 2022, 2023 TinyTrebuchet <tinytrebuchet@protonmail.com>
  *
@@ -23,9 +23,9 @@
 
 #include <gtk/gtkprivate.h>
 #include <gtk/gtkmodulesprivate.h>
-#include "gtkprintbackendcpdb.h"
-#include "gtkprintbackendutils.h"
-#include "gtkprintercpdb.h"
+#include "gtkprintbackendcpdbprivate.h"
+#include "gtkprintbackendutilsprivate.h"
+#include "gtkprintercpdbprivate.h"
 
 #include <cairo.h>
 #include <cairo-pdf.h>
@@ -943,10 +943,8 @@ cpdb_printer_get_settings_from_options (GtkPrinter            *printer,
                                 CPDB_OPTION_JOB_HOLD_UNTIL,
                                 CPDB_JOB_HOLD_INDEFINITE);
     }
-  if (print_at != NULL)
-    g_free (print_at);
-  if (print_at_time != NULL)
-    g_free (print_at_time);
+  g_free (print_at);
+  g_free (print_at_time);
 
   gtk_printer_option_set_foreach (options, add_option_to_settings, settings);
 }

@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.22.4',
+        version: '4.23.1',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -15,7 +15,7 @@ glib_major_req = 2
 glib_minor_req = 84
 
 pango_major_req = 1
-pango_minor_req = 56
+pango_minor_req = 57
 
 # keep these numbers in sync with wrap files where there exist
 glib_req           = '>= @0@.@1@'.format(glib_major_req, glib_minor_req)
@@ -24,7 +24,7 @@ harfbuzz_req       = '>= 8.4.0'
 fribidi_req        = '>= 1.0.6'
 cairo_req          = '>= 1.18.2'
 gdk_pixbuf_req     = '>= 2.30.0'
-wayland_proto_req  = '>= 1.44'
+wayland_proto_req  = '>= 1.48'
 wayland_req        = '>= 1.24.0'
 graphene_req       = '>= 1.10.0'
 epoxy_req          = '>= 1.4'
@@ -504,6 +504,10 @@ else
   gstd3d12_dep = dependency('', required: false)
 endif
 
+if gstplay_dep.found() and gstgl_dep.found() and gstallocators_dep.found()
+  cdata.set('HAVE_GSTREAMER', 1)
+endif
+gst_deps = [ gstplay_dep, gstgl_dep, gstallocators_dep, gstd3d12_dep ]
 
 fontconfig_dep = [] # only used in x11 backend
 
@@ -880,6 +884,8 @@ project_build_root = meson.current_build_dir()
 gen_visibility_macros = find_program('build-aux/meson/gen-visibility-macros.py')
 
 gen_profile_conf = find_program('build-aux/meson/gen-profile-conf.py')
+
+manifest_check = find_program('build-aux/meson/manifest-check.py')
 
 profile = get_option('profile')
 if profile == 'auto'

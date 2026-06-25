@@ -41,10 +41,10 @@ reveal_one (gpointer data)
   if (count >= 9)
     {
       timeout = 0;
-      return FALSE;
+      return G_SOURCE_REMOVE;
     }
   else
-    return TRUE;
+    return G_SOURCE_CONTINUE;
 }
 
 static GtkWidget *window = NULL;
@@ -53,11 +53,7 @@ static void
 on_destroy (gpointer data)
 {
   window = NULL;
-  if (timeout != 0)
-    {
-      g_source_remove (timeout);
-      timeout = 0;
-    }
+  g_clear_handle_id (&timeout, g_source_remove);
 
 }
 

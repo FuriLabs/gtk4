@@ -139,7 +139,7 @@ update_pointer_focus (GtkEventController    *controller,
   if (self->is_pointer != is_pointer)
     {
       self->is_pointer = is_pointer;
-      g_object_notify (G_OBJECT (self), "is-pointer");
+      g_object_notify_by_pspec (G_OBJECT (self), props[PROP_IS_POINTER]);
     }
   if (self->contains_pointer != contains_pointer)
     {
@@ -148,8 +148,8 @@ update_pointer_focus (GtkEventController    *controller,
         self->drop = g_object_ref (crossing->drop);
       else
         g_clear_object (&self->drop);
-      g_object_notify (G_OBJECT (self), "contains-pointer");
-      g_object_notify (G_OBJECT (self), "drop");
+      g_object_notify_by_pspec (G_OBJECT (self), props[PROP_CONTAINS_POINTER]);
+      g_object_notify_by_pspec (G_OBJECT (self), props[PROP_DROP]);
     }
   g_object_thaw_notify (G_OBJECT (self));
 
@@ -220,7 +220,7 @@ gtk_drop_controller_motion_class_init (GtkDropControllerMotionClass *klass)
   props[PROP_CONTAINS_POINTER] =
       g_param_spec_boolean ("contains-pointer", NULL, NULL,
                             FALSE,
-                            G_PARAM_READABLE);
+                            G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkDropControllerMotion:drop:
@@ -240,7 +240,7 @@ gtk_drop_controller_motion_class_init (GtkDropControllerMotionClass *klass)
   props[PROP_DROP] =
       g_param_spec_object ("drop", NULL, NULL,
                            GDK_TYPE_DROP,
-                           G_PARAM_READABLE);
+                           G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkDropControllerMotion:is-pointer:
@@ -257,7 +257,7 @@ gtk_drop_controller_motion_class_init (GtkDropControllerMotionClass *klass)
   props[PROP_IS_POINTER] =
       g_param_spec_boolean ("is-pointer", NULL, NULL,
                             FALSE,
-                            G_PARAM_READABLE);
+                            G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, props);
 

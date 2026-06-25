@@ -486,7 +486,7 @@ gtk_search_entry_class_init (GtkSearchEntryClass *klass)
   props[PROP_PLACEHOLDER_TEXT] =
       g_param_spec_string ("placeholder-text", NULL, NULL,
                            NULL,
-                           GTK_PARAM_READWRITE);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkSearchEntry:input-purpose:
@@ -500,7 +500,7 @@ gtk_search_entry_class_init (GtkSearchEntryClass *klass)
       g_param_spec_enum ("input-purpose", NULL, NULL,
                          GTK_TYPE_INPUT_PURPOSE,
                          GTK_INPUT_PURPOSE_FREE_FORM,
-                         GTK_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSearchEntry:input-hints:
@@ -514,7 +514,7 @@ gtk_search_entry_class_init (GtkSearchEntryClass *klass)
       g_param_spec_flags ("input-hints", NULL, NULL,
                           GTK_TYPE_INPUT_HINTS,
                           GTK_INPUT_HINT_NONE,
-                          GTK_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+                          G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSearchEntry:activates-default:
@@ -524,7 +524,7 @@ gtk_search_entry_class_init (GtkSearchEntryClass *klass)
   props[PROP_ACTIVATES_DEFAULT] =
       g_param_spec_boolean ("activates-default", NULL, NULL,
                             FALSE,
-                            GTK_PARAM_READWRITE|G_PARAM_EXPLICIT_NOTIFY);
+                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSearchEntry:search-delay:
@@ -537,7 +537,7 @@ gtk_search_entry_class_init (GtkSearchEntryClass *klass)
   props[PROP_SEARCH_DELAY] =
       g_param_spec_uint ("search-delay", NULL, NULL,
                          0, G_MAXUINT, 150,
-                         GTK_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * GtkSearchEntry:key-capture-widget:
@@ -551,7 +551,7 @@ gtk_search_entry_class_init (GtkSearchEntryClass *klass)
   props[PROP_KEY_CAPTURE_WIDGET] =
       g_param_spec_object ("key-capture-widget", NULL, NULL,
                            GTK_TYPE_WIDGET,
-                           GTK_PARAM_READWRITE|G_PARAM_CONSTRUCT|G_PARAM_EXPLICIT_NOTIFY);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, props);
   gtk_editable_install_properties (object_class, NUM_PROPERTIES);
@@ -694,7 +694,7 @@ gtk_search_entry_class_init (GtkSearchEntryClass *klass)
 #endif
 
   gtk_widget_class_add_binding_signal (widget_class,
-                                       GDK_KEY_Escape, 0,
+                                       GDK_KEY_Escape, GDK_NO_MODIFIER_MASK,
                                        "stop-search",
                                        NULL);
 
@@ -775,21 +775,17 @@ static void
 gtk_search_entry_changed (GtkEditable    *editable,
                           GtkSearchEntry *entry)
 {
-  const char *str;
+  char *str;
 
   /* Update the icons first */
-  str = gtk_editable_get_text (GTK_EDITABLE (entry->entry));
+  str = gtk_editable_get_complete_text (GTK_EDITABLE (entry->entry));
 
   if (str == NULL || *str == '\0')
     {
       gtk_widget_set_child_visible (entry->clear_icon, FALSE);
       gtk_widget_queue_allocate (GTK_WIDGET (entry));
 
-      if (entry->delayed_changed_id > 0)
-        {
-          g_source_remove (entry->delayed_changed_id);
-          entry->delayed_changed_id = 0;
-        }
+      g_clear_handle_id (&entry->delayed_changed_id, g_source_remove);
       g_signal_emit (entry, signals[SEARCH_CHANGED], 0);
     }
   else
@@ -800,6 +796,8 @@ gtk_search_entry_changed (GtkEditable    *editable,
       /* Queue up the timeout */
       reset_timeout (entry);
     }
+
+  g_free (str);
 }
 
 static void
@@ -923,6 +921,7 @@ capture_widget_key_handled (GtkEventControllerKey *controller,
 
   if (gtk_search_entry_is_keynav (keyval, state) ||
       keyval == GDK_KEY_space ||
+      keyval == GDK_KEY_KP_Space ||
       keyval == GDK_KEY_Menu ||
       keyval == GDK_KEY_Return ||
       keyval == GDK_KEY_KP_Enter ||
@@ -931,7 +930,7 @@ capture_widget_key_handled (GtkEventControllerKey *controller,
 
   entry->content_changed = FALSE;
   entry->search_stopped = FALSE;
-  was_empty = (gtk_text_get_text_length (GTK_TEXT (entry->entry)) == 0);
+  was_empty = (gtk_text_get_complete_text_length (GTK_TEXT (entry->entry)) == 0);
 
   handled = gtk_event_controller_key_forward (controller, entry->entry);
 

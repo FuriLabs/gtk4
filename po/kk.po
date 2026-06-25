@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2026-03-06 19:34+0000\n"
-"PO-Revision-Date: 2026-03-07 08:06+0500\n"
+"POT-Creation-Date: 2026-02-06 07:11+0000\n"
+"PO-Revision-Date: 2026-02-09 21:43+0500\n"
 "Last-Translator: Baurzhan Muftakhidinov <baurthefirst@gmail.com>\n"
 "Language-Team: Kazakh <kk_KZ@googlegroups.com>\n"
 "Language: kk\n"
@@ -39,11 +39,11 @@ msgstr "Кеңтаратылым дисплей түріне қолдау жоқ
 msgid "This clipboard cannot store data."
 msgstr "Бұл алмасу буфері деректерді сақтай алмайды."
 
-#: gdk/gdkclipboard.c:287 gdk/gdkclipboard.c:782 gdk/gdkclipboard.c:1073
+#: gdk/gdkclipboard.c:287 gdk/gdkclipboard.c:781 gdk/gdkclipboard.c:1072
 msgid "Cannot read from empty clipboard."
 msgstr "Бос алмасу буферінен оқу мүмкін емес."
 
-#: gdk/gdkclipboard.c:318 gdk/gdkclipboard.c:1123 gdk/gdkdrag.c:606
+#: gdk/gdkclipboard.c:318 gdk/gdkclipboard.c:1122 gdk/gdkdrag.c:606
 msgid "No compatible formats to transfer clipboard contents."
 msgstr "Алмасу буферінің мазмұнын тасымалдау үшін үйлесімді пішімдер жоқ."
 
@@ -176,7 +176,7 @@ msgstr "%s қолдану талабы жасалды, бірақ, %s қолда
 msgid "Trying to use %s, but it is disabled via GDK_DISABLE"
 msgstr "%s қолдану әрекеті жасалды, бірақ ол GDK_DISABLE арқылы сөндірілген"
 
-#: gdk/gdktexture.c:646
+#: gdk/gdktexture.c:679
 msgid "Unknown image format."
 msgstr "Анықталмаған сурет пішімі."
 
@@ -605,7 +605,7 @@ msgstr "TIFF деректерін жүктеу сәтсіз"
 msgid "Reading data failed at row %d"
 msgstr "Деректерді оқу %d жолында сәтсіз аяқталды"
 
-#: gdk/macos/gdkmacospasteboard.c:253
+#: gdk/macos/gdkmacospasteboard.c:255
 #, c-format
 msgid "Failed to decode contents with mime-type of '%s'"
 msgstr "'%s' mime-түрімен мазмұнды декодтау сәтсіз аяқталды"
@@ -2348,7 +2348,7 @@ msgstr "Олай аталатын файл бар болып тұр"
 #: gtk/gtkmessagedialog.c:182 gtk/gtkmountoperation.c:608
 #: gtk/print/gtkpagesetupunixdialog.c:285 gtk/print/gtkprintbackend.c:654
 #: gtk/print/gtkprintunixdialog.c:683 gtk/print/gtkprintunixdialog.c:840
-#: gtk/gtkwindow.c:6467 gtk/ui/gtkappchooserdialog.ui:51
+#: gtk/gtkwindow.c:6465 gtk/ui/gtkappchooserdialog.ui:51
 #: gtk/ui/gtkassistant.ui:52 gtk/ui/gtkcolorchooserdialog.ui:44
 #: gtk/ui/gtkfontchooserdialog.ui:29
 msgid "_Cancel"
@@ -2571,7 +2571,7 @@ msgstr "Бағдарлама"
 msgid "Audio"
 msgstr "Аудио"
 
-#: gtk/gtkfilechooserwidget.c:3851 gtk/gtkfilefilter.c:1111
+#: gtk/gtkfilechooserwidget.c:3851 gtk/gtkfilefilter.c:1072
 msgid "Image"
 msgstr "Сурет"
 
@@ -2703,11 +2703,11 @@ msgstr "Кодтау"
 msgid "Line Ending"
 msgstr "Жол аяқталуы"
 
-#: gtk/gtkfilefilter.c:1124
+#: gtk/gtkfilefilter.c:1085
 msgid "Unspecified"
 msgstr "Көрсетілмеген"
 
-#: gtk/gtkfontchooserdialog.c:202 gtk/gtkfontchooserdialog.c:205
+#: gtk/gtkfontchooserdialog.c:195 gtk/gtkfontchooserdialog.c:198
 msgid "Change Font Features"
 msgstr "Қаріп мүмкіндіктерін өзгерту"
 
@@ -2887,7 +2887,7 @@ msgid "Play"
 msgstr "Ойнату"
 
 #: gtk/gtkmessagedialog.c:165 gtk/gtkmessagedialog.c:183
-#: gtk/print/gtkprintbackend.c:655 gtk/gtkwindow.c:6468
+#: gtk/print/gtkprintbackend.c:655 gtk/gtkwindow.c:6466
 msgid "_OK"
 msgstr "О_К"
 
@@ -2903,59 +2903,59 @@ msgstr "_Иә"
 msgid "Co_nnect"
 msgstr "Ба_йланыс орнату"
 
-#: gtk/gtkmountoperation.c:678
+#: gtk/gtkmountoperation.c:676
 msgid "Connect As"
 msgstr "Қалайша байланыс орнату"
 
-#: gtk/gtkmountoperation.c:687
+#: gtk/gtkmountoperation.c:685
 msgid "_Anonymous"
 msgstr "Анон_имды"
 
-#: gtk/gtkmountoperation.c:694
+#: gtk/gtkmountoperation.c:692
 msgid "Registered U_ser"
 msgstr "Тірке_лген пайдаланушы"
 
-#: gtk/gtkmountoperation.c:704
+#: gtk/gtkmountoperation.c:702
 msgid "_Username"
 msgstr "_Пайдаланушы аты"
 
-#: gtk/gtkmountoperation.c:709
+#: gtk/gtkmountoperation.c:707
 msgid "_Domain"
 msgstr "До_мен"
 
-#: gtk/gtkmountoperation.c:718
+#: gtk/gtkmountoperation.c:716
 msgid "Volume type"
 msgstr "Том түрі"
 
-#: gtk/gtkmountoperation.c:728
+#: gtk/gtkmountoperation.c:726
 msgid "_Hidden"
 msgstr "_Жасырын"
 
-#: gtk/gtkmountoperation.c:731
+#: gtk/gtkmountoperation.c:729
 msgid "_Windows system"
 msgstr "Windows _жүйесі"
 
-#: gtk/gtkmountoperation.c:734
+#: gtk/gtkmountoperation.c:732
 msgid "_PIM"
 msgstr "_PIM"
 
-#: gtk/gtkmountoperation.c:740
+#: gtk/gtkmountoperation.c:738
 msgid "_Password"
 msgstr "_Пароль"
 
-#: gtk/gtkmountoperation.c:763
+#: gtk/gtkmountoperation.c:761
 msgid "Forget password _immediately"
 msgstr "Парольді _көп ұзамай ұмыту"
 
-#: gtk/gtkmountoperation.c:773
+#: gtk/gtkmountoperation.c:771
 msgid "Remember password until you _logout"
 msgstr "Парольді жүйеден шыққаныңызға д_ейін есте сақтау"
 
-#: gtk/gtkmountoperation.c:784
+#: gtk/gtkmountoperation.c:782
 msgid "Remember _forever"
 msgstr "Әрқаша_нға есте сақтау"
 
-#: gtk/gtkmountoperation.c:1256
+#: gtk/gtkmountoperation.c:1252
 #, c-format
 msgid "Unknown Application (PID %d)"
 msgstr "Белгісіз қолданба (PID %d)"
@@ -2965,12 +2965,12 @@ msgstr "Белгісіз қолданба (PID %d)"
 #. * this is triggered if the user yanks the device while we are showing
 #. * the dialog...
 #.
-#: gtk/gtkmountoperation.c:1401
+#: gtk/gtkmountoperation.c:1397
 #, c-format
 msgid "Unable to end process"
 msgstr "Үрдісті аяқтау мүмкін емес"
 
-#: gtk/gtkmountoperation.c:1553
+#: gtk/gtkmountoperation.c:1547
 msgid "_End Process"
 msgstr "Үрдіс_ті аяқтау"
 
@@ -3022,8 +3022,8 @@ msgstr "Келесі бет"
 msgid "Page %u"
 msgstr "Бет %u"
 
-#: gtk/print/gtkpagesetup.c:611 gtk/print/gtkpapersize.c:943
-#: gtk/print/gtkpapersize.c:983
+#: gtk/print/gtkpagesetup.c:611 gtk/print/gtkpapersize.c:942
+#: gtk/print/gtkpapersize.c:982
 msgid "Not a valid page setup file"
 msgstr "Баспағы шығару баптаулары бар қате файл"
 
@@ -4122,8 +4122,8 @@ msgstr "Ең мүмкін болған себебі - уақытша файлд�
 
 #. window
 #: gtk/print/gtkprintoperation-portal.c:273
-#: gtk/print/gtkprintoperation-portal.c:617
-#: gtk/print/gtkprintoperation-portal.c:686 gtk/print/gtkprintunixdialog.c:2992
+#: gtk/print/gtkprintoperation-portal.c:605
+#: gtk/print/gtkprintoperation-portal.c:674 gtk/print/gtkprintunixdialog.c:2992
 msgid "Print"
 msgstr "Баспаға шығару"
 
@@ -4219,7 +4219,7 @@ msgstr "Үстінен астыға"
 msgid "Bottom to top"
 msgstr "Астынан үстіге"
 
-#: gtk/gtkprintdialog.c:1767
+#: gtk/gtkprintdialog.c:1766
 msgid "Failed to create the read file descriptor"
 msgstr "Оқу файлының дескрипторын жасау сәтсіз аяқталды"
 
@@ -4246,7 +4246,7 @@ msgstr "URI \"%s\" болатын нәрсені \"%s\" мақсатына жы�
 msgid "No registered application with name “%s” for item with URI “%s” found"
 msgstr "URI \"%s\" үшін аты \"%s\" болатын ешбір тіркелген қолданба табылмады"
 
-#: gtk/gtksearchentry.c:861
+#: gtk/gtksearchentry.c:838
 msgid "Clear Entry"
 msgstr "Жазбаны тазарту"
 
@@ -4510,12 +4510,12 @@ msgstr "Бол_дырмау"
 msgid "_Redo"
 msgstr "Қа_йталау"
 
-#: gtk/gtkwindow.c:6456
+#: gtk/gtkwindow.c:6454
 #, c-format
 msgid "Do you want to use GTK Inspector?"
 msgstr "GTK бақылаушысын қолданғыңыз келе ме?"
 
-#: gtk/gtkwindow.c:6458
+#: gtk/gtkwindow.c:6456
 #, c-format
 msgid ""
 "GTK Inspector is an interactive debugger that lets you explore and modify "
@@ -4526,7 +4526,7 @@ msgstr ""
 "қолданбасының ішкі құрылысын шолып, түзете аласыз. Оны қолдану нәтижесінде "
 "қолданба сынуы, немесе құлап түсуі де мүмкін."
 
-#: gtk/gtkwindow.c:6463
+#: gtk/gtkwindow.c:6461
 msgid "Don’t show this message again"
 msgstr "Бұл хабарламаны келесіде көрсетпеу"
 
@@ -5089,7 +5089,7 @@ msgstr "Қайнар көзі:"
 msgid "Defined At"
 msgstr "Анықталған жері"
 
-#: gtk/inspector/recorder.c:2181
+#: gtk/inspector/recorder.c:2180
 #, c-format
 msgid "Saving RenderNode failed"
 msgstr "RenderNode сақтау сәтсіз аяқталды"
@@ -5154,7 +5154,7 @@ msgstr "Аты:"
 msgid "Type:"
 msgstr "Түрі:"
 
-#: gtk/inspector/resource-list.ui:180 tools/gtk-image-tool-info.c:57
+#: gtk/inspector/resource-list.ui:180 tools/gtk-image-tool-info.c:56
 msgid "Size:"
 msgstr "Өлшемі:"
 
@@ -7659,12 +7659,12 @@ msgstr ""
 
 #: tools/gtk-builder-tool-enumerate.c:56 tools/gtk-builder-tool-preview.c:179
 #: tools/gtk-builder-tool-preview.c:180 tools/gtk-builder-tool-screenshot.c:360
-#: tools/gtk-builder-tool-simplify.c:2709 tools/gtk-builder-tool-validate.c:268
-#: tools/gtk-image-tool-compare.c:44 tools/gtk-image-tool-info.c:80
-#: tools/gtk-path-tool-render.c:63 tools/gtk-rendernode-tool-compare.c:68
+#: tools/gtk-builder-tool-simplify.c:2709 tools/gtk-builder-tool-validate.c:267
+#: tools/gtk-image-tool-compare.c:43 tools/gtk-image-tool-info.c:79
+#: tools/gtk-path-tool-render.c:63 tools/gtk-rendernode-tool-compare.c:67
 #: tools/gtk-rendernode-tool-convert.c:98
-#: tools/gtk-rendernode-tool-extract.c:200 tools/gtk-rendernode-tool-info.c:119
-#: tools/gtk-rendernode-tool-show.c:123
+#: tools/gtk-rendernode-tool-extract.c:198 tools/gtk-rendernode-tool-info.c:131
+#: tools/gtk-rendernode-tool-show.c:122
 msgid "FILE"
 msgstr "ФАЙЛ"
 
@@ -7696,9 +7696,9 @@ msgid "Use style from CSS file"
 msgstr "CSS файлынан стильді пайдалану"
 
 #: tools/gtk-builder-tool-preview.c:187 tools/gtk-builder-tool-screenshot.c:370
-#: tools/gtk-builder-tool-validate.c:275
-#: tools/gtk-rendernode-tool-benchmark.c:109
-#: tools/gtk-rendernode-tool-render.c:318 tools/gtk-rendernode-tool-show.c:130
+#: tools/gtk-builder-tool-validate.c:274
+#: tools/gtk-rendernode-tool-benchmark.c:108
+#: tools/gtk-rendernode-tool-render.c:317 tools/gtk-rendernode-tool-show.c:129
 #, c-format
 msgid "Could not initialize windowing system\n"
 msgstr "Терезелерді басқару жүйесін іске қосу мүмкін емес\n"
@@ -7708,7 +7708,7 @@ msgid "Preview the file."
 msgstr "Файлды алдын ала қарау."
 
 #: tools/gtk-builder-tool-preview.c:208 tools/gtk-builder-tool-screenshot.c:391
-#: tools/gtk-builder-tool-simplify.c:2733 tools/gtk-builder-tool-validate.c:294
+#: tools/gtk-builder-tool-simplify.c:2733 tools/gtk-builder-tool-validate.c:293
 #, c-format
 msgid "No .ui file specified\n"
 msgstr ".ui файлы көрсетілмеген\n"
@@ -7743,13 +7743,13 @@ msgstr ""
 "Үстінен жазу үшін --force қолданыңыз.\n"
 
 #: tools/gtk-builder-tool-screenshot.c:332
-#: tools/gtk-rendernode-tool-render.c:251
+#: tools/gtk-rendernode-tool-render.c:250
 #, c-format
 msgid "Output written to %s.\n"
 msgstr "Шығыс %s ішіне жазылды.\n"
 
 #: tools/gtk-builder-tool-screenshot.c:336
-#: tools/gtk-rendernode-tool-render.c:255
+#: tools/gtk-rendernode-tool-render.c:254
 #, c-format
 msgid "Failed to save %s: %s\n"
 msgstr "%s сақтау сәтсіз аяқталды: %s\n"
@@ -7766,11 +7766,11 @@ msgstr "Png орнына торап файлы ретінде сақтау"
 msgid "Overwrite existing file"
 msgstr "Бар болып тұрған файлды үстінен жазу"
 
-#: tools/gtk-builder-tool-screenshot.c:363 tools/gtk-image-tool-compare.c:47
-#: tools/gtk-image-tool-convert.c:143 tools/gtk-image-tool-play.c:314
-#: tools/gtk-image-tool-relabel.c:87 tools/gtk-image-tool-show.c:120
-#: tools/gtk-rendernode-tool-benchmark.c:100
-#: tools/gtk-rendernode-tool-render.c:311
+#: tools/gtk-builder-tool-screenshot.c:363 tools/gtk-image-tool-compare.c:46
+#: tools/gtk-image-tool-convert.c:142 tools/gtk-image-tool-play.c:327
+#: tools/gtk-image-tool-relabel.c:86 tools/gtk-image-tool-show.c:119
+#: tools/gtk-rendernode-tool-benchmark.c:99
+#: tools/gtk-rendernode-tool-render.c:310
 msgid "FILE…"
 msgstr "ФАЙЛ…"
 
@@ -7876,7 +7876,7 @@ msgstr "Ескірген түрлер:\n"
 msgid "Failed to create an instance of the template type %s\n"
 msgstr "%s үлгі түрінің данасын жасау сәтсіз аяқталды\n"
 
-#: tools/gtk-builder-tool-validate.c:283
+#: tools/gtk-builder-tool-validate.c:282
 msgid "Validate the file."
 msgstr "Файлды тексеру."
 
@@ -7911,80 +7911,80 @@ msgstr ""
 "  play         Анимацияны ойнату\n"
 "\n"
 
-#: tools/gtk-image-tool-compare.c:44 tools/gtk-rendernode-tool-compare.c:68
+#: tools/gtk-image-tool-compare.c:43 tools/gtk-rendernode-tool-compare.c:67
 msgid "Output file"
 msgstr "Шығыс файлы"
 
-#: tools/gtk-image-tool-compare.c:58
+#: tools/gtk-image-tool-compare.c:57
 msgid "Compare two images"
 msgstr "Екі суретті салыстыру"
 
-#: tools/gtk-image-tool-compare.c:71 tools/gtk-image-tool-convert.c:167
-#: tools/gtk-image-tool-info.c:102 tools/gtk-image-tool-relabel.c:110
-#: tools/gtk-image-tool-show.c:142
+#: tools/gtk-image-tool-compare.c:70 tools/gtk-image-tool-convert.c:166
+#: tools/gtk-image-tool-info.c:101 tools/gtk-image-tool-relabel.c:109
+#: tools/gtk-image-tool-show.c:141
 #, c-format
 msgid "No image file specified\n"
 msgstr "Сурет файлы көрсетілмеген\n"
 
-#: tools/gtk-image-tool-compare.c:77
+#: tools/gtk-image-tool-compare.c:76
 #, c-format
 msgid "Can only accept two image files\n"
 msgstr "Тек екі сурет файлын қабылдауға болады\n"
 
-#: tools/gtk-image-tool-compare.c:90 tools/gtk-rendernode-tool-compare.c:123
+#: tools/gtk-image-tool-compare.c:89 tools/gtk-rendernode-tool-compare.c:122
 #, c-format
 msgid "Could not save diff image to %s\n"
 msgstr "Айырмашылық суретін %s ішіне сақтау мүмкін болмады\n"
 
-#: tools/gtk-image-tool-compare.c:100 tools/gtk-rendernode-tool-compare.c:133
+#: tools/gtk-image-tool-compare.c:99 tools/gtk-rendernode-tool-compare.c:132
 #, c-format
 msgid "Differences witten to %s.\n"
 msgstr "Айырмашылықтар %s файлына жазылды.\n"
 
-#: tools/gtk-image-tool-compare.c:102 tools/gtk-rendernode-tool-compare.c:135
+#: tools/gtk-image-tool-compare.c:101 tools/gtk-rendernode-tool-compare.c:134
 #, c-format
 msgid "The images are different.\n"
 msgstr "Суреттер әртүрлі.\n"
 
-#: tools/gtk-image-tool-compare.c:105 tools/gtk-rendernode-tool-compare.c:138
+#: tools/gtk-image-tool-compare.c:104 tools/gtk-rendernode-tool-compare.c:137
 #, c-format
 msgid "No differences.\n"
 msgstr "Айырмашылықтар жоқ.\n"
 
-#: tools/gtk-image-tool-convert.c:140
+#: tools/gtk-image-tool-convert.c:139
 msgid "Format to use"
 msgstr "Қолданылатын пішім"
 
-#: tools/gtk-image-tool-convert.c:140
+#: tools/gtk-image-tool-convert.c:139
 msgid "FORMAT"
 msgstr "ПІШІМ"
 
-#: tools/gtk-image-tool-convert.c:141 tools/gtk-image-tool-relabel.c:85
+#: tools/gtk-image-tool-convert.c:140 tools/gtk-image-tool-relabel.c:84
 msgid "Color state to use"
 msgstr "Қолданылатын түс күйі"
 
-#: tools/gtk-image-tool-convert.c:141 tools/gtk-image-tool-relabel.c:85
+#: tools/gtk-image-tool-convert.c:140 tools/gtk-image-tool-relabel.c:84
 msgid "COLORSTATE"
 msgstr "ТҮСКҮЙІ"
 
-#: tools/gtk-image-tool-convert.c:142 tools/gtk-image-tool-relabel.c:86
+#: tools/gtk-image-tool-convert.c:141 tools/gtk-image-tool-relabel.c:85
 msgid "Color state to use, as cicp tuple"
 msgstr "Қолданылатын түс күйі, cicp кортежі ретінде"
 
-#: tools/gtk-image-tool-convert.c:142 tools/gtk-image-tool-relabel.c:86
+#: tools/gtk-image-tool-convert.c:141 tools/gtk-image-tool-relabel.c:85
 msgid "CICP"
 msgstr "CICP"
 
-#: tools/gtk-image-tool-convert.c:154
+#: tools/gtk-image-tool-convert.c:153
 msgid "Convert the image to a different format or color state."
 msgstr "Суретті басқа пішімге немесе түс күйіне түрлендіру."
 
-#: tools/gtk-image-tool-convert.c:173 tools/gtk-image-tool-relabel.c:116
+#: tools/gtk-image-tool-convert.c:172 tools/gtk-image-tool-relabel.c:115
 #, c-format
 msgid "Can only accept a single image file and output file\n"
 msgstr "Тек жалғыз сурет файлын және шығыс файлын қабылдауға болады\n"
 
-#: tools/gtk-image-tool-convert.c:187
+#: tools/gtk-image-tool-convert.c:186
 #, c-format
 msgid ""
 "Not a memory format: %s\n"
@@ -7995,7 +7995,7 @@ msgstr ""
 "Мүмкін мәндер:\n"
 "  %s\n"
 
-#: tools/gtk-image-tool-convert.c:204
+#: tools/gtk-image-tool-convert.c:203
 #, c-format
 msgid ""
 "Not a color state: %s\n"
@@ -8006,77 +8006,77 @@ msgstr ""
 "Мүмкін мәндер:\n"
 "  %s\n"
 
-#: tools/gtk-image-tool-convert.c:214 tools/gtk-image-tool-relabel.c:141
+#: tools/gtk-image-tool-convert.c:213 tools/gtk-image-tool-relabel.c:140
 #, c-format
 msgid "Can't specify both --color-state and --cicp\n"
 msgstr "--color-state және --cicp екеуін де бірге көрсету мүмкін емес\n"
 
-#: tools/gtk-image-tool-convert.c:222 tools/gtk-image-tool-relabel.c:149
+#: tools/gtk-image-tool-convert.c:221 tools/gtk-image-tool-relabel.c:148
 #, c-format
 msgid "Not a supported cicp tuple: %s\n"
 msgstr "Қолдау көрсетілмейтін cicp кортежі: %s\n"
 
-#: tools/gtk-image-tool-info.c:58
+#: tools/gtk-image-tool-info.c:57
 msgid "Format:"
 msgstr "Пішім:"
 
-#: tools/gtk-image-tool-info.c:64 tools/gtk-image-tool-info.c:66
-#: tools/gtk-image-tool-info.c:68
+#: tools/gtk-image-tool-info.c:63 tools/gtk-image-tool-info.c:65
+#: tools/gtk-image-tool-info.c:67
 msgid "Color state:"
 msgstr "Түс күйі:"
 
-#: tools/gtk-image-tool-info.c:68
+#: tools/gtk-image-tool-info.c:67
 msgid "unknown"
 msgstr "белгісіз"
 
-#: tools/gtk-image-tool-info.c:89
+#: tools/gtk-image-tool-info.c:88
 msgid "Provide information about the image."
 msgstr "Сурет туралы ақпарат беру."
 
-#: tools/gtk-image-tool-info.c:108
+#: tools/gtk-image-tool-info.c:107
 #, c-format
 msgid "Can only accept a single image file\n"
 msgstr "Тек бір сурет файлын қабылдай алады\n"
 
-#: tools/gtk-image-tool-play.c:308 tools/gtk-image-tool-show.c:118
-#: tools/gtk-rendernode-tool-show.c:122
+#: tools/gtk-image-tool-play.c:321 tools/gtk-image-tool-show.c:117
+#: tools/gtk-rendernode-tool-show.c:121
 msgid "Don't add a titlebar"
 msgstr "Тақырып жолағын қоспау"
 
-#: tools/gtk-image-tool-play.c:309 tools/gtk-rendernode-tool-convert.c:97
+#: tools/gtk-image-tool-play.c:322 tools/gtk-rendernode-tool-convert.c:97
 msgid "SIZE"
 msgstr "ӨЛШЕМІ"
 
-#: tools/gtk-image-tool-play.c:310
+#: tools/gtk-image-tool-play.c:323
 msgid "Don't run animations"
 msgstr "Анимацияларды ойнатпау"
 
-#: tools/gtk-image-tool-play.c:311
+#: tools/gtk-image-tool-play.c:324
 msgid "Don't use system resources"
 msgstr "Жүйелік ресурстарды қолданбау"
 
-#: tools/gtk-image-tool-play.c:312
+#: tools/gtk-image-tool-play.c:325
 msgid "Don't load external resources"
 msgstr "Сыртқы ресурстарды жүктемеу"
 
-#: tools/gtk-image-tool-play.c:313
+#: tools/gtk-image-tool-play.c:326
 msgid "Don't allow gpa extensions"
 msgstr "Gpa кеңейтулеріне рұқсат бермеу"
 
-#: tools/gtk-image-tool-play.c:324
+#: tools/gtk-image-tool-play.c:337
 msgid "Show one or more animations."
 msgstr "Бір немесе бірнеше анимацияны көрсету."
 
-#: tools/gtk-image-tool-play.c:337
+#: tools/gtk-image-tool-play.c:350
 #, c-format
 msgid "No animation file specified\n"
 msgstr "Анимация файлы көрсетілмеген\n"
 
-#: tools/gtk-image-tool-relabel.c:97
+#: tools/gtk-image-tool-relabel.c:96
 msgid "Change the color state of the image without conversion."
 msgstr "Түрлендірусіз суреттің түс күйін өзгерту."
 
-#: tools/gtk-image-tool-relabel.c:131
+#: tools/gtk-image-tool-relabel.c:130
 #, c-format
 msgid ""
 "Not a color state: %s\n"
@@ -8085,9 +8085,29 @@ msgstr ""
 "Түс күйі емес: %s\n"
 "Мүмкін мәндер: %s\n"
 
-#: tools/gtk-image-tool-show.c:129
+#: tools/gtk-image-tool-show.c:128
 msgid "Show one or more images."
 msgstr "Бір немесе бірнеше суретті көрсету."
+
+#: tools/gtk-image-tool-utils.c:50 tools/gtk-rendernode-tool-utils.c:54
+#, c-format
+msgid "Error at %s: %s\n"
+msgstr "%s жеріндегі қате: %s\n"
+
+#: tools/gtk-image-tool-utils.c:68 tools/gtk-rendernode-tool-utils.c:73
+#, c-format
+msgid "Failed to load node file: %s\n"
+msgstr "Торап файлын жүктеу сәтсіз аяқталды: %s\n"
+
+#: tools/gtk-image-tool-utils.c:89
+#, c-format
+msgid "%s is not a texture node\n"
+msgstr "%s текстуралық торап емес\n"
+
+#: tools/gtk-image-tool-utils.c:315
+#, c-format
+msgid "cicp must be 4 numbers, separated by /\n"
+msgstr "cicp мәні / таңбасымен бөлінген 4 саннан тұруы керек /\n"
 
 #: tools/gtk-launch.c:40
 msgid "Show program version"
@@ -8492,7 +8512,6 @@ msgid ""
 "  convert      Convert into nodes\n"
 "  extract      Extract data urls\n"
 "  info         Provide information about the node\n"
-"  match        Match pattern in the node\n"
 "  show         Show the node\n"
 "  render       Take a screenshot of the node\n"
 "\n"
@@ -8500,82 +8519,81 @@ msgstr ""
 "Қолданылуы:\n"
 "  gtk4-rendernode-tool [КОМАНДА] [ОПЦИЯ…] ФАЙЛ\n"
 "\n"
-"GTK рендер тораптарында әртүрлі тапсырмаларды орындау.\n"
+"GTK рендерлеу тораптарына әртүрлі тапсырмаларды орындау.\n"
 "\n"
 "Командалар:\n"
-"  benchmark    Тораптың рендерлеу өнімділігін сынау\n"
+"  benchmark    Торап рендерін бенчмарктау\n"
 "  compare      Тораптарды немесе суреттерді салыстыру\n"
 "  convert      Тораптарға түрлендіру\n"
-"  extract      Деректер url-дерін шығарып алу\n"
-"  info         Торап туралы ақпаратты беру\n"
-"  match        Тораптағы үлгіні сәйкестендіру\n"
+"  extract      Деректердің url-дерін шығарып алу\n"
+"  info         Торап туралы ақпарат беру\n"
 "  show         Торапты көрсету\n"
-"  render       Тораптың скриншотын түсіру\n"
+"  render       Торап скриншотын түсіру\n"
 "\n"
 
-#: tools/gtk-rendernode-tool-benchmark.c:97
+#: tools/gtk-rendernode-tool-benchmark.c:96
 msgid "Add renderer to benchmark"
 msgstr "Бенчмаркке рендерерді қосу"
 
-#: tools/gtk-rendernode-tool-benchmark.c:97
-#: tools/gtk-rendernode-tool-compare.c:66
-#: tools/gtk-rendernode-tool-render.c:308
+#: tools/gtk-rendernode-tool-benchmark.c:96
+#: tools/gtk-rendernode-tool-compare.c:65
+#: tools/gtk-rendernode-tool-render.c:307
 msgid "RENDERER"
 msgstr "ӨҢДЕГІШ"
 
-#: tools/gtk-rendernode-tool-benchmark.c:98
+#: tools/gtk-rendernode-tool-benchmark.c:97
 msgid "Number of runs with each renderer"
 msgstr "Әрбір рендерердің орындаулар саны"
 
-#: tools/gtk-rendernode-tool-benchmark.c:98
+#: tools/gtk-rendernode-tool-benchmark.c:97
 msgid "RUNS"
 msgstr "RUNS"
 
-#: tools/gtk-rendernode-tool-benchmark.c:99
+#: tools/gtk-rendernode-tool-benchmark.c:98
 msgid "Don’t download result/wait for GPU to finish"
 msgstr "Нәтижені жүктеп алмау/GPU аяқталуын күтпеу"
 
-#: tools/gtk-rendernode-tool-benchmark.c:117
+#: tools/gtk-rendernode-tool-benchmark.c:116
 msgid "Benchmark rendering of a .node file."
 msgstr ".node файлының рендерерлеу бенчмаркі."
 
-#: tools/gtk-rendernode-tool-benchmark.c:130
-#: tools/gtk-rendernode-tool-extract.c:222 tools/gtk-rendernode-tool-info.c:141
-#: tools/gtk-rendernode-tool-render.c:339 tools/gtk-rendernode-tool-show.c:151
+#: tools/gtk-rendernode-tool-benchmark.c:129
+#: tools/gtk-rendernode-tool-extract.c:220 tools/gtk-rendernode-tool-info.c:153
+#: tools/gtk-rendernode-tool-render.c:338 tools/gtk-rendernode-tool-show.c:150
 #, c-format
 msgid "No .node file specified\n"
 msgstr "Ешбір .node файлы көрсетілмеген\n"
 
-#: tools/gtk-rendernode-tool-benchmark.c:136
+#: tools/gtk-rendernode-tool-benchmark.c:135
 #, c-format
 msgid "Can only benchmark a single .node file\n"
 msgstr "Тек бір .node файлының бенчмаркін жасауға болады\n"
 
-#: tools/gtk-rendernode-tool-compare.c:66
-#: tools/gtk-rendernode-tool-render.c:308
+#: tools/gtk-rendernode-tool-compare.c:65
+#: tools/gtk-rendernode-tool-render.c:307
 msgid "Renderer to use"
 msgstr "Қолданылатын өңдегіш"
 
-#: tools/gtk-rendernode-tool-compare.c:71
+#: tools/gtk-rendernode-tool-compare.c:70
 msgid "FILE1 FILE2"
 msgstr "ФАЙЛ1 ФАЙЛ2"
 
-#: tools/gtk-rendernode-tool-compare.c:83
+#: tools/gtk-rendernode-tool-compare.c:82
 msgid "Compare .node or .png files."
 msgstr ".node немесе .png файлдарын салыстыру."
 
-#: tools/gtk-rendernode-tool-compare.c:96
+#: tools/gtk-rendernode-tool-compare.c:95
 #, c-format
 msgid "Must specify two files\n"
 msgstr "Екі файлды көрсету керек\n"
 
-#: tools/gtk-rendernode-tool-compare.c:103
-#: tools/gtk-rendernode-tool-render.c:213
+#: tools/gtk-rendernode-tool-compare.c:102
+#: tools/gtk-rendernode-tool-render.c:212
 #, c-format
 msgid "Failed to create renderer: %s\n"
 msgstr "Рендерерді жасау сәтсіз аяқталды: %s\n"
 
-#: tools/gtk-rendernode-tool-compare.c:112
+#: tools/gtk-rendernode-tool-compare.c:111
 #, c-format
 msgid "Failed to load %s: %s\n"
 msgstr "%s жүктеу сәтсіз аяқталды: %s\n"
@@ -8610,58 +8628,58 @@ msgstr ".svg файлы көрсетілмеді\n"
 msgid "Can only accept a single .svg file\n"
 msgstr "Тек бір .svg файлын қабылдай алады\n"
 
-#: tools/gtk-rendernode-tool-extract.c:70
-#: tools/gtk-rendernode-tool-extract.c:148
+#: tools/gtk-rendernode-tool-extract.c:69
+#: tools/gtk-rendernode-tool-extract.c:147
 #, c-format
 msgid "Failed to write %s\n"
 msgstr "%s жазу сәтсіз аяқталды\n"
 
-#: tools/gtk-rendernode-tool-extract.c:198
+#: tools/gtk-rendernode-tool-extract.c:196
 msgid "Directory to use"
 msgstr "Қолданылатын бума"
 
-#: tools/gtk-rendernode-tool-extract.c:198
+#: tools/gtk-rendernode-tool-extract.c:196
 msgid "DIRECTORY"
 msgstr "БУМА"
 
-#: tools/gtk-rendernode-tool-extract.c:199
+#: tools/gtk-rendernode-tool-extract.c:197
 msgid "Be verbose"
 msgstr "Толық ақпаратты көрсету"
 
-#: tools/gtk-rendernode-tool-extract.c:209
+#: tools/gtk-rendernode-tool-extract.c:207
 msgid "Extract data urls from the render node."
 msgstr "Рендер торабынан деректер url-дерін алу."
 
-#: tools/gtk-rendernode-tool-extract.c:228 tools/gtk-rendernode-tool-info.c:147
+#: tools/gtk-rendernode-tool-extract.c:226 tools/gtk-rendernode-tool-info.c:159
 #, c-format
 msgid "Can only accept a single .node file\n"
 msgstr "Тек бір .node файлын қабылдай алады\n"
 
-#: tools/gtk-rendernode-tool-info.c:79 tools/gtk-rendernode-tool-info.c:81
+#: tools/gtk-rendernode-tool-info.c:97
 msgid "Number of nodes:"
 msgstr "Тораптар саны:"
 
-#: tools/gtk-rendernode-tool-info.c:93
+#: tools/gtk-rendernode-tool-info.c:104
 msgid "Depth:"
 msgstr "Тереңдігі:"
 
-#: tools/gtk-rendernode-tool-info.c:96
+#: tools/gtk-rendernode-tool-info.c:107
 msgid "Bounds:"
 msgstr "Шекаралар:"
 
-#: tools/gtk-rendernode-tool-info.c:97
+#: tools/gtk-rendernode-tool-info.c:108
 msgid "Origin:"
 msgstr "Бастапқы нүкте:"
 
-#: tools/gtk-rendernode-tool-info.c:101 tools/gtk-rendernode-tool-info.c:107
+#: tools/gtk-rendernode-tool-info.c:112 tools/gtk-rendernode-tool-info.c:118
 msgid "Opaque part:"
 msgstr "Мөлдір емес бөлік:"
 
-#: tools/gtk-rendernode-tool-info.c:128
+#: tools/gtk-rendernode-tool-info.c:140
 msgid "Provide information about the render node."
 msgstr "Өңдеп шығару торабы туралы ақпаратты ұсыну."
 
-#: tools/gtk-rendernode-tool-render.c:173
+#: tools/gtk-rendernode-tool-render.c:172
 #, c-format
 msgid ""
 "File %s exists.\n"
@@ -8670,82 +8688,50 @@ msgstr ""
 "%s файлы бар болып тұр.\n"
 "Үстінен жазуды қаласаңыз, файл атын көрсетіңіз.\n"
 
-#: tools/gtk-rendernode-tool-render.c:187
-#: tools/gtk-rendernode-tool-render.c:199
+#: tools/gtk-rendernode-tool-render.c:186
+#: tools/gtk-rendernode-tool-render.c:198
 #, c-format
 msgid "Failed to generate SVG: %s\n"
 msgstr "SVG жасау сәтсіз аяқталды: %s\n"
 
-#: tools/gtk-rendernode-tool-render.c:309
+#: tools/gtk-rendernode-tool-render.c:308
 msgid "Keep node position unchanged"
 msgstr "Торап орнын өзгертпеу"
 
-#: tools/gtk-rendernode-tool-render.c:310
+#: tools/gtk-rendernode-tool-render.c:309
 msgid "Area to render"
 msgstr "Рендерленетін аймақ"
 
-#: tools/gtk-rendernode-tool-render.c:310
+#: tools/gtk-rendernode-tool-render.c:309
 msgid "X,Y,W,H"
 msgstr "X,Y,Е,Б"
 
-#: tools/gtk-rendernode-tool-render.c:326
+#: tools/gtk-rendernode-tool-render.c:325
 msgid "Render a .node file to an image."
 msgstr ".node файлын сурет ретінде өңдеп шығару."
 
-#: tools/gtk-rendernode-tool-render.c:345
+#: tools/gtk-rendernode-tool-render.c:344
 #, c-format
 msgid "Can only render a single .node file to a single output file\n"
 msgstr "Тек бір .node файлын бір шығыс файлға өңдеп шығаруға болады\n"
 
-#: tools/gtk-rendernode-tool-render.c:353
+#: tools/gtk-rendernode-tool-render.c:352
 #, c-format
 msgid "Invalid rectangle given for bounds\n"
 msgstr "Шекаралар үшін жарамсыз тіктөртбұрыш берілген\n"
 
-#: tools/gtk-rendernode-tool-show.c:121
+#: tools/gtk-rendernode-tool-show.c:120
 msgid "Put node into offload container"
 msgstr "Торапты жүктемені жеңілдету контейнеріне салу"
 
-#: tools/gtk-rendernode-tool-show.c:138
+#: tools/gtk-rendernode-tool-show.c:137
 msgid "Show the render node."
 msgstr "Өңдеу торабын көрсету."
 
-#: tools/gtk-rendernode-tool-show.c:157
+#: tools/gtk-rendernode-tool-show.c:156
 #, c-format
 msgid "Can only preview a single .node file\n"
 msgstr "Тек бір .node файлын алдын-ала қарауға болады\n"
-
-#. translators: invalid UTF8 in filename
-#: tools/gtk-tool-utils.c:47
-#| msgctxt "Accelerator"
-#| msgid "Invalid"
-msgid "<invalid>"
-msgstr "<жарамсыз>"
-
-#: tools/gtk-tool-utils.c:60
-#, c-format
-msgid "Warning at %s: %s\n"
-msgstr "%s жеріндегі ескерту: %s\n"
-
-#: tools/gtk-tool-utils.c:62
-#, c-format
-msgid "Error at %s: %s\n"
-msgstr "%s жеріндегі қате: %s\n"
-
-#: tools/gtk-tool-utils.c:80
-#, c-format
-msgid "Failed to load node file: %s\n"
-msgstr "Торап файлын жүктеу сәтсіз аяқталды: %s\n"
-
-#: tools/gtk-tool-utils.c:106
-#, c-format
-msgid "%s is not a texture node\n"
-msgstr "%s текстуралық торап емес\n"
-
-#: tools/gtk-tool-utils.c:332
-#, c-format
-msgid "cicp must be 4 numbers, separated by /\n"
-msgstr "cicp мәні / таңбасымен бөлінген 4 саннан тұруы керек /\n"
 
 #: tools/updateiconcache.c:1402
 #, c-format

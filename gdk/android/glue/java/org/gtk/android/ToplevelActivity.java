@@ -19,6 +19,7 @@
 
 package org.gtk.android;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.ClipData;
@@ -47,6 +48,7 @@ import android.view.WindowInsetsController;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
+import android.window.OnBackInvokedCallback;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
@@ -67,6 +69,10 @@ public class ToplevelActivity extends Activity {
 	}
 
 	public static class GdkContext {
+        @Keep
+        @GlibContext.GtkThread
+        private static native void _set_latest_activity(ToplevelActivity activity);
+
 		@GlibContext.GtkThread
 		public static native void activate();
 		@GlibContext.GtkThread
@@ -307,6 +313,8 @@ public class ToplevelActivity extends Activity {
 
 			@Override
 			public void surfaceCreated(@NonNull SurfaceHolder holder) {
+				// Must be synchronous (not via GlibContext) so that delayed_map
+				// is set before surfaceChanged dispatches notifyLayoutSurface.
 				notifyVisibility(true);
 			}
 
@@ -422,6 +430,8 @@ public class ToplevelActivity extends Activity {
 	private ToplevelView view;
 	private boolean fullscreenState;
 
+	private OnBackInvokedCallback defaultBack;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		this.fullscreenState = false;
@@ -430,29 +440,52 @@ public class ToplevelActivity extends Activity {
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
 		getWindow().setDecorFitsSystemWindows(false);
 
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			this.defaultBack = new OnBackInvokedCallback() {
+				@Override
+				public void onBackInvoked() {
+					GlibContext.runOnMain(ToplevelActivity.this::notifyOnBackPress);
+				}
+			};
+			getOnBackInvokedDispatcher().registerOnBackInvokedCallback(0, this.defaultBack);
+		}
+
 		this.view = new ToplevelView();
 		setContentView(this.view);
 
-		long identifier = getIntent().getLongExtra(toplevelIdentifierKey, 0);
+		long[] possibleIdentifiers = {
+			savedInstanceState != null ? savedInstanceState.getLong(toplevelIdentifierKey, 0) : 0L,
+			getIntent().getLongExtra(toplevelIdentifierKey, 0),
+		};
 		GlibContext.blockForMain(() -> {
-			try {
-				bindNative(identifier);
-			} catch (UnregisteredSurfaceException e) {
-				Intent intent = getIntent();
-				if (intent.getData() != null) {
-					String hint = "";
-					if (intent.getAction() != null) {
-						String[] action = intent.getAction().split("\\.");
-						hint = action[action.length - 1].toLowerCase();
-					}
-					GdkContext.open(intent.getData(), hint);
-				} else {
-					GdkContext.activate();
-				}
+			for (long identifier : possibleIdentifiers) {
+				if (identifier == 0)
+					continue;
 
-				if (nativeIdentifier == 0)
-					Logger.getLogger("Toplevel").log(Level.SEVERE, "Call to activate did not spawn a new window");
+				try {
+					bindNative(identifier);
+					return;
+				} catch (UnregisteredSurfaceException e) {
+					this.nativeIdentifier = 0;
+				}
 			}
+
+			GdkContext._set_latest_activity(this);
+
+			Intent intent = getIntent();
+			if (intent.getData() != null) {
+				String hint = "";
+				if (intent.getAction() != null) {
+					String[] action = intent.getAction().split("\\.");
+					hint = action[action.length - 1].toLowerCase();
+				}
+				GdkContext.open(intent.getData(), hint);
+			} else {
+				GdkContext.activate();
+			}
+
+			if (nativeIdentifier == 0)
+				Logger.getLogger("Toplevel").log(Level.SEVERE, "Call to activate did not spawn a new window");
 		});
 	}
 
@@ -478,6 +511,12 @@ public class ToplevelActivity extends Activity {
 		GlibContext.runOnMain(() -> notifyStateChange(has_focus, is_fullscreen));
 	}
 
+	@SuppressLint("GestureBackNavigation")
+	@SuppressWarnings("deprecation")
+	/*
+	 * Legacy code for SDK < 33, newer versions call the callback
+	 * registered with the BackInvokedDispatcher.
+	 */
 	@Override
 	public void onBackPressed() {
 		GlibContext.runOnMain(this::notifyOnBackPress);
@@ -496,8 +535,15 @@ public class ToplevelActivity extends Activity {
 	}
 
 	@Override
+	public void onSaveInstanceState(@NonNull Bundle outState) {
+		if (this.nativeIdentifier != 0)
+			outState.putLong(toplevelIdentifierKey, this.nativeIdentifier);
+		super.onSaveInstanceState(outState);
+	}
+
+	@Override
 	protected void onDestroy() {
-		if (isFinishing())
+		if (isFinishing()) // TODO: investigate possibility unconditionally running this
 			GlibContext.runOnMain(this::notifyDestroy);
 		super.onDestroy();
 	}
@@ -505,20 +551,6 @@ public class ToplevelActivity extends Activity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		GlibContext.runOnMain(() -> notifyActivityResult(requestCode, resultCode, data));
-	}
-
-	@Override
-	public void finish() {
-		/*
-		 * Surfaces that are spawned as a new window (task) thus without any parents
-		 * should have their task dropped after they exited, as the Surface was already
-		 * destroyed on the gdk side and can't be bound anymore, which'd happen if the
-		 * user were able to navigate back to the nonexistent window in their history.
-		 */
-		if (isTaskRoot() && nativeIdentifier != 0)
-			super.finishAndRemoveTask();
-		else
-			super.finish();
 	}
 
 	public void postWindowConfiguration(int color, boolean fullscreen) {

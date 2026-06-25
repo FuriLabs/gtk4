@@ -3,7 +3,6 @@ gdk_win32_public_sources = files([
   'gdkd3d12texture.c',
   'gdkd3d12texturebuilder.c',
   'gdkdisplay-win32.c',
-  'gdkdisplaymanager-win32.c',
   'gdkdrag-win32.c',
   'gdkglcontext-win32.c',
   'gdkglcontext-win32-wgl.c',
@@ -14,6 +13,7 @@ gdk_win32_public_sources = files([
 ])
 
 gdk_win32_sources = gdk_win32_public_sources + files([
+  'gdkapplaunchcontext-win32.c',
   'gdkcairocontext-win32.c',
   'gdkclipboard-win32.c',
   'gdkclipdrop-win32.c',
@@ -32,8 +32,8 @@ gdk_win32_sources = gdk_win32_public_sources + files([
   'gdkkeys-win32-impl.c',
   'gdkkeys-win32-impl-wow64.c',
   'gdkmain-win32.c',
+  'gdkseat-win32.c',
   'gdkvulkancontext-win32.c',
-  'gdkwin32cursor.h',
   'gdkwin32display.h',
   'gdkwin32messagesource.c',
   'gdkwin32keys.h',
@@ -42,9 +42,7 @@ gdk_win32_sources = gdk_win32_public_sources + files([
 gdk_win32_public_headers = files([
   'gdkd3d12texture.h',
   'gdkd3d12texturebuilder.h',
-  'gdkwin32cursor.h',
   'gdkwin32display.h',
-  'gdkwin32displaymanager.h',
   'gdkwin32dnd.h',
   'gdkwin32glcontext.h',
   'gdkwin32misc.h',

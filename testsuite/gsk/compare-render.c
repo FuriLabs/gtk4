@@ -135,10 +135,12 @@ save_node (GskRenderNode *node,
            const char    *extension)
 {
   char *filename = get_output_file (test_name, variant_name, ".node", extension);
+  GError *error = NULL;
   gboolean result;
 
   g_print ("Storing modified nodes at %s\n", filename);
-  result = gsk_render_node_write_to_file (node, filename, NULL);
+  result = gsk_render_node_write_to_file (node, filename, &error);
+  g_assert_no_error (error);
   g_assert_true (result);
   g_free (filename);
 }
@@ -641,10 +643,10 @@ opaque_create_test (GskRenderNode *node,
 
   /* Turn image to white, don't touch alpha */
   graphene_matrix_init_from_float (&matrix,
-                                   (const float []) { 0, 0, 0, 0,
-                                                      0, 0, 0, 0,
-                                                      0, 0, 0, 0,
-                                                      1, 1, 1, 1 });
+                                   (const float []) { 0,    0,    0,    0,
+                                                      0,    0,    0,    0,
+                                                      0,    0,    0,    0,
+                                                      1.01, 1.01, 1.01, 1 });
   result = gsk_color_matrix_node_new (clip, &matrix, graphene_vec4_zero ());
 
   gsk_render_node_unref (clip);

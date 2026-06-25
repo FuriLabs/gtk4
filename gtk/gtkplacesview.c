@@ -814,7 +814,7 @@ add_file (GtkPlacesView *view,
                       "volume", NULL,
                       "mount", NULL,
                       "file", file,
-                      "is_network", is_network,
+                      "is-network", is_network,
                       NULL);
 
   insert_row (view, row, is_network);
@@ -1804,7 +1804,8 @@ on_key_press_event (GtkEventController *controller,
   if (keyval == GDK_KEY_Return ||
       keyval == GDK_KEY_KP_Enter ||
       keyval == GDK_KEY_ISO_Enter ||
-      keyval == GDK_KEY_space)
+      keyval == GDK_KEY_space ||
+      keyval == GDK_KEY_KP_Space)
     {
       GtkWidget *focus_widget;
       GtkWindow *toplevel;
@@ -2060,7 +2061,7 @@ listbox_header_func (GtkListBoxRow *row,
       separator = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
 
       label = g_object_new (GTK_TYPE_LABEL,
-                            "use_markup", TRUE,
+                            "use-markup", TRUE,
                             "margin-start", 12,
                             "label", text,
                             "xalign", 0.0f,
@@ -2274,18 +2275,18 @@ gtk_places_view_class_init (GtkPlacesViewClass *klass)
   properties[PROP_LOADING] =
           g_param_spec_boolean ("loading", NULL, NULL,
                                 FALSE,
-                                GTK_PARAM_READABLE);
+                                G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   properties[PROP_FETCHING_NETWORKS] =
           g_param_spec_boolean ("fetching-networks", NULL, NULL,
                                 FALSE,
-                                GTK_PARAM_READABLE);
+                                G_PARAM_READABLE | G_PARAM_STATIC_NAME);
 
   properties[PROP_OPEN_FLAGS] =
           g_param_spec_flags ("open-flags", NULL, NULL,
                               GTK_TYPE_PLACES_OPEN_FLAGS,
                               GTK_PLACES_OPEN_NORMAL,
-                              GTK_PARAM_READWRITE);
+                              G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (object_class, LAST_PROP, properties);
 

@@ -22,12 +22,14 @@
 #include "state-editor.h"
 #include "shape-editor.h"
 #include "path-paintable.h"
+#include "gtk/svg/gtksvgelementprivate.h"
 
 struct _StateEditor
 {
   GtkWindow parent_instance;
 
   GtkGrid *grid;
+  GtkSpinButton *initial_state;
   PathPaintable *paintable;
   unsigned int max_state;
 
@@ -49,41 +51,15 @@ static GParamSpec *properties[NUM_PROPERTIES];
 
 G_DEFINE_TYPE (StateEditor, state_editor, GTK_TYPE_WINDOW)
 
-/* {{{ Utilities, callbacks */
+/* {{{ Utilities, callbacks */ 
 
 static void repopulate (StateEditor *self);
 
 static GdkPaintable *
 get_paintable_for_shape (StateEditor *self,
-                         Shape       *shape)
+                         SvgElement       *shape)
 {
-  GtkSvg *svg = gtk_svg_new ();
-  g_autoptr (GBytes) bytes = NULL;
-  Shape *sh;
-
-  svg->width = path_paintable_get_width (self->paintable);
-  svg->height = path_paintable_get_height (self->paintable);
-
-  svg_shape_attr_set (svg->content,
-                      SHAPE_ATTR_WIDTH,
-                      svg_number_new (svg->width));
-  svg_shape_attr_set (svg->content,
-                      SHAPE_ATTR_HEIGHT,
-                      svg_number_new (svg->height));
-  svg_shape_attr_set (svg->content,
-                      SHAPE_ATTR_VIEW_BOX,
-                      svg_view_box_new (&GRAPHENE_RECT_INIT (0, 0, svg->width, svg->height)));
-
-  sh = shape_duplicate (shape);
-  svg_shape_attr_set (sh, SHAPE_ATTR_VISIBILITY, NULL);
-  svg_shape_attr_set (sh, SHAPE_ATTR_DISPLAY, NULL);
-  g_ptr_array_add (svg->content->shapes, sh);
-
-  bytes = gtk_svg_serialize (svg);
-  g_object_unref (svg);
-  svg = gtk_svg_new_from_bytes (bytes);
-  gtk_svg_play (svg);
-  return GDK_PAINTABLE (svg);
+  return shape_get_path_image (shape, path_paintable_get_svg (self->paintable));
 }
 
 static gboolean
@@ -97,9 +73,32 @@ valid_state_name (const char *name)
   return TRUE;
 }
 
+static unsigned int
+find_max_state (SvgElement *shape)
+{
+  uint64_t states = svg_element_get_states (shape);
+
+  if (svg_element_get_type (shape) == SVG_ELEMENT_SVG ||
+      svg_element_get_type (shape) == SVG_ELEMENT_GROUP)
+    {
+      unsigned int state = 0;
+      for (unsigned int i = 0; i < svg_element_get_n_children (shape); i++)
+        {
+          SvgElement *sh = svg_element_get_child (shape, i);
+          state = MAX (state, find_max_state (sh));
+        }
+      return state;
+    }
+  else if (states == 0 || states == G_MAXUINT64)
+    return 0;
+  else
+    return g_bit_nth_msf (states, -1);
+}
+
 static void
 update_state_names (StateEditor *self)
 {
+  GtkSvg *svg = path_paintable_get_svg (self->paintable);
   const char *names[65] = { NULL, };
   unsigned int i;
 
@@ -132,7 +131,28 @@ update_state_names (StateEditor *self)
     }
 
   names[i + 1] = NULL;
-  path_paintable_set_state_names (self->paintable, names);
+
+  gtk_svg_set_state_names (svg, names);
+  path_paintable_changed (self->paintable);
+}
+
+static unsigned int
+count_shapes (SvgElement *shape)
+{
+  SvgElementType type = svg_element_get_type (shape);
+  unsigned int count = 1;
+
+  if (svg_element_type_is_container (type))
+    {
+      for (unsigned int i = 0; i < svg_element_get_n_children (shape); i++)
+        {
+          SvgElement *sh = svg_element_get_child (shape, i);
+
+          count += count_shapes (sh);
+        }
+    }
+
+  return count;
 }
 
 static void
@@ -140,35 +160,132 @@ update_states (StateEditor *self)
 {
   GtkLayoutManager *mgr = gtk_widget_get_layout_manager (GTK_WIDGET (self->grid));
   uint64_t *states;
+  unsigned int n;
 
-  states = g_newa0 (uint64_t, path_paintable_get_n_paths (self->paintable));
+  n = count_shapes (path_paintable_get_svg (self->paintable)->content);
+
+  states = g_newa0 (uint64_t, n);
+
+  for (unsigned int i = 0; i < n; i++)
+    {
+      GtkLayoutChild *layout_child;
+      int row;
+
+      GtkWidget *child = gtk_grid_get_child_at (self->grid, -2, i);
+      GtkWidget *toggle = gtk_grid_get_child_at (self->grid, -1, i);
+
+      if (!GTK_IS_LABEL (child))
+        break;
+
+      layout_child = gtk_layout_manager_get_layout_child (mgr, child);
+      row = gtk_grid_layout_child_get_row (GTK_GRID_LAYOUT_CHILD (layout_child));
+
+      if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (toggle)))
+        states[row] = G_MAXUINT64;
+    }
 
   for (GtkWidget *child = gtk_widget_get_first_child (GTK_WIDGET (self->grid));
        child != NULL;
        child = gtk_widget_get_next_sibling (child))
     {
-      if (!GTK_IS_CHECK_BUTTON (child))
-        continue;
+      GtkLayoutChild *layout_child;
+      int row, col;
 
-      if (gtk_check_button_get_active (GTK_CHECK_BUTTON (child)))
+      layout_child = gtk_layout_manager_get_layout_child (mgr, child);
+      row = gtk_grid_layout_child_get_row (GTK_GRID_LAYOUT_CHILD (layout_child));
+      col = gtk_grid_layout_child_get_column (GTK_GRID_LAYOUT_CHILD (layout_child));
+
+      if (GTK_IS_CHECK_BUTTON (child))
         {
-          GtkLayoutChild *layout_child;
-          int row, col;
-
-          layout_child = gtk_layout_manager_get_layout_child (mgr, child);
-          row = gtk_grid_layout_child_get_row (GTK_GRID_LAYOUT_CHILD (layout_child));
-          col = gtk_grid_layout_child_get_column (GTK_GRID_LAYOUT_CHILD (layout_child));
-
-          if (col <= self->max_state)
-            states[row] |= (G_GUINT64_CONSTANT (1) << (unsigned int) col);
+          if (gtk_check_button_get_active (GTK_CHECK_BUTTON (child)))
+            states[row] |= G_GUINT64_CONSTANT (1) << (unsigned int) col;
+          else
+            states[row] &= ~(G_GUINT64_CONSTANT (1) << (unsigned int) col);
         }
     }
 
   self->updating = TRUE;
 
-  for (unsigned int i = 0; i < path_paintable_get_n_paths (self->paintable); i++)
-    path_paintable_set_path_states (self->paintable, i, states[i]);
+  for (unsigned int i = 0; i < n; i++)
+    {
+      GtkWidget *child = gtk_grid_get_child_at (self->grid, -2, i);
+      const char *id;
 
+      if (!GTK_IS_LABEL (child))
+        break;
+
+      id = gtk_label_get_label (GTK_LABEL (child));
+      path_paintable_set_path_states_by_id (self->paintable, id, states[i]);
+    }
+
+  self->updating = FALSE;
+
+  repopulate (self);
+}
+
+static void
+update_one (GtkWidget   *check,
+            GParamSpec  *pspec,
+            StateEditor *self)
+{
+  GtkLayoutManager *mgr;
+  GtkLayoutChild *layout_child;
+  int row;
+  GtkWidget *label;
+  const char *id;
+  uint64_t states;
+
+  mgr = gtk_widget_get_layout_manager (GTK_WIDGET (self->grid));
+  layout_child = gtk_layout_manager_get_layout_child (mgr, check);
+  row = gtk_grid_layout_child_get_row (GTK_GRID_LAYOUT_CHILD (layout_child));
+
+  label = gtk_grid_get_child_at (self->grid, -2, row);
+  id = gtk_label_get_label (GTK_LABEL (label));
+
+  states = 0;
+  for (unsigned int i = 0; i < self->max_state; i++)
+    {
+      GtkWidget *child;
+
+      child = gtk_grid_get_child_at (self->grid, i, row);
+      if (gtk_check_button_get_active (GTK_CHECK_BUTTON (child)))
+        states |= (G_GUINT64_CONSTANT (1) << (unsigned int) i);
+    }
+
+  self->updating = TRUE;
+  path_paintable_set_path_states_by_id (self->paintable, id, states);
+  self->updating = FALSE;
+
+  if (!gtk_check_button_get_active (GTK_CHECK_BUTTON (check)))
+    {
+      GtkWidget *toggle = gtk_grid_get_child_at (self->grid, -1, row);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (toggle), FALSE);
+    }
+}
+
+static void
+update_all (GtkWidget   *toggle,
+            GParamSpec  *pspec,
+            StateEditor *self)
+{
+  GtkLayoutManager *mgr;
+  GtkLayoutChild *layout_child;
+  int row;
+  GtkWidget *label;
+  const char *id;
+
+  if (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (toggle)))
+    return;
+
+  mgr = gtk_widget_get_layout_manager (GTK_WIDGET (self->grid));
+  layout_child = gtk_layout_manager_get_layout_child (mgr, toggle);
+  row = gtk_grid_layout_child_get_row (GTK_GRID_LAYOUT_CHILD (layout_child));
+
+  label = gtk_grid_get_child_at (self->grid, -2, row);
+  id = gtk_label_get_label (GTK_LABEL (label));
+
+  self->updating = TRUE;
+  path_paintable_set_path_states_by_id (self->paintable, id, G_MAXUINT64);
   self->updating = FALSE;
 
   repopulate (self);
@@ -209,32 +326,40 @@ clear_paths (StateEditor *self)
 }
 
 static void
-create_paths_for_shape (StateEditor *self,
-                        Shape       *shape)
+create_paths_for_shape (StateEditor  *self,
+                        SvgElement   *shape,
+                        unsigned int *row)
 {
-  for (unsigned int i = 0; i < shape->shapes->len; i++)
+  for (unsigned int i = 0; i < svg_element_get_n_children (shape); i++)
     {
-      Shape *sh = g_ptr_array_index (shape->shapes, i);
+      SvgElement *sh = svg_element_get_child (shape, i);
 
-      if (sh->type == SHAPE_GROUP)
+      if (svg_element_get_type (sh) == SVG_ELEMENT_GROUP)
         {
-          create_paths_for_shape (self, sh);
+          create_paths_for_shape (self, sh, row);
           continue;
         }
-      else if (shape_is_graphical (sh))
+      else if (svg_element_type_is_graphical (svg_element_get_type (sh)))
         {
-          uint64_t states = sh->gpa.states;
+          uint64_t states = svg_element_get_states (sh);
+          const char *id = svg_element_get_id (sh);
           GdkPaintable *paintable = get_paintable_for_shape (self, sh);
-          const char *id = sh->id;
           GtkWidget *child;
 
           child = gtk_image_new_from_paintable (paintable);
           gtk_image_set_pixel_size (GTK_IMAGE (child), 20);
           g_object_unref (paintable);
-          gtk_grid_attach (self->grid, child, -2, i, 1, 1);
+          gtk_grid_attach (self->grid, child, -3, *row, 1, 1);
 
           child = gtk_label_new (id);
-          gtk_grid_attach (self->grid, child, -1, i, 1, 1);
+          gtk_grid_attach (self->grid, child, -2, *row, 1, 1);
+
+          child = gtk_toggle_button_new_with_label ("All");
+          gtk_grid_attach (self->grid, child, -1, *row, 1, 1);
+
+          gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (child), states == G_MAXUINT64);
+
+          g_signal_connect (child, "notify::active", G_CALLBACK (update_all), self);
 
           for (unsigned int j = 0; j <= self->max_state; j++)
             {
@@ -242,9 +367,11 @@ create_paths_for_shape (StateEditor *self,
               gtk_widget_set_halign (child, GTK_ALIGN_CENTER);
               gtk_check_button_set_active (GTK_CHECK_BUTTON (child),
                                            (states & ((G_GUINT64_CONSTANT (1) << j))) != 0);
-              g_signal_connect_swapped (child, "notify::active", G_CALLBACK (update_states), self);
-              gtk_grid_attach (self->grid, child, j, i, 1, 1);
+              g_signal_connect (child, "notify::active", G_CALLBACK (update_one), self);
+              gtk_grid_attach (self->grid, child, j, *row, 1, 1);
             }
+
+          (*row)++;
         }
     }
 }
@@ -268,11 +395,13 @@ state_name_changed (GtkEditable *editable,
 static void
 create_paths (StateEditor *self)
 {
+  GtkSvg *svg = path_paintable_get_svg (self->paintable);
   GtkWidget *child;
   const char **names;
   unsigned int n_names;
+  unsigned int row;
 
-  names = path_paintable_get_state_names (self->paintable, &n_names);
+  names = gtk_svg_get_state_names (svg, &n_names);
 
   for (unsigned int i = 0; i <= self->max_state; i++)
     {
@@ -289,7 +418,8 @@ create_paths (StateEditor *self)
       g_signal_connect (child, "notify::editing", G_CALLBACK (state_name_changed), self);
     }
 
-  create_paths_for_shape (self, path_paintable_get_content (self->paintable));
+  row = 0;
+  create_paths_for_shape (self, svg->content, &row);
 }
 
 static void
@@ -305,10 +435,19 @@ repopulate (StateEditor *self)
 static void
 paths_changed (StateEditor *self)
 {
-  self->max_state = MAX (self->max_state, path_paintable_get_max_state (self->paintable));
+  GtkSvg *svg = path_paintable_get_svg (self->paintable);
+  self->max_state = MAX (self->max_state, find_max_state (svg->content));
   self->max_state = CLAMP (self->max_state, 0, 63);
 
   repopulate (self);
+}
+
+static void
+initial_state_changed (StateEditor *self)
+{
+  GtkSvg *svg = path_paintable_get_svg (self->paintable);
+  svg->initial_state = (unsigned int) gtk_spin_button_get_value_as_int (self->initial_state);
+  path_paintable_changed (self->paintable);
 }
 
 /* }}} */
@@ -405,8 +544,10 @@ state_editor_class_init (StateEditorClass *class)
                                                "/org/gtk/Shaper/state-editor.ui");
 
   gtk_widget_class_bind_template_child (widget_class, StateEditor, grid);
+  gtk_widget_class_bind_template_child (widget_class, StateEditor, initial_state);
   gtk_widget_class_bind_template_callback (widget_class, drop_state);
   gtk_widget_class_bind_template_callback (widget_class, add_state);
+  gtk_widget_class_bind_template_callback (widget_class, initial_state_changed);
 }
 
 /* }}} */
@@ -447,6 +588,7 @@ state_editor_set_paintable (StateEditor *self,
       g_signal_connect_swapped (paintable, "paths-changed",
                                 G_CALLBACK (paths_changed), self);
       paths_changed (self);
+      gtk_spin_button_set_value (self->initial_state, path_paintable_get_svg (paintable)->initial_state);
     }
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PAINTABLE]);

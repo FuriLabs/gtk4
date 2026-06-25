@@ -115,7 +115,7 @@ file_browser_view_finalize (GObject *object)
   g_free (self->icon_name);
   g_free (self->title);
 
-  G_OBJECT_CLASS (file_browser_view_parent_class)->dispose (object);
+  G_OBJECT_CLASS (file_browser_view_parent_class)->finalize (object);
 }
 
 static void
@@ -129,29 +129,25 @@ file_browser_view_class_init (FileBrowserViewClass *klass)
 
   properties[PROP_FACTORY] =
     g_param_spec_object ("factory",
-                         "factory",
-                         "factory to use in the main view",
+                         NULL, NULL,
                          GTK_TYPE_LIST_ITEM_FACTORY,
-                         G_PARAM_READWRITE);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
   properties[PROP_ICON_NAME] =
     g_param_spec_string ("icon-name",
-                         "icon name",
-                         "icon to display for selecting this view",
+                         NULL, NULL,
                          NULL,
-                         G_PARAM_READWRITE);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
   properties[PROP_TITLE] =
     g_param_spec_string ("title",
-                         "title",
-                         "title to display for selecting this view",
+                         NULL, NULL,
                          NULL,
-                         G_PARAM_READWRITE);
+                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
   properties[PROP_ORIENTATION] =
     g_param_spec_enum ("orientation",
-                       "orientation",
-                       "orientation of the view",
+                       NULL, NULL,
                        GTK_TYPE_ORIENTATION,
                        GTK_ORIENTATION_VERTICAL,
-                       G_PARAM_READWRITE);
+                       G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   g_object_class_install_properties (gobject_class, N_PROPS, properties);
 }

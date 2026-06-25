@@ -149,17 +149,9 @@ gdk_frame_clock_idle_dispose (GObject *object)
 {
   GdkFrameClockIdlePrivate *priv = GDK_FRAME_CLOCK_IDLE (object)->priv;
 
-  if (priv->flush_idle_id != 0)
-    {
-      g_source_remove (priv->flush_idle_id);
-      priv->flush_idle_id = 0;
-    }
+  g_clear_handle_id (&priv->flush_idle_id, g_source_remove);
 
-  if (priv->paint_idle_id != 0)
-    {
-      g_source_remove (priv->paint_idle_id);
-      priv->paint_idle_id = 0;
-    }
+  g_clear_handle_id (&priv->paint_idle_id, g_source_remove);
 
 #ifdef G_OS_WIN32
   if (priv->begin_period) 
@@ -361,16 +353,10 @@ maybe_stop_idle (GdkFrameClockIdle *self)
   GdkFrameClockIdlePrivate *priv = self->priv;
 
   if (priv->flush_idle_id != 0 && !should_run_flush_idle (self))
-    {
-      g_source_remove (priv->flush_idle_id);
-      priv->flush_idle_id = 0;
-    }
+    g_clear_handle_id (&priv->flush_idle_id, g_source_remove);
 
   if (priv->paint_idle_id != 0 && !should_run_paint_idle (self))
-    {
-      g_source_remove (priv->paint_idle_id);
-      priv->paint_idle_id = 0;
-    }
+    g_clear_handle_id (&priv->paint_idle_id, g_source_remove);
 }
 
 static gboolean
@@ -383,7 +369,7 @@ gdk_frame_clock_flush_idle (void *data)
   priv->flush_idle_id = 0;
 
   if (priv->phase != GDK_FRAME_CLOCK_PHASE_NONE)
-    return FALSE;
+    return G_SOURCE_REMOVE;
 
   priv->phase = GDK_FRAME_CLOCK_PHASE_FLUSH_EVENTS;
   priv->requested &= ~GDK_FRAME_CLOCK_PHASE_FLUSH_EVENTS;
@@ -399,7 +385,7 @@ gdk_frame_clock_flush_idle (void *data)
   g_clear_handle_id (&priv->paint_idle_id, g_source_remove);
   gdk_frame_clock_paint_idle (data);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 /*
@@ -696,7 +682,7 @@ gdk_frame_clock_paint_idle (void *data)
 
   gdk_profiler_end_mark (before, "Frameclock cycle", NULL);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void

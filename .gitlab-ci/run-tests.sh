@@ -11,11 +11,6 @@ nosuite="$4,failing,${setup}_failing,flaky,headless,gsk-compare-broadway"
 multiplier=${MESON_TEST_TIMEOUT_MULTIPLIER:-1}
 n_processes=${MESON_TEST_MAX_PROCESSES:-$(nproc)}
 
-# Ignore memory leaks lower in dependencies
-export LSAN_OPTIONS=suppressions=$srcdir/lsan.supp:print_suppressions=0:detect_leaks=0:allocator_may_return_null=1:symbolize=1
-export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer
-
-
 case "${setup}" in
   x11*)
     dbus-run-session -- \
@@ -78,13 +73,5 @@ case "${setup}" in
 esac
 
 cd ${builddir}
-
-$srcdir/.gitlab-ci/meson-html-report.py \
-            --project-name=gtk \
-            --backend="${setup}" \
-            --job-id="${CI_JOB_NAME}" \
-            --reftest-output-dir="testsuite/reftests/output/${setup}" \
-            --output="report-${setup}.html" \
-            "meson-logs/testlog-${setup}.json"
 
 exit $exit_code

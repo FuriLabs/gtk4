@@ -12,12 +12,4 @@ workarounds/nodeparser-Mark-failing-tests-on-s390x.patch
 x11-scale/gdk-x11-check-surface-scale-on-input-region-opaque-region.patch
 x11-scale/gdk-x11-update-correct-shadow-size-according-to-window-si.patch
 x11-scale/gdk-x11-update-cursor-size-on-the-extent-after-scale-chan.patch
-x11-touch/xi2-Start-drag-grab-with-pointer-only-event-mask.patch
-x11-touch/xi2-Do-not-discard-emulated-pointer-events-during-drag-an.patch
-x11-touch/xi2-Expose-a-logical-touch-device.patch
 testsuite-Don-t-build-waylandsocket-test-if-Wayland-is-di.patch
-print-Fix-listing-printers-with-synchronous-backends.patch
-gtkapplication-wayland-Add-a-missing-NULL-check-when-forg.patch
-gskvulkanimage-fix-building-on-32-bit.patch
-demos-Make-build-reproducible.patch
-dragsource-Fix-memory-corruption-due-to-uncancelled-sourc.patch

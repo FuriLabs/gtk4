@@ -1,8 +1,15 @@
-gtk4 (4.23.1+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.23.1+ds-0ubuntu1) stonking; urgency=medium
 
   * New upstream release
+  * d/control: Bump minimum pango
+  * d/control: Bump minimum wayland-protocols
+  * d/p: Drop patches applied upstream
+  * d/p: Rebase patches
+  * d/install: Drop gtk4-encode-symbolic-svg tool
+  * d/symbols: Drop private symbols
+  * d/symbols: Add new symbols
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Wed, 24 Jun 2026 17:10:27 +0200
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 25 Jun 2026 15:29:29 +0200
 
 gtk4 (4.22.4+ds-1ubuntu1) stonking; urgency=medium
 

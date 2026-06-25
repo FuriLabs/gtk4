@@ -29,7 +29,7 @@ Applied-upstream: no, upstream want reftests to be a strict pass/fail with ident
  4 files changed, 73 insertions(+), 4 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index 5cf3690..8e967ae 100644
+index 5c0f39e..eb02f25 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
 @@ -113,6 +113,37 @@ get_output_file (const char *file,
@@ -70,7 +70,7 @@ index 5cf3690..8e967ae 100644
  static void
  save_image (GdkTexture *texture,
              const char *test_name,
-@@ -842,7 +873,15 @@ run_single_test (const TestSetup *setup,
+@@ -844,7 +875,15 @@ run_single_test (const TestSetup *setup,
                                     &max_diff, &pixels_changed, &pixels);
    if (diff)
      {
@@ -101,10 +101,10 @@ index cad2f3b..4db8b96 100644
      {
        save_image (texture, filename, NULL, ".out.png");
 diff --git a/testsuite/reftests/gtk-reftest.c b/testsuite/reftests/gtk-reftest.c
-index 4ad5c56..ad55eab 100644
+index dfa868c..aba2f73 100644
 --- a/testsuite/reftests/gtk-reftest.c
 +++ b/testsuite/reftests/gtk-reftest.c
-@@ -302,6 +302,12 @@ save_image (GdkTexture *texture,
+@@ -303,6 +303,12 @@ save_image (GdkTexture *texture,
    g_free (filename);
  }
  
@@ -117,8 +117,8 @@ index 4ad5c56..ad55eab 100644
  static void
  save_node (GskRenderNode *node,
             const char    *test_name,
-@@ -383,13 +389,37 @@ test_ui_file (GFile *file)
- 
+@@ -386,13 +392,37 @@ test_ui_file (GFile *file)
+     }
    if (diff_image)
      {
 +      char *keyfile_path = get_test_keyfile (ui_file);

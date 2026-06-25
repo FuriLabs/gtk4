@@ -67,7 +67,7 @@ index 4fcd122..2c26b10 100644
    if (GDK_X11_DISPLAY (display)->cursors == NULL)
      return;
 diff --git a/gdk/x11/gdkscreen-x11.c b/gdk/x11/gdkscreen-x11.c
-index 3e76990..5a2db88 100644
+index 8251133..40060f3 100644
 --- a/gdk/x11/gdkscreen-x11.c
 +++ b/gdk/x11/gdkscreen-x11.c
 @@ -963,6 +963,9 @@ _gdk_x11_screen_set_surface_scale (GdkX11Screen *x11_screen,
@@ -81,7 +81,7 @@ index 3e76990..5a2db88 100644
  
  static void
 diff --git a/gdk/x11/gdkscreen-x11.h b/gdk/x11/gdkscreen-x11.h
-index bfd0149..280e631 100644
+index d6debc0..dd45626 100644
 --- a/gdk/x11/gdkscreen-x11.h
 +++ b/gdk/x11/gdkscreen-x11.h
 @@ -40,6 +40,8 @@ struct _GdkX11Screen

@@ -1,6 +1,14 @@
-gtk4 (4.23.1+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.23.1+ds-1) experimental; urgency=medium
 
+  * Team upload
   * New upstream release
+  * d/control: Update minimum pango & wayland-protocols
+  * d/install: gtk4-encode-symbolic-svg tool is no longer provided
+  * d/symbols: Add new symbols
+  * d/symbols: Remove private symbols
+  * Add patch to fix blurry text rendering
+  * Add patch to fix crash when closing the main window on X11
+  * Remove patches applied upstream
 
  -- Alessandro Astone <alessandro.astone@canonical.com>  Wed, 24 Jun 2026 17:10:27 +0200
 

@@ -1,0 +1,32 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Fri, 26 Jun 2026 09:58:56 +0200
+Subject: application-x11: Fix saved state ownership
+
+gtk_application_impl_dbus_get_window_state returns a transfer-none reference,
+so do not unref it.
+
+Solves use-after-free / GLib-CRITICAL / occasional crash when closing the main
+window on the X11 backend.
+
+Fixes: 517553b394 ("gtk: Implement session saving for X11")
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/10096
+---
+ gtk/gtkapplication-x11.c | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/gtk/gtkapplication-x11.c b/gtk/gtkapplication-x11.c
+index 7b9fd0e..f261ec3 100644
+--- a/gtk/gtkapplication-x11.c
++++ b/gtk/gtkapplication-x11.c
+@@ -82,10 +82,7 @@ gtk_application_impl_x11_handle_window_map (GtkApplicationImpl *impl,
+ 
+   state = gtk_application_impl_dbus_get_window_state (dbus, window);
+   if (state)
+-    {
+-      gdk_x11_toplevel_restore_state (GDK_TOPLEVEL (gdk_surface), state);
+-      g_variant_unref (state);
+-    }
++    gdk_x11_toplevel_restore_state (GDK_TOPLEVEL (gdk_surface), state);
+ }
+ 
+ static void

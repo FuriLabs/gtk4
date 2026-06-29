@@ -4,6 +4,7 @@ Upstream-Name: GTK
 License: LGPL-2.1+
 Files-Excluded:
  gtk/theme/Default/Default-*.css
+ subprojects/pango
 
 Files: *
 Copyright:

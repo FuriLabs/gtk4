@@ -17,10 +17,10 @@ Bug-Ubuntu: https://launchpad.net/bugs/1924689
  2 files changed, 20 insertions(+), 8 deletions(-)
 
 diff --git a/gdk/x11/gdksurface-x11.c b/gdk/x11/gdksurface-x11.c
-index 937c682..a890b94 100644
+index 87fe877..c79ae45 100644
 --- a/gdk/x11/gdksurface-x11.c
 +++ b/gdk/x11/gdksurface-x11.c
-@@ -210,7 +210,7 @@ gdk_x11_surface_update_size (GdkX11Surface *self,
+@@ -212,7 +212,7 @@ gdk_x11_surface_update_size (GdkX11Surface *self,
    return TRUE;
  }
  
@@ -29,7 +29,7 @@ index 937c682..a890b94 100644
  update_shadow_size (GdkSurface *surface,
                      int         shadow_left,
                      int         shadow_right,
-@@ -224,13 +224,15 @@ update_shadow_size (GdkSurface *surface,
+@@ -226,13 +226,15 @@ update_shadow_size (GdkSurface *surface,
    if (impl->shadow_left == shadow_left &&
        impl->shadow_right == shadow_right &&
        impl->shadow_top == shadow_top &&
@@ -47,7 +47,7 @@ index 937c682..a890b94 100644
  
    data[0] = shadow_left * impl->surface_scale;
    data[1] = shadow_right * impl->surface_scale;
-@@ -244,6 +246,8 @@ update_shadow_size (GdkSurface *surface,
+@@ -246,6 +248,8 @@ update_shadow_size (GdkSurface *surface,
                     frame_extents, XA_CARDINAL,
                     32, PropModeReplace,
                     (guchar *) &data, 4);
@@ -56,7 +56,7 @@ index 937c682..a890b94 100644
  }
  
  #define UPDATE_GEOMETRY TRUE
-@@ -260,6 +264,7 @@ compute_toplevel_size (GdkSurface *surface,
+@@ -262,6 +266,7 @@ compute_toplevel_size (GdkSurface *surface,
    GdkMonitor *monitor;
    GdkToplevelSize size;
    int bounds_width, bounds_height;
@@ -64,7 +64,7 @@ index 937c682..a890b94 100644
  
    monitor = gdk_display_get_monitor_at_surface (display, surface);
    if (monitor)
-@@ -281,11 +286,11 @@ compute_toplevel_size (GdkSurface *surface,
+@@ -283,11 +288,11 @@ compute_toplevel_size (GdkSurface *surface,
  
    if (size.shadow.is_valid)
      {
@@ -81,7 +81,7 @@ index 937c682..a890b94 100644
      }
  
    if (update_geometry)
-@@ -337,6 +342,12 @@ compute_toplevel_size (GdkSurface *surface,
+@@ -339,6 +344,12 @@ compute_toplevel_size (GdkSurface *surface,
            impl->last_computed_width = size.width;
            impl->last_computed_height = size.height;
  
@@ -95,7 +95,7 @@ index 937c682..a890b94 100644
          }
      }
 diff --git a/gdk/x11/gdksurface-x11.h b/gdk/x11/gdksurface-x11.h
-index d7f59ae..8868d1a 100644
+index 84d4d0d..6f17a96 100644
 --- a/gdk/x11/gdksurface-x11.h
 +++ b/gdk/x11/gdksurface-x11.h
 @@ -73,6 +73,7 @@ struct _GdkX11Surface

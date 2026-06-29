@@ -10,20 +10,20 @@ Signed-off-by: Simon McVittie <smcv@debian.org>
 Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/3195
 Applied-upstream: no, upstream want reftests to be a strict pass/fail with identical results required
 ---
- testsuite/gsk/compare-render.c       | 12 +++++++--
- testsuite/gsk/normalize.c            |  6 ++++-
- testsuite/reftests/gtk-reftest.c     |  8 +++++-
- testsuite/reftests/reftest-compare.c | 52 ++++++++++++++++++++++++++++++++----
- testsuite/reftests/reftest-compare.h |  5 +++-
- tools/gtk-image-tool-compare.c       |  6 ++++-
+ testsuite/gsk/compare-render.c       | 12 ++++++--
+ testsuite/gsk/normalize.c            |  6 +++-
+ testsuite/reftests/gtk-reftest.c     |  8 ++++-
+ testsuite/reftests/reftest-compare.c | 60 +++++++++++++++++++++++++++++++-----
+ testsuite/reftests/reftest-compare.h | 10 ++++--
+ tools/gtk-image-tool-compare.c       |  6 +++-
  tools/gtk-rendernode-tool-compare.c  |  7 +++--
- 7 files changed, 83 insertions(+), 13 deletions(-)
+ 7 files changed, 93 insertions(+), 16 deletions(-)
 
 diff --git a/testsuite/gsk/compare-render.c b/testsuite/gsk/compare-render.c
-index 55871f7..5c0f39e 100644
+index 0f43aea..6be1e19 100644
 --- a/testsuite/gsk/compare-render.c
 +++ b/testsuite/gsk/compare-render.c
-@@ -797,6 +797,9 @@ run_single_test (const TestSetup *setup,
+@@ -798,6 +798,9 @@ run_single_test (const TestSetup *setup,
    GdkTexture *reference, *rendered, *diff;
    graphene_rect_t test_bounds, *render_bounds;
    gpointer test_data;
@@ -33,17 +33,17 @@ index 55871f7..5c0f39e 100644
  
    if (setup->flags & KEEP_BOUNDS)
      {
-@@ -837,7 +840,8 @@ run_single_test (const TestSetup *setup,
+@@ -838,7 +841,8 @@ run_single_test (const TestSetup *setup,
    if (setup->free)
      setup->free (test_data);
  
--  diff = reftest_compare_textures (reference, rendered);
-+  diff = reftest_compare_textures (reference, rendered,
-+                                   &max_diff, &pixels_changed, &pixels);
+-  diff = reftest_compare_textures_with_tolerance (reference, rendered, arg_tolerance);
++  diff = reftest_compare_textures_with_tolerance (reference, rendered, arg_tolerance,
++                                                  &max_diff, &pixels_changed, &pixels);
    if (diff)
      {
        g_test_fail ();
-@@ -849,7 +853,11 @@ run_single_test (const TestSetup *setup,
+@@ -850,7 +854,11 @@ run_single_test (const TestSetup *setup,
        save_image (reference, file_name, setup->name, ".ref.png");
        save_image (rendered, file_name, setup->name, ".out.png");
        if (diff)
@@ -114,15 +114,15 @@ index 67e79b3..dfa868c 100644
        save_node (g_object_get_data (G_OBJECT (reference_image), "source-render-node"), ui_file, ".ref.node");
        save_image (diff_image, ui_file, ".diff.png");
 diff --git a/testsuite/reftests/reftest-compare.c b/testsuite/reftests/reftest-compare.c
-index 61dcf26..e438f94 100644
+index 5b5dc9e..206804d 100644
 --- a/testsuite/reftests/reftest-compare.c
 +++ b/testsuite/reftests/reftest-compare.c
-@@ -123,12 +123,16 @@ buffer_diff_u8 (GdkColorState *color_state,
-                 const guchar  *buf_b,
+@@ -124,12 +124,16 @@ buffer_diff_u8 (GdkColorState *color_state,
                  gsize          stride_b,
                  int            width,
--                int            height)
-+                int            height,
+                 int            height,
+-                int            tolerance)
++                int            tolerance,
 +                guint         *max_diff_out,
 +                guint         *pixels_changed_out)
  {
@@ -135,7 +135,7 @@ index 61dcf26..e438f94 100644
  
    for (y = 0; y < height; y++)
      {
-@@ -178,6 +182,10 @@ buffer_diff_u8 (GdkColorState *color_state,
+@@ -188,6 +192,10 @@ buffer_diff_u8 (GdkColorState *color_state,
                guint channel_diff;
  
                channel_diff = ABS (value_a - value_b);
@@ -146,7 +146,7 @@ index 61dcf26..e438f94 100644
                channel_diff *= 4;  /* emphasize */
                if (channel_diff)
                  channel_diff += 128; /* make sure it's visible */
-@@ -186,6 +194,8 @@ buffer_diff_u8 (GdkColorState *color_state,
+@@ -196,6 +204,8 @@ buffer_diff_u8 (GdkColorState *color_state,
                diff_pixel |= channel_diff << (channel * 8);
              }
  
@@ -155,7 +155,7 @@ index 61dcf26..e438f94 100644
            if ((diff_pixel & 0x00ffffff) == 0)
              {
                /* alpha only difference, convert to luminance */
-@@ -199,6 +209,12 @@ buffer_diff_u8 (GdkColorState *color_state,
+@@ -209,6 +219,12 @@ buffer_diff_u8 (GdkColorState *color_state,
        }
    }
  
@@ -168,12 +168,12 @@ index 61dcf26..e438f94 100644
    return diff;
  }
  
-@@ -213,12 +229,16 @@ buffer_diff_float (GdkColorState *color_state,
-                    const guchar  *buf_b,
+@@ -224,12 +240,16 @@ buffer_diff_float (GdkColorState *color_state,
                     int            stride_b,
                     int            width,
--                   int            height)
-+                   int            height,
+                    int            height,
+-                   int            tolerance)
++                   int            tolerance,
 +                   guint         *max_diff_out,
 +                   guint         *pixels_changed_out)
  {
@@ -186,7 +186,7 @@ index 61dcf26..e438f94 100644
  
    for (y = 0; y < height; y++)
      {
-@@ -271,6 +291,10 @@ buffer_diff_float (GdkColorState *color_state,
+@@ -288,6 +308,10 @@ buffer_diff_float (GdkColorState *color_state,
                float channel_diff;
  
                channel_diff = ABS (value_a - value_b);
@@ -197,7 +197,7 @@ index 61dcf26..e438f94 100644
                channel_diff *= 4;  /* emphasize */
                if (channel_diff)
                  channel_diff += 0.5; /* make sure it's visible */
-@@ -279,6 +303,8 @@ buffer_diff_float (GdkColorState *color_state,
+@@ -296,6 +320,8 @@ buffer_diff_float (GdkColorState *color_state,
                row[4 * x + channel] = channel_diff;
              }
  
@@ -206,7 +206,7 @@ index 61dcf26..e438f94 100644
            if (row[4 * x + 0] < 0.5 &&
                row[4 * x + 1] < 0.5 &&
                row[4 * x + 2] < 0.5)
-@@ -293,12 +319,23 @@ buffer_diff_float (GdkColorState *color_state,
+@@ -310,6 +336,14 @@ buffer_diff_float (GdkColorState *color_state,
        }
    }
  
@@ -221,31 +221,34 @@ index 61dcf26..e438f94 100644
    return diff;
  }
  
+@@ -337,7 +371,10 @@ buffer_diff_float (GdkColorState *color_state,
  GdkTexture *
- reftest_compare_textures (GdkTexture *texture1,
--                          GdkTexture *texture2)
-+                          GdkTexture *texture2,
-+                          guint      *max_diff_out,
-+                          guint      *pixels_changed_out,
-+                          guint      *pixels_out)
+ reftest_compare_textures_with_tolerance (GdkTexture *texture1,
+                                          GdkTexture *texture2,
+-                                         int         tolerance)
++                                         int         tolerance,
++                                         guint      *max_diff_out,
++                                         guint      *pixels_changed_out,
++                                         guint      *pixels_out)
  {
    int w, h, stride;
    guchar *data1, *data2;
-@@ -337,19 +374,24 @@ reftest_compare_textures (GdkTexture *texture1,
-       diff = buffer_diff_float (color_state,
+@@ -377,7 +414,8 @@ reftest_compare_textures_with_tolerance (GdkTexture *texture1,
                                  data1, stride,
                                  data2, stride,
--                                w, h);
-+                                w, h,
+                                 w, h,
+-                                tolerance);
++                                tolerance,
 +                                max_diff_out, pixels_changed_out);
      }
    else
      {
-       diff = buffer_diff_u8 (color_state,
+@@ -385,19 +423,27 @@ reftest_compare_textures_with_tolerance (GdkTexture *texture1,
                               data1, stride,
                               data2, stride,
--                             w, h);
-+                             w, h,
+                              w, h,
+-                             tolerance);
++                             tolerance,
 +                             max_diff_out, pixels_changed_out);
      }
  
@@ -258,16 +261,37 @@ index 61dcf26..e438f94 100644
 +
    return diff;
  }
+ 
+ GdkTexture *
+ reftest_compare_textures (GdkTexture *texture1,
+-                          GdkTexture *texture2)
++                          GdkTexture *texture2,
++                          guint      *max_diff_out,
++                          guint      *pixels_changed_out,
++                          guint      *pixels_out)
+ {
+-  return reftest_compare_textures_with_tolerance (texture1, texture2, 0);
++  return reftest_compare_textures_with_tolerance (texture1, texture2, 0,
++                                                  max_diff_out, pixels_changed_out, pixels_out);
+ }
 diff --git a/testsuite/reftests/reftest-compare.h b/testsuite/reftests/reftest-compare.h
-index b91a12f..a303ad2 100644
+index 9cdd2a6..8da98ca 100644
 --- a/testsuite/reftests/reftest-compare.h
 +++ b/testsuite/reftests/reftest-compare.h
-@@ -23,6 +23,9 @@ G_BEGIN_DECLS
+@@ -23,10 +23,16 @@ G_BEGIN_DECLS
  
  G_MODULE_EXPORT
  GdkTexture *            reftest_compare_textures        (GdkTexture             *texture1,
 -                                                         GdkTexture             *texture2);
 +                                                         GdkTexture             *texture2,
++                                                         guint                  *max_diff_out,
++                                                         guint                  *pixels_changed_out,
++                                                         guint                  *pixels_out);
+ GdkTexture *            reftest_compare_textures_with_tolerance
+                                                         (GdkTexture             *texture1,
+                                                          GdkTexture             *texture2,
+-                                                         int                     tolerance);
++                                                         int                     tolerance,
 +                                                         guint                  *max_diff_out,
 +                                                         guint                  *pixels_changed_out,
 +                                                         guint                  *pixels_out);

@@ -351,12 +351,14 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_frame_clock_get_type@Base 4.0.0
  gdk_frame_clock_phase_get_type@Base 4.0.0
  gdk_frame_clock_request_phase@Base 4.0.0
+ gdk_frame_result_get_type@Base 4.23.2
  gdk_frame_timings_get_complete@Base 4.0.0
  gdk_frame_timings_get_frame_counter@Base 4.0.0
  gdk_frame_timings_get_frame_time@Base 4.0.0
  gdk_frame_timings_get_predicted_presentation_time@Base 4.0.0
  gdk_frame_timings_get_presentation_time@Base 4.0.0
  gdk_frame_timings_get_refresh_interval@Base 4.0.0
+ gdk_frame_timings_get_result@Base 4.23.2
  gdk_frame_timings_get_type@Base 4.0.0
  gdk_frame_timings_ref@Base 4.0.0
  gdk_frame_timings_unref@Base 4.0.0
@@ -430,6 +432,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gdk_key_match_get_type@Base 4.0.0
  gdk_keyval_convert_case@Base 4.0.0
  gdk_keyval_from_name@Base 4.0.0
+ gdk_keyval_get_aliases@Base 4.23.2
  gdk_keyval_is_lower@Base 4.0.0
  gdk_keyval_is_upper@Base 4.0.0
  gdk_keyval_name@Base 4.0.0
@@ -1349,6 +1352,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_alternative_trigger_get_second@Base 4.0.0
  gtk_alternative_trigger_get_type@Base 4.0.0
  gtk_alternative_trigger_new@Base 4.0.0
+ gtk_alternative_trigger_newv@Base 4.23.2
  gtk_any_filter_get_type@Base 4.0.0
  gtk_any_filter_new@Base 4.0.0
  gtk_app_chooser_button_append_custom_item@Base 4.0.0
@@ -2183,6 +2187,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_editable_get_delegate@Base 4.0.0
  gtk_editable_get_editable@Base 4.0.0
  gtk_editable_get_enable_undo@Base 4.0.0
+ gtk_editable_get_input_interceptor@Base 4.23.2
  gtk_editable_get_max_width_chars@Base 4.0.0
  gtk_editable_get_position@Base 4.0.0
  gtk_editable_get_selection_bounds@Base 4.0.0
@@ -2202,6 +2207,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_editable_set_alignment@Base 4.0.0
  gtk_editable_set_editable@Base 4.0.0
  gtk_editable_set_enable_undo@Base 4.0.0
+ gtk_editable_set_input_interceptor@Base 4.23.2
  gtk_editable_set_max_width_chars@Base 4.0.0
  gtk_editable_set_position@Base 4.0.0
  gtk_editable_set_text@Base 4.0.0
@@ -2918,6 +2924,7 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_im_context_filter_keypress@Base 4.0.0
  gtk_im_context_focus_in@Base 4.0.0
  gtk_im_context_focus_out@Base 4.0.0
+ gtk_im_context_get_client_widget@Base 4.23.2
  gtk_im_context_get_preedit_string@Base 4.0.0
  gtk_im_context_get_surrounding@Base 4.0.0
  gtk_im_context_get_surrounding_with_selection@Base 4.3.1
@@ -4202,6 +4209,8 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_shortcut_set_arguments@Base 4.0.0
  gtk_shortcut_set_trigger@Base 4.0.0
  gtk_shortcut_trigger_compare@Base 4.0.0
+ gtk_shortcut_trigger_create_for_menu@Base 4.23.2
+ gtk_shortcut_trigger_create_with_aliases@Base 4.23.2
  gtk_shortcut_trigger_equal@Base 4.0.0
  gtk_shortcut_trigger_get_type@Base 4.0.0
  gtk_shortcut_trigger_hash@Base 4.0.0

@@ -13,5 +13,3 @@ x11-scale/gdk-x11-check-surface-scale-on-input-region-opaque-region.patch
 x11-scale/gdk-x11-update-correct-shadow-size-according-to-window-si.patch
 x11-scale/gdk-x11-update-cursor-size-on-the-extent-after-scale-chan.patch
 testsuite-Don-t-build-waylandsocket-test-if-Wayland-is-di.patch
-gsk-Account-for-render-offset-when-snapping-glyphs.patch
-application-x11-Fix-saved-state-ownership.patch

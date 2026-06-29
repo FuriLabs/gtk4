@@ -1,8 +1,13 @@
-gtk4 (4.23.2+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.23.2+ds-1) experimental; urgency=medium
 
   * New upstream release
+  * d/copyright: Repack excluding accidentally included pango vendoring
+  * d/p: Drop patches applied upstream
+  * d/p: Rebase patches
+  * d/control: Bump minimum pango version
+  * d/symbols: Add new symbols
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Mon, 29 Jun 2026 18:18:57 +0200
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Mon, 29 Jun 2026 18:25:05 +0200
 
 gtk4 (4.23.1+ds-1) experimental; urgency=medium
 

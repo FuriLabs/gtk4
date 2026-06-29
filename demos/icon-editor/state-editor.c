@@ -51,7 +51,14 @@ static GParamSpec *properties[NUM_PROPERTIES];
 
 G_DEFINE_TYPE (StateEditor, state_editor, GTK_TYPE_WINDOW)
 
-/* {{{ Utilities, callbacks */ 
+/* {{{ Utilities, callbacks */
+
+static void
+ensure_gpa (StateEditor *self)
+{
+  GtkSvg *svg = path_paintable_get_svg (self->paintable);
+  svg->gpa_version = 1;
+}
 
 static void repopulate (StateEditor *self);
 
@@ -67,6 +74,7 @@ valid_state_name (const char *name)
 {
   if (strcmp (name, "all") == 0 ||
       strcmp (name, "none") == 0 ||
+      strcmp (name, "not") == 0 ||
       g_ascii_isdigit (name[0]))
     return FALSE;
 
@@ -101,6 +109,7 @@ update_state_names (StateEditor *self)
   GtkSvg *svg = path_paintable_get_svg (self->paintable);
   const char *names[65] = { NULL, };
   unsigned int i;
+  gboolean cutoff = FALSE;
 
   for (i = 0; i <= self->max_state; i++)
     {
@@ -109,29 +118,26 @@ update_state_names (StateEditor *self)
 
       e = GTK_EDITABLE (gtk_grid_get_child_at (self->grid, i, -1));
       text = gtk_editable_get_text (e);
-      if (text && valid_state_name (text))
+      if (text && valid_state_name (text) && !cutoff)
         {
           names[i] = text;
         }
       else
         {
           char num[64];
+
           g_snprintf (num, sizeof (num), "%u", i);
-          if (strcmp (num, text) == 0)
-            {
-              names[i] = NULL;
-              break;
-            }
-          else
-            {
-              gtk_editable_set_text (e, num);
-              return;
-            }
+          if (strcmp (num, text) != 0)
+            gtk_editable_set_text (e, num);
+
+          names[i] = NULL;
+          cutoff = TRUE;
         }
     }
 
   names[i + 1] = NULL;
 
+  ensure_gpa (self);
   gtk_svg_set_state_names (svg, names);
   path_paintable_changed (self->paintable);
 }
@@ -209,15 +215,18 @@ update_states (StateEditor *self)
   for (unsigned int i = 0; i < n; i++)
     {
       GtkWidget *child = gtk_grid_get_child_at (self->grid, -2, i);
-      const char *id;
+      SvgElement *shape;
 
       if (!GTK_IS_LABEL (child))
         break;
 
-      id = gtk_label_get_label (GTK_LABEL (child));
-      path_paintable_set_path_states_by_id (self->paintable, id, states[i]);
+      shape = (SvgElement *) g_object_get_data (G_OBJECT (child), "shape");
+      if (shape)
+        svg_element_set_states (shape, states[i]);
     }
 
+  ensure_gpa (self);
+  path_paintable_changed (self->paintable);
   self->updating = FALSE;
 
   repopulate (self);
@@ -232,7 +241,7 @@ update_one (GtkWidget   *check,
   GtkLayoutChild *layout_child;
   int row;
   GtkWidget *label;
-  const char *id;
+  SvgElement *shape;
   uint64_t states;
 
   mgr = gtk_widget_get_layout_manager (GTK_WIDGET (self->grid));
@@ -240,7 +249,7 @@ update_one (GtkWidget   *check,
   row = gtk_grid_layout_child_get_row (GTK_GRID_LAYOUT_CHILD (layout_child));
 
   label = gtk_grid_get_child_at (self->grid, -2, row);
-  id = gtk_label_get_label (GTK_LABEL (label));
+  shape = (SvgElement *) g_object_get_data (G_OBJECT (label), "shape");
 
   states = 0;
   for (unsigned int i = 0; i < self->max_state; i++)
@@ -253,7 +262,9 @@ update_one (GtkWidget   *check,
     }
 
   self->updating = TRUE;
-  path_paintable_set_path_states_by_id (self->paintable, id, states);
+  svg_element_set_states (shape, states);
+  ensure_gpa (self);
+  path_paintable_changed (self->paintable);
   self->updating = FALSE;
 
   if (!gtk_check_button_get_active (GTK_CHECK_BUTTON (check)))
@@ -305,10 +316,30 @@ drop_state (StateEditor *self)
 }
 
 static void
+add_state_name (GtkSvg *svg)
+{
+  GStrvBuilder *builder;
+  GStrv strv;
+
+  builder = g_strv_builder_new ();
+  for (unsigned int i = 0; i < svg->n_state_names; i++)
+    g_strv_builder_add (builder, svg->state_names[i]);
+  g_strv_builder_take (builder, g_strdup_printf ("state%u", svg->n_state_names));
+  strv = g_strv_builder_unref_to_strv (builder);
+  gtk_svg_set_state_names (svg, (const char **) strv);
+  g_strfreev (strv);
+}
+
+static void
 add_state (StateEditor *self)
 {
+  GtkSvg *svg = path_paintable_get_svg (self->paintable);
+
   if (self->max_state == 63)
     return;
+
+  if (svg->n_state_names == self->max_state + 1)
+    add_state_name (svg);
 
   self->max_state++;
   self->max_state = CLAMP (self->max_state, 0, 63);
@@ -352,6 +383,7 @@ create_paths_for_shape (StateEditor  *self,
           gtk_grid_attach (self->grid, child, -3, *row, 1, 1);
 
           child = gtk_label_new (id);
+          g_object_set_data (G_OBJECT (child), "shape", sh);
           gtk_grid_attach (self->grid, child, -2, *row, 1, 1);
 
           child = gtk_toggle_button_new_with_label ("All");
@@ -401,6 +433,9 @@ create_paths (StateEditor *self)
   unsigned int n_names;
   unsigned int row;
 
+  if (svg->n_state_names == 0 && self->max_state == 0)
+    add_state_name (svg);
+
   names = gtk_svg_get_state_names (svg, &n_names);
 
   for (unsigned int i = 0; i <= self->max_state; i++)
@@ -414,6 +449,7 @@ create_paths (StateEditor *self)
           g_free (s);
         }
       gtk_editable_set_width_chars (GTK_EDITABLE (child), 6);
+      gtk_editable_set_alignment(GTK_EDITABLE (child), 0.5);
       gtk_grid_attach (self->grid, child, i, -1, 1, 1);
       g_signal_connect (child, "notify::editing", G_CALLBACK (state_name_changed), self);
     }
@@ -437,6 +473,7 @@ paths_changed (StateEditor *self)
 {
   GtkSvg *svg = path_paintable_get_svg (self->paintable);
   self->max_state = MAX (self->max_state, find_max_state (svg->content));
+  self->max_state = MAX (self->max_state, MAX (svg->n_state_names, 1) - 1);
   self->max_state = CLAMP (self->max_state, 0, 63);
 
   repopulate (self);
@@ -447,7 +484,13 @@ initial_state_changed (StateEditor *self)
 {
   GtkSvg *svg = path_paintable_get_svg (self->paintable);
   svg->initial_state = (unsigned int) gtk_spin_button_get_value_as_int (self->initial_state);
-  path_paintable_changed (self->paintable);
+
+  /* Not the best way to go about things, but we don't want to trigger
+   * recreating the render_paintable
+   */
+  g_object_set (gtk_window_get_transient_for (GTK_WINDOW (self)),
+                "changed", TRUE,
+                NULL);
 }
 
 /* }}} */
@@ -595,5 +638,3 @@ state_editor_set_paintable (StateEditor *self,
 }
 
 /* }}} */
-
-/* vim:set foldmethod=marker: */

@@ -1,6 +1,8 @@
 #include "config.h"
 
-#include <gdk/gdkframeclockprivate.h>
+#include "gdkframeclockprivate.h"
+#include "gdkframetimingsprivate.h"
+#include "gdkprofilerprivate.h"
 
 #include "gdkwaylandpresentationtime-private.h"
 
@@ -19,6 +21,17 @@ gdk_wayland_presentation_frame_free (GdkWaylandPresentationFrame *frame)
   g_clear_object (&frame->frame_clock);
   frame->self = NULL;
   g_free (frame);
+}
+
+static gboolean
+gdk_wayland_presentation_frame_same_frame (const void *a_,
+                                           const void *b_)
+{
+  const GdkWaylandPresentationFrame *a = (const GdkWaylandPresentationFrame *) a_;
+  const GdkWaylandPresentationFrame *b = (const GdkWaylandPresentationFrame *) b_;
+
+  return a->frame_clock == b->frame_clock &&
+         a->frame_number == b->frame_number;
 }
 
 struct _GdkWaylandPresentationTime
@@ -49,7 +62,15 @@ gdk_wayland_presentation_time_free (GdkWaylandPresentationTime *self)
   g_free (self);
 }
 
-static gint64
+gboolean
+gdk_wayland_presentation_time_supported (GdkWaylandPresentationTime *self)
+{
+  g_return_val_if_fail (self != NULL, FALSE);
+
+  return self->display->presentation != NULL;
+}
+
+static uint64_t
 time_from_wayland (uint32_t tv_sec_hi,
                    uint32_t tv_sec_lo,
                    uint32_t tv_nsec)
@@ -57,8 +78,8 @@ time_from_wayland (uint32_t tv_sec_hi,
   uint64_t t = tv_sec_hi;
   t <<= 32;
   t |= tv_sec_lo;
-  t *= G_USEC_PER_SEC;
-  t += tv_nsec / 1000L;
+  t *= G_NSEC_PER_SEC;
+  t += tv_nsec;
   return (gint64)t;
 }
 
@@ -82,22 +103,41 @@ gdk_wayland_presentation_feedback_presented (void                            *da
 {
   GdkWaylandPresentationFrame *frame = data;
   GdkWaylandPresentationTime *self;
-  GdkFrameTimings *timings;
   uint32_t pos;
+  uint64_t presentation_time;
 
   g_assert (frame != NULL);
   g_assert (frame->self != NULL);
 
   self = frame->self;
 
-  if ((timings = gdk_frame_clock_get_timings (frame->frame_clock, frame->frame_number)))
+  presentation_time = time_from_wayland (tv_sec_hi, tv_sec_lo, tv_nsec);
+  if (presentation_time != 0)
     {
-      timings->presentation_time = time_from_wayland (tv_sec_hi, tv_sec_lo, tv_nsec);
-      timings->complete = TRUE;
+      gdk_frame_clock_presented (frame->frame_clock,
+                                 frame->frame_number,
+                                 presentation_time,
+                                 refresh);
+    }
+  else
+    {
+      gdk_frame_clock_submitted (frame->frame_clock,
+                                 frame->frame_number,
+                                 refresh);
     }
 
-  if (g_ptr_array_find (self->frames, frame, &pos))
-    g_ptr_array_remove_index_fast (self->frames, pos);
+  if (g_ptr_array_find (frame->self->frames, frame, &pos))
+    g_ptr_array_steal_index_fast (frame->self->frames, pos);
+
+  while (g_ptr_array_find_with_equal_func (frame->self->frames,
+                                           frame,
+                                           gdk_wayland_presentation_frame_same_frame,
+                                           &pos))
+    {
+      g_ptr_array_remove_index_fast (self->frames, pos);
+    }
+
+  gdk_wayland_presentation_frame_free (frame);
 }
 
 static void
@@ -111,7 +151,17 @@ gdk_wayland_presentation_feedback_discarded (void                            *da
   g_assert (frame->self != NULL);
 
   if (g_ptr_array_find (frame->self->frames, frame, &pos))
-    g_ptr_array_remove_index_fast (frame->self->frames, pos);
+    g_ptr_array_steal_index_fast (frame->self->frames, pos);
+
+  if (!g_ptr_array_find_with_equal_func (frame->self->frames,
+                                         frame,
+                                         gdk_wayland_presentation_frame_same_frame,
+                                         NULL))
+    {
+      gdk_frame_clock_discarded (frame->frame_clock, frame->frame_number);
+    }
+
+  gdk_wayland_presentation_frame_free (frame);
 }
 
 static const struct wp_presentation_feedback_listener gdk_wayland_presentation_feedback_listener = {

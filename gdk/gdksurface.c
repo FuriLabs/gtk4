@@ -41,6 +41,7 @@
 #include <glib/gi18n-lib.h>
 #include "gdkmarshalers.h"
 #include "gdkpopupprivate.h"
+#include "gdkprofilerprivate.h"
 #include "gdkrectangleprivate.h"
 #include "gdktoplevelprivate.h"
 #include "gdkvulkancontext.h"
@@ -1270,12 +1271,6 @@ gdk_surface_create_vulkan_context (GdkSurface  *surface,
   return FALSE;
 }
 
-static gboolean
-gdk_surface_is_toplevel_frozen (GdkSurface *surface)
-{
-  return surface->update_and_descendants_freeze_count > 0;
-}
-
 static void
 gdk_surface_schedule_update (GdkSurface *surface)
 {
@@ -1285,8 +1280,7 @@ gdk_surface_schedule_update (GdkSurface *surface)
 
   surface->pending_phases |= GDK_FRAME_CLOCK_PHASE_PAINT;
 
-  if (surface->update_freeze_count ||
-      gdk_surface_is_toplevel_frozen (surface))
+  if (surface->update_freeze_count)
     return;
 
   /* If there's no frame clock (a foreign surface), then the invalid
@@ -1362,8 +1356,7 @@ gdk_surface_paint_on_clock (GdkFrameClock *clock,
 
   if (GDK_SURFACE_DESTROYED (surface) ||
       !surface->update_area ||
-      surface->update_freeze_count ||
-      gdk_surface_is_toplevel_frozen (surface))
+      surface->update_freeze_count)
     return;
 
   surface->pending_phases &= ~GDK_FRAME_CLOCK_PHASE_PAINT;
@@ -1537,7 +1530,7 @@ gdk_surface_freeze_updates (GdkSurface *surface)
 
   surface->update_freeze_count++;
   if (surface->update_freeze_count == 1)
-    _gdk_frame_clock_uninhibit_freeze (surface->frame_clock);
+    gdk_frame_clock_stop (surface->frame_clock);
 }
 
 static gboolean
@@ -1576,7 +1569,7 @@ gdk_surface_thaw_updates (GdkSurface *surface)
     {
       GdkFrameClock *frame_clock = surface->frame_clock;
 
-      _gdk_frame_clock_inhibit_freeze (frame_clock);
+      gdk_frame_clock_start (frame_clock);
 
       if (surface->pending_phases)
         gdk_frame_clock_request_phase (frame_clock, surface->pending_phases);
@@ -2394,7 +2387,7 @@ gdk_surface_set_frame_clock (GdkSurface     *surface,
                         surface);
 
       if (surface->update_freeze_count == 0)
-        _gdk_frame_clock_inhibit_freeze (clock);
+        gdk_frame_clock_start (clock);
     }
 
   if (surface->frame_clock)
@@ -2416,7 +2409,7 @@ gdk_surface_set_frame_clock (GdkSurface     *surface,
                                             surface);
 
       if (surface->update_freeze_count == 0)
-        _gdk_frame_clock_uninhibit_freeze (surface->frame_clock);
+        gdk_frame_clock_stop (surface->frame_clock);
 
       g_object_unref (surface->frame_clock);
     }
@@ -2662,7 +2655,7 @@ gdk_surface_queue_state_change (GdkSurface       *surface,
   surface->pending_unset_flags &= ~set_flags;
 
   frame_clock = gdk_surface_get_frame_clock (surface);
-  if (!frame_clock || gdk_frame_clock_is_frozen (frame_clock))
+  if (!frame_clock || gdk_frame_clock_is_stopped (frame_clock))
     gdk_surface_apply_state_change (surface);
 }
 

@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.23.1',
+        version: '4.23.2',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -15,7 +15,7 @@ glib_major_req = 2
 glib_minor_req = 84
 
 pango_major_req = 1
-pango_minor_req = 57
+pango_minor_req = 58
 
 # keep these numbers in sync with wrap files where there exist
 glib_req           = '>= @0@.@1@'.format(glib_major_req, glib_minor_req)
@@ -44,7 +44,7 @@ add_project_arguments([
     '-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_@0@_@1@'.format(glib_major_req, glib_minor_req),
     '-DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_@0@_@1@'.format(glib_major_req, glib_minor_req),
     '-DPANGO_VERSION_MIN_REQUIRED=G_ENCODE_VERSION(@0@,@1@)'.format(pango_major_req, pango_minor_req),
-    '-DPANGO_VERSION_MAX_ALLOWED=G_ENCODE_VERSION(@0@,@1@)'.format(pango_major_req, pango_minor_req),
+    '-DPANGO_VERSION_MAX_ALLOWED=G_ENCODE_VERSION(@0@,@1@)'.format(pango_major_req, pango_minor_req + 1),
   ],
   language: 'c'
 )

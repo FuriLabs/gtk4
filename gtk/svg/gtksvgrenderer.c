@@ -28,6 +28,7 @@
 #include "gtkenums.h"
 #include "gtksymbolicpaintable.h"
 #include "gtksnapshotprivate.h"
+#include "gskpangoprivate.h"
 #include "gsk/gskarithmeticnodeprivate.h"
 #include "gsk/gskblendnodeprivate.h"
 #include "gsk/gskcolormatrixnodeprivate.h"
@@ -36,6 +37,7 @@
 #include "gsk/gskdisplacementnodeprivate.h"
 #include "gsk/gskisolationnodeprivate.h"
 #include "gsk/gskrepeatnodeprivate.h"
+#include "gsk/gskturbulencenodeprivate.h"
 #include "gsk/gskpathprivate.h"
 #include "gsk/gskcontourprivate.h"
 #include "gsk/gskrectprivate.h"
@@ -80,6 +82,8 @@
 #include <stdint.h>
 
 #include "gdk/gdkrgbaprivate.h"
+
+#include <hb-ot.h>
 
 typedef enum
 {
@@ -300,28 +304,36 @@ apply_transform (GskRenderNode *node,
 
 static char *
 text_chomp (const char *in,
+            XmlSpace    space,
             gboolean   *lastwasspace)
 {
   size_t len = strlen (in);
-  GString *ret = g_string_sized_new (len);
+  GString *str = g_string_sized_new (len);
 
   for (size_t i = 0; i < len; i++)
     {
-      if (in[i] == '\n')
-        continue;
-      if (in[i] == '\t' || in[i] == ' ')
+      if (in[i] == '\r')
         {
-          if (*lastwasspace)
-            continue;
-          g_string_append_c (ret, ' ');
-          *lastwasspace = TRUE;
+          if (in[i+1] == '\n')
+            i++;
+        }
+
+      if (in[i] == '\r' || in[i] == '\n' ||
+          (space == XML_SPACE_DEFAULT && (in[i] == '\t' || in[i] == ' ')))
+        {
+          if (!*lastwasspace)
+            {
+              g_string_append_c (str, ' ');
+              *lastwasspace = TRUE;
+            }
           continue;
         }
-      g_string_append_c (ret, in[i]);
+
+      g_string_append_c (str, in[i]);
       *lastwasspace = FALSE;
     }
 
-  return g_string_free_and_steal (ret);
+  return g_string_free_and_steal (str);
 }
 
 /* }}} */
@@ -783,6 +795,7 @@ determine_filter_subregion (SvgFilter             *f,
         {
         case SVG_FILTER_FLOOD:
         case SVG_FILTER_IMAGE:
+        case SVG_FILTER_TURBULENCE:
           /* zero inputs */
           graphene_rect_init_from_rect (subregion, filter_region);
           break;
@@ -1395,6 +1408,52 @@ apply_filter_tree (SvgElement    *shape,
 
             filter_result_unref (in);
             filter_result_unref (in2);
+          }
+          break;
+
+        case SVG_FILTER_TURBULENCE:
+          {
+            SvgValue *base_freq = svg_filter_get_current_value (f, SVG_PROPERTY_FE_TURBULENCE_BASE_FREQ);
+            SvgValue *oct = svg_filter_get_current_value (f, SVG_PROPERTY_FE_TURBULENCE_NUM_OCTAVES);
+            SvgValue *seed_val = svg_filter_get_current_value (f, SVG_PROPERTY_FE_TURBULENCE_SEED);
+            SvgValue *type_val = svg_filter_get_current_value (f, SVG_PROPERTY_FE_TURBULENCE_TYPE);
+            SvgValue *stitch_val = svg_filter_get_current_value (f, SVG_PROPERTY_FE_TURBULENCE_STITCH_TILES);
+            graphene_size_t freq;
+            unsigned int num_octaves;
+            int seed;
+            GskNoiseType noise_type;
+            gboolean stitch_tiles;
+
+            for (unsigned int idx = 0; idx < svg_numbers_get_length (base_freq); idx++)
+              {
+                double val = svg_numbers_get (base_freq, idx, 1);
+                if (val < 0)
+                  {
+                    gtk_svg_rendering_error (context->svg, "Unsupported base-frequency value: %f", val);
+                    break;
+                  }
+              }
+
+            /* Limits here are copied from librsvg */
+            freq.width = CLAMP (svg_numbers_get (base_freq, 0, 1), 0, 32768.0);
+            freq.height = freq.width;
+            if (svg_numbers_get_length (base_freq) == 2)
+              freq.height = CLAMP (svg_numbers_get (base_freq, 1, freq.width), 0, 32768.0);
+            num_octaves = (unsigned int) CLAMP (svg_number_get (oct, 1), 0, 9);
+            seed = (int) trunc (svg_number_get (seed_val, 0));
+            noise_type = (svg_enum_get (type_val) == TURBULENCE_TYPE_TURBULENCE)
+                          ? GSK_NOISE_TURBULENCE
+                          : GSK_NOISE_FRACTAL_NOISE;
+            stitch_tiles = (svg_enum_get (stitch_val) == STITCH_STITCH);
+
+            result = gsk_turbulence_node_new (&subregion,
+                                              GSK_RECT_SNAP_NONE,
+                                              color_state,
+                                              &freq,
+                                              num_octaves,
+                                              seed,
+                                              noise_type,
+                                              stitch_tiles);
           }
           break;
 
@@ -2836,6 +2895,7 @@ paint_server (SvgValue              *paint,
 
 static GskStroke *
 shape_create_stroke (SvgElement   *shape,
+                     GskPath      *path,
                      PaintContext *context)
 {
   GskStroke *stroke;
@@ -2855,13 +2915,10 @@ shape_create_stroke (SvgElement   *shape,
       float *vals;
 
       if (svg_element_type_is_text (svg_element_get_type (shape)))
-        {
-          gtk_svg_rendering_error (context->svg,
-                                   "Dashing of stroked text is not supported");
-          return stroke;
-        }
+        measure = gsk_path_measure_new (path);
+      else
+        measure = svg_element_get_current_measure (shape, context->viewport);
 
-      measure = svg_element_get_current_measure (shape, context->viewport);
       length = gsk_path_measure_get_length (measure);
       gsk_path_measure_unref (measure);
 
@@ -3027,7 +3084,7 @@ stroke_shape (SvgElement   *shape,
   if (!gsk_path_get_bounds (path, &bounds))
     return;
 
-  stroke = shape_create_stroke (shape, context);
+  stroke = shape_create_stroke (shape, path, context);
   if (!gsk_path_get_stroke_bounds (path, stroke, &paint_bounds))
     return;
 
@@ -3298,6 +3355,17 @@ paint_markers (SvgElement   *shape,
 /* {{{ Text */
 
 #define SVG_DEFAULT_DPI 96.0
+
+#define LRE 0x202a
+#define RLE 0x202b
+#define PDF 0x202c
+#define LRO 0x202d
+#define RLO 0x202e
+#define LRI 0x2066
+#define RLI 0x2067
+#define FSI 0x2068
+#define PDI 0x2069
+
 static PangoLayout *
 text_create_layout (SvgElement       *self,
                     PangoFontMap     *fontmap,
@@ -3309,7 +3377,7 @@ text_create_layout (SvgElement       *self,
 {
   PangoContext *context;
   UnicodeBidi uni;
-  PangoDirection direction;
+  PangoDirection direction, dir;
   WritingMode wmode;
   PangoGravity gravity;
   PangoFontDescription *font_desc;
@@ -3324,13 +3392,14 @@ text_create_layout (SvgElement       *self,
   double offset;
   SvgValue *font_family;
   DominantBaseline baseline;
+  char *text_with_bidi = NULL;
 
   context = pango_font_map_create_context (fontmap);
-  pango_context_set_language (context, svg_language_get (self->current[SVG_PROPERTY_LANG], 0));
+  pango_context_set_language (context, svg_language_get (svg_element_get_current_value (self, SVG_PROPERTY_LANG), 0));
 
-  uni = svg_enum_get (self->current[SVG_PROPERTY_UNICODE_BIDI]);
-  direction = svg_enum_get (self->current[SVG_PROPERTY_DIRECTION]);
-  wmode = svg_enum_get (self->current[SVG_PROPERTY_WRITING_MODE]);
+  uni = svg_enum_get (svg_element_get_current_value (self, SVG_PROPERTY_UNICODE_BIDI));
+  dir = direction = svg_enum_get (svg_element_get_current_value (self, SVG_PROPERTY_DIRECTION));
+  wmode = svg_enum_get (svg_element_get_current_value (self, SVG_PROPERTY_WRITING_MODE));
   switch (wmode)
     {
     case WRITING_MODE_HORIZONTAL_TB:
@@ -3363,10 +3432,57 @@ text_create_layout (SvgElement       *self,
 
   if (uni == UNICODE_BIDI_OVERRIDE || uni == UNICODE_BIDI_EMBED)
     pango_context_set_base_dir (context, direction);
+  else if (dir != PANGO_DIRECTION_LTR)
+    pango_context_set_base_dir (context, dir);
+  else
+    pango_context_set_base_dir (context, direction);
+
+  if (uni != UNICODE_BIDI_NORMAL)
+    {
+      GString *s = g_string_new ("");
+      switch (uni)
+        {
+        case UNICODE_BIDI_EMBED:
+          g_string_append_unichar (s, dir == PANGO_DIRECTION_LTR ? LRE : RLE);
+          g_string_append (s, text);
+          g_string_append_unichar (s, PDF);
+          text_with_bidi = g_string_free_and_steal (s);
+          break;
+        case UNICODE_BIDI_ISOLATE:
+          g_string_append_unichar (s, dir == PANGO_DIRECTION_LTR ? LRI : RLI);
+          g_string_append (s, text);
+          g_string_append_unichar (s, PDI);
+          text_with_bidi = g_string_free_and_steal (s);
+          break;
+        case UNICODE_BIDI_OVERRIDE:
+          g_string_append_unichar (s, dir == PANGO_DIRECTION_LTR ? LRO : RLO);
+          g_string_append (s, text);
+          g_string_append_unichar (s, PDF);
+          text_with_bidi = g_string_free_and_steal (s);
+          break;
+        case UNICODE_BIDI_ISOLATE_OVERRIDE:
+          g_string_append_unichar (s, FSI);
+          g_string_append_unichar (s, dir == PANGO_DIRECTION_LTR ? LRO : RLO);
+          g_string_append (s, text);
+          g_string_append_unichar (s, PDF);
+          g_string_append_unichar (s, PDI);
+          text_with_bidi = g_string_free_and_steal (s);
+          break;
+        case UNICODE_BIDI_PLAINTEXT:
+          g_string_append_unichar (s, FSI);
+          g_string_append (s, text);
+          g_string_append_unichar (s, PDI);
+          text_with_bidi = g_string_free_and_steal (s);
+          break;
+        case UNICODE_BIDI_NORMAL:
+        default:
+          g_assert_not_reached ();
+        }
+    }
 
   font_desc = pango_font_description_copy (pango_context_get_font_description (context));
 
-  font_family = self->current[SVG_PROPERTY_FONT_FAMILY];
+  font_family = svg_element_get_current_value (self, SVG_PROPERTY_FONT_FAMILY);
   if (svg_string_list_get_length (font_family) > 0)
     {
       GString *s = g_string_new ("");
@@ -3381,13 +3497,13 @@ text_create_layout (SvgElement       *self,
       g_string_free (s, TRUE);
     }
 
-  pango_font_description_set_style (font_desc, svg_enum_get (self->current[SVG_PROPERTY_FONT_STYLE]));
-  pango_font_description_set_variant (font_desc, svg_enum_get (self->current[SVG_PROPERTY_FONT_VARIANT]));
-  pango_font_description_set_weight (font_desc, svg_number_get (self->current[SVG_PROPERTY_FONT_WEIGHT], 1000.));
-  pango_font_description_set_stretch (font_desc, svg_enum_get (self->current[SVG_PROPERTY_FONT_STRETCH]));
+  pango_font_description_set_style (font_desc, svg_enum_get (svg_element_get_current_value (self, SVG_PROPERTY_FONT_STYLE)));
+  pango_font_description_set_variant (font_desc, svg_enum_get (svg_element_get_current_value (self, SVG_PROPERTY_FONT_VARIANT)));
+  pango_font_description_set_weight (font_desc, (unsigned int) svg_number_get (svg_element_get_current_value (self, SVG_PROPERTY_FONT_WEIGHT), 1000.));
+  pango_font_description_set_stretch (font_desc, (unsigned int) svg_number_get (svg_element_get_current_value (self, SVG_PROPERTY_FONT_STRETCH), 100));
 
   pango_font_description_set_size (font_desc,
-                                   svg_number_get (self->current[SVG_PROPERTY_FONT_SIZE], 1.) *
+                                   svg_number_get (svg_element_get_current_value (self, SVG_PROPERTY_FONT_SIZE), 1.) *
                                    PANGO_SCALE / SVG_DEFAULT_DPI * 72);
 
   layout = pango_layout_new (context);
@@ -3401,12 +3517,12 @@ text_create_layout (SvgElement       *self,
 
   attr_list = pango_attr_list_new ();
 
-  attr = pango_attr_letter_spacing_new (svg_number_get (self->current[SVG_PROPERTY_LETTER_SPACING], 1.) * PANGO_SCALE);
+  attr = pango_attr_letter_spacing_new (svg_number_get (svg_element_get_current_value (self, SVG_PROPERTY_LETTER_SPACING), 1.) * PANGO_SCALE);
   attr->start_index = 0;
   attr->end_index = G_MAXINT;
   pango_attr_list_insert (attr_list, attr);
 
-  decoration = svg_text_decoration_get (self->current[SVG_PROPERTY_TEXT_DECORATION]);
+  decoration = svg_text_decoration_get (svg_element_get_current_value (self, SVG_PROPERTY_TEXT_DECORATION));
   if (text)
     {
       if (decoration & TEXT_DECORATION_UNDERLINE)
@@ -3423,7 +3539,7 @@ text_create_layout (SvgElement       *self,
           attr->end_index = -1;
           pango_attr_list_insert (attr_list, attr);
         }
-      if (decoration & TEXT_DECORATION_LINE_TROUGH)
+      if (decoration & TEXT_DECORATION_LINE_THROUGH)
         {
           attr = pango_attr_strikethrough_new (TRUE);
           attr->start_index = 0;
@@ -3435,7 +3551,9 @@ text_create_layout (SvgElement       *self,
   pango_layout_set_attributes (layout, attr_list);
   pango_attr_list_unref (attr_list);
 
-  pango_layout_set_text (layout, text, -1);
+  pango_layout_set_text (layout, text_with_bidi ? text_with_bidi : text, -1);
+
+  pango_layout_set_auto_dir (layout, FALSE);
 
   pango_layout_set_alignment (layout, (direction == PANGO_DIRECTION_LTR) ? PANGO_ALIGN_LEFT : PANGO_ALIGN_RIGHT);
 
@@ -3518,45 +3636,51 @@ text_create_layout (SvgElement       *self,
     }
 
   g_object_unref (context);
+  g_free (text_with_bidi);
+
   return layout;
 }
 
 static gboolean
-generate_layouts (SvgElement      *self,
-                  PangoFontMap    *fontmap,
-                  double          *x,
-                  double          *y,
-                  gboolean        *lastwasspace,
-                  graphene_rect_t *bounds)
+do_generate_layouts (SvgElement             *self,
+                     PangoFontMap           *fontmap,
+                     XmlSpace                space,
+                     double                 *x,
+                     double                 *y,
+                     TextNode              **lastwithspace,
+                     const graphene_rect_t  *viewport,
+                     graphene_rect_t        *bounds)
 {
-  double xs = 0.;
-  double ys = 0.;
-  gboolean lwss = TRUE;
-  double dx, dy;
+  double dx = 0;
+  double dy = 0;
+  gboolean set_bounds = FALSE;
+  SvgValue *v;
+  double baseline_shift = 0;
 
   g_assert (svg_element_type_is_text (self->type));
 
-  if (svg_enum_get (self->current[SVG_PROPERTY_DISPLAY]) == DISPLAY_NONE)
+  if (svg_enum_get (svg_element_get_current_value (self, SVG_PROPERTY_DISPLAY)) == DISPLAY_NONE)
     return FALSE;
 
-  if (!x)
-    x = &xs;
-  if (!y)
-    y = &ys;
-  if (!lastwasspace)
-    lastwasspace = &lwss;
+  v = svg_element_get_current_value (self, SVG_PROPERTY_TEXT_X);
+  if (svg_numbers_get_length (v) > 0)
+    *x = svg_numbers_get (v, 0, viewport->size.width);
 
-  if (svg_element_is_specified (self, SVG_PROPERTY_X))
-    *x = svg_number_get (self->current[SVG_PROPERTY_X], 1);
-  if (svg_element_is_specified (self, SVG_PROPERTY_Y))
-    *y = svg_number_get (self->current[SVG_PROPERTY_Y], 1);
+  v = svg_element_get_current_value (self, SVG_PROPERTY_TEXT_Y);
+  if (svg_numbers_get_length (v) > 0)
+    *y = svg_numbers_get (v, 0, viewport->size.height);
 
-  dx = svg_number_get (self->current[SVG_PROPERTY_DX], 1);
-  dy = svg_number_get (self->current[SVG_PROPERTY_DY], 1);
+  v = svg_element_get_current_value (self, SVG_PROPERTY_TEXT_DX);
+  if (svg_numbers_get_length (v) > 0)
+    dx = svg_numbers_get (v, 0, viewport->size.width);
+
+  v = svg_element_get_current_value (self, SVG_PROPERTY_TEXT_DY);
+  if (svg_numbers_get_length (v) > 0)
+    dy = svg_numbers_get (v, 0, viewport->size.height);
+
   *x += dx;
   *y += dy;
 
-  gboolean set_bounds = FALSE;
 #define ADD_BBOX(box) do {                          \
   if (!set_bounds)                                  \
     {                                               \
@@ -3577,23 +3701,91 @@ generate_layouts (SvgElement      *self,
       switch (node->type)
         {
         case TEXT_NODE_SHAPE:
-          node->shape.has_bounds = generate_layouts (node->shape.shape, fontmap, x, y, lastwasspace, &node->shape.bounds);
-          if (node->shape.has_bounds)
-            ADD_BBOX (&node->shape.bounds)
+          {
+            XmlSpace space2;
+            double y2 = *y + baseline_shift;
+
+            space2 = svg_enum_get (svg_element_get_current_value (node->shape.shape, SVG_PROPERTY_SPACE));
+            node->shape.has_bounds = do_generate_layouts (node->shape.shape, fontmap, space2, x, &y2, lastwithspace, viewport, &node->shape.bounds);
+            if (node->shape.has_bounds)
+              {
+                graphene_rect_init_from_rect (&node->shape.shape->bounds, &node->shape.bounds);
+                node->shape.shape->valid_bounds = TRUE;
+
+                ADD_BBOX (&node->shape.bounds)
+              }
+          }
           break;
         case TEXT_NODE_CHARACTERS:
           {
             graphene_point_t origin;
             graphene_rect_t cbounds;
             gboolean is_vertical;
-            char *text = text_chomp (node->characters.text, lastwasspace);
+            gboolean lastwasspace;
+            char *text;
+
+            lastwasspace = *lastwithspace != NULL;
+            text = text_chomp (node->characters.text, space, &lastwasspace);
+
+            if (!lastwasspace)
+              *lastwithspace = NULL;
+            else if (*text != '\0')
+              *lastwithspace = node;
+
             node->characters.layout = text_create_layout (self, fontmap, text, &origin, &cbounds, &is_vertical, &node->characters.r);
             g_free (text);
 
+            if (svg_element_get_type (self) == SVG_ELEMENT_TSPAN)
+              {
+                const PangoFontDescription *font_desc = pango_layout_get_font_description (node->characters.layout);
+                PangoContext *context = pango_layout_get_context (node->characters.layout);
+                PangoFontMetrics *metrics = pango_context_get_metrics (context, font_desc, pango_context_get_language (context));
+
+                SvgValue *bshift = svg_element_get_current_value (self, SVG_PROPERTY_BASELINE_SHIFT);
+                if (svg_value_is_number (bshift))
+                  {
+                    baseline_shift = - svg_number_get (bshift, pango_font_metrics_get_height (metrics) / 1024.0);
+                  }
+                else
+                  {
+                    PangoFont *font = pango_context_load_font (context, font_desc);
+                    hb_font_t *hb_font = pango_font_get_hb_font (font);
+                    int offset = 0;
+
+                    switch (svg_enum_get (bshift))
+                      {
+                      case BASELINE_SHIFT_SUB:
+                        hb_ot_metrics_get_position (hb_font, HB_OT_METRICS_TAG_SUBSCRIPT_EM_Y_OFFSET, &offset);
+                        baseline_shift = offset / 1024.0;
+                        break;
+                      case BASELINE_SHIFT_SUPER:
+                        hb_ot_metrics_get_position (hb_font, HB_OT_METRICS_TAG_SUPERSCRIPT_EM_Y_OFFSET, &offset);
+                        baseline_shift = - offset / 1024.0;
+                        break;
+                      case BASELINE_SHIFT_TOP:
+                        baseline_shift = pango_font_metrics_get_height (metrics) / 1024.0;
+                        break;
+                      case BASELINE_SHIFT_CENTER:
+                        baseline_shift = 0.5 * pango_font_metrics_get_height (metrics) / 1024.0;
+                        break;
+                      case BASELINE_SHIFT_BOTTOM:
+                        baseline_shift = 0;
+                        break;
+                      default:
+                        g_assert_not_reached ();
+                      }
+
+                    g_object_unref (font);
+                  }
+
+                pango_font_metrics_unref (metrics);
+              }
+
             node->characters.x = *x + origin.x;
-            node->characters.y = *y + origin.y;
+            node->characters.y = *y + origin.y + baseline_shift;
 
             graphene_rect_offset (&cbounds, *x, *y);
+
             ADD_BBOX (&cbounds)
 
             if (is_vertical)
@@ -3609,6 +3801,73 @@ generate_layouts (SvgElement      *self,
 
 #undef ADD_BBOX
   return set_bounds;
+}
+
+#if 0
+static void
+print_chunks (SvgElement *self,
+              gboolean    before)
+{
+  g_print ("%s\n", before ? "before" : "after");
+  for (unsigned int i = 0; i < self->text->len; i++)
+    {
+      TextNode *node = &g_array_index (self->text, TextNode, i);
+      switch (node->type)
+        {
+        case TEXT_NODE_SHAPE:
+          g_print ("<tspan>\n");
+          print_chunks (node->shape.shape, before);
+          g_print ("</tspan>\n");
+          break;
+        case TEXT_NODE_CHARACTERS:
+          g_print ("|%s|\n", before ? node->characters.text
+                                    : pango_layout_get_text (node->characters.layout));
+          break;
+        default:
+          g_assert_not_reached ();
+        }
+    }
+}
+#endif
+
+static gboolean
+generate_layouts (SvgElement            *self,
+                  PangoFontMap          *fontmap,
+                  const graphene_rect_t *viewport,
+                  graphene_rect_t       *bounds)
+{
+  gboolean retval;
+  TextNode dummy;
+  TextNode *node = &dummy;
+  double x = 0;
+  double y = 0;
+  XmlSpace space;
+
+#if 0
+  print_chunks (self, TRUE);
+#endif
+
+  space = svg_enum_get (svg_element_get_current_value (self, SVG_PROPERTY_SPACE));
+
+  retval = do_generate_layouts (self, fontmap, space, &x, &y, &node, viewport, bounds);
+
+  if (node && node != &dummy)
+    {
+      const char *text;
+
+      /* Remove the leftover final space. Note that we rely on text_chomp
+       * only considering single-byte whitespace
+       */
+      g_assert (node->type == TEXT_NODE_CHARACTERS);
+      text = pango_layout_get_text (node->characters.layout);
+      pango_layout_set_text (node->characters.layout, text, strlen (text) - 1);
+    }
+
+#if 0
+  print_chunks (self, FALSE);
+#endif
+
+  return retval;
 }
 
 static void
@@ -3631,101 +3890,322 @@ clear_layouts (SvgElement *self)
     }
 }
 
-static void
-fill_text (SvgElement            *self,
-           PaintContext          *context,
-           SvgValue              *paint,
-           const graphene_rect_t *bounds)
+static PangoRenderComponent
+decoration_to_component (TextDecoration decoration)
 {
-  g_assert (svg_element_type_is_text (self->type));
-
-  for (unsigned int i = 0; i < self->text->len; i++)
+  switch (decoration)
     {
-      TextNode *node = &g_array_index (self->text, TextNode, i);
-
-      switch (node->type)
-        {
-        case TEXT_NODE_SHAPE:
-          {
-            SvgValue *cpaint = paint;
-            const graphene_rect_t *cbounds = bounds;
-
-            if (svg_enum_get (svg_element_get_current_value (node->shape.shape, SVG_PROPERTY_DISPLAY)) == DISPLAY_NONE)
-              continue;
-
-            if (svg_enum_get (svg_element_get_current_value (node->shape.shape, SVG_PROPERTY_VISIBILITY)) == VISIBILITY_HIDDEN)
-              continue;
-
-            if (svg_element_is_specified (node->shape.shape, SVG_PROPERTY_FILL))
-              {
-                cpaint = svg_element_get_current_value (node->shape.shape, SVG_PROPERTY_FILL);
-                if (node->shape.has_bounds)
-                  cbounds = &node->shape.bounds;
-              }
-            fill_text (node->shape.shape, context, cpaint, cbounds);
-          }
-          break;
-        case TEXT_NODE_CHARACTERS:
-          {
-            double opacity;
-
-            if (svg_paint_get_kind (paint) == PAINT_NONE)
-              goto skip;
-
-#if 0
-            GskRoundedRect brd;
-            gsk_rounded_rect_init_from_rect (&brd, bounds, 0.f);
-            GdkRGBA red = (GdkRGBA){ .red = 1., .green = 0., .blue = 0., .alpha = 1. };
-            gtk_snapshot_append_border (context->snapshot, &brd, (const float[4]){ 3.f, 3.f, 3.f, 3.f }, (const GdkRGBA[4]){ red, red, red, red });
-#endif
-
-            gtk_snapshot_save (context->snapshot);
-
-            opacity = svg_number_get (self->current[SVG_PROPERTY_FILL_OPACITY], 1);
-            if (svg_paint_get_kind (paint) == PAINT_COLOR)
-              {
-                GdkColor color;
-
-                gdk_color_init_copy (&color, svg_paint_get_color (paint));
-                color.alpha *= opacity;
-                gtk_snapshot_translate (context->snapshot, &GRAPHENE_POINT_INIT (node->characters.x, node->characters.y));
-                gtk_snapshot_rotate (context->snapshot, node->characters.r);
-                gtk_snapshot_add_layout (context->snapshot, node->characters.layout, &color);
-              }
-            else if (paint_is_server (svg_paint_get_kind (paint)))
-              {
-                if (opacity < 1)
-                  gtk_snapshot_push_opacity (context->snapshot, opacity);
-
-                gtk_snapshot_push_mask (context->snapshot, GSK_MASK_MODE_ALPHA);
-                gtk_snapshot_translate (context->snapshot, &GRAPHENE_POINT_INIT (node->characters.x, node->characters.y));
-                gtk_snapshot_rotate (context->snapshot, node->characters.r);
-                gtk_snapshot_append_layout (context->snapshot, node->characters.layout, &GDK_RGBA_BLACK);
-                gtk_snapshot_pop (context->snapshot);
-                paint_server (paint, bounds, bounds, context);
-                gtk_snapshot_pop (context->snapshot);
-
-                if (opacity < 1)
-                  gtk_snapshot_pop (context->snapshot);
-              }
-
-            gtk_snapshot_restore (context->snapshot);
-
-skip: ;
-          }
-          break;
-        default:
-          g_assert_not_reached ();
-        }
+    case TEXT_DECORATION_UNDERLINE: return PANGO_RENDER_COMPONENT_UNDERLINE;
+    case TEXT_DECORATION_OVERLINE: return PANGO_RENDER_COMPONENT_OVERLINE;
+    case TEXT_DECORATION_LINE_THROUGH: return PANGO_RENDER_COMPONENT_STRIKETHROUGH;
+    case TEXT_DECORATION_NONE: return PANGO_RENDER_COMPONENT_NONE;
+    default: g_assert_not_reached ();
     }
 }
 
 static void
-stroke_text (SvgElement            *self,
-             PaintContext          *context,
-             SvgValue              *paint,
-             GskStroke             *stroke,
-             const graphene_rect_t *bounds)
+draw_text_path (SvgElement            *self,
+                unsigned int           idx,
+                PaintContext          *context,
+                SvgValue              *paint,
+                GskPath               *path,
+                GskStroke             *stroke,
+                const graphene_rect_t *bounds)
+{
+  TextNode *node = &g_array_index (self->text, TextNode, idx);
+  double opacity = svg_number_get (self->current[SVG_PROPERTY_FILL_OPACITY], 1);
+
+  if (svg_paint_get_kind (paint) == PAINT_NONE)
+    return;
+
+  gtk_snapshot_save (context->snapshot);
+
+  if (paint_is_server (svg_paint_get_kind (paint)) && opacity < 1)
+    gtk_snapshot_push_opacity (context->snapshot, opacity);
+
+  gtk_snapshot_push_mask (context->snapshot, GSK_MASK_MODE_ALPHA);
+  gtk_snapshot_translate (context->snapshot, &GRAPHENE_POINT_INIT (node->characters.x, node->characters.y));
+  gtk_snapshot_rotate (context->snapshot, node->characters.r);
+  if (stroke)
+    gtk_snapshot_append_stroke (context->snapshot, path, stroke, &GDK_RGBA_BLACK);
+  else
+    gtk_snapshot_append_fill (context->snapshot, path, GSK_FILL_RULE_WINDING, &GDK_RGBA_BLACK);
+  gtk_snapshot_pop (context->snapshot);
+
+  if (svg_paint_get_kind (paint) == PAINT_COLOR)
+    {
+      GdkColor color;
+      gdk_color_init_copy (&color, svg_paint_get_color (paint));
+      color.alpha *= opacity;
+
+      gtk_snapshot_add_color (context->snapshot, &color, bounds);
+      gdk_color_finish (&color);
+    }
+  else if (paint_is_server (svg_paint_get_kind (paint)))
+    {
+      paint_server (paint, bounds, bounds, context);
+    }
+
+  gtk_snapshot_pop (context->snapshot);
+
+  if (paint_is_server (svg_paint_get_kind (paint)) && opacity < 1)
+    gtk_snapshot_pop (context->snapshot);
+
+  gtk_snapshot_restore (context->snapshot);
+}
+
+static SvgElement *
+find_text_decoration_origin (SvgElement     *self,
+                             TextDecoration  decoration)
+{
+  SvgValue *value = svg_element_get_specified_value (self, SVG_PROPERTY_TEXT_DECORATION);
+  if (svg_value_is_set (value) &&
+      (svg_text_decoration_get (value) & decoration) != 0)
+    return self;
+
+  if (svg_element_get_type (self) == SVG_ELEMENT_TEXT)
+    return self;
+
+  return find_text_decoration_origin (self->parent, decoration);
+}
+
+static void
+paint_text_decoration (SvgElement            *self,
+                       unsigned int           idx,
+                       PaintContext          *context,
+                       const graphene_rect_t *bounds,
+                       TextDecoration         decoration)
+{
+  TextNode *node = &g_array_index (self->text, TextNode, idx);
+  SvgElement *elt = find_text_decoration_origin (self, decoration);
+  SvgValue *fill_paint = svg_element_get_current_value (elt, SVG_PROPERTY_FILL);
+  SvgValue *stroke_paint = svg_element_get_current_value (elt, SVG_PROPERTY_STROKE);
+  SvgValue *paint_order = svg_element_get_current_value (elt, SVG_PROPERTY_PAINT_ORDER);
+  GskStroke *stroke;
+  GskPath *path;
+
+  if (svg_paint_get_kind (fill_paint) == PAINT_NONE &&
+      svg_paint_get_kind (stroke_paint) == PAINT_NONE)
+    return;
+
+  path = svg_pango_layout_to_path (node->characters.layout, decoration_to_component (decoration));
+  if (!path)
+    return;
+
+  stroke = shape_create_stroke (elt, path, context);
+
+  switch (svg_enum_get (paint_order))
+    {
+    case PAINT_ORDER_FILL_STROKE_MARKERS:
+    case PAINT_ORDER_FILL_MARKERS_STROKE:
+    case PAINT_ORDER_MARKERS_FILL_STROKE:
+      draw_text_path (self, idx, context, fill_paint, path, NULL, bounds);
+      draw_text_path (self, idx, context, stroke_paint, path, stroke, bounds);
+      break;
+    case PAINT_ORDER_STROKE_FILL_MARKERS:
+    case PAINT_ORDER_STROKE_MARKERS_FILL:
+    case PAINT_ORDER_MARKERS_STROKE_FILL:
+      draw_text_path (self, idx, context, stroke_paint, path, stroke, bounds);
+      draw_text_path (self, idx, context, fill_paint, path, NULL, bounds);
+      break;
+    default:
+      g_assert_not_reached ();
+    }
+
+  gsk_stroke_free (stroke);
+  gsk_path_unref (path);
+}
+
+static void
+snapshot_add_layout (GtkSnapshot          *snapshot,
+                     PangoLayout          *layout,
+                     const GdkColor       *color,
+                     PangoRenderComponent  component)
+{
+  GskPangoRenderer *crenderer;
+
+  g_return_if_fail (snapshot != NULL);
+  g_return_if_fail (PANGO_IS_LAYOUT (layout));
+
+  crenderer = gsk_pango_renderer_acquire ();
+
+  crenderer->snapshot = snapshot;
+  gdk_color_init_copy (&crenderer->fg_color, color);
+
+  pango_renderer_set_components (PANGO_RENDERER (crenderer), component);
+
+  pango_renderer_draw_layout (PANGO_RENDERER (crenderer), layout, 0, 0);
+
+  gdk_color_finish (&crenderer->fg_color);
+
+  gsk_pango_renderer_release (crenderer);
+}
+
+static void
+fill_text (PaintContext          *context,
+           SvgValue              *paint,
+           double                 opacity,
+           TextNode              *node,
+           const graphene_rect_t *bounds,
+           PangoRenderComponent   component)
+{
+  gtk_snapshot_save (context->snapshot);
+
+  if (opacity < 1)
+    gtk_snapshot_push_opacity (context->snapshot, opacity);
+
+  if (svg_paint_get_kind (paint) == PAINT_COLOR)
+    {
+      gtk_snapshot_translate (context->snapshot, &GRAPHENE_POINT_INIT (node->characters.x, node->characters.y));
+      gtk_snapshot_rotate (context->snapshot, node->characters.r);
+      snapshot_add_layout (context->snapshot, node->characters.layout, svg_paint_get_color (paint), component);
+    }
+  else if (paint_is_server (svg_paint_get_kind (paint)))
+    {
+      GdkColor color;
+
+      gtk_snapshot_push_mask (context->snapshot, GSK_MASK_MODE_ALPHA);
+      gtk_snapshot_translate (context->snapshot, &GRAPHENE_POINT_INIT (node->characters.x, node->characters.y));
+      gtk_snapshot_rotate (context->snapshot, node->characters.r);
+
+      gdk_color_init_from_rgba (&color, &GDK_RGBA_BLACK);
+      snapshot_add_layout (context->snapshot, node->characters.layout, &color, component);
+      gtk_snapshot_pop (context->snapshot);
+      paint_server (paint, bounds, bounds, context);
+      gtk_snapshot_pop (context->snapshot);
+      gdk_color_finish (&color);
+    }
+
+  if (opacity < 1)
+    gtk_snapshot_pop (context->snapshot);
+
+  gtk_snapshot_restore (context->snapshot);
+}
+
+static void
+fill_text_undecorated (SvgElement            *self,
+                       unsigned int           idx,
+                       PaintContext          *context,
+                       SvgValue              *paint,
+                       const graphene_rect_t *bounds)
+{
+  double opacity = svg_number_get (svg_element_get_current_value (self, SVG_PROPERTY_FILL_OPACITY), 1);
+  TextNode *node = &g_array_index (self->text, TextNode, idx);
+
+  if (svg_paint_get_kind (paint) == PAINT_NONE)
+    return;
+
+  fill_text (context, paint, opacity, node, bounds, PANGO_RENDER_COMPONENT_PLAIN_GLYPH);
+}
+
+static void
+paint_text_color_glyphs (SvgElement            *self,
+                         unsigned int           idx,
+                         PaintContext          *context,
+                         const graphene_rect_t *bounds)
+{
+  double opacity = svg_number_get (svg_element_get_current_value (self, SVG_PROPERTY_FILL_OPACITY), 1);
+  TextNode *node = &g_array_index (self->text, TextNode, idx);
+  SvgValue *black;
+
+  black = svg_paint_new_black ();
+
+  fill_text (context, black, opacity, node, bounds, PANGO_RENDER_COMPONENT_COLOR_GLYPH);
+
+  svg_value_unref (black);
+}
+
+static void
+stroke_text_undecorated (SvgElement            *self,
+                         unsigned int           idx,
+                         PaintContext          *context,
+                         SvgValue              *paint,
+                         const graphene_rect_t *bounds)
+{
+  TextNode *node = &g_array_index (self->text, TextNode, idx);
+  GskPath *path;
+  GskStroke *stroke;
+
+  if (svg_paint_get_kind (paint) == PAINT_NONE)
+    return;
+
+  path = svg_pango_layout_to_path (node->characters.layout, PANGO_RENDER_COMPONENT_PLAIN_GLYPH);
+  if (!path)
+    return;
+
+  stroke = shape_create_stroke (self, path, context);
+
+  draw_text_path (self, idx, context, paint, path, stroke, bounds);
+
+  gsk_stroke_free (stroke);
+}
+
+static void
+paint_text_undecorated (SvgElement            *self,
+                        unsigned int           idx,
+                        PaintContext          *context,
+                        const graphene_rect_t *bounds)
+{
+  SvgValue *fill_paint = svg_element_get_current_value (self, SVG_PROPERTY_FILL);
+  SvgValue *stroke_paint = svg_element_get_current_value (self, SVG_PROPERTY_STROKE);
+  SvgValue *paint_order = svg_element_get_current_value (self, SVG_PROPERTY_PAINT_ORDER);
+
+  if (svg_paint_get_kind (fill_paint) == PAINT_NONE &&
+      svg_paint_get_kind (stroke_paint) == PAINT_NONE)
+    return;
+
+  switch (svg_enum_get (paint_order))
+    {
+    case PAINT_ORDER_FILL_STROKE_MARKERS:
+    case PAINT_ORDER_FILL_MARKERS_STROKE:
+    case PAINT_ORDER_MARKERS_FILL_STROKE:
+      fill_text_undecorated (self, idx, context, fill_paint, bounds);
+      stroke_text_undecorated (self, idx, context, stroke_paint, bounds);
+      paint_text_color_glyphs (self, idx, context, bounds);
+      break;
+    case PAINT_ORDER_STROKE_FILL_MARKERS:
+    case PAINT_ORDER_STROKE_MARKERS_FILL:
+    case PAINT_ORDER_MARKERS_STROKE_FILL:
+      stroke_text_undecorated (self, idx, context, stroke_paint, bounds);
+      fill_text_undecorated (self, idx, context, fill_paint, bounds);
+      paint_text_color_glyphs (self, idx, context, bounds);
+      break;
+    default:
+      g_assert_not_reached ();
+    }
+}
+
+static void
+paint_text_chunk (SvgElement            *self,
+                  unsigned int           idx,
+                  PaintContext          *context,
+                  const graphene_rect_t *bounds)
+{
+  SvgValue *decoration = svg_element_get_current_value (self, SVG_PROPERTY_TEXT_DECORATION);
+
+  if (context->op == CLIPPING)
+    {
+      TextNode *node = &g_array_index (self->text, TextNode, idx);
+      SvgValue *paint = svg_paint_new_black ();
+      double opacity = 1;
+      fill_text (context, paint, opacity, node, bounds, PANGO_RENDER_COMPONENT_ALL);
+      svg_value_unref (paint);
+      return;
+    }
+
+  if (svg_enum_get (decoration) & TEXT_DECORATION_UNDERLINE)
+    paint_text_decoration (self, idx, context, bounds, TEXT_DECORATION_UNDERLINE);
+  if (svg_enum_get (decoration) & TEXT_DECORATION_OVERLINE)
+    paint_text_decoration (self, idx, context, bounds, TEXT_DECORATION_OVERLINE);
+  paint_text_undecorated (self, idx, context, bounds);
+  if (svg_enum_get (decoration) & TEXT_DECORATION_LINE_THROUGH)
+    paint_text_decoration (self, idx, context, bounds, TEXT_DECORATION_LINE_THROUGH);
+}
+
+static void
+paint_text (SvgElement            *self,
+            PaintContext          *context,
+            const graphene_rect_t *bounds)
 {
   g_assert (svg_element_type_is_text (self->type));
 
@@ -3737,76 +4217,36 @@ stroke_text (SvgElement            *self,
         {
         case TEXT_NODE_SHAPE:
           {
-            SvgValue *cpaint = paint;
-            const graphene_rect_t *cbounds = bounds;
-
             if (svg_enum_get (svg_element_get_current_value (node->shape.shape, SVG_PROPERTY_DISPLAY)) == DISPLAY_NONE)
               continue;
 
             if (svg_enum_get (svg_element_get_current_value (node->shape.shape, SVG_PROPERTY_VISIBILITY)) == VISIBILITY_HIDDEN)
               continue;
 
-            if (svg_element_is_specified (node->shape.shape, SVG_PROPERTY_STROKE))
+            context->depth++;
+
+            if (context->depth > NESTING_LIMIT)
               {
-                cpaint = svg_element_get_current_value (node->shape.shape, SVG_PROPERTY_STROKE);
-                if (node->shape.has_bounds)
-                  cbounds = &node->shape.bounds;
+                gtk_svg_rendering_error (context->svg,
+                                         "excessive rendering depth (> %d), aborting",
+                                         NESTING_LIMIT);
+                return;
               }
-            stroke_text (node->shape.shape, context, cpaint, stroke, cbounds);
+
+            push_group (node->shape.shape, context);
+
+            paint_text (node->shape.shape, context, bounds);
+
+            pop_group (node->shape.shape, context);
+
+            context->depth--;
           }
           break;
+
         case TEXT_NODE_CHARACTERS:
-          {
-            GskPath *path;
-            double opacity;
-
-            if (svg_paint_get_kind (paint) == PAINT_NONE)
-              goto skip;
-
-            gtk_snapshot_save (context->snapshot);
-            opacity = svg_number_get (self->current[SVG_PROPERTY_STROKE_OPACITY], 1);
-            if (svg_paint_get_kind (paint) == PAINT_COLOR)
-              {
-                GdkColor color;
-
-                gdk_color_init_copy (&color, svg_paint_get_color (paint));
-                color.alpha *= opacity;
-
-                gtk_snapshot_push_mask (context->snapshot, GSK_MASK_MODE_ALPHA);
-                gtk_snapshot_translate (context->snapshot, &GRAPHENE_POINT_INIT (node->characters.x, node->characters.y));
-                gtk_snapshot_rotate (context->snapshot, node->characters.r);
-                path = svg_pango_layout_to_path (node->characters.layout);
-
-                gtk_snapshot_append_stroke (context->snapshot, path, stroke, &GDK_RGBA_BLACK);
-                gtk_snapshot_pop (context->snapshot);
-                gtk_snapshot_add_color (context->snapshot, &color, bounds);
-                gtk_snapshot_pop (context->snapshot);
-                gsk_path_unref (path);
-                gdk_color_finish (&color);
-              }
-            else if (paint_is_server (svg_paint_get_kind (paint)))
-              {
-                if (opacity < 1)
-                  gtk_snapshot_push_opacity (context->snapshot, opacity);
-
-                gtk_snapshot_push_mask (context->snapshot, GSK_MASK_MODE_ALPHA);
-                gtk_snapshot_translate (context->snapshot, &GRAPHENE_POINT_INIT (node->characters.x, node->characters.y));
-                gtk_snapshot_rotate (context->snapshot, node->characters.r);
-                path = svg_pango_layout_to_path (node->characters.layout);
-                gtk_snapshot_append_stroke (context->snapshot, path, stroke, &GDK_RGBA_BLACK);
-                gtk_snapshot_pop (context->snapshot);
-                paint_server (paint, bounds, bounds, context);
-                gtk_snapshot_pop (context->snapshot);
-                gsk_path_unref (path);
-
-                if (opacity < 1)
-                  gtk_snapshot_pop (context->snapshot);
-              }
-            gtk_snapshot_restore (context->snapshot);
-
-skip: ;
-          }
+          paint_text_chunk (self, i, context, bounds);
           break;
+
         default:
           g_assert_not_reached ();
         }
@@ -4076,7 +4516,7 @@ paint_shape (SvgElement   *shape,
 
       anchor = svg_enum_get (svg_element_get_current_value (shape, SVG_PROPERTY_TEXT_ANCHOR));
       wmode = svg_enum_get (svg_element_get_current_value (shape, SVG_PROPERTY_WRITING_MODE));
-      if (!generate_layouts (shape, get_fontmap (context->svg), NULL, NULL, NULL, &bounds))
+      if (!generate_layouts (shape, get_fontmap (context->svg), context->viewport, &bounds))
         return;
 
       dx = dy = 0;
@@ -4162,49 +4602,9 @@ paint_shape (SvgElement   *shape,
               g_assert_not_reached ();
             }
         }
-      else if (context->op == CLIPPING)
-        {
-          SvgValue *paint = svg_paint_new_black ();
-          fill_text (shape, context, paint, &bounds);
-          svg_value_unref (paint);
-        }
       else
         {
-          GskStroke *stroke = shape_create_stroke (shape, context);
-
-          switch (svg_enum_get (svg_element_get_current_value (shape, SVG_PROPERTY_PAINT_ORDER)))
-            {
-            case PAINT_ORDER_FILL_STROKE_MARKERS:
-            case PAINT_ORDER_FILL_MARKERS_STROKE:
-            case PAINT_ORDER_MARKERS_FILL_STROKE:
-              fill_text (shape, context, svg_element_get_current_value (shape, SVG_PROPERTY_FILL), &bounds);
-              break;
-            case PAINT_ORDER_STROKE_FILL_MARKERS:
-            case PAINT_ORDER_STROKE_MARKERS_FILL:
-            case PAINT_ORDER_MARKERS_STROKE_FILL:
-              stroke_text (shape, context, svg_element_get_current_value (shape, SVG_PROPERTY_STROKE), stroke, &bounds);
-              break;
-            default:
-              g_assert_not_reached ();
-            }
-
-          switch (svg_enum_get (svg_element_get_current_value (shape, SVG_PROPERTY_PAINT_ORDER)))
-            {
-            case PAINT_ORDER_FILL_STROKE_MARKERS:
-            case PAINT_ORDER_FILL_MARKERS_STROKE:
-            case PAINT_ORDER_MARKERS_FILL_STROKE:
-              stroke_text (shape, context, svg_element_get_current_value (shape, SVG_PROPERTY_STROKE), stroke, &bounds);
-              break;
-            case PAINT_ORDER_STROKE_FILL_MARKERS:
-            case PAINT_ORDER_STROKE_MARKERS_FILL:
-            case PAINT_ORDER_MARKERS_STROKE_FILL:
-              fill_text (shape, context, svg_element_get_current_value (shape, SVG_PROPERTY_FILL), &bounds);
-              break;
-            default:
-              g_assert_not_reached ();
-            }
-
-          gsk_stroke_free (stroke);
+          paint_text (shape, context, &bounds);
         }
 
       clear_layouts (shape);
@@ -4620,9 +5020,7 @@ can_reuse_node (GtkSvg        *self,
       return FALSE;
     }
 
-  if ((self->used & GTK_SVG_USES_STROKES) != 0 &&
-      self->weight < 1 &&
-      weight != self->node_for.weight)
+  if ((self->used & GTK_SVG_USES_STROKES) != 0 && weight != self->node_for.weight)
     {
       dbg_print ("cache", "Can't reuse rendernode: %s", "stroke weight change");
       return FALSE;
@@ -4738,6 +5136,9 @@ gtk_svg_snapshot_full (GtkSvg        *self,
       gtk_svg_set_load_time (self, current_time);
     }
 
+  if (self->weight >= 1)
+    weight = self->weight;
+
   if (!can_reuse_node (self, width, height, colors, n_colors, weight))
     {
       SvgComputeContext compute_context;
@@ -4809,7 +5210,7 @@ gtk_svg_snapshot_full (GtkSvg        *self,
       paint_context.snapshot = snapshot;
       paint_context.colors = used_colors;
       paint_context.n_colors = n_used_colors;
-      paint_context.weight = self->weight >= 1 ? self->weight : weight;
+      paint_context.weight = weight;
       paint_context.op = RENDERING;
       paint_context.op_stack = NULL;
       paint_context.ctx_shape_stack = NULL;

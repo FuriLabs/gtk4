@@ -129,6 +129,13 @@ static GParamSpec *properties[NUM_PROPERTIES];
 /* {{{ Callbacks */
 
 static void
+ensure_gpa (ShapeEditor *self)
+{
+  GtkSvg *svg = path_paintable_get_svg (self->paintable);
+  svg->gpa_version = 1;
+}
+
+static void
 shape_changed (ShapeEditor *self)
 {
   unsigned int old_type, type;
@@ -681,6 +688,8 @@ animation_changed (ShapeEditor *self)
     return;
 
   svg_element_set_gpa_animation (self->shape, animation, easing, duration * G_TIME_SPAN_MILLISECOND, repeat, segment);
+  ensure_gpa (self);
+
   path_paintable_changed (self->paintable);
 
   mini_graph_set_easing (self->mini_graph, easing);
@@ -712,6 +721,8 @@ transition_changed (ShapeEditor *self)
     return;
 
   svg_element_set_gpa_transition (self->shape, transition, easing, duration * G_TIME_SPAN_MILLISECOND, delay * G_TIME_SPAN_MILLISECOND);
+  ensure_gpa (self);
+
   path_paintable_changed (self->paintable);
 }
 
@@ -904,6 +915,7 @@ stroke_changed (ShapeEditor *self)
     {
       svg_element_take_specified_value (self->shape, SVG_PROPERTY_STROKE, svg_paint_new_symbolic (symbolic));
       svg_element_take_specified_value (self->shape, SVG_PROPERTY_STROKE_OPACITY, svg_number_new (color->alpha));
+      ensure_gpa (self);
     }
   else
     {
@@ -986,6 +998,7 @@ fill_changed (ShapeEditor *self)
     {
       svg_element_take_specified_value (self->shape, SVG_PROPERTY_FILL, svg_paint_new_symbolic (symbolic));
       svg_element_take_specified_value (self->shape, SVG_PROPERTY_FILL_OPACITY, svg_number_new (color->alpha));
+      ensure_gpa (self);
     }
   else
     {
@@ -1021,6 +1034,7 @@ attach_changed (ShapeEditor *self)
       sh = path_paintable_get_shape_by_id (self->paintable, id);
 
       svg_element_set_gpa_attachment (self->shape, id, pos, sh);
+      ensure_gpa (self);
     }
 
   path_paintable_changed (self->paintable);
@@ -1445,12 +1459,12 @@ shape_editor_update (ShapeEditor *self)
       GtkSvgLocation loc;
       SvgValue *href;
 
+      self->updating = TRUE;
+
       id = svg_element_get_id (self->shape);
       type = svg_element_get_type (self->shape);
 
       gtk_editable_set_text (GTK_EDITABLE (self->id_label), id ? id : "");
-
-      self->updating = TRUE;
 
       if (!can_edit_shape (self->shape))
         {
@@ -1841,6 +1855,7 @@ shape_editor_update (ShapeEditor *self)
 
       if (svg_property_applies_to (SVG_PROPERTY_MASK, type))
         {
+          /* todo */
         }
 
       if (svg_property_applies_to (SVG_PROPERTY_MASK_TYPE, type))

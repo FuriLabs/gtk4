@@ -27,9 +27,24 @@
 #pragma once
 
 #include <gdk/gdkframeclock.h>
-#include <gdk/gdkprofilerprivate.h>
 
 G_BEGIN_DECLS
+
+/* little hacks to avoid requiring 2.88 */
+#if GLIB_CHECK_VERSION(2, 87, 3)
+#undef G_NSEC_PER_SEC
+static inline uint64_t
+avoid_deprecation_monotonic_time_ns (void)
+{
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  return g_get_monotonic_time_ns ();
+G_GNUC_END_IGNORE_DEPRECATIONS
+}
+#define g_get_monotonic_time_ns() avoid_deprecation_monotonic_time_ns()
+#else
+#define g_get_monotonic_time_ns() ((uint64_t) 1000 * g_get_monotonic_time ())
+#endif
+#define G_NSEC_PER_SEC G_GUINT64_CONSTANT(1000000000)
 
 /**
  * GdkFrameClock:
@@ -38,9 +53,6 @@ G_BEGIN_DECLS
 struct _GdkFrameClock
 {
   GObject parent_instance;
-
-  /*< private >*/
-  GdkFrameClockPrivate *priv;
 };
 
 /**
@@ -68,8 +80,8 @@ struct _GdkFrameClockClass
   void     (* begin_updating) (GdkFrameClock      *clock);
   void     (* end_updating)   (GdkFrameClock      *clock);
 
-  void     (* freeze)         (GdkFrameClock *clock);
-  void     (* thaw)           (GdkFrameClock *clock);
+  void     (* start)             (GdkFrameClock *clock);
+  void     (* stop)              (GdkFrameClock *clock);
 
   /* signals */
   /* void (* flush_events)       (GdkFrameClock *clock); */
@@ -81,31 +93,9 @@ struct _GdkFrameClockClass
   /* void (* resume_events)      (GdkFrameClock *clock); */
 };
 
-struct _GdkFrameTimings
-{
-  /*< private >*/
-  guint ref_count;
-
-  gint64 frame_counter;
-  guint64 cookie;
-  gint64 frame_time;
-  gint64 smoothed_frame_time;
-  gint64 drawn_time;
-  gint64 presentation_time;
-  gint64 refresh_interval;
-  gint64 predicted_presentation_time;
-
-  gint64 layout_start_time;
-  gint64 paint_start_time;
-  gint64 frame_end_time;
-
-  guint complete : 1;
-  guint slept_before : 1;
-};
-
-void _gdk_frame_clock_inhibit_freeze (GdkFrameClock *clock);
-void _gdk_frame_clock_uninhibit_freeze (GdkFrameClock *clock);
-gboolean gdk_frame_clock_is_frozen (GdkFrameClock *clock);
+void gdk_frame_clock_start               (GdkFrameClock *clock);
+void gdk_frame_clock_stop                (GdkFrameClock *clock);
+gboolean gdk_frame_clock_is_stopped      (GdkFrameClock *clock);
 
 void _gdk_frame_clock_begin_frame         (GdkFrameClock   *clock,
                                            gint64           monotonic_time);
@@ -114,17 +104,24 @@ void _gdk_frame_clock_debug_print_timings (GdkFrameClock   *clock,
 void _gdk_frame_clock_add_timings_to_profiler (GdkFrameClock *frame_clock,
                                                GdkFrameTimings *timings);
 
-GdkFrameTimings *_gdk_frame_timings_new   (gint64           frame_counter);
-gboolean         _gdk_frame_timings_steal (GdkFrameTimings *timings,
-                                           gint64           frame_counter);
-
 void _gdk_frame_clock_emit_flush_events  (GdkFrameClock *frame_clock);
 void _gdk_frame_clock_emit_before_paint  (GdkFrameClock *frame_clock);
 void _gdk_frame_clock_emit_update        (GdkFrameClock *frame_clock);
 void _gdk_frame_clock_emit_layout        (GdkFrameClock *frame_clock);
 void _gdk_frame_clock_emit_paint         (GdkFrameClock *frame_clock);
-void _gdk_frame_clock_emit_after_paint   (GdkFrameClock *frame_clock);
+void _gdk_frame_clock_emit_after_paint   (GdkFrameClock *self);
 void _gdk_frame_clock_emit_resume_events (GdkFrameClock *frame_clock);
+
+void            gdk_frame_clock_outstanding                     (GdkFrameClock          *self);
+void            gdk_frame_clock_submitted                       (GdkFrameClock          *self,
+                                                                 gint64                  frame_counter,
+                                                                 uint64_t                refresh);
+void            gdk_frame_clock_discarded                       (GdkFrameClock          *self,
+                                                                 gint64                  frame_counter);
+void            gdk_frame_clock_presented                       (GdkFrameClock          *self,
+                                                                 gint64                  frame_counter,
+                                                                 uint64_t                presentation_time,
+                                                                 uint64_t                refresh);
 
 G_END_DECLS
 

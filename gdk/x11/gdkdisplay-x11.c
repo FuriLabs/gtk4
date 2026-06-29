@@ -28,12 +28,14 @@
 #include "gdkdisplayprivate.h"
 
 #include "gdkasync.h"
+#include "gdkdeviceprivate.h"
 #include "gdkdisplay.h"
 #include "gdkeventsprivate.h"
 #include "gdkeventsourceprivate.h"
 #include "gdkeventtranslatorprivate.h"
 #include "gdkframeclockprivate.h"
-#include "gdkdeviceprivate.h"
+#include "gdkframetimingsprivate.h"
+#include "gdkprofilerprivate.h"
 #include "gdksurfaceprivate.h"
 #include "gdkkeysprivate.h"
 #include "gdkmarshalers.h"
@@ -1200,7 +1202,6 @@ _gdk_wm_protocols_filter (const XEvent  *xevent,
 
           guint64 serial = ((guint64)d1 << 32) | d0;
           gint64 frame_drawn_time = server_time_to_monotonic_time (GDK_X11_DISPLAY (display), ((guint64)d3 << 32) | d2);
-          gint64 refresh_interval, presentation_time;
 
           GdkFrameClock *clock = gdk_surface_get_frame_clock (win);
           GdkFrameTimings *timings = find_frame_timings (clock, serial);
@@ -1213,13 +1214,6 @@ _gdk_wm_protocols_filter (const XEvent  *xevent,
               surface_impl->toplevel->frame_pending = FALSE;
               gdk_surface_thaw_updates (win);
             }
-
-          gdk_frame_clock_get_refresh_info (clock,
-                                            frame_drawn_time,
-                                            &refresh_interval,
-                                            &presentation_time);
-          if (presentation_time != 0)
-            surface_impl->toplevel->throttled_presentation_time = presentation_time + refresh_interval;
         }
 
       return GDK_FILTER_REMOVE;
@@ -1247,17 +1241,18 @@ _gdk_wm_protocols_filter (const XEvent  *xevent,
               gint32 refresh_interval = d3;
 
               if (timings->drawn_time && presentation_time_offset)
-                timings->presentation_time = timings->drawn_time + presentation_time_offset;
-
-              if (refresh_interval)
-                timings->refresh_interval = refresh_interval;
-
-              timings->complete = TRUE;
-              if (GDK_DISPLAY_DEBUG_CHECK (display, FRAMES))
-                _gdk_frame_clock_debug_print_timings (clock, timings);
-
-              if (GDK_PROFILER_IS_RUNNING)
-                _gdk_frame_clock_add_timings_to_profiler (clock, timings);
+                {
+                  gdk_frame_clock_presented (clock,
+                                             timings->frame_counter,
+                                             (uint64_t) (timings->drawn_time + presentation_time_offset) * 1000,
+                                             refresh_interval * 1000);
+                }
+              else
+                {
+                  gdk_frame_clock_submitted (clock,
+                                             timings->frame_counter,
+                                             refresh_interval * 1000);
+                }
             }
         }
     }

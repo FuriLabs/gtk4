@@ -385,7 +385,10 @@ DEFINE_ENUM (MARKER_UNITS, marker_units, MarkerUnits,
 DEFINE_ENUM (UNICODE_BIDI, unicode_bidi, UnicodeBidi,
   DEFINE_ENUM_VALUE (UNICODE_BIDI, UNICODE_BIDI_NORMAL, "normal"),
   DEFINE_ENUM_VALUE (UNICODE_BIDI, UNICODE_BIDI_EMBED, "embed"),
-  DEFINE_ENUM_VALUE (UNICODE_BIDI, UNICODE_BIDI_OVERRIDE, "bidi-override")
+  DEFINE_ENUM_VALUE (UNICODE_BIDI, UNICODE_BIDI_ISOLATE, "isolate"),
+  DEFINE_ENUM_VALUE (UNICODE_BIDI, UNICODE_BIDI_OVERRIDE, "bidi-override"),
+  DEFINE_ENUM_VALUE (UNICODE_BIDI, UNICODE_BIDI_ISOLATE_OVERRIDE, "isolate-override"),
+  DEFINE_ENUM_VALUE (UNICODE_BIDI, UNICODE_BIDI_PLAINTEXT, "plaintext")
 )
 
 DEFINE_ENUM (DIRECTION, direction, PangoDirection,
@@ -421,22 +424,71 @@ DEFINE_ENUM (FONT_VARIANT, font_variant, PangoVariant,
   DEFINE_ENUM_VALUE (FONT_VARIANT, PANGO_VARIANT_TITLE_CAPS, "titling-caps")
 )
 
-DEFINE_ENUM (FONT_STRETCH, font_stretch, PangoStretch,
-  DEFINE_ENUM_VALUE (FONT_STRETCH, PANGO_STRETCH_ULTRA_CONDENSED, "ultra-condensed"),
-  DEFINE_ENUM_VALUE (FONT_STRETCH, PANGO_STRETCH_EXTRA_CONDENSED, "extra-condensed"),
-  DEFINE_ENUM_VALUE (FONT_STRETCH, PANGO_STRETCH_CONDENSED, "condensed"),
-  DEFINE_ENUM_VALUE (FONT_STRETCH, PANGO_STRETCH_SEMI_CONDENSED, "semi-condensed"),
-  DEFINE_ENUM_VALUE (FONT_STRETCH, PANGO_STRETCH_NORMAL, "normal"),
-  DEFINE_ENUM_VALUE (FONT_STRETCH, PANGO_STRETCH_SEMI_EXPANDED, "semi-expanded"),
-  DEFINE_ENUM_VALUE (FONT_STRETCH, PANGO_STRETCH_EXPANDED, "expanded"),
-  DEFINE_ENUM_VALUE (FONT_STRETCH, PANGO_STRETCH_EXTRA_EXPANDED, "extra-expanded"),
-  DEFINE_ENUM_VALUE (FONT_STRETCH, PANGO_STRETCH_ULTRA_EXPANDED, "ultra-expanded")
+static SvgValue *
+svg_font_stretch_resolve (const SvgValue    *value,
+                          SvgProperty        attr,
+                          unsigned int       idx,
+                          SvgElement        *shape,
+                          SvgComputeContext *context)
+{
+  const SvgEnum *font_stretch = (const SvgEnum *) value;
+
+  g_assert (attr == SVG_PROPERTY_FONT_STRETCH);
+
+  if (font_stretch->value < FONT_STRETCH_NARROWER)
+    return svg_number_new (font_stretch->value);
+  else
+    {
+      unsigned int parent_stretch;
+
+      if (context->parent)
+        parent_stretch = (unsigned int) svg_number_get (context->parent->current[SVG_PROPERTY_FONT_STRETCH], 100);
+      else
+        parent_stretch = PANGO_STRETCH_NORMAL;
+
+      if (font_stretch->value == FONT_STRETCH_WIDER)
+        {
+
+          if (parent_stretch < PANGO_STRETCH_ULTRA_EXPANDED)
+            return svg_number_new (parent_stretch + 1);
+          else
+            return svg_number_new (parent_stretch);
+        }
+      else if (font_stretch->value == FONT_STRETCH_NARROWER)
+        {
+          if (parent_stretch > 0)
+            return svg_number_new (parent_stretch - 1);
+          else
+            return svg_number_new (parent_stretch);
+        }
+      else
+        g_assert_not_reached ();
+    }
+}
+
+DEFINE_ENUM_CUSTOM_RESOLVE (FONT_STRETCH, font_stretch, FontStretch, svg_font_stretch_resolve,
+  DEFINE_ENUM_VALUE (FONT_STRETCH, FONT_STRETCH_ULTRA_CONDENSED, "ultra-condensed"),
+  DEFINE_ENUM_VALUE (FONT_STRETCH, FONT_STRETCH_EXTRA_CONDENSED, "extra-condensed"),
+  DEFINE_ENUM_VALUE (FONT_STRETCH, FONT_STRETCH_CONDENSED, "condensed"),
+  DEFINE_ENUM_VALUE (FONT_STRETCH, FONT_STRETCH_SEMI_CONDENSED, "semi-condensed"),
+  DEFINE_ENUM_VALUE (FONT_STRETCH, FONT_STRETCH_NORMAL, "normal"),
+  DEFINE_ENUM_VALUE (FONT_STRETCH, FONT_STRETCH_SEMI_EXPANDED, "semi-expanded"),
+  DEFINE_ENUM_VALUE (FONT_STRETCH, FONT_STRETCH_EXPANDED, "expanded"),
+  DEFINE_ENUM_VALUE (FONT_STRETCH, FONT_STRETCH_EXTRA_EXPANDED, "extra-expanded"),
+  DEFINE_ENUM_VALUE (FONT_STRETCH, FONT_STRETCH_ULTRA_EXPANDED, "ultra-expanded"),
+  DEFINE_ENUM_VALUE (FONT_STRETCH, FONT_STRETCH_NARROWER, "narrower"),
+  DEFINE_ENUM_VALUE (FONT_STRETCH, FONT_STRETCH_WIDER, "wider")
 )
 
 DEFINE_ENUM (EDGE_MODE, edge_mode, EdgeMode,
   DEFINE_ENUM_VALUE (EDGE_MODE, EDGE_MODE_DUPLICATE, "duplicate"),
   DEFINE_ENUM_VALUE (EDGE_MODE, EDGE_MODE_WRAP, "wrap"),
   DEFINE_ENUM_VALUE (EDGE_MODE, EDGE_MODE_NONE, "none")
+)
+
+DEFINE_ENUM (STITCH_TILES, stitch_tiles, StitchTiles,
+  DEFINE_ENUM_VALUE (STITCH_TILES, STITCH_NO_STITCH, "noStitch"),
+  DEFINE_ENUM_VALUE (STITCH_TILES, STITCH_STITCH, "stitch")
 )
 
 DEFINE_ENUM (BLEND_COMPOSITE, blend_composite, BlendComposite,
@@ -474,6 +526,11 @@ DEFINE_ENUM (COMPONENT_TRANSFER_TYPE, component_transfer_type, ComponentTransfer
   DEFINE_ENUM_VALUE (COMPONENT_TRANSFER_TYPE, COMPONENT_TRANSFER_DISCRETE, "discrete"),
   DEFINE_ENUM_VALUE (COMPONENT_TRANSFER_TYPE, COMPONENT_TRANSFER_LINEAR, "linear"),
   DEFINE_ENUM_VALUE (COMPONENT_TRANSFER_TYPE, COMPONENT_TRANSFER_GAMMA, "gamma")
+)
+
+DEFINE_ENUM (TURBULENCE_TYPE, turbulence_type, TurbulenceType,
+  DEFINE_ENUM_VALUE (TURBULENCE_TYPE, TURBULENCE_TYPE_FRACTAL_NOISE, "fractalNoise"),
+  DEFINE_ENUM_VALUE (TURBULENCE_TYPE, TURBULENCE_TYPE_TURBULENCE, "turbulence")
 )
 
 DEFINE_ENUM (VECTOR_EFFECT, vector_effect, VectorEffect,
@@ -659,4 +716,17 @@ DEFINE_ENUM (POINTER_EVENTS, pointer_events, PointerEvents,
   DEFINE_ENUM_VALUE (POINTER_EVENTS, POINTER_EVENTS_STROKE, "stroke"),
   DEFINE_ENUM_VALUE (POINTER_EVENTS, POINTER_EVENTS_ALL, "all"),
   DEFINE_ENUM_VALUE (POINTER_EVENTS, POINTER_EVENTS_NONE, "none")
+)
+
+DEFINE_ENUM (XML_SPACE, xml_space, XmlSpace,
+  DEFINE_ENUM_VALUE (XML_SPACE, XML_SPACE_DEFAULT, "default"),
+  DEFINE_ENUM_VALUE (XML_SPACE, XML_SPACE_PRESERVE, "preserve")
+)
+
+DEFINE_ENUM (BASELINE_SHIFT, baseline_shift, BaselineShift,
+  DEFINE_ENUM_VALUE (BASELINE_SHIFT, BASELINE_SHIFT_SUB, "sub"),
+  DEFINE_ENUM_VALUE (BASELINE_SHIFT, BASELINE_SHIFT_SUPER, "super"),
+  DEFINE_ENUM_VALUE (BASELINE_SHIFT, BASELINE_SHIFT_TOP, "top"),
+  DEFINE_ENUM_VALUE (BASELINE_SHIFT, BASELINE_SHIFT_CENTER, "center"),
+  DEFINE_ENUM_VALUE (BASELINE_SHIFT, BASELINE_SHIFT_BOTTOM, "bottom")
 )

@@ -53,8 +53,9 @@
  *
  * Transitions between pages can be animated as slides or fades. This
  * can be controlled with [method@Gtk.Stack.set_transition_type].
+ *
  * These animations respect the [property@Gtk.Settings:gtk-enable-animations]
- * setting.
+ * and [property@Gtk.Settings:gtk-interface-reduced-motion] settings.
  *
  * `GtkStack` maintains a [class@Gtk.StackPage] object for each added
  * child, which holds additional per-child properties. You
@@ -1317,9 +1318,28 @@ gtk_stack_unschedule_ticks (GtkStack *stack)
 }
 
 static GtkStackTransitionType
-effective_transition_type (GtkStack               *stack,
-                           GtkStackTransitionType  transition_type)
+get_effective_transition_type (GtkStack               *stack,
+                               GtkStackTransitionType  transition_type)
 {
+  if (transition_type != GTK_STACK_TRANSITION_TYPE_NONE)
+    {
+      GtkStackPrivate *priv = gtk_stack_get_instance_private (stack);
+      GtkReducedMotion reduced_motion;
+
+      g_object_get (gtk_widget_get_settings (GTK_WIDGET (stack)),
+                    "gtk-interface-reduced-motion", &reduced_motion,
+                    NULL);
+
+      if (reduced_motion == GTK_REDUCED_MOTION_REDUCE)
+        {
+          if (priv->homogeneous[GTK_ORIENTATION_VERTICAL] &&
+              priv->homogeneous[GTK_ORIENTATION_HORIZONTAL])
+            return GTK_STACK_TRANSITION_TYPE_CROSSFADE;
+          else
+            return GTK_STACK_TRANSITION_TYPE_NONE;
+        }
+    }
+
   if (_gtk_widget_get_direction (GTK_WIDGET (stack)) == GTK_TEXT_DIR_RTL)
     {
       switch (transition_type)
@@ -1372,14 +1392,17 @@ gtk_stack_start_transition (GtkStack               *stack,
 {
   GtkStackPrivate *priv = gtk_stack_get_instance_private (stack);
   GtkWidget *widget = GTK_WIDGET (stack);
+  GtkStackTransitionType effective_transition_type = GTK_STACK_TRANSITION_TYPE_NONE;
 
   if (gtk_widget_get_mapped (widget) &&
-      gtk_settings_get_enable_animations (gtk_widget_get_settings (widget)) &&
-      transition_type != GTK_STACK_TRANSITION_TYPE_NONE &&
+      gtk_settings_get_enable_animations (gtk_widget_get_settings (widget)))
+    effective_transition_type = get_effective_transition_type (stack, transition_type);
+
+  if (effective_transition_type != GTK_STACK_TRANSITION_TYPE_NONE &&
       transition_duration != 0 &&
       priv->last_visible_child != NULL)
     {
-      priv->active_transition_type = effective_transition_type (stack, transition_type);
+      priv->active_transition_type = effective_transition_type;
       priv->first_frame_skipped = FALSE;
       gtk_stack_schedule_ticks (stack);
       gtk_progress_tracker_start (&priv->tracker,

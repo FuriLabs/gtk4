@@ -39,6 +39,7 @@
 #include "gskgpuroundedcoloropprivate.h"
 #include "gskgpuscissoropprivate.h"
 #include "gskgputextureopprivate.h"
+#include "gskgputurbulenceopprivate.h"
 #include "gskgpuuploadopprivate.h"
 #include "gskgpuutilsprivate.h"
 
@@ -80,6 +81,7 @@
 #include "gsktexturenode.h"
 #include "gsktexturescalenode.h"
 #include "gsktransformnode.h"
+#include "gskturbulencenodeprivate.h"
 #include "gsktransformprivate.h"
 #include "gskprivate.h"
 
@@ -1338,9 +1340,10 @@ gsk_gpu_node_processor_add_texture_node (GskGpuRenderPass *self,
     sampler = GSK_GPU_SAMPLER_DEFAULT;
 
   if (!gsk_gpu_image_supports_sampler (image, sampler) ||
-      (should_mipmap && !gdk_color_state_equal (image_cs, self->ccs)))
+      (should_mipmap && (!(gsk_gpu_image_get_flags (image) & GSK_GPU_IMAGE_CAN_MIPMAP) ||
+                        !gdk_color_state_equal (image_cs, self->ccs))))
     {
-      image = gsk_gpu_copy_image (self->frame, self->ccs, image, image_cs, TRUE);
+      image = gsk_gpu_copy_image (self->frame, self->ccs, image, image_cs, should_mipmap);
       gdk_color_state_unref (image_cs);
       image_cs = gdk_color_state_ref (self->ccs);
       gsk_gpu_cache_cache_texture_image (gsk_gpu_device_get_cache (gsk_gpu_frame_get_device (self->frame)),
@@ -1529,7 +1532,8 @@ gsk_gpu_node_processor_add_texture_scale_node (GskGpuRenderPass *self,
     }
 
   if (!gsk_gpu_image_supports_sampler (image, sampler) ||
-      (need_mipmap && !gdk_color_state_equal (image_cs, self->ccs)))
+      (need_mipmap && (!(gsk_gpu_image_get_flags (image) & GSK_GPU_IMAGE_CAN_MIPMAP) ||
+                      !gdk_color_state_equal (image_cs, self->ccs))))
     {
       image = gsk_gpu_copy_image (self->frame, self->ccs, image, image_cs, need_mipmap);
       gdk_color_state_unref (image_cs);
@@ -2658,14 +2662,14 @@ gsk_gpu_node_processor_add_glyph_node (GskGpuRenderPass *self,
       graphene_point_t glyph_offset, glyph_origin;
       GskGpuGlyphLookupFlags flags;
 
-      glyph_origin = GRAPHENE_POINT_INIT (offset.x + glyphs[i].geometry.x_offset / pango_scale,
-                                          offset.y + glyphs[i].geometry.y_offset / pango_scale);
+      glyph_origin = GRAPHENE_POINT_INIT (offset.x + glyphs[i].geometry.x_offset / pango_scale + self->offset.x,
+                                          offset.y + glyphs[i].geometry.y_offset / pango_scale + self->offset.y);
 
       glyph_origin.x = floorf (glyph_origin.x * align_scale_x + 0.5f);
       glyph_origin.y = floorf (glyph_origin.y * align_scale_y + 0.5f);
       flags = (((int) glyph_origin.x & 3) | (((int) glyph_origin.y & 3) << 2)) & flags_mask;
-      glyph_origin.x /= align_scale_x;
-      glyph_origin.y /= align_scale_y;
+      glyph_origin.x = glyph_origin.x / align_scale_x - self->offset.x;
+      glyph_origin.y = glyph_origin.y / align_scale_y - self->offset.y;
 
       image = gsk_gpu_cached_glyph_lookup (cache,
                                            self->frame,
@@ -3652,6 +3656,61 @@ gsk_gpu_get_debug_node_as_image (GskGpuFrame           *frame,
   return result;
 }
 
+static void
+gsk_gpu_node_processor_add_turbulence_node (GskGpuRenderPass *self,
+                                            GskRenderNode    *node)
+{
+  graphene_rect_t bounds;
+  GskGpuImage *lookup_image;
+  GdkTexture *lookup_texture;
+  GBytes *lookup_bytes;
+  const float *data;
+  size_t stride;
+  GdkColorState *image_cs;
+
+  /* Note: We don't clip here to avoid the turbulence pattern shifting */
+  if (!gsk_gpu_render_pass_snap_rect (self,
+                                      &node->bounds,
+                                      gsk_turbulence_node_get_snap (node),
+                                      &bounds))
+    return;
+
+  stride = GSK_TURBULENCE_TABLE_WIDTH * 4 * sizeof (float);
+  data = gsk_turbulence_node_get_lookup_table (node);
+
+  lookup_bytes = g_bytes_new_static (data, GSK_TURBULENCE_TABLE_HEIGHT * stride);
+  lookup_texture = GDK_TEXTURE (gdk_memory_texture_new (GSK_TURBULENCE_TABLE_WIDTH,
+                                                        GSK_TURBULENCE_TABLE_HEIGHT,
+                                                        GDK_MEMORY_R32G32B32A32_FLOAT_PREMULTIPLIED,
+                                                        lookup_bytes,
+                                                        stride));
+  g_bytes_unref (lookup_bytes);
+
+  lookup_image = gsk_gpu_lookup_texture (self->frame, self->ccs, lookup_texture, FALSE, &image_cs);
+  g_object_unref (lookup_texture);
+
+  if (lookup_image == NULL)
+    return;
+
+  gsk_gpu_turbulence_op (self,
+                         self->ccs,
+                         gsk_turbulence_node_get_color_state (node),
+                         &bounds,
+                         lookup_image,
+                         GSK_GPU_SAMPLER_NEAREST,
+                         gsk_turbulence_node_get_noise_type (node) == GSK_NOISE_FRACTAL_NOISE,
+                         gsk_turbulence_node_get_stitch_tiles (node),
+                         gsk_turbulence_node_get_base_frequency (node),
+                         (float) gsk_turbulence_node_get_num_octaves (node),
+                         bounds.origin.x,
+                         bounds.origin.y,
+                         bounds.size.width,
+                         bounds.size.height);
+
+  g_object_unref (lookup_image);
+  gdk_color_state_unref (image_cs);
+}
+
 static const struct
 {
   void                  (* process_node)                        (GskGpuRenderPass    *self,
@@ -3814,6 +3873,10 @@ static const struct
   },
   [GSK_ARITHMETIC_NODE] = {
     gsk_gpu_node_processor_add_arithmetic_node,
+    NULL,
+  },
+  [GSK_TURBULENCE_NODE] = {
+    gsk_gpu_node_processor_add_turbulence_node,
     NULL,
   },
 };

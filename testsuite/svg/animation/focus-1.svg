@@ -6,10 +6,11 @@
         gpa:state='0'
         gpa:state-change-delay='0ms'
         gpa:time-since-load='0ms'
+        gpa:next-update='0ms'
+        gpa:run-mode='continuous'
         id='toplevel'
         tabindex='-1'
         font-size='13.333'
-        font-weight='400'
         width='64'
         height='64'>
   <style type='text/css'>
@@ -20,7 +21,6 @@
           id='rect1'
           tabindex='0'
           font-size='13.333'
-          font-weight='400'
           fill='rgb(255,255,0)'
           stroke='rgb(0,0,0)'
           x='0'
@@ -38,7 +38,9 @@
             keyTimes='0; 1'
             gpa:status='running'
             gpa:current-start-time='0ms'
-            gpa:current-end-time='500ms'/>
+            gpa:current-end-time='500ms'
+            gpa:run-mode='continuous'
+            gpa:last-start-time='0ms'/>
     <animate
             attributeName='fill'
             begin='rect1.blur'
@@ -47,22 +49,20 @@
             from='rgb(255,0,0)'
             to='rgb(255,255,0)'
             keyTimes='0; 1'
-            gpa:status='inactive'/>
+            gpa:status='inactive'
+            gpa:run-mode='discrete'/>
   </rect>
   <g
           id='group'
-          font-size='13.333'
-          font-weight='400'>
+          font-size='13.333'>
     <a
             id='link'
             font-size='13.333'
-            font-weight='400'
             href='http://www.gtk.org'
             gpa:css-state='link'>
       <rect
               id='rect2'
               font-size='13.333'
-              font-weight='400'
               fill='rgb(255,255,0)'
               x='32px'
               y='0'
@@ -76,7 +76,8 @@
                 from='rgb(255,255,0)'
                 to='rgb(144,238,144)'
                 keyTimes='0; 1'
-                gpa:status='inactive'/>
+                gpa:status='inactive'
+                gpa:run-mode='discrete'/>
         <animate
                 attributeName='fill'
                 begin='link.blur'
@@ -85,14 +86,14 @@
                 from='rgb(144,238,144)'
                 to='rgb(255,255,0)'
                 keyTimes='0; 1'
-                gpa:status='inactive'/>
+                gpa:status='inactive'
+                gpa:run-mode='discrete'/>
       </rect>
     </a>
     <rect
             id='rect3'
             tabindex='0'
             font-size='13.333'
-            font-weight='400'
             fill='rgb(255,255,0)'
             x='0'
             y='32px'
@@ -104,7 +105,6 @@
           id='rect4'
           tabindex='0'
           font-size='13.333'
-          font-weight='400'
           fill='rgb(255,255,0)'
           x='32px'
           y='32px'

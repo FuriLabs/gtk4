@@ -36,6 +36,7 @@
 #include "gtksvgfilterfunctionsprivate.h"
 #include "gtksvgstringprivate.h"
 #include "gtksvgtimespecprivate.h"
+#include "gtkpopcountprivate.h"
 
 
 gboolean
@@ -61,7 +62,8 @@ gboolean
 valid_state_name (const char *name)
 {
   if (strcmp (name, "all") == 0 ||
-      strcmp (name, "none") == 0)
+      strcmp (name, "none") == 0 ||
+      strcmp (name, "not") == 0)
     return FALSE;
 
   if (!is_state_name_start (name[0]))
@@ -98,6 +100,8 @@ parse_states_css (GtkCssParser *parser,
                   GtkSvg       *svg,
                   uint64_t     *states)
 {
+  gboolean negated = FALSE;
+
   gtk_css_parser_skip_whitespace (parser);
 
   if (gtk_css_parser_try_ident (parser, "all"))
@@ -110,6 +114,10 @@ parse_states_css (GtkCssParser *parser,
       *states = NO_STATES;
       return TRUE;
     }
+
+  gtk_css_parser_skip_whitespace (parser);
+  if (gtk_css_parser_try_ident (parser, "not"))
+    negated = TRUE;
 
   *states = NO_STATES;
   while (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
@@ -145,10 +153,13 @@ parse_states_css (GtkCssParser *parser,
           *states |= BIT ((unsigned int) i);
         }
       else if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_COMMA))
-        return TRUE;
+        break;
       else
         return FALSE;
     }
+
+  if (negated)
+    *states = ALL_STATES ^ *states;
 
   return TRUE;
 }
@@ -189,11 +200,19 @@ print_states (GString  *s,
       gboolean first = TRUE;
       unsigned int n_state_names = 0;
       const char **state_names = NULL;
+
       if (svg)
         {
           n_state_names = svg->n_state_names;
           state_names = (const char **) svg->state_names;
         }
+
+      if (gtk_popcount64 (states) > 31)
+        {
+          g_string_append (s, "not ");
+          states = ~states;
+        }
+
       for (unsigned int u = 0; u < 64; u++)
         {
           if ((states & BIT (u)) != 0)
@@ -225,81 +244,81 @@ shape_apply_state (GtkSvg       *self,
                    SvgElement   *shape,
                    unsigned int  state)
 {
-  if (svg_element_type_is_path (svg_element_get_type (shape)))
+  Visibility visibility;
+
+  if (svg_element_get_states (shape) & BIT (state))
+    visibility = VISIBILITY_VISIBLE;
+  else
+    visibility = VISIBILITY_HIDDEN;
+
+  if (svg_element_type_is_renderable (svg_element_get_type (shape)))
     {
-      Visibility visibility;
-
-      if (svg_element_get_states (shape) & BIT (state))
-        visibility = VISIBILITY_VISIBLE;
-      else
-        visibility = VISIBILITY_HIDDEN;
-
       if ((self->features & GTK_SVG_ANIMATIONS) == 0)
         {
           SvgValue *value = svg_visibility_new (visibility);
           svg_element_set_base_value (shape, SVG_PROPERTY_VISIBILITY, value, FALSE);
           svg_value_unref (value);
         }
+     }
 
-      if (!self->playing && shape->animations)
+  if (!self->playing && shape->animations)
+    {
+      for (unsigned int i = shape->animations->len; i > 0; i--)
         {
-          for (unsigned int i = shape->animations->len; i > 0; i--)
-            {
-              SvgAnimation *a = g_ptr_array_index (shape->animations, i - 1);
+          SvgAnimation *a = g_ptr_array_index (shape->animations, i - 1);
 
-              if ((visibility == VISIBILITY_VISIBLE &&
-                   g_str_has_prefix (a->id, "gpa:transition:fade-in")) ||
-                  (visibility == VISIBILITY_HIDDEN &&
-                   g_str_has_prefix (a->id, "gpa:transition:fade-out")))
+          if ((visibility == VISIBILITY_VISIBLE &&
+               g_str_has_prefix (a->id, "gpa:transition:fade-in")) ||
+              (visibility == VISIBILITY_HIDDEN &&
+               g_str_has_prefix (a->id, "gpa:transition:fade-out")))
+            {
+              a->status = ANIMATION_STATUS_DONE;
+              a->previous.begin = self->current_time;
+              a->current.begin = INDEFINITE;
+              a->current.end = INDEFINITE;
+              a->state_changed = TRUE;
+              g_ptr_array_steal_index (shape->animations, i - 1);
+              g_ptr_array_add (shape->animations, a);
+            }
+          if (g_str_has_prefix (a->id, "gpa:out-of-state"))
+            {
+              if (visibility == VISIBILITY_HIDDEN)
+                {
+                  a->status = ANIMATION_STATUS_RUNNING;
+                  a->previous.begin = self->current_time;
+                  a->current.begin = self->current_time;
+                  a->current.end = INDEFINITE;
+                }
+              else
                 {
                   a->status = ANIMATION_STATUS_DONE;
                   a->previous.begin = self->current_time;
                   a->current.begin = INDEFINITE;
                   a->current.end = INDEFINITE;
-                  a->state_changed = TRUE;
-                  g_ptr_array_steal_index (shape->animations, i - 1);
-                  g_ptr_array_add (shape->animations, a);
                 }
-              if (g_str_has_prefix (a->id, "gpa:out-of-state"))
+              a->state_changed = TRUE;
+              g_ptr_array_steal_index (shape->animations, i - 1);
+              g_ptr_array_add (shape->animations, a);
+            }
+          if (g_str_has_prefix (a->id, "gpa:in-state"))
+            {
+              if (visibility == VISIBILITY_VISIBLE)
                 {
-                  if (visibility == VISIBILITY_HIDDEN)
-                    {
-                      a->status = ANIMATION_STATUS_RUNNING;
-                      a->previous.begin = self->current_time;
-                      a->current.begin = self->current_time;
-                      a->current.end = INDEFINITE;
-                    }
-                  else
-                    {
-                      a->status = ANIMATION_STATUS_DONE;
-                      a->previous.begin = self->current_time;
-                      a->current.begin = INDEFINITE;
-                      a->current.end = INDEFINITE;
-                    }
-                  a->state_changed = TRUE;
-                  g_ptr_array_steal_index (shape->animations, i - 1);
-                  g_ptr_array_add (shape->animations, a);
+                  a->status = ANIMATION_STATUS_RUNNING;
+                  a->previous.begin = self->current_time;
+                  a->current.begin = self->current_time;
+                  a->current.end = INDEFINITE;
                 }
-              if (g_str_has_prefix (a->id, "gpa:in-state"))
+              else
                 {
-                  if (visibility == VISIBILITY_VISIBLE)
-                    {
-                      a->status = ANIMATION_STATUS_RUNNING;
-                      a->previous.begin = self->current_time;
-                      a->current.begin = self->current_time;
-                      a->current.end = INDEFINITE;
-                    }
-                  else
-                    {
-                      a->status = ANIMATION_STATUS_DONE;
-                      a->previous.begin = self->current_time;
-                      a->current.begin = INDEFINITE;
-                      a->current.end = INDEFINITE;
-                    }
-                  a->state_changed = TRUE;
-                  g_ptr_array_steal_index (shape->animations, i - 1);
-                  g_ptr_array_add (shape->animations, a);
+                  a->status = ANIMATION_STATUS_DONE;
+                  a->previous.begin = self->current_time;
+                  a->current.begin = INDEFINITE;
+                  a->current.end = INDEFINITE;
                 }
+              a->state_changed = TRUE;
+              g_ptr_array_steal_index (shape->animations, i - 1);
+              g_ptr_array_add (shape->animations, a);
             }
         }
     }
@@ -335,6 +354,8 @@ create_visibility_setter (SvgElement   *shape,
   Visibility initial_visibility;
   Visibility opposite_visibility;
   SvgValue *value;
+
+  a->line = 0;
 
   if (svg_element_is_specified (shape, SVG_PROPERTY_VISIBILITY))
     {
@@ -407,6 +428,15 @@ create_states (SvgElement   *shape,
 /* }}} */
 /* {{{ Transitions */
 
+/* Animations and transitions are triggered by state changes, so they
+ * will commonly have the same start time. To make sure things work out
+ * correctly, we use the line field to disambiguate, as follows:
+ * - 0: visibility setters, connections, path-length
+ * - 1: fade-in transitions
+ * - 2: animations
+ * - 3: fade-out transitions
+ */
+
 void
 create_path_length (SvgElement *shape,
                     Timeline   *timeline)
@@ -414,6 +444,7 @@ create_path_length (SvgElement *shape,
   SvgAnimation *a = svg_animation_new (ANIMATION_TYPE_SET);
   TimeSpec *begin, *end;
 
+  a->line = 0;
   a->attr = SVG_PROPERTY_PATH_LENGTH;
 
   a->id = g_strdup_printf ("gpa:path-length:%s", svg_element_get_id (shape));
@@ -456,6 +487,8 @@ create_transition (SvgElement    *shape,
   TimeSpec *begin;
 
   a = svg_animation_new (ANIMATION_TYPE_ANIMATE);
+
+  a->line = 1;
   a->idx = idx;
   a->simple_duration = duration;
   a->repeat_duration = duration;
@@ -491,6 +524,8 @@ create_transition (SvgElement    *shape,
   a->gpa.origin = origin;
 
   a = svg_animation_new (ANIMATION_TYPE_ANIMATE);
+
+  a->line = 3;
   a->idx = idx;
   a->simple_duration = duration;
   a->repeat_duration = duration;
@@ -528,6 +563,8 @@ create_transition (SvgElement    *shape,
   if (delay > 0)
     {
       a = svg_animation_new (ANIMATION_TYPE_SET);
+
+      a->line = 1;
       a->idx = idx;
       a->attr = attr;
       a->simple_duration = duration;
@@ -555,6 +592,8 @@ create_transition (SvgElement    *shape,
       svg_element_add_animation (shape, a);
 
       a = svg_animation_new (ANIMATION_TYPE_SET);
+
+      a->line = 3;
       a->idx = idx;
       a->attr = attr;
       a->simple_duration = duration;
@@ -595,6 +634,8 @@ create_transition_delay (SvgElement  *shape,
   TimeSpec *begin;
 
   a = svg_animation_new (ANIMATION_TYPE_SET);
+
+  a->line = 1;
   a->simple_duration = delay;
   a->repeat_duration = delay;
   a->repeat_count = 1;
@@ -622,6 +663,8 @@ create_transition_delay (SvgElement  *shape,
   time_spec_add_animation (begin, a);
 
   a = svg_animation_new (ANIMATION_TYPE_SET);
+
+  a->line = 3;
   a->simple_duration = delay;
   a->repeat_duration = delay;
   a->repeat_count = 1;
@@ -786,6 +829,8 @@ create_morph_filter (SvgElement *shape,
   g_free (str);
 
   a = svg_animation_new (ANIMATION_TYPE_SET);
+
+  a->line = 1;
   a->id = g_strdup_printf ("gpa:set:morph:%s", svg_element_get_id (shape));
   a->attr = SVG_PROPERTY_FILTER;
 
@@ -878,6 +923,8 @@ create_animation (SvgElement   *shape,
   TimeSpec *begin, *end;
 
   a = svg_animation_new (ANIMATION_TYPE_ANIMATE);
+
+  a->line = 2;
   a->repeat_count = repeat;
   a->simple_duration = duration;
   if (repeat == REPEAT_FOREVER)
@@ -1216,6 +1263,7 @@ create_attachment (SvgElement *shape,
 
   a = svg_animation_new (ANIMATION_TYPE_MOTION);
 
+  a->line = 0;
   a->has_begin = 1;
   a->has_end = 1;
   a->has_simple_duration = 1;
@@ -1262,6 +1310,8 @@ create_attachment_connection_to (SvgAnimation *a,
   TimeSpec *begin, *end;
 
   a2 = svg_animation_new (ANIMATION_TYPE_MOTION);
+
+  a2->line = 0;
   a2->simple_duration = da->simple_duration;
   a2->repeat_count = da->repeat_count;
   if (g_str_has_prefix (da->id, "gpa:animation:"))

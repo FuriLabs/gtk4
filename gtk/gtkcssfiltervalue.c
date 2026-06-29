@@ -154,9 +154,11 @@ gtk_css_filter_init_identity (GtkCssFilter       *filter,
       filter->drop_shadow.value = gtk_css_shadow_value_new_filter (other->drop_shadow.value);
       break;
     case GTK_CSS_FILTER_SVG:
-      filter->svg.ref = NULL;
-      filter->svg.url = NULL;
-      filter->svg.svg = NULL;
+      filter->svg.ref = g_strdup ("filter");
+      filter->svg.url = g_strdup ("<svg><filter id='filter'><feMerge><feMergeNode in='SourceGraphic'/></feMerge></filter></svg>");
+      GBytes *bytes = g_bytes_new_static (filter->svg.url, strlen (filter->svg.url));
+      filter->svg.svg = gtk_svg_new_from_bytes (bytes);
+      g_bytes_unref (bytes);
       break;
     case GTK_CSS_FILTER_NONE:
     default:
@@ -864,11 +866,13 @@ typedef struct
 
 static void
 css_location_update (GtkCssLocation *l,
+                     int             lines,
                      int             bytes,
                      int             chars)
 {
   l->bytes += bytes;
   l->chars += chars;
+  l->lines += lines;
   l->line_bytes += bytes;
   l->line_chars += chars;
 }
@@ -881,18 +885,15 @@ svg_error_cb (GtkSvg          *svg,
   GtkCssLocation start = d->start;
   GtkCssLocation end = d->end;
 
-#if 0
-  /* GMarkup error locations are not good enough for this :( */
   if (d->is_data && svg_error->domain == GTK_SVG_ERROR)
     {
       const GtkSvgLocation *s = gtk_svg_error_get_start (svg_error);
       const GtkSvgLocation *e = gtk_svg_error_get_end (svg_error);
 
       start = end = d->start;
-      css_location_update (&start, s->line_chars, e->line_chars);
-      css_location_update (&end, e->line_chars, e->line_chars);
+      css_location_update (&start, s->lines, s->line_chars, s->line_chars);
+      css_location_update (&end, e->lines, e->line_chars, e->line_chars);
     }
-#endif
 
   gtk_css_parser_error (d->parser,
                         GTK_CSS_PARSER_ERROR_SYNTAX,
@@ -1019,9 +1020,9 @@ gtk_css_filter_value_parse (GtkCssParser *parser)
           end = *gtk_css_parser_get_end_location (parser);
 
           len = strlen ("url(\"");
-          css_location_update (&start, len, len);
+          css_location_update (&start, 0, len, len);
           len = strlen ("\")");
-          css_location_update (&end, - len, - len);
+          css_location_update (&end, 0, - len, - len);
 
           g_uri_split (url, 0, &scheme, NULL, NULL, NULL, &path, NULL, &fragment, NULL);
           if (!fragment)
@@ -1063,9 +1064,9 @@ gtk_css_filter_value_parse (GtkCssParser *parser)
               if (bytes)
                 {
                   len = strchr (url, ',') - url;
-                  css_location_update (&start, len, len);
+                  css_location_update (&start, 0, len, len);
                   len = strlen (fragment) - 1;
-                  css_location_update (&end, - len, - len);
+                  css_location_update (&end, 0, - len, - len);
                 }
             }
           else
@@ -1097,7 +1098,7 @@ gtk_css_filter_value_parse (GtkCssParser *parser)
            */
           filter.svg.svg = gtk_svg_new ();
           gtk_svg_set_features (filter.svg.svg,
-                                GTK_SVG_SYSTEM_RESOURCES & GTK_SVG_EXTERNAL_RESOURCES);
+                                GTK_SVG_SYSTEM_RESOURCES | GTK_SVG_EXTERNAL_RESOURCES);
           signal_id = g_signal_connect (filter.svg.svg, "error",
                                         G_CALLBACK (svg_error_cb),
                                         (&(ParserErrorData) { parser, is_data, start, end }));

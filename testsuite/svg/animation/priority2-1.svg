@@ -6,8 +6,8 @@
         gpa:state='0'
         gpa:state-change-delay='0ms'
         gpa:time-since-load='1000ms'
+        gpa:run-mode='continuous'
         font-size='13.333'
-        font-weight='400'
         width='0px'
         height='0px'
         viewBox='0 0 480 360'>
@@ -21,7 +21,6 @@
   <rect
           class='imp'
           font-size='13.333'
-          font-weight='400'
           fill='rgb(0,0,255)'
           width='480px'
           height='180px'>
@@ -33,11 +32,12 @@
             values='rgb(255,0,0); rgb(0,128,0); rgb(255,0,0)'
             keyTimes='0; 0.5; 1'
             gpa:status='running'
-            gpa:current-start-time='0ms'/>
+            gpa:current-start-time='0ms'
+            gpa:run-mode='continuous'
+            gpa:last-start-time='0ms'/>
   </rect>
   <rect
           font-size='13.333'
-          font-weight='400'
           fill='rgb(0,128,0)'
           y='180px'
           width='480px'
@@ -50,6 +50,8 @@
             values='rgb(255,0,0); rgb(0,128,0); rgb(255,0,0)'
             keyTimes='0; 0.5; 1'
             gpa:status='running'
-            gpa:current-start-time='0ms'/>
+            gpa:current-start-time='0ms'
+            gpa:run-mode='continuous'
+            gpa:last-start-time='0ms'/>
   </rect>
 </svg>

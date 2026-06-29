@@ -46,7 +46,6 @@
 #include "gsk/gskrectprivate.h"
 #include "gsk/gskroundedrectprivate.h"
 #include "gtk/gtkcssselectorprivate.h"
-#include <glib/gstdio.h>
 #include "gtksvgenumtypes.h"
 #include "gtksvgutilsprivate.h"
 #include "gtksvgstringutilsprivate.h"
@@ -88,6 +87,8 @@
 #include "gtksvgtimespecprivate.h"
 #include "gtksvggpaprivate.h"
 #include "gtksvgmediaqueryprivate.h"
+
+#include <glib/gstdio.h>
 
 #include <stdint.h>
 
@@ -150,8 +151,7 @@ extern int64_t time_base;
  * not supported.
  *
  * In the `<filter>` element, the following primitives are not supported:
- * feConvolveMatrix, feDiffuseLighting, feMorphology, feSpecularLighting
- * and feTurbulence.
+ * feConvolveMatrix, feDiffuseLighting, feMorphology, feSpecularLighting.
  *
  * Support for the `mask` attribute is limited to just a url referring to
  * the `<mask>` element by ID.
@@ -215,6 +215,10 @@ extern int64_t time_base;
  *
  * will start a fade-out of path1 300ms before a transition from state
  * 0 to 1, 2 or 3.
+ *
+ * States can be specified numerically, or by name. It is also possible
+ * to say `not STATE` instead of explictly listing all states that are
+ * different from `STATE`.
  *
  * In addition to the `gpa:fill` and `gpa:stroke` attributes, symbolic
  * colors can also be specified as a custom paint server reference,
@@ -450,6 +454,12 @@ load_texture (const char  *string,
   else if (g_str_has_prefix (string, "resource:"))
     {
       texture = gdk_texture_new_from_resource (string + strlen ("resource:"));
+    }
+  else if (allow_external && g_str_has_prefix (string, "file:"))
+    {
+      GFile *file = g_file_new_for_uri (string);
+      texture = gdk_texture_new_from_file (file, error);
+      g_object_unref (file);
     }
   else if (allow_external)
     {
@@ -1401,7 +1411,8 @@ compute_animation_motion_value (SvgAnimation      *a,
 
 static SvgValue *
 compute_value_at_time (SvgAnimation      *a,
-                       SvgComputeContext *context)
+                       SvgComputeContext *context,
+                       int64_t            time)
 {
   int rep;
   unsigned int frame;
@@ -1411,7 +1422,7 @@ compute_value_at_time (SvgAnimation      *a,
   if (a->type == ANIMATION_TYPE_SET)
     return resolve_value (a->shape, context, a->attr, a->idx, a->frames[0].value);
 
-  if (!svg_animation_get_progress (a, context->current_time,
+  if (!svg_animation_get_progress (a, time,
                                    &rep, &frame, &frame_t, &frame_start, &frame_end))
     gtk_svg_update_error (context->svg, "Not enough data to advance animation %s", a->id);
 
@@ -1506,28 +1517,28 @@ compute_value_for_animation (SvgAnimation      *a,
     {
       /* animation is active */
       dbg_print ("values", "%s: updating value", a->id);
-      value = compute_value_at_time (a, context);
+      value = compute_value_at_time (a, context, context->current_time);
     }
   else if (a->fill == ANIMATION_FILL_FREEZE)
     {
       /* keep the last value */
       if (a->repeat_count == 1)
         {
-          if (!(a->attr == SVG_PROPERTY_TRANSFORM && a->type == ANIMATION_TYPE_MOTION))
+          if (a->attr == SVG_PROPERTY_TRANSFORM && a->type == ANIMATION_TYPE_MOTION)
             {
-              dbg_print ("values", "%s: frozen (fast)", a->id);
-              value = resolve_value (a->shape, context, a->attr, a->idx, a->frames[a->n_frames - 1].value);
+              dbg_print ("values", "%s: frozen (motion)", a->id);
+              value = compute_animation_motion_value (a, 1, a->n_frames - 1, 0, context);
             }
           else
            {
-              dbg_print ("values", "%s: frozen (motion)", a->id);
-              value = compute_animation_motion_value (a, 1, a->n_frames - 1, 0, context);
+              dbg_print ("values", "%s: frozen (fast)", a->id);
+              value = resolve_value (a->shape, context, a->attr, a->idx, a->frames[a->n_frames - 1].value);
            }
         }
       else
         {
           dbg_print ("values", "%s: frozen", a->id);
-          value = compute_value_at_time (a, context);
+          value = compute_value_at_time (a, context, a->previous.end);
         }
     }
   else
@@ -1659,6 +1670,21 @@ compute_current_values_for_shape (SvgElement        *shape,
         graphene_rect_init (&viewport, 0, 0, width, height);
 
       context->viewport = &viewport;
+    }
+
+  if ((context->svg->features & GTK_SVG_ANIMATIONS) == 0 &&
+      !svg_element_is_important (shape, SVG_PROPERTY_VISIBILITY))
+    {
+      Visibility visibility;
+
+      if (svg_element_get_states (shape) & context->svg->state)
+        visibility = VISIBILITY_VISIBLE;
+      else
+        visibility = VISIBILITY_HIDDEN;
+
+      SvgValue *value = svg_visibility_new (visibility);
+      shape_set_current_value (shape, SVG_PROPERTY_VISIBILITY, 0, value);
+      svg_value_unref (value);
     }
 
   if (shape->animations)
@@ -1902,6 +1928,8 @@ gtk_svg_dispose (GObject *object)
   g_clear_pointer (&self->content, svg_element_free);
   g_clear_pointer (&self->timeline, timeline_free);
   g_clear_pointer (&self->images, g_hash_table_unref);
+  g_clear_pointer (&self->user_styles, g_array_unref);
+  g_clear_pointer (&self->author_styles, g_array_unref);
 
   frame_clock_disconnect (self);
   g_clear_handle_id (&self->pending_advance, g_source_remove);
@@ -2230,11 +2258,21 @@ gtk_svg_equal (GtkSvg *svg1,
     return TRUE;
 
   if (svg1->gpa_version != svg2->gpa_version ||
+      svg1->n_state_names != svg2->n_state_names ||
+      svg1->weight != svg2->weight ||
+      svg1->initial_state != svg2->initial_state ||
+      svg1->features != svg2->features ||
       g_strcmp0 (svg1->author, svg2->author) != 0 ||
       g_strcmp0 (svg1->license, svg2->license) != 0 ||
       g_strcmp0 (svg1->description, svg2->description) != 0 ||
       g_strcmp0 (svg1->keywords, svg2->keywords) != 0)
     return FALSE;
+
+  for (unsigned int i = 0; i < svg1->n_state_names; i++)
+    {
+      if (g_strcmp0 (svg1->state_names[i], svg2->state_names[i]) != 0)
+        return FALSE;
+    }
 
   return svg_element_equal (svg1->content, svg2->content);
 }
@@ -2258,6 +2296,9 @@ gtk_svg_set_hover_callback (GtkSvg             *svg,
 }
 
 /* {{{ Animation */
+
+static void update_for_state (GtkSvg       *self,
+                              unsigned int  previous_state);
 
 /*< private>
  * gtk_svg_set_load_time:
@@ -2297,6 +2338,7 @@ gtk_svg_set_load_time (GtkSvg  *self,
 
   timeline_set_load_time (self->timeline, load_time);
 
+  update_for_state (self, self->initial_state);
   update_animation_state (self);
 }
 
@@ -2466,6 +2508,7 @@ gtk_svg_set_playing (GtkSvg   *self,
 void
 gtk_svg_clear_content (GtkSvg *self)
 {
+  g_clear_pointer (&self->resource, g_free);
   g_clear_pointer (&self->timeline, timeline_free);
   g_clear_pointer (&self->content, svg_element_free);
   g_clear_pointer (&self->images, g_hash_table_unref);
@@ -2977,6 +3020,7 @@ gtk_svg_load_from_bytes (GtkSvg *self,
                          GBytes *bytes)
 {
   g_return_if_fail (GTK_IS_SVG (self));
+  g_return_if_fail (bytes != NULL);
 
   gtk_svg_clear_content (self);
 
@@ -3005,13 +3049,11 @@ gtk_svg_load_from_resource (GtkSvg     *self,
                             const char *path)
 {
   g_return_if_fail (GTK_IS_SVG (self));
-
-  g_set_str (&self->resource, path);
+  g_return_if_fail (path != NULL);
 
   gtk_svg_clear_content (self);
-
-  if (path)
-    gtk_svg_init_from_resource (self, path);
+  self->resource = g_strdup (path);
+  gtk_svg_init_from_resource (self, path);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_RESOURCE]);
 }
@@ -3068,6 +3110,32 @@ gtk_svg_get_weight (GtkSvg *self)
   return self->weight;
 }
 
+static void
+update_for_state (GtkSvg       *self,
+                  unsigned int  previous_state)
+{
+  int64_t current_time;
+
+  if ((self->features & GTK_SVG_ANIMATIONS) == 0 || !self->playing)
+    {
+      if (self->gpa_version > 0)
+        {
+          apply_state (self, self->state);
+          gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
+        }
+    }
+
+  current_time = get_current_time (self);
+  timeline_update_for_state (self->timeline,
+                             previous_state, self->state,
+                             current_time + self->state_change_delay);
+   gtk_svg_advance (self, current_time);
+
+#ifdef DEBUG
+   animation_state_dump (self);
+#endif
+}
+
 /**
  * gtk_svg_set_state:
  * @self: an SVG paintable
@@ -3097,39 +3165,16 @@ gtk_svg_set_state (GtkSvg       *self,
   previous_state = self->state;
   self->state = state;
 
-  if ((self->features & GTK_SVG_EXTENSIONS) == 0)
-    {
-      g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STATE]);
-      return;
-    }
+  dbg_print ("state", "renderer state %u -> %u", previous_state, state);
 
-  if ((self->features & GTK_SVG_ANIMATIONS) == 0 ||
-      !self->playing)
-    {
-      if (self->gpa_version > 0)
-        {
-          apply_state (self, state);
-          gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
-        }
-    }
+  if ((self->features & GTK_SVG_EXTENSIONS) == 0)
+    goto done;
 
   /* Don't jiggle things while we're still loading */
   if (self->load_time != INDEFINITE)
-    {
-      int64_t current_time = get_current_time (self);
-      dbg_print ("state", "renderer state %u -> %u", previous_state, state);
+    update_for_state (self, previous_state);
 
-      timeline_update_for_state (self->timeline,
-                                 previous_state, self->state,
-                                 current_time + self->state_change_delay);
-
-      gtk_svg_advance (self, current_time);
-
-#ifdef DEBUG
-      animation_state_dump (self);
-#endif
-    }
-
+done:
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STATE]);
 }
 

@@ -332,8 +332,10 @@ svg_element_get_path (SvgElement            *element,
     {
     case SVG_ELEMENT_LINE:
       builder = gsk_path_builder_new ();
-      if (values[SVG_PROPERTY_X1] && values[SVG_PROPERTY_Y1] &&
-          values[SVG_PROPERTY_X2] && values[SVG_PROPERTY_Y2])
+      if (svg_value_is_set (values[SVG_PROPERTY_X1]) &&
+          svg_value_is_set (values[SVG_PROPERTY_Y1]) &&
+          svg_value_is_set (values[SVG_PROPERTY_X2]) &&
+          svg_value_is_set (values[SVG_PROPERTY_Y2]))
         {
           double x1 = svg_number_get (values[SVG_PROPERTY_X1], viewport->size.width);
           double y1 = svg_number_get (values[SVG_PROPERTY_Y1], viewport->size.height);
@@ -347,7 +349,7 @@ svg_element_get_path (SvgElement            *element,
     case SVG_ELEMENT_POLYLINE:
     case SVG_ELEMENT_POLYGON:
       builder = gsk_path_builder_new ();
-      if (values[SVG_PROPERTY_POINTS])
+      if (svg_value_is_set (values[SVG_PROPERTY_POINTS]))
         {
           SvgValue *v = values[SVG_PROPERTY_POINTS];
           if (svg_numbers_get_length (v) > 0)
@@ -376,7 +378,9 @@ svg_element_get_path (SvgElement            *element,
 
     case SVG_ELEMENT_CIRCLE:
       builder = gsk_path_builder_new ();
-      if (values[SVG_PROPERTY_CX] && values[SVG_PROPERTY_CY] && values[SVG_PROPERTY_R])
+      if (svg_value_is_set (values[SVG_PROPERTY_CX]) &&
+          svg_value_is_set (values[SVG_PROPERTY_CY]) &&
+          svg_value_is_set (values[SVG_PROPERTY_R]))
         {
           double cx = svg_number_get (values[SVG_PROPERTY_CX], viewport->size.width);
           double cy = svg_number_get (values[SVG_PROPERTY_CY], viewport->size.height);
@@ -387,8 +391,10 @@ svg_element_get_path (SvgElement            *element,
 
     case SVG_ELEMENT_ELLIPSE:
       builder = gsk_path_builder_new ();
-      if (values[SVG_PROPERTY_CX] && values[SVG_PROPERTY_CY] &&
-          values[SVG_PROPERTY_RX] && values[SVG_PROPERTY_RY])
+      if (svg_value_is_set (values[SVG_PROPERTY_CX]) &&
+          svg_value_is_set (values[SVG_PROPERTY_CY]) &&
+          svg_value_is_set (values[SVG_PROPERTY_RX]) &&
+          svg_value_is_set (values[SVG_PROPERTY_RY]))
         {
           double cx = svg_number_get (values[SVG_PROPERTY_CX], viewport->size.width);
           double cy = svg_number_get (values[SVG_PROPERTY_CY], viewport->size.height);
@@ -400,9 +406,12 @@ svg_element_get_path (SvgElement            *element,
 
     case SVG_ELEMENT_RECT:
       builder = gsk_path_builder_new ();
-      if (values[SVG_PROPERTY_X] && values[SVG_PROPERTY_Y] &&
-          values[SVG_PROPERTY_WIDTH] && values[SVG_PROPERTY_HEIGHT] &&
-          values[SVG_PROPERTY_RX] && values[SVG_PROPERTY_RY])
+      if (svg_value_is_set (values[SVG_PROPERTY_X]) &&
+          svg_value_is_set (values[SVG_PROPERTY_Y]) &&
+          svg_value_is_set (values[SVG_PROPERTY_WIDTH]) &&
+          svg_value_is_set (values[SVG_PROPERTY_HEIGHT]) &&
+          svg_value_is_set (values[SVG_PROPERTY_RX]) &&
+          svg_value_is_set (values[SVG_PROPERTY_RY]))
         {
           double x = svg_number_get (values[SVG_PROPERTY_X], viewport->size.width);
           double y = svg_number_get (values[SVG_PROPERTY_Y], viewport->size.height);
@@ -427,7 +436,7 @@ svg_element_get_path (SvgElement            *element,
       return gsk_path_builder_free_to_path (builder);
 
     case SVG_ELEMENT_PATH:
-      if (values[SVG_PROPERTY_PATH] &&
+      if (svg_value_is_set (values[SVG_PROPERTY_PATH]) &&
           svg_path_get_gsk (values[SVG_PROPERTY_PATH]))
         {
           return gsk_path_ref (svg_path_get_gsk (values[SVG_PROPERTY_PATH]));
@@ -752,9 +761,15 @@ svg_element_get_current_bounds (SvgElement            *element,
       break;
     case SVG_ELEMENT_TEXT:
     case SVG_ELEMENT_TSPAN:
-      if (!element->valid_bounds)
-        g_critical ("No valid bounds for text");
-      graphene_rect_init_from_rect (&b, &element->bounds);
+      {
+        SvgElement *elt = element;
+        while (svg_element_get_type (elt) != SVG_ELEMENT_TEXT)
+          elt = svg_element_get_parent (elt);
+        if (!elt->valid_bounds)
+          g_critical ("No valid bounds for text");
+        graphene_rect_init_from_rect (&b, &elt->bounds);
+        ret = TRUE;
+      }
       break;
     case SVG_ELEMENT_IMAGE:
       {
@@ -2344,6 +2359,8 @@ svg_element_clone (SvgElement *element,
   clone->css_node = gtk_css_node_new ();
   gtk_css_node_set_parent (clone->css_node, parent->css_node);
   gtk_css_node_set_name (clone->css_node, g_quark_from_static_string (svg_element_type_get_name (clone->type)));
+  if (element->id)
+    gtk_css_node_set_id (clone->css_node, g_quark_from_string (element->id));
   gtk_css_node_set_classes (clone->css_node, (const char **) clone->classes);
   if (clone->type == SVG_ELEMENT_LINK)
     gtk_css_node_set_state (clone->css_node, GTK_STATE_FLAG_LINK);

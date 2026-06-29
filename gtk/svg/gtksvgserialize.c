@@ -190,6 +190,38 @@ serialize_shape_attrs (GString              *s,
           else
             value = svg_element_get_specified_value (shape, attr);
 
+          if (value)
+            svg_value_ref (value);
+
+          if (value &&
+              attr == SVG_PROPERTY_FONT_WEIGHT &&
+              strcmp (value->class->name, "SvgNumber") == 0)
+            {
+              SvgValue *tmp;
+              double weight = svg_number_get (value, 1000);
+
+              if (weight == 400)
+                tmp = svg_font_weight_new (FONT_WEIGHT_NORMAL);
+              else if (weight == 500)
+                tmp = svg_font_weight_new (FONT_WEIGHT_BOLD);
+              else
+                tmp = NULL;
+              if (tmp)
+                {
+                  svg_value_unref (value);
+                  value = tmp;
+                }
+            }
+
+          if (value &&
+              attr == SVG_PROPERTY_FONT_STRETCH &&
+              strcmp (value->class->name, "SvgNumber") == 0)
+            {
+              SvgValue *tmp = svg_font_stretch_new ((FontStretch) svg_number_get (value, 100));
+              svg_value_unref (value);
+              value = tmp;
+            }
+
           initial = svg_property_ref_initial_value (attr, svg_element_get_type (shape), svg_element_get_parent (shape) != NULL);
 
           if (value && (svg_element_is_specified (shape, attr) || !svg_value_equal (value, initial)))
@@ -204,6 +236,7 @@ serialize_shape_attrs (GString              *s,
             }
 
           svg_value_unref (initial);
+          svg_value_unref (value);
         }
     }
 }
@@ -494,6 +527,9 @@ serialize_animation_status (GString              *s,
   if (flags & GTK_SVG_SERIALIZE_INCLUDE_STATE)
     {
       const char *status[] = { "inactive", "running", "done" };
+      const char *run_modes[] = { "stopped", "discrete", "continuous" };
+      int64_t last_start;
+
       append_string_attr (s, indent, "gpa:status", status[a->status]);
 
       /* Not writing out start/end time, since that will be hard to compare */
@@ -512,6 +548,16 @@ serialize_animation_status (GString              *s,
 
       if (a->current.end != INDEFINITE)
         append_time_attr (s, indent, "gpa:current-end-time", a->current.end - svg->load_time);
+
+      append_string_attr (s, indent, "gpa:run-mode", run_modes[a->run_mode]);
+
+      if (a->status == ANIMATION_STATUS_DONE)
+        last_start = a->previous.begin;
+      else
+        last_start = a->current.begin;
+
+      if (last_start != INDEFINITE)
+        append_time_attr (s, indent, "gpa:last-start-time", last_start - svg->load_time);
     }
 }
 
@@ -1127,6 +1173,7 @@ gtk_svg_serialize_full (GtkSvg               *self,
 
   if (flags & GTK_SVG_SERIALIZE_INCLUDE_STATE)
     {
+      const char *run_modes[] = { "stopped", "discrete", "continuous" };
       string_indent (s, ATTR_INDENT);
       string_append_double (s,
                             "gpa:state-change-delay='",
@@ -1140,6 +1187,17 @@ gtk_svg_serialize_full (GtkSvg               *self,
                                 (self->current_time - self->load_time) / (double) G_TIME_SPAN_MILLISECOND);
           g_string_append (s, "ms'");
         }
+
+      if (self->next_update != INDEFINITE)
+        {
+          string_indent (s, ATTR_INDENT);
+          string_append_double (s,
+                                "gpa:next-update='",
+                                (self->next_update - self->load_time) / (double) G_TIME_SPAN_MILLISECOND);
+          g_string_append (s, "ms'");
+        }
+
+      append_string_attr (s, 0, "gpa:run-mode", run_modes[self->run_mode]);
     }
 
   serialize_shape_attrs (s, self, 0, self->content, flags);

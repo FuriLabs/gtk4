@@ -165,6 +165,20 @@ side they are used for.
 
 # Nodes
 
+### arithmetic
+
+| property    | syntax           | default                | printed     |
+| ----------- | ---------------- | ---------------------- | ----------- |
+| bounds      | `<number>`       | 1                      | non-default |
+| snap        | `<snap>`         | none                   | non-default |
+| first       | `<node>`         | color { }              | always      |
+| second      | `<node>`         | color { }              | always      |
+| k           | `<number>{4}`    | 0 0 0 0                | always      |
+| color-state | `<color-state>`  | srgb                   | non-default |
+
+Creates a new arithmetic node, with an effect as described in the CSS
+[filter effects spec](https://www.w3.org/TR/filter-effects-1/#elementdef-fecomposite).
+
 ### container
 
 The **container** node is a special node that allows specifying a list of child nodes. Its contents follow the same rules as an empty document.
@@ -285,7 +299,7 @@ matrix3d() production to specify all 16 values individually.
 
 Creates a node like `gsk_component_transfer_node_new()` with the given properties.
 
-Possible values for the transfer propertes are:
+Possible values for the transfer properties are:
 
     transfer: none | levels(n) | linear(m,b) | gamma(amp,exp,ofs) |
               discrete(v1,…,vn) | table(v1,…,vn)
@@ -365,6 +379,26 @@ Creates a node like `gsk_cross_fade_node_new()` with the given properties.
 | message  | `<string>`       | ""                     | non-default |
 
 Creates a node like `gsk_debug_node_new()` with the given properties.
+
+### displacement
+
+| property     | syntax           | default                | printed     |
+| ------------ | ---------------- | ---------------------- | ----------- |
+| bounds       | `<rect>`         | 50                     | always      |
+| snap         | `<snap>`         | none                   | non-default |
+| child        | `<node>`         | color { }              | always      |
+| displacement | `<node>`         | color { }              | always      |
+| max          | `<number>{1,2}`  | 5 5                    | non-default |
+| scale        | `<number>{1,2}`  | 10 10                  | non-default |
+| offset       | `<number>{1,2}`  | 0.5 0.5                | non-default |
+| channels     | `<channel>{2}`   | red green              | non-default |
+
+Creates a new displacement node, with an effect as described in the CSS
+[filter effects spec](https://www.w3.org/TR/filter-effects-1/#feDisplacementMapElement)
+
+Possible values for the channels property are:
+
+    channel: red | green | blue | alpha
 
 ### fill
 
@@ -715,3 +749,23 @@ Possible values for the filter property are:
 | transform| `<transform>`    | none                   | non-default |
 
 Creates a node like `gsk_transform_node_new()` with the given properties.
+
+### turbulence
+
+| property          | syntax               | default         | printed     |
+| ----------------- | -------------------- | --------------- | ----------- |
+| bounds            | `<rect>`             | 50              | always      |
+| snap              | `<snap>`             | none            | non-default |
+| color-state       | `<color-state>`      | srgb            | non-default |
+| base-frequency    | `<number>{1,2}`      | 0 0             | always      |
+| num-octaves       | `<integer>`          | 1               | non-default |
+| seed              | `<integer>`          | 0               | non-default |
+| noise-type        | `<noise-type>`       | turbulence      | non-default |
+| stitch-tiles      | `<boolean>`          | false           | non-default |
+
+Creates a new turbulence node, with an effect as described in the CSS
+[filter effects spec](https://www.w3.org/TR/filter-effects-1/#feTurbulenceElement).
+
+Possible values for the noise-type property are:
+
+    noise-type: fractal-noise | turbulence

@@ -495,7 +495,7 @@ parse_base_animation_attrs (SvgAnimation         *a,
   if (repeat_count_attr)
     {
       a->has_repeat_count = 1;
-      if (!parse_number_or_named (repeat_count_attr, 0, DBL_MAX, "indefinite", REPEAT_FOREVER, &a->repeat_count))
+      if (!parse_number_or_named (repeat_count_attr, 0, DBL_MAX, "indefinite", REPEAT_FOREVER, &a->repeat_count) || a->repeat_count == 0)
         {
           gtk_svg_invalid_attribute (data->svg, context, attr_names, "repeatCount", NULL);
           a->has_repeat_count = 0;
@@ -1499,17 +1499,13 @@ parse_svg_gpa_attrs (GtkSvg               *svg,
       unsigned int state;
 
       if (parse_number (state_attr, 0, 63, &v))
-        {
-          svg->initial_state = (unsigned int) v;
-          gtk_svg_set_state (svg, (unsigned int) v);
-        }
+        svg->initial_state = (unsigned int) v;
       else if (find_named_state (svg, state_attr, &state))
-        {
-          svg->initial_state = state;
-          gtk_svg_set_state (svg, state);
-        }
+        svg->initial_state = state;
       else
         gtk_svg_invalid_attribute (svg, context, attr_names, "gpa:state", NULL);
+
+      svg->state = svg->initial_state;
     }
 
   if (version_attr)
@@ -2310,8 +2306,7 @@ start_element_cb (GMarkupParseContext  *context,
       strcmp (element_name, "feConvolveMatrix") == 0 ||
       strcmp (element_name, "feDiffuseLighting") == 0 ||
       strcmp (element_name, "feMorphology") == 0 ||
-      strcmp (element_name, "feSpecularLighting") == 0 ||
-      strcmp (element_name, "feTurbulence") == 0)
+      strcmp (element_name, "feSpecularLighting") == 0)
     {
       skip_element (data, context, GTK_SVG_ERROR_NOT_IMPLEMENTED, "<%s> is not supported", element_name);
       return;
@@ -2753,7 +2748,7 @@ resolve_clip_ref (SvgValue   *value,
                   SvgElement *shape,
                   ParserData *data)
 {
-  if (svg_value_is_unset (value) || svg_value_is_inherit (value) || svg_value_is_initial (value))
+  if (svg_value_is_keyword (value))
     return;
 
   if (svg_clip_get_kind (value) == CLIP_URL &&
@@ -2783,7 +2778,7 @@ resolve_mask_ref (SvgValue   *value,
                   SvgElement *shape,
                   ParserData *data)
 {
-  if (svg_value_is_unset (value) || svg_value_is_inherit (value) || svg_value_is_initial (value))
+  if (svg_value_is_keyword (value))
     return;
 
   if (svg_mask_get_kind (value) == MASK_URL && svg_mask_get_shape (value) == NULL)
@@ -2810,7 +2805,7 @@ resolve_href_ref (SvgValue   *value,
 {
   const char *ref;
 
-  if (svg_value_is_unset (value))
+  if (svg_value_is_keyword (value))
     return;
 
   if (svg_href_get_kind (value) == HREF_NONE)
@@ -2893,7 +2888,7 @@ resolve_marker_ref (SvgValue   *value,
                     SvgElement *shape,
                     ParserData *data)
 {
-  if (svg_value_is_unset (value))
+  if (svg_value_is_keyword (value))
     return;
 
   if (svg_href_get_kind (value) != HREF_NONE && svg_href_get_shape (value) == NULL)
@@ -2926,7 +2921,7 @@ resolve_paint_ref (SvgValue   *value,
 {
   SvgValue *paint = value;
 
-  if (svg_value_is_unset (value) || svg_value_is_inherit (value) || svg_value_is_initial (value))
+  if (svg_value_is_keyword (value))
     return;
 
   if (paint_is_server (svg_paint_get_kind (paint)) &&
@@ -2982,7 +2977,7 @@ resolve_filter_ref (SvgValue   *value,
                     SvgElement *shape,
                     ParserData *data)
 {
-  if (svg_value_is_unset (value) || svg_value_is_inherit (value) || svg_value_is_initial (value))
+  if (svg_value_is_keyword (value))
     return;
 
   for (unsigned int i = 0; i < svg_filter_functions_get_length (value); i++)
@@ -4528,8 +4523,7 @@ apply_styles_to_shape (SvgElement *shape,
     }
 
   color = svg_element_get_base_value (shape, SVG_PROPERTY_COLOR);
-  if (!svg_value_is_unset (color) &&
-      !svg_value_is_inherit (color))
+  if (!svg_value_is_keyword (color))
     {
       if ((svg->features & GTK_SVG_EXTENSIONS) == 0 &&
           svg_color_get_kind (color) == COLOR_SYMBOLIC)

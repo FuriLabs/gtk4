@@ -72,7 +72,6 @@ debian/%: debian/%.in
 		$@.in > $@
 
 configure_flags_deb = \
-	-Dauto_features=enabled \
 	-Dbroadway-backend=true \
 	-Dx11-backend=true \
 	${NULL}
@@ -148,7 +147,7 @@ configure_flags_udeb = \
 	$(NULL)
 
 %:
-	dh $@ --buildsystem=meson $(dh_options)
+	dh $@ $(dh_options)
 
 override_dh_clean: debian/control
 	rm -f $(call dh_subst_files,$(all_binaries))

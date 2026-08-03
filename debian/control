@@ -4,7 +4,7 @@ Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.
 Uploaders: Simon McVittie <smcv@debian.org>,
            Jeremy Bícha <jbicha@ubuntu.com>,
 Section: libs
-Build-Depends: debhelper-compat (= 13),
+Build-Depends: debhelper-compat (= 14),
                dh-exec,
                dh-sequence-gir,
                dh-sequence-gnome,
@@ -89,8 +89,6 @@ Depends: adwaita-icon-theme,
          libgles2,
          libgtk-4-common (>= ${source:Version}),
          shared-mime-info,
-         ${misc:Depends},
-         ${shlibs:Depends},
 Recommends: ibus-gtk4,
             iso-codes,
             libgtk-4-bin,
@@ -116,8 +114,6 @@ Architecture: any
 Build-Profiles: <!noudeb>
 Package-Type: udeb
 Section: debian-installer
-Depends: ${misc:Depends},
-         ${shlibs:Depends},
 Provides: ${gtk:Provides},
 Description: GTK graphical user interface library - minimal runtime
  This is a udeb, or a microdeb, for the debian-installer.
@@ -134,7 +130,6 @@ Package: libgtk-4-common
 Architecture: all
 Multi-Arch: foreign
 Section: misc
-Depends: ${misc:Depends},
 Recommends: libgtk-4-1,
 Description: common files for the GTK graphical user interface library
  GTK is a multi-platform toolkit for creating graphical user
@@ -151,8 +146,6 @@ Section: misc
 Depends: gtk-update-icon-cache (>= ${binary:Version}),
          libgtk-4-1 (>= ${source:Version}),
          libgtk-4-common (>= ${source:Version}),
-         ${misc:Depends},
-         ${shlibs:Depends},
 Description: programs for the GTK graphical user interface library
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable
@@ -191,7 +184,6 @@ Depends: libcairo2-dev (>= 1.18.2),
          pkgconf,
          wayland-protocols (>= 1.44) [linux-any],
          ${gir:Depends},
-         ${misc:Depends},
 Suggests: gtk-4-examples,
           libgtk-4-doc,
 Provides: ${gir:Provides},
@@ -209,7 +201,6 @@ Architecture: all
 Build-Profiles: <!nodoc>
 Multi-Arch: foreign
 Section: doc
-Depends: ${misc:Depends},
 Recommends: libglib2.0-doc,
             libpango1.0-doc,
 Description: documentation for the GTK graphical user interface library
@@ -226,8 +217,6 @@ Architecture: any
 Build-Profiles: <!noinsttest>
 Section: x11
 Depends: libgtk-4-1 (= ${binary:Version}),
-         ${misc:Depends},
-         ${shlibs:Depends},
 Recommends: fonts-cantarell,
             highlight,
             librsvg2-common (>= 2.48),
@@ -247,8 +236,6 @@ Section: x11
 Depends: iso-codes,
          libgtk-4-1 (= ${binary:Version}),
          librsvg2-common (>= 2.48),
-         ${misc:Depends},
-         ${shlibs:Depends},
 Recommends: gnome-desktop-testing,
             locales | locales-all,
 Description: "as-installed" tests for GTK 4
@@ -266,7 +253,6 @@ Multi-Arch: same
 Section: introspection
 Depends: libgtk-4-common,
          ${gir:Depends},
-         ${misc:Depends},
 Provides: ${gir:Provides},
 Description: GTK graphical user interface library -- gir bindings
  GTK is a multi-platform toolkit for creating graphical user
@@ -281,8 +267,6 @@ Package: gtk-update-icon-cache
 Architecture: any
 Multi-Arch: foreign
 Section: misc
-Depends: ${misc:Depends},
-         ${shlibs:Depends},
 Breaks: libgtk-4-bin (<< 4.15),
 Replaces: libgtk-4-bin (<< 4.15),
 Description: icon theme caching utility

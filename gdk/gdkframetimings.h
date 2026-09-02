@@ -28,7 +28,7 @@ G_BEGIN_DECLS
 typedef struct _GdkFrameTimings GdkFrameTimings;
 
 GDK_AVAILABLE_IN_ALL
-GType            gdk_frame_timings_get_type (void) G_GNUC_CONST;
+GType            gdk_frame_timings_get_type (void);
 
 GDK_AVAILABLE_IN_ALL
 GdkFrameTimings *gdk_frame_timings_ref   (GdkFrameTimings *timings);

@@ -4,7 +4,6 @@
 #include <gsk/gsktypes.h>
 #include <graphene.h>
 
-#include "gskgputypesprivate.h"
 #include "gsktransformprivate.h"
 
 G_BEGIN_DECLS
@@ -18,7 +17,7 @@ struct _GskGpuTransform
   graphene_point_t offset;
 };
 
-#define GSK_GPU_TRANSFORM_IDENTITIY (GskGpuTransform) { GDK_DIHEDRAL_NORMAL, { 1.0, 1.0 }, { 0.0, 0.0 } }
+#define GSK_GPU_TRANSFORM_IDENTITY (GskGpuTransform) { GDK_DIHEDRAL_NORMAL, { 1.0, 1.0 }, { 0.0, 0.0 } }
 
 void                    gsk_gpu_transform_init                  (GskGpuTransform        *self,
                                                                  GdkDihedral             dihedral,
@@ -32,12 +31,18 @@ char *                  gsk_gpu_transform_to_string             (const GskGpuTra
 gboolean                gsk_gpu_transform_transform             (GskGpuTransform        *self,
                                                                  GskTransform           *transform);
 
+void                    gsk_gpu_transform_to_cairo_matrix       (const GskGpuTransform  *self,
+                                                                 cairo_matrix_t         *result);
+
 void                    gsk_gpu_transform_transform_rect        (const GskGpuTransform  *self,
                                                                  const graphene_rect_t  *rect,
                                                                  graphene_rect_t        *result);
 void                    gsk_gpu_transform_invert_rect           (const GskGpuTransform  *self,
                                                                  const graphene_rect_t  *rect,
                                                                  graphene_rect_t        *result);
+void                    gsk_gpu_transform_transform_rounded_rect (const GskGpuTransform *self,
+                                                                  const GskRoundedRect  *rect,
+                                                                  GskRoundedRect        *result);
 
 G_END_DECLS
 

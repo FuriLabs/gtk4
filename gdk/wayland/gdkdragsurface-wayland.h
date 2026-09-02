@@ -20,4 +20,4 @@
 #include <glib-object.h>
 
 #define GDK_TYPE_WAYLAND_DRAG_SURFACE (gdk_wayland_drag_surface_get_type ())
-GType gdk_wayland_drag_surface_get_type (void) G_GNUC_CONST;
+GType gdk_wayland_drag_surface_get_type (void);

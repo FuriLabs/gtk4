@@ -239,7 +239,7 @@ _gdk_win32_surface_procedure (HWND   hwnd,
   GdkSurface *surface = NULL;
 
   if (message != WM_CREATE && message != WM_NCCREATE)
-    surface = GDK_SURFACE (GetWindowLongPtr (hwnd, GWLP_USERDATA));
+    surface = GDK_SURFACE ((gpointer) GetWindowLongPtr (hwnd, GWLP_USERDATA));
 
   if (surface != NULL)
     display = GDK_WIN32_DISPLAY (gdk_surface_get_display (surface));

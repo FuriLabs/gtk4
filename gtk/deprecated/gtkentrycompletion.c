@@ -1699,7 +1699,7 @@ gtk_entry_completion_get_inline_selection (GtkEntryCompletion *completion)
 }
 
 
-static int
+static void
 gtk_entry_completion_timeout (gpointer data)
 {
   GtkEntryCompletion *completion = GTK_ENTRY_COMPLETION (data);
@@ -1730,7 +1730,6 @@ gtk_entry_completion_timeout (gpointer data)
     }
   else if (gtk_widget_get_visible (completion->popup_window))
     _gtk_entry_completion_popdown (completion);
-  return G_SOURCE_REMOVE;
 }
 
 static inline gboolean
@@ -2021,9 +2020,7 @@ gtk_entry_completion_changed (GtkWidget *widget,
     }
 
   completion->completion_timeout =
-    g_timeout_add (COMPLETION_TIMEOUT,
-                   gtk_entry_completion_timeout,
-                   completion);
+    g_timeout_add_once (COMPLETION_TIMEOUT, gtk_entry_completion_timeout, completion);
   gdk_source_set_static_name_by_id (completion->completion_timeout, "[gtk] gtk_entry_completion_timeout");
 }
 

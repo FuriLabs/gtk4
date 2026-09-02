@@ -31,7 +31,7 @@ typedef struct _GskDebugNode                    GskDebugNode;
 #define GSK_TYPE_DEBUG_NODE (gsk_debug_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_debug_node_get_type                 (void) G_GNUC_CONST;
+GType                   gsk_debug_node_get_type                 (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_debug_node_new                      (GskRenderNode            *child,
                                                                  char                     *message);

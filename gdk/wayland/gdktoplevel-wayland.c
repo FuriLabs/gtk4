@@ -1409,8 +1409,7 @@ gdk_wayland_toplevel_set_icon_list (GdkWaylandToplevel *self,
     return;
 
   g_clear_pointer (&self->display_server.toplevel_icon, xdg_toplevel_icon_v1_destroy);
-  g_list_free_full (self->icons, (GDestroyNotify) wl_buffer_destroy);
-  self->icons = NULL;
+  g_clear_list (&self->icons, NULL);
 
   self->display_server.toplevel_icon = xdg_toplevel_icon_manager_v1_create_icon (display_wayland->toplevel_icon);
 
@@ -1612,7 +1611,7 @@ gdk_wayland_toplevel_finalize (GObject *object)
   g_clear_pointer (&self->idle_inhibitor, zwp_idle_inhibitor_v1_destroy);
 
   g_clear_pointer (&self->display_server.toplevel_icon, xdg_toplevel_icon_v1_destroy);
-  g_list_free_full (self->icons, (GDestroyNotify) wl_buffer_destroy);
+  g_list_free (self->icons);
 
   g_clear_pointer (&self->a11y.dbus_name, g_free);
   g_clear_pointer (&self->a11y.toplevel_object_path, g_free);
@@ -2914,8 +2913,7 @@ gdk_wayland_toplevel_remove_from_session (GdkToplevel *toplevel)
   if (display_wayland->session && wayland_toplevel->toplevel_session)
     {
       xdg_session_v1_remove_toplevel (display_wayland->session, wayland_toplevel->session_id);
-      xdg_toplevel_session_v1_destroy (wayland_toplevel->toplevel_session);
-      wayland_toplevel->toplevel_session = NULL;
+      g_clear_pointer (&wayland_toplevel->toplevel_session, xdg_toplevel_session_v1_destroy);
     }
 }
 

@@ -30,14 +30,8 @@ G_BEGIN_DECLS
 
 #define GDK_TYPE_GL_TEXTURE (gdk_gl_texture_get_type ())
 
-#define GDK_GL_TEXTURE(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_GL_TEXTURE, GdkGLTexture))
-#define GDK_IS_GL_TEXTURE(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_GL_TEXTURE))
-
-typedef struct _GdkGLTexture            GdkGLTexture;
-typedef struct _GdkGLTextureClass       GdkGLTextureClass;
-
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_gl_texture_get_type                (void) G_GNUC_CONST;
+GDK_DECLARE_INTERNAL_TYPE (GdkGLTexture, gdk_gl_texture, GDK, GL_TEXTURE, GdkTexture)
 
 GDK_DEPRECATED_IN_4_12_FOR(GdkGLTextureBuilder)
 GdkTexture *            gdk_gl_texture_new                     (GdkGLContext    *context,
@@ -50,7 +44,4 @@ GdkTexture *            gdk_gl_texture_new                     (GdkGLContext    
 GDK_AVAILABLE_IN_ALL
 void                    gdk_gl_texture_release                 (GdkGLTexture    *self);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkGLTexture, g_object_unref)
-
 G_END_DECLS
-

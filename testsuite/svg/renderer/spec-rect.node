@@ -8,8 +8,7 @@ clip {
           bounds: 0 0 1200 400;
           color: rgb(0,0,255);
         }
-        path: "\
-M 1 1 h 1198 v 398 h -1198 z";
+        path: 1 1 1198 398;
         line-width: 2;
         line-cap: butt;
         line-join: miter;
@@ -28,13 +27,9 @@ M 1 1 h 1198 v 398 h -1198 z";
             bounds: -30 -30 460 260;
             color: rgb(128,0,128);
           }
-          path: "\
-M 50 0\
-L 350 0 O 400 0, 400 50, 0.707106769\
-L 400 150 O 400 200, 350 200, 0.707106769\
-L 50 200 O 0 200, 0 150, 0.707106769\
-L 0 50 O 0 0, 50 0, 0.707106769\
-Z";
+          path: rounded-rect {
+            outline: 0 0 400 200 / 50;
+          }
           line-width: 30;
           line-cap: butt;
           line-join: miter;

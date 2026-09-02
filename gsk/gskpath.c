@@ -25,6 +25,7 @@
 #include "gskpathbuilder.h"
 #include "gskpathpoint.h"
 #include "gskcontourprivate.h"
+#include "gskroundedrectprivate.h"
 
 /**
  * GskPath:
@@ -134,6 +135,8 @@ gsk_path_get_n_contours (const GskPath *self)
 }
 
 /* }}} */
+/* }}} */
+
 /* {{{ Public API */
 
 /**

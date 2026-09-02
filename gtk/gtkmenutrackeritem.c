@@ -873,7 +873,7 @@ typedef struct {
 
 static void gtk_menu_tracker_opener_observer_iface_init (GtkActionObserverInterface *iface);
 
-GType gtk_menu_tracker_opener_get_type (void) G_GNUC_CONST;
+GType gtk_menu_tracker_opener_get_type (void);
 
 G_DEFINE_TYPE_WITH_CODE (GtkMenuTrackerOpener, gtk_menu_tracker_opener, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_ACTION_OBSERVER, gtk_menu_tracker_opener_observer_iface_init))

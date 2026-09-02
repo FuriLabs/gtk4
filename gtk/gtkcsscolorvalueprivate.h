@@ -29,11 +29,12 @@ GtkCssValue *   gtk_css_color_value_new_transparent     (void) G_GNUC_PURE;
 GtkCssValue *   gtk_css_color_value_new_white           (void) G_GNUC_PURE;
 GtkCssValue *   gtk_css_color_value_new_current_color   (void) G_GNUC_PURE;
 GtkCssValue *   gtk_css_color_value_new_name            (const char     *name) G_GNUC_PURE;
+GtkCssValue *   gtk_css_color_value_new_from_rgba       (const GdkRGBA  *rgba);
 
 gboolean        gtk_css_color_value_can_parse           (GtkCssParser   *parser);
 GtkCssValue *   gtk_css_color_value_parse               (GtkCssParser   *parser);
 
-const GdkRGBA * gtk_css_color_value_get_rgba            (const GtkCssValue *color) G_GNUC_CONST;
+const GdkRGBA * gtk_css_color_value_get_rgba            (const GtkCssValue *color);
 
 GtkCssValue *   gtk_css_color_value_new_color           (GtkCssColorSpace color_space,
                                                          gboolean         serialize_as_rgb,
@@ -41,7 +42,7 @@ GtkCssValue *   gtk_css_color_value_new_color           (GtkCssColorSpace color_
                                                          gboolean         missing[4]) G_GNUC_PURE;
 
 const GtkCssColor *
-                gtk_css_color_value_get_color           (const GtkCssValue *color) G_GNUC_CONST;
+                gtk_css_color_value_get_color           (const GtkCssValue *color);
 
 float           gtk_css_color_value_get_coord           (const GtkCssValue *color,
                                                          GtkCssColorSpace   color_space,

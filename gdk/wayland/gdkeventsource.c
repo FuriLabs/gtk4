@@ -293,14 +293,12 @@ gdk_wayland_display_uninstall_gsources (GdkWaylandDisplay *display_wayland)
   if (display_wayland->event_source)
     {
       g_source_destroy (display_wayland->event_source);
-      g_source_unref (display_wayland->event_source);
-      display_wayland->event_source = NULL;
+      g_clear_pointer (&display_wayland->event_source, g_source_unref);
     }
   if (display_wayland->poll_source)
     {
       g_source_destroy (display_wayland->poll_source);
-      g_source_unref (display_wayland->poll_source);
-      display_wayland->poll_source = NULL;
+      g_clear_pointer (&display_wayland->poll_source, g_source_unref);
     }
 }
 

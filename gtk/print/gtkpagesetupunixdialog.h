@@ -34,7 +34,7 @@ typedef struct _GtkPageSetupUnixDialog GtkPageSetupUnixDialog;
 
 
 GDK_AVAILABLE_IN_ALL
-GType 		  gtk_page_setup_unix_dialog_get_type	        (void) G_GNUC_CONST;
+GType 		  gtk_page_setup_unix_dialog_get_type	        (void);
 GDK_AVAILABLE_IN_ALL
 GtkWidget *       gtk_page_setup_unix_dialog_new                (const char             *title,
 								 GtkWindow              *parent);

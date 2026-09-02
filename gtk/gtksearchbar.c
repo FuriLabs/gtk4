@@ -422,6 +422,8 @@ gtk_search_bar_set_entry (GtkSearchBar *bar,
     {
       if (GTK_IS_SEARCH_ENTRY (bar->entry))
         g_signal_handlers_disconnect_by_func (bar->entry, stop_search_cb, bar);
+
+      gtk_editable_set_input_interceptor (GTK_EDITABLE (bar->entry), NULL);
       g_signal_handlers_disconnect_by_func (bar->entry, input_intercepted_cb, bar);
       g_object_remove_weak_pointer (G_OBJECT (bar->entry), (gpointer *) &bar->entry);
     }
@@ -439,6 +441,9 @@ gtk_search_bar_set_entry (GtkSearchBar *bar,
           g_signal_connect (bar->entry, "stop-search",
                             G_CALLBACK (stop_search_cb), bar);
         }
+
+      if (bar->capture_widget)
+        gtk_editable_set_input_interceptor (GTK_EDITABLE (bar->entry), bar->capture_widget);
     }
 }
 

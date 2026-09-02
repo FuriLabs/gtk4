@@ -68,7 +68,7 @@ typedef enum
   GDK_DRAG_PROTO_OLE2,
 } GdkDragProtocol;
 
-GQuark                  gdk_win32_hresult_error_quark                   (void) G_GNUC_CONST;
+GQuark                  gdk_win32_hresult_error_quark                   (void);
 
 gulong _gdk_win32_get_next_tick (gulong suggested_tick);
 BOOL _gdk_win32_get_cursor_pos (GdkDisplay *display,

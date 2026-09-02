@@ -1,0 +1,51 @@
+a {
+  font-width: initial;
+}
+
+b {
+  font-width: inherit;
+}
+
+c {
+  font-width: unset;
+}
+
+d {
+  font-width: ultra-condensed;
+}
+
+e {
+  font-width: extra-condensed;
+}
+
+f {
+  font-width: condensed;
+}
+
+g {
+  font-width: semi-condensed;
+}
+
+h {
+  font-width: normal;
+}
+
+i {
+  font-width: semi-expanded;
+}
+
+j {
+  font-width: expanded;
+}
+
+k {
+  font-width: extra-expanded;
+}
+
+l {
+  font-width: ultra-expanded;
+}
+
+m {
+  font-width: 91.5%;
+}

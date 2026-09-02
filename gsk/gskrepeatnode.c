@@ -622,6 +622,7 @@ gsk_repeat_node_new2 (const graphene_rect_t  *bounds,
 
   node->preferred_depth = gsk_render_node_get_preferred_depth (child);
   node->is_hdr = gsk_render_node_is_hdr (child);
+  node->isolates_background = TRUE;
   node->fully_opaque = child->fully_opaque &&
                        !gsk_rect_snap_can_shrink (snap) &&
                        !gsk_rect_snap_can_shrink (child_snap) &&
@@ -629,6 +630,7 @@ gsk_repeat_node_new2 (const graphene_rect_t  *bounds,
                        gsk_rect_contains_rect (&child->bounds, &self->child_bounds) &&
                        repeat != GSK_REPEAT_NONE &&
                        !gsk_rect_is_empty (&self->child_bounds);
+  node->bilevel_opacity = gsk_render_node_is_bilevel_opacity (child);
   node->contains_subsurface_node = gsk_render_node_contains_subsurface_node (child);
   node->contains_paste_node = gsk_render_node_contains_paste_node (child);
   /* because we sometimes manually repeat the child */

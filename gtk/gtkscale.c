@@ -1630,8 +1630,7 @@ gtk_scale_clear_marks (GtkScale *scale)
 
   g_return_if_fail (GTK_IS_SCALE (scale));
 
-  g_slist_free_full (priv->marks, gtk_scale_mark_free);
-  priv->marks = NULL;
+  g_clear_slist (&priv->marks, gtk_scale_mark_free);
 
   g_clear_pointer (&priv->top_marks_widget, gtk_widget_unparent);
   g_clear_pointer (&priv->bottom_marks_widget, gtk_widget_unparent);

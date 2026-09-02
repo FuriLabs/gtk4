@@ -50,7 +50,7 @@ struct _GtkColorPickerInterface {
                              GError             **error);
 };
 
-GType            gtk_color_picker_get_type    (void) G_GNUC_CONST;
+GType            gtk_color_picker_get_type    (void);
 GtkColorPicker * gtk_color_picker_new         (void);
 void             gtk_color_picker_pick        (GtkColorPicker       *picker,
                                                GAsyncReadyCallback   callback,

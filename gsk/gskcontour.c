@@ -130,7 +130,7 @@ _g_string_append_float (GString    *string,
   char buf[G_ASCII_DTOSTR_BUF_SIZE];
 
   g_string_append (string, prefix);
-  g_ascii_formatd (buf, G_ASCII_DTOSTR_BUF_SIZE, "%.9g", f);
+  g_ascii_dtostr (buf, sizeof (buf), f);
   g_string_append (string, buf);
 }
 
@@ -1395,9 +1395,13 @@ gsk_standard_contour_init (GskContour             *contour,
   memcpy (self->points, points, sizeof (graphene_point_t) * n_points);
 
   offset += self->points - points;
+  /* The points of ops[] may be encoded relative to NULL (see gskpathbuilder.c),
+   * so do the offsetting in the integer domain to avoid overflowing a pointer.
+   */
   for (gsize i = 0; i < n_ops; i++)
     self->ops[i] = gsk_pathop_encode (gsk_pathop_op (ops[i]),
-                                      gsk_pathop_aligned_points (ops[i]) + offset);
+                                      GSIZE_TO_POINTER (GPOINTER_TO_SIZE (gsk_pathop_aligned_points (ops[i])) +
+                                                        (gsize) offset * sizeof (GskAlignedPoint)));
 
   gsk_bounding_box_init (&self->bounds,  &self->points[0].pt, &self->points[0].pt);
   for (gsize i = 1; i < self->n_points; i ++)
@@ -1541,12 +1545,13 @@ gsk_circle_contour_get_stroke_bounds (const GskContour *contour,
                                       GskBoundingBox   *bounds)
 {
   const GskCircleContour *self = (const GskCircleContour *) contour;
+  float offset = stroke->line_width / 2;
 
   gsk_bounding_box_init (bounds,
-                         &GRAPHENE_POINT_INIT (self->center.x - self->radius - stroke->line_width,
-                                               self->center.y - self->radius - stroke->line_width),
-                         &GRAPHENE_POINT_INIT (self->center.x + self->radius + stroke->line_width/2,
-                                               self->center.y + self->radius + stroke->line_width));
+                         &GRAPHENE_POINT_INIT (self->center.x - self->radius - offset,
+                                               self->center.y - self->radius - offset),
+                         &GRAPHENE_POINT_INIT (self->center.x + self->radius + offset,
+                                               self->center.y + self->radius + offset));
 
   return TRUE;
 }

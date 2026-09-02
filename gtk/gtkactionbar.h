@@ -34,7 +34,7 @@ G_BEGIN_DECLS
 typedef struct _GtkActionBar              GtkActionBar;
 
 GDK_AVAILABLE_IN_ALL
-GType        gtk_action_bar_get_type          (void) G_GNUC_CONST;
+GType        gtk_action_bar_get_type          (void);
 GDK_AVAILABLE_IN_ALL
 GtkWidget   *gtk_action_bar_new               (void);
 GDK_AVAILABLE_IN_ALL

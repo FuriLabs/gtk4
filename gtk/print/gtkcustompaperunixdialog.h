@@ -28,7 +28,7 @@ G_BEGIN_DECLS
 typedef struct _GtkCustomPaperUnixDialog         GtkCustomPaperUnixDialog;
 
 GDK_AVAILABLE_IN_ALL
-GType             gtk_custom_paper_unix_dialog_get_type           (void) G_GNUC_CONST;
+GType             gtk_custom_paper_unix_dialog_get_type           (void);
 GtkWidget *       _gtk_custom_paper_unix_dialog_new                (GtkWindow   *parent,
                                                                     const char *title);
 GtkUnit           _gtk_print_get_default_user_units                (void);

@@ -812,12 +812,10 @@ gtk_real_button_clicked (GtkButton *button)
     gtk_action_helper_activate (priv->action_helper);
 }
 
-static gboolean
+static void
 button_activate_timeout (gpointer data)
 {
   gtk_button_finish_activate (data, TRUE);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -828,7 +826,7 @@ gtk_real_button_activate (GtkButton *button)
 
   if (gtk_widget_get_realized (widget) && !priv->activate_timeout)
     {
-      priv->activate_timeout = g_timeout_add (ACTIVATE_TIMEOUT, button_activate_timeout, button);
+      priv->activate_timeout = g_timeout_add_once (ACTIVATE_TIMEOUT, button_activate_timeout, button);
       gdk_source_set_static_name_by_id (priv->activate_timeout, "[gtk] button_activate_timeout");
 
       gtk_widget_add_css_class (GTK_WIDGET (button), "keyboard-activating");

@@ -92,8 +92,7 @@ _gdk_macos_cairo_context_cairo_create (GdkCairoContext *cairo_context)
    * be unlocked as part of end_frame.
    */
 
-  if (!(cr = cairo_create (image_surface)))
-    goto failure;
+  cr = cairo_create (image_surface);
 
   /* Clip to the current damage region */
   if (damage != NULL)
@@ -112,7 +111,6 @@ _gdk_macos_cairo_context_cairo_create (GdkCairoContext *cairo_context)
       cairo_restore (cr);
     }
 
-failure:
   cairo_surface_destroy (image_surface);
 
   return cr;
@@ -161,7 +159,6 @@ copy_surface_data (GdkMacosBuffer       *from,
 static void
 _gdk_macos_cairo_context_begin_frame (GdkDrawContext  *draw_context,
                                       gpointer         context_data,
-                                      GdkMemoryDepth   depth,
                                       cairo_region_t  *region,
                                       GdkColorState  **out_color_state,
                                       GdkMemoryDepth  *out_depth)
@@ -237,11 +234,6 @@ _gdk_macos_cairo_context_end_frame (GdkDrawContext *draw_context,
 }
 
 static void
-_gdk_macos_cairo_context_empty_frame (GdkDrawContext *draw_context)
-{
-}
-
-static void
 _gdk_macos_cairo_context_surface_resized (GdkDrawContext *draw_context)
 {
   g_assert (GDK_IS_MACOS_CAIRO_CONTEXT (draw_context));
@@ -271,7 +263,6 @@ _gdk_macos_cairo_context_class_init (GdkMacosCairoContextClass *klass)
 
   draw_context_class->begin_frame = _gdk_macos_cairo_context_begin_frame;
   draw_context_class->end_frame = _gdk_macos_cairo_context_end_frame;
-  draw_context_class->empty_frame = _gdk_macos_cairo_context_empty_frame;
   draw_context_class->surface_resized = _gdk_macos_cairo_context_surface_resized;
   draw_context_class->surface_attach = _gdk_macos_cairo_context_surface_attach;
 

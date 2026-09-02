@@ -1,5 +1,5 @@
 project('gtk', 'c',
-        version: '4.23.2',
+        version: '4.23.4',
         default_options: [
           'buildtype=debugoptimized',
           'warning_level=1',
@@ -8,17 +8,17 @@ project('gtk', 'c',
           'c_std=gnu11',
           'cpp_std=c++11',
         ],
-        meson_version : '>= 1.5.0',
+        meson_version : '>= 1.8.0',
         license: 'LGPL-2.1-or-later')
 
 glib_major_req = 2
-glib_minor_req = 84
+glib_minor_req = 90
 
 pango_major_req = 1
 pango_minor_req = 58
 
 # keep these numbers in sync with wrap files where there exist
-glib_req           = '>= @0@.@1@'.format(glib_major_req, glib_minor_req)
+glib_req           = '>= 2.89.3' # `@0@.@1@'.format(glib_major_req, glib_minor_req)
 pango_req          = '>= @0@.@1@'.format(pango_major_req, pango_minor_req)
 harfbuzz_req       = '>= 8.4.0'
 fribidi_req        = '>= 1.0.6'
@@ -32,7 +32,7 @@ cloudproviders_req = '>= 0.3.1'
 xkbcommon_req      = '>= 0.2.0'
 sysprof_req        = '>= 3.38.0'
 vulkan_req         = '>= 1.3'
-gstreamer_req      = '>= 1.24.0'
+gstreamer_req      = '>= 1.28.0'
 gi_req             = '>= 1.84'
 
 fs = import('fs')
@@ -194,6 +194,7 @@ cdata.set_quoted('GTK_DATADIR', gtk_datadir)
 cdata.set_quoted('GTK_LIBDIR', gtk_libdir)
 cdata.set_quoted('GTK_SYSCONFDIR', gtk_sysconfdir)
 cdata.set_quoted('GETTEXT_PACKAGE', 'gtk40')
+cdata.set_quoted('SYMBOL_VISIBILITY', get_option('symbol-visibility'))
 
 check_headers = [
   'dev/evdev/input.h',
@@ -406,11 +407,11 @@ else
 endif
 
 # Symbol visibility
+symbol_visibility = get_option('symbol-visibility')
+
 if get_option('default_library') != 'static'
   if os_win32
     cdata.set('DLL_EXPORT', true)
-  else
-    test_cflags += ['-fvisibility=hidden']
   endif
 endif
 

@@ -65,7 +65,7 @@ gboolean                gdk_x11_display_init_glx                (GdkX11Display *
                                                                  GError       **error);
 void                    gdk_x11_surface_destroy_glx_drawable    (GdkX11Surface *self);
 
-GType                   gdk_x11_gl_context_glx_get_type         (void) G_GNUC_CONST;
+GType                   gdk_x11_gl_context_glx_get_type         (void);
 
 
 /* EGL */
@@ -75,7 +75,7 @@ GType                   gdk_x11_gl_context_glx_get_type         (void) G_GNUC_CO
 
 typedef struct _GdkX11GLContextEGL      GdkX11GLContextEGL;
 
-GType                   gdk_x11_gl_context_egl_get_type         (void) G_GNUC_CONST;
+GType                   gdk_x11_gl_context_egl_get_type         (void);
 
 G_END_DECLS
 

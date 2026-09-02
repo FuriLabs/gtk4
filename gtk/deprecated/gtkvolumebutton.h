@@ -47,7 +47,7 @@ struct _GtkVolumeButton
 };
 
 GDK_AVAILABLE_IN_ALL
-GType		gtk_volume_button_get_type	(void) G_GNUC_CONST;
+GType		gtk_volume_button_get_type	(void);
 GDK_DEPRECATED_IN_4_10
 GtkWidget*	gtk_volume_button_new		(void);
 

@@ -39,7 +39,7 @@ G_BEGIN_DECLS
 typedef struct _GtkLabel GtkLabel;
 
 GDK_AVAILABLE_IN_ALL
-GType                 gtk_label_get_type          (void) G_GNUC_CONST;
+GType                 gtk_label_get_type          (void);
 GDK_AVAILABLE_IN_ALL
 GtkWidget*            gtk_label_new               (const char    *str);
 GDK_AVAILABLE_IN_ALL

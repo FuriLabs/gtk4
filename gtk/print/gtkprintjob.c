@@ -263,8 +263,7 @@ gtk_print_job_finalize (GObject *object)
   if (job->backend)
     g_object_unref (job->backend);
 
-  if (job->spool_io != NULL)
-    g_clear_pointer (&job->spool_io, g_io_channel_unref);
+  g_clear_pointer (&job->spool_io, g_io_channel_unref);
 
   if (job->printer)
     g_object_unref (job->printer);

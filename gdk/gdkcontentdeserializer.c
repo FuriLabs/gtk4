@@ -60,12 +60,6 @@ struct _Deserializer
 
 GQueue deserializers = G_QUEUE_INIT;
 
-#define GDK_CONTENT_DESERIALIZER_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_CONTENT_DESERIALIZER, GdkContentDeserializerClass))
-#define GDK_IS_CONTENT_DESERIALIZER_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_CONTENT_DESERIALIZER))
-#define GDK_CONTENT_DESERIALIZER_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_CONTENT_DESERIALIZER, GdkContentDeserializerClass))
-
-typedef struct _GdkContentDeserializerClass GdkContentDeserializerClass;
-
 struct _GdkContentDeserializer
 {
   GObject parent_instance;
@@ -350,16 +344,27 @@ gdk_content_deserializer_emit_callback (gpointer data)
 void
 gdk_content_deserializer_return_success (GdkContentDeserializer *deserializer)
 {
+  GSource *idle_source;
+
   g_return_if_fail (GDK_IS_CONTENT_DESERIALIZER (deserializer));
   g_return_if_fail (!deserializer->returned);
-  guint source_id;
 
   deserializer->returned = TRUE;
-  source_id = g_idle_add_full (deserializer->priority,
-                               gdk_content_deserializer_emit_callback,
-                               deserializer,
-                               g_object_unref);
-  gdk_source_set_static_name_by_id (source_id, "[gtk] gdk_content_deserializer_emit_callback");
+
+  idle_source = g_idle_source_new ();
+  g_source_set_priority (idle_source, deserializer->priority);
+  g_source_set_callback (idle_source,
+                         gdk_content_deserializer_emit_callback,
+                         deserializer,
+                         g_object_unref);
+  g_source_set_static_name (idle_source, "[gtk] gdk_content_deserializer_emit_callback");
+
+  /* If we're in a sub-context (like on macOS), attach the idle function
+   * to the thread-default context, default to the global context.
+   */
+  g_source_attach (idle_source, g_main_context_get_thread_default ());
+
+  g_source_unref (idle_source);
   /* NB: the idle will destroy our reference */
 }
 

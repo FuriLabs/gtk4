@@ -31,7 +31,7 @@ typedef struct _GskStrokeNode                   GskStrokeNode;
 #define GSK_TYPE_STROKE_NODE (gsk_stroke_node_get_type())
 
 GDK_AVAILABLE_IN_4_14
-GType                   gsk_stroke_node_get_type                (void) G_GNUC_CONST;
+GType                   gsk_stroke_node_get_type                (void);
 GDK_AVAILABLE_IN_4_14
 GskRenderNode *         gsk_stroke_node_new                     (GskRenderNode            *child,
                                                                  GskPath                  *path,

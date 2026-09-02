@@ -307,17 +307,6 @@ the question you have, this list is a good place to start.
     See also the [Layout Objects](https://docs.gtk.org/Pango/class.Layout.html)
     section of the [Pango documentation](https://docs.gtk.org/Pango/).
 
-*  Why are types not registered if I use their `GTK_TYPE_BLAH` macro?
-
-    The %GTK_TYPE_BLAH macros are defined as calls to gtk_blah_get_type(), and
-    the `_get_type()` functions are declared as %G_GNUC_CONST which allows the
-    compiler to optimize the call away if it appears that the value is not
-    being used.
-
-    GLib provides the `g_type_ensure()` function to work around this problem.
-
-        g_type_ensure (GTK_TYPE_BLAH);
-
 *  How do I create a transparent toplevel window?
 
     Any toplevel window can be transparent. It is just a matter of setting a

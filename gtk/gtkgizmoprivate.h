@@ -51,7 +51,7 @@ struct _GtkGizmoClass
   GtkWidgetClass parent_class;
 };
 
-GType      gtk_gizmo_get_type (void) G_GNUC_CONST;
+GType      gtk_gizmo_get_type (void);
 
 GtkWidget *gtk_gizmo_new (const char            *css_name,
                           GtkGizmoMeasureFunc    measure_func,

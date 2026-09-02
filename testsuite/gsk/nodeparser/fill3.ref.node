@@ -1,0 +1,29 @@
+fill {
+  child: color {
+    bounds: 0 0 100 100;
+    color: rgb(255,0,204);
+  }
+  path: 0 0 100 100;
+  fill-rule: even-odd;
+}
+fill {
+  child: color {
+    bounds: 0 0 100 100;
+    color: rgb(255,0,204);
+  }
+  path: rounded-rect {
+    outline: 0 0 100 100 / 20;
+  }
+  fill-rule: even-odd;
+}
+fill {
+  child: color {
+    bounds: 39 49 22 22;
+    color: rgb(255,0,204);
+  }
+  path: circle {
+    center: 50 60;
+    radius: 11;
+  }
+  fill-rule: even-odd;
+}

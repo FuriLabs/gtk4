@@ -245,7 +245,7 @@ static void                 set_option_from_settings               (GtkPrinterOp
 static void                 cups_begin_polling_info                (GtkPrintBackendCups               *print_backend,
 								    GtkPrintJob                       *job,
 								    int                                job_id);
-static gboolean             cups_job_info_poll_timeout             (gpointer                           user_data);
+static void                 cups_job_info_poll_timeout             (gpointer                           user_data);
 static void                 gtk_print_backend_cups_print_stream    (GtkPrintBackend                   *backend,
 								    GtkPrintJob                       *job,
 								    GIOChannel                        *data_io,
@@ -925,8 +925,7 @@ gtk_print_backend_cups_finalize (GObject *object)
 
   g_clear_pointer (&backend_cups->default_printer, g_free);
 
-  gtk_cups_connection_test_free (backend_cups->cups_connection_test);
-  backend_cups->cups_connection_test = NULL;
+  g_clear_pointer (&backend_cups->cups_connection_test, gtk_cups_connection_test_free);
 
   g_hash_table_destroy (backend_cups->auth);
 
@@ -946,11 +945,9 @@ gtk_print_backend_cups_finalize (GObject *object)
       g_bus_unwatch_name (backend_cups->secrets_service_watch_id);
     }
 
-  g_list_free_full (backend_cups->temporary_queues_in_construction, g_free);
-  backend_cups->temporary_queues_in_construction = NULL;
+  g_clear_list (&backend_cups->temporary_queues_in_construction, g_free);
 
-  g_list_free_full (backend_cups->temporary_queues_removed, g_free);
-  backend_cups->temporary_queues_removed = NULL;
+  g_clear_list (&backend_cups->temporary_queues_removed, g_free);
 
   backend_parent_class->finalize (object);
 }
@@ -1786,7 +1783,7 @@ cups_request_job_info_cb (GtkPrintBackendCups *print_backend,
       else
         timeout = 1000;
 
-      id = g_timeout_add (timeout, cups_job_info_poll_timeout, data);
+      id = g_timeout_add_once (timeout, cups_job_info_poll_timeout, data);
       g_source_set_name_by_id (id, "[gtk] cups_job_info_poll_timeout");
     }
   else
@@ -1819,7 +1816,7 @@ cups_request_job_info (CupsJobPollData *data)
                         NULL);
 }
 
-static gboolean
+static void
 cups_job_info_poll_timeout (gpointer user_data)
 {
   CupsJobPollData *data = user_data;
@@ -1828,8 +1825,6 @@ cups_job_info_poll_timeout (gpointer user_data)
     cups_job_poll_data_free (data);
   else
     cups_request_job_info (data);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -3484,7 +3479,7 @@ avahi_service_browser_signal_handler (GDBusConnection *connection,
     }
 }
 
-static gboolean
+static void
 unsubscribe_general_subscription_cb (gpointer user_data)
 {
   GtkPrintBackendCups *cups_backend = user_data;
@@ -3493,8 +3488,6 @@ unsubscribe_general_subscription_cb (gpointer user_data)
                                         cups_backend->avahi_service_browser_subscription_id);
   cups_backend->avahi_service_browser_subscription_id = 0;
   cups_backend->unsubscribe_general_subscription_id = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -3541,7 +3534,7 @@ avahi_service_browser_new_cb (GObject      *source_object,
           /* We need to unsubscribe in idle since signals in queue destined for emit
            * are emitted in idle and check whether the subscriber is still subscribed.
            */
-          cups_backend->unsubscribe_general_subscription_id = g_idle_add (unsubscribe_general_subscription_cb, cups_backend);
+          cups_backend->unsubscribe_general_subscription_id = g_idle_add_once (unsubscribe_general_subscription_cb, cups_backend);
         }
 
       g_variant_unref (output);
@@ -4140,8 +4133,7 @@ cups_request_ppd (GtkPrinter *printer)
           return G_SOURCE_CONTINUE;
         }
 
-      gtk_cups_connection_test_free (cups_printer->remote_cups_connection_test);
-      cups_printer->remote_cups_connection_test = NULL;
+      g_clear_pointer (&cups_printer->remote_cups_connection_test, gtk_cups_connection_test_free);
       cups_printer->get_remote_ppd_poll = 0;
       cups_printer->get_remote_ppd_attempts = 0;
 
@@ -6070,7 +6062,7 @@ cups_printer_get_options (GtkPrinter           *printer,
                          G_CALLBACK (colord_printer_option_set_changed_cb),
                          helper,
                          (GClosureNotify) g_free,
-                         0);
+                         G_CONNECT_DEFAULT);
 
   /* initial coldplug */
   gtk_printer_cups_update_settings (GTK_PRINTER_CUPS (printer),

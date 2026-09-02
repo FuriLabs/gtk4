@@ -83,6 +83,7 @@ enum
   PROP_RESOURCE = 1,
   PROP_STATE,
   PROP_STYLESHEET,
+  PROP_SVG,
   NUM_PROPERTIES,
 };
 
@@ -183,7 +184,7 @@ activate_cb (SvgElement *element,
 {
   GtkSvgWidget *self = data;
 
-  if (svg_element_get_type (element) == SVG_ELEMENT_LINK)
+  if (svg_element_get_element_type (element) == SVG_ELEMENT_LINK)
     {
       const char *id = svg_element_get_id (element);
       SvgValue *href = svg_element_get_current_value (element, SVG_PROPERTY_HREF);
@@ -253,6 +254,10 @@ gtk_svg_widget_get_property (GObject      *object,
       g_value_set_boxed (value, gtk_svg_widget_get_stylesheet (self));
       break;
 
+    case PROP_SVG:
+      g_value_set_object (value, self->svg);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
@@ -271,6 +276,7 @@ gtk_svg_widget_set_property (GObject      *object,
     {
     case PROP_RESOURCE:
       gtk_svg_load_from_resource (self->svg, g_value_get_string (value));
+      gtk_svg_play (self->svg);
       break;
 
     case PROP_STATE:
@@ -361,6 +367,9 @@ gtk_svg_widget_snapshot (GtkWidget   *widget,
   width = gtk_widget_get_width (widget);
   height = gtk_widget_get_height (widget);
 
+  if (width == 0 || height == 0)
+    return;
+
   style = gtk_css_node_get_style (gtk_widget_get_css_node (widget));
 
   gtk_css_style_snapshot_icon_paintable (style,
@@ -394,6 +403,21 @@ gtk_svg_widget_query_tooltip (GtkWidget  *widget,
 }
 
 static void
+gtk_svg_widget_css_changed (GtkWidget         *widget,
+                            GtkCssStyleChange *change)
+{
+  GtkSvgWidget *self = GTK_SVG_WIDGET (widget);
+
+  GTK_WIDGET_CLASS (gtk_svg_widget_parent_class)->css_changed (widget, change);
+
+  if (gtk_css_style_change_affects (change, GTK_CSS_AFFECTS_ICON_REDRAW_SYMBOLIC) &&
+      self->svg && self->svg->used != 0)
+    {
+      gtk_widget_queue_draw (widget);
+    }
+}
+
+static void
 gtk_svg_widget_class_init (GtkSvgWidgetClass *class)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (class);
@@ -408,6 +432,7 @@ gtk_svg_widget_class_init (GtkSvgWidgetClass *class)
   widget_class->snapshot = gtk_svg_widget_snapshot;
   widget_class->focus = gtk_svg_widget_focus;
   widget_class->query_tooltip = gtk_svg_widget_query_tooltip;
+  widget_class->css_changed = gtk_svg_widget_css_changed;
 
   /**
    * GtkSvgWidget:resource:
@@ -448,6 +473,25 @@ gtk_svg_widget_class_init (GtkSvgWidgetClass *class)
     g_param_spec_boxed ("stylesheet", NULL, NULL,
                         G_TYPE_BYTES,
                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * GtkSvgWidget:svg:
+   *
+   * The GtkSvg paintable used for rendering.
+   *
+   * This property is mainly useful for making details of the
+   * SVG rendering machinery available in the GTK inspector.
+   *
+   * You should not modify the returned object.
+   *
+   * Returns: the GtkSvg paintable
+   *
+   * Since: 4.24
+   */
+  properties[PROP_SVG] =
+    g_param_spec_object ("svg", NULL, NULL,
+                         GTK_TYPE_SVG,
+                         G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, NUM_PROPERTIES, properties);
 
@@ -568,6 +612,7 @@ gtk_svg_widget_load_from_bytes (GtkSvgWidget *self,
   g_return_if_fail (GTK_IS_SVG_WIDGET (self));
 
   gtk_svg_load_from_bytes (self->svg, bytes);
+  gtk_svg_play (self->svg);
 }
 
 /**

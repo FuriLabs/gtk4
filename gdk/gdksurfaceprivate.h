@@ -25,11 +25,11 @@
 #include "gdktoplevel.h"
 #include <graphene.h>
 
+#include <gsk/gsktypes.h>
+
 G_BEGIN_DECLS
 
 typedef struct _GdkSubsurface GdkSubsurface;
-
-typedef struct _GskRenderNode GskRenderNode;
 
 struct _GdkSurface
 {
@@ -89,8 +89,6 @@ struct _GdkSurface
   GList *devices_inside;
 
   GdkFrameClock *frame_clock; /* NULL to use from parent or default */
-
-  GdkDrawContext *paint_context;
 
   GdkSeat *current_shortcuts_inhibited_seat;
 
@@ -262,7 +260,6 @@ void       gdk_surface_invalidate_rect    (GdkSurface            *surface,
                                            const GdkRectangle    *rect);
 void       gdk_surface_invalidate_region  (GdkSurface            *surface,
                                            const cairo_region_t  *region);
-void       _gdk_surface_clear_update_area (GdkSurface            *surface);
 void       _gdk_surface_update_size       (GdkSurface            *surface);
 void       gdk_surface_set_opaque_rect    (GdkSurface            *self,
                                            const graphene_rect_t *rect);
@@ -356,5 +353,8 @@ void                    gdk_surface_set_color_state                     (GdkSurf
 void                    gdk_surface_set_attached_context                (GdkSurface             *self,
                                                                          GdkDrawContext         *context);
 GdkDrawContext *        gdk_surface_get_attached_context                (GdkSurface             *self);
+void                    gdk_surface_set_content                         (GdkSurface             *self,
+                                                                         GskRenderNode          *content);
+GskRenderNode *         gdk_surface_get_content                         (GdkSurface             *self);
 
 G_END_DECLS

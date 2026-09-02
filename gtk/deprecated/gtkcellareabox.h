@@ -36,7 +36,7 @@ G_BEGIN_DECLS
 typedef struct _GtkCellAreaBox              GtkCellAreaBox;
 
 GDK_AVAILABLE_IN_ALL
-GType        gtk_cell_area_box_get_type    (void) G_GNUC_CONST;
+GType        gtk_cell_area_box_get_type    (void);
 
 GDK_DEPRECATED_IN_4_10
 GtkCellArea *gtk_cell_area_box_new         (void);

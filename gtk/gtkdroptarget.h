@@ -42,7 +42,7 @@ typedef struct _GtkDropTarget GtkDropTarget;
 typedef struct _GtkDropTargetClass GtkDropTargetClass;
 
 GDK_AVAILABLE_IN_ALL
-GType                   gtk_drop_target_get_type         (void) G_GNUC_CONST;
+GType                   gtk_drop_target_get_type         (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkDropTarget *         gtk_drop_target_new              (GType                  type,

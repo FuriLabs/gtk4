@@ -882,8 +882,7 @@ _gtk_text_btree_delete (GtkTextIter *start,
 	      next2 = prev_seg->next->next;
               _gtk_toggle_segment_free (prev_seg->next);
 	      prev_seg->next = next2;
-              _gtk_toggle_segment_free (seg);
-	      seg = NULL;
+              g_clear_pointer (&seg, _gtk_toggle_segment_free);
 	    }
 	  else
 	    {

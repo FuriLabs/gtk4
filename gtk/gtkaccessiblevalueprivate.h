@@ -79,7 +79,7 @@ typedef enum {
   GTK_ACCESSIBLE_VALUE_ERROR_INVALID_TOKEN
 } GtkAccessibleValueError;
 
-GType                   gtk_accessible_value_get_type                   (void) G_GNUC_CONST;
+GType                   gtk_accessible_value_get_type                   (void);
 GQuark                  gtk_accessible_value_error_quark                (void);
 
 GtkAccessibleValue *    gtk_accessible_value_alloc                      (const GtkAccessibleValueClass *klass);

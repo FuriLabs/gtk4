@@ -36,18 +36,11 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GdkSurfaceClass GdkSurfaceClass;
-
 #define GDK_TYPE_SURFACE              (gdk_surface_get_type ())
-#define GDK_SURFACE(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), GDK_TYPE_SURFACE, GdkSurface))
-#define GDK_SURFACE_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_SURFACE, GdkSurfaceClass))
-#define GDK_IS_SURFACE(object)        (G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_SURFACE))
-#define GDK_IS_SURFACE_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_SURFACE))
-#define GDK_SURFACE_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_SURFACE, GdkSurfaceClass))
-
 
 GDK_AVAILABLE_IN_ALL
-GType         gdk_surface_get_type              (void) G_GNUC_CONST;
+GDK_DECLARE_INTERNAL_TYPE (GdkSurface, gdk_surface, GDK, SURFACE, GObject)
+
 GDK_AVAILABLE_IN_ALL
 GdkSurface *   gdk_surface_new_toplevel         (GdkDisplay    *display);
 GDK_AVAILABLE_IN_ALL
@@ -138,8 +131,6 @@ GDK_DEPRECATED_IN_4_14
 GdkVulkanContext *
                gdk_surface_create_vulkan_context(GdkSurface     *surface,
                                                  GError        **error);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (GdkSurface, g_object_unref)
 
 G_END_DECLS
 

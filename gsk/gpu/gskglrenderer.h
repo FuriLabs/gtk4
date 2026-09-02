@@ -17,8 +17,11 @@
 
 #pragma once
 
-#include <gdk/gdk.h>
-#include <gsk/gsk.h>
+#if !defined (__GSK_H_INSIDE__) && !defined (GTK_COMPILATION)
+#error "Only <gsk/gsk.h> can be included directly."
+#endif
+
+#include <gsk/gsktypes.h>
 
 G_BEGIN_DECLS
 
@@ -37,10 +40,10 @@ GDK_AVAILABLE_IN_ALL
 GskRenderer *gsk_gl_renderer_new      (void);
 
 GDK_AVAILABLE_IN_ALL
-GType        gsk_gl_renderer_get_type (void) G_GNUC_CONST;
+GType        gsk_gl_renderer_get_type (void);
 
 GDK_DEPRECATED_IN_4_18_FOR (gsk_gl_renderer_get_type)
-GType        gsk_ngl_renderer_get_type (void) G_GNUC_CONST;
+GType        gsk_ngl_renderer_get_type (void);
 
 GDK_DEPRECATED_IN_4_18_FOR (gsk_gl_renderer_new)
 GskRenderer *gsk_ngl_renderer_new      (void);

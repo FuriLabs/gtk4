@@ -43,32 +43,19 @@ set_window_title (GtkWindow  *window,
 }
 
 static void
-quit_cb (GtkWidget *widget,
-         gpointer   user_data)
+show_node (GskRenderNode *node,
+           const char    *filename,
+           gboolean       decorated,
+           gboolean       offload)
 {
-  gboolean *is_done = user_data;
-
-  *is_done = TRUE;
-
-  g_main_context_wakeup (NULL);
-}
-
-static void
-show_file (const char *filename,
-           gboolean    decorated,
-           gboolean    offload)
-{
-  GskRenderNode *node;
   graphene_rect_t node_bounds;
   GdkPaintable *paintable;
   GtkWidget *sw;
   GtkWidget *handle;
   GtkWidget *window;
-  gboolean done = FALSE;
   GtkSnapshot *snapshot;
   GtkWidget *picture;
 
-  node = load_node_file (filename);
   gsk_render_node_get_bounds (node, &node_bounds);
 
   snapshot = gtk_snapshot_new ();
@@ -79,6 +66,7 @@ show_file (const char *filename,
   picture = gtk_picture_new_for_paintable (paintable);
   gtk_picture_set_can_shrink (GTK_PICTURE (picture), FALSE);
   gtk_picture_set_content_fit (GTK_PICTURE (picture), GTK_CONTENT_FIT_SCALE_DOWN);
+  gtk_picture_set_isolate_contents (GTK_PICTURE (picture), decorated);
 
   if (offload)
     picture = gtk_graphics_offload_new (picture);
@@ -96,17 +84,15 @@ show_file (const char *filename,
   gtk_window_set_resizable (GTK_WINDOW (window), decorated);
   if (!decorated)
     gtk_widget_remove_css_class (window, "background");
-  set_window_title (GTK_WINDOW (window), filename);
+  if (filename)
+    set_window_title (GTK_WINDOW (window), filename);
   gtk_window_set_child (GTK_WINDOW (window), handle);
 
   gtk_window_present (GTK_WINDOW (window));
-  g_signal_connect (window, "destroy", G_CALLBACK (quit_cb), &done);
-
-  while (!done)
-    g_main_context_iteration (NULL, TRUE);
+  gtk_tool_inhibit ();
+  g_signal_connect (window, "destroy", G_CALLBACK (gtk_tool_uninhibit), NULL);
 
   g_clear_object (&paintable);
-  g_clear_pointer (&node, gsk_render_node_unref);
 }
 
 void
@@ -115,14 +101,15 @@ do_show (int          *argc,
 {
   GOptionContext *context;
   char **filenames = NULL;
-  gboolean decorated = TRUE;
+  gboolean decorate = FALSE;
   gboolean offload = FALSE;
   const GOptionEntry entries[] = {
     { "offload", 0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, &offload, N_("Put node into offload container"), NULL },
-    { "undecorated", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &decorated, N_("Don't add a titlebar"), NULL },
+    { "decorate", 0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, &decorate, N_("Add a titlebar"), NULL },
     { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, N_("FILE") },
     { NULL, }
   };
+  GskRenderNode *node;
   GError *error = NULL;
 
   if (gdk_display_get_default () == NULL)
@@ -158,7 +145,46 @@ do_show (int          *argc,
       exit (1);
     }
 
-  show_file (filenames[0], decorated, offload);
+  node = load_node_file (filenames[0]);
+
+  show_node (node, filenames[0], decorate, offload);
+
+  gtk_tool_run ();
 
   g_strfreev (filenames);
+  g_clear_pointer (&node, gsk_render_node_unref);
+}
+
+GskRenderNode *
+filter_show (GskRenderNode  *node,
+             int             argc,
+             const char    **argv)
+{
+  GOptionContext *context;
+  gboolean decorate = FALSE;
+  gboolean offload = FALSE;
+  const GOptionEntry entries[] = {
+    { "offload", 0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, &offload, N_("Put node into offload container"), NULL },
+    { "decorate", 0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, &decorate, N_("Add a titlebar"), NULL },
+    { NULL, }
+  };
+  GError *error = NULL;
+
+  context = g_option_context_new (NULL);
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
+  g_option_context_add_main_entries (context, entries, NULL);
+  g_option_context_set_summary (context, _("Show the render node."));
+
+  if (!g_option_context_parse (context, &argc, (char ***) &argv, &error))
+    {
+      g_printerr ("show: %s\n", error->message);
+      g_error_free (error);
+      exit (1);
+    }
+
+  g_option_context_free (context);
+
+  show_node (node, NULL, decorate, offload);
+
+  return node;
 }

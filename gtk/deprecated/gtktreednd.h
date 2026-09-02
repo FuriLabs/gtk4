@@ -34,7 +34,7 @@ G_BEGIN_DECLS
  */
 #define GTK_TYPE_TREE_ROW_DATA (gtk_tree_row_data_get_type ())
 GDK_DEPRECATED_IN_4_10
-GType             gtk_tree_row_data_get_type (void) G_GNUC_CONST;
+GType             gtk_tree_row_data_get_type (void);
 
 
 #define GTK_TYPE_TREE_DRAG_SOURCE            (gtk_tree_drag_source_get_type ())
@@ -74,7 +74,7 @@ struct _GtkTreeDragSourceIface
 };
 
 GDK_DEPRECATED_IN_4_10_FOR(GtkDragSource)
-GType           gtk_tree_drag_source_get_type   (void) G_GNUC_CONST;
+GType           gtk_tree_drag_source_get_type   (void);
 
 /* Returns whether the given row can be dragged */
 GDK_DEPRECATED_IN_4_10_FOR(GtkDragSource)
@@ -129,7 +129,7 @@ struct _GtkTreeDragDestIface
 };
 
 GDK_DEPRECATED_IN_4_10_FOR(GtkDropTarget)
-GType           gtk_tree_drag_dest_get_type   (void) G_GNUC_CONST;
+GType           gtk_tree_drag_dest_get_type   (void);
 
 /* Inserts a row before dest which contains data in selection_data,
  * or returns FALSE if it can't

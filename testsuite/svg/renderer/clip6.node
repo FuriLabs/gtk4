@@ -13,8 +13,7 @@ mask {
         bounds: 0.25 0.5 0.6 1;
         color: rgb(0,0,0);
       }
-      path: "\
-M 0.25 0.5 h 0.600000024 v 1 h -0.600000024 z";
+      path: 0.25 0.5 0.6 1;
       fill-rule: winding;
     }
   }
@@ -27,8 +26,7 @@ transform {
         bounds: 115 48 262 44;
         color: rgb(0,0,0);
       }
-      path: "\
-M 117 50 h 258 v 40 h -258 z";
+      path: 117 50 258 40;
       line-width: 4;
       line-cap: butt;
       line-join: miter;
@@ -50,8 +48,7 @@ M 117 50 h 258 v 40 h -258 z";
           bounds: 58 58 64 64;
           color: rgb(0,0,0);
         }
-        path: "\
-M 60 60 h 60 v 60 h -60 z";
+        path: 60 60 60 60;
         line-width: 4;
         line-cap: butt;
         line-join: miter;
@@ -62,8 +59,7 @@ M 60 60 h 60 v 60 h -60 z";
         bounds: 0.5 0.5 479 359;
         color: rgb(0,0,0);
       }
-      path: "\
-M 1 1 h 478 v 358 h -478 z";
+      path: 1 1 478 358;
       line-width: 1;
       line-cap: butt;
       line-join: miter;

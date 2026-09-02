@@ -143,7 +143,7 @@ struct _GtkPrintBackendClass
 #define GTK_PRINT_BACKEND_EXTENSION_POINT_NAME "gtk-print-backend"
 
 GDK_AVAILABLE_IN_ALL
-GType   gtk_print_backend_get_type       (void) G_GNUC_CONST;
+GType   gtk_print_backend_get_type       (void);
 
 GDK_AVAILABLE_IN_ALL
 GList      *gtk_print_backend_get_printer_list     (GtkPrintBackend         *print_backend);

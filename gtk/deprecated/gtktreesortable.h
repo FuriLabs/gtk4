@@ -136,7 +136,7 @@ struct _GtkTreeSortableIface
 
 
 GDK_AVAILABLE_IN_ALL
-GType    gtk_tree_sortable_get_type              (void) G_GNUC_CONST;
+GType    gtk_tree_sortable_get_type              (void);
 
 GDK_DEPRECATED_IN_4_10
 void     gtk_tree_sortable_sort_column_changed   (GtkTreeSortable        *sortable);

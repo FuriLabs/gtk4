@@ -859,7 +859,7 @@ gtk_popover_has_mnemonic_modifier_pressed (GtkPopover *popover)
   return retval;
 }
 
-static gboolean
+static void
 schedule_mnemonics_visible_cb (gpointer data)
 {
   GtkPopover *popover = data;
@@ -868,8 +868,6 @@ schedule_mnemonics_visible_cb (gpointer data)
   priv->mnemonics_display_timeout_id = 0;
 
   gtk_popover_set_mnemonics_visible (popover, TRUE);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -881,7 +879,7 @@ gtk_popover_schedule_mnemonics_visible (GtkPopover *popover)
     return;
 
   priv->mnemonics_display_timeout_id =
-    g_timeout_add (MNEMONICS_DELAY, schedule_mnemonics_visible_cb, popover);
+    g_timeout_add_once (MNEMONICS_DELAY, schedule_mnemonics_visible_cb, popover);
   gdk_source_set_static_name_by_id (priv->mnemonics_display_timeout_id, "[gtk] popover_schedule_mnemonics_visible_cb");
 }
 
@@ -1063,7 +1061,7 @@ gtk_popover_init (GtkPopover *popover)
   gtk_css_node_set_state (priv->arrow_node,
                           gtk_css_node_get_state (gtk_widget_get_css_node (widget)));
   g_signal_connect_object (priv->arrow_node, "style-changed",
-                           G_CALLBACK (node_style_changed_cb), popover, 0);
+                           G_CALLBACK (node_style_changed_cb), popover, G_CONNECT_DEFAULT);
   g_object_unref (priv->arrow_node);
 
   priv->contents_widget = gtk_popover_content_new ();
@@ -1177,6 +1175,7 @@ static void
 gtk_popover_show (GtkWidget *widget)
 {
   GtkPopover *popover = GTK_POPOVER (widget);
+  GtkPopoverPrivate *priv = gtk_popover_get_instance_private (popover);
 
   _gtk_widget_set_visible_flag (widget, TRUE);
   gtk_widget_realize (widget);
@@ -1185,8 +1184,11 @@ gtk_popover_show (GtkWidget *widget)
 
   gtk_widget_map (widget);
 
-  if (!gtk_widget_get_focus_child (widget))
-    gtk_widget_child_focus (widget, GTK_DIR_TAB_FORWARD);
+  if (priv->autohide)
+    {
+      if (!gtk_widget_get_focus_child (widget))
+        gtk_widget_child_focus (widget, GTK_DIR_TAB_FORWARD);
+    }
 }
 
 static void
@@ -1974,6 +1976,10 @@ gtk_popover_class_init (GtkPopoverClass *klass)
    * GtkPopover:autohide:
    *
    * Whether to dismiss the popover on outside clicks.
+   *
+   * If false, the popover won't automatically grab the focus when shown.
+   * This is useful for usecases like entry completion, where the focus is
+   * expected to stay on the entry.
    */
   properties[PROP_AUTOHIDE] =
       g_param_spec_boolean ("autohide", NULL, NULL,

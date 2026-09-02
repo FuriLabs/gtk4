@@ -192,7 +192,7 @@
 #define RESIZE_HANDLE_CORNER_SIZE 24 /* How resize corners extend */
 #define MNEMONICS_DELAY 300 /* ms */
 #define NO_CONTENT_CHILD_NAT 200 /* ms */
-#define VISIBLE_FOCUS_DURATION 3 /* s */
+#define DEFAULT_VISIBLE_FOCUS_DURATION 3 /* s */
 
 
 /* In case the content (excluding header bar and shadows) of the window
@@ -2509,7 +2509,7 @@ gtk_window_get_default_widget (GtkWindow *window)
   return priv->default_widget;
 }
 
-static gboolean
+static void
 handle_keys_changed (gpointer data)
 {
   GtkWindow *window = GTK_WINDOW (data);
@@ -2520,8 +2520,6 @@ handle_keys_changed (gpointer data)
   if (priv->application_shortcut_controller)
     gtk_shortcut_controller_update_accels (GTK_SHORTCUT_CONTROLLER (priv->application_shortcut_controller));
   g_signal_emit (window, window_signals[KEYS_CHANGED], 0);
-
-  return G_SOURCE_REMOVE;
 }
 
 void
@@ -2531,7 +2529,7 @@ _gtk_window_notify_keys_changed (GtkWindow *window)
 
   if (!priv->keys_changed_handler)
     {
-      priv->keys_changed_handler = g_idle_add (handle_keys_changed, window);
+      priv->keys_changed_handler = g_idle_add_once (handle_keys_changed, window);
       gdk_source_set_static_name_by_id (priv->keys_changed_handler, "[gtk] handle_keys_changed");
     }
 }
@@ -2709,8 +2707,7 @@ gtk_window_dispose (GObject *object)
 
   unset_fullscreen_monitor (window);
 
-  g_list_free_full (priv->foci, (GDestroyNotify) gtk_pointer_focus_unref);
-  priv->foci = NULL;
+  g_clear_list (&priv->foci, (GDestroyNotify) gtk_pointer_focus_unref);
 
   g_clear_object (&priv->move_focus_widget);
   gtk_window_set_focus (window, NULL);
@@ -3095,8 +3092,7 @@ unset_titlebar (GtkWindow *window)
 
   if (priv->title_box != NULL)
     {
-      gtk_widget_unparent (priv->title_box);
-      priv->title_box = NULL;
+      g_clear_pointer (&priv->title_box, gtk_widget_unparent);
       priv->titlebar = NULL;
     }
 }
@@ -3909,10 +3905,7 @@ gtk_window_finalize (GObject *object)
   g_free (priv->title);
   gtk_window_release_application (window);
 
-  if (priv->geometry_info)
-    {
-      g_free (priv->geometry_info);
-    }
+  g_free (priv->geometry_info);
 
   g_clear_handle_id (&priv->keys_changed_handler, g_source_remove);
 
@@ -6262,7 +6255,7 @@ gtk_window_set_mnemonics_visible (GtkWindow *window,
   g_clear_handle_id (&priv->mnemonics_display_timeout_id, g_source_remove);
 }
 
-static gboolean
+static void
 schedule_mnemonics_visible_cb (gpointer data)
 {
   GtkWindow *window = data;
@@ -6271,8 +6264,6 @@ schedule_mnemonics_visible_cb (gpointer data)
   priv->mnemonics_display_timeout_id = 0;
 
   gtk_window_set_mnemonics_visible (window, TRUE);
-
-  return G_SOURCE_REMOVE;
 }
 
 void
@@ -6286,7 +6277,7 @@ _gtk_window_schedule_mnemonics_visible (GtkWindow *window)
     return;
 
   priv->mnemonics_display_timeout_id =
-    g_timeout_add (MNEMONICS_DELAY, schedule_mnemonics_visible_cb, window);
+    g_timeout_add_once (MNEMONICS_DELAY, schedule_mnemonics_visible_cb, window);
   gdk_source_set_static_name_by_id (priv->mnemonics_display_timeout_id, "[gtk] schedule_mnemonics_visible_cb");
 }
 
@@ -6309,7 +6300,7 @@ gtk_window_get_focus_visible (GtkWindow *window)
   return priv->focus_visible;
 }
 
-static gboolean
+static void
 unset_focus_visible (gpointer data)
 {
   GtkWindow *window = data;
@@ -6318,8 +6309,6 @@ unset_focus_visible (gpointer data)
   priv->focus_visible_timeout = 0;
 
   gtk_window_set_focus_visible (window, FALSE);
-
-  return G_SOURCE_REMOVE;
 }
 
 /**
@@ -6350,8 +6339,17 @@ gtk_window_set_focus_visible (GtkWindow *window,
 
   if (priv->focus_visible)
     {
-      priv->focus_visible_timeout = g_timeout_add_seconds (VISIBLE_FOCUS_DURATION, unset_focus_visible, window);
-      gdk_source_set_static_name_by_id (priv->focus_visible_timeout, "[gtk] unset_focus_visible");
+      GtkSettings *settings = gtk_widget_get_settings (GTK_WIDGET (window));
+      int keyboard_focus_visible_timeout;
+
+      g_object_get (settings, "gtk-keyboard-focus-visible-timeout", &keyboard_focus_visible_timeout, NULL);
+      if (keyboard_focus_visible_timeout != 0)
+        {
+          if (keyboard_focus_visible_timeout < 0)
+            keyboard_focus_visible_timeout = DEFAULT_VISIBLE_FOCUS_DURATION;
+          priv->focus_visible_timeout = g_timeout_add_seconds_once (keyboard_focus_visible_timeout, unset_focus_visible, window);
+          gdk_source_set_static_name_by_id (priv->focus_visible_timeout, "[gtk] unset_focus_visible");
+        }
     }
 
   if (changed)

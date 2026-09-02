@@ -47,7 +47,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkSnapshot, g_object_unref)
 
 
 GDK_AVAILABLE_IN_ALL
-GType           gtk_snapshot_get_type                   (void) G_GNUC_CONST;
+GType           gtk_snapshot_get_type                   (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkSnapshot *   gtk_snapshot_new                        (void);

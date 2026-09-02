@@ -48,7 +48,7 @@ typedef struct _GtkDropTargetAsyncClass GtkDropTargetAsyncClass;
 
 
 GDK_AVAILABLE_IN_ALL
-GType                   gtk_drop_target_async_get_type          (void) G_GNUC_CONST;
+GType                   gtk_drop_target_async_get_type          (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkDropTargetAsync *    gtk_drop_target_async_new               (GdkContentFormats      *formats,

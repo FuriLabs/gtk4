@@ -82,7 +82,7 @@ GDK_AVAILABLE_IN_ALL
 GQuark gtk_icon_theme_error_quark (void);
 
 GDK_AVAILABLE_IN_ALL
-GType            gtk_icon_theme_get_type             (void) G_GNUC_CONST;
+GType            gtk_icon_theme_get_type             (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkIconTheme    *gtk_icon_theme_new                  (void);

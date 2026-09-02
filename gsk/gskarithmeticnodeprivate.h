@@ -30,7 +30,7 @@ typedef struct _GskArithmeticNode                    GskArithmeticNode;
 
 #define GSK_TYPE_ARITHMETIC_NODE (gsk_arithmetic_node_get_type())
 
-GType                   gsk_arithmetic_node_get_type            (void) G_GNUC_CONST;
+GType                   gsk_arithmetic_node_get_type            (void);
 GskRenderNode *         gsk_arithmetic_node_new                 (const graphene_rect_t  *bounds,
                                                                  GskRectSnap             snap,
                                                                  GskRenderNode          *first,

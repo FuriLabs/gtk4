@@ -56,7 +56,7 @@ struct _GtkPopoverClass
 };
 
 GDK_AVAILABLE_IN_ALL
-GType           gtk_popover_get_type (void) G_GNUC_CONST;
+GType           gtk_popover_get_type (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkWidget *     gtk_popover_new             (void);

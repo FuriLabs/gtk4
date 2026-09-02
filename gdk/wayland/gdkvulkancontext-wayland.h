@@ -31,14 +31,7 @@
 G_BEGIN_DECLS
 
 #define GDK_TYPE_WAYLAND_VULKAN_CONTEXT		(gdk_wayland_vulkan_context_get_type ())
-#define GDK_WAYLAND_VULKAN_CONTEXT(obj)		(G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_WAYLAND_VULKAN_CONTEXT, GdkWaylandVulkanContext))
-#define GDK_IS_WAYLAND_VULKAN_CONTEXT(obj)		(G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_WAYLAND_VULKAN_CONTEXT))
-#define GDK_WAYLAND_VULKAN_CONTEXT_CLASS(klass) 	(G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_WAYLAND_VULKAN_CONTEXT, GdkWaylandVulkanContextClass))
-#define GDK_IS_WAYLAND_VULKAN_CONTEXT_CLASS(klass)	(G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_WAYLAND_VULKAN_CONTEXT))
-#define GDK_WAYLAND_VULKAN_CONTEXT_GET_CLASS(obj)	(G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_WAYLAND_VULKAN_CONTEXT, GdkWaylandVulkanContextClass))
-
-typedef struct _GdkWaylandVulkanContext GdkWaylandVulkanContext;
-typedef struct _GdkWaylandVulkanContextClass GdkWaylandVulkanContextClass;
+GDK_DECLARE_INTERNAL_TYPE (GdkWaylandVulkanContext, gdk_wayland_vulkan_context, GDK, WAYLAND_VULKAN_CONTEXT, GdkVulkanContext)
 
 struct _GdkWaylandVulkanContext
 {
@@ -50,10 +43,6 @@ struct _GdkWaylandVulkanContextClass
   GdkVulkanContextClass parent_class;
 };
 
-GDK_AVAILABLE_IN_ALL
-GType gdk_wayland_vulkan_context_get_type (void) G_GNUC_CONST;
-
 G_END_DECLS
 
 #endif /* !GDK_RENDERING_VULKAN */
-

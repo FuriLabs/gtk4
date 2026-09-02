@@ -25,15 +25,11 @@
 #include "gdkcolorstateprivate.h"
 #include "gdkmemoryformatprivate.h"
 
+#include "gsk/gsktypes.h"
+
 #include <graphene.h>
 
 G_BEGIN_DECLS
-
-#define GDK_DRAW_CONTEXT_CLASS(klass) 	(G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_DRAW_CONTEXT, GdkDrawContextClass))
-#define GDK_IS_DRAW_CONTEXT_CLASS(klass)	(G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_DRAW_CONTEXT))
-#define GDK_DRAW_CONTEXT_GET_CLASS(obj)	(G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_DRAW_CONTEXT, GdkDrawContextClass))
-
-typedef struct _GdkDrawContextClass GdkDrawContextClass;
 
 struct _GdkDrawContext
 {
@@ -46,7 +42,6 @@ struct _GdkDrawContextClass
 
   void                  (* begin_frame)                         (GdkDrawContext         *context,
                                                                  gpointer                context_data,
-                                                                 GdkMemoryDepth          depth,
                                                                  cairo_region_t         *update_area,
                                                                  GdkColorState         **out_color_state,
                                                                  GdkMemoryDepth         *out_depth);
@@ -64,9 +59,8 @@ void                    gdk_draw_context_surface_resized        (GdkDrawContext 
 
 void                    gdk_draw_context_begin_frame_full       (GdkDrawContext         *context,
                                                                  gpointer                context_data,
-                                                                 GdkMemoryDepth          depth,
-                                                                 const cairo_region_t   *region,
-                                                                 const graphene_rect_t  *opaque);
+                                                                 GskRenderNode          *node,
+                                                                 const cairo_region_t   *region);
 void                    gdk_draw_context_end_frame_full         (GdkDrawContext         *context,
                                                                  gpointer                context_data);
 

@@ -39,7 +39,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkColumnViewColumn, g_object_unref)
 typedef struct _GtkColumnViewColumnClass GtkColumnViewColumnClass;
 
 GDK_AVAILABLE_IN_ALL
-GType                   gtk_column_view_column_get_type                 (void) G_GNUC_CONST;
+GType                   gtk_column_view_column_get_type                 (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkColumnViewColumn *   gtk_column_view_column_new                      (const char             *title,

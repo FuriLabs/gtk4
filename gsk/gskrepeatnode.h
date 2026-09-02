@@ -31,7 +31,7 @@ typedef struct _GskRepeatNode                   GskRepeatNode;
 #define GSK_TYPE_REPEAT_NODE                    (gsk_repeat_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_repeat_node_get_type                (void) G_GNUC_CONST;
+GType                   gsk_repeat_node_get_type                (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_repeat_node_new                     (const graphene_rect_t    *bounds,
                                                                  GskRenderNode            *child,

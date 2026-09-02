@@ -604,8 +604,7 @@ gtk_list_store_finalize (GObject *object)
       GDestroyNotify d = priv->default_sort_destroy;
 
       priv->default_sort_destroy = NULL;
-      d (priv->default_sort_data);
-      priv->default_sort_data = NULL;
+      g_clear_pointer (&priv->default_sort_data, d);
     }
 
   G_OBJECT_CLASS (gtk_list_store_parent_class)->finalize (object);

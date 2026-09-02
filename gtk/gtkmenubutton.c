@@ -929,8 +929,7 @@ gtk_menu_button_dispose (GObject *object)
       g_signal_handlers_disconnect_by_func (self->popover,
                                             popover_destroy_cb,
                                             object);
-      gtk_widget_unparent (self->popover);
-      self->popover = NULL;
+      g_clear_pointer (&self->popover, gtk_widget_unparent);
     }
 
   g_clear_object (&self->model);

@@ -47,7 +47,7 @@ G_GNUC_EXTENSION struct _GskPathPoint
 };
 
 GDK_AVAILABLE_IN_4_14
-GType                   gsk_path_point_get_type        (void) G_GNUC_CONST;
+GType                   gsk_path_point_get_type        (void);
 
 GDK_AVAILABLE_IN_4_14
 GskPathPoint *          gsk_path_point_copy            (GskPathPoint       *point);

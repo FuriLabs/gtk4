@@ -142,11 +142,9 @@ gtk_statusbar_dispose (GObject *object)
 {
   GtkStatusbar *self = GTK_STATUSBAR (object);
 
-  g_slist_free_full (self->messages, (GDestroyNotify) gtk_statusbar_msg_free);
-  self->messages = NULL;
+  g_clear_slist (&self->messages, (GDestroyNotify) gtk_statusbar_msg_free);
 
-  g_slist_free_full (self->keys, g_free);
-  self->keys = NULL;
+  g_clear_slist (&self->keys, g_free);
 
   gtk_widget_dispose_template (GTK_WIDGET (self), GTK_TYPE_STATUSBAR);
 

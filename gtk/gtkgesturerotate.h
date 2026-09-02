@@ -39,7 +39,7 @@ typedef struct _GtkGestureRotate GtkGestureRotate;
 typedef struct _GtkGestureRotateClass GtkGestureRotateClass;
 
 GDK_AVAILABLE_IN_ALL
-GType        gtk_gesture_rotate_get_type        (void) G_GNUC_CONST;
+GType        gtk_gesture_rotate_get_type        (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkGesture * gtk_gesture_rotate_new             (void);

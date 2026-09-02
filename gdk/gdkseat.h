@@ -31,8 +31,9 @@
 G_BEGIN_DECLS
 
 #define GDK_TYPE_SEAT  (gdk_seat_get_type ())
-#define GDK_SEAT(o)    (G_TYPE_CHECK_INSTANCE_CAST ((o), GDK_TYPE_SEAT, GdkSeat))
-#define GDK_IS_SEAT(o) (G_TYPE_CHECK_INSTANCE_TYPE ((o), GDK_TYPE_SEAT))
+
+GDK_AVAILABLE_IN_ALL
+GDK_DECLARE_INTERNAL_TYPE (GdkSeat, gdk_seat, GDK, SEAT, GObject)
 
 /**
  * GdkSeatCapabilities:
@@ -64,9 +65,6 @@ struct _GdkSeat
 };
 
 GDK_AVAILABLE_IN_ALL
-GType          gdk_seat_get_type         (void) G_GNUC_CONST;
-
-GDK_AVAILABLE_IN_ALL
 GdkDisplay *   gdk_seat_get_display             (GdkSeat             *seat);
 
 GDK_AVAILABLE_IN_ALL
@@ -85,7 +83,4 @@ GdkDevice *    gdk_seat_get_pointer             (GdkSeat             *seat);
 GDK_AVAILABLE_IN_ALL
 GdkDevice *    gdk_seat_get_keyboard            (GdkSeat             *seat);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkSeat, g_object_unref)
-
 G_END_DECLS
-

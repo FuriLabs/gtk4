@@ -23,7 +23,7 @@
 
 G_BEGIN_DECLS
 
-GType         gtk_im_context_wayland_get_type (void) G_GNUC_CONST;
+GType         gtk_im_context_wayland_get_type (void);
 
 struct wl_proxy *gtk_im_context_wayland_get_text_protocol (GdkDisplay *display);
 

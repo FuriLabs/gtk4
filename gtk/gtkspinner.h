@@ -38,7 +38,7 @@ typedef struct _GtkSpinner      GtkSpinner;
 
 
 GDK_AVAILABLE_IN_ALL
-GType      gtk_spinner_get_type     (void) G_GNUC_CONST;
+GType      gtk_spinner_get_type     (void);
 GDK_AVAILABLE_IN_ALL
 GtkWidget *gtk_spinner_new          (void);
 GDK_AVAILABLE_IN_ALL

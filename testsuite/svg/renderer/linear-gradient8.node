@@ -7,8 +7,7 @@ stroke {
     repeat: repeat;
     premultiplied: false;
   }
-  path: "\
-M 50 50 h 200 v 100 h -200 z";
+  path: 50 50 200 100;
   line-width: 10;
   line-cap: butt;
   line-join: miter;

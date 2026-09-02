@@ -41,7 +41,6 @@
 #include "gskroundedrect.h"
 #include "gskroundedrectprivate.h"
 
-#include "gskdebugprivate.h"
 #include "gskrectprivate.h"
 
 #include <math.h>

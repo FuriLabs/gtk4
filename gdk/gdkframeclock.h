@@ -33,15 +33,9 @@
 G_BEGIN_DECLS
 
 #define GDK_TYPE_FRAME_CLOCK            (gdk_frame_clock_get_type ())
-#define GDK_FRAME_CLOCK(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_FRAME_CLOCK, GdkFrameClock))
-#define GDK_FRAME_CLOCK_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_FRAME_CLOCK, GdkFrameClockClass))
-#define GDK_IS_FRAME_CLOCK(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_FRAME_CLOCK))
-#define GDK_IS_FRAME_CLOCK_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_FRAME_CLOCK))
-#define GDK_FRAME_CLOCK_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_FRAME_CLOCK, GdkFrameClockClass))
 
-typedef struct _GdkFrameClock              GdkFrameClock;
-typedef struct _GdkFrameClockPrivate       GdkFrameClockPrivate;
-typedef struct _GdkFrameClockClass         GdkFrameClockClass;
+GDK_AVAILABLE_IN_ALL
+GDK_DECLARE_INTERNAL_TYPE (GdkFrameClock, gdk_frame_clock, GDK, FRAME_CLOCK, GObject)
 
 /**
  * GdkFrameClockPhase:
@@ -70,19 +64,16 @@ typedef enum {
 } GdkFrameClockPhase;
 
 GDK_AVAILABLE_IN_ALL
-GType    gdk_frame_clock_get_type             (void) G_GNUC_CONST;
+gint64             gdk_frame_clock_get_frame_time               (GdkFrameClock          *self);
 
 GDK_AVAILABLE_IN_ALL
-gint64   gdk_frame_clock_get_frame_time            (GdkFrameClock *frame_clock);
+void               gdk_frame_clock_request_phase                (GdkFrameClock          *self,
+                                                                 GdkFrameClockPhase      phase);
 
 GDK_AVAILABLE_IN_ALL
-void               gdk_frame_clock_request_phase (GdkFrameClock      *frame_clock,
-                                                  GdkFrameClockPhase  phase);
-
+void               gdk_frame_clock_begin_updating (GdkFrameClock      *self);
 GDK_AVAILABLE_IN_ALL
-void               gdk_frame_clock_begin_updating (GdkFrameClock      *frame_clock);
-GDK_AVAILABLE_IN_ALL
-void               gdk_frame_clock_end_updating   (GdkFrameClock      *frame_clock);
+void               gdk_frame_clock_end_updating   (GdkFrameClock      *self);
 
 /* Frame history */
 GDK_AVAILABLE_IN_ALL
@@ -105,7 +96,4 @@ void gdk_frame_clock_get_refresh_info (GdkFrameClock *frame_clock,
 GDK_AVAILABLE_IN_ALL
 double gdk_frame_clock_get_fps (GdkFrameClock *frame_clock);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkFrameClock, g_object_unref)
-
 G_END_DECLS
-

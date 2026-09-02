@@ -21,20 +21,12 @@
 #pragma once
 
 #include <gio/gio.h>
+#include <gdk/gdktypes.h>
 
 G_BEGIN_DECLS
 
 #define GTK_TYPE_LIST_LIST_MODEL         (gtk_list_list_model_get_type ())
-#define GTK_LIST_LIST_MODEL(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), GTK_TYPE_LIST_LIST_MODEL, GtkListListModel))
-#define GTK_LIST_LIST_MODEL_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST ((k), GTK_TYPE_LIST_LIST_MODEL, GtkListListModelClass))
-#define GTK_IS_LIST_LIST_MODEL(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), GTK_TYPE_LIST_LIST_MODEL))
-#define GTK_IS_LIST_LIST_MODEL_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), GTK_TYPE_LIST_LIST_MODEL))
-#define GTK_LIST_LIST_MODEL_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), GTK_TYPE_LIST_LIST_MODEL, GtkListListModelClass))
-
-typedef struct _GtkListListModel GtkListListModel;
-typedef struct _GtkListListModelClass GtkListListModelClass;
-
-GType                   gtk_list_list_model_get_type            (void) G_GNUC_CONST;
+GDK_DECLARE_INTERNAL_TYPE (GtkListListModel, gtk_list_list_model, GTK, LIST_LIST_MODEL, GObject);
 
 GtkListListModel *      gtk_list_list_model_new                 (gpointer                (* get_first) (gpointer),
                                                                  gpointer                (* get_next) (gpointer, gpointer),
@@ -59,6 +51,8 @@ void                    gtk_list_list_model_item_added_at       (GtkListListMode
                                                                  guint                   position);
 void                    gtk_list_list_model_item_removed        (GtkListListModel       *self,
                                                                  gpointer                previous);
+void                    gtk_list_list_model_item_replaced       (GtkListListModel       *self,
+                                                                 gpointer                new_item);
 void                    gtk_list_list_model_item_removed_at     (GtkListListModel       *self,
                                                                  guint                   position);
 void                    gtk_list_list_model_item_moved          (GtkListListModel       *self,
@@ -67,6 +61,4 @@ void                    gtk_list_list_model_item_moved          (GtkListListMode
 
 void                    gtk_list_list_model_clear               (GtkListListModel       *self);
 
-
 G_END_DECLS
-

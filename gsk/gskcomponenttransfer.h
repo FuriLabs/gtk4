@@ -31,7 +31,7 @@ G_BEGIN_DECLS
 #define GSK_TYPE_COMPONENT_TRANSFER (gsk_component_transfer_get_type ())
 
 GDK_AVAILABLE_IN_4_20
-GType                   gsk_component_transfer_get_type         (void) G_GNUC_CONST;
+GType                   gsk_component_transfer_get_type         (void);
 GDK_AVAILABLE_IN_4_20
 GskComponentTransfer *  gsk_component_transfer_new_identity     (void);
 GDK_AVAILABLE_IN_4_20

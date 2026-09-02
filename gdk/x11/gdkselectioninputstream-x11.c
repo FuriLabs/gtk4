@@ -542,7 +542,7 @@ gdk_x11_selection_input_stream_new_async (GdkDisplay          *display,
   g_signal_connect_data (display, "xevent",
                          G_CALLBACK (gdk_x11_selection_input_stream_xevent),
                          g_steal_pointer (&stream),
-                         (GClosureNotify) g_object_unref, 0);
+                         (GClosureNotify) g_object_unref, G_CONNECT_DEFAULT);
 
   XConvertSelection (GDK_DISPLAY_XDISPLAY (display),
                      priv->xselection,

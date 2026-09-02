@@ -157,7 +157,7 @@ struct _GtkCssFontValues {
   GtkCssValue *font_family;
   GtkCssValue *font_style;
   GtkCssValue *font_weight;
-  GtkCssValue *font_stretch;
+  GtkCssValue *font_width;
   GtkCssValue *letter_spacing;
   GtkCssValue *text_shadow;
   GtkCssValue *caret_color;
@@ -305,7 +305,7 @@ struct _GtkCssStyleClass
                                                                  guint                   id);
 };
 
-GType                   gtk_css_style_get_type                  (void) G_GNUC_CONST;
+GType                   gtk_css_style_get_type                  (void);
 
 GtkCssValue *           gtk_css_style_get_value                 (GtkCssStyle            *style,
                                                                  guint                   id) G_GNUC_PURE;

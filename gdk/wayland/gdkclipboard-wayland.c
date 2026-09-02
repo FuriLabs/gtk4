@@ -30,8 +30,6 @@
 #include <gio/gunixinputstream.h>
 #include <gio/gunixoutputstream.h>
 
-typedef struct _GdkWaylandClipboardClass GdkWaylandClipboardClass;
-
 struct _GdkWaylandClipboard
 {
   GdkClipboard parent;

@@ -281,6 +281,7 @@ gsk_gl_texture_data_free (gpointer user_data)
   /* can't use g_clear_pointer() on glDeleteSync(), see MR !7294 */
   if (data->sync)
     {
+      /* gobject-linter-ignore-next-line: use_clear_functions */
       glDeleteSync (data->sync);
       data->sync = NULL;
     }

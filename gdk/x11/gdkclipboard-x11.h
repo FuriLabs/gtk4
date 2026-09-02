@@ -30,7 +30,7 @@ G_BEGIN_DECLS
 
 typedef struct _GdkX11Clipboard GdkX11Clipboard;
 
-GType                   gdk_x11_clipboard_get_type              (void) G_GNUC_CONST;
+GType                   gdk_x11_clipboard_get_type              (void);
 
 GdkClipboard *          gdk_x11_clipboard_new                   (GdkDisplay             *display,
                                                                  const char             *selection);

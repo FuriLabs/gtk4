@@ -973,11 +973,7 @@ gtk_icon_view_dispose (GObject *object)
 
   gtk_icon_view_set_model (icon_view, NULL);
 
-  if (icon_view->priv->scroll_to_path != NULL)
-    {
-      gtk_tree_row_reference_free (icon_view->priv->scroll_to_path);
-      icon_view->priv->scroll_to_path = NULL;
-    }
+  g_clear_pointer (&icon_view->priv->scroll_to_path, gtk_tree_row_reference_free);
 
   remove_scroll_timeout (icon_view);
 
@@ -1596,8 +1592,7 @@ gtk_icon_view_size_allocate (GtkWidget *widget,
     {
       GtkTreePath *path;
       path = gtk_tree_row_reference_get_path (icon_view->priv->scroll_to_path);
-      gtk_tree_row_reference_free (icon_view->priv->scroll_to_path);
-      icon_view->priv->scroll_to_path = NULL;
+      g_clear_pointer (&icon_view->priv->scroll_to_path, gtk_tree_row_reference_free);
 
       gtk_icon_view_scroll_to_path (icon_view, path,
 				    icon_view->priv->scroll_to_use_align,
@@ -4578,11 +4573,7 @@ gtk_icon_view_set_model (GtkIconView *icon_view,
   if (icon_view->priv->model == model)
     return;
 
-  if (icon_view->priv->scroll_to_path)
-    {
-      gtk_tree_row_reference_free (icon_view->priv->scroll_to_path);
-      icon_view->priv->scroll_to_path = NULL;
-    }
+  g_clear_pointer (&icon_view->priv->scroll_to_path, gtk_tree_row_reference_free);
 
   /* The area can be NULL while disposing */
   if (icon_view->priv->cell_area)
@@ -4626,8 +4617,7 @@ gtk_icon_view_set_model (GtkIconView *icon_view,
 
       g_object_unref (icon_view->priv->model);
 
-      g_list_free_full (icon_view->priv->items, (GDestroyNotify) gtk_icon_view_item_free);
-      icon_view->priv->items = NULL;
+      g_clear_list (&icon_view->priv->items, (GDestroyNotify) gtk_icon_view_item_free);
       icon_view->priv->anchor_item = NULL;
       icon_view->priv->cursor_item = NULL;
       icon_view->priv->last_single_clicked = NULL;
@@ -6477,8 +6467,7 @@ gtk_icon_view_set_drag_dest_item (GtkIconView              *icon_view,
     {
       GtkTreePath *current_path;
       current_path = gtk_tree_row_reference_get_path (icon_view->priv->dest_item);
-      gtk_tree_row_reference_free (icon_view->priv->dest_item);
-      icon_view->priv->dest_item = NULL;
+      g_clear_pointer (&icon_view->priv->dest_item, gtk_tree_row_reference_free);
 
       gtk_icon_view_queue_draw_path (icon_view, current_path);
       gtk_tree_path_free (current_path);

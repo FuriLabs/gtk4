@@ -39,7 +39,7 @@ typedef struct _GtkGestureSingle GtkGestureSingle;
 typedef struct _GtkGestureSingleClass GtkGestureSingleClass;
 
 GDK_AVAILABLE_IN_ALL
-GType       gtk_gesture_single_get_type       (void) G_GNUC_CONST;
+GType       gtk_gesture_single_get_type       (void);
 
 GDK_AVAILABLE_IN_ALL
 gboolean    gtk_gesture_single_get_touch_only (GtkGestureSingle *gesture);

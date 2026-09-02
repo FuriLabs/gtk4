@@ -101,9 +101,9 @@ typedef struct _GtkAssistantPage GtkAssistantPage;
 typedef int (*GtkAssistantPageFunc) (int current_page, gpointer data);
 
 GDK_AVAILABLE_IN_ALL
-GType                 gtk_assistant_page_get_type         (void) G_GNUC_CONST;
+GType                 gtk_assistant_page_get_type         (void);
 GDK_AVAILABLE_IN_ALL
-GType                 gtk_assistant_get_type              (void) G_GNUC_CONST;
+GType                 gtk_assistant_get_type              (void);
 GDK_DEPRECATED_IN_4_10
 GtkWidget            *gtk_assistant_new                   (void);
 GDK_DEPRECATED_IN_4_10

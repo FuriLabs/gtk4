@@ -31,7 +31,7 @@ typedef struct _GskMaskNode                     GskMaskNode;
 #define GSK_TYPE_MASK_NODE                      (gsk_mask_node_get_type())
 
 GDK_AVAILABLE_IN_4_10
-GType                  gsk_mask_node_get_type                   (void) G_GNUC_CONST;GDK_AVAILABLE_IN_4_10
+GType                  gsk_mask_node_get_type                   (void);GDK_AVAILABLE_IN_4_10
 GskRenderNode *        gsk_mask_node_new                        (GskRenderNode            *source,
                                                                  GskRenderNode            *mask,
                                                                  GskMaskMode               mask_mode);

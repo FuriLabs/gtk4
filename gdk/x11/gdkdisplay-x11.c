@@ -1110,25 +1110,6 @@ gdk_x11_display_translate_event (GdkEventTranslator *translator,
   return event;
 }
 
-static GdkFrameTimings *
-find_frame_timings (GdkFrameClock *clock,
-                    guint64        serial)
-{
-  gint64 start_frame, end_frame, i;
-
-  start_frame = gdk_frame_clock_get_history_start (clock);
-  end_frame = gdk_frame_clock_get_frame_counter (clock);
-  for (i = end_frame; i >= start_frame; i--)
-    {
-      GdkFrameTimings *timings = gdk_frame_clock_get_timings (clock, i);
-
-      if (timings->cookie == serial)
-        return timings;
-    }
-
-  return NULL;
-}
-
 /* _NET_WM_FRAME_DRAWN and _NET_WM_FRAME_TIMINGS messages represent time
  * as a "high resolution server time" - this is the server time interpolated
  * to microsecond resolution. The advantage of this time representation
@@ -1204,7 +1185,7 @@ _gdk_wm_protocols_filter (const XEvent  *xevent,
           gint64 frame_drawn_time = server_time_to_monotonic_time (GDK_X11_DISPLAY (display), ((guint64)d3 << 32) | d2);
 
           GdkFrameClock *clock = gdk_surface_get_frame_clock (win);
-          GdkFrameTimings *timings = find_frame_timings (clock, serial);
+          GdkFrameTimings *timings = gdk_frame_clock_find_timings (clock, serial);
 
           if (timings)
             timings->drawn_time = frame_drawn_time;
@@ -1233,24 +1214,25 @@ _gdk_wm_protocols_filter (const XEvent  *xevent,
           guint64 serial = ((guint64)d1 << 32) | d0;
 
           GdkFrameClock *clock = gdk_surface_get_frame_clock (win);
-          GdkFrameTimings *timings = find_frame_timings (clock, serial);
+          GdkFrameTimings *timings = gdk_frame_clock_find_timings (clock, serial);
 
-          if (timings)
+          if (timings && !gdk_frame_timings_get_complete (timings))
             {
+              gint64 frame_counter = gdk_frame_timings_get_frame_counter (timings);
               gint32 presentation_time_offset = (gint32)d2;
               gint32 refresh_interval = d3;
 
               if (timings->drawn_time && presentation_time_offset)
                 {
                   gdk_frame_clock_presented (clock,
-                                             timings->frame_counter,
+                                             frame_counter,
                                              (uint64_t) (timings->drawn_time + presentation_time_offset) * 1000,
                                              refresh_interval * 1000);
                 }
               else
                 {
                   gdk_frame_clock_submitted (clock,
-                                             timings->frame_counter,
+                                             frame_counter,
                                              refresh_interval * 1000);
                 }
             }
@@ -1921,8 +1903,7 @@ gdk_x11_display_dispose (GObject *object)
   if (display_x11->event_source)
     {
       g_source_destroy (display_x11->event_source);
-      g_source_unref (display_x11->event_source);
-      display_x11->event_source = NULL;
+      g_clear_pointer (&display_x11->event_source, g_source_unref);
     }
 
   G_OBJECT_CLASS (gdk_x11_display_parent_class)->dispose (object);

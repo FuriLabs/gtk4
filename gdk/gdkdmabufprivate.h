@@ -36,7 +36,7 @@ gboolean                    gdk_memory_layout_init_from_dmabuf  (GdkMemoryLayout
 int                         gdk_dmabuf_new_for_bytes            (GBytes                         *bytes,
                                                                  GError                        **error);
 
-GdkDmabufFormats *          gdk_dmabuf_get_mmap_formats         (void) G_GNUC_CONST;
+GdkDmabufFormats *          gdk_dmabuf_get_mmap_formats         (void);
 gboolean                    gdk_dmabuf_download_mmap            (GdkTexture                     *texture,
                                                                  guchar                         *data,
                                                                  const GdkMemoryLayout          *layout,

@@ -35,8 +35,9 @@
 G_BEGIN_DECLS
 
 #define GDK_TYPE_DRAG              (gdk_drag_get_type ())
-#define GDK_DRAG(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), GDK_TYPE_DRAG, GdkDrag))
-#define GDK_IS_DRAG(object)        (G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_DRAG))
+
+GDK_AVAILABLE_IN_ALL
+GDK_DECLARE_INTERNAL_TYPE (GdkDrag, gdk_drag, GDK, DRAG, GObject)
 
 /**
  * GdkDragCancelReason:
@@ -53,9 +54,6 @@ typedef enum {
 } GdkDragCancelReason;
 
 GDK_AVAILABLE_IN_ALL
-GType            gdk_drag_get_type             (void) G_GNUC_CONST;
-
-GDK_AVAILABLE_IN_ALL
 GdkDisplay *     gdk_drag_get_display          (GdkDrag *drag);
 GDK_AVAILABLE_IN_ALL
 GdkDevice *      gdk_drag_get_device           (GdkDrag *drag);
@@ -68,7 +66,7 @@ GDK_AVAILABLE_IN_ALL
 GdkDragAction    gdk_drag_get_selected_action  (GdkDrag *drag);
 
 GDK_AVAILABLE_IN_ALL
-gboolean         gdk_drag_action_is_unique     (GdkDragAction   action) G_GNUC_CONST;
+gboolean         gdk_drag_action_is_unique     (GdkDragAction   action);
 
 GDK_AVAILABLE_IN_ALL
 GdkDrag *        gdk_drag_begin                (GdkSurface         *surface,
@@ -97,7 +95,4 @@ GdkContentProvider *
 GDK_AVAILABLE_IN_ALL
 GdkSurface *    gdk_drag_get_surface (GdkDrag *drag);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkDrag, g_object_unref)
-
 G_END_DECLS
-

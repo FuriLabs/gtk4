@@ -1160,13 +1160,12 @@ coords_close_to_indicator (GtkScrolledWindow *sw,
   return FALSE;
 }
 
-static gboolean
+static void
 enable_over_timeout_cb (gpointer user_data)
 {
   Indicator *indicator = user_data;
 
   indicator_set_over (indicator, TRUE);
-  return G_SOURCE_REMOVE;
 }
 
 static gboolean
@@ -1195,7 +1194,7 @@ check_update_scrollbar_proximity (GtkScrolledWindow *sw,
     indicator_set_over (indicator, TRUE);
   else if (indicator_close && !on_other_scrollbar)
     {
-      indicator->over_timeout_id = g_timeout_add (30, enable_over_timeout_cb, indicator);
+      indicator->over_timeout_id = g_timeout_add_once (30, enable_over_timeout_cb, indicator);
       gdk_source_set_static_name_by_id (indicator->over_timeout_id, "[gtk] enable_over_timeout_cb");
     }
   else
@@ -1327,7 +1326,7 @@ captured_motion (GtkEventController *controller,
     }
 }
 
-static gboolean
+static void
 start_scroll_deceleration_cb (gpointer user_data)
 {
   GtkScrolledWindow *scrolled_window = user_data;
@@ -1337,8 +1336,6 @@ start_scroll_deceleration_cb (gpointer user_data)
 
   if (!priv->deceleration_id)
     gtk_scrolled_window_start_deceleration (scrolled_window);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -1443,7 +1440,7 @@ scrolled_window_scroll (GtkScrolledWindow        *scrolled_window,
       _gtk_scrolled_window_get_overshoot (scrolled_window, NULL, NULL))
     {
       priv->scroll_events_overshoot_id =
-        g_timeout_add (50, start_scroll_deceleration_cb, scrolled_window);
+        g_timeout_add_once (50, start_scroll_deceleration_cb, scrolled_window);
       gdk_source_set_static_name_by_id (priv->scroll_events_overshoot_id,
                                       "[gtk] start_scroll_deceleration_cb");
     }
@@ -2727,8 +2724,7 @@ gtk_scrolled_window_dispose (GObject *object)
       g_signal_handlers_disconnect_by_data (hadjustment, self);
       g_signal_handlers_disconnect_by_data (hadjustment, &priv->hindicator);
 
-      gtk_widget_unparent (priv->hscrollbar);
-      priv->hscrollbar = NULL;
+      g_clear_pointer (&priv->hscrollbar, gtk_widget_unparent);
     }
 
   if (priv->vscrollbar)
@@ -2738,8 +2734,7 @@ gtk_scrolled_window_dispose (GObject *object)
       g_signal_handlers_disconnect_by_data (vadjustment, self);
       g_signal_handlers_disconnect_by_data (vadjustment, &priv->vindicator);
 
-      gtk_widget_unparent (priv->vscrollbar);
-      priv->vscrollbar = NULL;
+      g_clear_pointer (&priv->vscrollbar, gtk_widget_unparent);
     }
 
   if (priv->deceleration_id)

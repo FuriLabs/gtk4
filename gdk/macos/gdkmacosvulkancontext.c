@@ -70,11 +70,6 @@ gdk_macos_vulkan_context_create_surface (GdkVulkanContext *context,
 }
 
 static void
-gdk_macos_vulkan_context_empty_frame (GdkDrawContext *context)
-{
-}
-
-static void
 gdk_macos_vulkan_context_surface_resized (GdkDrawContext *context)
 {
   GdkSurface *surface = gdk_draw_context_get_surface (context);
@@ -121,7 +116,6 @@ gdk_macos_vulkan_context_class_init (GdkMacosVulkanContextClass *klass)
 
   vulkan_context_class->create_surface = gdk_macos_vulkan_context_create_surface;
 
-  draw_context_class->empty_frame = gdk_macos_vulkan_context_empty_frame;
   draw_context_class->surface_resized = gdk_macos_vulkan_context_surface_resized;
   draw_context_class->surface_attach = gdk_macos_vulkan_context_surface_attach;
 }

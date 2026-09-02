@@ -30,7 +30,7 @@ G_BEGIN_DECLS
 typedef struct _GtkLockButton        GtkLockButton;
 
 GDK_AVAILABLE_IN_ALL
-GType        gtk_lock_button_get_type       (void) G_GNUC_CONST;
+GType        gtk_lock_button_get_type       (void);
 GDK_DEPRECATED_IN_4_10
 GtkWidget   *gtk_lock_button_new            (GPermission   *permission);
 GDK_DEPRECATED_IN_4_10

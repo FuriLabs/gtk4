@@ -1462,11 +1462,7 @@ gtk_combo_box_unset_model (GtkComboBox *combo_box)
       g_clear_object (&priv->model);
     }
 
-  if (priv->active_row)
-    {
-      gtk_tree_row_reference_free (priv->active_row);
-      priv->active_row = NULL;
-    }
+  g_clear_pointer (&priv->active_row, gtk_tree_row_reference_free);
 
   if (priv->cell_view)
     gtk_cell_view_set_model (GTK_CELL_VIEW (priv->cell_view), NULL);
@@ -1995,11 +1991,7 @@ gtk_combo_box_set_active_internal (GtkComboBox *combo_box,
         return;
     }
 
-  if (priv->active_row)
-    {
-      gtk_tree_row_reference_free (priv->active_row);
-      priv->active_row = NULL;
-    }
+  g_clear_pointer (&priv->active_row, gtk_tree_row_reference_free);
 
   if (!path)
     {
@@ -2427,8 +2419,7 @@ gtk_combo_box_dispose (GObject* object)
       /* destroy things (unparent will kill the latest ref from us)
        * last unref on button will destroy the arrow
        */
-      gtk_widget_unparent (priv->box);
-      priv->box = NULL;
+      g_clear_pointer (&priv->box, gtk_widget_unparent);
       priv->button = NULL;
       priv->arrow = NULL;
       priv->child = NULL;
@@ -2499,7 +2490,7 @@ gtk_combo_box_start_editing (GtkCellEditable *cell_editable,
   controller = gtk_event_controller_key_new ();
   g_signal_connect_object (controller, "key-pressed",
                            G_CALLBACK (gtk_cell_editable_key_pressed),
-                           cell_editable, 0);
+                           cell_editable, G_CONNECT_DEFAULT);
 
   if (priv->cell_view)
     {

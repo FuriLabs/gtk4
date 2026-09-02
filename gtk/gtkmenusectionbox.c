@@ -509,11 +509,7 @@ gtk_menu_section_box_dispose (GObject *object)
 
   g_clear_object (&box->separator);
 
-  if (box->tracker)
-    {
-      gtk_menu_tracker_free (box->tracker);
-      box->tracker = NULL;
-    }
+  g_clear_pointer (&box->tracker, gtk_menu_tracker_free);
 
   g_clear_object (&box->indicators);
   g_clear_pointer (&box->custom_slots, g_hash_table_unref);

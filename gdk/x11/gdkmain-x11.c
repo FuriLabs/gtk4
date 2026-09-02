@@ -220,8 +220,7 @@ _gdk_x11_error_handler_pop  (void)
 
   if (_gdk_error_handler_push_count == 0)
     {
-      XSetErrorHandler (_gdk_old_error_handler);
-      _gdk_old_error_handler = NULL;
+      g_clear_pointer (&_gdk_old_error_handler, XSetErrorHandler);
     }
 }
 

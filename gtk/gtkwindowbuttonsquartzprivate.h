@@ -31,7 +31,7 @@ G_BEGIN_DECLS
 
 typedef struct _GtkWindowButtonsQuartz              GtkWindowButtonsQuartz;
 
-GType      gtk_window_buttons_quartz_get_type (void) G_GNUC_CONST;
+GType      gtk_window_buttons_quartz_get_type (void);
 
 G_END_DECLS
 

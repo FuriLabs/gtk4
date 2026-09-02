@@ -96,15 +96,15 @@ G_BEGIN_DECLS
       GTK_MICRO_VERSION >= (micro)))
 
 GDK_AVAILABLE_IN_ALL
-guint gtk_get_major_version (void) G_GNUC_CONST;
+guint gtk_get_major_version (void);
 GDK_AVAILABLE_IN_ALL
-guint gtk_get_minor_version (void) G_GNUC_CONST;
+guint gtk_get_minor_version (void);
 GDK_AVAILABLE_IN_ALL
-guint gtk_get_micro_version (void) G_GNUC_CONST;
+guint gtk_get_micro_version (void);
 GDK_AVAILABLE_IN_ALL
-guint gtk_get_binary_age    (void) G_GNUC_CONST;
+guint gtk_get_binary_age    (void);
 GDK_AVAILABLE_IN_ALL
-guint gtk_get_interface_age (void) G_GNUC_CONST;
+guint gtk_get_interface_age (void);
 
 GDK_AVAILABLE_IN_ALL
 const char * gtk_check_version (guint   required_major,

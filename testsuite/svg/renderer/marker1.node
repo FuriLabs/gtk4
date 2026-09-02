@@ -50,8 +50,7 @@ stroke {
     bounds: 149.5 99.5 126 76;
     color: rgb(0,0,255);
   }
-  path: "\
-M 150 100 h 125 v 75 h -125 z";
+  path: 150 100 125 75;
   line-width: 1;
   line-cap: butt;
   line-join: miter;

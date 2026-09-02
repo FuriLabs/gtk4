@@ -36,6 +36,7 @@
 #include "gskcomponenttransferprivate.h"
 #include "gskcompositenode.h"
 #include "gskcontainernodeprivate.h"
+#include "gskcontourprivate.h"
 #include "gskcopynode.h"
 #include "gskcrossfadenode.h"
 #include "gskdebugnode.h"
@@ -116,12 +117,15 @@
 
 #include <glib/gstdio.h>
 
+#define INDENT_LEVEL 2 /* Spaces per level */
+
 typedef struct _Context Context;
 
 struct _Context
 {
   GHashTable *named_nodes;
   GHashTable *named_textures;
+  GHashTable *named_paths;
   GHashTable *named_color_states;
   PangoFontMap *fontmap;
 };
@@ -147,6 +151,7 @@ context_finish (Context *context)
 {
   g_clear_pointer (&context->named_nodes, g_hash_table_unref);
   g_clear_pointer (&context->named_textures, g_hash_table_unref);
+  g_clear_pointer (&context->named_paths, g_hash_table_unref);
   g_clear_pointer (&context->named_color_states, g_hash_table_unref);
   g_clear_object (&context->fontmap);
 }
@@ -3846,24 +3851,247 @@ parse_rounded_clip_node (GtkCssParser *parser,
   return result;
 }
 
+static GskPath *
+parse_rect_path (GtkCssParser *parser,
+                 Context      *context)
+{
+  graphene_rect_t rect = GRAPHENE_RECT_INIT (0, 0, 50, 50);
+  const Declaration declarations[] = {
+    { "outline", parse_rect, NULL, &rect },
+  };
+  GskPathBuilder *builder;
+
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+
+  builder = gsk_path_builder_new ();
+  gsk_path_builder_add_rect (builder, &rect);
+  return gsk_path_builder_free_to_path (builder);
+}
+
+static GskPath *
+parse_rounded_rect_path (GtkCssParser *parser,
+                         Context      *context)
+{
+  GskRoundedRect rect = GSK_ROUNDED_RECT_INIT (0, 0, 50, 50);
+  const Declaration declarations[] = {
+    { "outline", parse_rounded_rect, NULL, &rect },
+  };
+  GskPathBuilder *builder;
+
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+
+  builder = gsk_path_builder_new ();
+  if (gsk_rounded_rect_is_rectilinear (&rect))
+    gsk_path_builder_add_rect (builder, &rect.bounds);
+  else
+    gsk_path_builder_add_rounded_rect (builder, &rect);
+  return gsk_path_builder_free_to_path (builder);
+}
+
+static GskPath *
+parse_circle_path (GtkCssParser *parser,
+                   Context      *context)
+{
+  graphene_point_t center = GRAPHENE_POINT_INIT (10, 10);
+  double radius = 10;
+  const Declaration declarations[] = {
+    { "center", parse_point, NULL, &center },
+    { "radius", parse_double, NULL, &radius },
+  };
+  GskPathBuilder *builder;
+
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+
+  builder = gsk_path_builder_new ();
+  gsk_path_builder_add_circle (builder, &center, radius);
+  return gsk_path_builder_free_to_path (builder);
+}
+
+static GskPath *
+parse_contour (GtkCssParser *parser,
+               Context      *context)
+{
+  if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_STRING))
+    {
+      char *str = NULL;
+      GskPath *path;
+
+      str = gtk_css_parser_consume_string (parser);
+
+      path = gsk_path_parse (str);
+      g_free (str);
+      if (path == NULL)
+        {
+          gtk_css_parser_error_value (parser, "Invalid path");
+          return NULL;
+        }
+
+      return path;
+    }
+  else if (gtk_css_parser_has_number (parser))
+    {
+      GskRoundedRect rect = GSK_ROUNDED_RECT_INIT (0, 0, 50, 50);
+      GskPathBuilder *builder;
+
+      if (!parse_rounded_rect (parser, context, &rect))
+        return FALSE;
+
+      builder = gsk_path_builder_new ();
+
+      if (gsk_rounded_rect_is_rectilinear (&rect))
+        gsk_path_builder_add_rect (builder, &rect.bounds);
+      else
+        gsk_path_builder_add_rounded_rect (builder, &rect);
+
+      return gsk_path_builder_free_to_path (builder);
+    }
+  else
+    {
+      static const struct {
+        const char *name;
+        GskPath * (* func) (GtkCssParser *, Context *);
+      } path_parsers[] = {
+        { "rect", parse_rect_path },
+        { "rounded-rect", parse_rounded_rect_path },
+        { "circle", parse_circle_path },
+      };
+
+      for (unsigned int i = 0; i < G_N_ELEMENTS (path_parsers); i++)
+        {
+          if (gtk_css_parser_try_ident (parser, path_parsers[i].name))
+            {
+              if (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
+                {
+                  gtk_css_parser_error_syntax (parser, "Expected '{' after contour name");
+                  return FALSE;
+                }
+
+              gtk_css_parser_end_block_prelude (parser);
+
+              return path_parsers[i].func (parser, context);
+            }
+        }
+
+      if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_IDENT))
+        gtk_css_parser_error_syntax (parser, "No contour named \"%s\"",
+                                     gtk_css_token_get_string (gtk_css_parser_get_token (parser)));
+      else
+        gtk_css_parser_error_syntax (parser, "Expected a contour name");
+
+      return NULL;
+    }
+}
+
 static gboolean
 parse_path (GtkCssParser *parser,
             Context      *context,
             gpointer      out_path)
 {
-  GskPath *path;
-  char *str = NULL;
+  GtkCssLocation start_location, end_location;
+  GskPath *path = NULL;
+  char *path_name;
 
-  if (!parse_string (parser, context, &str))
-    return FALSE;
-
-  path = gsk_path_parse (str);
-  g_free (str);
-
-  if (path == NULL)
+  if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_STRING))
     {
-      gtk_css_parser_error_value (parser, "Invalid path");
-      return FALSE;
+      path_name = gtk_css_parser_consume_string (parser);
+      start_location = *gtk_css_parser_get_start_location (parser);
+      end_location = *gtk_css_parser_get_end_location (parser);
+
+      if (context->named_paths)
+        path = g_hash_table_lookup (context->named_paths, path_name);
+      else
+        path = NULL;
+
+      if (path)
+        {
+          g_free (path_name);
+          if (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF) ||
+              gtk_css_parser_end_block_prelude (parser))
+            {
+              gtk_css_parser_error_syntax (parser, "Junk at end of path reference");
+            }
+          *(GskPath **) out_path = gsk_path_ref (path);
+          return TRUE;
+        }
+
+      if (context->named_paths && g_hash_table_lookup (context->named_paths, path_name))
+        {
+          gtk_css_parser_error_value (parser, "A path named \"%s\" already exists.", path_name);
+          g_clear_pointer (&path_name, g_free);
+        }
+    }
+  else
+    {
+      /* shut up compiler */
+      start_location = end_location = *gtk_css_parser_get_start_location (parser);
+      path_name = NULL;
+    }
+
+  if (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
+    {
+      if (path_name != NULL)
+        {
+          gtk_css_parser_error_syntax (parser, "Named paths must use long form syntax");
+          g_free (path_name);
+          return FALSE;
+        }
+
+      path = parse_contour (parser, context);
+    }
+  else if (!gtk_css_parser_end_block_prelude (parser))
+    {
+      if (path_name == NULL)
+        {
+          GskPathBuilder *builder = gsk_path_builder_new ();
+          path = gsk_path_builder_free_to_path (builder);
+        }
+      else
+        {
+          path = gsk_path_parse (path_name);
+          g_clear_pointer (&path_name, g_free);
+
+          if (path == NULL)
+            {
+              gtk_css_parser_error (parser,
+                                    GTK_CSS_PARSER_ERROR_UNKNOWN_VALUE,
+                                    &start_location,
+                                    &end_location,
+                                    "Neither valid name nor valid path");
+              return FALSE;
+            }
+        }
+    }
+  else
+    {
+      GskPathBuilder *builder = gsk_path_builder_new ();
+
+      while (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
+        {
+          GskPath *subpath;
+
+          gtk_css_parser_start_semicolon_block (parser, GTK_CSS_TOKEN_OPEN_CURLY);
+          subpath = parse_contour (parser, context);
+          gtk_css_parser_end_block (parser);
+
+          if (subpath)
+            gsk_path_builder_add_path (builder, subpath);
+          else
+            {
+              g_clear_pointer (&builder, gsk_path_builder_unref);
+              break;
+            }
+        }
+
+      if (builder)
+        path = gsk_path_builder_free_to_path (builder);
+    }
+
+  if (path_name)
+    {
+      if (context->named_paths == NULL)
+        context->named_paths = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                                      g_free, (GDestroyNotify) gsk_path_unref);
+      g_hash_table_insert (context->named_paths, path_name, gsk_path_ref (path));
     }
 
   *((GskPath **) out_path) = path;
@@ -4503,8 +4731,8 @@ parse_turbulence_node (GtkCssParser *parser,
 {
   graphene_rect_t bounds = GRAPHENE_RECT_INIT (0, 0, 50, 50);
   GskRectSnap snap = GSK_RECT_SNAP_NONE;
-  graphene_size_t base_frequency = { 0, 0 };
-  size_t num_octaves = 1;
+  graphene_size_t frequency = { 0, 0 };
+  size_t octaves = 1;
   unsigned int seed = 0;
   GskNoiseType noise_type = GSK_NOISE_TURBULENCE;
   gboolean stitch_tiles = FALSE;
@@ -4512,8 +4740,8 @@ parse_turbulence_node (GtkCssParser *parser,
   const Declaration declarations[] = {
     { "bounds", parse_rect, NULL, &bounds },
     { "snap", parse_rect_snap, NULL, &snap },
-    { "base-frequency", parse_scale, NULL, &base_frequency },
-    { "num-octaves", parse_size, NULL, &num_octaves },
+    { "frequency", parse_scale, NULL, &frequency },
+    { "octaves", parse_size, NULL, &octaves },
     { "seed", parse_unsigned, NULL, &seed },
     { "noise-type", parse_noise_type, NULL, &noise_type },
     { "stitch-tiles", parse_boolean, NULL, &stitch_tiles },
@@ -4524,8 +4752,8 @@ parse_turbulence_node (GtkCssParser *parser,
   parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
 
   node = gsk_turbulence_node_new (&bounds, snap, color_state,
-                                  &base_frequency,
-                                  num_octaves, seed, noise_type, stitch_tiles);
+                                  &frequency,
+                                  octaves, seed, noise_type, stitch_tiles);
 
   gdk_color_state_unref (color_state);
 
@@ -4750,6 +4978,8 @@ typedef struct
   gsize named_node_counter;
   GHashTable *named_textures;
   gsize named_texture_counter;
+  GHashTable *named_paths;
+  gsize named_path_counter;
   GHashTable *named_color_states;
   gsize named_color_state_counter;
   GHashTable *fonts;
@@ -4765,6 +4995,18 @@ printer_init_check_texture (Printer    *printer,
     g_hash_table_insert (printer->named_textures, texture, NULL);
   else if (name == NULL)
     g_hash_table_insert (printer->named_textures, texture, g_strdup (""));
+}
+
+static void
+printer_init_check_path (Printer *printer,
+                         GskPath *path)
+{
+  gpointer name;
+
+  if (!g_hash_table_lookup_extended (printer->named_paths, path, NULL, &name))
+    g_hash_table_insert (printer->named_paths, path, NULL);
+  else if (name == NULL)
+    g_hash_table_insert (printer->named_paths, path, g_strdup (""));
 }
 
 typedef struct {
@@ -4903,6 +5145,14 @@ printer_init_duplicates_for_node (Printer       *printer,
       printer_init_check_texture (printer, gsk_texture_scale_node_get_texture (node));
       break;
 
+    case GSK_FILL_NODE:
+      printer_init_check_path (printer, gsk_fill_node_get_path (node));
+      break;
+
+    case GSK_STROKE_NODE:
+      printer_init_check_path (printer, gsk_stroke_node_get_path (node));
+      break;
+
     case GSK_COLOR_NODE:
     case GSK_BORDER_NODE:
     case GSK_INSET_SHADOW_NODE:
@@ -4923,8 +5173,6 @@ printer_init_duplicates_for_node (Printer       *printer,
     case GSK_ROUNDED_CLIP_NODE:
     case GSK_SHADOW_NODE:
     case GSK_DEBUG_NODE:
-    case GSK_FILL_NODE:
-    case GSK_STROKE_NODE:
     case GSK_BLEND_NODE:
     case GSK_MASK_NODE:
     case GSK_CROSS_FADE_NODE:
@@ -4968,6 +5216,8 @@ printer_init (Printer       *self,
   self->named_node_counter = 0;
   self->named_textures = g_hash_table_new_full (NULL, NULL, NULL, g_free);
   self->named_texture_counter = 0;
+  self->named_paths = g_hash_table_new_full (NULL, NULL, NULL, g_free);
+  self->named_path_counter = 0;
   self->named_color_states = g_hash_table_new_full (NULL, NULL, NULL, g_free);
   self->named_color_state_counter = 0;
   self->fonts = g_hash_table_new_full (font_info_hash, font_info_equal, font_info_free, NULL);
@@ -4985,14 +5235,12 @@ printer_clear (Printer *self)
   g_hash_table_unref (self->fonts);
 }
 
-#define IDENT_LEVEL 2 /* Spaces per level */
 static void
 _indent (Printer *self)
 {
   if (self->indentation_level > 0)
-    g_string_append_printf (self->str, "%*s", self->indentation_level * IDENT_LEVEL, " ");
+    g_string_append_printf (self->str, "%*s", self->indentation_level * INDENT_LEVEL, " ");
 }
-#undef IDENT_LEVEL
 
 static void
 start_node (Printer    *self,
@@ -5677,19 +5925,10 @@ append_compressed_bytes_param (Printer    *p,
   GBytes *compressed_bytes;
 
   compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, 9);
-#if GLIB_CHECK_VERSION (2, 85, 0)
-G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   g_zlib_compressor_set_os (compressor, 3);
-G_GNUC_END_IGNORE_DEPRECATIONS
-#endif
 
   compressed_bytes = g_converter_convert_bytes (G_CONVERTER (compressor), bytes, NULL);
   g_assert (compressed_bytes != NULL);
-
-#if !GLIB_CHECK_VERSION (2, 85, 0)
-  /* fallback for above */
-  ((guchar *) g_bytes_get_data (compressed_bytes, NULL))[9] = 3;
-#endif
 
   /* rough estimates for the length of each string */
   if (2 * g_bytes_get_size (bytes) <= 4 * g_bytes_get_size (compressed_bytes) / 3 + 25)
@@ -6133,25 +6372,119 @@ gsk_text_node_serialize_glyphs (GskRenderNode *node,
 }
 
 static void
+append_contour (Printer          *p,
+                unsigned int      chars_in,
+                const GskContour *contour)
+{
+  graphene_rect_t rect;
+  GskRoundedRect rr;
+  graphene_point_t center;
+  float radius;
+  gboolean ccw;
+
+  if (gsk_contour_get_rect (contour, &rect))
+    {
+      append_rect (p->str, &rect);
+      g_string_append (p->str, ";\n");
+    }
+  else if (gsk_contour_get_rounded_rect (contour, &rr))
+    {
+      g_string_append (p->str, "rounded-rect {\n");
+      p->indentation_level ++;
+      append_rounded_rect_param (p, "outline", &rr);
+      p->indentation_level --;
+      _indent (p);
+      g_string_append (p->str, "}\n");
+    }
+  else if (gsk_contour_get_circle (contour, &center, &radius, &ccw))
+    {
+      g_string_append (p->str, "circle {\n");
+      p->indentation_level ++;
+      append_point_param (p, "center", &center);
+      append_float_param (p, "radius", radius, 0);
+      p->indentation_level --;
+      _indent (p);
+      g_string_append (p->str, "}\n");
+    }
+  else
+    {
+      GString *s = g_string_new ("");
+      size_t last_break, next, last_newline, threshold;
+      gsk_contour_print (contour, s);
+      threshold = 90 - MIN (30, p->indentation_level * INDENT_LEVEL + chars_in + 1);
+      last_break = 0;
+      last_newline = 0;
+      g_string_append (p->str, "\"");
+      for (next = strcspn (s->str, "mMhHvVzZlLcCsStTqQaAoO");
+           s->str[last_break] != '\0';
+           next = strcspn (&s->str[MIN (last_break + 1, s->len)], "mMhHvVzZlLcCsStTqQaAoO") + 1)
+        {
+          if (last_break != last_newline &&
+              last_break + next - last_newline > threshold)
+            {
+              g_string_append_len (p->str, &s->str[last_newline], last_break - last_newline - 1);
+              g_string_append (p->str, "\\\n");
+              _indent (p);
+              g_string_append_printf (p->str, "%*s", chars_in + 1, "");
+              last_newline = last_break;
+            }
+          last_break += next;
+        }
+      if (s->str[last_newline] != '\0')
+        g_string_append (p->str, &s->str[last_newline]);
+      g_string_append (p->str, "\";\n");
+      g_string_free (s, TRUE);
+    }
+}
+
+static void
 append_path_param (Printer    *p,
                    const char *param_name,
                    GskPath    *path)
 {
-  char *str, *s;
+  const char *path_name;
 
   _indent (p);
-  g_string_append (p->str, "path: \"\\\n");
-  str = gsk_path_to_string (path);
-  /* Put each command on a new line */
-  for (s = str; *s; s++)
+  g_string_append (p->str, "path: ");
+
+  path_name = g_hash_table_lookup (p->named_paths, path);
+  if (path_name == NULL)
     {
-      if (*s == ' ' &&
-          (s[1] == 'M' || s[1] == 'C' || s[1] == 'Z' || s[1] == 'L'))
-        *s = '\n';
+      /* nothing to do here, path is unique */
     }
-  append_escaping_newlines (p->str, str);
-  g_string_append (p->str, "\";\n");
-  g_free (str);
+  else if (path_name[0])
+    {
+      /* path has been named already */
+      gtk_css_print_string (p->str, path_name, TRUE);
+      g_string_append (p->str, ";\n");
+      return;
+    }
+  else
+    {
+      /* path needs a name */
+      char *new_name = g_strdup_printf ("path%zu", ++p->named_path_counter);
+      gtk_css_print_string (p->str, new_name, TRUE);
+      g_string_append_c (p->str, ' ');
+      g_hash_table_insert (p->named_paths, path, new_name);
+    }
+
+  if (gsk_path_get_n_contours (path) == 1 && path_name == NULL)
+    {
+      append_contour (p, 6, gsk_path_get_contour (path, 0));
+    }
+  else
+    {
+      g_string_append (p->str, "{\n");
+      p->indentation_level ++;
+      for (size_t i = 0; i < gsk_path_get_n_contours (path); i++)
+        {
+          _indent (p);
+          append_contour (p, 0, gsk_path_get_contour (path, i));
+        }
+      p->indentation_level --;
+      _indent (p);
+      g_string_append (p->str, "}\n");
+    }
 }
 
 static void
@@ -7130,16 +7463,16 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 
     case GSK_TURBULENCE_NODE:
       {
-        const graphene_size_t *freq = gsk_turbulence_node_get_base_frequency (node);
+        const graphene_size_t *freq = gsk_turbulence_node_get_frequency (node);
 
         start_node (p, "turbulence", node_name);
 
         append_rect_param (p, "bounds", &node->bounds);
         append_snap_param (p, "snap", gsk_turbulence_node_get_snap (node));
         append_color_state_param (p, "color-state", gsk_turbulence_node_get_color_state (node), GDK_COLOR_STATE_SRGB);
-        append_two_float_param (p, "base-frequency", freq->width, freq->height);
-        if (gsk_turbulence_node_get_num_octaves (node) != 1)
-          append_size_param (p, "num-octaves", gsk_turbulence_node_get_num_octaves (node));
+        append_two_float_param (p, "frequency", freq->width, freq->height);
+        if (gsk_turbulence_node_get_octaves (node) != 1)
+          append_size_param (p, "octaves", gsk_turbulence_node_get_octaves (node));
         if (gsk_turbulence_node_get_seed (node) != 0)
           append_unsigned_param (p, "seed", gsk_turbulence_node_get_seed (node));
         if (gsk_turbulence_node_get_noise_type (node) != GSK_NOISE_TURBULENCE)

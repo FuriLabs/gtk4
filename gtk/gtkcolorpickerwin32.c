@@ -193,11 +193,7 @@ ensure_mouse_hook (void)
 static void
 remove_hook (void)
 {
-  if (hook)
-    {
-      UnhookWindowsHookEx (hook);
-      hook = NULL;
-    }
+  g_clear_pointer (&hook, UnhookWindowsHookEx);
 }
 
 static void

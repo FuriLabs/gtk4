@@ -99,8 +99,7 @@ gtk_application_impl_win32_shutdown (GtkApplicationImpl *impl)
                                                NULL);
     }
 
-  g_slist_free_full (appwin32->inhibitors, (GDestroyNotify) appwin32_inhibitor_free);
-  appwin32->inhibitors = NULL;
+  g_clear_slist (&appwin32->inhibitors, (GDestroyNotify) appwin32_inhibitor_free);
 }
 
 static void

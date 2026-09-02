@@ -2782,14 +2782,12 @@ handle_progress_response (GtkWidget *dialog,
   gtk_print_operation_cancel (op);
 }
 
-static gboolean
+static void
 show_progress_timeout (PrintPagesData *data)
 {
   gtk_window_present (GTK_WINDOW (data->progress));
 
   data->op->priv->show_progress_timeout_id = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -2839,9 +2837,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
                         G_CALLBACK (handle_progress_response), op);
 
       priv->show_progress_timeout_id =
-        g_timeout_add (SHOW_PROGRESS_TIME,
-                       (GSourceFunc) show_progress_timeout,
-                       data);
+        g_timeout_add_once (SHOW_PROGRESS_TIME, (GSourceOnceFunc) show_progress_timeout, data);
       g_source_set_static_name (g_main_context_find_source_by_id (NULL, priv->show_progress_timeout_id), "[gtk] show_progress_timeout");
 
       data->progress = progress;
@@ -2923,8 +2919,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
       g_object_ref (op);
 
       g_main_loop_run (priv->rloop);
-      g_main_loop_unref (priv->rloop);
-      priv->rloop = NULL;
+      g_clear_pointer (&priv->rloop, g_main_loop_unref);
 
       g_object_unref (op);
     }

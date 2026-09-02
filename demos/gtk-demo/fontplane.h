@@ -54,7 +54,7 @@ struct _GtkFontPlaneClass
 };
 
 
-GType       gtk_font_plane_get_type (void) G_GNUC_CONST;
+GType       gtk_font_plane_get_type (void);
 GtkWidget * gtk_font_plane_new      (GtkAdjustment *weight_adj,
                                      GtkAdjustment *width_adj);
 

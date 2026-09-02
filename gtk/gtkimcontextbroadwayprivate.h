@@ -21,7 +21,7 @@
 
 G_BEGIN_DECLS
 
-GType gtk_im_context_broadway_get_type (void) G_GNUC_CONST;
+GType gtk_im_context_broadway_get_type (void);
 
 G_END_DECLS
 

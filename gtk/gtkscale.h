@@ -83,7 +83,7 @@ typedef char * (*GtkScaleFormatValueFunc) (GtkScale *scale,
 
 
 GDK_AVAILABLE_IN_ALL
-GType             gtk_scale_get_type           (void) G_GNUC_CONST;
+GType             gtk_scale_get_type           (void);
 GDK_AVAILABLE_IN_ALL
 GtkWidget       * gtk_scale_new                (GtkOrientation   orientation,
                                                 GtkAdjustment   *adjustment);

@@ -262,6 +262,20 @@ test_rsvg_parse (void)
     { "M 10 10 z ", "M 10 10 z" },
     // unexpected char
     { "M 10 ;", NULL },
+    // If either rx or ry is 0, then this arc is treated as a straight line segment (a "lineto") joining the endpoints
+    { "M 0 0 A 5 0 0 00 10 0", "M 0 0 L 10 0" },
+    { "M 0 0 A 0 5 0 00 10 0", "M 0 0 L 10 0" },
+    { "M 0 0 A 0 0 0 00 10 0", "M 0 0 L 10 0" },
+    { "M 0 0 A 5 -0 0 00 10 0", "M 0 0 L 10 0" },
+    { "M 0 0 A -0 5 0 00 10 0", "M 0 0 L 10 0" },
+    { "M 0 0 A -0 -0 0 00 10 0", "M 0 0 L 10 0" },
+    // If either rx or ry have negative signs, these are dropped; the absolute value is used instead.
+    { "M 0 0 A -5 5 0 00 10 0", "M 0 0 A 5 5 0 0 0 10 0" },
+    { "M 0 0 A 5 -5 0 00 10 0", "M 0 0 A 5 5 0 0 0 10 0" },
+    { "M 0 0 A -5 -5 0 00 10 0", "M 0 0 A 5 5 0 0 0 10 0" },
+    // conic weights must be > 0
+    { "M 0 0 O 5 0 5 5 0", NULL },
+    { "M 0 0 O 5 0 5 5 -1", NULL },
   };
   int i;
 
@@ -1407,7 +1421,7 @@ test_rounded_rect_plain (void)
   path = gsk_path_builder_free_to_path (builder);
 
   s = gsk_path_to_string (path);
-  g_assert_cmpstr (s, ==, "M 20 10 L 100 10 O 110 10, 110 20, 0.707106769 L 110 200 O 110 210, 100 210, 0.707106769 L 20 210 O 10 210, 10 200, 0.707106769 L 10 20 O 10 10, 20 10, 0.707106769 Z");
+  g_assert_cmpstr (s, ==, "M 20 10 L 100 10 O 110 10, 110 20, 0.70710676908493042 L 110 200 O 110 210, 100 210, 0.70710676908493042 L 20 210 O 10 210, 10 200, 0.70710676908493042 L 10 20 O 10 10, 20 10, 0.70710676908493042 Z");
   g_free (s);
 
   measure = gsk_path_measure_new (path);
@@ -1551,7 +1565,7 @@ test_rounded_rect_tricky (void)
   path = gsk_path_builder_free_to_path (builder);
 
   s = gsk_path_to_string (path);
-  g_assert_cmpstr (s, ==, "M 10 10 L 110 10 L 110 110 L 110 210 L 20 210 O 10 210, 10 200, 0.707106769 L 10 10 Z");
+  g_assert_cmpstr (s, ==, "M 10 10 L 110 10 L 110 110 L 110 210 L 20 210 O 10 210, 10 200, 0.70710676908493042 L 10 10 Z");
   g_free (s);
 
   measure = gsk_path_measure_new (path);
@@ -1654,13 +1668,12 @@ test_rounded_rect_parse (void)
   path = gsk_path_builder_free_to_path (builder);
 
   s = gsk_path_to_string (path);
-  g_assert_cmpstr (s, ==, "M 12 10 L 104 10 O 110 10, 110 18, 0.707106769 L 110 109 O 110 121, 100 121, 0.707106769 L 24 121 O 10 121, 10 105, 0.707106769 L 10 14 O 10 10, 12 10, 0.707106769 Z");
-
+  g_assert_cmpstr (s, ==, "M 12 10 L 104 10 O 110 10, 110 18, 0.70710676908493042 L 110 109 O 110 121, 100 121, 0.70710676908493042 L 24 121 O 10 121, 10 105, 0.70710676908493042 L 10 14 O 10 10, 12 10, 0.70710676908493042 Z");
   path2 = gsk_path_parse (s);
   g_free (s);
 
   s = gsk_path_to_string (path2);
-  g_assert_cmpstr (s, ==, "M 12 10 L 104 10 O 110 10, 110 18, 0.707106769 L 110 109 O 110 121, 100 121, 0.707106769 L 24 121 O 10 121, 10 105, 0.707106769 L 10 14 O 10 10, 12 10, 0.707106769 Z");
+  g_assert_cmpstr (s, ==, "M 12 10 L 104 10 O 110 10, 110 18, 0.70710676908493042 L 110 109 O 110 121, 100 121, 0.70710676908493042 L 24 121 O 10 121, 10 105, 0.70710676908493042 L 10 14 O 10 10, 12 10, 0.70710676908493042 Z");
   g_free (s);
 
   gsk_path_unref (path);
@@ -1687,7 +1700,7 @@ test_circle_plain (void)
   path = gsk_path_builder_free_to_path (builder);
 
   s = gsk_path_to_string (path);
-  g_assert_cmpstr (s, ==, "M 110 100 o 0 10, -10 10, 0.707106769 o -10 0, -10 -10, 0.707106769 o 0 -10, 10 -10, 0.707106769 o 10 0, 10 10, 0.707106769 z");
+  g_assert_cmpstr (s, ==, "M 110 100 o 0 10, -10 10, 0.70710676908493042 o -10 0, -10 -10, 0.70710676908493042 o 0 -10, 10 -10, 0.70710676908493042 o 10 0, 10 10, 0.70710676908493042 z");
   g_free (s);
 
   measure = gsk_path_measure_new (path);
@@ -1740,8 +1753,8 @@ test_circle_zero (void)
   path = gsk_path_builder_free_to_path (builder);
 
   s = gsk_path_to_string (path);
-  g_assert_cmpstr (s, ==, "M 100 100 o 0 0, 0 0, 0.707106769 o 0 0, 0 0, 0.707106769 o 0 0, 0 0, 0.707106769 o 0 0, 0 0, 0.707106769 z");
-  g_free (s);
+  g_assert_cmpstr (s, ==, "M 100 100 o 0 0, 0 0, 0.70710676908493042 o 0 0, 0 0, 0.70710676908493042 o 0 0, 0 0, 0.70710676908493042 o 0 0, 0 0, 0.70710676908493042 z");
+ g_free (s);
 
   measure = gsk_path_measure_new (path);
 

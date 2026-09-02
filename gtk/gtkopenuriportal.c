@@ -127,8 +127,7 @@ open_uri_data_free (OpenUriData *data)
   if (data->signal_id)
     g_dbus_connection_signal_unsubscribe (data->connection, data->signal_id);
   g_clear_object (&data->connection);
-  if (data->cancel_handler)
-    g_clear_signal_handler (&data->cancel_handler, data->cancellable);
+  g_clear_signal_handler (&data->cancel_handler, data->cancellable);
   if (data->parent && data->parent_handle)
     gtk_window_unexport_handle (data->parent, data->parent_handle);
   g_free (data->parent_handle);

@@ -35,7 +35,7 @@ typedef struct _GdkWin32CairoContext GdkWin32CairoContext;
 typedef struct _GdkWin32CairoContextClass GdkWin32CairoContextClass;
 
 GDK_AVAILABLE_IN_ALL
-GType gdk_win32_cairo_context_get_type (void) G_GNUC_CONST;
+GType gdk_win32_cairo_context_get_type (void);
 
 G_END_DECLS
 

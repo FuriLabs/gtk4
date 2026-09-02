@@ -108,11 +108,10 @@ gsk_gpu_frame_default_cleanup (GskGpuFrame *self)
 static void
 gsk_gpu_frame_default_begin (GskGpuFrame           *self,
                              GdkDrawContext        *context,
-                             GdkMemoryDepth         depth,
-                             const cairo_region_t  *region,
-                             const graphene_rect_t *opaque)
+                             GskRenderNode         *node,
+                             const cairo_region_t  *region)
 {
-  gdk_draw_context_begin_frame_full (context, NULL, depth, region, opaque);
+  gdk_draw_context_begin_frame_full (context, NULL, node, region);
 }
 
 static void
@@ -299,11 +298,10 @@ gsk_gpu_frame_set_texture_vertex_size (GskGpuFrame *self,
 void
 gsk_gpu_frame_begin (GskGpuFrame          *self,
                      GdkDrawContext       *context,
-                     GdkMemoryDepth        depth,
-                     const cairo_region_t *region,
-                     const graphene_rect_t *opaque)
+                     GskRenderNode        *node,
+                     const cairo_region_t *region)
 {
-  GSK_GPU_FRAME_GET_CLASS (self)->begin (self, context, depth, region, opaque);
+  GSK_GPU_FRAME_GET_CLASS (self)->begin (self, context, node, region);
 }
 
 /* Must do equivalent of gsk_gpu_frame_sync() */

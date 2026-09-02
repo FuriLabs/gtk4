@@ -24,6 +24,8 @@
 
 #include <gsk/gskroundedrect.h>
 #include <gsk/gsktypes.h>
+
+#include <gdk/gdkrgba.h>
 #include <gtk/css/gtkcss.h>
 
 G_BEGIN_DECLS
@@ -86,7 +88,7 @@ typedef void           (* GskParseErrorFunc)                    (const GskParseL
                                                                  gpointer                user_data);
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_render_node_get_type                (void) G_GNUC_CONST;
+GType                   gsk_render_node_get_type                (void);
 
 GDK_AVAILABLE_IN_ALL
 GQuark                  gsk_serialization_error_quark           (void);

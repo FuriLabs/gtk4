@@ -39,7 +39,7 @@ typedef struct _GtkSignalListItemFactoryClass GtkSignalListItemFactoryClass;
 
 
 GDK_AVAILABLE_IN_ALL
-GType                   gtk_signal_list_item_factory_get_type   (void) G_GNUC_CONST;
+GType                   gtk_signal_list_item_factory_get_type   (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkListItemFactory *    gtk_signal_list_item_factory_new        (void);

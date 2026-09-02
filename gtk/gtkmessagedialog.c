@@ -343,7 +343,7 @@ gtk_message_dialog_constructed (GObject *object)
       gtk_widget_set_hexpand (label, TRUE);
       gtk_widget_add_css_class (label, "title");
       gtk_box_append (GTK_BOX (box), label);
-      g_signal_connect_object (dialog, "notify::title", G_CALLBACK (update_title), label, 0);
+      g_signal_connect_object (dialog, "notify::title", G_CALLBACK (update_title), label, G_CONNECT_DEFAULT);
 
       gtk_window_set_titlebar (GTK_WINDOW (dialog), box);
     }

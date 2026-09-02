@@ -801,8 +801,7 @@ populate_emoji_chooser (gpointer data)
         }
     }
 
-  g_variant_iter_free (chooser->iter);
-  chooser->iter = NULL;
+  g_clear_pointer (&chooser->iter, g_variant_iter_free);
   chooser->box = NULL;
   chooser->populate_idle = 0;
 

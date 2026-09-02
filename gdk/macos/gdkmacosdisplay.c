@@ -413,7 +413,7 @@ _gdk_macos_display_surface_became_key (GdkMacosDisplay *self,
   gdk_surface_request_motion (GDK_SURFACE (surface));
 }
 
-static gboolean
+static void
 select_key_in_idle_cb (gpointer data)
 {
   GdkMacosDisplay *self = data;
@@ -424,7 +424,7 @@ select_key_in_idle_cb (gpointer data)
 
   /* Don't steal focus from NSPanel, etc */
   if (self->key_window_is_foreign)
-    return G_SOURCE_REMOVE;
+    return;
 
   if (self->keyboard_surface == NULL)
     {
@@ -442,8 +442,6 @@ select_key_in_idle_cb (gpointer data)
             }
         }
     }
-
-  return G_SOURCE_REMOVE;
 }
 
 void
@@ -492,7 +490,7 @@ _gdk_macos_display_surface_resigned_key (GdkMacosDisplay *self,
   _gdk_macos_display_clear_sorting (self);
 
   if (self->select_key_in_idle == 0)
-    self->select_key_in_idle = g_idle_add (select_key_in_idle_cb, self);
+    self->select_key_in_idle = g_idle_add_once (select_key_in_idle_cb, self);
 }
 
 /* Raises a transient window.
@@ -805,7 +803,7 @@ _gdk_macos_display_break_all_grabs (GdkMacosDisplay *self,
 
   seat = gdk_display_get_default_seat (GDK_DISPLAY (self));
 
-  while ((surface = gdk_seat_get_topmost_grab_surface (seat)) != NULL)
+  if ((surface = gdk_seat_get_topmost_grab_surface (seat)) != NULL)
     gdk_seat_break_grab (seat, surface);
 }
 

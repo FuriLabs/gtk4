@@ -75,35 +75,35 @@ gdk_shader_op_get_n_shaders (GdkShaderOp op)
   return n_shaders[op];
 }
 
-gsize                   gdk_memory_format_alignment         (GdkMemoryFormat             format) G_GNUC_CONST;
-GdkMemoryAlpha          gdk_memory_format_alpha             (GdkMemoryFormat             format) G_GNUC_CONST;
-GdkMemoryFormat         gdk_memory_format_get_premultiplied (GdkMemoryFormat             format) G_GNUC_CONST;
-GdkMemoryFormat         gdk_memory_format_get_straight      (GdkMemoryFormat             format) G_GNUC_CONST;
-const GdkMemoryFormat * gdk_memory_format_get_fallbacks     (GdkMemoryFormat             format) G_GNUC_CONST;
-GdkMemoryFormat         gdk_memory_format_get_mipmap_format (GdkMemoryFormat             format) G_GNUC_CONST;
+gsize                   gdk_memory_format_alignment         (GdkMemoryFormat             format);
+GdkMemoryAlpha          gdk_memory_format_alpha             (GdkMemoryFormat             format);
+GdkMemoryFormat         gdk_memory_format_get_premultiplied (GdkMemoryFormat             format);
+GdkMemoryFormat         gdk_memory_format_get_straight      (GdkMemoryFormat             format);
+const GdkMemoryFormat * gdk_memory_format_get_fallbacks     (GdkMemoryFormat             format);
+GdkMemoryFormat         gdk_memory_format_get_mipmap_format (GdkMemoryFormat             format);
 gboolean                gdk_memory_format_get_rgba_format   (GdkMemoryFormat             format,
                                                              GdkMemoryFormat            *out_format,
                                                              GdkSwizzle                 *out_swizzle);
-GdkMemoryDepth          gdk_memory_format_get_depth         (GdkMemoryFormat             format) G_GNUC_CONST;
-gsize                   gdk_memory_format_get_n_planes      (GdkMemoryFormat             format) G_GNUC_CONST;
-gsize                   gdk_memory_format_get_block_width   (GdkMemoryFormat             format) G_GNUC_CONST;
-gsize                   gdk_memory_format_get_block_height  (GdkMemoryFormat             format) G_GNUC_CONST;
+GdkMemoryDepth          gdk_memory_format_get_depth         (GdkMemoryFormat             format);
+gsize                   gdk_memory_format_get_n_planes      (GdkMemoryFormat             format);
+gsize                   gdk_memory_format_get_block_width   (GdkMemoryFormat             format);
+gsize                   gdk_memory_format_get_block_height  (GdkMemoryFormat             format);
 gboolean                gdk_memory_format_is_block_boundary (GdkMemoryFormat             format,
                                                              gsize                       x,
-                                                             gsize                       y) G_GNUC_CONST;
+                                                             gsize                       y);
 gsize                   gdk_memory_format_get_plane_block_width
                                                             (GdkMemoryFormat             format,
-                                                             gsize                       plane) G_GNUC_CONST;
+                                                             gsize                       plane);
 gsize                   gdk_memory_format_get_plane_block_height
                                                             (GdkMemoryFormat             format,
-                                                             gsize                       plane) G_GNUC_CONST;
+                                                             gsize                       plane);
 gsize                   gdk_memory_format_get_plane_block_bytes
                                                             (GdkMemoryFormat             format,
-                                                             gsize                       plane) G_GNUC_CONST;
+                                                             gsize                       plane);
 GdkMemoryDepth          gdk_memory_depth_merge              (GdkMemoryDepth              depth1,
-                                                             GdkMemoryDepth              depth2) G_GNUC_CONST;
-GdkMemoryFormat         gdk_memory_depth_get_format         (GdkMemoryDepth              depth) G_GNUC_CONST;
-GdkMemoryFormat         gdk_memory_depth_get_alpha_format   (GdkMemoryDepth              depth) G_GNUC_CONST;
+                                                             GdkMemoryDepth              depth2);
+GdkMemoryFormat         gdk_memory_depth_get_format         (GdkMemoryDepth              depth);
+GdkMemoryFormat         gdk_memory_depth_get_alpha_format   (GdkMemoryDepth              depth);
 const char *            gdk_memory_depth_get_name           (GdkMemoryDepth              depth);
 GdkShaderOp             gdk_memory_format_get_default_shader_op
                                                             (GdkMemoryFormat             format);

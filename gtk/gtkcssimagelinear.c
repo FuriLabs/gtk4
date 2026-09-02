@@ -802,11 +802,7 @@ gtk_css_image_linear_dispose (GObject *object)
   g_free (linear->color_stops);
 
   linear->side = 0;
-  if (linear->angle)
-    {
-      gtk_css_value_unref (linear->angle);
-      linear->angle = NULL;
-    }
+  g_clear_pointer (&linear->angle, gtk_css_value_unref);
 
   G_OBJECT_CLASS (_gtk_css_image_linear_parent_class)->dispose (object);
 }

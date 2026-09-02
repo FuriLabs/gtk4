@@ -542,7 +542,7 @@ Additionally, public headers should use C++ guards around their declarations:
   G_BEGIN_DECLS
 
   GDK_AVAILABLE_IN_ALL
-  GType         gtk_foo_get_type        (void) G_GNUC_CONST;
+  GType         gtk_foo_get_type        (void);
 
   GDK_AVAILABLE_IN_ALL
   GtkWidget *   gtk_foo_new             (void);

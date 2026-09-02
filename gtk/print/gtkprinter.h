@@ -69,7 +69,7 @@ typedef enum
 } GtkPrintCapabilities;
 
 GDK_AVAILABLE_IN_ALL
-GType gtk_print_capabilities_get_type (void) G_GNUC_CONST;
+GType gtk_print_capabilities_get_type (void);
 
 #define GTK_TYPE_PRINTER                  (gtk_printer_get_type ())
 #define GTK_PRINTER(obj)                  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_PRINTER, GtkPrinter))
@@ -79,7 +79,7 @@ typedef struct _GtkPrinter      GtkPrinter;
 typedef struct _GtkPrintBackend GtkPrintBackend;
 
 GDK_AVAILABLE_IN_ALL
-GType                    gtk_printer_get_type              (void) G_GNUC_CONST;
+GType                    gtk_printer_get_type              (void);
 GDK_AVAILABLE_IN_ALL
 GtkPrinter              *gtk_printer_new                   (const char      *name,
 							    GtkPrintBackend *backend,

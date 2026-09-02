@@ -281,7 +281,7 @@ test_content_files (void)
 }
 
 #define MY_TYPE_INT_LIST (my_int_list_get_type ())
-GType my_int_list_get_type (void) G_GNUC_CONST;
+GType my_int_list_get_type (void);
 
 typedef gpointer MyIntList;
 

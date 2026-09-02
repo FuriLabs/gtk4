@@ -28,6 +28,7 @@
 #include "gtktypebuiltins.h"
 #include "gtkversion.h"
 #include "gtkwidgetprivate.h"
+#include "gtkcsscolorvalueprivate.h"
 
 #include "gdk/gdkdisplayprivate.h"
 
@@ -207,6 +208,8 @@ enum {
   PROP_INTERFACE_COLOR_SCHEME,
   PROP_INTERFACE_CONTRAST,
   PROP_INTERFACE_REDUCED_MOTION,
+  PROP_KEYBOARD_FOCUS_VISIBLE_TIMEOUT,
+  PROP_ACCENT_COLOR,
 
   NUM_PROPERTIES
 };
@@ -954,6 +957,18 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
+   * GtkSettings:gtk-keyboard-focus-visible-timeout:
+   *
+   * Time in seconds that the focus is visible when using keyboard navigation. A zero value means "forever", and a negative
+   * value means "toolkit default timeout".
+   *
+   * Since: 4.24
+   */
+  pspecs[PROP_KEYBOARD_FOCUS_VISIBLE_TIMEOUT] = g_param_spec_int ("gtk-keyboard-focus-visible-timeout", NULL, NULL,
+                                                                  -1, G_MAXINT, -1,
+                                                                  G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
+
+  /**
    * GtkSettings:gtk-overlay-scrolling:
    *
    * Whether scrolled windows may use overlaid scrolling indicators.
@@ -1037,6 +1052,20 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                              GTK_REDUCED_MOTION_NO_PREFERENCE,
                                                              G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
+  /**
+   * GtkSettings:gtk-accent-color:
+   *
+   * The desktop accent color (if available).
+   *
+   * GTK provides this value to the CSS stylesheet as a named color
+   * under the name "accent_color".
+   *
+   * Since: 4.24
+   */
+  pspecs[PROP_ACCENT_COLOR] = g_param_spec_boxed ("gtk-accent-color", NULL, NULL,
+                                                  GDK_TYPE_RGBA,
+                                                  G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
+
   g_object_class_install_properties (gobject_class, NUM_PROPERTIES, pspecs);
 }
 
@@ -1046,9 +1075,33 @@ gtk_settings_style_provider_get_settings (GtkStyleProvider *provider)
   return GTK_SETTINGS (provider);
 }
 
+static GtkCssValue *
+gtk_settings_style_provider_get_color (GtkStyleProvider *provider,
+                                       const char       *name)
+{
+  GtkSettings *settings = GTK_SETTINGS (provider);
+  GdkRGBA *rgba;
+  GtkCssValue *value;
+
+  if (strcmp (name, "accent_color") != 0)
+    return NULL;
+
+  if (_gtk_settings_get_setting_source (settings, "gtk-accent-color") == GTK_SETTINGS_SOURCE_DEFAULT)
+    return NULL;
+
+  g_object_get (G_OBJECT (settings), "gtk-accent-color", &rgba, NULL);
+
+  value = gtk_css_color_value_new_from_rgba (rgba);
+
+  gdk_rgba_free (rgba);
+
+  return value;
+}
+
 static void
 gtk_settings_provider_iface_init (GtkStyleProviderInterface *iface)
 {
+  iface->get_color = gtk_settings_style_provider_get_color;
   iface->get_settings = gtk_settings_style_provider_get_settings;
 }
 
@@ -1205,7 +1258,7 @@ gtk_settings_create_for_display (GdkDisplay *display)
 
   settings->display = display;
 
-  g_signal_connect_object (display, "setting-changed", G_CALLBACK (setting_changed), settings, 0);
+  g_signal_connect_object (display, "setting-changed", G_CALLBACK (setting_changed), settings, G_CONNECT_DEFAULT);
 
   g_ptr_array_add (display_settings, settings);
 
@@ -1386,6 +1439,9 @@ gtk_settings_notify (GObject    *object,
     case PROP_CURSOR_THEME_NAME:
     case PROP_CURSOR_THEME_SIZE:
       settings_update_cursor_theme (settings);
+      break;
+    case PROP_ACCENT_COLOR:
+      settings_invalidate_style (settings);
       break;
     default:
       break;

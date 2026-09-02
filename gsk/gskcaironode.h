@@ -33,7 +33,7 @@ typedef struct _GskCairoNode                    GskCairoNode;
 #define GSK_TYPE_CAIRO_NODE (gsk_cairo_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_cairo_node_get_type                 (void) G_GNUC_CONST;
+GType                   gsk_cairo_node_get_type                 (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_cairo_node_new                      (const graphene_rect_t    *bounds);
 GDK_AVAILABLE_IN_ALL

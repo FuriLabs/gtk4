@@ -31,7 +31,7 @@ typedef struct _GskCompositeNode                GskCompositeNode;
 #define GSK_TYPE_COMPOSITE_NODE (gsk_composite_node_get_type())
 
 GDK_AVAILABLE_IN_4_22
-GType                   gsk_composite_node_get_type             (void) G_GNUC_CONST;
+GType                   gsk_composite_node_get_type             (void);
 GDK_AVAILABLE_IN_4_22
 GskRenderNode *         gsk_composite_node_new                  (GskRenderNode            *child,
                                                                  GskRenderNode            *mask,

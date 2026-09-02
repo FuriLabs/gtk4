@@ -335,15 +335,14 @@ update_style (GtkInspectorCssEditor *ce)
 {
   char *text;
 
-  g_list_free_full (ce->priv->errors, css_error_free);
-  ce->priv->errors = NULL;
+  g_clear_list (&ce->priv->errors, css_error_free);
 
   text = get_current_text (ce->priv->text);
   gtk_css_provider_load_from_string (ce->priv->provider, text);
   g_free (text);
 }
 
-static gboolean
+static void
 update_timeout (gpointer data)
 {
   GtkInspectorCssEditor *ce = data;
@@ -352,8 +351,6 @@ update_timeout (gpointer data)
 
   autosave_contents (ce);
   update_style (ce);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -363,10 +360,9 @@ text_changed (GtkTextBuffer         *buffer,
   if (ce->priv->timeout != 0)
     g_source_remove (ce->priv->timeout);
 
-  ce->priv->timeout = g_timeout_add (100, update_timeout, ce);
+  ce->priv->timeout = g_timeout_add_once (100, update_timeout, ce);
 
-  g_list_free_full (ce->priv->errors, css_error_free);
-  ce->priv->errors = NULL;
+  g_clear_list (&ce->priv->errors, css_error_free);
 }
 
 static void
@@ -435,11 +431,11 @@ add_provider (GtkInspectorCssEditor *ce,
   GtkSettings *settings = gtk_settings_get_for_display (display);
 
   g_signal_connect_object (settings, "notify::gtk-interface-color-scheme",
-                           G_CALLBACK (system_settings_changed), ce, 0);
+                           G_CALLBACK (system_settings_changed), ce, G_CONNECT_DEFAULT);
   g_signal_connect_object (settings, "notify::gtk-interface-contrast",
-                           G_CALLBACK (system_settings_changed), ce, 0);
+                           G_CALLBACK (system_settings_changed), ce, G_CONNECT_DEFAULT);
   g_signal_connect_object (settings, "notify::gtk-interface-reduced-motion",
-                           G_CALLBACK (system_settings_changed), ce, 0);
+                           G_CALLBACK (system_settings_changed), ce, G_CONNECT_DEFAULT);
 
   system_settings_changed (settings, NULL, ce);
 

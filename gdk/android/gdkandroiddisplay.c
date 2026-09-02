@@ -94,8 +94,7 @@ gdk_android_display_finalize (GObject *object)
   if (self->choreographer_source)
     {
       g_source_destroy (self->choreographer_source);
-      g_source_unref (self->choreographer_source);
-      self->choreographer_source = NULL;
+      g_clear_pointer (&self->choreographer_source, g_source_unref);
     }
 
   g_clear_list (&self->visible_surfaces, NULL);
@@ -230,6 +229,11 @@ gdk_android_display_get_setting (GdkDisplay *display,
         [GDK_ANDROID_DISPLAY_NIGHT_YES] = GTK_INTERFACE_COLOR_SCHEME_DARK
       };
       g_value_set_enum (value, color_schemes[self->night_mode]);
+      return TRUE;
+    }
+  else if (g_strcmp0 (name, "gtk-accent-color") == 0)
+    {
+      g_value_set_boxed (value, &self->accent_color_rgba);
       return TRUE;
     }
   else if (g_strcmp0 (name, "gtk-decoration-layout") == 0)
@@ -466,6 +470,7 @@ gdk_android_display_update_configuration (GdkAndroidDisplay *self, jobject conte
       self->accent_color = color;
       self->accent_color_rgba = GDK_RGBA_INIT_FROM_INT (color);
       g_debug ("accent color changed");
+      gdk_display_setting_changed ((GdkDisplay *) self, "gtk-accent-color");
       g_object_notify_by_pspec ((GObject *) self, obj_properties[PROP_ACCENT_COLOR]);
     }
 }

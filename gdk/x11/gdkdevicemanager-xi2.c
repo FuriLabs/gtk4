@@ -866,8 +866,7 @@ gdk_x11_device_manager_xi2_dispose (GObject *object)
 
   device_manager = GDK_X11_DEVICE_MANAGER_XI2 (object);
 
-  g_list_free_full (device_manager->devices, g_object_unref);
-  device_manager->devices = NULL;
+  g_clear_list (&device_manager->devices, g_object_unref);
 
   g_clear_pointer (&device_manager->id_table, g_hash_table_destroy);
 

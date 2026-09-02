@@ -28,7 +28,7 @@ G_BEGIN_DECLS
 
 typedef struct _GdkWin32Clipboard GdkWin32Clipboard;
 
-GType                   gdk_win32_clipboard_get_type            (void) G_GNUC_CONST;
+GType                   gdk_win32_clipboard_get_type            (void);
 
 GdkClipboard *          gdk_win32_clipboard_new                 (GdkDisplay *display);
 

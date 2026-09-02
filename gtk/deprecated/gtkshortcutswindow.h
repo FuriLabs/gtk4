@@ -34,7 +34,7 @@ G_BEGIN_DECLS
 typedef struct _GtkShortcutsWindow GtkShortcutsWindow;
 
 GDK_AVAILABLE_IN_ALL
-GType gtk_shortcuts_window_get_type (void) G_GNUC_CONST;
+GType gtk_shortcuts_window_get_type (void);
 
 GDK_DEPRECATED_IN_4_18
 void gtk_shortcuts_window_add_section (GtkShortcutsWindow  *self,

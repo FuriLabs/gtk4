@@ -31,7 +31,7 @@ typedef struct _GskIsolationNode                GskIsolationNode;
 #define GSK_TYPE_ISOLATION_NODE (gsk_isolation_node_get_type())
 
 GDK_AVAILABLE_IN_4_22
-GType                   gsk_isolation_node_get_type             (void) G_GNUC_CONST;
+GType                   gsk_isolation_node_get_type             (void);
 GDK_AVAILABLE_IN_4_22
 GskRenderNode *         gsk_isolation_node_new                  (GskRenderNode            *child,
                                                                  GskIsolation              isolations);

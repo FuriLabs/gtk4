@@ -48,7 +48,7 @@ struct _GtkListHeaderBaseClass
                                                                  guint                   end);
 };
 
-GType                   gtk_list_header_base_get_type           (void) G_GNUC_CONST;
+GType                   gtk_list_header_base_get_type           (void);
 
 void                    gtk_list_header_base_update             (GtkListHeaderBase      *self,
                                                                  gpointer                item,

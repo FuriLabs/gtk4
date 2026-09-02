@@ -46,7 +46,7 @@ struct _GtkCssImageCrossFadeClass
   GtkCssImageClass parent_class;
 };
 
-GType          gtk_css_image_cross_fade_get_type              (void) G_GNUC_CONST;
+GType          gtk_css_image_cross_fade_get_type              (void);
 
 GtkCssImage *  _gtk_css_image_cross_fade_new                  (GtkCssImage      *start,
                                                                GtkCssImage      *end,

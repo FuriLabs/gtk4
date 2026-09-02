@@ -65,12 +65,6 @@ struct _Serializer
 
 GQueue serializers = G_QUEUE_INIT;
 
-#define GDK_CONTENT_SERIALIZER_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_CONTENT_SERIALIZER, GdkContentSerializerClass))
-#define GDK_IS_CONTENT_SERIALIZER_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_CONTENT_SERIALIZER))
-#define GDK_CONTENT_SERIALIZER_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_CONTENT_SERIALIZER, GdkContentSerializerClass))
-
-typedef struct _GdkContentSerializerClass GdkContentSerializerClass;
-
 struct _GdkContentSerializer
 {
   GObject parent_instance;
@@ -356,16 +350,27 @@ gdk_content_serializer_emit_callback (gpointer data)
 void
 gdk_content_serializer_return_success (GdkContentSerializer *serializer)
 {
+  GSource *idle_source;
+
   g_return_if_fail (GDK_IS_CONTENT_SERIALIZER (serializer));
   g_return_if_fail (!serializer->returned);
-  guint source_id;
 
   serializer->returned = TRUE;
-  source_id = g_idle_add_full (serializer->priority,
-                               gdk_content_serializer_emit_callback,
-                               serializer,
-                               g_object_unref);
-  gdk_source_set_static_name_by_id (source_id, "[gtk] gdk_content_serializer_emit_callback");
+
+  idle_source = g_idle_source_new ();
+  g_source_set_priority (idle_source, serializer->priority);
+  g_source_set_callback (idle_source,
+                         gdk_content_serializer_emit_callback,
+                         serializer,
+                         g_object_unref);
+  g_source_set_static_name (idle_source, "[gtk] gdk_content_serializer_emit_callback");
+
+  /* If we're in a sub-context (like on macOS), attach the idle function
+   * to the thread-default context, default to the global context.
+   */
+  g_source_attach (idle_source, g_main_context_get_thread_default ());
+
+  g_source_unref (idle_source);
   /* NB: the idle will destroy our reference */
 }
 
@@ -727,17 +732,36 @@ texture_serializer (GdkContentSerializer *serializer)
 }
 
 static void
-string_serializer_finish (GObject      *source,
-                          GAsyncResult *result,
-                          gpointer      serializer)
+string_serializer_close_done (GObject      *source,
+                              GAsyncResult *result,
+                              gpointer      serializer)
 {
-  GOutputStream *stream = G_OUTPUT_STREAM (source);
-  GError *error = NULL;
+  GOutputStream *converter_stream = G_OUTPUT_STREAM (source);
+  GError *error = gdk_content_serializer_get_task_data (serializer);
 
-  if (!g_output_stream_write_all_finish (stream, result, NULL, &error))
+  if (error || !g_output_stream_close_finish (converter_stream, result, &error))
     gdk_content_serializer_return_error (serializer, error);
   else
     gdk_content_serializer_return_success (serializer);
+}
+
+static void
+string_serializer_write_done (GObject      *source,
+                              GAsyncResult *result,
+                              gpointer      serializer)
+{
+  GOutputStream *converter_stream = G_OUTPUT_STREAM (source);
+  /* gobject-linter-ignore-next-line: g_error_leak */
+  GError *error = NULL;
+
+  if (!g_output_stream_write_all_finish (converter_stream, result, NULL, &error))
+    gdk_content_serializer_set_task_data (serializer, error, NULL);
+
+  g_output_stream_close_async (converter_stream,
+                               gdk_content_serializer_get_priority (serializer),
+                               gdk_content_serializer_get_cancellable (serializer),
+                               string_serializer_close_done,
+                               serializer);
 }
 
 static void
@@ -762,6 +786,8 @@ string_serializer (GdkContentSerializer *serializer)
                                           G_CONVERTER (converter));
   g_object_unref (converter);
 
+  g_filter_output_stream_set_close_base_stream (G_FILTER_OUTPUT_STREAM (filter), FALSE);
+
   text = g_value_get_string (gdk_content_serializer_get_value (serializer));
   if (text == NULL)
     text = "";
@@ -771,7 +797,7 @@ string_serializer (GdkContentSerializer *serializer)
                                    strlen (text),
                                    gdk_content_serializer_get_priority (serializer),
                                    gdk_content_serializer_get_cancellable (serializer),
-                                   string_serializer_finish,
+                                   string_serializer_write_done,
                                    serializer);
   g_object_unref (filter);
 }

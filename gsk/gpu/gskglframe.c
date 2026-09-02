@@ -68,6 +68,7 @@ gsk_gl_frame_cleanup (GskGpuFrame *frame)
       glClientWaitSync (self->sync, GL_SYNC_FLUSH_COMMANDS_BIT, G_MAXUINT64);
 
       /* can't use g_clear_pointer() on glDeleteSync(), see MR !7294 */
+      /* gobject-linter-ignore-next-line: use_clear_functions */
       glDeleteSync (self->sync);
       self->sync = NULL;
     }

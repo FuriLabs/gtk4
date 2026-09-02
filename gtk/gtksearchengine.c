@@ -320,9 +320,9 @@ static void
 connect_engine_signals (GtkSearchEngine *engine,
                         gpointer         data)
 {
-  g_signal_connect_object (engine, "hits-added", G_CALLBACK (hits_added), data, 0);
-  g_signal_connect_object (engine, "finished", G_CALLBACK (finished), data, 0);
-  g_signal_connect_object (engine, "error", G_CALLBACK (error), data, 0);
+  g_signal_connect_object (engine, "hits-added", G_CALLBACK (hits_added), data, G_CONNECT_DEFAULT);
+  g_signal_connect_object (engine, "finished", G_CALLBACK (finished), data, G_CONNECT_DEFAULT);
+  g_signal_connect_object (engine, "error", G_CALLBACK (error), data, G_CONNECT_DEFAULT);
 }
 
 GtkSearchEngine *

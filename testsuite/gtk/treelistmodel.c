@@ -193,7 +193,7 @@ check_model_changes (GListModel *model)
                          G_CALLBACK (assert_items_changed_correctly), 
                          check,
                          (GClosureNotify) g_object_unref,
-                         0);
+                         G_CONNECT_DEFAULT);
 
   g_object_set_data (G_OBJECT (check),
                      "last-notified-n-items",
@@ -203,7 +203,7 @@ check_model_changes (GListModel *model)
                          G_CALLBACK (assert_n_items_notified_properly), 
                          g_object_ref (check),
                          (GClosureNotify) g_object_unref,
-                         0);
+                         G_CONNECT_DEFAULT);
 }
 
 static GListStore *

@@ -25,22 +25,17 @@
 #endif
 
 #include <gdk/gdktypes.h>
+#include <gdk/gdkdrawcontext.h>
 
 G_BEGIN_DECLS
 
-#define GDK_TYPE_CAIRO_CONTEXT             (gdk_cairo_context_get_type ())
-#define GDK_CAIRO_CONTEXT(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_CAIRO_CONTEXT, GdkCairoContext))
-#define GDK_IS_CAIRO_CONTEXT(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_CAIRO_CONTEXT))
-
-#define GDK_CAIRO_ERROR                    (gdk_cairo_error_quark ())
+#define GDK_TYPE_CAIRO_CONTEXT (gdk_cairo_context_get_type ())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_cairo_context_get_type                      (void) G_GNUC_CONST;
+GDK_DECLARE_INTERNAL_TYPE (GdkCairoContext, gdk_cairo_context, GDK, CAIRO_CONTEXT, GdkDrawContext)
 
 GDK_DEPRECATED_IN_4_18_FOR(gsk_cairo_node_get_draw_context)
 cairo_t *               gdk_cairo_context_cairo_create                  (GdkCairoContext        *self);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (GdkCairoContext, g_object_unref)
 
 G_END_DECLS
 

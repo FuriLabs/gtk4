@@ -20,7 +20,7 @@ struct _GskGpuCacheClass
   GObjectClass parent_class;
 };
 
-GType                   gsk_gpu_cache_get_type                          (void) G_GNUC_CONST;
+GType                   gsk_gpu_cache_get_type                          (void);
 
 GskGpuCache *           gsk_gpu_cache_new                               (GskGpuDevice           *device);
 

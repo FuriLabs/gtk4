@@ -77,7 +77,7 @@ typedef enum {
 } GtkShortcutType;
 
 GDK_AVAILABLE_IN_ALL
-GType        gtk_shortcuts_shortcut_get_type (void) G_GNUC_CONST;
+GType        gtk_shortcuts_shortcut_get_type (void);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GtkShortcutsShortcut, g_object_unref)
 

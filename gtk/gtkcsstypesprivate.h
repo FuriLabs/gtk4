@@ -192,7 +192,7 @@ enum { /*< skip >*/
   GTK_CSS_PROPERTY_FONT_FAMILY,
   GTK_CSS_PROPERTY_FONT_STYLE,
   GTK_CSS_PROPERTY_FONT_WEIGHT,
-  GTK_CSS_PROPERTY_FONT_STRETCH,
+  GTK_CSS_PROPERTY_FONT_WIDTH,
   GTK_CSS_PROPERTY_LETTER_SPACING,
   GTK_CSS_PROPERTY_TEXT_DECORATION_LINE,
   GTK_CSS_PROPERTY_TEXT_DECORATION_COLOR,
@@ -303,6 +303,7 @@ enum {
   GTK_CSS_SHORTHAND_PROPERTY_ANIMATION,
   GTK_CSS_SHORTHAND_PROPERTY_TEXT_DECORATION,
   GTK_CSS_SHORTHAND_PROPERTY_FONT_VARIANT,
+  GTK_CSS_SHORTHAND_PROPERTY_FONT_STRETCH,
   GTK_CSS_SHORTHAND_PROPERTY_ALL,
   /* add more */
   GTK_CSS_SHORTHAND_PROPERTY_N_PROPERTIES,
@@ -541,13 +542,13 @@ _gtk_css_change_for_child (GtkCssChange match)
 #undef KEEP_STATES
 }
 
-GtkCssDimension         gtk_css_unit_get_dimension               (GtkCssUnit         unit) G_GNUC_CONST;
+GtkCssDimension         gtk_css_unit_get_dimension               (GtkCssUnit         unit);
 
 char *                  gtk_css_change_to_string                 (GtkCssChange       change) G_GNUC_MALLOC;
 void                    gtk_css_change_print                     (GtkCssChange       change,
                                                                   GString           *string);
 
-const char *            gtk_css_pseudoclass_name                 (GtkStateFlags      flags) G_GNUC_CONST;
+const char *            gtk_css_pseudoclass_name                 (GtkStateFlags      flags);
 
 /* These hash functions are selected so they achieve 2 things:
  * 1. collision free among each other

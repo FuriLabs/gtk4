@@ -41,7 +41,7 @@ typedef struct _GdkWaylandSeatClass GdkWaylandSeatClass;
 #define GDK_IS_WAYLAND_SEAT(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), GDK_TYPE_WAYLAND_SEAT))
 
 GDK_AVAILABLE_IN_ALL
-GType gdk_wayland_seat_get_type (void) G_GNUC_CONST;
+GType gdk_wayland_seat_get_type (void);
 
 GDK_AVAILABLE_IN_ALL
 struct wl_seat *        gdk_wayland_seat_get_wl_seat    (GdkSeat *seat);

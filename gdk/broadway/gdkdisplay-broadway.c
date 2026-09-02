@@ -265,8 +265,7 @@ gdk_broadway_display_dispose (GObject *object)
   if (self->event_source)
     {
       g_source_destroy (self->event_source);
-      g_source_unref (self->event_source);
-      self->event_source = NULL;
+      g_clear_pointer (&self->event_source, g_source_unref);
     }
   if (self->monitors)
     {
@@ -455,7 +454,7 @@ gdk_broadway_display_ensure_texture (GdkDisplay *display,
   return data->id;
 }
 
-static gboolean
+static void
 flush_idle (gpointer data)
 {
   GdkDisplay *display = data;
@@ -463,8 +462,6 @@ flush_idle (gpointer data)
 
   broadway_display->idle_flush_id = 0;
   gdk_display_flush (display);
-
-  return G_SOURCE_REMOVE;
 }
 
 void
@@ -474,7 +471,7 @@ gdk_broadway_display_flush_in_idle (GdkDisplay *display)
 
   if (broadway_display->idle_flush_id == 0)
     {
-      broadway_display->idle_flush_id = g_idle_add (flush_idle, g_object_ref (display));
+      broadway_display->idle_flush_id = g_idle_add_once (flush_idle, g_object_ref (display));
       gdk_source_set_static_name_by_id (broadway_display->idle_flush_id, "[gtk] flush_idle");
     }
 }

@@ -24,6 +24,8 @@
 
 #include <gsk/gsktypes.h>
 
+#include <gdk/gdkrgba.h>
+
 G_BEGIN_DECLS
 
 typedef struct _GskBorderNode                    GskBorderNode;
@@ -31,7 +33,7 @@ typedef struct _GskBorderNode                    GskBorderNode;
 #define GSK_TYPE_BORDER_NODE (gsk_border_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_border_node_get_type                (void) G_GNUC_CONST;
+GType                   gsk_border_node_get_type                (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_border_node_new                     (const GskRoundedRect     *outline,
                                                                  const float               border_width[4],

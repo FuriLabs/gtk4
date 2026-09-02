@@ -31,7 +31,7 @@ typedef struct _GskRoundedClipNode              GskRoundedClipNode;
 #define GSK_TYPE_ROUNDED_CLIP_NODE              (gsk_rounded_clip_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_rounded_clip_node_get_type          (void) G_GNUC_CONST;
+GType                   gsk_rounded_clip_node_get_type          (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_rounded_clip_node_new               (GskRenderNode            *child,
                                                                  const GskRoundedRect     *clip);

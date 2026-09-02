@@ -28,7 +28,7 @@ struct _GskGpuImageClass
                                                                          graphene_matrix_t      *out_projection);
 };
 
-GType                   gsk_gpu_image_get_type                          (void) G_GNUC_CONST;
+GType                   gsk_gpu_image_get_type                          (void);
 
 void                    gsk_gpu_image_setup                             (GskGpuImage            *self,
                                                                          GskGpuImageFlags        flags,

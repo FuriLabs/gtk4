@@ -43,7 +43,7 @@ typedef struct _GtkScrollbar        GtkScrollbar;
 
 
 GDK_AVAILABLE_IN_ALL
-GType       gtk_scrollbar_get_type (void) G_GNUC_CONST;
+GType       gtk_scrollbar_get_type (void);
 GDK_AVAILABLE_IN_ALL
 GtkWidget * gtk_scrollbar_new      (GtkOrientation  orientation,
                                     GtkAdjustment  *adjustment);

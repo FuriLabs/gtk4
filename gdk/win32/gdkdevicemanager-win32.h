@@ -68,7 +68,7 @@ struct _GdkDeviceManagerWin32Class
   GObjectClass parent_class;
 };
 
-GType gdk_device_manager_win32_get_type (void) G_GNUC_CONST;
+GType gdk_device_manager_win32_get_type (void);
 
 void     _gdk_wintab_set_tablet_active (GdkDeviceManagerWin32 *device_manager);
 GdkEvent *gdk_wintab_make_event        (GdkDisplay            *display,

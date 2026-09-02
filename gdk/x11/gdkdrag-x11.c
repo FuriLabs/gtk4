@@ -347,11 +347,7 @@ gdk_surface_cache_shape_filter (const XEvent *xevent,
         {
           GdkCacheChild *child = node->data;
           child->shape_valid = FALSE;
-          if (child->shape)
-            {
-              cairo_region_destroy (child->shape);
-              child->shape = NULL;
-            }
+          g_clear_pointer (&child->shape, cairo_region_destroy);
         }
 
       return GDK_FILTER_REMOVE;
@@ -1946,7 +1942,7 @@ _gdk_x11_surface_drag_begin (GdkSurface         *surface,
     }
 
   
-  g_signal_connect_object (display, "xevent", G_CALLBACK (gdk_x11_drag_xevent), drag, 0);
+  g_signal_connect_object (display, "xevent", G_CALLBACK (gdk_x11_drag_xevent), drag, G_CONNECT_DEFAULT);
   /* backend holds a ref until gdk_drag_drop_done is called */
   g_object_ref (drag);
 

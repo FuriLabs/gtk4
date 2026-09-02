@@ -31,7 +31,7 @@ typedef struct _GskPasteNode                    GskPasteNode;
 #define GSK_TYPE_PASTE_NODE (gsk_paste_node_get_type())
 
 GDK_AVAILABLE_IN_4_22
-GType                   gsk_paste_node_get_type                 (void) G_GNUC_CONST;
+GType                   gsk_paste_node_get_type                 (void);
 GDK_AVAILABLE_IN_4_22
 GskRenderNode *         gsk_paste_node_new                      (const graphene_rect_t    *bounds,
                                                                  gsize                     depth);

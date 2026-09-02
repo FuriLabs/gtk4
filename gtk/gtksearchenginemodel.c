@@ -76,7 +76,7 @@ info_matches_query (GtkQuery  *query,
   return TRUE;
 }
 
-static gboolean
+static void
 do_search (gpointer data)
 {
   GtkSearchEngineModel *model = data;
@@ -112,8 +112,6 @@ do_search (gpointer data)
   model->idle = 0;
 
   _gtk_search_engine_finished (GTK_SEARCH_ENGINE (model), got_results);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -126,7 +124,7 @@ gtk_search_engine_model_start (GtkSearchEngine *engine)
   if (model->query == NULL)
     return;
 
-  model->idle = g_idle_add (do_search, engine);
+  model->idle = g_idle_add_once (do_search, engine);
   gdk_source_set_static_name_by_id (model->idle, "[gtk] gtk_search_engine_model_start");
 }
 

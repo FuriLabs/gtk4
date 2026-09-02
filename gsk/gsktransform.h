@@ -32,7 +32,7 @@ G_BEGIN_DECLS
 #define GSK_TYPE_TRANSFORM (gsk_transform_get_type ())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_transform_get_type                  (void) G_GNUC_CONST;
+GType                   gsk_transform_get_type                  (void);
 
 GDK_AVAILABLE_IN_ALL
 GskTransform *          gsk_transform_ref                       (GskTransform                   *self);

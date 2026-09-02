@@ -156,12 +156,7 @@ mask {
         bounds: 0 33 128 2;
         color: rgb(0,0,0);
       }
-      path: "\
-M 0 33\
-L 128 33\
-L 128 35\
-L 0 35\
-Z";
+      path: "M 0 33 L 128 33 L 128 35 L 0 35 Z";
       fill-rule: winding;
     }
   }
@@ -190,12 +185,7 @@ mask {
         bounds: 0 20 170 2;
         color: rgb(0,0,0);
       }
-      path: "\
-M 0 20\
-L 170 20\
-L 170 22\
-L 0 22\
-Z";
+      path: "M 0 20 L 170 20 L 170 22 L 0 22 Z";
       fill-rule: winding;
     }
   }
@@ -212,12 +202,7 @@ mask {
         bounds: -1 33 365 2;
         color: rgb(0,0,0);
       }
-      path: "\
-M -1 33\
-L 364 33\
-L 364 35\
-L -1 35\
-Z";
+      path: "M -1 33 L 364 33 L 364 35 L -1 35 Z";
       fill-rule: winding;
     }
   }
@@ -286,8 +271,7 @@ stroke {
     bounds: 49 224 382 66;
     color: rgb(0,0,0);
   }
-  path: "\
-M 50 225 h 380 v 64 h -380 z";
+  path: 50 225 380 64;
   line-width: 2;
   line-cap: butt;
   line-join: miter;
@@ -385,8 +369,7 @@ stroke {
     bounds: 0.5 0.5 479 359;
     color: rgb(0,0,0);
   }
-  path: "\
-M 1 1 h 478 v 358 h -478 z";
+  path: 1 1 478 358;
   line-width: 1;
   line-cap: butt;
   line-join: miter;

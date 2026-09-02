@@ -30,7 +30,7 @@ typedef struct _GskDisplacementNode                GskDisplacementNode;
 
 #define GSK_TYPE_DISPLACEMENT_NODE (gsk_displacement_node_get_type())
 
-GType                   gsk_displacement_node_get_type          (void) G_GNUC_CONST;
+GType                   gsk_displacement_node_get_type          (void);
 GskRenderNode *         gsk_displacement_node_new               (const graphene_rect_t    *bounds,
                                                                  GskRectSnap               snap,
                                                                  GskRenderNode            *child,

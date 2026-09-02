@@ -31,7 +31,7 @@ struct _GskVulkanFrameClass
                                                                          GskGpuOp               *op);
 };
 
-GType                   gsk_vulkan_frame_get_type                       (void) G_GNUC_CONST;
+GType                   gsk_vulkan_frame_get_type                       (void);
 
 void                    gsk_vulkan_semaphores_add_wait                  (GskVulkanSemaphores    *self,
                                                                          VkSemaphore             semaphore,

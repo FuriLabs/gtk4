@@ -392,7 +392,7 @@ gtk_scale_button_class_init (GtkScaleButtonClass *klass)
   gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_GROUP);
 }
 
-static gboolean
+static void
 start_autoscroll (gpointer data)
 {
   GtkScaleButton *button = data;
@@ -402,8 +402,6 @@ start_autoscroll (gpointer data)
 
   priv->autoscrolling = TRUE;
   priv->autoscroll_timeout = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -421,7 +419,7 @@ button_pressed_cb (GtkGesture     *gesture,
     priv->autoscroll_step = GTK_SCROLL_PAGE_FORWARD;
   else
     priv->autoscroll_step = GTK_SCROLL_PAGE_BACKWARD;
-  priv->autoscroll_timeout = g_timeout_add (200, start_autoscroll, button);
+  priv->autoscroll_timeout = g_timeout_add_once (200, start_autoscroll, button);
 }
 
 static void

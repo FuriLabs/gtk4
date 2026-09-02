@@ -30,16 +30,8 @@
 G_BEGIN_DECLS
 
 #define GDK_TYPE_WAYLAND_GL_CONTEXT		(gdk_wayland_gl_context_get_type ())
-#define GDK_WAYLAND_GL_CONTEXT(obj)		(G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_WAYLAND_GL_CONTEXT, GdkWaylandGLContext))
-#define GDK_WAYLAND_IS_GL_CONTEXT(obj)	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_WAYLAND_GL_CONTEXT))
-
-typedef struct _GdkWaylandGLContext		GdkWaylandGLContext;
-typedef struct _GdkWaylandGLContextClass	GdkWaylandGLContextClass;
 
 GDK_AVAILABLE_IN_ALL
-GType gdk_wayland_gl_context_get_type (void) G_GNUC_CONST;
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (GdkWaylandGLContext, g_object_unref)
+GDK_DECLARE_INTERNAL_TYPE (GdkWaylandGLContext, gdk_wayland_gl_context, GDK, WAYLAND_GL_CONTEXT, GdkGLContext)
 
 G_END_DECLS
-

@@ -30,14 +30,7 @@
 #include "gdkprivate.h"
 
 #define GDK_TYPE_CONTENT_PROVIDER_VALUE            (gdk_content_provider_value_get_type ())
-#define GDK_CONTENT_PROVIDER_VALUE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_CONTENT_PROVIDER_VALUE, GdkContentProviderValue))
-#define GDK_IS_CONTENT_PROVIDER_VALUE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_CONTENT_PROVIDER_VALUE))
-#define GDK_CONTENT_PROVIDER_VALUE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_CONTENT_PROVIDER_VALUE, GdkContentProviderValueClass))
-#define GDK_IS_CONTENT_PROVIDER_VALUE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_CONTENT_PROVIDER_VALUE))
-#define GDK_CONTENT_PROVIDER_VALUE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_CONTENT_PROVIDER_VALUE, GdkContentProviderValueClass))
-
-typedef struct _GdkContentProviderValue GdkContentProviderValue;
-typedef struct _GdkContentProviderValueClass GdkContentProviderValueClass;
+GDK_DECLARE_INTERNAL_TYPE (GdkContentProviderValue, gdk_content_provider_value, GDK, CONTENT_PROVIDER_VALUE, GdkContentProvider)
 
 struct _GdkContentProviderValue
 {
@@ -50,8 +43,6 @@ struct _GdkContentProviderValueClass
 {
   GdkContentProviderClass parent_class;
 };
-
-GType gdk_content_provider_value_get_type (void) G_GNUC_CONST;
 
 G_DEFINE_TYPE (GdkContentProviderValue, gdk_content_provider_value, GDK_TYPE_CONTENT_PROVIDER)
 
@@ -167,14 +158,7 @@ gdk_content_provider_new_typed (GType type,
 }
 
 #define GDK_TYPE_CONTENT_PROVIDER_UNION            (gdk_content_provider_union_get_type ())
-#define GDK_CONTENT_PROVIDER_UNION(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_CONTENT_PROVIDER_UNION, GdkContentProviderUnion))
-#define GDK_IS_CONTENT_PROVIDER_UNION(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_CONTENT_PROVIDER_UNION))
-#define GDK_CONTENT_PROVIDER_UNION_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_CONTENT_PROVIDER_UNION, GdkContentProviderUnionClass))
-#define GDK_IS_CONTENT_PROVIDER_UNION_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_CONTENT_PROVIDER_UNION))
-#define GDK_CONTENT_PROVIDER_UNION_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_CONTENT_PROVIDER_UNION, GdkContentProviderUnionClass))
-
-typedef struct _GdkContentProviderUnion GdkContentProviderUnion;
-typedef struct _GdkContentProviderUnionClass GdkContentProviderUnionClass;
+GDK_DECLARE_INTERNAL_TYPE (GdkContentProviderUnion, gdk_content_provider_union, GDK, CONTENT_PROVIDER_UNION, GdkContentProvider)
 
 struct _GdkContentProviderUnion
 {
@@ -188,8 +172,6 @@ struct _GdkContentProviderUnionClass
 {
   GdkContentProviderClass parent_class;
 };
-
-GType gdk_content_provider_union_get_type (void) G_GNUC_CONST;
 
 G_DEFINE_TYPE (GdkContentProviderUnion, gdk_content_provider_union, GDK_TYPE_CONTENT_PROVIDER)
 
@@ -441,14 +423,7 @@ gdk_content_provider_new_union (GdkContentProvider **providers,
 }
 
 #define GDK_TYPE_CONTENT_PROVIDER_BYTES            (gdk_content_provider_bytes_get_type ())
-#define GDK_CONTENT_PROVIDER_BYTES(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_CONTENT_PROVIDER_BYTES, GdkContentProviderBytes))
-#define GDK_IS_CONTENT_PROVIDER_BYTES(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_CONTENT_PROVIDER_BYTES))
-#define GDK_CONTENT_PROVIDER_BYTES_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_CONTENT_PROVIDER_BYTES, GdkContentProviderBytesClass))
-#define GDK_IS_CONTENT_PROVIDER_BYTES_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_CONTENT_PROVIDER_BYTES))
-#define GDK_CONTENT_PROVIDER_BYTES_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_CONTENT_PROVIDER_BYTES, GdkContentProviderBytesClass))
-
-typedef struct _GdkContentProviderBytes GdkContentProviderBytes;
-typedef struct _GdkContentProviderBytesClass GdkContentProviderBytesClass;
+GDK_DECLARE_INTERNAL_TYPE (GdkContentProviderBytes, gdk_content_provider_bytes, GDK, CONTENT_PROVIDER_BYTES, GdkContentProvider)
 
 struct _GdkContentProviderBytes
 {
@@ -462,8 +437,6 @@ struct _GdkContentProviderBytesClass
 {
   GdkContentProviderClass parent_class;
 };
-
-GType gdk_content_provider_bytes_get_type (void) G_GNUC_CONST;
 
 G_DEFINE_TYPE (GdkContentProviderBytes, gdk_content_provider_bytes, GDK_TYPE_CONTENT_PROVIDER)
 

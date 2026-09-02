@@ -108,7 +108,7 @@ gtk_video_get_playing (GtkVideo *self)
   return FALSE;
 }
 
-static gboolean
+static void
 gtk_video_hide_controls (gpointer data)
 {
   GtkVideo *self = data;
@@ -117,8 +117,6 @@ gtk_video_hide_controls (gpointer data)
     gtk_revealer_set_reveal_child (GTK_REVEALER (self->controls_revealer), FALSE);
 
   self->controls_hide_source = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -127,13 +125,11 @@ gtk_video_reveal_controls (GtkVideo *self)
   gtk_revealer_set_reveal_child (GTK_REVEALER (self->controls_revealer), TRUE);
   if (self->controls_hide_source)
     g_source_remove (self->controls_hide_source);
-  self->controls_hide_source = g_timeout_add (3 * 1000,
-                                              gtk_video_hide_controls,
-                                              self);
+  self->controls_hide_source = g_timeout_add_once (3 * 1000, gtk_video_hide_controls, self);
   gdk_source_set_static_name_by_id (self->controls_hide_source, "[gtk] gtk_video_hide_controls");
 }
 
-static gboolean
+static void
 gtk_video_hide_cursor (gpointer data)
 {
   GtkVideo *self = data;
@@ -145,8 +141,6 @@ gtk_video_hide_cursor (gpointer data)
     }
 
   self->cursor_hide_source = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -156,9 +150,7 @@ gtk_video_reveal_cursor (GtkVideo *self)
   self->cursor_hidden = FALSE;
   if (self->cursor_hide_source)
     g_source_remove (self->cursor_hide_source);
-  self->cursor_hide_source = g_timeout_add (3 * 1000,
-                                            gtk_video_hide_cursor,
-                                            self);
+  self->cursor_hide_source = g_timeout_add_once (3 * 1000, gtk_video_hide_cursor, self);
   gdk_source_set_static_name_by_id (self->cursor_hide_source, "[gtk] gtk_video_hide_cursor");
 }
 

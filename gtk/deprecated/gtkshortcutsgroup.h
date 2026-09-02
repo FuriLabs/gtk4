@@ -35,7 +35,7 @@ typedef struct _GtkShortcutsGroup         GtkShortcutsGroup;
 typedef struct _GtkShortcutsGroupClass    GtkShortcutsGroupClass;
 
 GDK_AVAILABLE_IN_ALL
-GType gtk_shortcuts_group_get_type (void) G_GNUC_CONST;
+GType gtk_shortcuts_group_get_type (void);
 
 GDK_DEPRECATED_IN_4_18
 void gtk_shortcuts_group_add_shortcut (GtkShortcutsGroup    *self,

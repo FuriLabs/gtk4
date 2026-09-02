@@ -174,11 +174,16 @@ proto_sources = [
     'stability': 'staging',
     'version': 1,
   },
+  {
+    'name': 'ext-background-effect',
+    'stability': 'staging',
+    'version': 1,
+  },
 ]
 
 gdk_wayland_gen_headers = []
 
-wlmod = import('unstable-wayland')
+wlmod = import('wayland')
 foreach p: proto_sources
   if wlprotocolsdep.version().version_compare(p.get('required', '>=0'))
     if p.get('stability') == 'private'
@@ -221,6 +226,7 @@ libgdk_wayland = static_library('gdk-wayland',
     '-DG_LOG_DOMAIN="Gdk"',
   ] + common_cflags,
   dependencies: [ gdk_deps, gdk_wayland_deps ],
+  gnu_symbol_visibility: symbol_visibility,
 )
 
 # Used to generate pkg-config Requires

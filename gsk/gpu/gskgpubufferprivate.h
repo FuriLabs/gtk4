@@ -27,7 +27,7 @@ struct _GskGpuBufferClass
                                                                          gsize                   used);
 };
 
-GType                   gsk_gpu_buffer_get_type                         (void) G_GNUC_CONST;
+GType                   gsk_gpu_buffer_get_type                         (void);
 
 void                    gsk_gpu_buffer_setup                            (GskGpuBuffer           *self,
                                                                          gsize                   size);

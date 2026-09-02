@@ -268,14 +268,12 @@ gtk_drag_source_filter_event (GtkEventController *controller,
   return GTK_EVENT_CONTROLLER_CLASS (gtk_drag_source_parent_class)->filter_event (controller, event);
 }
 
-static gboolean
+static void
 drag_timeout (gpointer user_data)
 {
   GtkDragSource *source = user_data;
 
   source->timeout_id = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -287,7 +285,7 @@ gtk_drag_source_begin (GtkGesture       *gesture,
 
   current = gtk_gesture_single_get_current_sequence (GTK_GESTURE_SINGLE (gesture));
   g_clear_handle_id (&source->timeout_id, g_source_remove);
-  source->timeout_id = g_timeout_add (MIN_TIME_TO_DND, drag_timeout, source);
+  source->timeout_id = g_timeout_add_once (MIN_TIME_TO_DND, drag_timeout, source);
 
   gtk_gesture_get_point (gesture, current, &source->start_x, &source->start_y);
 }

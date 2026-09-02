@@ -73,7 +73,7 @@ struct _GtkCssValueClass {
                                                        GString                    *string);
 };
 
-GType         gtk_css_value_get_type                  (void) G_GNUC_CONST;
+GType         gtk_css_value_get_type                  (void);
 
 GtkCssValue * gtk_css_value_alloc                     (const GtkCssValueClass     *klass,
                                                        gsize                       size);

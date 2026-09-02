@@ -181,7 +181,7 @@ connect_controller (GObject     *controller,
   p->spec = spec;
 
   p->modified_id = g_signal_connect_data (controller, signal, func, p,
-                                          (GClosureNotify)free_object_property, 0);
+                                          (GClosureNotify)free_object_property, G_CONNECT_DEFAULT);
   g_object_set_data (controller, "object-property", p);
 }
 

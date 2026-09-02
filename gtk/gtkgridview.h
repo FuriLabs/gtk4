@@ -38,7 +38,7 @@ typedef struct _GtkGridView GtkGridView;
 typedef struct _GtkGridViewClass GtkGridViewClass;
 
 GDK_AVAILABLE_IN_ALL
-GType           gtk_grid_view_get_type                          (void) G_GNUC_CONST;
+GType           gtk_grid_view_get_type                          (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkWidget *     gtk_grid_view_new                               (GtkSelectionModel      *model,

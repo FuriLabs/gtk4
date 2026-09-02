@@ -46,7 +46,7 @@ struct _GtkCssImagePaintableClass
   GtkCssImageClass parent_class;
 };
 
-GType           gtk_css_image_paintable_get_type              (void) G_GNUC_CONST;
+GType           gtk_css_image_paintable_get_type              (void);
 
 GtkCssImage *   gtk_css_image_paintable_new                   (GdkPaintable     *paintable,
                                                                GdkPaintable     *static_paintable);

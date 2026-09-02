@@ -2560,7 +2560,12 @@ gsk_gpu_node_processor_add_mask_node (GskGpuRenderPass *self,
         {
           GskGpuRenderPassClipStorage storage;
 
-          gsk_gpu_render_pass_push_clip_mask (self, &bounds, mask_image, &mask_rect, TRUE, &storage);
+          gsk_gpu_render_pass_push_clip_mask (self,
+                                              &bounds,
+                                              mask_image,
+                                              &mask_rect,
+                                              !gsk_render_node_is_bilevel_opacity (mask_child),
+                                              &storage);
           gsk_gpu_node_processor_add_node (self, source_child, 0);
           gsk_gpu_render_pass_pop_clip_mask (self, &storage);
         }
@@ -2639,7 +2644,7 @@ gsk_gpu_node_processor_add_glyph_node (GskGpuRenderPass *self,
 
   if (gsk_transform_get_fine_category (self->modelview) <= GSK_FINE_TRANSFORM_CATEGORY_2D)
     {
-      scale = ceilf (scale + 0.5);
+      scale = exp2f (ceilf (log2f (scale)));
       align_scale_x = align_scale_y = 1;
       flags_mask = 0;
     }
@@ -2680,33 +2685,36 @@ gsk_gpu_node_processor_add_glyph_node (GskGpuRenderPass *self,
                                            &glyph_bounds,
                                            &glyph_offset);
 
-      glyph_origin.x -= glyph_offset.x / scale;
-      glyph_origin.y -= glyph_offset.y / scale;
-      glyph_tex_rect = GRAPHENE_RECT_INIT (glyph_origin.x - glyph_bounds.origin.x / scale,
-                                           glyph_origin.y - glyph_bounds.origin.y / scale,
-                                           gsk_gpu_image_get_width (image) / scale,
-                                           gsk_gpu_image_get_height (image) / scale);
-      glyph_bounds = GRAPHENE_RECT_INIT (glyph_origin.x,
-                                         glyph_origin.y,
-                                         glyph_bounds.size.width / scale,
-                                         glyph_bounds.size.height / scale);
+      if (image)
+        {
+          glyph_origin.x -= glyph_offset.x / scale;
+          glyph_origin.y -= glyph_offset.y / scale;
+          glyph_tex_rect = GRAPHENE_RECT_INIT (glyph_origin.x - glyph_bounds.origin.x / scale,
+                                               glyph_origin.y - glyph_bounds.origin.y / scale,
+                                               gsk_gpu_image_get_width (image) / scale,
+                                               gsk_gpu_image_get_height (image) / scale);
+          glyph_bounds = GRAPHENE_RECT_INIT (glyph_origin.x,
+                                             glyph_origin.y,
+                                             glyph_bounds.size.width / scale,
+                                             glyph_bounds.size.height / scale);
 
-      if (glyphs[i].attr.is_color)
-        gsk_gpu_texture_op (self,
-                            self->ccs,
-                            &glyph_bounds,
-                            image,
-                            GSK_GPU_SAMPLER_DEFAULT,
-                            &glyph_tex_rect);
-      else
-        gsk_gpu_colorize_op (self,
-                             self->ccs,
-                             acs,
-                             &glyph_bounds,
-                             image,
-                             GSK_GPU_SAMPLER_DEFAULT,
-                             &glyph_tex_rect,
-                             &color2);
+          if (glyphs[i].attr.is_color)
+            gsk_gpu_texture_op (self,
+                                self->ccs,
+                                &glyph_bounds,
+                                image,
+                                GSK_GPU_SAMPLER_DEFAULT,
+                                &glyph_tex_rect);
+          else
+            gsk_gpu_colorize_op (self,
+                                 self->ccs,
+                                 acs,
+                                 &glyph_bounds,
+                                 image,
+                                 GSK_GPU_SAMPLER_DEFAULT,
+                                 &glyph_tex_rect,
+                                 &color2);
+        }
 
       offset.x += glyphs[i].geometry.width / pango_scale;
     }
@@ -3700,8 +3708,8 @@ gsk_gpu_node_processor_add_turbulence_node (GskGpuRenderPass *self,
                          GSK_GPU_SAMPLER_NEAREST,
                          gsk_turbulence_node_get_noise_type (node) == GSK_NOISE_FRACTAL_NOISE,
                          gsk_turbulence_node_get_stitch_tiles (node),
-                         gsk_turbulence_node_get_base_frequency (node),
-                         (float) gsk_turbulence_node_get_num_octaves (node),
+                         gsk_turbulence_node_get_frequency (node),
+                         (float) gsk_turbulence_node_get_octaves (node),
                          bounds.origin.x,
                          bounds.origin.y,
                          bounds.size.width,

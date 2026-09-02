@@ -31,7 +31,7 @@ typedef struct _GskSubsurfaceNode               GskSubsurfaceNode;
 #define GSK_TYPE_SUBSURFACE_NODE                (gsk_subsurface_node_get_type())
 
 GDK_AVAILABLE_IN_4_14
-GType                   gsk_subsurface_node_get_type            (void) G_GNUC_CONST;
+GType                   gsk_subsurface_node_get_type            (void);
 GDK_AVAILABLE_IN_4_14
 GskRenderNode *         gsk_subsurface_node_new                 (GskRenderNode            *child,
                                                                  gpointer                  subsurface);

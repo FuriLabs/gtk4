@@ -804,8 +804,6 @@ gdk_win32_surface_hide (GdkSurface *surface)
   if (GDK_SURFACE_IS_MAPPED (surface))
     gdk_surface_set_is_mapped (surface, FALSE);
 
-  _gdk_surface_clear_update_area (surface);
-
   GtkShowSurfaceHWND (surface, SW_HIDE);
 }
 

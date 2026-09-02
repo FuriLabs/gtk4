@@ -40,7 +40,7 @@ typedef struct _GtkEventControllerKey GtkEventControllerKey;
 typedef struct _GtkEventControllerKeyClass GtkEventControllerKeyClass;
 
 GDK_AVAILABLE_IN_ALL
-GType               gtk_event_controller_key_get_type  (void) G_GNUC_CONST;
+GType               gtk_event_controller_key_get_type  (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkEventController *gtk_event_controller_key_new (void);

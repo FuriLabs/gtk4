@@ -222,7 +222,7 @@ struct _GdkWin32ClipdropClass
   GObjectClass parent_class;
 };
 
-GType    gdk_win32_clipdrop_get_type                               (void) G_GNUC_CONST;
+GType    gdk_win32_clipdrop_get_type                               (void);
 
 gboolean _gdk_win32_format_uses_hdata                              (UINT                         w32format);
 

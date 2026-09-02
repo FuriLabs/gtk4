@@ -43,6 +43,9 @@ struct _GtkIMContextWaylandGlobal
   GdkDisplay *gdk_display;
   struct wl_display *display;
   struct wl_registry *registry;
+#ifdef WL_FIXES_ACK_GLOBAL_REMOVE
+  struct wl_fixes *fixes;
+#endif
   uint32_t text_input_manager_wl_id;
   struct zwp_text_input_manager_v3 *text_input_manager;
   struct zwp_text_input_v3 *text_input;
@@ -728,7 +731,7 @@ on_css_node_style_changed (GtkCssNode          *node,
                            GtkCssStyleChange   *change,
                            GtkIMContextWayland *context)
 {
-  if (context->widget)
+  if (!context->widget)
     return;
 
   if (gtk_css_style_change_affects (change, GTK_CSS_AFFECTS_SIZE))
@@ -950,7 +953,7 @@ gtk_im_context_wayland_filter_keypress (GtkIMContext *context,
 {
   guint keyval, state;
   gunichar ch;
-  GdkModifierType no_text_input_mask = GDK_ALT_MASK|GDK_CONTROL_MASK;
+  GdkModifierType no_text_input_mask = GDK_ALT_MASK|GDK_CONTROL_MASK|GDK_SUPER_MASK|GDK_HYPER_MASK;
 
   if (gdk_event_get_event_type (event) == GDK_KEY_RELEASE)
     return FALSE;
@@ -1058,8 +1061,14 @@ text_input_preedit_hint (void                                *data,
   GtkIMContextWaylandGlobal *global = data;
   GtkIMContextWayland *context = GTK_IM_CONTEXT_WAYLAND (global->current);
   GtkIMContextPreeditSegment *segment, new_segment;
+  int start_idx, end_idx;
   int first_start_idx = G_MAXINT, last_end_idx = -1;
   unsigned int i;
+
+  g_return_if_fail (begin < G_MAXUINT16);
+  g_return_if_fail (end < G_MAXUINT16);
+  start_idx = (int)begin;
+  end_idx = (int)end;
 
   if (!context->pending_preedit.style_hints)
     {
@@ -1070,39 +1079,47 @@ text_input_preedit_hint (void                                *data,
   /* Convert to a list of non-overlapping segments */
   for (i = 0; i < context->pending_preedit.style_hints->len; i++)
     {
-      segment = &g_array_index (context->current_preedit.style_hints,
+      int increment = 0;
+      segment = &g_array_index (context->pending_preedit.style_hints,
                                 GtkIMContextPreeditSegment, i);
 
       /* This segment is unaffected by the new hint */
-      if (begin >= segment->end_idx || end < segment->start_idx)
+      if (start_idx >= segment->end_idx || end_idx < segment->start_idx)
         continue;
 
-      if (begin <= segment->start_idx && end >= segment->end_idx)
+      if (start_idx <= segment->start_idx && end_idx >= segment->end_idx)
         {
           /* Segment is affected as a whole */
           segment->hint_flags |= (1 << hint);
         }
       else
         {
-          if (end < segment->end_idx)
+          if (end_idx < segment->end_idx)
             {
               /* Partition at the end */
-              new_segment.start_idx = end;
+              new_segment.start_idx = end_idx;
               new_segment.end_idx = segment->end_idx;
               new_segment.hint_flags = (1 << hint);
-              segment->end_idx = end;
+              segment->end_idx = end_idx;
               g_array_insert_val (context->pending_preedit.style_hints, i + 1, new_segment);
+              segment = &g_array_index (context->pending_preedit.style_hints,
+                                        GtkIMContextPreeditSegment, i);
+              ++increment;
             }
 
-          if (begin > segment->start_idx)
+          if (start_idx > segment->start_idx)
             {
               /* Partition at the beginning */
               new_segment.start_idx = segment->start_idx;
-              new_segment.end_idx = begin;
+              new_segment.end_idx = start_idx;
               new_segment.hint_flags = (1 << hint);
-              segment->start_idx = begin;
+              segment->start_idx = start_idx;
               g_array_insert_val (context->pending_preedit.style_hints, i, new_segment);
+              segment = &g_array_index (context->pending_preedit.style_hints,
+                                        GtkIMContextPreeditSegment, i);
+              ++increment;
             }
+            i += increment;
         }
 
       first_start_idx = MIN (segment->start_idx, first_start_idx);
@@ -1110,20 +1127,20 @@ text_input_preedit_hint (void                                *data,
     }
 
   /* Prepend any missing segment */
-  if (begin < first_start_idx)
+  if (start_idx < first_start_idx)
     {
-      new_segment.start_idx = begin;
-      new_segment.end_idx = first_start_idx;
+      new_segment.start_idx = start_idx;
+      new_segment.end_idx = MIN(end_idx, first_start_idx);
       new_segment.hint_flags = (1 << hint);
       g_array_prepend_val (context->pending_preedit.style_hints, new_segment);
-      last_end_idx = MAX (last_end_idx, end);
+      last_end_idx = MAX (last_end_idx, end_idx);
     }
 
   /* Append any missing segment */
-  if (last_end_idx >= 0 && end > last_end_idx)
+  if (last_end_idx >= 0 && end_idx > last_end_idx)
     {
-      new_segment.start_idx = last_end_idx;
-      new_segment.end_idx = end;
+      new_segment.start_idx = MAX(start_idx, last_end_idx);
+      new_segment.end_idx = end_idx;
       new_segment.hint_flags = (1 << hint);
       g_array_append_val (context->pending_preedit.style_hints, new_segment);
     }
@@ -1165,6 +1182,14 @@ registry_handle_global (void               *data,
       zwp_text_input_v3_add_listener (global->text_input,
                                       &text_input_listener, global);
     }
+#ifdef WL_FIXES_ACK_GLOBAL_REMOVE
+  else if (strcmp (interface, "wl_fixes") == 0)
+    {
+      global->fixes =
+        wl_registry_bind (global->registry, id, &wl_fixes_interface,
+                          MIN (version, WL_FIXES_ACK_GLOBAL_REMOVE_SINCE_VERSION));
+    }
+#endif
 }
 
 static void
@@ -1174,11 +1199,16 @@ registry_handle_global_remove (void               *data,
 {
   GtkIMContextWaylandGlobal *global = data;
 
-  if (id != global->text_input_manager_wl_id)
-    return;
+  if (id == global->text_input_manager_wl_id)
+  {
+    g_clear_pointer (&global->text_input, zwp_text_input_v3_destroy);
+    g_clear_pointer (&global->text_input_manager, zwp_text_input_manager_v3_destroy);
+  }
 
-  g_clear_pointer (&global->text_input, zwp_text_input_v3_destroy);
-  g_clear_pointer (&global->text_input_manager, zwp_text_input_manager_v3_destroy);
+#ifdef WL_FIXES_ACK_GLOBAL_REMOVE
+  if (global->fixes && wl_fixes_get_version (global->fixes) >= WL_FIXES_ACK_GLOBAL_REMOVE_SINCE_VERSION)
+    wl_fixes_ack_global_remove (global->fixes, registry, id);
+#endif
 }
 
 static const struct wl_registry_listener registry_listener = {

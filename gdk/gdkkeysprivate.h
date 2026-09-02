@@ -88,7 +88,7 @@ struct _GdkKeymap
   GHashTable *cache;
 };
 
-GType gdk_keymap_get_type (void) G_GNUC_CONST;
+GType gdk_keymap_get_type (void);
 
 guint          gdk_keymap_lookup_key               (GdkKeymap           *keymap,
                                                     const GdkKeymapKey  *key);

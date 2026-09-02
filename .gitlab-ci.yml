@@ -44,7 +44,7 @@ stages:
 # Common variables
 variables:
   FDO_UPSTREAM_REPO: GNOME/gtk
-  COMMON_MESON_FLAGS: "-Dwerror=true -Dcairo:werror=false -Dgi-docgen:werror=false -Dgraphene:werror=false -Dlibepoxy:werror=false -Dlibsass:werror=false -Dpango:werror=false -Dsassc:werror=false -Dgdk-pixbuf:werror=false -Dglib:werror=false -Dlibcloudproviders:werror=false -Dlibpng:werror=false -Dlibtiff:werror=false -Dsysprof:werror=false -Dwayland:werror=false -Dwayland-protocols:werror=false -Dharfbuzz:werror=false -Dfreetype2:werror=false -Dfontconfig:werror=false -Dfribidi:werror=false -Dlibffi:werror=false -Dlibjpeg-turbo:werror=false -Dmutest:werror=false -Dpcre2:werror=false -Dpixman:werror=false -Dproxy-libintl:werror=false -Dgperf:werror=false -Dlibxml2:werror=false"
+  COMMON_MESON_FLAGS: "-Dwerror=true -Dcairo:werror=false -Dgi-docgen:werror=false -Dgraphene:werror=false -Dlibepoxy:werror=false -Dlibsass:werror=false -Dpango:werror=false -Dsassc:werror=false -Dgdk-pixbuf:werror=false -Dglib:werror=false -Dlibcloudproviders:werror=false -Dlibpng:werror=false -Dlibtiff:werror=false -Dsysprof:werror=false -Dwayland:werror=false -Dwayland-protocols:werror=false -Dharfbuzz:werror=false -Dfreetype2:werror=false -Dfontconfig:werror=false -Dfribidi:werror=false -Dlibffi:werror=false -Dlibjpeg-turbo:werror=false -Dmutest:werror=false -Dpcre2:werror=false -Dpixman:werror=false -Dproxy-libintl:werror=false -Dgperf:werror=false -Dlibxml2:werror=false -Dfribidi:docs=false"
   BACKEND_FLAGS: "-Dx11-backend=true -Dwayland-backend=true -Dbroadway-backend=true"
   FEATURE_FLAGS: "-Dvulkan=enabled -Dcloudproviders=enabled -Dbuild-testsuite=true -Dintrospection=enabled"
   MESON_TEST_TIMEOUT_MULTIPLIER: 3
@@ -75,8 +75,8 @@ default:
 
 .container.fedora:
   variables:
-    BASE_TAG: '2026-06-24.0'
-    FDO_DISTRIBUTION_VERSION: 44
+    BASE_TAG: '2026-08-09.0'
+    FDO_DISTRIBUTION_VERSION: 45
     FDO_DISTRIBUTION_TAG: "x86_64-${BASE_TAG}"
     FDO_DISTRIBUTION_PACKAGES:
       ccache
@@ -105,6 +105,7 @@ default:
       mingw64-glib2
       mingw64-libepoxy
       mingw64-pango
+      mold
       mutter
       python-devel
       python3-jinja2
@@ -142,7 +143,7 @@ container:fedora:
 
 .container.android:
   variables:
-    BASE_TAG: '2026-04-27.0'
+    BASE_TAG: '2026-07-30.1'
     FDO_DISTRIBUTION_VERSION: sid
     FDO_DISTRIBUTION_TAG: "x86_64-${BASE_TAG}"
     FDO_DISTRIBUTION_PACKAGES:
@@ -271,6 +272,7 @@ fedora-x86_64:
   script:
     - .gitlab-ci/show-info-linux.sh
     - export PATH="$HOME/.local/bin:$PATH"
+    - export CC_LD=mold
     - meson setup
             ${COMMON_MESON_FLAGS}
             ${EXTRA_MESON_FLAGS}
@@ -294,9 +296,6 @@ release-build:
   script:
     - .gitlab-ci/show-info-linux.sh
     - mkdir _install
-    # don't use catch by default, since it causes sporadic test failures
-    # - export PATH="$HOME/.local/bin:${CI_PROJECT_DIR}/_install/bin:$PATH"
-    # - .gitlab-ci/install-meson-project.sh --prefix ${CI_PROJECT_DIR}/_install https://gitlab.gnome.org/jadahl/catch.git main
     - git config --global --add safe.directory $CI_PROJECT_DIR
     - meson setup
             --prefix=${CI_PROJECT_DIR}/_install
@@ -326,6 +325,7 @@ fedora-clang:
     - .gitlab-ci/show-info-linux.sh
     - export PATH="$HOME/.local/bin:$PATH"
     - export CC=clang
+    - export CC_LD=mold
     - meson setup
             ${COMMON_MESON_FLAGS}
             ${EXTRA_MESON_FLAGS}
@@ -377,6 +377,7 @@ msys2-ucrt64:
     when: always
     expose_as: 'Windows_DLL_MSYS2_UCRT64_toolchain'
     paths:
+      - "${CI_PROJECT_DIR}/_build/meson-logs"
       - "${CI_PROJECT_DIR}/_build/gtkdll.tar.gz"
       - "${CI_PROJECT_DIR}/_build/gtk/GdkWin32-4.0.gir"
 
@@ -390,6 +391,7 @@ msys2-clang64:
     when: always
     expose_as: 'Windows_DLL_MSYS2_CLANG64_toolchain'
     paths:
+      - "${CI_PROJECT_DIR}/_build/meson-logs"
       - "${CI_PROJECT_DIR}/_build/gtkdll.tar.gz"
       - "${CI_PROJECT_DIR}/_build/gtk/GdkWin32-4.0.gir"
 
@@ -642,20 +644,6 @@ flatpak:node-editor:aarch64:
   variables:
     APPID: org.gtk.gtk4.NodeEditor
 
-flatpak:icon-editor:
-  extends: '.flatpak-defaults'
-  needs: []
-  variables:
-    APPID: org.gtk.Shaper
-
-flatpak:icon-editor:aarch64:
-  extends: '.flatpak-defaults'
-  needs: []
-  tags:
-    - flatpak-aarch64
-  variables:
-    APPID: org.gtk.Shaper
-
 # Publish the demo apps to the GNOME Nightly repo
 # https://wiki.gnome.org/Apps/Nightly
 # https://gitlab.gnome.org/GNOME/Initiatives/-/wikis/DevOps-with-Flatpak
@@ -683,14 +671,6 @@ nightly node-editor aarch64:
     extends: '.publish_nightly'
     needs: ['flatpak:node-editor:aarch64']
 
-nightly icon-editor:
-    extends: '.publish_nightly'
-    needs: ['flatpak:icon-editor']
-
-nightly icon-editor aarch64:
-    extends: '.publish_nightly'
-    needs: ['flatpak:icon-editor:aarch64']
-
 static-scan:
   extends:
     - .distribution.fedora
@@ -700,6 +680,7 @@ static-scan:
     EXTRA_MESON_FLAGS: "--buildtype=debug"
   script:
     - export PATH="$HOME/.local/bin:$PATH"
+    - export CC_LD=mold
     - meson setup
             ${COMMON_MESON_FLAGS}
             ${EXTRA_MESON_FLAGS}
@@ -712,9 +693,18 @@ static-scan:
       - _scan_build/meson-logs
   allow_failure: true
 
-# Run tests with the address sanitizer. We need to turn off introspection
-# and f16c, since they are incompatible with asan
-asan-build:
+# Run tests with the address and undefined behavior sanitizers. We need to
+# turn off introspection and f16c, since they are incompatible with asan.
+#
+# Two ubsan checks are turned off:
+#
+#  - "function", since GObject dispatches signal handlers through the generic
+#    prototypes that glib-genmarshal generates, which the check flags for
+#    every handler with a concrete signature.
+#
+#  - "object-size", since GtkTextLineSegment is allocated with room for just
+#    one member of its body union, which the check flags on every access.
+sanitizer-build:
   extends:
     - .test-runner
     - .build-fedora-default
@@ -723,9 +713,11 @@ asan-build:
   needs: ['container:fedora']
   script:
     - export PATH="$HOME/.local/bin:$PATH"
-    - CC=clang meson setup
+    - export CC=clang
+    - meson setup
             --buildtype=debugoptimized
-            -Db_sanitize=address
+            -Db_sanitize=address,undefined
+            -Dc_args=-fno-sanitize=function,object-size
             -Db_lundef=false
             -Dbuild-demos=false
             -Dbuild-tests=false

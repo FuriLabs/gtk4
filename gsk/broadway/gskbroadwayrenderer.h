@@ -39,7 +39,7 @@ typedef struct _GskBroadwayRendererClass           GskBroadwayRendererClass;
 
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_broadway_renderer_get_type          (void) G_GNUC_CONST;
+GType                   gsk_broadway_renderer_get_type          (void);
 
 GDK_DEPRECATED_IN_4_20
 GskRenderer *           gsk_broadway_renderer_new               (void);

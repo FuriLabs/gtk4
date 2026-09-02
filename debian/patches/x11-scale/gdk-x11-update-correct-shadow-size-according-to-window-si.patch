@@ -17,7 +17,7 @@ Bug-Ubuntu: https://launchpad.net/bugs/1924689
  2 files changed, 20 insertions(+), 8 deletions(-)
 
 diff --git a/gdk/x11/gdksurface-x11.c b/gdk/x11/gdksurface-x11.c
-index 87fe877..c79ae45 100644
+index 1e50e11..31bc04e 100644
 --- a/gdk/x11/gdksurface-x11.c
 +++ b/gdk/x11/gdksurface-x11.c
 @@ -212,7 +212,7 @@ gdk_x11_surface_update_size (GdkX11Surface *self,
@@ -95,7 +95,7 @@ index 87fe877..c79ae45 100644
          }
      }
 diff --git a/gdk/x11/gdksurface-x11.h b/gdk/x11/gdksurface-x11.h
-index 84d4d0d..6f17a96 100644
+index 1058dd1..fc2c822 100644
 --- a/gdk/x11/gdksurface-x11.h
 +++ b/gdk/x11/gdksurface-x11.h
 @@ -73,6 +73,7 @@ struct _GdkX11Surface

@@ -9,10 +9,10 @@ Forwarded: not-needed, workaround
  1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/testsuite/gsk/meson.build b/testsuite/gsk/meson.build
-index 74cbedf..5fe7112 100644
+index c174699..c07c60f 100644
 --- a/testsuite/gsk/meson.build
 +++ b/testsuite/gsk/meson.build
-@@ -662,6 +662,12 @@ node_parser_tests = [
+@@ -677,6 +677,12 @@ node_parser_tests = [
  
  foreach test : node_parser_tests
    if test.endswith('.node') and not test.endswith('.ref.node')
@@ -25,7 +25,7 @@ index 74cbedf..5fe7112 100644
      test('parser ' + test, node_parser,
        args: [
          join_paths(meson.current_source_dir(), 'nodeparser', test)
-@@ -674,7 +680,7 @@ foreach test : node_parser_tests
+@@ -689,7 +695,7 @@ foreach test : node_parser_tests
          'FONTCONFIG_FILE=@0@/fonts/fonts.conf'.format(meson.current_source_dir()),
        ],
        protocol: 'exitcode',

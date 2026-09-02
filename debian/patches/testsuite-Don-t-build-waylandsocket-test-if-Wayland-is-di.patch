@@ -12,10 +12,10 @@ Signed-off-by: Simon McVittie <smcv@debian.org>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/testsuite/gdk/meson.build b/testsuite/gdk/meson.build
-index 9fe2dc1..9194d8b 100644
+index 6a57ac8..cd24204 100644
 --- a/testsuite/gdk/meson.build
 +++ b/testsuite/gdk/meson.build
-@@ -96,7 +96,9 @@ if os_linux
+@@ -97,7 +97,9 @@ if os_linux
    internal_tests += { 'name': 'dmabufformats' }
    internal_tests += { 'name': 'dmabuftexture', 'suites': 'failing' }
  

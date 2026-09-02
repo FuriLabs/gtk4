@@ -58,7 +58,7 @@ struct _GtkListFactoryWidgetClass
                                                                  gpointer                      object);
 };
 
-GType                   gtk_list_factory_widget_get_type        (void) G_GNUC_CONST;
+GType                   gtk_list_factory_widget_get_type        (void);
 
 gpointer                gtk_list_factory_widget_get_object      (GtkListFactoryWidget   *self);
 

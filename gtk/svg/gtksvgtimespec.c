@@ -336,6 +336,50 @@ time_spec_parse (GtkCssParser  *parser,
   return TRUE;
 }
 
+typedef struct
+{
+  GtkSvg *svg;
+  GArray *array;
+  GError **error;
+  SvgElement *default_event_target;
+} Specs;
+
+static gboolean
+time_spec_parse_one (GtkCssParser *parser,
+                     gpointer      user_data)
+{
+  Specs *specs = user_data;
+  TimeSpec *spec;
+
+  g_array_set_size (specs->array, specs->array->len + 1);
+  spec = &g_array_index (specs->array, TimeSpec, specs->array->len - 1);
+
+  return time_spec_parse (parser, specs->svg, specs->default_event_target, spec, specs->error);
+}
+
+gboolean
+time_specs_parse (const char  *str,
+                  GtkSvg      *svg,
+                  GArray      *array,
+                  SvgElement  *default_event_target,
+                  GError     **error)
+{
+  GtkCssParser *parser = parser_new_for_string (str);
+  Specs specs = { 0, };
+  gboolean ret;
+
+  specs.svg = svg;
+  specs.array = array;
+  specs.error = error;
+  specs.default_event_target = default_event_target;
+
+  ret = parser_parse_list (parser, time_spec_parse_one, &specs);
+
+  gtk_css_parser_unref (parser);
+
+  return ret;
+}
+
 void
 time_spec_add_animation (TimeSpec     *spec,
                          SvgAnimation *a)
@@ -349,7 +393,8 @@ void
 time_spec_drop_animation (TimeSpec     *spec,
                           SvgAnimation *a)
 {
-  g_ptr_array_remove (spec->animations, a);
+  if (spec->animations)
+    g_ptr_array_remove (spec->animations, a);
 }
 
 static void
@@ -446,6 +491,9 @@ find_first_time (GPtrArray *specs,
   for (unsigned int i = 0; i < specs->len; i++)
     {
       TimeSpec *spec = g_ptr_array_index (specs, i);
+
+      if (spec->time == INDEFINITE)
+        continue;
 
       if (after <= spec->time + slop && spec->time < first)
         first = spec->time;

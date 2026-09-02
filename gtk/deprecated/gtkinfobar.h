@@ -44,7 +44,7 @@ G_BEGIN_DECLS
 typedef struct _GtkInfoBar GtkInfoBar;
 
 GDK_AVAILABLE_IN_ALL
-GType          gtk_info_bar_get_type               (void) G_GNUC_CONST;
+GType          gtk_info_bar_get_type               (void);
 GDK_DEPRECATED_IN_4_10
 GtkWidget     *gtk_info_bar_new                    (void);
 

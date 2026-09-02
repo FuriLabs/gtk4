@@ -27,9 +27,10 @@
 
 G_BEGIN_DECLS
 
-#define GDK_TYPE_DEVICE         (gdk_device_get_type ())
-#define GDK_DEVICE(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), GDK_TYPE_DEVICE, GdkDevice))
-#define GDK_IS_DEVICE(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), GDK_TYPE_DEVICE))
+#define GDK_TYPE_DEVICE (gdk_device_get_type ())
+
+GDK_AVAILABLE_IN_ALL
+GDK_DECLARE_INTERNAL_TYPE (GdkDevice, gdk_device, GDK, DEVICE, GObject)
 
 typedef struct _GdkTimeCoord GdkTimeCoord;
 
@@ -81,9 +82,6 @@ struct _GdkTimeCoord
 };
 
 GDK_AVAILABLE_IN_ALL
-GType               gdk_device_get_type                 (void) G_GNUC_CONST;
-
-GDK_AVAILABLE_IN_ALL
 const char *        gdk_device_get_name                 (GdkDevice *device);
 GDK_AVAILABLE_IN_ALL
 const char *        gdk_device_get_vendor_id            (GdkDevice *device);
@@ -128,8 +126,6 @@ GDK_AVAILABLE_IN_4_18
 gint                gdk_device_get_active_layout_index  (GdkDevice *device);
 GDK_AVAILABLE_IN_4_18
 gchar **            gdk_device_get_layout_names         (GdkDevice *device);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkDevice, g_object_unref)
 
 G_END_DECLS
 

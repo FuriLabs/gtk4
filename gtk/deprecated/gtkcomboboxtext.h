@@ -33,7 +33,7 @@ G_BEGIN_DECLS
 typedef struct _GtkComboBoxText GtkComboBoxText;
 
 GDK_AVAILABLE_IN_ALL
-GType         gtk_combo_box_text_get_type        (void) G_GNUC_CONST;
+GType         gtk_combo_box_text_get_type        (void);
 GDK_DEPRECATED_IN_4_10_FOR(GtkDropDown and GtkStringList)
 GtkWidget*    gtk_combo_box_text_new             (void);
 GDK_DEPRECATED_IN_4_10_FOR(GtkDropDown and GtkStringList)

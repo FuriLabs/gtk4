@@ -83,7 +83,7 @@ typedef gboolean (* GskPathForeachFunc) (GskPathOperation        op,
 #define GSK_TYPE_PATH (gsk_path_get_type ())
 
 GDK_AVAILABLE_IN_4_14
-GType                   gsk_path_get_type                       (void) G_GNUC_CONST;
+GType                   gsk_path_get_type                       (void);
 
 GDK_AVAILABLE_IN_4_14
 GskPath *               gsk_path_ref                            (GskPath                *self);

@@ -44,7 +44,7 @@ struct _GdkWin32SeatClass
   GdkSeatClass parent_class;
 };
 
-GType     gdk_win32_seat_get_type     (void) G_GNUC_CONST;
+GType     gdk_win32_seat_get_type     (void);
 
 GdkSeat * gdk_win32_seat_new_for_logical_pair         (GdkDevice     *pointer,
                                                        GdkDevice     *keyboard);

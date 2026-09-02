@@ -31,7 +31,7 @@ G_BEGIN_DECLS
 
 typedef struct _GtkColorEditor         GtkColorEditor;
 
-GType       gtk_color_editor_get_type (void) G_GNUC_CONST;
+GType       gtk_color_editor_get_type (void);
 GtkWidget * gtk_color_editor_new      (void);
 
 G_END_DECLS

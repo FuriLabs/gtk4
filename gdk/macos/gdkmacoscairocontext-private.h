@@ -30,7 +30,7 @@ typedef struct _GdkMacosCairoContextClass GdkMacosCairoContextClass;
 #define GDK_MACOS_CAIRO_CONTEXT(object)    (G_TYPE_CHECK_INSTANCE_CAST ((object), GDK_TYPE_MACOS_CAIRO_CONTEXT, GdkMacosCairoContext))
 #define GDK_IS_MACOS_CAIRO_CONTEXT(object) (G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_MACOS_CAIRO_CONTEXT))
 
-GType _gdk_macos_cairo_context_get_type (void) G_GNUC_CONST;
+GType _gdk_macos_cairo_context_get_type (void);
 
 G_END_DECLS
 

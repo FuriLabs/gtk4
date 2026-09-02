@@ -108,7 +108,7 @@ struct _GtkFontChooserIface
 };
 
 GDK_AVAILABLE_IN_ALL
-GType            gtk_font_chooser_get_type                 (void) G_GNUC_CONST;
+GType            gtk_font_chooser_get_type                 (void);
 
 GDK_DEPRECATED_IN_4_10
 PangoFontFamily *gtk_font_chooser_get_font_family          (GtkFontChooser   *fontchooser);

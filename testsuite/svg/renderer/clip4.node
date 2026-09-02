@@ -12,8 +12,7 @@ mask {
           bounds: 0 0 200 100;
           color: rgb(0,0,0);
         }
-        path: "\
-M 0 0 h 200 v 100 h -200 z";
+        path: 0 0 200 100;
         fill-rule: winding;
       }
     }

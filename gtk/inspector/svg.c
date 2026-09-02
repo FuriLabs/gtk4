@@ -92,11 +92,6 @@ error_cb (GtkSvg   *svg,
           GError   *error,
           gpointer  data)
 {
-/* Without GLib 2.88, we don't get usable location
- * information from GMarkup, so don't try to highlight
- * errors
- */
-#if GLIB_CHECK_VERSION (2, 88, 0)
   ErrorData *d = data;
   GtkInspectorSvg *self = d->self;
   SvgError *svg_error;
@@ -134,7 +129,6 @@ error_cb (GtkSvg   *svg,
                                      tag,
                                      &svg_error->start,
                                      &svg_error->end);
-#endif
 }
 
 static void
@@ -156,8 +150,7 @@ update_timeout (gpointer data)
   text = gtk_text_buffer_get_text (self->xml_buffer, &start, &end, FALSE);
   bytes = g_bytes_new_take (text, strlen (text));
 
-  g_list_free_full (self->errors, svg_error_free);
-  self->errors = NULL;
+  g_clear_list (&self->errors, svg_error_free);
 
   d.self = self;
   d.text = text;
@@ -431,8 +424,7 @@ dispose (GObject *o)
 {
   GtkInspectorSvg *self = GTK_INSPECTOR_SVG (o);
 
-  g_list_free_full (self->errors, svg_error_free);
-  self->errors = NULL;
+  g_clear_list (&self->errors, svg_error_free);
 
   g_clear_handle_id (&self->timeout, g_source_remove);
 

@@ -31,7 +31,7 @@ GDK_AVAILABLE_IN_ALL
 const char *            gdk_intern_mime_type                    (const char                     *string);
 
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_content_formats_get_type            (void) G_GNUC_CONST;
+GType                   gdk_content_formats_get_type            (void);
 GDK_AVAILABLE_IN_ALL
 GdkContentFormats *     gdk_content_formats_new                 (const char                    **mime_types,
                                                                  guint                           n_mime_types);
@@ -84,7 +84,7 @@ gboolean gdk_content_formats_is_empty                           (GdkContentForma
 typedef struct _GdkContentFormatsBuilder GdkContentFormatsBuilder;
 
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_content_formats_builder_get_type    (void) G_GNUC_CONST;
+GType                   gdk_content_formats_builder_get_type    (void);
 
 GDK_AVAILABLE_IN_ALL
 GdkContentFormatsBuilder *gdk_content_formats_builder_new        (void);
@@ -112,7 +112,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkContentFormats, gdk_content_formats_unref)
 /* dunno where else to put this */
 #define GDK_TYPE_FILE_LIST (gdk_file_list_get_type ())
 GDK_AVAILABLE_IN_ALL
-GType gdk_file_list_get_type (void) G_GNUC_CONST;
+GType gdk_file_list_get_type (void);
 
 /**
  * GdkFileList:

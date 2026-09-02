@@ -98,6 +98,8 @@
 #include <epoxy/egl.h>
 #endif
 
+#include "gsk/gskrendernodeprivate.h"
+
 #include <math.h>
 
 #define DEFAULT_ALLOWED_APIS GDK_GL_API_GL | GDK_GL_API_GLES
@@ -701,7 +703,6 @@ gdk_gl_context_ensure_egl_surface (GdkGLContext   *self,
 static void
 gdk_gl_context_real_begin_frame (GdkDrawContext  *draw_context,
                                  gpointer         context_data,
-                                 GdkMemoryDepth   depth,
                                  cairo_region_t  *region,
                                  GdkColorState  **out_color_state,
                                  GdkMemoryDepth  *out_depth)
@@ -712,12 +713,21 @@ gdk_gl_context_real_begin_frame (GdkDrawContext  *draw_context,
 #endif
   GdkSurface *surface = gdk_draw_context_get_surface (draw_context);
   GdkColorState *color_state;
+  GskRenderNode *content;
+  GdkMemoryDepth depth;
   cairo_region_t *damage;
   guint ww, wh;
   int i;
 
+  content = gdk_surface_get_content (surface);
+  depth = gsk_render_node_get_preferred_depth (content);
+  if (content)
+    depth = gsk_render_node_get_preferred_depth (content);
+  else
+    depth = GDK_MEMORY_U8;
+  if (GDK_DISPLAY_DEBUG_CHECK (gdk_draw_context_get_display (draw_context), HIGH_DEPTH))
+    depth = GDK_MEMORY_FLOAT32;
   color_state = gdk_surface_get_color_state (surface);
-
   depth = gdk_memory_depth_merge (depth, gdk_color_state_get_depth (color_state));
 
 #ifdef HAVE_EGL
@@ -1160,7 +1170,7 @@ gdk_gl_context_get_matching_version (GdkGLContext *context,
   GdkGLContextPrivate *priv = gdk_gl_context_get_instance_private (context);
   GdkGLVersion min_version;
 
-  g_return_if_fail (GDK_IS_GL_CONTEXT (context));
+  g_assert (GDK_IS_GL_CONTEXT (context));
 
   if (api == GDK_GL_API_GL)
     min_version = GDK_GL_MIN_GL_VERSION;

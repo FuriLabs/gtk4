@@ -358,7 +358,7 @@ object_tree_tree_view_get_children (GObject *object)
   props = list_model_for_properties (object, (const char *[2]) { "model", NULL });
 
   columns = g_list_store_new (GTK_TYPE_TREE_VIEW_COLUMN);
-  g_signal_connect_object (treeview, "columns-changed", G_CALLBACK (treeview_columns_changed), columns, 0);
+  g_signal_connect_object (treeview, "columns-changed", G_CALLBACK (treeview_columns_changed), columns, G_CONNECT_DEFAULT);
   for (i = 0; i < gtk_tree_view_get_n_columns (treeview); i++)
     g_list_store_append (columns, gtk_tree_view_get_column (treeview, i));
 
@@ -503,8 +503,8 @@ object_tree_text_tag_table_get_children (GObject *object)
 {
   GListStore *store = g_list_store_new (GTK_TYPE_TEXT_TAG);
 
-  g_signal_connect_object (object, "tag-added", G_CALLBACK (text_tag_added), store, 0);
-  g_signal_connect_object (object, "tag-removed", G_CALLBACK (text_tag_removed), store, 0);
+  g_signal_connect_object (object, "tag-added", G_CALLBACK (text_tag_added), store, G_CONNECT_DEFAULT);
+  g_signal_connect_object (object, "tag-removed", G_CALLBACK (text_tag_removed), store, G_CONNECT_DEFAULT);
   gtk_text_tag_table_foreach (GTK_TEXT_TAG_TABLE (object), text_tag_foreach, store);
 
   return NULL;

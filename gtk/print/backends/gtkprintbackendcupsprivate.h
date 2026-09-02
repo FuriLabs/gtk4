@@ -30,6 +30,6 @@ G_BEGIN_DECLS
 typedef struct _GtkPrintBackendCups      GtkPrintBackendCups;
 
 GtkPrintBackend *gtk_print_backend_cups_new      (void);
-GType          gtk_print_backend_cups_get_type (void) G_GNUC_CONST;
+GType          gtk_print_backend_cups_get_type (void);
 
 G_END_DECLS

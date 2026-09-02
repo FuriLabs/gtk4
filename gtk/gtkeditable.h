@@ -77,7 +77,7 @@ struct _GtkEditableInterface
 };
 
 GDK_AVAILABLE_IN_ALL
-GType    gtk_editable_get_type             (void) G_GNUC_CONST;
+GType    gtk_editable_get_type             (void);
 
 GDK_AVAILABLE_IN_ALL
 const char * gtk_editable_get_text         (GtkEditable *editable);

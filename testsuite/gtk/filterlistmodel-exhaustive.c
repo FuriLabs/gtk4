@@ -187,7 +187,7 @@ filter_list_model_new (GListModel *source,
                          G_CALLBACK (assert_items_changed_correctly), 
                          check,
                          (GClosureNotify) g_object_unref,
-                         0);
+                         G_CONNECT_DEFAULT);
 
   g_object_set_data (G_OBJECT (check),
                      "last-notified-n-items",
@@ -197,7 +197,7 @@ filter_list_model_new (GListModel *source,
                          G_CALLBACK (assert_n_items_notified_properly), 
                          g_object_ref (check),
                          (GClosureNotify) g_object_unref,
-                         0);
+                         G_CONNECT_DEFAULT);
 
   return model;
 }

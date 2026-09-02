@@ -38,4 +38,3 @@ gboolean gdk_drag_surface_present (GdkDragSurface *drag_surface,
                                    int             height);
 
 G_END_DECLS
-

@@ -1,0 +1,19 @@
+fill {
+  path: rect {
+    outline: 0 0 100 100;
+  }
+  fill-rule: even-odd;
+}
+fill {
+  path: rounded-rect {
+    outline: 0 0 100 100 / 20;
+  }
+  fill-rule: even-odd;
+}
+fill {
+  path: circle {
+    center: 50 60;
+    radius: 11;
+  }
+  fill-rule: even-odd;
+}

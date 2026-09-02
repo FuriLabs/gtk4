@@ -26,10 +26,9 @@
 G_BEGIN_DECLS
 
 #define GDK_TYPE_CONTENT_DESERIALIZER         (gdk_content_deserializer_get_type ())
-#define GDK_CONTENT_DESERIALIZER(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), GDK_TYPE_CONTENT_DESERIALIZER, GdkContentDeserializer))
-#define GDK_IS_CONTENT_DESERIALIZER(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), GDK_TYPE_CONTENT_DESERIALIZER))
 
-typedef struct _GdkContentDeserializer GdkContentDeserializer;
+GDK_AVAILABLE_IN_ALL
+G_DECLARE_FINAL_TYPE (GdkContentDeserializer, gdk_content_deserializer, GDK, CONTENT_DESERIALIZER, GObject)
 
 /**
  * GdkContentDeserializeFunc:
@@ -42,9 +41,6 @@ typedef struct _GdkContentDeserializer GdkContentDeserializer;
  * operation.
  */
 typedef void (* GdkContentDeserializeFunc) (GdkContentDeserializer *deserializer);
-
-GDK_AVAILABLE_IN_ALL
-GType                   gdk_content_deserializer_get_type               (void) G_GNUC_CONST;
 
 GDK_AVAILABLE_IN_ALL
 const char *            gdk_content_deserializer_get_mime_type          (GdkContentDeserializer *deserializer);
@@ -97,8 +93,4 @@ gboolean                gdk_content_deserialize_finish                  (GAsyncR
                                                                          GValue                 *value,
                                                                          GError                **error);
 
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (GdkContentDeserializer, g_object_unref)
-
 G_END_DECLS
-

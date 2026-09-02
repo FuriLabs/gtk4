@@ -134,8 +134,7 @@ create_widget_tree (void)
 static void
 destroy_widgets (void)
 {
-  g_slist_free_full (widgets, (GDestroyNotify) gtk_window_destroy);
-  widgets = NULL;
+  g_clear_slist (&widgets, (GDestroyNotify) gtk_window_destroy);
 }
 
 static GtkPropertyLookupListModel *

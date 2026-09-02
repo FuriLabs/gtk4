@@ -59,11 +59,11 @@ struct _GtkCssStylePropertyClass
   GPtrArray *style_properties;
 };
 
-GType                   _gtk_css_style_property_get_type        (void) G_GNUC_CONST;
+GType                   _gtk_css_style_property_get_type        (void);
 
 void                    _gtk_css_style_property_init_properties (void);
 
-guint                   _gtk_css_style_property_get_n_properties(void) G_GNUC_CONST;
+guint                   _gtk_css_style_property_get_n_properties(void);
 GtkCssStyleProperty *   _gtk_css_style_property_lookup_by_id    (guint                   id);
 
 gboolean                _gtk_css_style_property_is_inherit      (GtkCssStyleProperty    *property);

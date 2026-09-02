@@ -62,6 +62,25 @@ filter_save (GskRenderNode *node,
   return NULL;
 }
 
+static GskRenderNode *
+filter_print (GskRenderNode *node,
+              int            argc,
+              const char   **argv)
+{
+  GBytes *bytes;
+
+  if (argc != 1)
+    {
+      g_printerr ("print: Unexpected arguments.\n");
+      exit (1);
+    }
+
+  bytes = gsk_render_node_serialize (node);
+  g_print ("%s", (const char *) g_bytes_get_data (bytes, NULL));
+  g_bytes_unref (bytes);
+
+  return node;
+}
 
 typedef struct _Filter Filter;
 
@@ -77,6 +96,11 @@ struct _Filter
 
 static const Filter filters[] = {
   {
+    .name = "background-blur",
+    .description = "Show where background blur would take effect",
+    .run = filter_background_blur,
+  },
+  {
     .name = "copypaste",
     .description = "Replace copy/paste nodes with copies of nodes",
     .run = filter_copypaste,
@@ -87,10 +111,32 @@ static const Filter filters[] = {
     .run = filter_cut,
   },
   {
+    .name = "diff",
+    .description = "Show where two nodes differ",
+    .run = filter_diff,
+  },
+  {
+    .name = "opaque",
+    .description = "Show the opaque part",
+    .run = filter_opaque,
+  },
+  {
+    .name = "print",
+    .description = "Print the node",
+    .suppress_printing = TRUE,
+    .run = filter_print,
+  },
+  {
     .name = "save",
     .description = "Save current node to file",
     .suppress_printing = TRUE,
     .run = filter_save,
+  },
+  {
+    .name = "show",
+    .description = "Show the render node",
+    .suppress_printing = TRUE,
+    .run = filter_show,
   },
   {
     .name = "simplify",
@@ -252,6 +298,8 @@ do_filter (int          *argc_,
 
       node = filter->run (node, argc_part, (const char **) argv_part);
   }
+
+  gtk_tool_run ();
 
   g_strfreev (filenames);
   g_clear_pointer (&node, gsk_render_node_unref);

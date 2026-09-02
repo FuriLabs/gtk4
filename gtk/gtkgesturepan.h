@@ -38,7 +38,7 @@ typedef struct _GtkGesturePan GtkGesturePan;
 typedef struct _GtkGesturePanClass GtkGesturePanClass;
 
 GDK_AVAILABLE_IN_ALL
-GType             gtk_gesture_pan_get_type        (void) G_GNUC_CONST;
+GType             gtk_gesture_pan_get_type        (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkGesture *      gtk_gesture_pan_new             (GtkOrientation  orientation);

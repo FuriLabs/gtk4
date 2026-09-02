@@ -701,7 +701,7 @@ gtk_tree_expander_class_init (GtkTreeExpanderClass *klass)
   gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_BUTTON);
 }
 
-static gboolean
+static void
 gtk_tree_expander_expand_timeout (gpointer data)
 {
   GtkTreeExpander *self = GTK_TREE_EXPANDER (data);
@@ -710,8 +710,6 @@ gtk_tree_expander_expand_timeout (gpointer data)
     gtk_tree_list_row_set_expanded (self->list_row, TRUE);
 
   self->expand_timer = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 #define TIMEOUT_EXPAND 500
@@ -728,7 +726,7 @@ gtk_tree_expander_drag_enter (GtkDropControllerMotion *motion,
   if (!gtk_tree_list_row_get_expanded (self->list_row) &&
       !self->expand_timer)
     {
-      self->expand_timer = g_timeout_add (TIMEOUT_EXPAND, (GSourceFunc) gtk_tree_expander_expand_timeout, self);
+      self->expand_timer = g_timeout_add_once (TIMEOUT_EXPAND, (GSourceOnceFunc) gtk_tree_expander_expand_timeout, self);
       gdk_source_set_static_name_by_id (self->expand_timer, "[gtk] gtk_tree_expander_expand_timeout");
     }
 }

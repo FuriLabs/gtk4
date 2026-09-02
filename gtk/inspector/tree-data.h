@@ -27,7 +27,7 @@ typedef struct _GtkInspectorTreeData GtkInspectorTreeData;
 
 G_BEGIN_DECLS
 
-GType      gtk_inspector_tree_data_get_type   (void) G_GNUC_CONST;
+GType      gtk_inspector_tree_data_get_type   (void);
 void       gtk_inspector_tree_data_set_object (GtkInspectorTreeData *sl,
                                                GObject              *object);
 

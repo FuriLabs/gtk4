@@ -43,7 +43,7 @@ struct _GtkFishbowlClass
   GtkWidgetClass parent_class;
 };
 
-GType      gtk_fishbowl_get_type          (void) G_GNUC_CONST;
+GType      gtk_fishbowl_get_type          (void);
 
 GtkWidget* gtk_fishbowl_new               (void);
 

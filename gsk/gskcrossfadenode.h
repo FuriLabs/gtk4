@@ -31,7 +31,7 @@ typedef struct _GskCrossFadeNode                GskCrossFadeNode;
 #define GSK_TYPE_CROSS_FADE_NODE                (gsk_cross_fade_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_cross_fade_node_get_type            (void) G_GNUC_CONST;
+GType                   gsk_cross_fade_node_get_type            (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_cross_fade_node_new                 (GskRenderNode            *start,
                                                                  GskRenderNode            *end,

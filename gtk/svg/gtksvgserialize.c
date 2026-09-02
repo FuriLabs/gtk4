@@ -163,7 +163,7 @@ serialize_shape_attrs (GString              *s,
 
       if ((flags & GTK_SVG_SERIALIZE_NO_COMPAT) == 0 &&
           svg->gpa_version > 0 &&
-          svg_element_type_is_path (svg_element_get_type (shape)) &&
+          svg_element_type_is_path (svg_element_get_element_type (shape)) &&
           attr == SVG_PROPERTY_VISIBILITY)
         {
           unsigned int state;
@@ -183,7 +183,8 @@ serialize_shape_attrs (GString              *s,
       if (svg_element_is_specified (shape, attr) ||
           (flags & GTK_SVG_SERIALIZE_AT_CURRENT_TIME))
         {
-          SvgValue *value, *initial;
+          SvgValue *value = NULL;
+          SvgValue *initial = NULL;
 
           if (flags & GTK_SVG_SERIALIZE_AT_CURRENT_TIME)
             value = svg_element_get_current_value (shape, attr);
@@ -214,29 +215,33 @@ serialize_shape_attrs (GString              *s,
             }
 
           if (value &&
-              attr == SVG_PROPERTY_FONT_STRETCH &&
+              attr == SVG_PROPERTY_FONT_WIDTH &&
               strcmp (value->class->name, "SvgNumber") == 0)
             {
-              SvgValue *tmp = svg_font_stretch_new ((FontStretch) svg_number_get (value, 100));
-              svg_value_unref (value);
-              value = tmp;
+              double width = svg_number_get (value, 1000);
+
+              if (width == 1000)
+                {
+                  svg_value_unref (value);
+                  value = svg_font_width_new (PANGO_WIDTH_NORMAL);
+                }
             }
 
-          initial = svg_property_ref_initial_value (attr, svg_element_get_type (shape), svg_element_get_parent (shape) != NULL);
+          initial = svg_property_ref_initial_value (attr, svg_element_get_element_type (shape), svg_element_get_parent (shape) != NULL);
 
           if (value && (svg_element_is_specified (shape, attr) || !svg_value_equal (value, initial)))
             {
               if (svg_property_has_presentation (attr))
                 {
                   string_indent (s, indent + ATTR_INDENT);
-                  g_string_append_printf (s, "%s='", svg_property_get_presentation (attr, svg_element_get_type (shape)));
+                  g_string_append_printf (s, "%s='", svg_property_get_presentation (attr, svg_element_get_element_type (shape)));
                   svg_value_print (value, s);
                   g_string_append_c (s, '\'');
                 }
             }
 
-          svg_value_unref (initial);
-          svg_value_unref (value);
+          g_clear_pointer (&initial, svg_value_unref);
+          g_clear_pointer (&value, svg_value_unref);
         }
     }
 }
@@ -250,7 +255,7 @@ serialize_gpa_attrs (GString              *s,
 {
   SvgValue *value;
 
-  if (svg->gpa_version == 0 || !svg_element_type_is_path (svg_element_get_type (shape)))
+  if (svg->gpa_version == 0 || !svg_element_type_is_path (svg_element_get_element_type (shape)))
     return;
 
   value = svg_element_get_gpa_stroke (shape);
@@ -357,7 +362,7 @@ serialize_base_animation_attrs (GString      *s,
     append_string_attr (s, indent, "id", a->id);
 
   if (a->type != ANIMATION_TYPE_MOTION)
-    append_string_attr (s, indent, "attributeName", svg_property_get_presentation (a->attr, svg_element_get_type (a->shape)));
+    append_string_attr (s, indent, "attributeName", svg_property_get_presentation (a->attr, svg_element_get_element_type (a->shape)));
 
   if (a->has_begin)
     {
@@ -759,14 +764,10 @@ serialize_color_stop (GString              *s,
     }
   g_string_append (s, ">");
 
-  if (shape->animations)
+  for (SvgAnimation *a = shape->first_animation; a; a = a->next_sibling)
     {
-      for (unsigned int i = 0; i < shape->animations->len; i++)
-        {
-          SvgAnimation *a = g_ptr_array_index (shape->animations, i);
-          if (a->idx == idx + 1)
-            serialize_animation (s, svg, indent + BASE_INDENT, a, flags);
-        }
+      if (a->idx == idx + 1)
+        serialize_animation (s, svg, indent + BASE_INDENT, a, flags);
     }
 
   string_indent (s, indent);
@@ -782,7 +783,7 @@ serialize_filter_begin (GString              *s,
                         unsigned int          idx,
                         GtkSvgSerializeFlags  flags)
 {
-  SvgFilterType type = svg_filter_get_type (f);
+  SvgFilterType type = svg_filter_get_filter_type (f);
 
   string_indent (s, indent);
   g_string_append_printf (s, "<%s", svg_filter_type_get_name (type));
@@ -816,7 +817,7 @@ serialize_filter_begin (GString              *s,
       if (value && !svg_value_equal (value, initial))
         {
           string_indent (s, indent + ATTR_INDENT);
-          g_string_append_printf (s, "%s='", svg_property_get_presentation (attr, svg_element_get_type (shape)));
+          g_string_append_printf (s, "%s='", svg_property_get_presentation (attr, svg_element_get_element_type (shape)));
           svg_value_print (value, s);
           g_string_append (s, "'");
         }
@@ -826,14 +827,10 @@ serialize_filter_begin (GString              *s,
 
   g_string_append (s, ">");
 
-  if (shape->animations)
+  for (SvgAnimation *a = shape->first_animation; a; a = a->next_sibling)
     {
-      for (unsigned int i = 0; i < shape->animations->len; i++)
-        {
-          SvgAnimation *a = g_ptr_array_index (shape->animations, i);
-          if (a->idx == idx + 1)
-            serialize_animation (s, svg, indent + BASE_INDENT, a, flags);
-        }
+      if (a->idx == idx + 1)
+        serialize_animation (s, svg, indent + BASE_INDENT, a, flags);
     }
 }
 
@@ -845,7 +842,7 @@ serialize_filter_end (GString              *s,
                       SvgFilter            *f,
                       GtkSvgSerializeFlags  flags)
 {
-  SvgFilterType type = svg_filter_get_type (f);
+  SvgFilterType type = svg_filter_get_filter_type (f);
 
   string_indent (s, indent);
   g_string_append_printf (s, "</%s>", svg_filter_type_get_name (type));
@@ -858,14 +855,14 @@ serialize_shape (GString              *s,
                  SvgElement           *shape,
                  GtkSvgSerializeFlags  flags)
 {
-  if (svg_element_get_type (shape) == SVG_ELEMENT_DEFS &&
-      shape->shapes->len == 0)
+  if (svg_element_get_element_type (shape) == SVG_ELEMENT_DEFS &&
+      shape->first_child == NULL)
     return;
 
   if (indent > 0) /* Hack: this is for <svg> */
     {
       string_indent (s, indent);
-      g_string_append_printf (s, "<%s", svg_element_type_get_name (svg_element_get_type (shape)));
+      g_string_append_printf (s, "<%s", svg_element_type_get_name (svg_element_get_element_type (shape)));
       serialize_shape_attrs (s, svg, indent, shape, flags);
       serialize_gpa_attrs (s, svg, indent, shape, flags);
 
@@ -938,13 +935,13 @@ serialize_shape (GString              *s,
       g_string_append (s, "</style>");
     }
 
-  if (svg_element_type_is_gradient (svg_element_get_type (shape)))
+  if (svg_element_type_is_gradient (svg_element_get_element_type (shape)))
     {
       for (unsigned int idx = 0; idx < shape->color_stops->len; idx++)
         serialize_color_stop (s, svg, indent + BASE_INDENT, shape, idx, flags);
     }
 
-  if (svg_element_type_is_filter (svg_element_get_type (shape)))
+  if (svg_element_type_is_filter (svg_element_get_element_type (shape)))
     {
       for (unsigned int idx = 0; idx < shape->filters->len; idx++)
         {
@@ -952,12 +949,12 @@ serialize_shape (GString              *s,
 
           serialize_filter_begin (s, svg, indent + BASE_INDENT, shape, f, idx, flags);
 
-          if (svg_filter_get_type (f) == SVG_FILTER_MERGE)
+          if (svg_filter_get_filter_type (f) == SVG_FILTER_MERGE)
             {
               for (idx++; idx < shape->filters->len; idx++)
                 {
                   SvgFilter *f2 = g_ptr_array_index (shape->filters, idx);
-                  if (svg_filter_get_type (f2) != SVG_FILTER_MERGE_NODE)
+                  if (svg_filter_get_filter_type (f2) != SVG_FILTER_MERGE_NODE)
                     {
                       idx--;
                       break;
@@ -968,12 +965,12 @@ serialize_shape (GString              *s,
                 }
             }
 
-          if (svg_filter_get_type (f) == SVG_FILTER_COMPONENT_TRANSFER)
+          if (svg_filter_get_filter_type (f) == SVG_FILTER_COMPONENT_TRANSFER)
             {
               for (idx++; idx < shape->filters->len; idx++)
                 {
                   SvgFilter *f2 = g_ptr_array_index (shape->filters, idx);
-                  SvgFilterType t = svg_filter_get_type (f2);
+                  SvgFilterType t = svg_filter_get_filter_type (f2);
                   if (t != SVG_FILTER_FUNC_R &&
                       t != SVG_FILTER_FUNC_G &&
                       t != SVG_FILTER_FUNC_B &&
@@ -992,17 +989,13 @@ serialize_shape (GString              *s,
         }
     }
 
-  if (shape->animations)
+  for (SvgAnimation *a = shape->first_animation; a; a = a->next_sibling)
     {
-      for (unsigned int i = 0; i < shape->animations->len; i++)
-        {
-          SvgAnimation *a = g_ptr_array_index (shape->animations, i);
-          if (a->idx == 0)
-            serialize_animation (s, svg, indent + BASE_INDENT, a, flags);
-        }
+      if (a->idx == 0)
+        serialize_animation (s, svg, indent + BASE_INDENT, a, flags);
     }
 
-  if (svg_element_type_is_text (svg_element_get_type (shape)))
+  if (svg_element_type_is_text (svg_element_get_element_type (shape)))
     {
       for (unsigned int i = 0; i < shape->text->len; i++)
         {
@@ -1023,22 +1016,19 @@ serialize_shape (GString              *s,
               g_assert_not_reached ();
             }
         }
-      g_string_append_printf (s, "</%s>", svg_element_type_get_name (svg_element_get_type (shape)));
+      g_string_append_printf (s, "</%s>", svg_element_type_get_name (svg_element_get_element_type (shape)));
       return;
     }
-  else if (svg_element_type_is_container (svg_element_get_type (shape)))
+  else if (svg_element_type_is_container (svg_element_get_element_type (shape)))
     {
-      for (unsigned int i = 0; i < shape->shapes->len; i++)
-        {
-          SvgElement *sh = g_ptr_array_index (shape->shapes, i);
-          serialize_shape (s, svg, indent + BASE_INDENT, sh, flags);
-        }
+      for (SvgElement *sh = shape->first_child; sh; sh = sh->next_sibling)
+        serialize_shape (s, svg, indent + BASE_INDENT, sh, flags);
     }
 
   if (indent > 0)
     {
       string_indent (s, indent);
-      g_string_append_printf (s, "</%s>", svg_element_type_get_name (svg_element_get_type (shape)));
+      g_string_append_printf (s, "</%s>", svg_element_type_get_name (svg_element_get_element_type (shape)));
     }
 }
 
@@ -1122,8 +1112,13 @@ gtk_svg_serialize_full (GtkSvg               *self,
       context.colors = col;
       context.n_colors = n_col;
       context.interpolation = GDK_COLOR_STATE_SRGB;
+      context.clone_count = 0;
+      context.shadow_tree_map = NULL;
+      context.animations_only = FALSE;
 
       compute_current_values_for_shape (self->content, &context);
+
+      g_assert (context.shadow_tree_map == NULL);
     }
 
   g_string_append (s, "<svg");
@@ -1198,6 +1193,11 @@ gtk_svg_serialize_full (GtkSvg               *self,
         }
 
       append_string_attr (s, 0, "gpa:run-mode", run_modes[self->run_mode]);
+    }
+
+  if (self->gpa_version > 0 && self->rendering != SVG_RENDERING_SVG)
+    {
+      append_string_attr (s, 0, "gpa:rendering", "symbolic");
     }
 
   serialize_shape_attrs (s, self, 0, self->content, flags);

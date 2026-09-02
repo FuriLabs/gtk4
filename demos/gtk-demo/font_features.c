@@ -1620,8 +1620,7 @@ font_features_reset_features (void)
 
   gtk_label_select_region (GTK_LABEL (demo->the_label), 0, 0);
 
-  g_list_free_full (demo->ranges, free_range);
-  demo->ranges = NULL;
+  g_clear_list (&demo->ranges, free_range);
 
   for (l = demo->feature_items; l; l = l->next)
     {

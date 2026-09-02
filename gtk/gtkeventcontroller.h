@@ -41,7 +41,7 @@ G_BEGIN_DECLS
 
 
 GDK_AVAILABLE_IN_ALL
-GType        gtk_event_controller_get_type       (void) G_GNUC_CONST;
+GType        gtk_event_controller_get_type       (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkWidget  * gtk_event_controller_get_widget     (GtkEventController *controller);

@@ -48,7 +48,7 @@ struct _GtkListItemBaseClass
                                                                  gboolean                selected);
 };
 
-GType                   gtk_list_item_base_get_type             (void) G_GNUC_CONST;
+GType                   gtk_list_item_base_get_type             (void);
 
 void                    gtk_list_item_base_update               (GtkListItemBase        *self,
                                                                  guint                   position,

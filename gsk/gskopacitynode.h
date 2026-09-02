@@ -33,7 +33,7 @@ typedef struct _GskOpacityNode                    GskOpacityNode;
 #define GSK_TYPE_OPACITY_NODE (gsk_opacity_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_opacity_node_get_type               (void) G_GNUC_CONST;
+GType                   gsk_opacity_node_get_type               (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_opacity_node_new                    (GskRenderNode            *child,
                                                                  float                     opacity);

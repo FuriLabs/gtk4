@@ -31,7 +31,7 @@ typedef struct _GskContainerNode                GskContainerNode;
 #define GSK_TYPE_CONTAINER_NODE (gsk_container_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_container_node_get_type             (void) G_GNUC_CONST;
+GType                   gsk_container_node_get_type             (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_container_node_new                  (GskRenderNode           **children,
                                                                  guint                     n_children);

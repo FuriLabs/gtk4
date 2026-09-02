@@ -853,7 +853,7 @@ activate (GApplication *app)
                            "changed",
                            G_CALLBACK (buffer_changed_callback),
                            NULL,
-                           0);
+                           G_CONNECT_DEFAULT);
 
   g_signal_connect_object (buffer,
                            "mark-set", /* cursor moved */

@@ -564,7 +564,7 @@ gtk_inspector_misc_info_set_object (GtkInspectorMiscInfo *sl,
 
   if (GTK_IS_WIDGET (object))
     {
-      g_signal_connect_object (object, "state-flags-changed", G_CALLBACK (state_flags_changed), sl, 0);
+      g_signal_connect_object (object, "state-flags-changed", G_CALLBACK (state_flags_changed), sl, G_CONNECT_DEFAULT);
       state_flags_changed (GTK_WIDGET (sl->object), 0, sl);
 
       update_allocation (GTK_WIDGET (sl->object), sl);

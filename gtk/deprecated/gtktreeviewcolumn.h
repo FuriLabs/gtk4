@@ -82,7 +82,7 @@ typedef void (* GtkTreeCellDataFunc) (GtkTreeViewColumn *tree_column,
 
 
 GDK_AVAILABLE_IN_ALL
-GType                   gtk_tree_view_column_get_type            (void) G_GNUC_CONST;
+GType                   gtk_tree_view_column_get_type            (void);
 GDK_DEPRECATED_IN_4_10_FOR(GtkColumnView and GtkColumnViewColumn)
 GtkTreeViewColumn      *gtk_tree_view_column_new                 (void);
 GDK_DEPRECATED_IN_4_10_FOR(GtkColumnView and GtkColumnViewColumn)

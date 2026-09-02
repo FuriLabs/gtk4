@@ -31,7 +31,7 @@ typedef struct _GskTextNode                    GskTextNode;
 #define GSK_TYPE_TEXT_NODE (gsk_text_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_text_node_get_type                 (void) G_GNUC_CONST;
+GType                   gsk_text_node_get_type                 (void);
 
 GDK_AVAILABLE_IN_ALL                                            GskRenderNode *         gsk_text_node_new                       (PangoFont                *font,
                                                                  PangoGlyphString         *glyphs,

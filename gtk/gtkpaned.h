@@ -39,7 +39,7 @@ G_BEGIN_DECLS
 typedef struct _GtkPaned GtkPaned;
 
 GDK_AVAILABLE_IN_ALL
-GType       gtk_paned_get_type     (void) G_GNUC_CONST;
+GType       gtk_paned_get_type     (void);
 GDK_AVAILABLE_IN_ALL
 GtkWidget * gtk_paned_new          (GtkOrientation orientation);
 GDK_AVAILABLE_IN_ALL

@@ -788,11 +788,7 @@ gtk_css_image_radial_dispose (GObject *object)
     }
   g_free (radial->color_stops);
 
-  if (radial->position)
-    {
-      gtk_css_value_unref (radial->position);
-      radial->position = NULL;
-    }
+  g_clear_pointer (&radial->position, gtk_css_value_unref);
 
   for (i = 0; i < 2; i++)
     if (radial->sizes[i])

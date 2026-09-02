@@ -1,6 +1,6 @@
 compare_render = executable('compare-render',
   ['compare-render.c', '../reftests/reftest-compare.c', 'replay-node.c'],
-  dependencies: libgtk_static_dep,
+  dependencies: libgtk_private_dep,
   c_args: common_cflags + ['-DGTK_COMPILATION'],
 )
 
@@ -76,6 +76,7 @@ compare_render_tests = [
   'color-states',
   'composite-rotated-mask',
   'composite-source-all-opaque-with-complex-mask',
+  'container-bilevel-opacity',
   'copy-paste',
   'copy-paste-transformed',
   'copy-transform-order',
@@ -131,6 +132,7 @@ compare_render_tests = [
   'fill-subpixel-offsets-horizontal-nocairo',
   'fill-subpixel-offsets-vertical-nocairo',
   'fill-subpixel-shift-nocairo',
+  'fill-tiny-3d-scale-nocairo',
   'fill-with-3d-contents-nocairo',
   'globals-stress',
   'glyph-cache-overflow',
@@ -259,6 +261,7 @@ compare_render_tests = [
   'stroke-huge-path',
   'stroke-opacity',
   'stroke-scale-alignment-nocairo',
+  'stroke-tiny-3d-scale-nocairo',
   'stroke-with-3d-contents-nocairo',
   'subpixel-positioning',
   'subpixel-positioning-hidpi-nocairo',
@@ -267,6 +270,7 @@ compare_render_tests = [
   'text-glyph-lsb',
   'text-mixed-color-nocairo',
   'text-mixed-color-colrv1',
+  'text-tiny-3d-scale-nocairo',
   'texture-all-snaps',
   'texture-coords',
   'texture-offscreen-mipmap',
@@ -581,6 +585,17 @@ node_parser_tests = [
   'fill.ref.node',
   'fill2.node',
   'fill2.ref.node',
+  'fill3.node',
+  'fill3.ref.node',
+  'fill4.node',
+  'fill4.ref.node',
+  'fill5.node',
+  'fill5.ref.node',
+  'fill6.node',
+  'fill6.ref.node',
+  'fill-not-a-path.node',
+  'fill-not-a-path.ref.node',
+  'fill-not-a-path.errors',
   'glshader.node',
   'glshader.ref.node',
   'glshader.errors',
@@ -677,7 +692,7 @@ if os_linux
   offload = executable('offload',
     [ 'offload.c', 'gskrendernodeattach.c' ],
     link_with: testutils_lib,
-    dependencies : libgtk_static_dep,
+    dependencies : libgtk_private_dep,
     c_args: common_cflags + [ '-DGTK_COMPILATION=1' ],
   )
 
@@ -822,7 +837,7 @@ foreach t : internal_tests
 
   test_exe = executable(test_name,
     sources: test_srcs,
-    dependencies : libgtk_static_dep,
+    dependencies : libgtk_private_dep,
     c_args : test_cargs + common_cflags + ['-DGTK_COMPILATION'],
   )
 

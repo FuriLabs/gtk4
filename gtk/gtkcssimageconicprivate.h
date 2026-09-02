@@ -60,7 +60,7 @@ struct _GtkCssImageConicClass
   GtkCssImageClass parent_class;
 };
 
-GType           gtk_css_image_conic_get_type                    (void) G_GNUC_CONST;
+GType           gtk_css_image_conic_get_type                    (void);
 
 G_END_DECLS
 

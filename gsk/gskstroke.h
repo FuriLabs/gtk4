@@ -31,7 +31,7 @@ G_BEGIN_DECLS
 #define GSK_TYPE_STROKE (gsk_stroke_get_type ())
 
 GDK_AVAILABLE_IN_4_14
-GType                   gsk_stroke_get_type                     (void) G_GNUC_CONST;
+GType                   gsk_stroke_get_type                     (void);
 GDK_AVAILABLE_IN_4_14
 GskStroke *             gsk_stroke_new                          (float                   line_width);
 GDK_AVAILABLE_IN_4_14

@@ -42,7 +42,7 @@ struct _GdkBroadwayDeviceClass
 };
 
 G_GNUC_INTERNAL
-GType gdk_broadway_device_get_type (void) G_GNUC_CONST;
+GType gdk_broadway_device_get_type (void);
 
 void gdk_broadway_device_query_state (GdkDevice        *device,
                                       GdkSurface       *surface,

@@ -172,7 +172,7 @@ free_startup_timeout (void *data)
   g_free (std);
 }
 
-static gboolean
+static void
 startup_timeout (void *data)
 {
   StartupTimeoutData *std;
@@ -215,12 +215,11 @@ startup_timeout (void *data)
   if (std->contexts == NULL)
     std->timeout_id = 0;
   else {
-    std->timeout_id = g_timeout_add_seconds ((min_timeout + 500)/1000, startup_timeout, std);
+    std->timeout_id = g_timeout_add_seconds_once ((min_timeout + 500)/1000, startup_timeout, std);
     gdk_source_set_static_name_by_id (std->timeout_id, "[gtk] startup_timeout");
   }
 
   /* always remove this one, but we may have reinstalled another one. */
-  return G_SOURCE_REMOVE;
 }
 
 
@@ -251,8 +250,7 @@ add_startup_timeout (GdkX11Screen *screen,
   data->contexts = g_slist_prepend (data->contexts, sn_data);
 
   if (data->timeout_id == 0) {
-    data->timeout_id = g_timeout_add_seconds (STARTUP_TIMEOUT_LENGTH_SECONDS,
-                                              startup_timeout, data);
+    data->timeout_id = g_timeout_add_seconds_once (STARTUP_TIMEOUT_LENGTH_SECONDS, startup_timeout, data);
     gdk_source_set_static_name_by_id (data->timeout_id, "[gtk] startup_timeout");
   }
 }

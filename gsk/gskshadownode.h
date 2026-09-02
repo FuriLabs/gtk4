@@ -24,6 +24,8 @@
 
 #include <gsk/gsktypes.h>
 
+#include <gdk/gdkrgba.h>
+
 G_BEGIN_DECLS
 
 typedef struct _GskShadowNode                    GskShadowNode;
@@ -50,7 +52,7 @@ struct _GskShadow
 };
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_shadow_node_get_type                (void) G_GNUC_CONST;
+GType                   gsk_shadow_node_get_type                (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_shadow_node_new                     (GskRenderNode            *child,
                                                                  const GskShadow          *shadows,

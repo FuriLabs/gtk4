@@ -21,3 +21,7 @@ GdkColorState  *parse_cicp_tuple         (const char      *cicp_tuple,
                                           GError         **error);
 
 const char *    get_node_name            (GskRenderNodeType type);
+
+void            gtk_tool_inhibit         (void);
+void            gtk_tool_uninhibit       (void);
+void            gtk_tool_run             (void);

@@ -25,20 +25,19 @@
 #endif
 
 #include <gdk/gdktypes.h>
+#include <gdk/gdkdrawcontext.h>
 
 G_BEGIN_DECLS
 
 #define GDK_TYPE_GL_CONTEXT             (gdk_gl_context_get_type ())
-#define GDK_GL_CONTEXT(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_GL_CONTEXT, GdkGLContext))
-#define GDK_IS_GL_CONTEXT(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_GL_CONTEXT))
+
+GDK_AVAILABLE_IN_ALL
+GDK_DECLARE_INTERNAL_TYPE (GdkGLContext, gdk_gl_context, GDK, GL_CONTEXT, GdkDrawContext)
 
 #define GDK_GL_ERROR       (gdk_gl_error_quark ())
 
 GDK_AVAILABLE_IN_ALL
 GQuark gdk_gl_error_quark (void);
-
-GDK_AVAILABLE_IN_ALL
-GType gdk_gl_context_get_type (void) G_GNUC_CONST;
 
 GDK_AVAILABLE_IN_ALL
 GdkDisplay *            gdk_gl_context_get_display              (GdkGLContext  *context);
@@ -98,7 +97,4 @@ GdkGLContext *          gdk_gl_context_get_current              (void);
 GDK_AVAILABLE_IN_ALL
 void                    gdk_gl_context_clear_current            (void);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkGLContext, g_object_unref)
-
 G_END_DECLS
-

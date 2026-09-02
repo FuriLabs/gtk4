@@ -31,7 +31,7 @@ typedef struct _GskTextureNode                    GskTextureNode;
 #define GSK_TYPE_TEXTURE_NODE (gsk_texture_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_texture_node_get_type               (void) G_GNUC_CONST;
+GType                   gsk_texture_node_get_type               (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_texture_node_new                    (GdkTexture               *texture,
                                                                  const graphene_rect_t    *bounds);

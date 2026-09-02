@@ -36,9 +36,9 @@
 
 G_BEGIN_DECLS
 
-GType gdk_x11_toplevel_get_type (void) G_GNUC_CONST;
-GType gdk_x11_popup_get_type (void) G_GNUC_CONST;
-GType gdk_x11_drag_surface_get_type (void) G_GNUC_CONST;
+GType gdk_x11_toplevel_get_type (void);
+GType gdk_x11_popup_get_type (void);
+GType gdk_x11_drag_surface_get_type (void);
 
 #define GDK_TYPE_X11_TOPLEVEL (gdk_x11_toplevel_get_type ())
 #define GDK_TYPE_X11_POPUP (gdk_x11_popup_get_type ())

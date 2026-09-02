@@ -547,8 +547,6 @@ gdk_android_surface_hide (GdkSurface *surface)
 
   if (surface->is_mapped)
     (*env)->CallVoidMethod (env, self->surface, gdk_android_get_java_cache ()->surface.set_visibility, FALSE);
-
-  _gdk_surface_clear_update_area (surface);
 }
 
 static void

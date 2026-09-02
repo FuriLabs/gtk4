@@ -26,14 +26,9 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GdkSubsurface GdkSubsurface;
-typedef struct _GdkSubsurfaceClass GdkSubsurfaceClass;
 
 #define GDK_TYPE_SUBSURFACE              (gdk_subsurface_get_type ())
-#define GDK_SUBSURFACE(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), GDK_TYPE_SUBSURFACE, GdkSubsurface))
-#define GDK_SUBSURFACE_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_SUBSURFACE, GdkSubsurfaceClass))
-#define GDK_IS_SUBSURFACE(object)        (G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_SUBSURFACE))
-#define GDK_SUBSURFACE_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_SUBSURFACE, GdkSubsurfaceClass))
+GDK_DECLARE_INTERNAL_TYPE (GdkSubsurface, gdk_subsurface, GDK, SUBSURFACE, GObject)
 
 struct _GdkSubsurface
 {
@@ -72,8 +67,6 @@ struct _GdkSubsurfaceClass
                                         graphene_rect_t       *rect);
 };
 
-GType           gdk_subsurface_get_type            (void) G_GNUC_CONST;
-
 GdkSurface *    gdk_subsurface_get_parent          (GdkSubsurface         *subsurface);
 
 gboolean        gdk_subsurface_attach              (GdkSubsurface         *subsurface,
@@ -101,4 +94,3 @@ void            gdk_subsurface_get_bounds          (GdkSubsurface         *subsu
                                                     graphene_rect_t       *bounds);
 
 G_END_DECLS
-

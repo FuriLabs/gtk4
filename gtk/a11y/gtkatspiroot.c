@@ -827,7 +827,7 @@ on_registration_reply (GObject      *gobject,
   self->can_use_event_listeners = true;
 }
 
-static gboolean
+static void
 root_register (gpointer user_data)
 {
   RegistrationData *data = user_data;
@@ -888,8 +888,6 @@ root_register (gpointer user_data)
                           NULL,
                           on_registration_reply,
                           data);
-
-  return G_SOURCE_REMOVE;
 }
 
 /*< private >
@@ -930,7 +928,7 @@ gtk_at_spi_root_queue_register (GtkAtSpiRoot             *self,
   data->root = self;
   data->register_func = func;
 
-  self->register_id = g_idle_add (root_register, data);
+  self->register_id = g_idle_add_once (root_register, data);
   gdk_source_set_static_name_by_id (self->register_id, "[gtk] ATSPI root registration");
 }
 

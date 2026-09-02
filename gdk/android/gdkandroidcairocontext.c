@@ -68,7 +68,6 @@ gdk_android_cairo_context_cairo_create (GdkCairoContext *cairo_context)
 static void
 gdk_android_cairo_context_begin_frame (GdkDrawContext *draw_context,
                                        gpointer        context_data,
-                                       GdkMemoryDepth  depth,
                                        cairo_region_t *region,
                                        GdkColorState **out_color_state,
                                        GdkMemoryDepth *out_depth)

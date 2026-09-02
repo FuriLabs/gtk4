@@ -33,7 +33,7 @@ G_BEGIN_DECLS
 
 typedef struct _GtkFileThumbnail      GtkFileThumbnail;
 
-GType _gtk_file_thumbnail_get_type (void) G_GNUC_CONST;
+GType _gtk_file_thumbnail_get_type (void);
 
 GFileInfo *_gtk_file_thumbnail_get_info (GtkFileThumbnail *self);
 void _gtk_file_thumbnail_set_info (GtkFileThumbnail *self,

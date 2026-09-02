@@ -567,8 +567,7 @@ gtk_file_chooser_widget_iface_init (GtkFileChooserIface *iface)
 static void
 pending_select_files_free (GtkFileChooserWidget *impl)
 {
-  g_slist_free_full (impl->pending_select_files, g_object_unref);
-  impl->pending_select_files = NULL;
+  g_clear_slist (&impl->pending_select_files, g_object_unref);
 }
 
 static void
@@ -2177,7 +2176,7 @@ update_default (GtkFileChooserWidget *impl)
   g_object_unref (files);
 }
 
-static gboolean
+static void
 location_changed_timeout_cb (gpointer user_data)
 {
   GtkFileChooserWidget *impl = user_data;
@@ -2186,8 +2185,6 @@ location_changed_timeout_cb (gpointer user_data)
 
   update_default (impl);
   impl->location_changed_id = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -2209,9 +2206,7 @@ location_entry_changed_cb (GtkEditable          *editable,
       if (impl->location_changed_id > 0)
         g_source_remove (impl->location_changed_id);
 
-      impl->location_changed_id = g_timeout_add (LOCATION_CHANGED_TIMEOUT,
-                                                location_changed_timeout_cb,
-                                                impl);
+      impl->location_changed_id = g_timeout_add_once (LOCATION_CHANGED_TIMEOUT, location_changed_timeout_cb, impl);
       gdk_source_set_static_name_by_id (impl->location_changed_id, "[gtk] location_changed_timeout_cb");
     }
 }
@@ -3484,7 +3479,7 @@ load_set_model (GtkFileChooserWidget *impl)
 }
 
 /* Timeout callback used when the loading timer expires */
-static gboolean
+static void
 load_timeout_cb (gpointer data)
 {
   GtkFileChooserWidget *impl = GTK_FILE_CHOOSER_WIDGET (data);
@@ -3497,8 +3492,6 @@ load_timeout_cb (gpointer data)
   impl->load_state = LOAD_LOADING;
 
   load_set_model (impl);
-
-  return G_SOURCE_REMOVE;
 }
 
 /* Sets up a new load timer for the model and switches to the LOAD_PRELOAD state */
@@ -3508,7 +3501,7 @@ load_setup_timer (GtkFileChooserWidget *impl)
   g_assert (impl->load_timeout_id == 0);
   g_assert (impl->load_state != LOAD_PRELOAD);
 
-  impl->load_timeout_id = g_timeout_add (MAX_LOADING_TIME, load_timeout_cb, impl);
+  impl->load_timeout_id = g_timeout_add_once (MAX_LOADING_TIME, load_timeout_cb, impl);
   gdk_source_set_static_name_by_id (impl->load_timeout_id, "[gtk] load_timeout_cb");
   impl->load_state = LOAD_PRELOAD;
 }
@@ -5815,7 +5808,7 @@ search_setup_model (GtkFileChooserWidget *impl)
   update_columns (impl, TRUE, _("Modified"));
 }
 
-static gboolean
+static void
 show_spinner (gpointer data)
 {
   GtkFileChooserWidget *impl = data;
@@ -5823,8 +5816,6 @@ show_spinner (gpointer data)
   gtk_widget_set_visible (impl->search_spinner, TRUE);
   gtk_spinner_start (GTK_SPINNER (impl->search_spinner));
   impl->show_progress_timeout = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 /* Creates a new query with the specified text and launches it */
@@ -5845,7 +5836,7 @@ search_start_query (GtkFileChooserWidget *impl,
   search_setup_model (impl);
 
   set_busy_cursor (impl, TRUE);
-  impl->show_progress_timeout = g_timeout_add (1500, show_spinner, impl);
+  impl->show_progress_timeout = g_timeout_add_once (1500, show_spinner, impl);
   gdk_source_set_static_name_by_id (impl->show_progress_timeout, "[gtk] show_spinner");
 
   if (impl->search_engine == NULL)

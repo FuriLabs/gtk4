@@ -27,17 +27,9 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GdkSnapshotClass        GdkSnapshotClass;
-
 #define GDK_TYPE_SNAPSHOT               (gdk_snapshot_get_type ())
 
-#define GDK_SNAPSHOT(obj)               (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_SNAPSHOT, GdkSnapshot))
-#define GDK_IS_SNAPSHOT(obj)            (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_SNAPSHOT))
-
 GDK_AVAILABLE_IN_ALL
-GType           gdk_snapshot_get_type   (void) G_GNUC_CONST;
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkSnapshot, g_object_unref)
+GDK_DECLARE_INTERNAL_TYPE (GdkSnapshot, gdk_snapshot, GDK, SNAPSHOT, GObject)
 
 G_END_DECLS
-

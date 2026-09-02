@@ -291,7 +291,7 @@ gtk_editable_label_prepare_drag (GtkDragSource    *source,
                                          gtk_label_get_label (GTK_LABEL (self->label)));
 }
 
-static gboolean
+static void
 stop_editing_soon (gpointer data)
 {
   GtkEventController *controller = data;
@@ -301,8 +301,6 @@ stop_editing_soon (gpointer data)
     gtk_editable_label_stop_editing (self, TRUE);
 
   self->stop_editing_soon_id = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -313,7 +311,7 @@ gtk_editable_label_focus_out (GtkEventController *controller,
     return;
 
   if (self->stop_editing_soon_id == 0)
-    self->stop_editing_soon_id = g_timeout_add (100, stop_editing_soon, controller);
+    self->stop_editing_soon_id = g_timeout_add_once (100, stop_editing_soon, controller);
 }
 
 static void

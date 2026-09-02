@@ -32,7 +32,7 @@ typedef struct _GskConicGradientNode                    GskConicGradientNode;
 #define GSK_TYPE_CONIC_GRADIENT_NODE (gsk_conic_gradient_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_conic_gradient_node_get_type            (void) G_GNUC_CONST;
+GType                   gsk_conic_gradient_node_get_type            (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_conic_gradient_node_new                 (const graphene_rect_t    *bounds,
                                                                      const graphene_point_t   *center,

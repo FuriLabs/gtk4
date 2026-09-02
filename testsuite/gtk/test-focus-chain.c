@@ -67,14 +67,12 @@ check_focus_states (GtkWidget *focus_widget)
     }
 }
 
-static gboolean
+static void
 quit_iteration_loop (gpointer user_data)
 {
   gboolean *keep_running = user_data;
 
   *keep_running = FALSE;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -83,7 +81,7 @@ timed_loop (guint millis)
   gboolean keep_running = TRUE;
 
   /* gobject-linter-ignore-next-line: g_source_id_not_stored */
-  g_timeout_add (millis, quit_iteration_loop, &keep_running);
+  g_timeout_add_once (millis, quit_iteration_loop, &keep_running);
   while (keep_running)
     g_main_context_iteration (NULL, TRUE);
 }
@@ -217,9 +215,7 @@ load_ui_file (GFile *ui_file,
 
   gtk_window_present (GTK_WINDOW (window));
 
-  timeout_handle_id = g_timeout_add (2000,
-                                     quit_iteration_loop,
-                                     &keep_running);
+  timeout_handle_id = g_timeout_add_once (2000, quit_iteration_loop, &keep_running);
   while (keep_running && !gtk_window_is_active (GTK_WINDOW (window)))
     g_main_context_iteration (NULL, TRUE);
 

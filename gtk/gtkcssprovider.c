@@ -829,8 +829,7 @@ gtk_css_provider_finalize (GObject *object)
   if (priv->resource)
     {
       g_resources_unregister (priv->resource);
-      g_resource_unref (priv->resource);
-      priv->resource = NULL;
+      g_clear_pointer (&priv->resource, g_resource_unref);
     }
 
   g_free (priv->path);
@@ -1001,8 +1000,7 @@ gtk_css_provider_reset (GtkCssProvider *css_provider)
   if (priv->resource)
     {
       g_resources_unregister (priv->resource);
-      g_resource_unref (priv->resource);
-      priv->resource = NULL;
+      g_clear_pointer (&priv->resource, g_resource_unref);
     }
 
   g_clear_pointer (&priv->path, g_free);
@@ -1013,8 +1011,7 @@ gtk_css_provider_reset (GtkCssProvider *css_provider)
   for (i = 0; i < priv->rulesets->len; i++)
     gtk_css_ruleset_clear (&g_array_index (priv->rulesets, GtkCssRuleset, i));
   g_array_set_size (priv->rulesets, 0);
-  _gtk_css_selector_tree_free (priv->tree);
-  priv->tree = NULL;
+  g_clear_pointer (&priv->tree, _gtk_css_selector_tree_free);
 }
 
 static gboolean
@@ -1599,8 +1596,7 @@ gtk_css_provider_postprocess (GtkCssProvider *css_provider)
 
       ruleset = &g_array_index (priv->rulesets, GtkCssRuleset, i);
 
-      _gtk_css_selector_free (ruleset->selector);
-      ruleset->selector = NULL;
+      g_clear_pointer (&ruleset->selector, _gtk_css_selector_free);
     }
 #endif
 

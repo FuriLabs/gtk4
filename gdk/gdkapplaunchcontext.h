@@ -29,12 +29,9 @@
 G_BEGIN_DECLS
 
 #define GDK_TYPE_APP_LAUNCH_CONTEXT         (gdk_app_launch_context_get_type ())
-#define GDK_APP_LAUNCH_CONTEXT(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), GDK_TYPE_APP_LAUNCH_CONTEXT, GdkAppLaunchContext))
-#define GDK_IS_APP_LAUNCH_CONTEXT(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), GDK_TYPE_APP_LAUNCH_CONTEXT))
-
 
 GDK_AVAILABLE_IN_ALL
-GType                gdk_app_launch_context_get_type      (void);
+GDK_DECLARE_INTERNAL_TYPE (GdkAppLaunchContext, gdk_app_launch_context, GDK, APP_LAUNCH_CONTEXT, GAppLaunchContext)
 
 GDK_AVAILABLE_IN_ALL
 GdkDisplay *         gdk_app_launch_context_get_display   (GdkAppLaunchContext *context);
@@ -51,8 +48,6 @@ void                 gdk_app_launch_context_set_icon      (GdkAppLaunchContext *
 GDK_AVAILABLE_IN_ALL
 void                 gdk_app_launch_context_set_icon_name (GdkAppLaunchContext *context,
                                                            const char          *icon_name);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkAppLaunchContext, g_object_unref)
 
 G_END_DECLS
 

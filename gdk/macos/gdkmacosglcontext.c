@@ -482,7 +482,6 @@ gdk_macos_gl_context_real_realize (GdkGLContext  *context,
 static void
 gdk_macos_gl_context_begin_frame (GdkDrawContext  *context,
                                   gpointer         context_data,
-                                  GdkMemoryDepth   depth,
                                   cairo_region_t  *region,
                                   GdkColorState  **out_color_state,
                                   GdkMemoryDepth  *out_depth)
@@ -503,7 +502,7 @@ gdk_macos_gl_context_begin_frame (GdkDrawContext  *context,
   gdk_gl_context_make_current (GDK_GL_CONTEXT (self));
   gdk_macos_gl_context_allocate (self);
 
-  GDK_DRAW_CONTEXT_CLASS (gdk_macos_gl_context_parent_class)->begin_frame (context, context_data, depth, region, out_color_state, out_depth);
+  GDK_DRAW_CONTEXT_CLASS (gdk_macos_gl_context_parent_class)->begin_frame (context, context_data, region, out_color_state, out_depth);
 
   gdk_gl_context_make_current (GDK_GL_CONTEXT (self));
   CHECK_GL (NULL, glBindFramebuffer (GL_FRAMEBUFFER, self->fbo));
@@ -549,11 +548,6 @@ gdk_macos_gl_context_end_frame (GdkDrawContext *context,
   [CATransaction setDisableActions:YES];
   _gdk_macos_surface_swap_buffers (GDK_MACOS_SURFACE (surface), painted);
   [CATransaction commit];
-}
-
-static void
-gdk_macos_gl_context_empty_frame (GdkDrawContext *draw_context)
-{
 }
 
 static void
@@ -696,7 +690,6 @@ gdk_macos_gl_context_class_init (GdkMacosGLContextClass *klass)
 
   draw_context_class->begin_frame = gdk_macos_gl_context_begin_frame;
   draw_context_class->end_frame = gdk_macos_gl_context_end_frame;
-  draw_context_class->empty_frame = gdk_macos_gl_context_empty_frame;
   draw_context_class->surface_resized = gdk_macos_gl_context_surface_resized;
   draw_context_class->surface_attach = gdk_macos_gl_context_surface_attach;
 

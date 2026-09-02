@@ -30,7 +30,7 @@ G_BEGIN_DECLS
 typedef struct _GskGpuRenderer                GskGpuRenderer;
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_gpu_renderer_get_type            (void) G_GNUC_CONST;
+GType                   gsk_gpu_renderer_get_type            (void);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GskGpuRenderer, g_object_unref)
 

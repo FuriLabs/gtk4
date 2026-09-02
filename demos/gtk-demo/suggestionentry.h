@@ -11,7 +11,7 @@ G_BEGIN_DECLS
 
 typedef struct _MatchObject MatchObject;
 
-GType            match_object_get_type (void) G_GNUC_CONST;
+GType            match_object_get_type (void);
 
 gpointer         match_object_get_item        (MatchObject *object);
 const char *     match_object_get_string      (MatchObject *object);
@@ -29,7 +29,7 @@ void             match_object_set_match       (MatchObject *object,
 
 typedef struct _SuggestionEntry       SuggestionEntry;
 
-GType           suggestion_entry_get_type (void) G_GNUC_CONST;
+GType           suggestion_entry_get_type (void);
 
 GtkWidget*      suggestion_entry_new                (void);
 

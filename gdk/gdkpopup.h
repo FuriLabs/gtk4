@@ -58,4 +58,3 @@ GDK_AVAILABLE_IN_ALL
 gboolean        gdk_popup_get_autohide          (GdkPopup       *popup);
 
 G_END_DECLS
-

@@ -39,7 +39,7 @@ typedef struct _GtkDropControllerMotion GtkDropControllerMotion;
 typedef struct _GtkDropControllerMotionClass GtkDropControllerMotionClass;
 
 GDK_AVAILABLE_IN_ALL
-GType                   gtk_drop_controller_motion_get_type             (void) G_GNUC_CONST;
+GType                   gtk_drop_controller_motion_get_type             (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkEventController *    gtk_drop_controller_motion_new                  (void);

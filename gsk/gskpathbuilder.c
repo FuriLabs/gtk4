@@ -19,14 +19,15 @@
 
 #include "config.h"
 
-#include <math.h>
-
 #include "gskpathbuilder.h"
 
 #include "gskpathprivate.h"
 #include "gskcurveprivate.h"
 #include "gskpathpointprivate.h"
 #include "gskcontourprivate.h"
+
+#include <math.h>
+#include <pango/pangocairo.h>
 
 /**
  * GskPathBuilder:
@@ -174,7 +175,7 @@ static inline gskpathop
 gsk_pathop_encode_index (GskPathOperation op,
                          gsize            index)
 {
-  return gsk_pathop_encode (op, ((GskAlignedPoint *) NULL) + index);
+  return gsk_pathop_encode (op, GSIZE_TO_POINTER (index * sizeof (GskAlignedPoint)));
 }
 
 static void
@@ -249,8 +250,7 @@ gsk_path_builder_clear (GskPathBuilder *self)
 {
   gsk_path_builder_end_current (self);
 
-  g_slist_free_full (self->contours, g_free);
-  self->contours = NULL;
+  g_clear_slist (&self->contours, g_free);
 }
 
 /**

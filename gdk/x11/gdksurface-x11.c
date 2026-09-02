@@ -707,7 +707,7 @@ gdk_x11_surface_end_frame (GdkSurface *surface)
         {
           impl->toplevel->frame_pending = TRUE;
           gdk_surface_freeze_updates (surface);
-          timings->cookie = impl->toplevel->current_counter_value;
+          gdk_frame_timings_set_serial (timings, impl->toplevel->current_counter_value);
         }
     }
 
@@ -1198,16 +1198,8 @@ static void
 gdk_toplevel_x11_free_contents (GdkDisplay *display,
 				GdkToplevelX11 *toplevel)
 {
-  if (toplevel->icon_pixmap)
-    {
-      cairo_surface_destroy (toplevel->icon_pixmap);
-      toplevel->icon_pixmap = NULL;
-    }
-  if (toplevel->icon_mask)
-    {
-      cairo_surface_destroy (toplevel->icon_mask);
-      toplevel->icon_mask = NULL;
-    }
+  g_clear_pointer (&toplevel->icon_pixmap, cairo_surface_destroy);
+  g_clear_pointer (&toplevel->icon_mask, cairo_surface_destroy);
   g_clear_object (&toplevel->group_leader);
 #ifdef HAVE_XSYNC
   if (toplevel->update_counter != None)
@@ -1244,8 +1236,7 @@ gdk_x11_surface_destroy (GdkSurface *surface,
   if (impl->cairo_surface)
     {
       cairo_surface_finish (impl->cairo_surface);
-      cairo_surface_destroy (impl->cairo_surface);
-      impl->cairo_surface = NULL;
+      g_clear_pointer (&impl->cairo_surface, cairo_surface_destroy);
     }
 
   if (!foreign_destroy)
@@ -3123,17 +3114,9 @@ gdk_surface_update_icon (GdkSurface *surface,
 
   toplevel = _gdk_x11_surface_get_toplevel (surface);
 
-  if (toplevel->icon_pixmap != NULL)
-    {
-      cairo_surface_destroy (toplevel->icon_pixmap);
-      toplevel->icon_pixmap = NULL;
-    }
+  g_clear_pointer (&toplevel->icon_pixmap, cairo_surface_destroy);
 
-  if (toplevel->icon_mask != NULL)
-    {
-      cairo_surface_destroy (toplevel->icon_mask);
-      toplevel->icon_mask = NULL;
-    }
+  g_clear_pointer (&toplevel->icon_mask, cairo_surface_destroy);
 
 #define IDEAL_SIZE 48
 
@@ -4173,8 +4156,7 @@ update_pos (MoveResizeData *mv_resize,
 static void
 finish_drag (MoveResizeData *mv_resize)
 {
-  gdk_surface_destroy (mv_resize->moveresize_emulation_surface);
-  mv_resize->moveresize_emulation_surface = NULL;
+  g_clear_pointer (&mv_resize->moveresize_emulation_surface, gdk_surface_destroy);
   g_clear_object (&mv_resize->moveresize_surface);
   g_clear_pointer (&mv_resize->moveresize_pending_event, g_free);
 }

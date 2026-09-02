@@ -30,11 +30,9 @@
 G_BEGIN_DECLS
 
 #define GDK_TYPE_MONITOR           (gdk_monitor_get_type ())
-#define GDK_MONITOR(object)        (G_TYPE_CHECK_INSTANCE_CAST ((object), GDK_TYPE_MONITOR, GdkMonitor))
-#define GDK_IS_MONITOR(object)     (G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_MONITOR))
 
-typedef struct _GdkMonitor      GdkMonitor;
-typedef struct _GdkMonitorClass GdkMonitorClass;
+GDK_AVAILABLE_IN_ALL
+GDK_DECLARE_INTERNAL_TYPE (GdkMonitor, gdk_monitor, GDK, MONITOR, GObject)
 
 /**
  * GdkSubpixelLayout:
@@ -56,9 +54,6 @@ typedef enum {
   GDK_SUBPIXEL_LAYOUT_VERTICAL_RGB,
   GDK_SUBPIXEL_LAYOUT_VERTICAL_BGR
 } GdkSubpixelLayout;
-
-GDK_AVAILABLE_IN_ALL
-GType             gdk_monitor_get_type            (void) G_GNUC_CONST;
 
 GDK_AVAILABLE_IN_ALL
 GdkDisplay  *     gdk_monitor_get_display         (GdkMonitor   *monitor);
@@ -88,7 +83,4 @@ gboolean          gdk_monitor_is_valid            (GdkMonitor   *monitor);
 GDK_AVAILABLE_IN_4_10
 const char *      gdk_monitor_get_description     (GdkMonitor   *monitor);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkMonitor, g_object_unref)
-
 G_END_DECLS
-

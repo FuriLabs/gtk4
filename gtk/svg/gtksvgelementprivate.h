@@ -40,21 +40,26 @@
 
 G_BEGIN_DECLS
 
-void         svg_element_free                (SvgElement            *element);
+#define SVG_TYPE_ELEMENT (svg_element_get_type ())
+
+GDK_DECLARE_INTERNAL_TYPE (SvgElement, svg_element, SVG, ELEMENT, GObject)
+
 SvgElement * svg_element_new                 (SvgElement            *parent,
                                               SvgElementType         type);
 
-void         svg_element_set_type            (SvgElement            *element,
-                                              SvgElementType         type);
-
 SvgElementType
-             svg_element_get_type            (SvgElement            *element);
+             svg_element_get_element_type    (SvgElement            *element);
 void         svg_element_add_color_stop      (SvgElement            *element,
                                               SvgColorStop          *stop);
 void         svg_element_add_filter          (SvgElement            *element,
                                               SvgFilter             *filter);
-void         svg_element_add_child           (SvgElement            *element,
+void         svg_element_append_child        (SvgElement            *element,
                                               SvgElement            *child);
+void         svg_element_prepend_child       (SvgElement            *element,
+                                              SvgElement            *child);
+void         svg_element_insert_after        (SvgElement            *element,
+                                              SvgElement            *child,
+                                              SvgElement            *sibling);
 void         svg_element_add_animation       (SvgElement            *element,
                                               SvgAnimation          *animation);
 
@@ -130,6 +135,32 @@ void         svg_element_set_origin          (SvgElement            *element,
 void         svg_element_get_origin          (SvgElement            *element,
                                               GtkSvgLocation        *location);
 
+void         svg_element_get_rect            (SvgElement            *element,
+                                              GskRoundedRect        *rect,
+                                              const graphene_rect_t *viewport,
+                                              gboolean               current);
+void         svg_element_get_circle          (SvgElement            *element,
+                                              graphene_point_t      *center,
+                                              double                *radius,
+                                              const graphene_rect_t *viewport,
+                                              gboolean               current);
+void         svg_element_get_ellipse         (SvgElement            *element,
+                                              graphene_point_t      *center,
+                                              double                *rx,
+                                              double                *ry,
+                                              const graphene_rect_t *viewport,
+                                              gboolean               current);
+double *     svg_element_get_polyline        (SvgElement            *element,
+                                              unsigned int          *n_coords,
+                                              gboolean              *closed,
+                                              const graphene_rect_t *viewport,
+                                              gboolean               current);
+void         svg_element_get_line            (SvgElement            *element,
+                                              graphene_point_t      *start,
+                                              graphene_point_t      *end,
+                                              const graphene_rect_t *viewport,
+                                              gboolean               current);
+
 GskPath *    svg_element_get_path            (SvgElement            *element,
                                               const graphene_rect_t *viewport,
                                               gboolean               current);
@@ -150,6 +181,7 @@ gboolean     svg_element_get_current_stroke_bounds
                                               graphene_rect_t       *bounds);
 GskStroke *  svg_element_create_basic_stroke (SvgElement            *element,
                                               const graphene_rect_t *viewport,
+                                              gboolean               current,
                                               gboolean               allow_gpa,
                                               double                 weight);
 
@@ -250,6 +282,10 @@ svg_element_foreach (SvgElement       *element,
                      SvgShapeCallback  callback,
                      gpointer          user_data);
 
+unsigned int  svg_element_get_n_animations (SvgElement   *element);
+SvgAnimation *svg_element_get_animation    (SvgElement   *element,
+                                            unsigned int  pos);
+
 SvgAnimation *svg_element_find_animation (SvgElement *element,
                                           const char *id);
 
@@ -277,8 +313,24 @@ gboolean svg_element_contains          (SvgElement             *element,
                                        GtkSvg                 *svg,
                                        const graphene_point_t *point);
 
-void         svg_element_ensure_shadow_tree (SvgElement *element,
-                                             GtkSvg     *svg);
+void         svg_element_ensure_shadow_tree (SvgElement        *element,
+                                             SvgComputeContext *context);
 SvgElement * svg_element_get_corresponding  (SvgElement *element);
+
+SvgElement *    svg_element_get_first_child     (SvgElement *element);
+SvgElement *    svg_element_get_last_child      (SvgElement *element);
+SvgElement *    svg_element_get_prev_sibling    (SvgElement *element);
+SvgElement *    svg_element_get_next_sibling    (SvgElement *element);
+
+GListModel *    svg_element_observe_children    (SvgElement *element);
+
+SvgAnimation *  svg_element_get_first_animation (SvgElement *element);
+SvgAnimation *  svg_element_get_last_animation  (SvgElement *element);
+
+GListModel *    svg_element_observe_animations  (SvgElement *element);
+
+GListModel *    svg_element_observe_filters     (SvgElement *element);
+
+GListModel *    svg_element_observe_color_stops (SvgElement *element);
 
 G_END_DECLS

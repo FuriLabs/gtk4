@@ -42,7 +42,7 @@ typedef GdkMonitor GdkWin32Monitor;
 typedef struct _GdkWin32MonitorClass GdkWin32MonitorClass;
 
 GDK_AVAILABLE_IN_ALL
-GType             gdk_win32_monitor_get_type            (void) G_GNUC_CONST;
+GType             gdk_win32_monitor_get_type            (void);
 
 GDK_AVAILABLE_IN_ALL
 void gdk_win32_monitor_get_workarea (GdkMonitor   *monitor,

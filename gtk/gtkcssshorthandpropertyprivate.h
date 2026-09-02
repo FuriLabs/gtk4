@@ -61,13 +61,13 @@ struct _GtkCssShorthandPropertyClass
 
 void                    _gtk_css_shorthand_property_init_properties     (void);
 
-GType                   _gtk_css_shorthand_property_get_type            (void) G_GNUC_CONST;
+GType                   _gtk_css_shorthand_property_get_type            (void);
 
 GtkCssStyleProperty *   _gtk_css_shorthand_property_get_subproperty     (GtkCssShorthandProperty *shorthand,
                                                                          guint                    property);
-guint                   _gtk_css_shorthand_property_get_n_subproperties (GtkCssShorthandProperty *shorthand) G_GNUC_CONST;
+guint                   _gtk_css_shorthand_property_get_n_subproperties (GtkCssShorthandProperty *shorthand);
 
-guint                   _gtk_css_shorthand_property_get_id              (GtkCssShorthandProperty *shorthand) G_GNUC_CONST;
+guint                   _gtk_css_shorthand_property_get_id              (GtkCssShorthandProperty *shorthand);
 
 
 G_END_DECLS

@@ -27,11 +27,9 @@
 G_BEGIN_DECLS
 
 #define GDK_TYPE_CLIPBOARD            (gdk_clipboard_get_type ())
-#define GDK_CLIPBOARD(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_CLIPBOARD, GdkClipboard))
-#define GDK_IS_CLIPBOARD(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_CLIPBOARD))
 
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_clipboard_get_type          (void) G_GNUC_CONST;
+GDK_DECLARE_INTERNAL_TYPE (GdkClipboard, gdk_clipboard, GDK, CLIPBOARD, GObject)
 
 GDK_AVAILABLE_IN_ALL
 GdkDisplay *            gdk_clipboard_get_display       (GdkClipboard          *clipboard);
@@ -115,8 +113,6 @@ void                    gdk_clipboard_set_text          (GdkClipboard          *
 GDK_AVAILABLE_IN_ALL
 void                    gdk_clipboard_set_texture       (GdkClipboard          *clipboard,
                                                          GdkTexture            *texture);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkClipboard, g_object_unref)
 
 G_END_DECLS
 

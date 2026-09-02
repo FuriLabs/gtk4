@@ -50,7 +50,7 @@ show_error (gpointer data)
                                    "This should have unbroken the grab");
   g_signal_connect_object (G_OBJECT (dialog),
                            "response",
-                           G_CALLBACK (response_cb), NULL, 0);
+                           G_CALLBACK (response_cb), NULL, G_CONNECT_DEFAULT);
   gtk_window_present (GTK_WINDOW (dialog));
 }
 

@@ -8,8 +8,7 @@ clip {
           bounds: 9.5 9.5 51 31;
           color: rgb(0,0,0);
         }
-        path: "\
-M 10 10 h 50 v 30 h -50 z";
+        path: 10 10 50 30;
         line-width: 1;
         line-cap: butt;
         line-join: miter;
@@ -22,8 +21,7 @@ M 10 10 h 50 v 30 h -50 z";
           bounds: 9.5 9.5 51 31;
           color: rgb(255,0,0);
         }
-        path: "\
-M 10 10 h 50 v 30 h -50 z";
+        path: 10 10 50 30;
         line-width: 1;
         line-cap: butt;
         line-join: miter;

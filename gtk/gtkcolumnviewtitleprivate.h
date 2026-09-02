@@ -33,7 +33,7 @@ G_BEGIN_DECLS
 typedef struct _GtkColumnViewTitle GtkColumnViewTitle;
 typedef struct _GtkColumnViewTitleClass GtkColumnViewTitleClass;
 
-GType                   gtk_column_view_title_get_type          (void) G_GNUC_CONST;
+GType                   gtk_column_view_title_get_type          (void);
 
 GtkWidget *             gtk_column_view_title_new               (GtkColumnViewColumn    *column);
 

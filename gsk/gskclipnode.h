@@ -31,7 +31,7 @@ typedef struct _GskClipNode                     GskClipNode;
 #define GSK_TYPE_CLIP_NODE                      (gsk_clip_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_clip_node_get_type                  (void) G_GNUC_CONST;
+GType                   gsk_clip_node_get_type                  (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_clip_node_new                       (GskRenderNode            *child,
                                                                  const graphene_rect_t    *clip);

@@ -31,7 +31,7 @@ typedef struct _GskInsetShadowNode                    GskInsetShadowNode;
 #define GSK_TYPE_INSET_SHADOW_NODE (gsk_inset_shadow_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_inset_shadow_node_get_type          (void) G_GNUC_CONST;
+GType                   gsk_inset_shadow_node_get_type          (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_inset_shadow_node_new               (const GskRoundedRect     *outline,
                                                                  const GdkRGBA            *color,

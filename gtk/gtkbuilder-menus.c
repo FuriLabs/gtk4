@@ -290,11 +290,7 @@ gtk_builder_menu_end_element (GtkBuildableParseContext  *context,
           g_variant_unref (value);
         }
 
-      if (state->type)
-        {
-          g_variant_type_free (state->type);
-          state->type = NULL;
-        }
+      g_clear_pointer (&state->type, g_variant_type_free);
 
       state->translatable = FALSE;
 

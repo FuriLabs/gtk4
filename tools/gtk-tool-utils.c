@@ -455,3 +455,29 @@ get_node_name (GskRenderNodeType type)
 
   return name;
 }
+
+static gsize inhibit_count = 0;
+
+void
+gtk_tool_inhibit (void)
+{
+  inhibit_count++;
+}
+
+void
+gtk_tool_uninhibit (void)
+{
+  g_assert (inhibit_count > 0);
+
+  inhibit_count--;
+
+  if (inhibit_count == 0)
+    g_main_context_wakeup (NULL);
+}
+
+void
+gtk_tool_run (void)
+{
+  while (inhibit_count > 0)
+    g_main_context_iteration (NULL, TRUE);
+}

@@ -60,7 +60,7 @@ struct _GdkMacosDragClass
   GdkDragClass parent_class;
 };
 
-GType            gdk_macos_drag_get_type           (void) G_GNUC_CONST;
+GType            gdk_macos_drag_get_type           (void);
 gboolean        _gdk_macos_drag_begin              (GdkMacosDrag       *self,
                                                     GdkContentProvider *content,
                                                     GdkMacosWindow     *window);

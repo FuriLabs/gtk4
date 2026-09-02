@@ -45,7 +45,7 @@ struct _GtkListHeaderWidgetClass
   GtkListHeaderBaseClass parent_class;
 };
 
-GType                   gtk_list_header_widget_get_type         (void) G_GNUC_CONST;
+GType                   gtk_list_header_widget_get_type         (void);
 
 GtkWidget *             gtk_list_header_widget_new              (GtkListItemFactory     *factory);
 

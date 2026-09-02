@@ -24,6 +24,8 @@
 #include "gskrectprivate.h"
 #include "gskrenderreplay.h"
 
+#include "gdk/gdkcairoprivate.h"
+
 #include <tgmath.h>
 
 /*< private >
@@ -36,8 +38,8 @@ struct _GskTurbulenceNode
   GskRenderNode render_node;
 
   GdkColorState *color_state;
-  graphene_size_t base_frequency;
-  unsigned int num_octaves;
+  graphene_size_t frequency;
+  unsigned int octaves;
   int seed;
   GskNoiseType noise_type;
   gboolean stitch_tiles;
@@ -199,13 +201,13 @@ noise2 (const float *lookup,
   int i, j;
   const float *q;
 
-  fx = vec[0] + PerlinN;
+  fx = round (vec[0] * PerlinN) / PerlinN;
   bx0 = (size_t) fx;
   bx1 = bx0 + 1;
   rx0 = fx - floor (fx);
   rx1 = rx0 - 1.0;
 
-  fy = vec[1] + PerlinN;
+  fy = round (vec[1] * PerlinN) / PerlinN;
   by0 = (size_t) fy;
   by1 = by0 + 1;
   ry0 = fy - floor (fy);
@@ -256,7 +258,7 @@ static double
 turbulence (const float           *lookup,
             int                    channel,
             double                 point[2],
-            const graphene_size_t *base_freq,
+            const graphene_size_t *frequency,
             int                    n_octaves,
             gboolean               is_fractal,
             gboolean               stitch_tiles,
@@ -264,8 +266,8 @@ turbulence (const float           *lookup,
 {
   StitchInfo stitch;
   StitchInfo *stitch_info = NULL;
-  float freq_h = base_freq->width;
-  float freq_v = base_freq->height;
+  float freq_h = frequency->width;
+  float freq_v = frequency->height;
   double sum, ratio, vec[2];
 
   if (stitch_tiles)
@@ -378,17 +380,17 @@ gsk_turbulence_node_draw (GskRenderNode *node,
           point[0] = bounds.origin.x + x;
           point[1] = bounds.origin.y + y;
 
-          noise_r = turbulence (self->lookup, 0, point, &self->base_frequency,
-                                self->num_octaves, is_fractal, self->stitch_tiles,
+          noise_r = turbulence (self->lookup, 0, point, &self->frequency,
+                                self->octaves, is_fractal, self->stitch_tiles,
                                 &bounds);
-          noise_g = turbulence (self->lookup, 1, point, &self->base_frequency,
-                                self->num_octaves, is_fractal, self->stitch_tiles,
+          noise_g = turbulence (self->lookup, 1, point, &self->frequency,
+                                self->octaves, is_fractal, self->stitch_tiles,
                                 &bounds);
-          noise_b = turbulence (self->lookup, 2, point, &self->base_frequency,
-                                self->num_octaves, is_fractal, self->stitch_tiles,
+          noise_b = turbulence (self->lookup, 2, point, &self->frequency,
+                                self->octaves, is_fractal, self->stitch_tiles,
                                 &bounds);
-          noise_a = turbulence (self->lookup, 3, point, &self->base_frequency,
-                                self->num_octaves, is_fractal, self->stitch_tiles,
+          noise_a = turbulence (self->lookup, 3, point, &self->frequency,
+                                self->octaves, is_fractal, self->stitch_tiles,
                                 &bounds);
 
           if (is_fractal)
@@ -420,10 +422,7 @@ gsk_turbulence_node_draw (GskRenderNode *node,
           g *= a;
           b *= a;
 
-          row[x] = CLAMP ((int) round (a * 255), 0, 255) << 24 |
-                   CLAMP ((int) round (r * 255), 0, 255) << 16 |
-                   CLAMP ((int) round (g * 255), 0, 255) << 8 |
-                   CLAMP ((int) round (b * 255), 0, 255) << 0;
+          row[x] = gdk_cairo_pixel_from_float ((float[4]) { r, g, b, a });
         }
     }
 
@@ -444,9 +443,9 @@ gsk_turbulence_node_diff (GskRenderNode *node1,
   GskTurbulenceNode *self2 = (GskTurbulenceNode *) node2;
 
   if (gsk_rect_equal (&node1->bounds, &node2->bounds) &&
-      self1->base_frequency.width == self2->base_frequency.width &&
-      self1->base_frequency.height == self2->base_frequency.height &&
-      self1->num_octaves == self2->num_octaves &&
+      self1->frequency.width == self2->frequency.width &&
+      self1->frequency.height == self2->frequency.height &&
+      self1->octaves == self2->octaves &&
       self1->seed == self2->seed &&
       self1->noise_type == self2->noise_type &&
       self1->stitch_tiles == self2->stitch_tiles)
@@ -483,8 +482,8 @@ GSK_DEFINE_RENDER_NODE_TYPE (GskTurbulenceNode, gsk_turbulence_node)
  * @bounds: The bounds of the node
  * @snap: How to snap the rectangle to the pixel grid
  * @color_state: The color state to return noise in
- * @base_frequency: the base frequencies
- * @num_octaves: The number of octaves of noise
+ * @frequency: the base frequencies
+ * @octaves: The number of octaves of noise
  * @seed: The random seed
  * @noise_type: The type of noise pattern
  * @stitch_tiles: Whether to enable tile stitching
@@ -500,8 +499,8 @@ GskRenderNode *
 gsk_turbulence_node_new (const graphene_rect_t *bounds,
                          GskRectSnap            snap,
                          GdkColorState         *color_state,
-                         const graphene_size_t *base_frequency,
-                         unsigned int           num_octaves,
+                         const graphene_size_t *frequency,
+                         unsigned int           octaves,
                          int                    seed,
                          GskNoiseType           noise_type,
                          gboolean               stitch_tiles)
@@ -515,8 +514,8 @@ gsk_turbulence_node_new (const graphene_rect_t *bounds,
   self->snap = snap;
   self->color_state = gdk_color_state_ref (color_state);
 
-  self->base_frequency = *base_frequency;
-  self->num_octaves = num_octaves;
+  self->frequency = *frequency;
+  self->octaves = octaves;
   self->seed = seed;
   self->noise_type = noise_type;
   self->stitch_tiles = stitch_tiles;
@@ -567,7 +566,7 @@ gsk_turbulence_node_get_snap (const GskRenderNode *node)
 }
 
 /*< private >
- * gsk_turbulence_node_get_base_frequency:
+ * gsk_turbulence_node_get_frequency:
  * @node: (type GskTurbulenceNode): a `GskRenderNode`
  *
  * Returns the base frequencies in the horizontal and
@@ -576,15 +575,15 @@ gsk_turbulence_node_get_snap (const GskRenderNode *node)
  * Returns: the frequencies
  */
 const graphene_size_t *
-gsk_turbulence_node_get_base_frequency (const GskRenderNode *node)
+gsk_turbulence_node_get_frequency (const GskRenderNode *node)
 {
   GskTurbulenceNode *self = (GskTurbulenceNode *) node;
 
-  return &self->base_frequency;
+  return &self->frequency;
 }
 
 /*< private >
- * gsk_turbulence_node_get_num_octaves:
+ * gsk_turbulence_node_get_octaves:
  * @node: (type GskTurbulenceNode): a `GskRenderNode`
  *
  * Returns the number of octaves for the noise pattern.
@@ -592,11 +591,11 @@ gsk_turbulence_node_get_base_frequency (const GskRenderNode *node)
  * Returns: the number of octaves
  */
 unsigned int
-gsk_turbulence_node_get_num_octaves (const GskRenderNode *node)
+gsk_turbulence_node_get_octaves (const GskRenderNode *node)
 {
   GskTurbulenceNode *self = (GskTurbulenceNode *) node;
 
-  return self->num_octaves;
+  return self->octaves;
 }
 
 /*< private >

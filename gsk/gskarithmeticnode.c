@@ -204,10 +204,7 @@ gsk_arithmetic_node_draw (GskRenderNode *node,
             }
 
           *(guint32 *)(first_data + y * first_stride + 4 * x) =
-              CLAMP ((int) roundf (a * 255), 0, 255) << 24 |
-              CLAMP ((int) roundf (r * 255), 0, 255) << 16 |
-              CLAMP ((int) roundf (g * 255), 0, 255) << 8 |
-              CLAMP ((int) roundf (b * 255), 0, 255) << 0;
+              gdk_cairo_pixel_from_float ((float[4]) { r, g, b, a });
         }
     }
 
@@ -371,6 +368,8 @@ gsk_arithmetic_node_new (const graphene_rect_t *bounds,
                        gsk_rect_contains_rect (&first->bounds, bounds) &&
                        gsk_rect_contains_rect (&second->bounds, bounds) &&
                        factors[0] + factors[1] + factors[2] + factors[3] >= 1;
+  node->bilevel_opacity = node->fully_opaque;
+  node->isolates_background = TRUE;
   node->contains_subsurface_node = gsk_render_node_contains_subsurface_node (first) ||
                                    gsk_render_node_contains_subsurface_node (second);
   node->contains_paste_node = gsk_render_node_contains_paste_node (first) ||

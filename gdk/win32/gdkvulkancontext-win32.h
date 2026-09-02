@@ -42,7 +42,7 @@ typedef struct _GdkWin32VulkanContext      GdkWin32VulkanContext;
 typedef struct _GdkWin32VulkanContextClass GdkWin32VulkanContextClass;
 
 GDK_AVAILABLE_IN_ALL
-GType gdk_win32_vulkan_context_get_type (void) G_GNUC_CONST;
+GType gdk_win32_vulkan_context_get_type (void);
 
 G_END_DECLS
 

@@ -175,8 +175,7 @@ response_cb (GDBusConnection  *connection,
       g_variant_unref (current_filter);
     }
 
-  g_slist_free_full (self->custom_files, g_object_unref);
-  self->custom_files = NULL;
+  g_clear_slist (&self->custom_files, g_object_unref);
   for (i = 0; uris[i]; i++)
     self->custom_files = g_slist_prepend (self->custom_files, g_file_new_for_uri (uris[i]));
   self->custom_files = g_slist_reverse (self->custom_files);

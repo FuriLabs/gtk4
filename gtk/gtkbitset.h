@@ -31,7 +31,7 @@ G_BEGIN_DECLS
 #define GTK_TYPE_BITSET (gtk_bitset_get_type ())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gtk_bitset_get_type                     (void) G_GNUC_CONST;
+GType                   gtk_bitset_get_type                     (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkBitset *             gtk_bitset_ref                          (GtkBitset              *self);
@@ -150,7 +150,7 @@ struct _GtkBitsetIter
 };
 
 GDK_AVAILABLE_IN_4_6
-GType                   gtk_bitset_iter_get_type                (void) G_GNUC_CONST;
+GType                   gtk_bitset_iter_get_type                (void);
 
 GDK_AVAILABLE_IN_ALL
 gboolean                gtk_bitset_iter_init_first              (GtkBitsetIter          *iter,

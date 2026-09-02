@@ -38,7 +38,7 @@ G_BEGIN_DECLS
 typedef struct _GtkAppChooser GtkAppChooser;
 
 GDK_AVAILABLE_IN_ALL
-GType      gtk_app_chooser_get_type         (void) G_GNUC_CONST;
+GType      gtk_app_chooser_get_type         (void);
 
 GDK_DEPRECATED_IN_4_10
 GAppInfo * gtk_app_chooser_get_app_info     (GtkAppChooser *self);

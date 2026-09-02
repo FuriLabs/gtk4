@@ -31,7 +31,7 @@ typedef struct _GskBlendNode                    GskBlendNode;
 #define GSK_TYPE_BLEND_NODE (gsk_blend_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_blend_node_get_type                 (void) G_GNUC_CONST;
+GType                   gsk_blend_node_get_type                 (void);
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_blend_node_new                      (GskRenderNode            *bottom,
                                                                  GskRenderNode            *top,

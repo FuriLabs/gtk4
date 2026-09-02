@@ -29,10 +29,8 @@ G_BEGIN_DECLS
 
 #define GDK_TYPE_TEXTURE (gdk_texture_get_type ())
 
-#define GDK_TEXTURE(obj)               (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_TEXTURE, GdkTexture))
-#define GDK_IS_TEXTURE(obj)            (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_TEXTURE))
-
-typedef struct _GdkTextureClass        GdkTextureClass;
+GDK_AVAILABLE_IN_ALL
+GDK_DECLARE_INTERNAL_TYPE (GdkTexture, gdk_texture, GDK, TEXTURE, GObject)
 
 #define GDK_TEXTURE_ERROR       (gdk_texture_error_quark ())
 
@@ -58,9 +56,6 @@ typedef enum
   GDK_TEXTURE_ERROR_UNSUPPORTED_CONTENT,
   GDK_TEXTURE_ERROR_UNSUPPORTED_FORMAT,
 } GdkTextureError;
-
-GDK_AVAILABLE_IN_ALL
-GType                   gdk_texture_get_type                   (void) G_GNUC_CONST;
 
 GDK_DEPRECATED_IN_4_20
 GdkTexture *            gdk_texture_new_for_pixbuf             (GdkPixbuf       *pixbuf);
@@ -101,7 +96,4 @@ gboolean                gdk_texture_save_to_tiff               (GdkTexture      
 GDK_AVAILABLE_IN_4_6
 GBytes *                gdk_texture_save_to_tiff_bytes         (GdkTexture      *texture);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkTexture, g_object_unref)
-
 G_END_DECLS
-

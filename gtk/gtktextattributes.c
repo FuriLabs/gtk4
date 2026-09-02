@@ -142,8 +142,7 @@ gtk_text_attributes_copy_values (GtkTextAttributes *src,
   if (dest->appearance.strikethrough_rgba)
     gdk_rgba_free (dest->appearance.strikethrough_rgba);
 
-  if (dest->font_features)
-    g_free (dest->font_features);
+  g_free (dest->font_features);
 
   /* Copy */
   orig_refcount = dest->refcount;
@@ -241,8 +240,7 @@ gtk_text_attributes_unref (GtkTextAttributes *values)
       if (values->appearance.strikethrough_rgba)
 	gdk_rgba_free (values->appearance.strikethrough_rgba);
 
-      if (values->font_features)
-        g_free (values->font_features);
+      g_free (values->font_features);
 
       g_free (values);
     }
@@ -266,11 +264,7 @@ _gtk_text_attributes_fill_from_tags (GtkTextAttributes *dest,
 
       if (tag->priv->bg_color_set)
         {
-	  if (dest->appearance.bg_rgba)
-	    {
-	      gdk_rgba_free (dest->appearance.bg_rgba);
-	      dest->appearance.bg_rgba = NULL;
-	    }
+	  g_clear_pointer (&dest->appearance.bg_rgba, gdk_rgba_free);
 
 	  if (vals->appearance.bg_rgba)
 	    dest->appearance.bg_rgba = gdk_rgba_copy (vals->appearance.bg_rgba);
@@ -280,11 +274,7 @@ _gtk_text_attributes_fill_from_tags (GtkTextAttributes *dest,
 
       if (tag->priv->fg_color_set)
 	{
-	  if (dest->appearance.fg_rgba)
-	    {
-	      gdk_rgba_free (dest->appearance.fg_rgba);
-	      dest->appearance.fg_rgba = NULL;
-	    }
+	  g_clear_pointer (&dest->appearance.fg_rgba, gdk_rgba_free);
 
 	  if (vals->appearance.fg_rgba)
 	    dest->appearance.fg_rgba = gdk_rgba_copy (vals->appearance.fg_rgba);
@@ -292,11 +282,7 @@ _gtk_text_attributes_fill_from_tags (GtkTextAttributes *dest,
 
       if (tag->priv->underline_rgba_set)
         {
-	  if (dest->appearance.underline_rgba)
-	    {
-	      gdk_rgba_free (dest->appearance.underline_rgba);
-	      dest->appearance.underline_rgba = NULL;
-	    }
+	  g_clear_pointer (&dest->appearance.underline_rgba, gdk_rgba_free);
 
 	  if (vals->appearance.underline_rgba)
 	    dest->appearance.underline_rgba = gdk_rgba_copy (vals->appearance.underline_rgba);
@@ -304,11 +290,7 @@ _gtk_text_attributes_fill_from_tags (GtkTextAttributes *dest,
 
       if (tag->priv->overline_rgba_set)
         {
-	  if (dest->appearance.overline_rgba)
-	    {
-	      gdk_rgba_free (dest->appearance.overline_rgba);
-	      dest->appearance.overline_rgba = NULL;
-	    }
+	  g_clear_pointer (&dest->appearance.overline_rgba, gdk_rgba_free);
 
 	  if (vals->appearance.overline_rgba)
 	    dest->appearance.overline_rgba = gdk_rgba_copy (vals->appearance.overline_rgba);
@@ -316,11 +298,7 @@ _gtk_text_attributes_fill_from_tags (GtkTextAttributes *dest,
 
       if (tag->priv->strikethrough_rgba_set)
         {
-	  if (dest->appearance.strikethrough_rgba)
-	    {
-	      gdk_rgba_free (dest->appearance.strikethrough_rgba);
-	      dest->appearance.strikethrough_rgba = NULL;
-	    }
+	  g_clear_pointer (&dest->appearance.strikethrough_rgba, gdk_rgba_free);
 
 	  if (vals->appearance.strikethrough_rgba)
 	    dest->appearance.strikethrough_rgba = gdk_rgba_copy (vals->appearance.strikethrough_rgba);
@@ -328,11 +306,7 @@ _gtk_text_attributes_fill_from_tags (GtkTextAttributes *dest,
 
       if (tag->priv->pg_bg_color_set)
         {
-	  if (dest->pg_bg_rgba)
-	    {
-	      gdk_rgba_free (dest->pg_bg_rgba);
-	      dest->pg_bg_rgba = NULL;
-	    }
+	  g_clear_pointer (&dest->pg_bg_rgba, gdk_rgba_free);
 
 	  if (vals->pg_bg_rgba)
 	    dest->pg_bg_rgba = gdk_rgba_copy (vals->pg_bg_rgba);

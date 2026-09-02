@@ -57,10 +57,10 @@ typedef enum {
 } GdkD3D12Error;
 
 GDK_AVAILABLE_IN_4_20
-GType                   gdk_d3d12_texture_get_type                (void) G_GNUC_CONST;
+GType                   gdk_d3d12_texture_get_type                (void);
 
 GDK_AVAILABLE_IN_4_20
-GQuark                  gdk_d3d12_error_quark                     (void) G_GNUC_CONST;
+GQuark                  gdk_d3d12_error_quark                     (void);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkD3D12Texture, g_object_unref)
 

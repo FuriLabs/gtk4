@@ -32,15 +32,10 @@
 
 G_BEGIN_DECLS
 
-#define GDK_TYPE_CURSOR              (gdk_cursor_get_type ())
-#define GDK_CURSOR(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), GDK_TYPE_CURSOR, GdkCursor))
-#define GDK_IS_CURSOR(object)        (G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_CURSOR))
-
-/* Cursors
- */
+#define GDK_TYPE_CURSOR (gdk_cursor_get_type ())
 
 GDK_AVAILABLE_IN_ALL
-GType      gdk_cursor_get_type           (void) G_GNUC_CONST;
+G_DECLARE_FINAL_TYPE (GdkCursor, gdk_cursor, GDK, CURSOR, GObject)
 
 GDK_AVAILABLE_IN_ALL
 GdkCursor* gdk_cursor_new_from_texture   (GdkTexture      *texture,
@@ -107,8 +102,6 @@ GDK_AVAILABLE_IN_ALL
 int         gdk_cursor_get_hotspot_x     (GdkCursor       *cursor);
 GDK_AVAILABLE_IN_ALL
 int         gdk_cursor_get_hotspot_y     (GdkCursor       *cursor);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkCursor, g_object_unref)
 
 G_END_DECLS
 

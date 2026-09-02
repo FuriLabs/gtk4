@@ -39,7 +39,7 @@ typedef struct _GtkShortcutController GtkShortcutController;
 typedef struct _GtkShortcutControllerClass GtkShortcutControllerClass;
 
 GDK_AVAILABLE_IN_ALL
-GType                   gtk_shortcut_controller_get_type                (void) G_GNUC_CONST;
+GType                   gtk_shortcut_controller_get_type                (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkEventController *    gtk_shortcut_controller_new                     (void);

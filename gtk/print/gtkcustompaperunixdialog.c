@@ -350,8 +350,7 @@ gtk_custom_paper_unix_dialog_finalize (GObject *object)
 
   for (node = dialog->print_backends; node; node = node->next)
     gtk_print_backend_destroy (GTK_PRINT_BACKEND (node->data));
-  g_list_free_full (dialog->print_backends, g_object_unref);
-  dialog->print_backends = NULL;
+  g_clear_list (&dialog->print_backends, g_object_unref);
 
   G_OBJECT_CLASS (gtk_custom_paper_unix_dialog_parent_class)->finalize (object);
 }

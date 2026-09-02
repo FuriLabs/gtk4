@@ -11,7 +11,7 @@ transform {
       bounds: 0 0 1 1;
       color: red;
     }
-    path: "M 0.3125 0.3125 h 0.375 v 0.375 h -0.375 z";
+    path: rect { outline: 0.3125 0.3125 0.375 0.375; }
     line-width: 0.125;
     line-cap: square;
     line-join: miter;

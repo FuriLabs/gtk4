@@ -243,12 +243,17 @@ gtk_list_base_adjustment_value_changed_cb (GtkAdjustment *adjustment,
   else
     side_along = GTK_PACK_START;
 
-  /* Compute the align based on side to keep the values identical */
-  if (side_across == GTK_PACK_START)
+  /* Compute the align based on side to keep the values identical.
+   * The viewport can be empty, so avoid dividing by zero. */
+  if (area.width == 0)
+    align_across = 0;
+  else if (side_across == GTK_PACK_START)
     align_across = (double) (cell_area.x - area.x) / area.width;
   else
     align_across = (double) (cell_area.x + cell_area.width - area.x) / area.width;
-  if (side_along == GTK_PACK_START)
+  if (area.height == 0)
+    align_along = 0;
+  else if (side_along == GTK_PACK_START)
     align_along = (double) (cell_area.y - area.y) / area.height;
   else
     align_along = (double) (cell_area.y + cell_area.height - area.y) / area.height;
@@ -844,9 +849,20 @@ gtk_list_base_compute_scroll_align (int            cell_start,
   visible_end = visible_start + visible_size;
   cell_end = cell_start + cell_size;
 
-  if (cell_size <= visible_size)
+  if (visible_size == 0)
     {
-      if (cell_start < visible_start)
+      /* Avoid division by 0 */
+      *new_align = current_align;
+      *new_side = current_side;
+    }
+  else if (cell_size <= visible_size)
+    {
+      if (visible_size <= 0)
+        {
+          *new_align = current_align;
+          *new_side = current_side;
+        }
+      else if (cell_start < visible_start)
         {
           *new_align = 0.0;
           *new_side = GTK_PACK_START;
@@ -2279,6 +2295,9 @@ gtk_list_base_set_anchor (GtkListBase *self,
 {
   GtkListBasePrivate *priv = gtk_list_base_get_instance_private (self);
   guint items_before;
+
+  g_return_if_fail (isfinite (anchor_align_across));
+  g_return_if_fail (isfinite (anchor_align_along));
 
   items_before = round (priv->center_widgets * CLAMP (anchor_align_along, 0, 1));
   gtk_list_item_tracker_set_position (priv->item_manager,

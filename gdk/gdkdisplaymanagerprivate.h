@@ -21,12 +21,6 @@
 
 G_BEGIN_DECLS
 
-#define GDK_DISPLAY_MANAGER_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_DISPLAY_MANAGER, GdkDisplayManagerClass))
-#define GDK_IS_DISPLAY_MANAGER_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_DISPLAY_MANAGER))
-#define GDK_DISPLAY_MANAGER_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_DISPLAY_MANAGER, GdkDisplayManagerClass))
-
-typedef struct _GdkDisplayManagerClass GdkDisplayManagerClass;
-
 struct _GdkDisplayManager
 {
   GObject parent_instance;
@@ -51,4 +45,3 @@ void            _gdk_display_manager_remove_display     (GdkDisplayManager      
                                                          GdkDisplay             *display);
 
 G_END_DECLS
-

@@ -43,7 +43,7 @@ void _gtk_file_chooser_delegate_iface_init (GtkFileChooserIface *iface);
 void _gtk_file_chooser_set_delegate        (GtkFileChooser *receiver,
 					    GtkFileChooser *delegate);
 
-GQuark _gtk_file_chooser_delegate_get_quark (void) G_GNUC_CONST;
+GQuark _gtk_file_chooser_delegate_get_quark (void);
 
 GSettings *_gtk_file_chooser_get_settings_for_widget (GtkWidget *widget);
 

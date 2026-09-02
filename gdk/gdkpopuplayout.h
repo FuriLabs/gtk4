@@ -146,4 +146,3 @@ void                    gdk_popup_layout_get_shadow_width       (GdkPopupLayout 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkPopupLayout, gdk_popup_layout_unref)
 
 G_END_DECLS
-

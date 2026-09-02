@@ -22,7 +22,7 @@
 #endif
 
 #include <graphene.h>
-#include <gdk/gdk.h>
+#include <gdk/gdktypes.h>
 #include <gsk/gskenums.h>
 
 G_BEGIN_DECLS

@@ -2546,7 +2546,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
   widget = (GtkWidget *)gtk_builder_get_object (builder, "pastebutton");
   g_signal_connect (widget, "clicked", G_CALLBACK (handle_cutcopypaste), widget2);
   g_signal_connect_object (gtk_widget_get_clipboard (widget2), "notify::formats",
-                           G_CALLBACK (clipboard_formats_notify), widget, 0);
+                           G_CALLBACK (clipboard_formats_notify), widget, G_CONNECT_DEFAULT);
 
   widget = (GtkWidget *)gtk_builder_get_object (builder, "osd_frame");
   widget2 = (GtkWidget *)gtk_builder_get_object (builder, "totem_like_osd");

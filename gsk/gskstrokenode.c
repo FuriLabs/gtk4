@@ -62,9 +62,9 @@ gsk_stroke_node_finalize (GskRenderNode *node)
 }
 
 void
-gsk_cairo_stroke_path (cairo_t   *cr,
-                       GskPath   *path,
-                       GskStroke *stroke)
+gsk_cairo_stroke_path (cairo_t         *cr,
+                       GskPath         *path,
+                       const GskStroke *stroke)
 {
   gsk_stroke_to_cairo (stroke, cr);
   gsk_path_to_cairo (path, cr);
@@ -238,6 +238,7 @@ gsk_stroke_node_new (GskRenderNode   *child,
   node = (GskRenderNode *) self;
   node->preferred_depth = gsk_render_node_get_preferred_depth (child);
   node->is_hdr = gsk_render_node_is_hdr (child);
+  node->bilevel_opacity = gsk_render_node_is_bilevel_opacity (child);
   node->clears_background = gsk_render_node_clears_background (child);
   node->copy_mode = gsk_render_node_get_copy_mode (child);
   node->contains_subsurface_node = gsk_render_node_contains_subsurface_node (child);

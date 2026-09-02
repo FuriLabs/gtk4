@@ -565,11 +565,7 @@ gsk_pango_renderer_release (GskPangoRenderer *renderer)
       renderer->snapshot = NULL;
       renderer->shadow_style = NULL;
 
-      if (renderer->error_color)
-        {
-          gdk_rgba_free (renderer->error_color);
-          renderer->error_color = NULL;
-        }
+      g_clear_pointer (&renderer->error_color, gdk_rgba_free);
 
       G_UNLOCK (cached_renderer);
     }

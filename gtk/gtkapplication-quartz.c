@@ -352,8 +352,7 @@ gtk_application_impl_quartz_shutdown (GtkApplicationImpl *impl)
       quartz->delegate = NULL;
     }
 
-  g_slist_free_full (quartz->inhibitors, (GDestroyNotify) gtk_application_quartz_inhibitor_free);
-  quartz->inhibitors = NULL;
+  g_clear_slist (&quartz->inhibitors, (GDestroyNotify) gtk_application_quartz_inhibitor_free);
 }
 
 static void

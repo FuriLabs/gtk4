@@ -257,7 +257,7 @@ create_gear (GLfloat inner_radius,
   int i;
 
   /* Allocate memory for the gear */
-  gear = g_malloc (sizeof *gear);
+  gear = g_new (struct gear, 1);
 
   /* Calculate the radii used in the gear */
   r0 = inner_radius;

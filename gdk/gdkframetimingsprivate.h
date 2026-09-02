@@ -37,6 +37,8 @@ typedef enum {
   GDK_FRAME_STAGE_PAINT,
   GDK_FRAME_STAGE_AFTER_PAINT,
   GDK_FRAME_STAGE_RESUME_EVENTS,
+
+  GDK_FRAME_N_STAGES
 } GdkFrameStage;
 
 struct _GdkFrameTimings
@@ -45,17 +47,17 @@ struct _GdkFrameTimings
   guint ref_count;
 
   gint64 frame_counter;
-  guint64 cookie;
-  gint64 frame_time;
-  gint64 smoothed_frame_time;
-  gint64 drawn_time;
-  gint64 presentation_time;
-  gint64 refresh_interval;
-  gint64 predicted_presentation_time;
+  guint64 serial;
 
-  gint64 layout_start_time;
-  gint64 paint_start_time;
-  gint64 frame_end_time;
+  gint64 drawn_time;
+
+  uint64_t frame_time;
+  uint64_t presentation_time;
+  uint64_t refresh_interval;
+  uint64_t predicted_presentation_time;
+
+  uint64_t stage_end_time[GDK_FRAME_N_STAGES];
+  uint64_t throttling_hint;
 
   GdkFrameResult result;
 };
@@ -63,6 +65,36 @@ struct _GdkFrameTimings
 GdkFrameTimings *_gdk_frame_timings_new   (gint64           frame_counter);
 gboolean         _gdk_frame_timings_steal (GdkFrameTimings *timings,
                                            gint64           frame_counter);
+void             gdk_frame_timings_setup                        (GdkFrameTimings        *self,
+                                                                 uint64_t                frame_time,
+                                                                 uint64_t                predicted_presentation_time,
+                                                                 uint64_t                frame_start_time,
+                                                                 uint64_t                stage_start_time);
+
+guint64          gdk_frame_timings_get_serial                   (GdkFrameTimings        *self);
+void             gdk_frame_timings_set_serial                   (GdkFrameTimings        *self,
+                                                                 guint64                 serial);
+
+uint64_t         gdk_frame_timings_get_frame_time_ns            (GdkFrameTimings        *self);
+uint64_t         gdk_frame_timings_get_presentation_time_ns     (GdkFrameTimings        *self);
+uint64_t         gdk_frame_timings_get_refresh_interval_ns      (GdkFrameTimings        *self);
+uint64_t         gdk_frame_timings_get_predicted_presentation_time_ns
+                                                                (GdkFrameTimings        *self);
+uint64_t         gdk_frame_timings_get_start_time               (GdkFrameTimings        *self,
+                                                                 GdkFrameStage           stage);
+uint64_t         gdk_frame_timings_get_end_time                 (GdkFrameTimings        *self,
+                                                                 GdkFrameStage           stage);
+uint64_t         gdk_frame_timings_get_throttling_hint          (GdkFrameTimings        *self);
+
+void             gdk_frame_timings_outstanding                  (GdkFrameTimings        *self);
+void             gdk_frame_timings_throttling_hint              (GdkFrameTimings        *self,
+                                                                 uint64_t                timestamp);
+void             gdk_frame_timings_submitted                    (GdkFrameTimings        *self,
+                                                                 uint64_t                refresh);
+void             gdk_frame_timings_discarded                    (GdkFrameTimings        *self);
+void             gdk_frame_timings_presented                    (GdkFrameTimings        *self,
+                                                                 uint64_t                presentation_time,
+                                                                 uint64_t                refresh);
 
 G_END_DECLS
 

@@ -46,7 +46,7 @@ G_BEGIN_DECLS
 typedef struct _GtkColorButton GtkColorButton;
 
 GDK_AVAILABLE_IN_ALL
-GType        gtk_color_button_get_type      (void) G_GNUC_CONST;
+GType        gtk_color_button_get_type      (void);
 GDK_DEPRECATED_IN_4_10
 GtkWidget *  gtk_color_button_new           (void);
 GDK_DEPRECATED_IN_4_10

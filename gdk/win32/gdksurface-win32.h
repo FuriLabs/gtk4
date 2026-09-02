@@ -34,9 +34,9 @@
 
 G_BEGIN_DECLS
 
-GType gdk_win32_toplevel_get_type (void) G_GNUC_CONST;
-GType gdk_win32_popup_get_type (void) G_GNUC_CONST;
-GType gdk_win32_drag_surface_get_type (void) G_GNUC_CONST;
+GType gdk_win32_toplevel_get_type (void);
+GType gdk_win32_popup_get_type (void);
+GType gdk_win32_drag_surface_get_type (void);
 
 #define GDK_TYPE_WIN32_TOPLEVEL (gdk_win32_toplevel_get_type ())
 #define GDK_TYPE_WIN32_POPUP (gdk_win32_popup_get_type ())

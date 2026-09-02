@@ -17,8 +17,11 @@
 
 #pragma once
 
-#include <gdk/gdk.h>
-#include <gsk/gsk.h>
+#if !defined (__GSK_H_INSIDE__) && !defined (GTK_COMPILATION)
+#error "Only <gsk/gsk.h> can be included directly."
+#endif
+
+#include <gsk/gsktypes.h>
 
 G_BEGIN_DECLS
 
@@ -41,7 +44,7 @@ typedef struct _GskVulkanRenderer                GskVulkanRenderer;
 typedef struct _GskVulkanRendererClass           GskVulkanRendererClass;
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_vulkan_renderer_get_type            (void) G_GNUC_CONST;
+GType                   gsk_vulkan_renderer_get_type            (void);
 
 GDK_AVAILABLE_IN_ALL
 GskRenderer *           gsk_vulkan_renderer_new                 (void);

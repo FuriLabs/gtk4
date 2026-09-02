@@ -33,7 +33,7 @@ G_BEGIN_DECLS
 typedef struct _GtkColumnViewCellWidget GtkColumnViewCellWidget;
 typedef struct _GtkColumnViewCellWidgetClass GtkColumnViewCellWidgetClass;
 
-GType                           gtk_column_view_cell_widget_get_type           (void) G_GNUC_CONST;
+GType                           gtk_column_view_cell_widget_get_type           (void);
 
 GtkWidget *                     gtk_column_view_cell_widget_new                (GtkColumnViewColumn             *column,
                                                                                 gboolean                         inert);

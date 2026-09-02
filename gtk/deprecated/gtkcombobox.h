@@ -69,7 +69,7 @@ struct _GtkComboBoxClass
 
 /* construction */
 GDK_AVAILABLE_IN_ALL
-GType         gtk_combo_box_get_type                 (void) G_GNUC_CONST;
+GType         gtk_combo_box_get_type                 (void);
 GDK_DEPRECATED_IN_4_10_FOR(GtkDropDown)
 GtkWidget    *gtk_combo_box_new                      (void);
 GDK_DEPRECATED_IN_4_10_FOR(GtkDropDown)

@@ -75,7 +75,7 @@ typedef struct _GdkWin32GLContextWGL      GdkWin32GLContextWGL;
 GdkGLContext *  gdk_win32_display_init_wgl              (GdkDisplay             *display,
                                                          GError                **error);
 
-GType           gdk_win32_gl_context_wgl_get_type       (void) G_GNUC_CONST;
+GType           gdk_win32_gl_context_wgl_get_type       (void);
 
 /* EGL */
 #define GDK_TYPE_WIN32_GL_CONTEXT_EGL     (gdk_win32_gl_context_egl_get_type())
@@ -84,7 +84,7 @@ GType           gdk_win32_gl_context_wgl_get_type       (void) G_GNUC_CONST;
 
 typedef struct _GdkWin32GLContextEGL      GdkWin32GLContextEGL;
 
-GType     gdk_win32_gl_context_egl_get_type         (void) G_GNUC_CONST;
+GType     gdk_win32_gl_context_egl_get_type         (void);
 
 #endif /* !DONT_INCLUDE_LIBEPOXY */
 

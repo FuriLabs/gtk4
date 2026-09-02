@@ -31,7 +31,7 @@ typedef struct _GskComponentTransferNode        GskComponentTransferNode;
 #define GSK_TYPE_COMPONENT_TRANSFER_NODE (gsk_component_transfer_node_get_type())
 
 GDK_AVAILABLE_IN_4_20
-GType                   gsk_component_transfer_node_get_type    (void) G_GNUC_CONST;
+GType                   gsk_component_transfer_node_get_type    (void);
 
 GDK_AVAILABLE_IN_4_20
 GskRenderNode *         gsk_component_transfer_node_new         (GskRenderNode              *child,

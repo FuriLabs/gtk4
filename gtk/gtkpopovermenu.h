@@ -32,7 +32,7 @@ G_BEGIN_DECLS
 typedef struct _GtkPopoverMenu GtkPopoverMenu;
 
 GDK_AVAILABLE_IN_ALL
-GType       gtk_popover_menu_get_type (void) G_GNUC_CONST;
+GType       gtk_popover_menu_get_type (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkWidget * gtk_popover_menu_new_from_model (GMenuModel *model);

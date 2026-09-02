@@ -41,7 +41,7 @@ G_BEGIN_DECLS
 typedef struct _GtkAspectFrame      GtkAspectFrame;
 
 GDK_AVAILABLE_IN_ALL
-GType      gtk_aspect_frame_get_type   (void) G_GNUC_CONST;
+GType      gtk_aspect_frame_get_type   (void);
 GDK_AVAILABLE_IN_ALL
 GtkWidget* gtk_aspect_frame_new        (float            xalign,
                                         float            yalign,

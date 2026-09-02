@@ -32,7 +32,7 @@ G_BEGIN_DECLS
 #define GSK_TYPE_PATH_BUILDER (gsk_path_builder_get_type ())
 
 GDK_AVAILABLE_IN_4_14
-GType                   gsk_path_builder_get_type               (void) G_GNUC_CONST;
+GType                   gsk_path_builder_get_type               (void);
 
 GDK_AVAILABLE_IN_4_14
 GskPathBuilder *        gsk_path_builder_new                    (void);

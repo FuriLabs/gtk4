@@ -31,7 +31,7 @@ typedef struct _GskTransformNode                    GskTransformNode;
 #define GSK_TYPE_TRANSFORM_NODE (gsk_transform_node_get_type())
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_transform_node_get_type                 (void) G_GNUC_CONST;
+GType                   gsk_transform_node_get_type                 (void);
 
 GDK_AVAILABLE_IN_ALL
 GskRenderNode *         gsk_transform_node_new                  (GskRenderNode            *child,

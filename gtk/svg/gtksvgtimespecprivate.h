@@ -116,6 +116,12 @@ gboolean time_spec_parse (GtkCssParser  *parser,
                           TimeSpec      *spec,
                           GError       **error);
 
+gboolean time_specs_parse (const char  *str,
+                           GtkSvg      *svg,
+                           GArray      *specs,
+                           SvgElement  *default_event_target,
+                           GError     **error);
+
 int64_t find_first_time (GPtrArray *specs,
                          int64_t    after);
 

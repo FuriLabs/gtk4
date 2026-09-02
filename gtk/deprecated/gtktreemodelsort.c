@@ -569,11 +569,7 @@ gtk_tree_model_sort_finalize (GObject *object)
   if (priv->root)
     gtk_tree_model_sort_free_level (tree_model_sort, priv->root, TRUE);
 
-  if (priv->sort_list)
-    {
-      _gtk_tree_data_list_header_free (priv->sort_list);
-      priv->sort_list = NULL;
-    }
+  g_clear_pointer (&priv->sort_list, _gtk_tree_data_list_header_free);
 
   if (priv->default_sort_destroy)
     {
@@ -2157,8 +2153,7 @@ gtk_tree_model_sort_set_model (GtkTreeModelSort *tree_model_sort,
       if (priv->root)
 	gtk_tree_model_sort_free_level (tree_model_sort, priv->root, TRUE);
       priv->root = NULL;
-      _gtk_tree_data_list_header_free (priv->sort_list);
-      priv->sort_list = NULL;
+      g_clear_pointer (&priv->sort_list, _gtk_tree_data_list_header_free);
       g_object_unref (priv->child_model);
     }
 

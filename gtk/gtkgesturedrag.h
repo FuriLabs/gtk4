@@ -38,7 +38,7 @@ typedef struct _GtkGestureDrag GtkGestureDrag;
 typedef struct _GtkGestureDragClass GtkGestureDragClass;
 
 GDK_AVAILABLE_IN_ALL
-GType        gtk_gesture_drag_get_type          (void) G_GNUC_CONST;
+GType        gtk_gesture_drag_get_type          (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkGesture * gtk_gesture_drag_new               (void);

@@ -31,7 +31,7 @@ typedef struct _GskFillNode                     GskFillNode;
 #define GSK_TYPE_FILL_NODE                      (gsk_fill_node_get_type())
 
 GDK_AVAILABLE_IN_4_14
-GType                   gsk_fill_node_get_type                  (void) G_GNUC_CONST;
+GType                   gsk_fill_node_get_type                  (void);
 GDK_AVAILABLE_IN_4_14
 GskRenderNode *         gsk_fill_node_new                       (GskRenderNode            *child,
                                                                  GskPath                  *path,

@@ -196,7 +196,7 @@ struct _GtkTreeViewClass
 };
 
 GDK_AVAILABLE_IN_ALL
-GType                  gtk_tree_view_get_type                      (void) G_GNUC_CONST;
+GType                  gtk_tree_view_get_type                      (void);
 
 /* Creators */
 GDK_DEPRECATED_IN_4_10_FOR(GtkListView)

@@ -30,7 +30,7 @@ G_BEGIN_DECLS
 
 typedef struct _GdkWaylandPrimary GdkWaylandPrimary;
 
-GType                   gdk_wayland_primary_get_type            (void) G_GNUC_CONST;
+GType                   gdk_wayland_primary_get_type            (void);
 
 GdkClipboard *          gdk_wayland_primary_new                 (GdkWaylandSeat         *seat);
 

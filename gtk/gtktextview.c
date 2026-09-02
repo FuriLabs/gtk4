@@ -226,6 +226,10 @@ struct _GtkTextViewPrivate
   GtkTextLayout *layout;
   GtkTextBuffer *buffer;
 
+  PangoContext *mru_line_height_context;
+  guint mru_line_height_context_serial;
+  int mru_line_height;
+
   guint blink_time;  /* time in msec the cursor has blinked since last user event */
   guint im_spot_idle;
   char *im_module;
@@ -616,6 +620,10 @@ static void gtk_text_view_delete_range_handler   (GtkTextBuffer     *buffer,
                                                   GtkTextIter       *start,
                                                   GtkTextIter       *end,
                                                   gpointer           data);
+static void gtk_text_view_delete_range_after_handler (GtkTextBuffer     *buffer,
+                                                      GtkTextIter       *start,
+                                                      GtkTextIter       *end,
+                                                      gpointer           data);
 static void gtk_text_view_update_redo_action     (GtkTextView       *view);
 static void gtk_text_view_update_undo_action     (GtkTextView       *view);
 static void gtk_text_view_get_virtual_cursor_pos (GtkTextView       *text_view,
@@ -2239,6 +2247,9 @@ gtk_text_view_set_buffer (GtkTextView   *text_view,
       g_signal_handlers_disconnect_by_func (priv->buffer,
                                             gtk_text_view_delete_range_handler,
                                             text_view);
+      g_signal_handlers_disconnect_by_func (priv->buffer,
+                                            gtk_text_view_delete_range_after_handler,
+                                            text_view);
 
       if (gtk_widget_get_realized (GTK_WIDGET (text_view)))
 	{
@@ -2299,6 +2310,9 @@ gtk_text_view_set_buffer (GtkTextView   *text_view,
       g_signal_connect (priv->buffer, "delete-range",
                         G_CALLBACK (gtk_text_view_delete_range_handler),
                         text_view);
+      g_signal_connect_after (priv->buffer, "delete-range",
+                              G_CALLBACK (gtk_text_view_delete_range_after_handler),
+                              text_view);
 
 
       if (gtk_widget_get_realized (GTK_WIDGET (text_view)))
@@ -2835,11 +2849,7 @@ free_pending_scroll (GtkTextPendingScroll *scroll)
 static void
 cancel_pending_scroll (GtkTextView *text_view)
 {
-  if (text_view->priv->pending_scroll)
-    {
-      free_pending_scroll (text_view->priv->pending_scroll);
-      text_view->priv->pending_scroll = NULL;
-    }
+  g_clear_pointer (&text_view->priv->pending_scroll, free_pending_scroll);
 }
 
 static void
@@ -4113,6 +4123,7 @@ gtk_text_view_finalize (GObject *object)
 
   g_clear_pointer (&priv->popup_menu, gtk_widget_unparent);
   g_clear_object (&priv->extra_menu);
+  g_clear_object (&priv->mru_line_height_context);
 
   G_OBJECT_CLASS (gtk_text_view_parent_class)->finalize (object);
 }
@@ -4701,6 +4712,35 @@ gtk_text_view_set_gutter (GtkTextView       *text_view,
   update_node_ordering (GTK_WIDGET (text_view));
 }
 
+static int
+gtk_text_view_get_mru_line_height (GtkTextView *text_view)
+{
+  GtkTextViewPrivate *priv = text_view->priv;
+  GtkWidget *widget = GTK_WIDGET (text_view);
+  PangoContext *context;
+  PangoLayout *layout;
+  guint serial;
+  int height;
+
+  context = gtk_widget_get_pango_context (widget);
+  serial = pango_context_get_serial (context);
+
+  if (priv->mru_line_height_context == context &&
+      priv->mru_line_height_context_serial == serial)
+    return priv->mru_line_height;
+
+  layout = pango_layout_new (context);
+  pango_layout_set_text (layout, "X", 1);
+  pango_layout_get_pixel_size (layout, NULL, &height);
+  g_object_unref (layout);
+
+  g_set_object (&priv->mru_line_height_context, context);
+  priv->mru_line_height_context_serial = serial;
+  priv->mru_line_height = height;
+
+  return height;
+}
+
 static void
 gtk_text_view_size_allocate (GtkWidget *widget,
                              int        widget_width,
@@ -4716,7 +4756,6 @@ gtk_text_view_size_allocate (GtkWidget *widget,
   GdkRectangle top_rect;
   GdkRectangle bottom_rect;
   GtkWidget *chooser;
-  PangoLayout *layout;
   guint mru_size;
 
   text_view = GTK_TEXT_VIEW (widget);
@@ -4803,14 +4842,12 @@ gtk_text_view_size_allocate (GtkWidget *widget,
   gtk_text_view_allocate_children (text_view);
 
   /* Optimize display cache size */
-  layout = gtk_widget_create_pango_layout (widget, "X");
-  pango_layout_get_pixel_size (layout, &width, &height);
+  height = gtk_text_view_get_mru_line_height (text_view);
   if (height > 0)
     {
       mru_size = SCREEN_HEIGHT (widget) / height * 3;
       gtk_text_layout_set_mru_size (priv->layout, mru_size);
     }
-  g_object_unref (layout);
 
   /* The GTK resize loop processes all the pending exposes right
    * after doing the resize stuff, so the idle sizer won't have a
@@ -7238,6 +7275,8 @@ gtk_text_view_paste_done_handler (GtkTextBuffer *buffer,
     }
 
   priv->scroll_after_paste = FALSE;
+
+  gtk_text_view_set_virtual_cursor_pos (text_view, -1, -1);
 }
 
 static void
@@ -7281,6 +7320,17 @@ gtk_text_view_delete_range_handler (GtkTextBuffer *buffer,
                                        GTK_ACCESSIBLE_TEXT_CONTENT_CHANGE_REMOVE,
                                        gtk_text_iter_get_offset (start),
                                        gtk_text_iter_get_offset (end));
+}
+
+static void
+gtk_text_view_delete_range_after_handler (GtkTextBuffer *buffer,
+                                          GtkTextIter   *start,
+                                          GtkTextIter   *end,
+                                          gpointer       data)
+{
+  GtkTextView *text_view = data;
+
+  gtk_text_view_set_virtual_cursor_pos (text_view, -1, -1);
 }
 
 static void
@@ -9484,7 +9534,7 @@ append_bubble_item (GtkTextView *text_view,
   gtk_box_append (GTK_BOX (toolbar), item);
 }
 
-static gboolean
+static void
 gtk_text_view_selection_bubble_popup_show (gpointer user_data)
 {
   GtkTextView *text_view = user_data;
@@ -9539,8 +9589,6 @@ gtk_text_view_selection_bubble_popup_show (gpointer user_data)
 
   gtk_popover_set_pointing_to (GTK_POPOVER (priv->selection_bubble), &rect);
   gtk_widget_set_visible (priv->selection_bubble, TRUE);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -9566,7 +9614,7 @@ gtk_text_view_selection_bubble_popup_set (GtkTextView *text_view)
   if (priv->selection_bubble_timeout_id)
     g_source_remove (priv->selection_bubble_timeout_id);
 
-  priv->selection_bubble_timeout_id = g_timeout_add (50, gtk_text_view_selection_bubble_popup_show, text_view);
+  priv->selection_bubble_timeout_id = g_timeout_add_once (50, gtk_text_view_selection_bubble_popup_show, text_view);
   gdk_source_set_static_name_by_id (priv->selection_bubble_timeout_id, "[gtk] gtk_text_view_selection_bubble_popup_cb");
 }
 
@@ -9643,7 +9691,7 @@ text_window_new (GtkWidget *widget)
   win->css_node = gtk_css_node_new ();
   gtk_css_node_set_parent (win->css_node, widget_node);
   gtk_css_node_set_state (win->css_node, gtk_css_node_get_state (widget_node));
-  g_signal_connect_object (win->css_node, "style-changed", G_CALLBACK (node_style_changed_cb), widget, 0);
+  g_signal_connect_object (win->css_node, "style-changed", G_CALLBACK (node_style_changed_cb), widget, G_CONNECT_DEFAULT);
   gtk_css_node_set_name (win->css_node, g_quark_from_static_string ("text"));
 
   g_object_unref (win->css_node);
@@ -10611,9 +10659,12 @@ gtk_text_view_accessible_text_get_selection (GtkAccessibleText       *self,
 
   *n_ranges = 1;
 
-  *ranges = g_new (GtkAccessibleTextRange, 1);
-  (*ranges)[0].start = start;
-  (*ranges)[0].length = end - start;
+  if (ranges != NULL)
+    {
+      *ranges = g_new (GtkAccessibleTextRange, 1);
+      (*ranges)[0].start = start;
+      (*ranges)[0].length = end - start;
+    }
 
   return TRUE;
 }
@@ -10640,32 +10691,46 @@ gtk_text_view_accessible_text_get_attributes (GtkAccessibleText        *self,
     {
       g_hash_table_unref (attrs);
       *n_ranges = 0;
-      *ranges = NULL;
-      *attribute_names = NULL;
-      *attribute_values = NULL;
+      if (ranges != NULL)
+        *ranges = NULL;
+      if (attribute_names != NULL)
+        *attribute_names = NULL;
+      if (attribute_values != NULL)
+        *attribute_values = NULL;
       return FALSE;
     }
 
   *n_ranges = n_attrs;
-  *ranges = g_new (GtkAccessibleTextRange, n_attrs);
-  *attribute_names = g_new (char *, n_attrs + 1);
-  *attribute_values = g_new (char *, n_attrs + 1);
+
+  if (ranges != NULL)
+    *ranges = g_new (GtkAccessibleTextRange, n_attrs);
+  if (attribute_names != NULL)
+    *attribute_names = g_new (char *, n_attrs + 1);
+  if (attribute_values != NULL)
+    *attribute_values = g_new (char *, n_attrs + 1);
 
   i = 0;
   g_hash_table_iter_init (&iter, attrs);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      ((*ranges)[i]).start = start;
-      ((*ranges)[i]).length = end - start;
+      if (ranges != NULL)
+        {
+          ((*ranges)[i]).start = start;
+          ((*ranges)[i]).length = end - start;
+        }
 
-      (*attribute_names)[i] = g_strdup (key);
-      (*attribute_values)[i] = g_strdup (value);
+      if (attribute_names != NULL)
+        (*attribute_names)[i] = g_strdup (key);
+      if (attribute_values != NULL)
+        (*attribute_values)[i] = g_strdup (value);
 
       i += 1;
     }
 
-  (*attribute_names)[n_attrs] = NULL;
-  (*attribute_values)[n_attrs] = NULL;
+  if (attribute_names != NULL)
+    (*attribute_names)[n_attrs] = NULL;
+  if (attribute_values != NULL)
+    (*attribute_values)[n_attrs] = NULL;
 
   return TRUE;
 }
@@ -10804,26 +10869,34 @@ gtk_text_view_accessible_text_get_default_attributes (GtkAccessibleText   *self,
   if (n_attrs == 0)
     {
       g_hash_table_unref (attrs);
-      *attribute_names = NULL;
-      *attribute_values = NULL;
+      if (attribute_names != NULL)
+        *attribute_names = NULL;
+      if (attribute_values != NULL)
+        *attribute_values = NULL;
       return;
     }
 
-  *attribute_names = g_new (char *, n_attrs + 1);
-  *attribute_values = g_new (char *, n_attrs + 1);
+  if (attribute_names != NULL)
+    *attribute_names = g_new (char *, n_attrs + 1);
+  if (attribute_values != NULL)
+    *attribute_values = g_new (char *, n_attrs + 1);
 
   i = 0;
   g_hash_table_iter_init (&iter, attrs);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      (*attribute_names)[i] = g_strdup (key);
-      (*attribute_values)[i] = g_strdup (value);
+      if (attribute_names != NULL)
+        (*attribute_names)[i] = g_strdup (key);
+      if (attribute_values != NULL)
+        (*attribute_values)[i] = g_strdup (value);
 
       i += 1;
     }
 
-  (*attribute_names)[n_attrs] = NULL;
-  (*attribute_values)[n_attrs] = NULL;
+  if (attribute_names != NULL)
+    (*attribute_names)[n_attrs] = NULL;
+  if (attribute_values != NULL)
+    (*attribute_values)[n_attrs] = NULL;
 
   g_hash_table_unref (attrs);
 }

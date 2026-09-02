@@ -24,7 +24,7 @@ struct _GtkPanedHandleClass
   GtkWidgetClass parent_class;
 };
 
-GType      gtk_paned_handle_get_type (void) G_GNUC_CONST;
+GType      gtk_paned_handle_get_type (void);
 
 GtkWidget *gtk_paned_handle_new (void);
 

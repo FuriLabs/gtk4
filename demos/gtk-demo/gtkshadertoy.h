@@ -22,7 +22,7 @@ struct _GtkShadertoyClass {
   GtkGLAreaClass parent_class;
 };
 
-GType       gtk_shadertoy_get_type         (void) G_GNUC_CONST;
+GType       gtk_shadertoy_get_type         (void);
 GtkWidget  *gtk_shadertoy_new              (void);
 const char *gtk_shadertoy_get_image_shader (GtkShadertoy *shadertoy);
 void        gtk_shadertoy_set_image_shader (GtkShadertoy *shadertoy,

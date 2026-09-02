@@ -59,7 +59,7 @@ GtkCssChange gtk_css_selector_tree_get_change_all    (const GtkCssSelectorTree *
 						      GtkCssNode               *node);
 void         _gtk_css_selector_tree_match_print      (const GtkCssSelectorTree *tree,
 						      GString                  *str);
-gboolean     _gtk_css_selector_tree_is_empty         (const GtkCssSelectorTree *tree) G_GNUC_CONST;
+gboolean     _gtk_css_selector_tree_is_empty         (const GtkCssSelectorTree *tree);
 
 
 

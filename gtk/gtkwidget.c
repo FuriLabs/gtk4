@@ -4587,7 +4587,7 @@ gtk_widget_class_add_binding (GtkWidgetClass  *widget_class,
 
   for (unsigned int i = 0; i < n_keys; i++)
     {
-      shortcut = gtk_shortcut_new (gtk_keyval_trigger_new (keys[i], mods),
+      shortcut = gtk_shortcut_new (gtk_keyval_trigger_new (keys[n_keys - i - 1], mods),
                                    gtk_callback_action_new (callback, NULL, NULL));
       if (format_string)
         {
@@ -4655,7 +4655,7 @@ gtk_widget_class_add_binding_signal (GtkWidgetClass  *widget_class,
 
   for (unsigned int i = 0; i < n_keys; i++)
     {
-      shortcut = gtk_shortcut_new (gtk_keyval_trigger_new (keys[i], mods),
+      shortcut = gtk_shortcut_new (gtk_keyval_trigger_new (keys[n_keys - i - 1], mods),
                                    gtk_signal_action_new (signal));
       if (format_string)
         {
@@ -4720,7 +4720,7 @@ gtk_widget_class_add_binding_action (GtkWidgetClass  *widget_class,
 
   for (unsigned int i = 0; i < n_keys; i++)
     {
-      shortcut = gtk_shortcut_new (gtk_keyval_trigger_new (keys[i], mods),
+      shortcut = gtk_shortcut_new (gtk_keyval_trigger_new (keys[n_keys - i - 1], mods),
                                    gtk_named_action_new (action_name));
       if (format_string)
         {
@@ -10258,7 +10258,7 @@ gtk_widget_set_tooltip_text (GtkWidget  *widget,
   priv->tooltip_markup = tooltip_text != NULL ? g_markup_escape_text (tooltip_text, -1) : NULL;
 
   gtk_widget_set_has_tooltip (widget, priv->tooltip_text != NULL);
-  if (_gtk_widget_get_visible (widget))
+  if (gtk_widget_get_mapped (widget))
     gtk_widget_trigger_tooltip_query (widget);
 
   g_object_notify_by_pspec (object, widget_props[PROP_TOOLTIP_TEXT]);
@@ -10346,7 +10346,7 @@ gtk_widget_set_tooltip_markup (GtkWidget  *widget,
                                   -1);
 
   gtk_widget_set_has_tooltip (widget, tooltip_markup != NULL);
-  if (_gtk_widget_get_visible (widget))
+  if (gtk_widget_get_mapped (widget))
     gtk_widget_trigger_tooltip_query (widget);
 
   g_object_notify_by_pspec (object, widget_props[PROP_TOOLTIP_TEXT]);

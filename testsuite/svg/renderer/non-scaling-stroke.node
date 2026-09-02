@@ -10,8 +10,7 @@ transform {
         bounds: 18.5 18.5 83 63;
         color: rgb(0,0,255);
       }
-      path: "\
-M 20 20 h 80 v 60 h -80 z";
+      path: 20 20 80 60;
       line-width: 3;
       line-cap: butt;
       line-join: miter;
@@ -23,8 +22,7 @@ M 20 20 h 80 v 60 h -80 z";
           bounds: 18.5 18.5 33 13;
           color: rgb(255,0,0);
         }
-        path: "\
-M 20 20 h 30 v 10 h -30 z";
+        path: 20 20 30 10;
         line-width: 3;
         line-cap: butt;
         line-join: miter;
@@ -45,12 +43,7 @@ M 20 20 h 30 v 10 h -30 z";
               premultiplied: false;
             }
           }
-          path: "\
-M 240 60\
-L 321 60\
-L 321 120\
-L 240 120\
-Z";
+          path: "M 240 60 L 321 60 L 321 120 L 240 120 Z";
           line-width: 1;
           line-cap: butt;
           line-join: miter;

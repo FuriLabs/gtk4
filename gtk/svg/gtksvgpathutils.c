@@ -27,6 +27,9 @@
 #include "gsk/gskpathprivate.h"
 #include "gsk/gskcontourprivate.h"
 
+#include <math.h>
+
+
 /* {{{ Builder */
 
 void
@@ -152,6 +155,10 @@ path_is_rect (GskPathOperation *ops,
   return TRUE;
 }
 
+#define in_order3(a, b, c) ((a <= b && b <= c) || (b <= a && c <= b))
+#define in_order4(a, b, c, d) \
+  ((a <= b && b <= c && b <= c) || \
+   (b <= a && c <= b && c <= b))
 #define in_order5(a, b, c, d, e) \
   ((a <= b && b <= c && c <= d && d <= e) || \
    (a >= b && b >= c && c >= d && d >= e))
@@ -282,6 +289,57 @@ path_is_circle2 (GskPathOperation *ops,
 
   swap (rect->bounds.origin.x, rect->bounds.origin.y);
   swap (rect->bounds.size.width, rect->bounds.size.height);
+
+  return TRUE;
+}
+
+static gboolean
+path_is_precise_circle (GskPathOperation *ops,
+                        size_t            n_ops,
+                        graphene_point_t *points,
+                        size_t            n_points,
+                        GskRoundedRect   *rect)
+{
+  float radius;
+
+  if (n_ops != 6)
+    return FALSE;
+
+  if (n_points != 14)
+    return FALSE;
+
+  if (ops[0] != GSK_PATH_MOVE ||
+      ops[1] != GSK_PATH_CONIC ||
+      ops[2] != GSK_PATH_CONIC ||
+      ops[3] != GSK_PATH_CONIC ||
+      ops[4] != GSK_PATH_CONIC ||
+      ops[5] != GSK_PATH_CLOSE)
+    return FALSE;
+
+  if (!(points[0].x == points[12].x && points[0].y == points[12].y))
+    return FALSE;
+
+  if (!(equal3 (points[10].x, points[12].x, points[1].x) &&
+        equal3 (points[1].y, points[3].y, points[4].y) &&
+        equal3 (points[4].x, points[6].x, points[7].x) &&
+        equal3 (points[7].y, points[8].y, points[10].y)))
+    return FALSE;
+
+  if (points[3].x != points[9].x || points[0].y != points[6].y)
+    return FALSE;
+
+  if (!(equal4 (points[2].x, points[5].x, points[8].x, points[11].x)))
+    return FALSE;
+
+  if (points[2].x != (float) M_SQRT1_2)
+    return FALSE;
+
+  radius = points[0].x - points[3].x;
+
+  gsk_rounded_rect_init_uniform (rect,
+                                 points[3].x, points[3].y,
+                                 2 * radius, 2 * radius,
+                                 radius);
 
   return TRUE;
 }
@@ -442,6 +500,145 @@ rounded_rect_from_points (graphene_point_t *points,
     }
 
   return FALSE;
+}
+
+static gboolean
+rounded_rect_from_points3 (graphene_point_t *points,
+                           GskRoundedRect   *rect)
+{
+  GskCorner c;
+
+  /* points are assumed to be for an mlolololoz contour */
+
+  if (points[0].x != points[16].x ||
+      points[0].y != points[16].y)
+    return FALSE;
+
+  if (!(equal4 (points[14].y, points[0].y, points[1].y, points[2].y) &&
+        equal4 (points[2].x, points[4].x, points[5].x, points[6].x) &&
+        equal4 (points[6].y, points[8].y, points[9].y, points[10].y) &&
+        equal4 (points[10].x, points[12].x, points[13].x, points[14].x)))
+    return FALSE;
+
+  if (!in_order4 (points[14].x, points[0].x, points[1].x, points[2].x))
+    return FALSE;
+
+  if (!in_order4 (points[2].y, points[4].y, points[5].y, points[6].y))
+    return FALSE;
+
+  graphene_rect_init (&rect->bounds,
+                      MIN (points[14].x, points[2].x),
+                      points[14].y,
+                      fabs (points[2].x - points[14].x),
+                      fabs (points[10].y - points[14].y));
+
+  if (points[1].x < points[4].x)
+    {
+      if (points[1].y < points[4].y)
+        c = GSK_CORNER_TOP_RIGHT;
+      else
+        c = GSK_CORNER_BOTTOM_RIGHT;
+    }
+  else
+    {
+      if (points[1].y < points[4].y)
+        c = GSK_CORNER_TOP_LEFT;
+      else
+        c = GSK_CORNER_BOTTOM_LEFT;
+    }
+
+  rect->corner[c].width = fabs (points[4].x - points[1].x);
+  rect->corner[c].height = fabs (points[4].y - points[1].y);
+
+  if (points[8].x < points[5].x)
+    {
+      if (points[5].y < points[8].y)
+        c = GSK_CORNER_BOTTOM_RIGHT;
+      else
+        c = GSK_CORNER_TOP_RIGHT;
+    }
+  else
+    {
+      if (points[5].y < points[8].y)
+        c = GSK_CORNER_BOTTOM_LEFT;
+      else
+        c = GSK_CORNER_TOP_LEFT;
+    }
+
+  rect->corner[c].width = fabs (points[5].x - points[8].x);
+  rect->corner[c].height = fabs (points[8].y - points[5].y);
+
+  if (points[12].x < points[9].x)
+    {
+      if (points[12].y < points[9].y)
+        c = GSK_CORNER_BOTTOM_LEFT;
+      else
+        c = GSK_CORNER_TOP_LEFT;
+    }
+  else
+    {
+      if (points[12].y < points[9].y)
+        c = GSK_CORNER_BOTTOM_RIGHT;
+      else
+        c = GSK_CORNER_TOP_RIGHT;
+    }
+
+  rect->corner[c].width = fabs (points[9].x - points[12].x);
+  rect->corner[c].height = fabs (points[9].y - points[12].y);
+
+  if (points[13].x < points[16].x)
+    {
+      if (points[16].y < points[13].y)
+        c = GSK_CORNER_TOP_LEFT;
+      else
+        c = GSK_CORNER_BOTTOM_LEFT;
+    }
+  else
+    {
+      if (points[16].y < points[13].y)
+        c = GSK_CORNER_TOP_RIGHT;
+      else
+        c = GSK_CORNER_BOTTOM_RIGHT;
+    }
+
+  rect->corner[c].width = fabs (points[16].x - points[13].x);
+  rect->corner[c].height = fabs (points[13].y - points[16].y);
+
+  return TRUE;
+}
+
+static gboolean
+path_is_precise_rounded_rect (GskPathOperation *ops,
+                              size_t            n_ops,
+                              graphene_point_t *points,
+                              size_t            n_points,
+                              GskRoundedRect   *rect)
+{
+  if (n_ops != 10)
+    return FALSE;
+
+  if (n_points != 18)
+    return FALSE;
+
+  if (ops[0] != GSK_PATH_MOVE ||
+      ops[1] != GSK_PATH_LINE ||
+      ops[2] != GSK_PATH_CONIC ||
+      ops[3] != GSK_PATH_LINE ||
+      ops[4] != GSK_PATH_CONIC ||
+      ops[5] != GSK_PATH_LINE ||
+      ops[6] != GSK_PATH_CONIC ||
+      ops[7] != GSK_PATH_LINE ||
+      ops[8] != GSK_PATH_CONIC ||
+      ops[9] != GSK_PATH_CLOSE)
+    return FALSE;
+
+  if (!(equal4 (points[3].x, points[7].x, points[11].x, points[15].x)))
+    return FALSE;
+
+  if (points[3].x != (float) M_SQRT1_2)
+    return FALSE;
+
+  return rounded_rect_from_points3 (points, rect);
 }
 
 static gboolean
@@ -661,8 +858,13 @@ svg_path_classify (GskPath        *path,
 
   if (path_is_rect (ops, n_ops, points, n_points, &rect->bounds))
     return PATH_RECT;
-  else if (path_is_circle (ops, n_ops, points, n_points, rect) ||
-           path_is_circle2 (ops, n_ops, points, n_points, rect))
+  else if (path_is_precise_circle (ops, n_ops, points, n_points, rect))
+    return PATH_CIRCLE;
+  else if (path_is_precise_rounded_rect (ops, n_ops, points, n_points, rect))
+    return PATH_ROUNDED_RECT;
+
+  if (path_is_circle (ops, n_ops, points, n_points, rect) ||
+      path_is_circle2 (ops, n_ops, points, n_points, rect))
     return PATH_CIRCLE;
   else if (path_is_rounded_rect (ops, n_ops, points, n_points, rect) ||
            path_is_rounded_rect2 (ops, n_ops, points, n_points, rect) ||
@@ -686,19 +888,21 @@ svg_snapshot_push_fill (GtkSnapshot *snapshot,
 {
   GskRoundedRect rect = { 0, };
 
-  switch (svg_path_classify (path, &rect))
+  switch (gsk_path_classify (path, &rect))
     {
-    case PATH_RECT:
+    case GSK_PATH_RECT:
       gtk_snapshot_push_clip (snapshot, &rect.bounds);
       break;
-    case PATH_ROUNDED_RECT:
-    case PATH_CIRCLE:
+    case GSK_PATH_ROUNDED_RECT:
+    case GSK_PATH_CIRCLE:
+    case GSK_PATH_APPROXIMATE_ROUNDED_RECT:
+    case GSK_PATH_APPROXIMATE_CIRCLE:
       gtk_snapshot_push_rounded_clip (snapshot, &rect);
       break;
-    case PATH_GENERAL:
+    case GSK_PATH_GENERAL:
       gtk_snapshot_push_fill (snapshot, path, rule);
       break;
-    case PATH_EMPTY:
+    case GSK_PATH_EMPTY:
       gtk_snapshot_push_clip (snapshot, &GRAPHENE_RECT_INIT (0, 0, 0, 0));
       break;
     default:

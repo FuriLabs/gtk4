@@ -6,8 +6,7 @@ clip {
         bounds: -0.5 -0.5 481 361;
         color: rgb(0,0,0);
       }
-      path: "\
-M 0 0 h 480 v 360 h -480 z";
+      path: 0 0 480 360;
       line-width: 1;
       line-cap: butt;
       line-join: miter;
@@ -21,8 +20,7 @@ M 0 0 h 480 v 360 h -480 z";
             bounds: -0.5 -0.5 201 201;
             color: rgb(255,0,0);
           }
-          path: "\
-M 0 0 h 200 v 200 h -200 z";
+          path: 0 0 200 200;
           line-width: 1;
           line-cap: butt;
           line-join: miter;
@@ -38,8 +36,7 @@ M 0 0 h 200 v 200 h -200 z";
             bounds: -0.5 -0.5 101 101;
             color: rgb(0,0,255);
           }
-          path: "\
-M 0 0 h 100 v 100 h -100 z";
+          path: 0 0 100 100;
           line-width: 1;
           line-cap: butt;
           line-join: miter;

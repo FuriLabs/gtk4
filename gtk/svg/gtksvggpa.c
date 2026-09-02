@@ -246,26 +246,28 @@ shape_apply_state (GtkSvg       *self,
 {
   Visibility visibility;
 
-  if (svg_element_get_states (shape) & BIT (state))
+  if (state_match (svg_element_get_states (shape), state))
     visibility = VISIBILITY_VISIBLE;
   else
     visibility = VISIBILITY_HIDDEN;
 
-  if (svg_element_type_is_renderable (svg_element_get_type (shape)))
+  if (svg_element_type_is_path (svg_element_get_element_type (shape)))
     {
       if ((self->features & GTK_SVG_ANIMATIONS) == 0)
         {
           SvgValue *value = svg_visibility_new (visibility);
-          svg_element_set_base_value (shape, SVG_PROPERTY_VISIBILITY, value, FALSE);
-          svg_value_unref (value);
+          svg_element_take_base_value (shape, SVG_PROPERTY_VISIBILITY, value);
         }
      }
 
-  if (!self->playing && shape->animations)
+  if ((!self->playing || !self->clock) && shape->animations)
     {
       for (unsigned int i = shape->animations->len; i > 0; i--)
         {
           SvgAnimation *a = g_ptr_array_index (shape->animations, i - 1);
+
+          if (a->id == NULL || !g_str_has_prefix (a->id, "gpa:"))
+            continue;
 
           if ((visibility == VISIBILITY_VISIBLE &&
                g_str_has_prefix (a->id, "gpa:transition:fade-in")) ||
@@ -323,19 +325,16 @@ shape_apply_state (GtkSvg       *self,
         }
     }
 
-  if (svg_element_type_is_container (svg_element_get_type (shape)))
+  if (svg_element_type_is_container (svg_element_get_element_type (shape)))
     {
-      for (unsigned int i = 0; i < shape->shapes->len; i++)
-        {
-          SvgElement *sh = g_ptr_array_index (shape->shapes, i);
-          shape_apply_state (self, sh, state);
-        }
+      for (SvgElement *sh = shape->first_child; sh; sh = sh->next_sibling)
+        shape_apply_state (self, sh, state);
     }
 }
 
 void
-apply_state (GtkSvg   *self,
-             uint64_t  state)
+apply_state (GtkSvg       *self,
+             unsigned int  state)
 {
   shape_apply_state (self, self->content, state);
 }
@@ -723,13 +722,9 @@ create_morph_filter (SvgElement *shape,
   TimeSpec *begin;
   TimeSpec *end;
 
-  for (unsigned int i = 0; i < svg_element_get_parent (shape)->shapes->len; i++)
+
+  for (SvgElement *sh = shape->prev_sibling; sh; sh = sh->prev_sibling)
     {
-      SvgElement *sh = g_ptr_array_index (svg_element_get_parent (shape)->shapes, i);
-
-      if (sh == shape)
-        break;
-
       if (sh->type == SVG_ELEMENT_DEFS)
         {
           parent = sh;
@@ -739,12 +734,12 @@ create_morph_filter (SvgElement *shape,
 
   if (parent == NULL)
     {
-      parent = svg_element_new (svg_element_get_parent (shape), SVG_ELEMENT_DEFS);
-      g_ptr_array_insert (svg_element_get_parent (shape)->shapes, 0, parent);
+      parent = svg_element_new (shape->parent, SVG_ELEMENT_DEFS);
+      svg_element_prepend_child (shape->parent, parent);
     }
 
   filter = svg_element_new (parent, SVG_ELEMENT_FILTER);
-  svg_element_add_child (parent, filter);
+  svg_element_append_child (parent, filter);
   filter->id = g_strdup_printf ("gpa:morph-filter:%s", svg_element_get_id (shape));
 
   g_hash_table_insert (shapes, filter->id, filter);

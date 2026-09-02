@@ -23,11 +23,7 @@ resize_cb (GtkWidget *widget,
            int        height,
            gpointer   data)
 {
-  if (surface)
-    {
-      cairo_surface_destroy (surface);
-      surface = NULL;
-    }
+  g_clear_pointer (&surface, cairo_surface_destroy);
 
   if (gtk_native_get_surface (gtk_widget_get_native (widget)))
     {

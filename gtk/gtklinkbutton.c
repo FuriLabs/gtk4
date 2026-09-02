@@ -296,7 +296,7 @@ struct _GtkLinkContentClass
   GdkContentProviderClass parent_class;
 };
 
-GType gtk_link_content_get_type (void) G_GNUC_CONST;
+GType gtk_link_content_get_type (void);
 
 G_DEFINE_TYPE (GtkLinkContent, gtk_link_content, GDK_TYPE_CONTENT_PROVIDER)
 

@@ -36,7 +36,7 @@ G_BEGIN_DECLS
 typedef struct _GtkCellView             GtkCellView;
 
 GDK_AVAILABLE_IN_ALL
-GType             gtk_cell_view_get_type                (void) G_GNUC_CONST;
+GType             gtk_cell_view_get_type                (void);
 GDK_DEPRECATED_IN_4_10
 GtkWidget        *gtk_cell_view_new                     (void);
 GDK_DEPRECATED_IN_4_10

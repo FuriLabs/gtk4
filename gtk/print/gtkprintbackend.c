@@ -746,10 +746,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
     }
 
   if (focus != NULL)
-    {
-      gtk_widget_grab_focus (focus);
-      focus = NULL;
-    }
+    gtk_widget_grab_focus (focus);
 
   g_object_ref (backend);
   g_signal_connect (G_OBJECT (dialog), "response",

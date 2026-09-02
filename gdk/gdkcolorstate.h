@@ -29,7 +29,7 @@ G_BEGIN_DECLS
 #define GDK_TYPE_COLOR_STATE (gdk_color_state_get_type ())
 
 GDK_AVAILABLE_IN_4_16
-GType           gdk_color_state_get_type                (void) G_GNUC_CONST;
+GType           gdk_color_state_get_type                (void);
 
 GDK_AVAILABLE_IN_4_16
 GdkColorState * gdk_color_state_ref                     (GdkColorState  *self);

@@ -226,15 +226,13 @@ G_DEFINE_TYPE_WITH_CODE (GtkExpander, gtk_expander, GTK_TYPE_WIDGET,
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
                                                 gtk_expander_buildable_init))
 
-static gboolean
+static void
 expand_timeout (gpointer data)
 {
   GtkExpander *expander = GTK_EXPANDER (data);
 
   expander->expand_timer = 0;
   gtk_expander_set_expanded (expander, TRUE);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -245,7 +243,7 @@ gtk_expander_drag_enter (GtkDropControllerMotion *motion,
 {
   if (!expander->expanded && !expander->expand_timer)
     {
-      expander->expand_timer = g_timeout_add (TIMEOUT_EXPAND, (GSourceFunc) expand_timeout, expander);
+      expander->expand_timer = g_timeout_add_once (TIMEOUT_EXPAND, (GSourceOnceFunc) expand_timeout, expander);
       gdk_source_set_static_name_by_id (expander->expand_timer, "[gtk] expand_timeout");
     }
 }
@@ -564,8 +562,7 @@ gtk_expander_dispose (GObject *object)
 
   if (expander->box)
     {
-      gtk_widget_unparent (expander->box);
-      expander->box = NULL;
+      g_clear_pointer (&expander->box, gtk_widget_unparent);
       expander->child = NULL;
       expander->label_widget = NULL;
       expander->arrow_widget = NULL;

@@ -70,7 +70,7 @@ void                    gsk_path_builder_add_op                 (GskPathBuilder 
 /* implemented in gskstrokenode.c */
 void                    gsk_cairo_stroke_path                   (cairo_t                *cr,
                                                                  GskPath                *path,
-                                                                 GskStroke              *stroke);
+                                                                 const GskStroke        *stroke);
 
 static inline void
 gsk_cairo_set_fill_rule (cairo_t     *cr,
@@ -110,18 +110,24 @@ typedef struct
                               float                   x,
                               float                   y,
                               gpointer                user_data);
-  gboolean (* add_rect)      (const graphene_rect_t  *rect,
-                              gpointer                user_data);
-  gboolean (* add_circle)    (const graphene_point_t *center,
-                              float                   radius,
-                              gpointer                user_data);
-  gboolean (* add_rounded_rect)
-                             (const GskRoundedRect   *rect,
-                              gpointer                user_data);
 } GskPathParser;
 
 gboolean gsk_path_parse_full (const char    *string,
                               GskPathParser *callbacks,
                               gpointer       data);
+
+typedef enum
+{
+  GSK_PATH_EMPTY,
+  GSK_PATH_RECT,
+  GSK_PATH_ROUNDED_RECT,
+  GSK_PATH_CIRCLE,
+  GSK_PATH_APPROXIMATE_ROUNDED_RECT,
+  GSK_PATH_APPROXIMATE_CIRCLE,
+  GSK_PATH_GENERAL,
+} GskPathClassification;
+
+GskPathClassification gsk_path_classify (GskPath        *path,
+                                         GskRoundedRect *rect);
 
 G_END_DECLS

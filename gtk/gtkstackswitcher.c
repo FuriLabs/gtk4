@@ -217,7 +217,7 @@ on_page_updated (GtkStackPage     *page,
   update_button (self, page, button);
 }
 
-static gboolean
+static void
 gtk_stack_switcher_switch_timeout (gpointer data)
 {
   GtkWidget *button = data;
@@ -226,8 +226,6 @@ gtk_stack_switcher_switch_timeout (gpointer data)
 
   if (button)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -247,9 +245,7 @@ gtk_stack_switcher_drag_enter (GtkDropControllerMotion *motion,
 
   if (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (button)))
     {
-      guint switch_timer = g_timeout_add (TIMEOUT_EXPAND,
-                                          gtk_stack_switcher_switch_timeout,
-                                          button);
+      guint switch_timer = g_timeout_add_once (TIMEOUT_EXPAND, gtk_stack_switcher_switch_timeout, button);
       gdk_source_set_static_name_by_id (switch_timer, "[gtk] gtk_stack_switcher_switch_timeout");
       g_object_set_data_full (G_OBJECT (button), "-gtk-switch-timer", GUINT_TO_POINTER (switch_timer), clear_timer);
     }

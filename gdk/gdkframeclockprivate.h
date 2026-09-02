@@ -30,22 +30,6 @@
 
 G_BEGIN_DECLS
 
-/* little hacks to avoid requiring 2.88 */
-#if GLIB_CHECK_VERSION(2, 87, 3)
-#undef G_NSEC_PER_SEC
-static inline uint64_t
-avoid_deprecation_monotonic_time_ns (void)
-{
-G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-  return g_get_monotonic_time_ns ();
-G_GNUC_END_IGNORE_DEPRECATIONS
-}
-#define g_get_monotonic_time_ns() avoid_deprecation_monotonic_time_ns()
-#else
-#define g_get_monotonic_time_ns() ((uint64_t) 1000 * g_get_monotonic_time ())
-#endif
-#define G_NSEC_PER_SEC G_GUINT64_CONSTANT(1000000000)
-
 /**
  * GdkFrameClock:
  * @parent_instance: The parent instance.
@@ -73,44 +57,35 @@ struct _GdkFrameClockClass
 
   /*< public >*/
 
-  gint64   (* get_frame_time) (GdkFrameClock *clock);
+  uint64_t              (* compute_frame_time)                  (GdkFrameClock          *self,
+                                                                 uint64_t                now,
+                                                                 gboolean                for_frame_start);
+  uint64_t              (* predict_presentation_time)           (GdkFrameClock          *self,
+                                                                 uint64_t                now);
 
-  void     (* request_phase)  (GdkFrameClock      *clock,
-                               GdkFrameClockPhase  phase);
-  void     (* begin_updating) (GdkFrameClock      *clock);
-  void     (* end_updating)   (GdkFrameClock      *clock);
+  void                  (* request_phase)                       (GdkFrameClock          *self,
+                                                                 GdkFrameClockPhase      phase);
+  void                  (* begin_updating)                      (GdkFrameClock          *self);
+  void                  (* end_updating)                        (GdkFrameClock          *self);
 
-  void     (* start)             (GdkFrameClock *clock);
-  void     (* stop)              (GdkFrameClock *clock);
-
-  /* signals */
-  /* void (* flush_events)       (GdkFrameClock *clock); */
-  /* void (* before_paint)       (GdkFrameClock *clock); */
-  /* void (* update)             (GdkFrameClock *clock); */
-  /* void (* layout)             (GdkFrameClock *clock); */
-  /* void (* paint)              (GdkFrameClock *clock); */
-  /* void (* after_paint)        (GdkFrameClock *clock); */
-  /* void (* resume_events)      (GdkFrameClock *clock); */
+  void                  (* start)                               (GdkFrameClock          *self);
+  void                  (* stop)                                (GdkFrameClock          *self);
 };
 
-void gdk_frame_clock_start               (GdkFrameClock *clock);
-void gdk_frame_clock_stop                (GdkFrameClock *clock);
-gboolean gdk_frame_clock_is_stopped      (GdkFrameClock *clock);
+void                    gdk_frame_clock_start                   (GdkFrameClock          *clock);
+void                    gdk_frame_clock_stop                    (GdkFrameClock          *clock);
+gboolean                gdk_frame_clock_is_stopped              (GdkFrameClock          *clock);
+gboolean                gdk_frame_clock_is_updating             (GdkFrameClock          *self);
+gboolean                gdk_frame_clock_is_in_frame             (GdkFrameClock          *self);
+GdkFrameClockPhase      gdk_frame_clock_get_requested           (GdkFrameClock          *self);
 
-void _gdk_frame_clock_begin_frame         (GdkFrameClock   *clock,
-                                           gint64           monotonic_time);
-void _gdk_frame_clock_debug_print_timings (GdkFrameClock   *clock,
-                                           GdkFrameTimings *timings);
-void _gdk_frame_clock_add_timings_to_profiler (GdkFrameClock *frame_clock,
-                                               GdkFrameTimings *timings);
+void                    gdk_frame_clock_frame                   (GdkFrameClock          *self);
 
-void _gdk_frame_clock_emit_flush_events  (GdkFrameClock *frame_clock);
-void _gdk_frame_clock_emit_before_paint  (GdkFrameClock *frame_clock);
-void _gdk_frame_clock_emit_update        (GdkFrameClock *frame_clock);
-void _gdk_frame_clock_emit_layout        (GdkFrameClock *frame_clock);
-void _gdk_frame_clock_emit_paint         (GdkFrameClock *frame_clock);
-void _gdk_frame_clock_emit_after_paint   (GdkFrameClock *self);
-void _gdk_frame_clock_emit_resume_events (GdkFrameClock *frame_clock);
+GdkFrameTimings *       gdk_frame_clock_find_timings            (GdkFrameClock          *self,
+                                                                 guint64                 serial);
+
+uint64_t        gdk_frame_clock_get_refresh_interval            (GdkFrameClock          *self);
+uint64_t        gdk_frame_clock_get_latest_presentation_time    (GdkFrameClock          *self);
 
 void            gdk_frame_clock_outstanding                     (GdkFrameClock          *self);
 void            gdk_frame_clock_submitted                       (GdkFrameClock          *self,

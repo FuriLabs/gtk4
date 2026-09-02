@@ -33,6 +33,6 @@ typedef struct _GtkPrintBackendCpdbClass GtkPrintBackendCpdbClass;
 typedef struct _GtkPrintBackendCpdb      GtkPrintBackendCpdb;
 
 GtkPrintBackend  *gtk_print_backend_cpdb_new        (void);
-GType             gtk_print_backend_cpdb_get_type   (void) G_GNUC_CONST;
+GType             gtk_print_backend_cpdb_get_type   (void);
 
 G_END_DECLS

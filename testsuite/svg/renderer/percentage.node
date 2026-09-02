@@ -10,11 +10,13 @@ clip {
     }
     stroke {
       child: color {
-        bounds: 31 31 97.5 98;
+        bounds: 31.5 31.5 97 97;
         color: rgba(0,0,0,0.75);
       }
-      path: "\
-M 128 80 o 0 48, -48 48, 0.707106769 o -48 0, -48 -48, 0.707106769 o 0 -48, 48 -48, 0.707106769 o 48 0, 48 48, 0.707106769 z";
+      path: circle {
+        center: 80 80;
+        radius: 48;
+      }
       line-width: 1;
       line-cap: butt;
       line-join: miter;
@@ -28,8 +30,7 @@ M 128 80 o 0 48, -48 48, 0.707106769 o -48 0, -48 -48, 0.707106769 o 0 -48, 48 -
         bounds: -0.5 15.5 33 33;
         color: rgba(0,0,0,0.75);
       }
-      path: "\
-M 0 16 h 32 v 32 h -32 z";
+      path: 0 16 32 32;
       line-width: 1;
       line-cap: butt;
       line-join: miter;

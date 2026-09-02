@@ -718,7 +718,7 @@ struct _GtkTextContentClass
   GdkContentProviderClass parent_class;
 };
 
-GType gtk_text_content_get_type (void) G_GNUC_CONST;
+GType gtk_text_content_get_type (void);
 
 G_DEFINE_TYPE (GtkTextContent, gtk_text_content, GDK_TYPE_CONTENT_PROVIDER)
 
@@ -3774,7 +3774,7 @@ gtk_text_password_hint_free (GtkTextPasswordHint *password_hint)
 }
 
 
-static gboolean
+static void
 gtk_text_remove_password_hint (gpointer data)
 {
   GtkTextPasswordHint *password_hint = g_object_get_qdata (data, quark_password_hint);
@@ -3783,8 +3783,6 @@ gtk_text_remove_password_hint (gpointer data)
 
   /* Force the string to be redrawn, but now without a visible character */
   gtk_text_recompute (GTK_TEXT (data));
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -3847,9 +3845,9 @@ buffer_inserted_text (GtkEntryBuffer *buffer,
           password_hint->position = position;
           if (password_hint->source_id)
             g_source_remove (password_hint->source_id);
-          password_hint->source_id = g_timeout_add (password_hint_timeout,
-                                                    (GSourceFunc)gtk_text_remove_password_hint,
-                                                    self);
+          password_hint->source_id = g_timeout_add_once (password_hint_timeout,
+                                                         (GSourceOnceFunc) gtk_text_remove_password_hint,
+                                                         self);
           gdk_source_set_static_name_by_id (password_hint->source_id, "[gtk] gtk_text_remove_password_hint");
         }
     }
@@ -6511,7 +6509,7 @@ append_bubble_item (GtkText    *self,
   gtk_box_append (GTK_BOX (toolbar), item);
 }
 
-static gboolean
+static void
 gtk_text_selection_bubble_popup_show (gpointer user_data)
 {
   GtkText *self = user_data;
@@ -6534,7 +6532,7 @@ gtk_text_selection_bubble_popup_show (gpointer user_data)
   if (!has_selection && !priv->editable)
     {
       priv->selection_bubble_timeout_id = 0;
-      return G_SOURCE_REMOVE;
+      return;
     }
 
   g_clear_pointer (&priv->selection_bubble, gtk_widget_unparent);
@@ -6598,8 +6596,6 @@ gtk_text_selection_bubble_popup_show (gpointer user_data)
   gtk_popover_popup (GTK_POPOVER (priv->selection_bubble));
 
   priv->selection_bubble_timeout_id = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -6622,7 +6618,7 @@ gtk_text_selection_bubble_popup_set (GtkText *self)
     g_source_remove (priv->selection_bubble_timeout_id);
 
   priv->selection_bubble_timeout_id =
-    g_timeout_add (50, gtk_text_selection_bubble_popup_show, self);
+    g_timeout_add_once (50, gtk_text_selection_bubble_popup_show, self);
   gdk_source_set_static_name_by_id (priv->selection_bubble_timeout_id, "[gtk] gtk_text_selection_bubble_popup_cb");
 }
 
@@ -7641,9 +7637,16 @@ gtk_text_update_history (GtkText *self)
 }
 
 static void
-input_interceptor_im_update (GtkEventControllerKey *controller,
+input_interceptor_im_update (GtkEventControllerKey *key_controller,
                              GtkText               *self)
 {
+  GtkEventController *controller = GTK_EVENT_CONTROLLER (key_controller);
+  GdkEvent *event = gtk_event_controller_get_current_event (controller);
+  unsigned int keyval = gdk_key_event_get_keyval (event);
+
+  if (keyval == GDK_KEY_space)
+    return;
+
   g_signal_emit_by_name (self, "input-intercepted");
 }
 
@@ -7758,9 +7761,13 @@ gtk_text_accessible_text_get_selection (GtkAccessibleText       *self,
     return FALSE;
 
   *n_ranges = 1;
-  *ranges = g_new (GtkAccessibleTextRange, 1);
-  (*ranges)[0].start = start;
-  (*ranges)[0].length = end - start;
+
+  if (ranges != NULL)
+    {
+      *ranges = g_new (GtkAccessibleTextRange, 1);
+      (*ranges)[0].start = start;
+      (*ranges)[0].length = end - start;
+    }
 
   return TRUE;
 }
@@ -7780,18 +7787,28 @@ gtk_text_accessible_text_get_attributes (GtkAccessibleText        *self,
   gtk_pango_get_run_attributes (layout, offset, &names, &values, &start, &end);
 
   *n_ranges = g_strv_length (names);
-  *ranges = g_new (GtkAccessibleTextRange, *n_ranges);
 
-  for (unsigned i = 0; i < *n_ranges; i++)
+  if (ranges != NULL)
     {
-      GtkAccessibleTextRange *range = &(*ranges)[i];
+      *ranges = g_new (GtkAccessibleTextRange, *n_ranges);
+      for (unsigned int i = 0; i < *n_ranges; i++)
+        {
+          GtkAccessibleTextRange *range = &(*ranges)[i];
 
-      range->start = start;
-      range->length = end - start;
+          range->start = start;
+          range->length = end - start;
+        }
     }
 
-  *attribute_names = names;
-  *attribute_values = values;
+  if (attribute_names != NULL)
+    *attribute_names = names;
+  else
+    g_strfreev (names);
+
+  if (attribute_values != NULL)
+    *attribute_values = values;
+  else
+    g_strfreev (values);
 
   return TRUE;
 }
@@ -7806,8 +7823,15 @@ gtk_text_accessible_text_get_default_attributes (GtkAccessibleText   *self,
 
   gtk_pango_get_default_attributes (layout, &names, &values);
 
-  *attribute_names = names;
-  *attribute_values = values;
+  if (attribute_names != NULL)
+    *attribute_names = names;
+  else
+    g_strfreev (names);
+
+  if (attribute_values != NULL)
+    *attribute_values = values;
+  else
+    g_strfreev (values);
 }
 
 static gboolean

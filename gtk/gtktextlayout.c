@@ -192,20 +192,12 @@ gtk_text_layout_dispose (GObject *object)
 
   gtk_text_layout_set_buffer (layout, NULL);
 
-  if (layout->default_style != NULL)
-    {
-      gtk_text_attributes_unref (layout->default_style);
-      layout->default_style = NULL;
-    }
+  g_clear_pointer (&layout->default_style, gtk_text_attributes_unref);
 
   g_clear_object (&layout->ltr_context);
   g_clear_object (&layout->rtl_context);
 
-  if (layout->preedit_attrs != NULL)
-    {
-      pango_attr_list_unref (layout->preedit_attrs);
-      layout->preedit_attrs = NULL;
-    }
+  g_clear_pointer (&layout->preedit_attrs, pango_attr_list_unref);
 
   G_OBJECT_CLASS (gtk_text_layout_parent_class)->dispose (object);
 }

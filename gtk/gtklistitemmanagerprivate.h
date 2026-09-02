@@ -75,7 +75,7 @@ struct _GtkListTileAugment
 };
 
 
-GType                   gtk_list_item_manager_get_type          (void) G_GNUC_CONST;
+GType                   gtk_list_item_manager_get_type          (void);
 
 GtkListItemManager *    gtk_list_item_manager_new               (GtkWidget              *widget,
                                                                  GtkListTile *           (* split_func) (GtkWidget *, GtkListTile *, guint),

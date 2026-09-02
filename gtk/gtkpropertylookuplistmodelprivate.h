@@ -34,7 +34,7 @@ G_BEGIN_DECLS
 typedef struct _GtkPropertyLookupListModel GtkPropertyLookupListModel;
 typedef struct _GtkPropertyLookupListModelClass GtkPropertyLookupListModelClass;
 
-GType                           gtk_property_lookup_list_model_get_type         (void) G_GNUC_CONST;
+GType                           gtk_property_lookup_list_model_get_type         (void);
 
 GtkPropertyLookupListModel *    gtk_property_lookup_list_model_new              (GType                           item_type,
                                                                                  const char                     *property_name);

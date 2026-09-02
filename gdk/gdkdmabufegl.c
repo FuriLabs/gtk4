@@ -32,6 +32,9 @@
 
 #include <graphene.h>
 
+#include "gsk/gskrenderer.h"
+#include "gsk/gpu/gskglrenderer.h"
+
 #if defined(HAVE_DMABUF) && defined (HAVE_EGL)
 
 /* A dmabuf downloader implementation that downloads buffers via
@@ -501,18 +504,6 @@ gdk_dmabuf_egl_import_dmabuf_multiplane (GdkGLContext    *context,
 }
 
 #endif  /* HAVE_DMABUF && HAVE_EGL */
-
-/* Hack. We don't include gsk/gsk.h here to avoid a build order problem
- * with the generated header gskenumtypes.h, so we need to hack around
- * a bit to access the gsk api we need.
- */
-
-typedef struct _GskRenderer GskRenderer;
-
-extern GskRenderer *   gsk_gl_renderer_new                      (void);
-extern gboolean        gsk_renderer_realize_for_display         (GskRenderer  *renderer,
-                                                                 GdkDisplay   *display,
-                                                                 GError      **error);
 
 void
 gdk_dmabuf_egl_init (GdkDisplay *display)

@@ -229,7 +229,7 @@ struct _GtkTextBufferContentClass
   GdkContentProviderClass parent_class;
 };
 
-GType gtk_text_buffer_content_get_type (void) G_GNUC_CONST;
+GType gtk_text_buffer_content_get_type (void);
 
 G_DEFINE_TYPE (GtkTextBufferContent, gtk_text_buffer_content, GDK_TYPE_CONTENT_PROVIDER)
 
@@ -1156,11 +1156,7 @@ gtk_text_buffer_finalize (GObject *object)
       g_clear_object (&priv->tag_table);
     }
 
-  if (priv->btree)
-    {
-      _gtk_text_btree_unref (priv->btree);
-      priv->btree = NULL;
-    }
+  g_clear_pointer (&priv->btree, _gtk_text_btree_unref);
 
   if (priv->log_attr_cache)
     free_log_attr_cache (priv->log_attr_cache);
@@ -1606,8 +1602,7 @@ insert_range_untagged (GtkTextBuffer     *buffer,
 
                   gtk_text_buffer_insert_paintable (buffer, iter, paintable);
 
-                  restore_range (r);
-                  r = NULL;
+                  g_clear_pointer (&r, restore_range);
 
                   gtk_text_iter_forward_char (&range_end);
 
@@ -1656,8 +1651,7 @@ insert_range_untagged (GtkTextBuffer     *buffer,
                              &range_end,
                              interactive);
 
-          restore_range (r);
-          r = NULL;
+          g_clear_pointer (&r, restore_range);
 
           range_start = range_end;
         }
@@ -1721,8 +1715,7 @@ insert_range_not_inside_self (GtkTextBuffer     *buffer,
 
       insert_range_untagged (buffer, iter, &range_start, &range_end, interactive);
 
-      restore_range (r);
-      r = NULL;
+      g_clear_pointer (&r, restore_range);
 
       if (insert_tags)
         {

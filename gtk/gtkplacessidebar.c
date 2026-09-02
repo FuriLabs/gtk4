@@ -234,24 +234,25 @@ enum {
 };
 
 /* Names for themed icons */
-#define ICON_NAME_HOME     "user-home-symbolic"
-#define ICON_NAME_DESKTOP  "user-desktop-symbolic"
-#define ICON_NAME_FILESYSTEM     "drive-harddisk-symbolic"
-#define ICON_NAME_EJECT    "media-eject-symbolic"
-#define ICON_NAME_NETWORK  "network-workgroup-symbolic"
-#define ICON_NAME_NETWORK_SERVER "network-server-symbolic"
-#define ICON_NAME_FOLDER_NETWORK "folder-remote-symbolic"
-#define ICON_NAME_OTHER_LOCATIONS "list-add-symbolic"
+#define ICON_NAME_HOME                  "user-home-symbolic"
+#define ICON_NAME_DESKTOP               "user-desktop-symbolic"
+#define ICON_NAME_FILESYSTEM            "drive-harddisk-symbolic"
+#define ICON_NAME_EJECT                 "media-eject-symbolic"
+#define ICON_NAME_NETWORK               "network-workgroup-symbolic"
+#define ICON_NAME_NETWORK_SERVER        "network-server-symbolic"
+#define ICON_NAME_OTHER_LOCATIONS       "list-add-symbolic"
 
 #define ICON_NAME_FOLDER                "folder-symbolic"
-#define ICON_NAME_FOLDER_DESKTOP  "user-desktop-symbolic"
+#define ICON_NAME_FOLDER_DESKTOP        "user-desktop-symbolic"
 #define ICON_NAME_FOLDER_DOCUMENTS      "folder-documents-symbolic"
 #define ICON_NAME_FOLDER_DOWNLOAD       "folder-download-symbolic"
-#define ICON_NAME_FOLDER_MUSIC    "folder-music-symbolic"
+#define ICON_NAME_FOLDER_MUSIC          "folder-music-symbolic"
+#define ICON_NAME_FOLDER_NETWORK        "folder-remote-symbolic"
 #define ICON_NAME_FOLDER_PICTURES       "folder-pictures-symbolic"
 #define ICON_NAME_FOLDER_PUBLIC_SHARE   "folder-publicshare-symbolic"
 #define ICON_NAME_FOLDER_TEMPLATES      "folder-templates-symbolic"
-#define ICON_NAME_FOLDER_VIDEOS   "folder-videos-symbolic"
+#define ICON_NAME_FOLDER_VIDEOS         "folder-videos-symbolic"
+#define ICON_NAME_FOLDER_PROJECTS       "folder-projects-symbolic"
 #define ICON_NAME_FOLDER_SAVED_SEARCH   "folder-saved-search-symbolic"
 
 static guint places_sidebar_signals [LAST_SIGNAL] = { 0 };
@@ -489,6 +490,7 @@ special_directory_get_gicon (GUserDirectory directory)
     ICON_CASE (DOWNLOAD);
     ICON_CASE (MUSIC);
     ICON_CASE (PICTURES);
+    ICON_CASE (PROJECTS);
     ICON_CASE (PUBLIC_SHARE);
     ICON_CASE (TEMPLATES);
     ICON_CASE (VIDEOS);
@@ -1083,8 +1085,7 @@ update_places (GtkPlacesSidebar *sidebar)
     {
         g_signal_handlers_disconnect_by_data (l->data, sidebar);
     }
-  g_list_free_full (sidebar->unready_accounts, g_object_unref);
-  sidebar->unready_accounts = NULL;
+  g_clear_list (&sidebar->unready_accounts, g_object_unref);
   for (l = cloud_providers; l != NULL; l = l->next)
     {
       cloud_provider = CLOUD_PROVIDERS_PROVIDER (l->data);
@@ -2406,8 +2407,7 @@ show_rename_popover (GtkSidebarRow *row)
 
   create_rename_popover (sidebar);
 
-  if (sidebar->rename_uri)
-    g_free (sidebar->rename_uri);
+  g_free (sidebar->rename_uri);
   sidebar->rename_uri = g_strdup (uri);
 
   gtk_editable_set_text (GTK_EDITABLE (sidebar->rename_entry), name);
@@ -3978,22 +3978,14 @@ gtk_places_sidebar_dispose (GObject *object)
       g_clear_object (&sidebar->cancellable);
     }
 
-  if (sidebar->bookmarks_manager != NULL)
-    {
-      _gtk_bookmarks_manager_free (sidebar->bookmarks_manager);
-      sidebar->bookmarks_manager = NULL;
-    }
+  g_clear_pointer (&sidebar->bookmarks_manager, _gtk_bookmarks_manager_free);
 
   g_clear_pointer (&sidebar->popover, gtk_widget_unparent);
 
-  if (sidebar->rename_popover)
-    {
-      gtk_widget_unparent (sidebar->rename_popover);
-      sidebar->rename_popover = NULL;
-      sidebar->rename_entry = NULL;
-      sidebar->rename_button = NULL;
-      sidebar->rename_error = NULL;
-    }
+  g_clear_pointer (&sidebar->rename_popover, gtk_widget_unparent);
+  sidebar->rename_entry = NULL;
+  sidebar->rename_button = NULL;
+  sidebar->rename_error = NULL;
 
   if (sidebar->trash_monitor)
     {
@@ -4001,10 +3993,7 @@ gtk_places_sidebar_dispose (GObject *object)
       g_clear_object (&sidebar->trash_monitor);
     }
 
-  if (sidebar->trash_row)
-    {
-      g_clear_weak_pointer (&sidebar->trash_row);
-    }
+  g_clear_weak_pointer (&sidebar->trash_row);
 
   if (sidebar->volume_monitor != NULL)
     {
@@ -4037,8 +4026,7 @@ gtk_places_sidebar_dispose (GObject *object)
     {
         g_signal_handlers_disconnect_by_data (l->data, sidebar);
     }
-  g_list_free_full (sidebar->unready_accounts, g_object_unref);
-  sidebar->unready_accounts = NULL;
+  g_clear_list (&sidebar->unready_accounts, g_object_unref);
   if (sidebar->cloud_manager)
     {
       g_signal_handlers_disconnect_by_data (sidebar->cloud_manager, sidebar);

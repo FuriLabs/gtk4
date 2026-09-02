@@ -944,12 +944,11 @@ clipboard_store_finished (GObject      *source,
     g_main_loop_quit (store->store_loop);
 }
 
-static gboolean
+static void
 sync_timed_out_cb (ClipboardStore *store)
 {
   store->timeout_id = 0;
   g_main_loop_quit (store->store_loop);
-  return G_SOURCE_REMOVE;
 }
 
 void
@@ -981,7 +980,7 @@ gtk_main_sync (void)
   g_slist_free (displays);
 
   store.store_loop = g_main_loop_new (NULL, TRUE);
-  store.timeout_id = g_timeout_add_seconds (10, (GSourceFunc) sync_timed_out_cb, &store);
+  store.timeout_id = g_timeout_add_seconds_once (10, (GSourceOnceFunc) sync_timed_out_cb, &store);
   gdk_source_set_static_name_by_id (store.timeout_id, "[gtk] gtk_main_sync clipboard store timeout");
 
   if (g_main_loop_is_running (store.store_loop))

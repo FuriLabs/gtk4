@@ -31,16 +31,7 @@
 G_BEGIN_DECLS
 
 #define GDK_TYPE_FRAME_CLOCK_IDLE            (gdk_frame_clock_idle_get_type ())
-#define GDK_FRAME_CLOCK_IDLE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_FRAME_CLOCK_IDLE, GdkFrameClockIdle))
-#define GDK_FRAME_CLOCK_IDLE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_FRAME_CLOCK_IDLE, GdkFrameClockIdleClass))
-#define GDK_IS_FRAME_CLOCK_IDLE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_FRAME_CLOCK_IDLE))
-#define GDK_IS_FRAME_CLOCK_IDLE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_FRAME_CLOCK_IDLE))
-#define GDK_FRAME_CLOCK_IDLE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_FRAME_CLOCK_IDLE, GdkFrameClockIdleClass))
-
-
-typedef struct _GdkFrameClockIdle              GdkFrameClockIdle;
-typedef struct _GdkFrameClockIdlePrivate       GdkFrameClockIdlePrivate;
-typedef struct _GdkFrameClockIdleClass         GdkFrameClockIdleClass;
+GDK_DECLARE_INTERNAL_TYPE (GdkFrameClockIdle, gdk_frame_clock_idle, GDK, FRAME_CLOCK_IDLE, GdkFrameClock)
 
 struct _GdkFrameClockIdle
 {
@@ -52,9 +43,6 @@ struct _GdkFrameClockIdleClass
   GdkFrameClockClass parent_class;
 };
 
-GType           gdk_frame_clock_idle_get_type       (void) G_GNUC_CONST;
-
 GdkFrameClock *_gdk_frame_clock_idle_new            (void);
 
 G_END_DECLS
-

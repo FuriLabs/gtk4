@@ -129,8 +129,7 @@ node_pattern_parse (const char **string)
 
       if (pattern->type == 0)
         {
-          node_pattern_free (pattern);
-          pattern = NULL;
+          g_clear_pointer (&pattern, node_pattern_free);
         }
       else
         {

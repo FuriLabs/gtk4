@@ -14,10 +14,6 @@ fill {
     bounds: 40 40 35 40;
     color: rgba(0,128,0,0.75);
   }
-  path: "\
-M 40 40\
-L 50 80\
-L 75 55\
-Z";
+  path: "M 40 40 L 50 80 L 75 55 Z";
   fill-rule: winding;
 }

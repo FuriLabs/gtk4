@@ -17,19 +17,15 @@
 
 #pragma once
 
-#include "gdk/gdkclipboard.h"
+#include "gdk/gdkclipboardprivate.h"
 
 #include <wayland-client.h>
 
 G_BEGIN_DECLS
 
 #define GDK_TYPE_WAYLAND_CLIPBOARD    (gdk_wayland_clipboard_get_type ())
-#define GDK_WAYLAND_CLIPBOARD(obj)    (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_WAYLAND_CLIPBOARD, GdkWaylandClipboard))
-#define GDK_IS_WAYLAND_CLIPBOARD(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_WAYLAND_CLIPBOARD))
 
-typedef struct _GdkWaylandClipboard GdkWaylandClipboard;
-
-GType                   gdk_wayland_clipboard_get_type              (void) G_GNUC_CONST;
+G_DECLARE_FINAL_TYPE (GdkWaylandClipboard, gdk_wayland_clipboard, GDK, WAYLAND_CLIPBOARD, GdkClipboard)
 
 GdkClipboard *          gdk_wayland_clipboard_new                   (GdkDisplay             *display);
 
@@ -38,4 +34,3 @@ void                    gdk_wayland_clipboard_claim_remote          (GdkWaylandC
                                                                      GdkContentFormats      *formats);
 
 G_END_DECLS
-

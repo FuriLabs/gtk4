@@ -49,6 +49,7 @@
 #include "gdkseatprivate.h"
 
 #include "gsk/gskrectprivate.h"
+#include "gsk/gskrendernode.h"
 
 #include <math.h>
 
@@ -78,6 +79,7 @@ struct _GdkSurfacePrivate
   cairo_rectangle_int_t opaque_rect; /* This is different from the region */
 
   GdkDrawContext *attached_context;
+  GskRenderNode *content;
   gpointer widget;
 
   GdkColorState *color_state;
@@ -1054,13 +1056,7 @@ _gdk_surface_destroy_hierarchy (GdkSurface *surface,
     }
 
   if (surface->frame_clock)
-    {
-      if (surface->parent == NULL)
-        g_object_run_dispose (G_OBJECT (surface->frame_clock));
-      gdk_surface_set_frame_clock (surface, NULL);
-    }
-
-  _gdk_surface_clear_update_area (surface);
+    gdk_surface_set_frame_clock (surface, NULL);
 
   g_object_unref (surface);
 }
@@ -1492,25 +1488,6 @@ gdk_surface_invalidate_region (GdkSurface          *surface,
 }
 
 /*
- * _gdk_surface_clear_update_area:
- * @surface: a `GdkSurface`
- *
- * Internal function to clear the update area for a surface.
- * This is called when the surface is hidden or destroyed.
- */
-void
-_gdk_surface_clear_update_area (GdkSurface *surface)
-{
-  g_return_if_fail (GDK_IS_SURFACE (surface));
-
-  if (surface->update_area)
-    {
-      cairo_region_destroy (surface->update_area);
-      surface->update_area = NULL;
-    }
-}
-
-/*
  * gdk_surface_freeze_updates:
  * @surface: a `GdkSurface`
  *
@@ -1708,6 +1685,9 @@ gdk_surface_hide (GdkSurface *surface)
   gdk_surface_queue_set_is_mapped (surface, FALSE);
 
   GDK_SURFACE_GET_CLASS (surface)->hide (surface);
+
+  gdk_surface_set_content (surface, NULL);
+  g_clear_pointer (&surface->update_area, cairo_region_destroy);
 
   surface->popup.rect_anchor = 0;
   surface->popup.surface_anchor = 0;
@@ -3104,4 +3084,46 @@ gdk_surface_get_attached_context (GdkSurface *self)
   GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
 
   return priv->attached_context;
+}
+
+/*<private>
+ * gdk_surface_set_content:
+ * @self: the surface
+ * @content: (nullable): the render node describing the content
+ *
+ * This function may only be called by gdk_draw_context_begin_frame().
+ *
+ * Use the attached draw context to render a new render node.
+ **/
+void
+gdk_surface_set_content (GdkSurface    *self,
+                         GskRenderNode *content)
+{
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
+
+  g_clear_pointer (&priv->content, gsk_render_node_unref);
+
+  if (content)
+    priv->content = gsk_render_node_ref (content);
+}
+
+/*<private>
+ * gdk_surface_get_content:
+ * @self: the surface
+ *
+ * Gets the content for this surface. If the surface is hidden its content
+ * will be cleared.
+ *
+ * An implementation detail for backends is that this value will be updated
+ * before `GdkDrawContext::begin_frame()` is called, so implementations can
+ * use this function to inspect the node that is drawn.
+ *
+ * Returns: (nullable): The content that this surface will draw.
+ **/
+GskRenderNode *
+gdk_surface_get_content (GdkSurface *self)
+{
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
+
+  return priv->content;
 }

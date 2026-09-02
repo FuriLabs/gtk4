@@ -27,18 +27,9 @@
 G_BEGIN_DECLS
 
 #define GDK_TYPE_CONTENT_PROVIDER            (gdk_content_provider_get_type ())
-#define GDK_CONTENT_PROVIDER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_CONTENT_PROVIDER, GdkContentProvider))
-#define GDK_IS_CONTENT_PROVIDER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_CONTENT_PROVIDER))
-#define GDK_CONTENT_PROVIDER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_CONTENT_PROVIDER, GdkContentProviderClass))
-#define GDK_IS_CONTENT_PROVIDER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_CONTENT_PROVIDER))
-#define GDK_CONTENT_PROVIDER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_CONTENT_PROVIDER, GdkContentProviderClass))
 
-typedef struct _GdkContentProviderClass GdkContentProviderClass;
-
-struct _GdkContentProvider
-{
-  GObject parent;
-};
+GDK_AVAILABLE_IN_ALL
+G_DECLARE_DERIVABLE_TYPE (GdkContentProvider, gdk_content_provider, GDK, CONTENT_PROVIDER, GObject)
 
 /**
  * GdkContentProviderClass:
@@ -80,10 +71,6 @@ struct _GdkContentProviderClass
   gpointer padding[8];
 };
 
-
-GDK_AVAILABLE_IN_ALL
-GType                   gdk_content_provider_get_type                   (void) G_GNUC_CONST;
-
 GDK_AVAILABLE_IN_ALL
 GdkContentFormats *     gdk_content_provider_ref_formats                (GdkContentProvider     *provider);
 GDK_AVAILABLE_IN_ALL
@@ -109,7 +96,4 @@ gboolean                gdk_content_provider_get_value                  (GdkCont
                                                                          GValue                 *value,
                                                                          GError                **error);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GdkContentProvider, g_object_unref)
-
 G_END_DECLS
-

@@ -38,7 +38,7 @@ G_BEGIN_DECLS
 typedef struct _GtkGestureClass GtkGestureClass;
 
 GDK_AVAILABLE_IN_ALL
-GType       gtk_gesture_get_type             (void) G_GNUC_CONST;
+GType       gtk_gesture_get_type             (void);
 
 GDK_AVAILABLE_IN_ALL
 GdkDevice * gtk_gesture_get_device           (GtkGesture       *gesture);

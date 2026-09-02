@@ -1074,11 +1074,7 @@ gtk_tree_model_filter_prune_level (GtkTreeModelFilter *filter,
     gtk_tree_model_filter_real_unref_node (GTK_TREE_MODEL (filter),
                                            &f_iter, TRUE, TRUE);
 
-  if (elt->visible_siter)
-    {
-      g_sequence_remove (elt->visible_siter);
-      elt->visible_siter = NULL;
-    }
+  g_clear_pointer (&elt->visible_siter, g_sequence_remove);
 
   /* Remove the other elts */
   end_siter = g_sequence_get_end_iter (level->seq);
@@ -1102,11 +1098,7 @@ gtk_tree_model_filter_prune_level (GtkTreeModelFilter *filter,
         gtk_tree_model_filter_real_unref_node (GTK_TREE_MODEL (filter),
                                                &f_iter, FALSE, TRUE);
 
-      if (elt->visible_siter)
-        {
-          g_sequence_remove (elt->visible_siter);
-          elt->visible_siter = NULL;
-        }
+      g_clear_pointer (&elt->visible_siter, g_sequence_remove);
     }
 
   /* Remove [begin + 1, end] */
@@ -1665,8 +1657,7 @@ gtk_tree_model_filter_remove_elt_from_level (GtkTreeModelFilter *filter,
   length = g_sequence_get_length (level->seq);
 
   /* first register the node to be invisible */
-  g_sequence_remove (elt->visible_siter);
-  elt->visible_siter = NULL;
+  g_clear_pointer (&elt->visible_siter, g_sequence_remove);
 
   /*
    * If level != root level and the number of visible nodes is 0 (ie. this

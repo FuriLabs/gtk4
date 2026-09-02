@@ -1,47 +1,47 @@
 a {
-  font-stretch: initial;
+  font-width: initial;
 }
 
 b {
-  font-stretch: inherit;
+  font-width: inherit;
 }
 
 c {
-  font-stretch: unset;
+  font-width: unset;
 }
 
 d {
-  font-stretch: ultra-condensed;
+  font-width: ultra-condensed;
 }
 
 e {
-  font-stretch: extra-condensed;
+  font-width: extra-condensed;
 }
 
 f {
-  font-stretch: condensed;
+  font-width: condensed;
 }
 
 g {
-  font-stretch: semi-condensed;
+  font-width: semi-condensed;
 }
 
 h {
-  font-stretch: normal;
+  font-width: normal;
 }
 
 i {
-  font-stretch: semi-expanded;
+  font-width: semi-expanded;
 }
 
 j {
-  font-stretch: expanded;
+  font-width: expanded;
 }
 
 k {
-  font-stretch: extra-expanded;
+  font-width: extra-expanded;
 }
 
 l {
-  font-stretch: ultra-expanded;
+  font-width: ultra-expanded;
 }

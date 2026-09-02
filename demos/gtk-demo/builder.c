@@ -37,15 +37,13 @@ remove_timeout (gpointer data)
   g_source_remove (id);
 }
 
-static int
+static void
 pop_message (gpointer data)
 {
   GtkWidget *status = data;
 
   gtk_label_set_label (GTK_LABEL (status), "");
   g_object_set_data (G_OBJECT (status), "timeout", GUINT_TO_POINTER (0));
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -60,7 +58,7 @@ status_message (GtkWidget  *status,
 
   gtk_label_set_text (GTK_LABEL (status), text);
 
-  id = g_timeout_add (5000, pop_message, status);
+  id = g_timeout_add_once (5000, pop_message, status);
 
   g_object_set_data_full (G_OBJECT (status), "timeout", GUINT_TO_POINTER (id), remove_timeout);
 }

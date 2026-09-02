@@ -437,8 +437,7 @@ unix_end_run (GtkPrintOperation *op,
       g_object_ref (op);
       if (!op_unix->data_sent)
         g_main_loop_run (op_unix->loop);
-      g_main_loop_unref (op_unix->loop);
-      op_unix->loop = NULL;
+      g_clear_pointer (&op_unix->loop, g_main_loop_unref);
       g_object_unref (op);
     }
 }
@@ -924,8 +923,7 @@ gtk_print_operation_unix_run_dialog (GtkPrintOperation *op,
 
       rdata.loop = g_main_loop_new (NULL, FALSE);
       g_main_loop_run (rdata.loop);
-      g_main_loop_unref (rdata.loop);
-      rdata.loop = NULL;
+      g_clear_pointer (&rdata.loop, g_main_loop_unref);
     }
   else
     {
@@ -938,8 +936,7 @@ gtk_print_operation_unix_run_dialog (GtkPrintOperation *op,
                     (GFunc) found_printer, &rdata);
 
       g_main_loop_run (rdata.loop);
-      g_main_loop_unref (rdata.loop);
-      rdata.loop = NULL;
+      g_clear_pointer (&rdata.loop, g_main_loop_unref);
     }
 
   *do_print = rdata.do_print;
@@ -1050,8 +1047,7 @@ gtk_print_run_page_setup_dialog (GtkWindow        *parent,
   gtk_window_present (GTK_WINDOW (dialog));
 
   g_main_loop_run (rdata.loop);
-  g_main_loop_unref (rdata.loop);
-  rdata.loop = NULL;
+  g_clear_pointer (&rdata.loop, g_main_loop_unref);
 
   if (rdata.page_setup)
     return rdata.page_setup;

@@ -118,7 +118,7 @@ struct _GtkPrinterCupsClass
 
 };
 
-GType                    gtk_printer_cups_get_type      (void) G_GNUC_CONST;
+GType                    gtk_printer_cups_get_type      (void);
 
 GtkPrinterCups          *gtk_printer_cups_new           (const char      *name,
                                                          GtkPrintBackend *backend,

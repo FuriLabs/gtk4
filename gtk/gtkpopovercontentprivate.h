@@ -43,7 +43,7 @@ struct _GtkPopoverContentClass
   GtkWidgetClass parent_class;
 };
 
-GType      gtk_popover_content_get_type (void) G_GNUC_CONST;
+GType      gtk_popover_content_get_type (void);
 
 GtkWidget *gtk_popover_content_new (void);
 

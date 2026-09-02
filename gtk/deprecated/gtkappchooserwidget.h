@@ -40,7 +40,7 @@ G_BEGIN_DECLS
 typedef struct _GtkAppChooserWidget        GtkAppChooserWidget;
 
 GDK_AVAILABLE_IN_ALL
-GType         gtk_app_chooser_widget_get_type             (void) G_GNUC_CONST;
+GType         gtk_app_chooser_widget_get_type             (void);
 
 GDK_DEPRECATED_IN_4_10
 GtkWidget *   gtk_app_chooser_widget_new                  (const char          *content_type);

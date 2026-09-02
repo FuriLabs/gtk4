@@ -97,7 +97,7 @@ gtk_gesture_long_press_check (GtkGesture *gesture)
   return GTK_GESTURE_CLASS (gtk_gesture_long_press_parent_class)->check (gesture);
 }
 
-static gboolean
+static void
 _gtk_gesture_long_press_timeout (gpointer user_data)
 {
   GtkGestureLongPress *gesture = user_data;
@@ -112,8 +112,6 @@ _gtk_gesture_long_press_timeout (gpointer user_data)
   priv->timeout_id = 0;
   priv->triggered = TRUE;
   g_signal_emit (gesture, signals[PRESSED], 0, x, y);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -148,7 +146,7 @@ gtk_gesture_long_press_begin (GtkGesture       *gesture,
 
   gtk_gesture_get_point (gesture, sequence,
                          &priv->initial_x, &priv->initial_y);
-  priv->timeout_id = g_timeout_add (delay, _gtk_gesture_long_press_timeout, gesture);
+  priv->timeout_id = g_timeout_add_once (delay, _gtk_gesture_long_press_timeout, gesture);
   gdk_source_set_static_name_by_id (priv->timeout_id, "[gtk] _gtk_gesture_long_press_timeout");
 }
 

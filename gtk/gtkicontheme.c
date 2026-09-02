@@ -1149,12 +1149,12 @@ gtk_icon_theme_set_display (GtkIconTheme *self,
                              G_CALLBACK (display_closed__mainthread_unlocked),
                              gtk_icon_theme_ref_ref (self->ref),
                              (GClosureNotify)gtk_icon_theme_ref_unref,
-                             0);
+                             G_CONNECT_DEFAULT);
       g_signal_connect_data (self->display_settings, "notify::gtk-icon-theme-name",
                              G_CALLBACK (theme_changed__mainthread_unlocked),
                              gtk_icon_theme_ref_ref (self->ref),
                              (GClosureNotify)gtk_icon_theme_ref_unref,
-                             0);
+                             G_CONNECT_DEFAULT);
 
       g_object_notify_by_pspec (G_OBJECT (self), props[PROP_DISPLAY]);
     }

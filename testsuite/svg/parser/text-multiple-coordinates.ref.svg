@@ -1,0 +1,35 @@
+<svg
+        xmlns='http://www.w3.org/2000/svg'
+        xmlns:svg='http://www.w3.org/2000/svg'
+        id='svg1'
+        font-size='64'
+        font-family='Noto Sans'
+        viewBox='0 0 200 200'>
+  <title>Multiple coordinates</title>
+  <path
+          id='crosshair'
+          stroke='rgb(128,128,128)'
+          stroke-width='0.5'
+          d='M 20 100 L 180 100 M 100 20 L 100 180'>
+  </path>
+  <text
+          id='text1'
+          x='33'>
+        
+    <tspan
+            id='tspan1'
+            y='100 110 120 130 20'>T
+      <tspan
+              id='tspan2'
+              y='50'>ex</tspan></tspan>t
+    </text>
+  <rect
+          id='frame'
+          fill='none'
+          stroke='rgb(0,0,0)'
+          x='1'
+          y='1'
+          width='198'
+          height='198'>
+  </rect>
+</svg>

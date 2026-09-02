@@ -44,7 +44,7 @@ struct _GdkBroadwaySeatClass
   GdkSeatClass parent_class;
 };
 
-GType     gdk_broadway_seat_get_type     (void) G_GNUC_CONST;
+GType     gdk_broadway_seat_get_type     (void);
 
 GdkSeat * gdk_broadway_seat_new_for_logical_pair    (GdkDevice     *pointer,
                                                      GdkDevice     *keyboard);

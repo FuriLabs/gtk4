@@ -123,7 +123,7 @@ struct _RoundtripState
   gpointer data;
 };
 
-static gboolean
+static void
 callback_idle (gpointer data)
 {
   SendEventState *state = (SendEventState *)data;  
@@ -131,8 +131,6 @@ callback_idle (gpointer data)
   state->callback (state->window, !state->have_error, state->data);
 
   g_free (state);
-
-  return G_SOURCE_REMOVE;
 }
 
 static Bool
@@ -172,7 +170,7 @@ send_event_handler (Display *dpy,
       if (state->callback)
         {
           guint id;
-          id = g_idle_add (callback_idle, state);
+          id = g_idle_add_once (callback_idle, state);
           gdk_source_set_static_name_by_id (id, "[gtk] callback_idle");
         }
 
@@ -667,7 +665,7 @@ _gdk_x11_get_window_child_info (GdkDisplay       *display,
   return !state.have_error;
 }
 
-static gboolean
+static void
 roundtrip_callback_idle (gpointer data)
 {
   RoundtripState *state = (RoundtripState *)data;  
@@ -675,8 +673,6 @@ roundtrip_callback_idle (gpointer data)
   state->callback (state->display, state->data, state->get_input_focus_req);
 
   g_free (state);
-
-  return G_SOURCE_REMOVE;
 }
 
 static Bool
@@ -708,7 +704,7 @@ roundtrip_handler (Display *dpy,
       if (state->callback)
         {
           guint id;
-          id = g_idle_add (roundtrip_callback_idle, state);
+          id = g_idle_add_once (roundtrip_callback_idle, state);
           gdk_source_set_static_name_by_id (id, "[gtk] roundtrip_callback_idle");
         }
 

@@ -19,14 +19,8 @@
 
 #pragma once
 
-typedef struct _GdkSeatClass GdkSeatClass;
-
 #include "gdkseat.h"
 #include "gdkdeviceprivate.h"
-
-#define GDK_SEAT_CLASS(c)     (G_TYPE_CHECK_CLASS_CAST ((c), GDK_TYPE_SEAT, GdkSeatClass))
-#define GDK_IS_SEAT_CLASS(c)  (G_TYPE_CHECK_CLASS_TYPE ((c), GDK_TYPE_SEAT))
-#define GDK_SEAT_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), GDK_TYPE_SEAT, GdkSeatClass))
 
 struct _GdkSeatClass
 {

@@ -238,7 +238,8 @@ gsk_isolation_node_new (GskRenderNode *child,
 
   self = gsk_render_node_alloc (GSK_TYPE_ISOLATION_NODE);
   node = (GskRenderNode *) self;
-  node->fully_opaque = child->fully_opaque;
+  node->fully_opaque = gsk_render_node_is_fully_opaque (child);
+  node->bilevel_opacity = gsk_render_node_is_bilevel_opacity (child);
 
   self->child = gsk_render_node_ref (child);
   self->isolations = isolations;
@@ -247,7 +248,11 @@ gsk_isolation_node_new (GskRenderNode *child,
 
   node->preferred_depth = gsk_render_node_get_preferred_depth (child);
   node->is_hdr = gsk_render_node_is_hdr (child);
-  if (!gsk_isolation_node_is_isolating (self, GSK_ISOLATION_BACKGROUND))
+  if (gsk_isolation_node_is_isolating (self, GSK_ISOLATION_BACKGROUND))
+    {
+      node->isolates_background = TRUE;
+    }
+  else
     {
       node->clears_background = gsk_render_node_clears_background (child);
       node->copy_mode = gsk_render_node_get_copy_mode (child);

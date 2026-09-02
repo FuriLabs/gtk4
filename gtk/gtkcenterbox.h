@@ -40,7 +40,7 @@ typedef struct _GtkCenterBox             GtkCenterBox;
 typedef struct _GtkCenterBoxClass        GtkCenterBoxClass;
 
 GDK_AVAILABLE_IN_ALL
-GType      gtk_center_box_get_type (void) G_GNUC_CONST;
+GType      gtk_center_box_get_type (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkWidget *gtk_center_box_new (void);

@@ -4584,7 +4584,7 @@ tracking_label (GtkWidget *window)
   g_signal_connect_object (gtk_native_get_surface (GTK_NATIVE (window)), "notify::state",
                            G_CALLBACK (surface_state_callback),
                            label,
-                           0);
+                           G_CONNECT_DEFAULT);
 
   button = gtk_button_new_with_label ("Unminimize");
   g_signal_connect_object (button,

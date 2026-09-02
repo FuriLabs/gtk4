@@ -43,7 +43,7 @@ G_BEGIN_DECLS
 typedef struct _GtkSearchBar        GtkSearchBar;
 
 GDK_AVAILABLE_IN_ALL
-GType       gtk_search_bar_get_type        (void) G_GNUC_CONST;
+GType       gtk_search_bar_get_type        (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkWidget*  gtk_search_bar_new             (void);

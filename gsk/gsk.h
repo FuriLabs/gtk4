@@ -19,6 +19,8 @@
 
 #define __GSK_H_INSIDE__
 
+#include <gdk/gdk.h>
+
 #include <gsk/gskblendnode.h>
 #include <gsk/gskblurnode.h>
 #include <gsk/gskbordernode.h>

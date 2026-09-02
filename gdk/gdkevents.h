@@ -364,9 +364,9 @@ typedef enum
 } GdkCrossingMode;
 
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_event_get_type              (void) G_GNUC_CONST;
+GType                   gdk_event_get_type              (void);
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_event_sequence_get_type     (void) G_GNUC_CONST;
+GType                   gdk_event_sequence_get_type     (void);
 
 GDK_AVAILABLE_IN_ALL
 GdkEvent *              gdk_event_ref                   (GdkEvent *event);
@@ -419,11 +419,11 @@ GDK_AVAILABLE_IN_ALL
 gboolean                gdk_event_get_pointer_emulated (GdkEvent *event);
 
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_button_event_get_type       (void) G_GNUC_CONST;
+GType                   gdk_button_event_get_type       (void);
 GDK_AVAILABLE_IN_ALL
 guint                   gdk_button_event_get_button     (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_scroll_event_get_type       (void) G_GNUC_CONST;
+GType                   gdk_scroll_event_get_type       (void);
 GDK_AVAILABLE_IN_ALL
 GdkScrollDirection      gdk_scroll_event_get_direction  (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
@@ -439,7 +439,7 @@ GDK_AVAILABLE_IN_4_20
 GdkScrollRelativeDirection
                         gdk_scroll_event_get_relative_direction (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_key_event_get_type          (void) G_GNUC_CONST;
+GType                   gdk_key_event_get_type          (void);
 GDK_AVAILABLE_IN_ALL
 guint                   gdk_key_event_get_keyval        (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
@@ -453,15 +453,15 @@ guint                   gdk_key_event_get_level         (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
 gboolean                gdk_key_event_is_modifier       (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_focus_event_get_type        (void) G_GNUC_CONST;
+GType                   gdk_focus_event_get_type        (void);
 GDK_AVAILABLE_IN_ALL
 gboolean                gdk_focus_event_get_in          (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_touch_event_get_type        (void) G_GNUC_CONST;
+GType                   gdk_touch_event_get_type        (void);
 GDK_AVAILABLE_IN_ALL
 gboolean                gdk_touch_event_get_emulating_pointer (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_crossing_event_get_type     (void) G_GNUC_CONST;
+GType                   gdk_crossing_event_get_type     (void);
 GDK_AVAILABLE_IN_ALL
 GdkCrossingMode         gdk_crossing_event_get_mode     (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
@@ -469,7 +469,7 @@ GdkNotifyType           gdk_crossing_event_get_detail   (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
 gboolean                gdk_crossing_event_get_focus    (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_touchpad_event_get_type     (void) G_GNUC_CONST;
+GType                   gdk_touchpad_event_get_type     (void);
 GDK_AVAILABLE_IN_ALL
 GdkTouchpadGesturePhase
                         gdk_touchpad_event_get_gesture_phase (GdkEvent *event);
@@ -484,7 +484,7 @@ double                  gdk_touchpad_event_get_pinch_angle_delta (GdkEvent *even
 GDK_AVAILABLE_IN_ALL
 double                  gdk_touchpad_event_get_pinch_scale       (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_pad_event_get_type          (void) G_GNUC_CONST;
+GType                   gdk_pad_event_get_type          (void);
 GDK_AVAILABLE_IN_ALL
 guint                   gdk_pad_event_get_button        (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
@@ -496,23 +496,23 @@ void                    gdk_pad_event_get_group_mode    (GdkEvent *event,
                                                          guint    *group,
                                                          guint    *mode);
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_dnd_event_get_type          (void) G_GNUC_CONST;
+GType                   gdk_dnd_event_get_type          (void);
 GDK_AVAILABLE_IN_ALL
 GdkDrop *               gdk_dnd_event_get_drop          (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_grab_broken_event_get_type  (void) G_GNUC_CONST;
+GType                   gdk_grab_broken_event_get_type  (void);
 GDK_AVAILABLE_IN_ALL
 GdkSurface *            gdk_grab_broken_event_get_grab_surface (GdkEvent *event);
 GDK_AVAILABLE_IN_ALL
 gboolean                gdk_grab_broken_event_get_implicit     (GdkEvent *event);
 
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_motion_event_get_type       (void) G_GNUC_CONST;
+GType                   gdk_motion_event_get_type       (void);
 
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_delete_event_get_type       (void) G_GNUC_CONST;
+GType                   gdk_delete_event_get_type       (void);
 GDK_AVAILABLE_IN_ALL
-GType                   gdk_proximity_event_get_type    (void) G_GNUC_CONST;
+GType                   gdk_proximity_event_get_type    (void);
 
 GDK_AVAILABLE_IN_ALL
 gboolean                gdk_event_triggers_context_menu (GdkEvent *event);

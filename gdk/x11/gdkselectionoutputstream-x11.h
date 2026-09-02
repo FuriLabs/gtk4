@@ -51,7 +51,7 @@ struct GdkX11SelectionOutputStreamClass
 };
 
 
-GType           gdk_x11_selection_output_stream_get_type        (void) G_GNUC_CONST;
+GType           gdk_x11_selection_output_stream_get_type        (void);
 
 void            gdk_x11_selection_output_streams_create         (GdkDisplay             *display,
                                                                  GdkContentFormats      *formats,

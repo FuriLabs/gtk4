@@ -81,8 +81,7 @@ gdk_win32_gl_context_wgl_dispose (GObject *gobject)
 
       GDK_NOTE (OPENGL, g_print ("Destroying WGL context\n"));
 
-      gdk_win32_private_wglDeleteContext (context_wgl->wgl_context);
-      context_wgl->wgl_context = NULL;
+      g_clear_pointer (&context_wgl->wgl_context, gdk_win32_private_wglDeleteContext);
     }
 
   G_OBJECT_CLASS (gdk_win32_gl_context_wgl_parent_class)->dispose (gobject);
@@ -131,11 +130,6 @@ gdk_win32_gl_context_wgl_end_frame (GdkDrawContext *draw_context,
     }
 
   SwapBuffers (GetDC (GDK_WIN32_GL_CONTEXT (context)->handle));
-}
-
-static void
-gdk_win32_gl_context_wgl_empty_frame (GdkDrawContext *draw_context)
-{
 }
 
 static cairo_region_t *
@@ -1093,7 +1087,6 @@ gdk_win32_gl_context_wgl_class_init (GdkWin32GLContextWGLClass *klass)
   context_class->get_damage = gdk_win32_gl_context_wgl_get_damage;
 
   draw_context_class->end_frame = gdk_win32_gl_context_wgl_end_frame;
-  draw_context_class->empty_frame = gdk_win32_gl_context_wgl_empty_frame;
   draw_context_class->surface_attach = gdk_win32_gl_context_wgl_surface_attach;
   draw_context_class->surface_detach = gdk_win32_gl_context_wgl_surface_detach;
 

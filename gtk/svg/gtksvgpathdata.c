@@ -166,7 +166,6 @@ svg_path_data_parse_full (const char   *string,
   GskPathParser parser = {
     path_data_add_op,
     path_data_add_arc,
-    NULL, NULL, NULL,
   };
   SvgPathOps ops;
   size_t size;

@@ -182,9 +182,17 @@ gtk_search_entry_finalize (GObject *object)
   if (entry->delayed_changed_id > 0)
     g_source_remove (entry->delayed_changed_id);
 
-  gtk_search_entry_set_key_capture_widget (GTK_SEARCH_ENTRY (object), NULL);
-
   G_OBJECT_CLASS (gtk_search_entry_parent_class)->finalize (object);
+}
+
+static void
+gtk_search_entry_dispose (GObject *object)
+{
+  GtkSearchEntry *entry = GTK_SEARCH_ENTRY (object);
+
+  gtk_search_entry_set_key_capture_widget (entry, NULL);
+
+  G_OBJECT_CLASS (gtk_search_entry_parent_class)->dispose (object);
 }
 
 static void
@@ -458,6 +466,7 @@ gtk_search_entry_class_init (GtkSearchEntryClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
+  object_class->dispose = gtk_search_entry_dispose;
   object_class->finalize = gtk_search_entry_finalize;
   object_class->get_property = gtk_search_entry_get_property;
   object_class->set_property = gtk_search_entry_set_property;
@@ -742,15 +751,13 @@ gtk_search_entry_icon_release (GtkGestureClick *press,
   gtk_editable_set_text (GTK_EDITABLE (entry->entry), "");
 }
 
-static gboolean
+static void
 gtk_search_entry_changed_timeout_cb (gpointer user_data)
 {
   GtkSearchEntry *entry = user_data;
 
   g_signal_emit (entry, signals[SEARCH_CHANGED], 0);
   entry->delayed_changed_id = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -758,9 +765,7 @@ reset_timeout (GtkSearchEntry *entry)
 {
   if (entry->delayed_changed_id > 0)
     g_source_remove (entry->delayed_changed_id);
-  entry->delayed_changed_id = g_timeout_add (entry->search_delay,
-                                            gtk_search_entry_changed_timeout_cb,
-                                            entry);
+  entry->delayed_changed_id = g_timeout_add_once (entry->search_delay, gtk_search_entry_changed_timeout_cb, entry);
   gdk_source_set_static_name_by_id (entry->delayed_changed_id, "[gtk] gtk_search_entry_changed_timeout_cb");
 }
 

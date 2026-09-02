@@ -47,7 +47,7 @@ struct _GskGpuDeviceClass
 
 };
 
-GType                   gsk_gpu_device_get_type                         (void) G_GNUC_CONST;
+GType                   gsk_gpu_device_get_type                         (void);
 
 void                    gsk_gpu_device_setup                            (GskGpuDevice           *self,
                                                                          GdkDisplay             *display,

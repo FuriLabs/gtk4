@@ -9,8 +9,7 @@ transform {
       bounds: 0 0 50 50;
       color: rgb(0,80,0);
     }
-    path: "\
-M 0.5 0.5 h 9 v 9 h -9 z";
+    path: rect { outline: 0.5 0.5 9 9; }
     line-width: 1;
     line-cap: butt;
     line-join: miter;

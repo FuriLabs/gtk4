@@ -527,11 +527,7 @@ gtk_app_chooser_widget_dispose (GObject *object)
 
   g_clear_object (&self->selected_app_info);
 
-  if (self->overlay)
-    {
-      gtk_widget_unparent (self->overlay);
-      self->overlay = NULL;
-    }
+  g_clear_pointer (&self->overlay, gtk_widget_unparent);
 
   G_OBJECT_CLASS (gtk_app_chooser_widget_parent_class)->dispose (object);
 }

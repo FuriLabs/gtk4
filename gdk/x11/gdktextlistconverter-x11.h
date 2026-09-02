@@ -31,7 +31,7 @@ G_BEGIN_DECLS
 
 typedef struct _GdkX11TextListConverter   GdkX11TextListConverter;
 
-GType              gdk_x11_text_list_converter_get_type         (void) G_GNUC_CONST;
+GType              gdk_x11_text_list_converter_get_type         (void);
 
 GConverter *       gdk_x11_text_list_converter_to_utf8_new      (GdkDisplay     *display,
                                                                  const char     *encoding,

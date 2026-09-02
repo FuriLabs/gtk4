@@ -429,7 +429,8 @@ delete_one_texture (gpointer data)
   if (texture->gl_texture)
     {
       gdk_gl_texture_release (GDK_GL_TEXTURE (texture->gl_texture));
-      texture->gl_texture = NULL;
+      if (texture->dmabuf_texture == NULL)
+        texture->gl_texture = NULL;
     }
 
   id = gdk_gl_texture_builder_get_id (texture->builder);
@@ -647,18 +648,13 @@ gtk_gl_area_delete_textures (GtkGLArea *area)
 {
   GtkGLAreaPrivate *priv = gtk_gl_area_get_instance_private (area);
 
-  if (priv->texture)
-    {
-      delete_one_texture (priv->texture);
-      priv->texture = NULL;
-    }
+  g_clear_pointer (&priv->texture, delete_one_texture);
 
   /* FIXME: we need to explicitly release all outstanding
    * textures here, otherwise release_texture will get called
    * later and access freed memory.
    */
-  g_list_free_full (priv->textures, delete_one_texture);
-  priv->textures = NULL;
+  g_clear_list (&priv->textures, delete_one_texture);
 }
 
 static void
@@ -734,7 +730,8 @@ release_gl_texture (gpointer data)
       gdk_gl_texture_builder_set_sync (texture->builder, NULL);
     }
 
-  texture->gl_texture = NULL;
+  if (texture->dmabuf_texture == NULL)
+    texture->gl_texture = NULL;
 }
 
 static void
@@ -750,6 +747,9 @@ release_dmabuf_texture (gpointer data)
   gdk_dmabuf_close_fds ((GdkDmabuf *) gdk_dmabuf_texture_get_dmabuf (GDK_DMABUF_TEXTURE (texture->dmabuf_texture)));
 
   texture->dmabuf_texture = NULL;
+
+  if (texture->builder == NULL)
+    g_free (texture);
 }
 
 static void

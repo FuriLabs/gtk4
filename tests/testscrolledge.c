@@ -53,7 +53,7 @@ populate_list (GtkListBox *list)
 static GtkWidget *popup;
 static GtkWidget *spinner;
 
-static gboolean
+static void
 add_rows (gpointer data)
 {
   GtkListBox *list = data;
@@ -63,8 +63,6 @@ add_rows (gpointer data)
 
   populate_list (list);
   add_rows_id = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -78,7 +76,7 @@ edge_overshot (GtkScrolledWindow *sw,
       gtk_widget_set_visible (popup, TRUE);
 
       if (add_rows_id == 0)
-        add_rows_id = g_timeout_add (2000, add_rows, list);
+        add_rows_id = g_timeout_add_once (2000, add_rows, list);
     }
 }
 

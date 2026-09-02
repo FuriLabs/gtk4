@@ -76,18 +76,16 @@ pixbuf_paintable_init (PixbufPaintable *paintable)
 {
 }
 
-static gboolean
+static void
 delay_cb (gpointer data)
 {
   PixbufPaintable *self = data;
   int delay;
 
   delay = gdk_pixbuf_animation_iter_get_delay_time (self->iter);
-  self->timeout = g_timeout_add (delay, delay_cb, self);
+  self->timeout = g_timeout_add_once (delay, delay_cb, self);
 
   gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -105,7 +103,7 @@ pixbuf_paintable_set_resource_path (PixbufPaintable *self,
   self->iter = gdk_pixbuf_animation_get_iter (self->anim, NULL);
 
   delay = gdk_pixbuf_animation_iter_get_delay_time (self->iter);
-  self->timeout = g_timeout_add (delay, delay_cb, self);
+  self->timeout = g_timeout_add_once (delay, delay_cb, self);
 
   gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
 

@@ -93,7 +93,7 @@ GDK_AVAILABLE_IN_ALL
 GQuark gtk_builder_error_quark (void);
 
 GDK_AVAILABLE_IN_ALL
-GType        gtk_builder_get_type                (void) G_GNUC_CONST;
+GType        gtk_builder_get_type                (void);
 GDK_AVAILABLE_IN_ALL
 GtkBuilder*  gtk_builder_new                     (void);
 

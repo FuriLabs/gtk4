@@ -204,8 +204,6 @@ gdk_macos_surface_hide (GdkSurface *surface)
 
   [self->window hide];
 
-  _gdk_surface_clear_update_area (surface);
-
   g_clear_object (&self->buffer);
   g_clear_object (&self->front);
 

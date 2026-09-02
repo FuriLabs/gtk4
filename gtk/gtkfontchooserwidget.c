@@ -2744,11 +2744,7 @@ gtk_font_chooser_widget_update_font_features (GtkFontChooserWidget *fontchooser)
             }
         }
 
-      if (fontchooser->glyphmap)
-        {
-          hb_map_destroy (fontchooser->glyphmap);
-          fontchooser->glyphmap = NULL;
-        }
+      g_clear_pointer (&fontchooser->glyphmap, hb_map_destroy);
     }
 
   g_object_unref (pango_font);

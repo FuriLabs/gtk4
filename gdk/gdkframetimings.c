@@ -21,6 +21,8 @@
 
 #include "gdkframetimingsprivate.h"
 
+#include "gdkenumtypes.h"
+
 /**
  * GdkFrameTimings:
  *
@@ -64,6 +66,33 @@ _gdk_frame_timings_steal (GdkFrameTimings *timings,
     }
 
   return FALSE;
+}
+
+/**
+ * gdk_frame_timings_setup:
+ * @self: the timings
+ * @frame_time: the frame time
+ * @predicted_presentation_time: The predicted presentation time
+ * @frame_start_time: The time this frame started the
+ *   `GDK_FRAME_STAGE_FLUSH_EVENTS` stage
+ * @stage_start_time: The time this frame started the
+ *   `GDK_FRAME_STAGE_BEFORE_PAINT` stage
+ *
+ * Initializes the required values for a `GdkFrameTimings`.
+ *
+ * All provided timestamps are in nanoseconds.
+ **/
+void
+gdk_frame_timings_setup (GdkFrameTimings *self,
+                         uint64_t         frame_time,
+                         uint64_t         predicted_presentation_time,
+                         uint64_t         frame_start_time,
+                         uint64_t         stage_start_time)
+{
+  self->frame_time = frame_time;
+  self->predicted_presentation_time = predicted_presentation_time;
+  self->stage_end_time[GDK_FRAME_STAGE_NONE] = frame_start_time;
+  self->stage_end_time[GDK_FRAME_STAGE_FLUSH_EVENTS] = stage_start_time;
 }
 
 /**
@@ -144,6 +173,9 @@ gdk_frame_timings_get_complete (GdkFrameTimings *timings)
 {
   g_return_val_if_fail (timings != NULL, FALSE);
 
+  if (timings->throttling_hint == 0)
+    return FALSE;
+
   switch (timings->result)
   {
     case GDK_FRAME_PREPARING:
@@ -206,6 +238,14 @@ gdk_frame_timings_get_frame_time (GdkFrameTimings *timings)
 {
   g_return_val_if_fail (timings != NULL, 0);
 
+  return timings->frame_time / 1000;
+}
+
+uint64_t
+gdk_frame_timings_get_frame_time_ns (GdkFrameTimings *timings)
+{
+  g_return_val_if_fail (timings != NULL, 0);
+
   return timings->frame_time;
 }
 
@@ -223,6 +263,14 @@ gdk_frame_timings_get_frame_time (GdkFrameTimings *timings)
  */
 gint64
 gdk_frame_timings_get_presentation_time (GdkFrameTimings *timings)
+{
+  g_return_val_if_fail (timings != NULL, 0);
+
+  return timings->presentation_time / 1000;
+}
+
+uint64_t
+gdk_frame_timings_get_presentation_time_ns (GdkFrameTimings *timings)
 {
   g_return_val_if_fail (timings != NULL, 0);
 
@@ -255,6 +303,14 @@ gdk_frame_timings_get_predicted_presentation_time (GdkFrameTimings *timings)
 {
   g_return_val_if_fail (timings != NULL, 0);
 
+  return timings->predicted_presentation_time / 1000;
+}
+
+uint64_t
+gdk_frame_timings_get_predicted_presentation_time_ns (GdkFrameTimings *timings)
+{
+  g_return_val_if_fail (timings != NULL, 0);
+
   return timings->predicted_presentation_time;
 }
 
@@ -277,5 +333,252 @@ gdk_frame_timings_get_refresh_interval (GdkFrameTimings *timings)
 {
   g_return_val_if_fail (timings != NULL, 0);
 
+  return (timings->refresh_interval + 500) / 1000;
+}
+
+uint64_t
+gdk_frame_timings_get_refresh_interval_ns (GdkFrameTimings *timings)
+{
+  g_return_val_if_fail (timings != NULL, 0);
+
   return timings->refresh_interval;
 }
+
+/*<private>
+ * gdk_frame_timings_get_start_time:
+ * @self: the timings
+ * @stage: the stage to query the start time for
+ *
+ * Gets the timestamp of when the given stage started processing.
+ * 
+ * If the stage has not started processing yet - usually because this
+ * is the current frame's timings and the stage has not been reached yet,
+ * then the timestamp of the last stage that has started will be
+ * returned instead.
+ *
+ * Returns: the timestamp in nanoseconds
+ **/
+uint64_t
+gdk_frame_timings_get_start_time (GdkFrameTimings *self,
+                                  GdkFrameStage    stage)
+{
+  if (stage > 0)
+    stage--;
+
+  while (self->stage_end_time[stage] == 0 && stage > 0)
+    stage--;
+
+  return self->stage_end_time[stage];
+}
+
+/*<private>
+ * gdk_frame_timings_get_end_time:
+ * @self: the timings
+ * @stage: the stage to query the end time for
+ *
+ * Gets the timestamp of when the given stage was finished processing.
+ * 
+ * If the stage has not finished processing yet - either because it is
+ * in-process or because it has not yet started processing, then the
+ * timestamp of the last stage that has finished will be returned instead.
+ *
+ * Returns: the timestamp in nanoseconds
+ **/
+uint64_t
+gdk_frame_timings_get_end_time (GdkFrameTimings *self,
+                                GdkFrameStage    stage)
+{
+  while (self->stage_end_time[stage] == 0 && stage > 0)
+    stage--;
+
+  return self->stage_end_time[stage];
+}
+
+/*<private>
+ * gdk_frame_timings_get_throttling_hint:
+ * @self: the timings
+ *
+ * Gets the timestamp of when the compositor suggested to resume rendering.
+ *
+ * Many backends implement a hint to allow clients to throttle painting. This
+ * is modeled after 
+ * [wl_surface::frame](https://wayland.app/protocols/wayland#wl_surface:request:frame)
+ * or [AChoreographer::postFrameCallback](https://developer.android.com/ndk/reference/group/choreographer#achoreographer_framecallback)
+ * and is the timestamp of when GTK's callback was called, not any timestamp
+ * carried by the event.
+ *
+ * If the frame has not finished throttling yet - either because
+ * it is still in-process or because the compositor has not
+ * indicated to stop throttling yet - then 0 will be returned.
+ *
+ * If the compositor did not do any throttling for this frame, either because
+ * GTK didn't request it or because the compositor does not support throttling
+ * hints, then this time will be less than or equal to the end of the frame
+ * timings queried via `gdk_frame_timings_get_end_time(self, GDK_FRAME_STAGE_RESUME_EVENTS)`.
+ *
+ * Returns: the timestamp in nanoseconds
+ **/
+uint64_t
+gdk_frame_timings_get_throttling_hint (GdkFrameTimings *self)
+{
+  return self->throttling_hint;
+}
+
+void
+gdk_frame_timings_outstanding (GdkFrameTimings *self)
+{
+  /* frames can only be completed in AFTER_PAINT, so we must still be in progress.
+   * We might however be OUTSTANDING already because of a different surface submitting
+   * a buffer.
+   */
+  g_warn_if_fail (self->result == GDK_FRAME_PREPARING || self->result == GDK_FRAME_OUTSTANDING);
+
+  self->result = GDK_FRAME_OUTSTANDING;
+}
+
+void
+gdk_frame_timings_throttling_hint (GdkFrameTimings *self,
+                                   uint64_t         timestamp)
+{
+  g_warn_if_fail (self->result != GDK_FRAME_PREPARING);
+  g_warn_if_fail (self->throttling_hint == 0);
+
+  self->throttling_hint = timestamp;
+}
+
+void
+gdk_frame_timings_submitted (GdkFrameTimings *self,
+                             uint64_t         refresh)
+{
+  switch (self->result)
+    {
+      case GDK_FRAME_PREPARING:
+        self->result = GDK_FRAME_SKIPPED;
+        break;
+
+      case GDK_FRAME_OUTSTANDING:
+        self->result = GDK_FRAME_SUBMITTED;
+        break;
+
+      case GDK_FRAME_SKIPPED:
+      case GDK_FRAME_PRESENTED:
+        /* duplicate calls are allowed, but must have the same values */
+        if (self->refresh_interval != refresh)
+          {
+            g_warning_once ("Duplicate call to gdk_frame_timings_submitted() with different values.");
+          }
+        return;
+
+      case GDK_FRAME_EMPTY:
+      case GDK_FRAME_SUBMITTED:
+      case GDK_FRAME_DISCARDED:
+        g_warning_once ("gdk_frame_timings_submitted() called on %s frame.",
+                        g_enum_get_value (g_type_class_get (GDK_TYPE_FRAME_RESULT), self->result)->value_nick);
+        return;
+
+      default:
+        g_assert_not_reached ();
+    }
+
+  if (refresh != 0)
+    self->refresh_interval = refresh;
+}
+
+void
+gdk_frame_timings_discarded (GdkFrameTimings *self)
+{
+  switch (self->result)
+    {
+      case GDK_FRAME_PREPARING:
+        self->result = GDK_FRAME_SKIPPED;
+        break;
+
+      case GDK_FRAME_OUTSTANDING:
+        self->result = GDK_FRAME_DISCARDED;
+        break;
+
+      case GDK_FRAME_SKIPPED:
+      case GDK_FRAME_DISCARDED:
+        /* duplicate calls are allowed */
+        return;
+
+      case GDK_FRAME_EMPTY:
+      case GDK_FRAME_SUBMITTED:
+      case GDK_FRAME_PRESENTED:
+        g_warning_once ("gdk_frame_timings_discarded() called on already %s frame.",
+                        g_enum_get_value (g_type_class_get (GDK_TYPE_FRAME_RESULT), self->result)->value_nick);
+        return;
+
+      default:
+        g_assert_not_reached ();
+        return;
+    }
+}
+
+void
+gdk_frame_timings_presented (GdkFrameTimings *self,
+                             uint64_t         presentation_time,
+                             uint64_t         refresh)
+{
+  switch (self->result)
+    {
+      case GDK_FRAME_PREPARING:
+        self->result = GDK_FRAME_EMPTY;
+        break;
+
+      case GDK_FRAME_OUTSTANDING:
+        self->result = GDK_FRAME_PRESENTED;
+        break;
+
+      case GDK_FRAME_EMPTY:
+      case GDK_FRAME_PRESENTED:
+        /* duplicate calls are allowed, but must have the same values */
+        if (self->presentation_time != presentation_time ||
+            self->refresh_interval != refresh)
+          {
+            int64_t time_diff = (int64_t) (presentation_time - self->presentation_time);
+            g_warning_once ("Duplicate call to gdk_frame_timings_presented() with different values: "
+                            "presentation time is %" PRId64 ".%" PRId64 "ms off from expected",
+                            time_diff / (1000 * 1000), (time_diff / 1000) % 1000);
+          }
+        return;
+
+      case GDK_FRAME_SKIPPED:
+      case GDK_FRAME_SUBMITTED:
+      case GDK_FRAME_DISCARDED:
+        g_warning_once ("gdk_frame_timings_presented() called on %s frame.",
+                        g_enum_get_value (g_type_class_get (GDK_TYPE_FRAME_RESULT), self->result)->value_nick);
+        return;
+
+      default:
+        g_assert_not_reached ();
+    }
+
+  self->presentation_time = presentation_time;
+  if (refresh != 0)
+    self->refresh_interval = refresh;
+}
+
+guint64
+gdk_frame_timings_get_serial (GdkFrameTimings *self)
+{
+  return self->serial;
+}
+
+/*<private>
+ * gdk_frame_timings_set_serial:
+ * @self: the timings
+ * @serial: the serial
+ *
+ * Allows backends to set a serial to map the frame timings
+ * to OS-specific IDs.
+ * Timings can then later be queried by backends using
+ * `gdk_frame_clock_find_timings()`.
+ **/
+void
+gdk_frame_timings_set_serial (GdkFrameTimings *self,
+                              guint64          serial)
+{
+  self->serial = serial;
+}
+

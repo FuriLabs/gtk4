@@ -30,6 +30,8 @@
 
 #include <glib/gi18n-lib.h>
 
+#include "gsk/gskrendernode.h"
+
 /**
  * GdkDrawContext:
  *
@@ -99,7 +101,6 @@ gdk_draw_context_default_surface_detach (GdkDrawContext *context)
 static void
 gdk_draw_context_default_empty_frame (GdkDrawContext *context)
 {
-  g_warning ("FIXME: Implement GdkDrawContext.empty_frame in %s", G_OBJECT_TYPE_NAME (context));
 }
 
 static void
@@ -362,11 +363,10 @@ gdk_draw_context_begin_frame (GdkDrawContext       *context,
   g_return_if_fail (priv->surface != NULL);
   g_return_if_fail (region != NULL);
 
-  gdk_draw_context_begin_frame_full (context, NULL, GDK_MEMORY_U8, region, NULL);
+  gdk_draw_context_begin_frame_full (context, NULL, NULL, region);
 }
 
 /*
- * @depth: best depth to render in
  * @opaque: (nullable): opaque region of the rendering
  *
  * If the given depth is not `GDK_MEMORY_U8`, GDK will see about providing a
@@ -392,13 +392,13 @@ gdk_draw_context_begin_frame (GdkDrawContext       *context,
 void
 gdk_draw_context_begin_frame_full (GdkDrawContext        *context,
                                    gpointer               context_data,
-                                   GdkMemoryDepth         depth,
-                                   const cairo_region_t  *region,
-                                   const graphene_rect_t *opaque)
+                                   GskRenderNode         *node,
+                                   const cairo_region_t  *region)
 {
   GdkDrawContextPrivate *priv = gdk_draw_context_get_instance_private (context);
   double scale;
   guint buffer_width, buffer_height;
+  graphene_rect_t opaque;
 
   if (GDK_SURFACE_DESTROYED (priv->surface))
     return;
@@ -430,42 +430,32 @@ gdk_draw_context_begin_frame_full (GdkDrawContext        *context,
       if (!gdk_draw_context_attach (context, &error))
         {
           g_critical ("Failed to attach context: %s", error->message);
+          g_error_free (error);
           return;
         }
     }
 
-  if (priv->surface->paint_context != NULL)
+  if (priv->render_region != NULL)
     {
-      if (priv->surface->paint_context == context)
-        {
-          g_critical ("The surface %p is already drawing. You must finish the "
-                      "previous drawing operation with gdk_draw_context_end_frame() first.",
-                      priv->surface);
-        }
-      else
-        {
-          g_critical ("The surface %p is already being drawn by %s %p. "
-                      "You cannot draw a surface with multiple contexts at the same time.",
-                      priv->surface,
-                      G_OBJECT_TYPE_NAME (priv->surface->paint_context), priv->surface->paint_context);
-        }
-      return;
+      g_critical ("The surface %p is already drawing. You must finish the "
+                  "previous drawing operation with gdk_draw_context_end_frame() first.",
+                  priv->surface);
     }
 
-  gdk_surface_set_opaque_rect (priv->surface, opaque);
+  gdk_surface_set_content (priv->surface, node);
 
-  if (gdk_display_get_debug_flags (priv->display) & GDK_DEBUG_HIGH_DEPTH)
-    depth = GDK_MEMORY_FLOAT32;
+  if (gsk_render_node_get_opaque_rect (node, &opaque))
+    gdk_surface_set_opaque_rect (priv->surface, &opaque);
+  else
+    gdk_surface_set_opaque_rect (priv->surface, NULL);
 
   scale = gdk_surface_get_scale (priv->surface);
   priv->render_region = gdk_cairo_region_scale_grow (region, scale, scale);
-  priv->surface->paint_context = g_object_ref (context);
 
   g_assert (priv->color_state == NULL);
 
   GDK_DRAW_CONTEXT_GET_CLASS (context)->begin_frame (context,
                                                      context_data,
-                                                     depth,
                                                      priv->render_region,
                                                      &priv->color_state,
                                                      &priv->depth);
@@ -513,7 +503,6 @@ gdk_draw_context_end_frame_full (GdkDrawContext *context,
 
   priv->color_state = NULL;
   g_clear_pointer (&priv->render_region, cairo_region_destroy);
-  g_clear_object (&priv->surface->paint_context);
   priv->depth = GDK_N_DEPTHS;
 
   gdk_frame_clock_outstanding (gdk_surface_get_frame_clock (priv->surface));
@@ -546,18 +535,28 @@ gdk_draw_context_end_frame (GdkDrawContext *context)
   if (GDK_SURFACE_DESTROYED (priv->surface))
     return;
 
-  if (priv->surface->paint_context == NULL)
+  if (!gdk_draw_context_is_attached (context))
+    {
+      GdkDrawContext *attached = gdk_surface_get_attached_context (priv->surface);
+      if (attached)
+        {
+          g_critical ("The surface %p is not drawn by this context but by %s %p.",
+                      priv->surface, 
+                      G_OBJECT_TYPE_NAME (attached), attached);
+        }
+      else
+        {
+          g_critical ("The surface %p has no drawing context. You must call"
+                      "gdk_draw_context_begin_frame() before calling "
+                      "gdk_draw_context_end_frame().", priv->surface);
+        }
+      return;
+    }
+  if (priv->render_region == NULL)
     {
       g_critical ("The surface %p has no drawing context. You must call "
                   "gdk_draw_context_begin_frame() before calling "
                   "gdk_draw_context_end_frame().", priv->surface);
-      return;
-    }
-  else if (priv->surface->paint_context != context)
-    {
-      g_critical ("The surface %p is not drawn by this context but by %s %p.",
-                  priv->surface, 
-                  G_OBJECT_TYPE_NAME (priv->surface->paint_context), priv->surface->paint_context);
       return;
     }
 

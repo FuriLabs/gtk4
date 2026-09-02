@@ -418,12 +418,14 @@ gsk_composite_node_new (GskRenderNode *child,
 
   node->preferred_depth = gsk_render_node_get_preferred_depth (child);
   node->is_hdr = gsk_render_node_is_hdr (child);
+  node->isolates_background = TRUE;
   node->clears_background = gsk_porter_duff_clears_background (op);
   if (gsk_porter_duff_clears_foreground (op) ||
       !gsk_render_node_is_fully_opaque (mask))
     node->fully_opaque = FALSE;
   else
     node->fully_opaque = gsk_render_node_is_fully_opaque (child);
+  node->bilevel_opacity = node->fully_opaque;
   node->contains_subsurface_node = gsk_render_node_contains_subsurface_node (child) ||
                                    gsk_render_node_contains_subsurface_node (mask);
   node->contains_paste_node = gsk_render_node_contains_paste_node (child) ||

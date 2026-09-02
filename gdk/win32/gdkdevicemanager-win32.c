@@ -132,26 +132,14 @@ gdk_device_manager_win32_finalize (GObject *object)
   g_clear_pointer (&device_manager_win32->winpointer_funcs, g_free);
 
   /* Sadly, no g_clear_pointer() on DestroyWindow() as it is __stdcall */
-  if (device_manager_win32->winpointer_notification_hwnd != NULL)
-    {
-      DestroyWindow (device_manager_win32->winpointer_notification_hwnd);
-      device_manager_win32->winpointer_notification_hwnd = NULL;
-    }
+  g_clear_pointer (&device_manager_win32->winpointer_notification_hwnd, DestroyWindow);
 
   if (device_manager_win32->wintab_items)
     {
-      if (device_manager_win32->wintab_items->wintab_contexts)
-        {
-          g_list_free_full (device_manager_win32->wintab_items->wintab_contexts, g_free);
-          device_manager_win32->wintab_items->wintab_contexts = NULL;
-	    }
+      g_clear_list (&device_manager_win32->wintab_items->wintab_contexts, g_free);
 
       g_clear_pointer (&device_manager_win32->wintab_items->wintab_surface, g_object_unref);
-      if (device_manager_win32->wintab_items->wintab32 != NULL)
-        {
-          FreeLibrary (device_manager_win32->wintab_items->wintab32);
-          device_manager_win32->wintab_items->wintab32 = NULL;
-        }
+      g_clear_pointer (&device_manager_win32->wintab_items->wintab32, FreeLibrary);
       g_clear_pointer (&device_manager_win32->wintab_items, g_free);
     }
 

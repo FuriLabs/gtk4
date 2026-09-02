@@ -38,7 +38,7 @@ typedef struct _GtkGestureClick GtkGestureClick;
 typedef struct _GtkGestureClickClass GtkGestureClickClass;
 
 GDK_AVAILABLE_IN_ALL
-GType        gtk_gesture_click_get_type (void) G_GNUC_CONST;
+GType        gtk_gesture_click_get_type (void);
 
 GDK_AVAILABLE_IN_ALL
 GtkGesture * gtk_gesture_click_new      (void);

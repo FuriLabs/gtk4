@@ -28,7 +28,7 @@ G_BEGIN_DECLS
 #define GDK_TYPE_TEXTURE_DOWNLOADER    (gdk_texture_downloader_get_type ())
 
 GDK_AVAILABLE_IN_4_10
-GType                   gdk_texture_downloader_get_type         (void) G_GNUC_CONST;
+GType                   gdk_texture_downloader_get_type         (void);
 GDK_AVAILABLE_IN_4_10
 GdkTextureDownloader *  gdk_texture_downloader_new              (GdkTexture                     *texture);
 

@@ -1,3 +1,15 @@
+gtk4 (4.23.4+ds-2) experimental; urgency=medium
+
+  [ Alessandro Astone ]
+  * d/tests/control: Require dbus-daemon for the build tests
+  * d/control: Bump minimum glib
+  * d/control: Bump minimum meson
+
+  [ Jeremy Bícha ]
+  * Update debhelper compat to 14
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 03 Sep 2026 16:48:10 +0200
+
 gtk4 (4.23.4+ds-1) experimental; urgency=medium
 
   * New upstream release

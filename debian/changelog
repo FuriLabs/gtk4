@@ -1,8 +1,13 @@
-gtk4 (4.23.4+ds-1) UNRELEASED; urgency=medium
+gtk4 (4.23.4+ds-1) experimental; urgency=medium
 
   * New upstream release
+  * d/p: Rebase patches
+  * d/gtk-4-examples.install: Drop the icon-editor demo.
+    Now lives in a standalone project upstream.
+  * d/libgtk-4-1.symbols.in: Drop symbols removed during the development cycle
+  * d/libgtk-4-1.symbols.in: Drop symbol that was accidentally exported
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Wed, 02 Sep 2026 16:13:54 +0200
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 03 Sep 2026 15:38:20 +0200
 
 gtk4 (4.23.2+ds-1) experimental; urgency=medium
 

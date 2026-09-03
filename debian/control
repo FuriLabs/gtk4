@@ -183,10 +183,8 @@ Depends: libcairo2-dev (>= 1.18.2),
          libxrandr-dev,
          pkgconf,
          wayland-protocols (>= 1.44) [linux-any],
-         ${gir:Depends},
 Suggests: gtk-4-examples,
           libgtk-4-doc,
-Provides: ${gir:Provides},
 Description: development files for the GTK library
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable
@@ -252,8 +250,6 @@ Architecture: any
 Multi-Arch: same
 Section: introspection
 Depends: libgtk-4-common,
-         ${gir:Depends},
-Provides: ${gir:Provides},
 Description: GTK graphical user interface library -- gir bindings
  GTK is a multi-platform toolkit for creating graphical user
  interfaces. Offering a complete set of widgets, GTK is suitable

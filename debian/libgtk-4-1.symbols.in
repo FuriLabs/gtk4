@@ -1393,7 +1393,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_app_chooser_widget_set_show_other@Base 4.0.0
  gtk_app_chooser_widget_set_show_recommended@Base 4.0.0
  gtk_application_add_window@Base 4.0.0
- gtk_application_forget@Base 4.23.1
  gtk_application_get_accels_for_action@Base 4.0.0
  gtk_application_get_actions_for_accel@Base 4.0.0
  gtk_application_get_active_window@Base 4.0.0
@@ -1407,7 +1406,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_application_list_action_descriptions@Base 4.0.0
  gtk_application_new@Base 4.0.0
  gtk_application_remove_window@Base 4.0.0
- gtk_application_save@Base 4.23.1
  gtk_application_set_accels_for_action@Base 4.0.0
  gtk_application_set_menubar@Base 4.0.0
  gtk_application_uninhibit@Base 4.0.0
@@ -4020,7 +4018,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  gtk_requisition_get_type@Base 4.0.0
  gtk_requisition_new@Base 4.0.0
  gtk_response_type_get_type@Base 4.0.0
- gtk_restore_reason_get_type@Base 4.23.1
  gtk_revealer_get_child@Base 4.0.0
  gtk_revealer_get_child_revealed@Base 4.0.0
  gtk_revealer_get_reveal_child@Base 4.0.0

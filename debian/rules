@@ -133,7 +133,7 @@ configure_flags_deb += -Dcloudproviders=enabled
 endif
 
 configure_flags_udeb = \
-	-Dauto_features=disabled \
+	--auto-features=disabled \
 	-Dbroadway-backend=false \
 	-Dbuild-examples=false \
 	-Dbuild-demos=false \

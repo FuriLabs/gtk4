@@ -710,7 +710,6 @@ libgtk-@APIVER@.so.@SONAME@ @SHARED_PKG@ #MINVER#
  (arch=linux-any)gdk_wayland_toplevel_set_application_id@Base 4.0.0
  (arch=linux-any)gdk_wayland_toplevel_set_transient_for_exported@Base 4.0.0
  (arch=linux-any)gdk_wayland_toplevel_unexport_handle@Base 4.0.0
- (arch=linux-any)gdk_wayland_vulkan_context_get_type@Base 4.13.5
  gdk_x11_app_launch_context_get_type@Base 4.0.0
  gdk_x11_cairo_context_get_type@Base 4.0.0
  gdk_x11_device_get_id@Base 4.0.0

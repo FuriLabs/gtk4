@@ -2,6 +2,7 @@ Test-Command: env GDK_BACKEND=x11 debian/tests/build
 Features: test-name=build-x11
 Classes: desktop, x11
 Depends: build-essential,
+         dbus-daemon,
          libgtk-4-dev,
          xauth,
          xvfb,
@@ -12,6 +13,7 @@ Test-Command: env GDK_BACKEND=wayland debian/tests/build
 Features: test-name=build-wayland
 Classes: desktop, wayland, linux-only
 Depends: build-essential,
+         dbus-daemon,
          libgtk-4-dev,
          weston,
 # Architecture: linux-any

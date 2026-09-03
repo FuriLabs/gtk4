@@ -1,3 +1,9 @@
+gtk4 (4.23.4+ds-3) experimental; urgency=medium
+
+  * Fix udeb build
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 03 Sep 2026 18:02:11 +0200
+
 gtk4 (4.23.4+ds-2) experimental; urgency=medium
 
   [ Alessandro Astone ]

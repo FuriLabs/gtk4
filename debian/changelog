@@ -1,3 +1,14 @@
+gtk4 (4.23.4+ds-4) unstable; urgency=medium
+
+  [ Jeremy Bícha ]
+  * Add patch to skip running bad-image load tests
+  * Release to unstable
+
+  [ Simon McVittie ]
+  * Opt into Salsa CI
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 05 Sep 2026 13:27:48 +0200
+
 gtk4 (4.23.4+ds-3) experimental; urgency=medium
 
   * Fix udeb build

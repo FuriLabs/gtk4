@@ -785,8 +785,8 @@ svg_element_get_path (SvgElement            *element,
         {
           double x = svg_number_get (values[SVG_PROPERTY_X], viewport->size.width);
           double y = svg_number_get (values[SVG_PROPERTY_Y], viewport->size.height);
-          double width = svg_number_get (values[SVG_PROPERTY_WIDTH], viewport->size.width);
-          double height = svg_number_get (values[SVG_PROPERTY_HEIGHT],viewport->size.height);
+          double width = svg_value_is_auto (values[SVG_PROPERTY_WIDTH]) ? 0 : svg_number_get (values[SVG_PROPERTY_WIDTH], viewport->size.width);
+          double height = svg_value_is_auto (values[SVG_PROPERTY_HEIGHT]) ? 0 : svg_number_get (values[SVG_PROPERTY_HEIGHT],viewport->size.height);
           double rx, ry;
           resolve_rx (element, viewport, current, &rx, &ry);
           if (rx == 0 || ry == 0)
@@ -1511,6 +1511,28 @@ svg_element_add_animation (SvgElement   *shape,
 
   if (shape->animation_observer)
     gtk_list_list_model_item_added (shape->animation_observer, animation);
+}
+
+void
+svg_animation_delete (SvgAnimation *animation)
+{
+  SvgElement *shape = animation->shape;
+  SvgAnimation *previous = animation->prev_sibling;
+
+  if (shape->last_animation == animation)
+    shape->last_animation = animation->prev_sibling;
+  if (shape->first_animation == animation)
+    shape->first_animation = animation->next_sibling;
+  if (animation->prev_sibling)
+    animation->prev_sibling->next_sibling = animation->next_sibling;
+  if (animation->next_sibling)
+    animation->next_sibling->prev_sibling = animation->prev_sibling;
+
+  svg_animation_drop_and_free (g_object_ref (animation));
+  g_ptr_array_remove (shape->animations, animation);
+
+  if (shape->animation_observer)
+    gtk_list_list_model_item_removed (shape->animation_observer, previous);
 }
 
 /* What we call base value here is roughly the 'cascaded' value of CSS:

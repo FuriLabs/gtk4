@@ -7299,6 +7299,14 @@ gtk_text_get_key_controller (GtkText *self)
   return priv->key_controller;
 }
 
+GtkIMContext *
+gtk_text_get_im_context (GtkText *self)
+{
+  GtkTextPrivate *priv = gtk_text_get_instance_private (self);
+
+  return priv->im_context;
+}
+
 /**
  * gtk_text_set_extra_menu:
  * @self: a text widget

@@ -104,6 +104,6 @@ void                gtk_text_get_layout_offsets       (GtkText    *entry,
                                                        int        *y);
 void                gtk_text_reset_im_context         (GtkText    *entry);
 GtkEventController *gtk_text_get_key_controller       (GtkText    *entry);
+GtkIMContext *      gtk_text_get_im_context           (GtkText    *entry);
 
 G_END_DECLS
-

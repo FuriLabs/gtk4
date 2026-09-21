@@ -1,0 +1,83 @@
+From: =?utf-8?q?Guido_G=C3=BCnther?= <agx@sigxcpu.org>
+Date: Sat, 19 Sep 2026 08:49:43 +0200
+Subject: imcontextwayland: Don't resend text-change-cause on cursor-rect-only
+ updates
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+`after_layout_cb` is to update the cursor rect so we shouldn't send out
+the full state im state again. This avoids sending an inccorect text
+change cause which can cause input methods to clear their preedit (like
+Phosh's Stevia).
+
+Before this change:
+
+```
+[ 529528.331] {Default Queue} zwp_text_input_v3#57.preedit_string("a", 1, 1)
+[ 529528.419] {Default Queue} zwp_text_input_v3#57.done(15)
+[ 529529.085] {Default Queue}  -> zwp_text_input_v3#57.set_surrounding_text("were
+[ 529529.143] {Default Queue}  -> zwp_text_input_v3#57.set_text_change_cause(0)
+[ 529529.188] {Default Queue}  -> zwp_text_input_v3#57.set_content_type(1, 0)
+[ 529529.216] {Default Queue}  -> zwp_text_input_v3#57.set_cursor_rectangle(29, 347, 0, 17)
+[ 529529.276] {Default Queue}  -> zwp_text_input_v3#57.commit()
+[ 529536.432] {Default Queue}  -> zwp_text_input_v3#57.set_surrounding_text("were
+[ 529536.498] {Default Queue}  -> zwp_text_input_v3#57.set_text_change_cause(1)
+[ 529536.542] {Default Queue}  -> zwp_text_input_v3#57.set_content_type(1, 0)
+[ 529536.571] {Default Queue}  -> zwp_text_input_v3#57.set_cursor_rectangle(38, 347, 0, 17)
+[ 529536.602] {Default Queue}  -> zwp_text_input_v3#57.commit()
+[ 529547.577] {Default Queue} zwp_text_input_v3#57.preedit_string("", 0, 0)
+[ 529547.663] {Default Queue} zwp_text_input_v3#57.done(17)
+[ 529549.102] {Default Queue}  -> zwp_text_input_v3#57.set_surrounding_text("were
+[ 529549.160] {Default Queue}  -> zwp_text_input_v3#57.set_text_change_cause(0)
+[ 529549.208] {Default Queue}  -> zwp_text_input_v3#57.set_content_type(1, 0)
+[ 529549.264] {Default Queue}  -> zwp_text_input_v3#57.set_cursor_rectangle(38, 347, 0, 17)
+[ 529549.298] {Default Queue}  -> zwp_text_input_v3#57.commit()
+[ 529563.293] {Default Queue}  -> zwp_text_input_v3#57.set_surrounding_text("were
+[ 529563.348] {Default Queue}  -> zwp_text_input_v3#57.set_text_change_cause(1)
+[ 529563.388] {Default Queue}  -> zwp_text_input_v3#57.set_content_type(1, 0)
+[ 529563.416] {Default Queue}  -> zwp_text_input_v3#57.set_cursor_rectangle(29, 347, 0, 17)
+[ 529563.446] {Default Queue}  -> zwp_text_input_v3#57.commit()
+[ 529565.216] {Default Queue} zwp_text_input_v3#57.preedit_string("", 0, 0)
+[ 529565.323] {Default Queue} zwp_text_input_v3#57.done(19)```
+```
+
+After this change:
+
+```
+[1593776.977] {Default Queue} zwp_text_input_v3#57.preedit_string("aaa", 3, 3)
+[1593777.011] {Default Queue} zwp_text_input_v3#57.done(36)
+[1593777.237] {Default Queue}  -> zwp_text_input_v3#57.set_surrounding_text("snapshots)
+[1593777.251] {Default Queue}  -> zwp_text_input_v3#57.set_text_change_cause(0)
+[1593777.264] {Default Queue}  -> zwp_text_input_v3#57.set_content_type(1, 0)
+[1593777.269] {Default Queue}  -> zwp_text_input_v3#57.set_cursor_rectangle(38, 287, 0, 17)
+[1593777.274] {Default Queue}  -> zwp_text_input_v3#57.commit()
+[1593791.235] {Default Queue}  -> zwp_text_input_v3#57.set_cursor_rectangle(47, 287, 0, 17)
+[1593791.265] {Default Queue}  -> zwp_text_input_v3#57.commit()
+```
+
+Closes: #8419
+Fixes: bf874024b90 ("gtk/imcontextwayland: Track widget position changes")
+Signed-off-by: Guido Günther <agx@sigxcpu.org>
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/10392
+---
+ gtk/gtkimcontextwayland.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/gtk/gtkimcontextwayland.c b/gtk/gtkimcontextwayland.c
+index 0644cb9..a507cf7 100644
+--- a/gtk/gtkimcontextwayland.c
++++ b/gtk/gtkimcontextwayland.c
+@@ -651,8 +651,9 @@ after_layout_cb (GtkIMContext *context)
+       context_wayland->surface_cursor_rect.height != rect.height)
+     {
+       context_wayland->surface_cursor_rect = rect;
+-      notify_im_change (GTK_IM_CONTEXT_WAYLAND (context),
+-                        ZWP_TEXT_INPUT_V3_CHANGE_CAUSE_OTHER);
++
++      notify_cursor_location (context_wayland);
++      commit_state (context_wayland);
+     }
+ }
+ 

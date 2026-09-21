@@ -1,0 +1,42 @@
+From: =?utf-8?q?Guido_G=C3=BCnther?= <agx@sigxcpu.org>
+Date: Sat, 19 Sep 2026 21:10:24 +0200
+Subject: searchbar: Show OSK when search-mode gets enabled
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+This avoids having to touch the search entry when it grabs
+focus anyway.
+
+Closes: https://gitlab.gnome.org/GNOME/gtk/-/work_items/8409
+Signed-off-by: Guido Günther <agx@sigxcpu.org>
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/10395
+---
+ gtk/gtksearchbar.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/gtk/gtksearchbar.c b/gtk/gtksearchbar.c
+index 48f2e30..06f2432 100644
+--- a/gtk/gtksearchbar.c
++++ b/gtk/gtksearchbar.c
+@@ -499,6 +499,19 @@ gtk_search_bar_set_search_mode (GtkSearchBar *bar,
+   g_return_if_fail (GTK_IS_SEARCH_BAR (bar));
+ 
+   gtk_revealer_set_reveal_child (GTK_REVEALER (bar->revealer), search_mode);
++
++  if (search_mode && bar->entry)
++    {
++      GtkText *text = NULL;
++
++      if (GTK_IS_TEXT (bar->entry))
++        text = GTK_TEXT (bar->entry);
++      else if (GTK_IS_SEARCH_ENTRY (bar->entry))
++        text = gtk_search_entry_get_text_widget (GTK_SEARCH_ENTRY (bar->entry));
++
++      if (text && (gtk_text_get_input_hints (text) & GTK_INPUT_HINT_INHIBIT_OSK) == 0)
++        gtk_im_context_activate_osk (gtk_text_get_im_context (text), NULL);
++    }
+ }
+ 
+ /**

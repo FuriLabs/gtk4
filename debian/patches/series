@@ -14,3 +14,6 @@ x11-scale/gdk-x11-check-surface-scale-on-input-region-opaque-region.patch
 x11-scale/gdk-x11-update-correct-shadow-size-according-to-window-si.patch
 x11-scale/gdk-x11-update-cursor-size-on-the-extent-after-scale-chan.patch
 testsuite-Don-t-build-waylandsocket-test-if-Wayland-is-di.patch
+imcontextwayland-Don-t-resend-text-change-cause-on-cursor.patch
+gtktext-Add-getter-for-im-context.patch
+searchbar-Show-OSK-when-search-mode-gets-enabled.patch

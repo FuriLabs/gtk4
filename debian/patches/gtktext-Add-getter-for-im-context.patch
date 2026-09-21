@@ -1,0 +1,48 @@
+From: =?utf-8?q?Guido_G=C3=BCnther?= <agx@sigxcpu.org>
+Date: Sat, 19 Sep 2026 16:51:55 +0200
+Subject: gtktext: Add getter for im-context
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+Can be helpful to trigger the OSK from other widgets
+
+Signed-off-by: Guido Günther <agx@sigxcpu.org>
+
+Forwarded: https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/10395
+---
+ gtk/gtktext.c        | 8 ++++++++
+ gtk/gtktextprivate.h | 2 +-
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/gtk/gtktext.c b/gtk/gtktext.c
+index 631e881..37225c8 100644
+--- a/gtk/gtktext.c
++++ b/gtk/gtktext.c
+@@ -7299,6 +7299,14 @@ gtk_text_get_key_controller (GtkText *self)
+   return priv->key_controller;
+ }
+ 
++GtkIMContext *
++gtk_text_get_im_context (GtkText *self)
++{
++  GtkTextPrivate *priv = gtk_text_get_instance_private (self);
++
++  return priv->im_context;
++}
++
+ /**
+  * gtk_text_set_extra_menu:
+  * @self: a text widget
+diff --git a/gtk/gtktextprivate.h b/gtk/gtktextprivate.h
+index 18b6803..2e4c450 100644
+--- a/gtk/gtktextprivate.h
++++ b/gtk/gtktextprivate.h
+@@ -104,6 +104,6 @@ void                gtk_text_get_layout_offsets       (GtkText    *entry,
+                                                        int        *y);
+ void                gtk_text_reset_im_context         (GtkText    *entry);
+ GtkEventController *gtk_text_get_key_controller       (GtkText    *entry);
++GtkIMContext *      gtk_text_get_im_context           (GtkText    *entry);
+ 
+ G_END_DECLS
+-

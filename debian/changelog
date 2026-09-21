@@ -1,3 +1,13 @@
+gtk4 (4.24.0+ds-2) unstable; urgency=medium
+
+  * Cherry-pick 3 proposed patches from Guido Günther
+    to fix preedit and screen keyboard regressions seen in Phosh
+    (Closes: #1146833)
+  * Add Breaks: phoc << 0.58~alpha since that version was updated
+    to adapt to changes in input method handling introduced in gtk 4.23.2
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 21 Sep 2026 17:23:49 +0200
+
 gtk4 (4.24.0+ds-1) unstable; urgency=medium
 
   * New upstream release
